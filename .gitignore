@@ -20,3 +20,4 @@ src/flash/classes/
 node_modules/
 
 build/
+acceptance-results.txt
