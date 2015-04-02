@@ -267,8 +267,6 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, "$BgpropertyIsEnumerable", asProto.native_propertyIsEnumerable);
       addPrototypeFunctionAlias(proto, "$BgsetPropertyIsEnumerable", asProto.setPropertyIsEnumerable);
       addPrototypeFunctionAlias(proto, "$BgisPrototypeOf", asProto.native_isPrototypeOf);
-      addPrototypeFunctionAlias(proto, "$BgtoString", asProto.toString);
-      addPrototypeFunctionAlias(proto, "$BgvalueOf", asProto.valueOf);
     }
 
     static _init() {

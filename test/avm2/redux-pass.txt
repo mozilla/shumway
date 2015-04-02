@@ -131,3 +131,5 @@ test/avm2/pass/inline-2.abc
 test/avm2/pass/vectors.abc
 test/avm2/pass/vectors-4.abc
 test/avm2/pass/getQualifiedClassName.abc
+test/avm2/pass/classes-6.abc
+test/avm2/pass/toString.abc

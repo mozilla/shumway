@@ -235,10 +235,9 @@ module Shumway.AVMX.AS.flash.events {
     }
 
     toString(): string {
-      /* tslint:disable */
-      // REDUX:
-      // return ASObject.dynamicPrototype['$BgtoString'].call(this);
-      return "";
+      // EventDispatcher's toString doesn't actually do anything. It just introduces a trait that
+      // forwards to Object.prototype's toString method.
+      return this.securityDomain.AXObject.dPrototype.$BgtoString.axCall(this);
     }
 
     /**
