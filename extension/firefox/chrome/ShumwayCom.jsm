@@ -66,10 +66,6 @@ var ShumwayCom = {
         callbacks.sendMessage('setFullscreen', value, false);
       },
 
-      endActivation: function endActivation() {
-        callbacks.sendMessage('endActivation', null, false);
-      },
-
       fallback: function fallback() {
         callbacks.sendMessage('fallback', null, false);
       },
@@ -418,12 +414,6 @@ ShumwayChromeActions.prototype = {
     } else {
       target.ownerDocument.mozCancelFullScreen();
     }
-  },
-
-  endActivation: function () {
-    var event = this.document.createEvent('CustomEvent');
-    event.initCustomEvent('shumwayActivated', true, true, null);
-    this.window.dispatchEvent(event);
   },
 
   reportTelemetry: function (data) {

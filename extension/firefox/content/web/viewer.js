@@ -49,7 +49,6 @@ function runViewer() {
   movieUrl = flashParams.url;
   if (!movieUrl) {
     console.log("no movie url provided -- stopping here");
-    ShumwayCom.endActivation();
     return;
   }
 
@@ -172,9 +171,6 @@ function parseSwf(url, baseUrl, movieParams, objectParams) {
 
   console.info("Compiler settings: " + JSON.stringify(compilerSettings));
   console.info("Parsing " + url + "...");
-  function loaded() {
-    ShumwayCom.endActivation();
-  }
 
   var backgroundColor;
   if (objectParams) {
