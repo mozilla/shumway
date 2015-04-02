@@ -342,10 +342,15 @@ module Shumway.AVMX.AS.flash.display {
       this._trackAsMenu = !!value;
     }
 
-    get scenes(): Scene[] {
-      return this._scenes.map(function (scene: Scene) {
-        return scene.clone();
-      });
+    get scenes(): ASArray /* flash.display [] */ {
+      return this._getScenes();
+    }
+
+    private _getScenes(): ASArray /* flash.display [] */ {
+      var scenes = this._scenes ? this._scenes.map(function (x: flash.display.Scene) {
+        return x.clone();
+      }) : [];
+      return this.securityDomain.createArray(scenes);
     }
 
     get currentScene(): Scene {
