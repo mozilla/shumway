@@ -593,11 +593,11 @@ module Shumway.AVMX.AS {
     value: any [];
 
     public static axApply(self: ASArray, args: any[]): ASArray {
-      return this.securityDomain.AXArray.axBox(Array.apply(Array, args));
+      return this.securityDomain.createArray(Array.apply(Array, args));
     }
 
     public static axConstruct(args: any[]): ASArray {
-      return this.securityDomain.AXArray.axBox(Array.apply(Array, args));
+      return this.securityDomain.createArray(Array.apply(Array, args));
     }
 
     push() {
@@ -629,10 +629,10 @@ module Shumway.AVMX.AS {
           value.push(a);
         }
       }
-      return this.securityDomain.AXArray.axBox(value);
+      return this.securityDomain.createArray(value);
     }
     slice(startIndex: number, endIndex: number) {
-      return this.securityDomain.AXArray.axBox(this.value.slice(startIndex, endIndex));
+      return this.securityDomain.createArray(this.value.slice(startIndex, endIndex));
     }
     join(sep: string) {
       return this.value.join(sep);
@@ -662,7 +662,7 @@ module Shumway.AVMX.AS {
       return this.value.forEach(callbackfn.value, thisArg);
     }
     map(callbackfn: {value}, thisArg?) {
-      return this.securityDomain.AXArray.axBox(this.value.map(callbackfn.value, thisArg));
+      return this.securityDomain.createArray(this.value.map(callbackfn.value, thisArg));
     }
     filter(callbackfn: {value: Function}, thisArg?) {
       var result = [];
@@ -672,7 +672,7 @@ module Shumway.AVMX.AS {
           result.push(o[i]);
         }
       }
-      return this.securityDomain.AXArray.axBox(result);
+      return this.securityDomain.createArray(result);
     }
 
     toLocaleString(): string {
@@ -696,7 +696,7 @@ module Shumway.AVMX.AS {
       if (arguments.length === 0) {
         return undefined;
       }
-      return this.securityDomain.AXArray.axBox(o.splice.apply(o, arguments));
+      return this.securityDomain.createArray(o.splice.apply(o, arguments));
     }
 
     sort(): any {
