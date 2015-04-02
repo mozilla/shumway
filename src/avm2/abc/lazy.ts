@@ -285,8 +285,13 @@ module Shumway.AVMX {
     var method;
     if (methodInfo.flags & METHOD.Native) {
       var metadata = methodInfo.getNativeMetadata();
-      if (metadata) {
-        method = AS.getNative(metadata.getValueAt(0));
+      if (metadata || methodTraitInfo.holder instanceof ScriptInfo) {
+        if (metadata) {
+          method = AS.getNative(metadata.getValueAt(0));
+        } else {
+          var mn = methodTraitInfo.getName();
+          method = AS.getNative(mn.uri + '.' + mn.name);
+        }
         method = createGlobalNative(method, scope.object.securityDomain);
       } else {
         method = AS.getMethodOrAccessorNative(methodTraitInfo);
@@ -958,6 +963,15 @@ module Shumway.AVMX {
         str += "<" + this.parameterType + ">";
       }
       return str;
+    }
+
+    public toFQNString(useColons: boolean) {
+      release || assert(this.isQName());
+      var prefix = this.namespaces[0].uri;
+      if (prefix.length) {
+        prefix += (useColons ? '::' : '.');
+      }
+      return prefix + this.name;
     }
 
     public isRuntime(): boolean {

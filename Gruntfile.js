@@ -582,7 +582,7 @@ module.exports = function(grunt) {
   grunt.registerTask('player', ['exec:build_player_ts', 'quick-test']);
   grunt.registerTask('shell', ['exec:build_shell_ts', 'quick-test']);
   grunt.registerTask('tools', ['exec:build_tools_ts', 'quick-test']);
-  grunt.registerTask('avm2', ['exec:build_avm2_ts', 'copy_relooper', 'quick-test', 'exec:test_avm2_quick']);
+  grunt.registerTask('avm2', ['exec:build_avm2_ts', 'copy_relooper', 'quick-test']);
   grunt.registerTask('gfx', ['exec:build_gfx_base_ts', 'exec:build_gfx_ts', 'quick-test']);
   grunt.registerTask('gfx-base', ['exec:build_gfx_base_ts']);
   grunt.registerTask('perf', ['exec:perf']);

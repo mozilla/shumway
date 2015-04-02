@@ -487,9 +487,9 @@ module Shumway.Shell {
           if (verbose) {
             writer.writeLn("executeABC FAIL: " + file);
           }
-          writer.writeLn("EXCEPTED!");
+          writer.writeLn("EXCEPTED: " + file);
           try {
-            writer.redLn('Exception encountered while running ' + file + ': ' + '(' + x + ')');
+            writer.redLn('Exception: ' + '(' + x + ')');
             writer.redLns(x.stack);
           } catch (y) {
             writer.writeLn("Error printing error.");

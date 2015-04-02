@@ -58,6 +58,11 @@ module Shumway.AVMX.AS {
 
   var writer = new IndentingWriter();
 
+  function wrapJSGlobalFunction(fun) {
+    return function(securityDomain, ...args) {
+      return fun.apply(jsGlobal, args);
+    };
+  }
 
   /**
    * Other natives can live in this module
@@ -76,7 +81,7 @@ module Shumway.AVMX.AS {
       /* tslint:enable */
     }
 
-    export function bugzilla(n) {
+    export function bugzilla(_: SecurityDomain, n) {
       switch (n) {
         case 574600: // AS3 Vector::map Bug
           return true;
@@ -84,20 +89,76 @@ module Shumway.AVMX.AS {
       return false;
     }
 
-    export var decodeURI: (encodedURI: string) => string = jsGlobal.decodeURI;
-    export var decodeURIComponent: (encodedURIComponent: string) =>  string = jsGlobal.decodeURIComponent;
-    export var encodeURI: (uri: string) => string = jsGlobal.encodeURI;
-    export var encodeURIComponent: (uriComponent: string) => string = jsGlobal.encodeURIComponent;
-    export var isNaN: (number: number) => boolean = jsGlobal.isNaN;
-    export var isFinite: (number: number) => boolean = jsGlobal.isFinite;
-    export var parseInt: (s: string, radix?: number) => number = jsGlobal.parseInt;
-    export var parseFloat: (string: string) => number = jsGlobal.parseFloat;
-    export var escape: (x: any) => any = jsGlobal.escape;
-    export var unescape: (x: any) => any = jsGlobal.unescape;
+    export var decodeURI: (encodedURI: string) => string = wrapJSGlobalFunction(jsGlobal.decodeURI);
+    export var decodeURIComponent: (encodedURIComponent: string) =>  string = wrapJSGlobalFunction(jsGlobal.decodeURIComponent);
+    export var encodeURI: (uri: string) => string = wrapJSGlobalFunction(jsGlobal.encodeURI);
+    export var encodeURIComponent: (uriComponent: string) => string = wrapJSGlobalFunction(jsGlobal.encodeURIComponent);
+    export var isNaN: (number: number) => boolean = wrapJSGlobalFunction(jsGlobal.isNaN);
+    export var isFinite: (number: number) => boolean = wrapJSGlobalFunction(jsGlobal.isFinite);
+    export var parseInt: (s: string, radix?: number) => number = wrapJSGlobalFunction(jsGlobal.parseInt);
+    export var parseFloat: (string: string) => number = wrapJSGlobalFunction(jsGlobal.parseFloat);
+    export var escape: (x: any) => any = wrapJSGlobalFunction(jsGlobal.escape);
+    export var unescape: (x: any) => any = wrapJSGlobalFunction(jsGlobal.unescape);
     export var isXMLName: (x: any) => boolean = function () {
       return false; // "FIX ME";
     };
-    export var notImplemented: (x: any) => void = Shumway.Debug.notImplemented;
+    export var notImplemented: (x: any) => void = wrapJSGlobalFunction(jsGlobal.Shumway.Debug.notImplemented);
+
+    /**
+     * Returns the fully qualified class name of an object.
+     */
+    export function getQualifiedClassName(_: SecurityDomain, value: any):string {
+      release || checkValue(value);
+      var valueType = typeof value;
+      switch (valueType) {
+        case 'undefined':
+          return 'void';
+        case 'object':
+          if (value === null) {
+            return 'null';
+          }
+          return value.classInfo.instanceInfo.name.toFQNString(true);
+        case 'number':
+          return (value | 0) === value ? 'int' : 'Number';
+        case 'string':
+          return 'String';
+        case 'boolean':
+          return 'Boolean';
+      }
+      release || assertUnreachable('invalid value type ' + valueType);
+    }
+
+    /**
+     * Returns the fully qualified class name of the base class of the object specified by the
+     * |value| parameter.
+     */
+    export function getQualifiedSuperclassName(securityDomain: SecurityDomain, value: any) {
+      if (isNullOrUndefined(value)) {
+        return "null";
+      }
+      value = securityDomain.box(value);
+      // The value might be from another domain, so don't use passed-in the current SecurityDomain.
+      var axClass = value.securityDomain.AXClass.axIsType(value) ?
+                    (<AXClass>value).superClass :
+                    value.axClass.superClass;
+      return getQualifiedClassName(securityDomain, axClass);
+    }
+    /**
+     * Returns the class with the specified name, or |null| if no such class exists.
+     */
+    export function getDefinitionByName(securityDomain: SecurityDomain, name: string): AXClass {
+      name = asCoerceString(name).replace("::", ".");
+      var mn = Multiname.FromFQNString(name, NamespaceType.Public);
+      return securityDomain.application.getClass(mn);
+    }
+
+    export function describeType(securityDomain: SecurityDomain, value: any, flags: number) {
+      //return Shumway.AVM2.AS.describeType(value, flags);
+    }
+
+    export function describeTypeJSON(securityDomain: SecurityDomain, value: any, flags: number) {
+      //return Shumway.AVM2.AS.describeTypeJSON(value, flags);
+    }
   }
 
   var nativeClasses: Shumway.MapObject<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
@@ -206,8 +267,6 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, "$BgpropertyIsEnumerable", asProto.native_propertyIsEnumerable);
       addPrototypeFunctionAlias(proto, "$BgsetPropertyIsEnumerable", asProto.setPropertyIsEnumerable);
       addPrototypeFunctionAlias(proto, "$BgisPrototypeOf", asProto.native_isPrototypeOf);
-      addPrototypeFunctionAlias(proto, "$BgtoString", asProto.toString);
-      addPrototypeFunctionAlias(proto, "$BgvalueOf", asProto.valueOf);
     }
 
     static _init() {
@@ -1660,9 +1719,8 @@ module Shumway.AVMX.AS {
       securityDomain.throwError('TypeError', Errors.NullPointerError, 'url');
     }
     if (url.toLowerCase().indexOf('fscommand:') === 0) {
-      var fscommand = (<any>securityDomain).flash.system.fscommand;
-      fscommand.axCall(securityDomain.createObject(), // REDUX ? why
-        url.substring('fscommand:'.length), window_);
+      var fscommand = (<any>securityDomain).flash.system.fscommand.value;
+      fscommand(securityDomain, url.substring('fscommand:'.length), window_);
       return;
     }
     // TODO handle other methods than GET
@@ -1720,10 +1778,8 @@ module Shumway.AVMX.AS {
   registerNativeFunction('FlashNetScript::navigateToURL', FlashNetScript_navigateToURL);
   registerNativeFunction('FlashNetScript::sendToURL', FlashNetScript_sendToURL);
 
-  declare var escape;
-  declare var unescape;
-  registerNativeFunction('FlashUtilScript::escapeMultiByte', escape);
-  registerNativeFunction('FlashUtilScript::unescapeMultiByte', unescape);
+  registerNativeFunction('FlashUtilScript::escapeMultiByte', wrapJSGlobalFunction(jsGlobal.escape));
+  registerNativeFunction('FlashUtilScript::unescapeMultiByte', wrapJSGlobalFunction(jsGlobal.unescape));
 
   registerNativeFunction('Toplevel::registerClassAlias', Toplevel_registerClassAlias);
   registerNativeFunction('Toplevel::getClassByAlias', Toplevel_getClassByAlias);
@@ -1750,6 +1806,8 @@ module Shumway.AVMX.AS {
       if (native.classNatives) {
         pushMany(natives, native.classNatives);
       }
+    } else {
+      release || assertUnreachable('Invalid trait type');
     }
     return natives;
   }
@@ -1764,8 +1822,8 @@ module Shumway.AVMX.AS {
     }
     //// TODO: Assert eagerly.
     //return function () {
-    //  release || assert (!methodInfo.isNative(), "Must supply a constructor for " + classInfo + ".");
-    //}
+    //  release || assert (!methodInfo.isNative(), "Must supply a constructor for " + classInfo +
+    // "."); }
     return null;
   }
 
@@ -1942,7 +2000,8 @@ module Shumway.AVMX.AS {
       // it copies over all properties and may overwrite properties that we don't expect.
       // TODO: Look into a safer way to do this, for now it doesn't overwrite already
       // defined properties.
-      // copyOwnPropertyDescriptors(axClass.dPrototype, axClass.superClass.dPrototype, null, false, true);
+      // copyOwnPropertyDescriptors(axClass.dPrototype, axClass.superClass.dPrototype, null, false,
+      // true);
     }
 
     // Copy instance methods and properties.
@@ -1955,8 +2014,8 @@ module Shumway.AVMX.AS {
     // Inherit or override prototype descriptors from the template class.
     copyOwnPropertyDescriptors(axClass.dPrototype, asClass.prototype, filter);
 
-    // Copy inherited traps. We want to make sure we copy all the in inherited traps, not just the traps
-    // defined in asClass.Prototype.
+    // Copy inherited traps. We want to make sure we copy all the in inherited traps, not just the
+    // traps defined in asClass.Prototype.
     copyPropertiesByList(axClass.dPrototype, asClass.prototype, axTrapNames);
 
     if (asClass.classInitializer) {
