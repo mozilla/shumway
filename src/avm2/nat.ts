@@ -1660,9 +1660,8 @@ module Shumway.AVMX.AS {
       securityDomain.throwError('TypeError', Errors.NullPointerError, 'url');
     }
     if (url.toLowerCase().indexOf('fscommand:') === 0) {
-      var fscommand = (<any>securityDomain).flash.system.fscommand;
-      fscommand.axCall(securityDomain.createObject(), // REDUX ? why
-        url.substring('fscommand:'.length), window_);
+      var fscommand = (<any>securityDomain).flash.system.fscommand.value;
+      fscommand(securityDomain, url.substring('fscommand:'.length), window_);
       return;
     }
     // TODO handle other methods than GET
