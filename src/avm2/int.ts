@@ -83,7 +83,7 @@ module Shumway.AVMX {
     }
   }
 
-  function _interpret(self: Object, methodInfo: MethodInfo, savedScope: Scope, args: any []) {
+  function _interpret(self: Object, methodInfo: MethodInfo, savedScope: Scope, callArgs: any []) {
     var applicationDomain = methodInfo.abc.applicationDomain;
     var securityDomain = applicationDomain.securityDomain;
 
@@ -96,12 +96,12 @@ module Shumway.AVMX {
     var scope = new ScopeStack(savedScope);
     var rn: Multiname = null;
 
-    var argCount = args.length;
+    var argCount = callArgs.length;
     var arg;
     for (var i = 0, j = methodInfo.parameters.length; i < j; i++) {
       var p = methodInfo.parameters[i];
       if (i < argCount) {
-        arg = args[i];
+        arg = callArgs[i];
       } else if (p.hasOptionalValue()) {
         arg = p.getOptionalValue();
       }
@@ -116,10 +116,12 @@ module Shumway.AVMX {
     }
 
     if (methodInfo.needsRest()) {
-      local.push(box(sliceArguments(args, methodInfo.parameters.length)));
+      local.push(box(sliceArguments(callArgs, methodInfo.parameters.length)));
     } else if (methodInfo.needsArguments()) {
-      local.push(box(sliceArguments(args, 0)));
+      local.push(box(sliceArguments(callArgs, 0)));
     }
+
+    var args = [];
 
     var pc = 0;
     function s32(): number {
