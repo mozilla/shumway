@@ -135,3 +135,4 @@ test/avm2/pass/classes-6.abc
 test/avm2/pass/toString.abc
 test/avm2/pass/call-apply.abc
 test/avm2/pass/inject.abc
+test/avm2/pass/functions-3.abc
