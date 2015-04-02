@@ -469,7 +469,7 @@ module Shumway.AVMX {
   }
 
   export class RuntimeTraitInfo {
-    configurable: boolean = true; // Always false.
+    configurable: boolean = true; // Always true.
     enumerable: boolean; // Always false.
     writable: boolean;
     get: () => any;
