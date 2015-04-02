@@ -1750,6 +1750,8 @@ module Shumway.AVMX.AS {
       if (native.classNatives) {
         pushMany(natives, native.classNatives);
       }
+    } else {
+      release || assertUnreachable('Invalid trait type');
     }
     return natives;
   }
