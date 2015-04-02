@@ -965,6 +965,15 @@ module Shumway.AVMX {
       return str;
     }
 
+    public toFQNString(useColons: boolean) {
+      release || assert(this.isQName());
+      var prefix = this.namespaces[0].uri;
+      if (prefix.length) {
+        prefix += (useColons ? '::' : '.');
+      }
+      return prefix + this.name;
+    }
+
     public isRuntime(): boolean {
       switch (this.kind) {
         case CONSTANT.QName:

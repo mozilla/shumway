@@ -22,7 +22,6 @@ test/avm2/pass/iss-1057.abc
 test/avm2/pass/iss-1034.abc
 test/avm2/pass/inject.abc
 test/avm2/pass/in-1.abc
-test/avm2/pass/getQualifiedClassName.abc
 test/avm2/pass/functions-3.abc
 test/avm2/pass/for.abc
 test/avm2/pass/dynamic-0.abc
