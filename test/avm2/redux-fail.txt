@@ -26,5 +26,4 @@ test/avm2/pass/for.abc
 test/avm2/pass/dynamic-0.abc
 test/avm2/pass/describeTypeJSON.abc
 test/avm2/pass/describetype.abc
-test/avm2/pass/call-apply.abc
 test/avm2/pass/base.abc
