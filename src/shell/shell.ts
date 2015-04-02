@@ -435,9 +435,8 @@ module Shumway.Shell {
       }
       writer.writeLn(file + ": " + IntegerUtilities.toHEX(hash));
     } catch (x) {
-      if (verbose) {
-        writer.writeLn("executeSWF FAIL: " + file);
-      }
+      writer.redLn('Exception: ' + '(' + x + ')');
+      writer.redLns(x.stack);
     }
   }
 
