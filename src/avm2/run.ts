@@ -374,6 +374,7 @@ module Shumway.AVMX {
    * AS3 also overloads the `+` operator to concatenate XMLs/XMLLists instead of stringifying them.
    */
   export function asAdd(l: any, r: any, securityDomain: SecurityDomain): any {
+    release || assert(!(typeof l === "number" && typeof r === "number"), 'Inline number addition.');
     if (typeof l === "string" || typeof r === "string") {
       return String(l) + String(r);
     }

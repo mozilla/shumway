@@ -593,7 +593,13 @@ module Shumway.AVMX {
             stack[stack.length - 1] = ~stack[stack.length - 1];
             break;
           case Bytecode.ADD:
-            stack[stack.length - 2] = asAdd(stack[stack.length - 2], stack.pop(), securityDomain);
+            b = stack.pop();
+            a = stack[stack.length - 1];
+            if (typeof a === "number" && typeof b === "number") {
+              stack[stack.length - 1] = a + b;
+            } else {
+              stack[stack.length - 1] = asAdd(a, b, securityDomain);
+            }
             break;
           case Bytecode.SUBTRACT:
             stack[stack.length - 2] -= stack.pop();
