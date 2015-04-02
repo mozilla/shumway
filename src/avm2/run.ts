@@ -163,7 +163,7 @@ module Shumway.AVMX {
   export var runtimeWriter = null;
   export var interpreterWriter = null;
 
-  export function sliceArguments(args, offset: number = 0) {
+  export function sliceArguments(args, offset: number) {
     return Array.prototype.slice.call(args, offset);
   }
 
@@ -1137,9 +1137,9 @@ module Shumway.AVMX {
     }
 
     createFunction(methodInfo: MethodInfo, scope: Scope, hasDynamicScope: boolean): AXFunction {
-      var fun = this.AXFunction.axBox(function () {
+      var fun = this.boxFunction(function () {
         var self = this === jsGlobal ? scope.global.object : this;
-        return interpret(self, methodInfo, scope, sliceArguments(arguments));
+        return interpret(self, methodInfo, scope, <any>arguments);
       });
       fun.receiver = {scope: scope};
       return fun;
@@ -1172,7 +1172,7 @@ module Shumway.AVMX {
       var methodInfo = classInfo.instanceInfo.getInitializer();
       release || assert(!methodInfo.isNative(), "Must provide a native initializer for " + classInfo.instanceInfo.getClassName());
       return function () {
-        return interpret(this, methodInfo, scope, sliceArguments(arguments));
+        return interpret(this, methodInfo, scope, <any>arguments);
       };
     }
 
@@ -1613,11 +1613,5 @@ module Shumway.AVMX {
       }
       return null;
     }
-  }
-
-  export function createMethod(methodInfo: MethodInfo, scope: Scope, hasDynamicScope: boolean) {
-    return function () {
-      return interpret(this, methodInfo, scope, sliceArguments(arguments));
-    };
   }
 }

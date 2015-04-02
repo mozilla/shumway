@@ -299,7 +299,7 @@ module Shumway.AVMX {
     } else {
       method = function () {
         var self = this === jsGlobal ? scope.global.object : this;
-        return interpret(self, methodInfo, scope, sliceArguments(arguments));
+        return interpret(self, methodInfo, scope, <any>arguments);
       };
     }
     if (!release) {
@@ -469,7 +469,7 @@ module Shumway.AVMX {
   }
 
   export class RuntimeTraitInfo {
-    configurable: boolean = true; // Always false.
+    configurable: boolean = true; // Always true.
     enumerable: boolean; // Always false.
     writable: boolean;
     get: () => any;
