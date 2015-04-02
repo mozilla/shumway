@@ -1699,6 +1699,11 @@ module Shumway {
       return (i + x) & ~x; // Round up to multiple of power of two.
     }
 
+    export function toHEX(i: number) {
+      var i = (i < 0 ? 0xFFFFFFFF + i + 1 : i);
+      return "0x" + ("00000000" + i.toString(16)).substr(-8);
+    }
+
     /**
      * Polyfill imul.
      */

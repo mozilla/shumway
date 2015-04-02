@@ -1,0 +1,2 @@
+test/swf/demo.swf: 0xd6494940
+test/swf/main.swf: 0x8ea01534

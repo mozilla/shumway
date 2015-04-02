@@ -616,11 +616,8 @@ module Shumway.Player {
     }
 
     private _tracePlayer(): void {
-      var stageHashCode = this._stage.hashCode();
-      var code = (stageHashCode < 0 ? 0xFFFFFFFF + stageHashCode + 1 : stageHashCode);
-      var stageHashCodeString = "0x" + ("00000000" + code.toString(16)).substr(-8);
       this._writer.writeLn("Frame: " +
-                           String(this._framesPlayed).padLeft(' ', 4) + ": " + stageHashCodeString + " " +
+                           String(this._framesPlayed).padLeft(' ', 4) + ": " + IntegerUtilities.toHEX(this._stage.hashCode()) + " " +
                            String(this._stage.getAncestorCount()).padLeft(' ', 4));
     }
 

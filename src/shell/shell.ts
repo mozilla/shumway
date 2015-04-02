@@ -421,16 +421,19 @@ module Shumway.Shell {
     }
 
     try {
+      var hash = 0;
       microTaskQueue.run(runDuration, runCount, true, function () {
         if (!frameCount) {
           return true;
         }
+        hash = HashUtilities.mixWords(hash, player.stage.hashCode());
         // Exit if we've executed enough frames.
-        return player.framesPlayed < frameCount;
+        return player.framesPlayed <= frameCount;
       });
       if (verbose) {
         writer.writeLn("executeSWF PASS: " + file);
       }
+      writer.writeLn(file + ": " + IntegerUtilities.toHEX(hash));
     } catch (x) {
       if (verbose) {
         writer.writeLn("executeSWF FAIL: " + file);

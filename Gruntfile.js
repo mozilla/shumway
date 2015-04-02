@@ -168,7 +168,7 @@ module.exports = function(grunt) {
         cmd: 'node src/shell/numbers.js -c icb -i ' + (grunt.option('include') || 'test/avm2/pass/') +
                                       ' -j ' + (+grunt.option('threads') || 9)
       },
-      // Runs tamarin acceptance tests and tests against current baseline. If you get more tests to pass, update the baseline.
+      // Runs tamarin acceptance tests and tests against the current baseline. If you get more tests to pass, update the baseline.
       test_avm2_acceptance: {
         maxBuffer: Infinity,
         cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance-pass.json | egrep -o "(PASSED|FAILED|EXCEPTED|TIMEDOUT)" | sort | uniq -c | tee test/avm2/acceptance-results.txt && ' +
@@ -183,6 +183,12 @@ module.exports = function(grunt) {
       test_avm2_acceptance_parse: {
         maxBuffer: Infinity,
         cmd: 'find -L test/avm2/acceptance -name "*.abc" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -d -v {}'
+      },
+      // Runs SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
+      test_swf_acceptance: {
+        maxBuffer: Infinity,
+        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort | tee test/swf/acceptance-results.txt && ' +
+             'diff test/swf/acceptance-results.txt test/swf/acceptance-baseline.txt'
       },
       test_avm2_baseline: {
         cmd: 'node src/shell/numbers.js -c b -i ' + (grunt.option('include') || 'test/avm2/pass/') +
@@ -628,6 +634,7 @@ module.exports = function(grunt) {
   grunt.registerTask('test', [
     'exec:test_avm2_redux_pass',
     'exec:test_avm2_acceptance',
+    'exec:test_swf_acceptance',
     'exec:unit_test'
     // 'exec:tracetest'
     // 'exec:tracetest_swfdec'
