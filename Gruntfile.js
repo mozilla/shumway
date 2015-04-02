@@ -184,7 +184,8 @@ module.exports = function(grunt) {
         maxBuffer: Infinity,
         cmd: 'find -L test/avm2/acceptance -name "*.abc" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -d -v {}'
       },
-      // Runs SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
+      // Runs SWFs and tests against the current baseline. If you get more tests to pass, update the baseline. This currently only runs 1 file at a time
+      // because the shell doesn't yet isolate player instances correctly.
       test_swf_acceptance: {
         maxBuffer: Infinity,
         cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort | tee test/swf/acceptance-results.txt && ' +
