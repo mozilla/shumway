@@ -599,10 +599,17 @@ module Shumway.AVMX {
     var T = traits.traits;
     for (var i = 0; i < T.length; i++) {
       var t = T[i];
-      if (!release && (t.kind === TRAIT.Slot || t.kind === TRAIT.Const)) {
-        checkValue(t.value);
+      var p: PropertyDescriptor = t;
+      if (p.value instanceof Namespace) {
+        // We can't call |object.securityDomain.AXNamespace.FromNamespace(...)| because the AXNamespace
+        // class may not have been loaded yet. However, at this point we do have a valid reference to
+        // |object.securityDomain.AXNamespace| because |prepareNativeClass| has been called.
+        p = { value: AS.ASNamespace.FromNamespace.call(object.securityDomain.AXNamespace, p.value) };
       }
-      Object.defineProperty(object, t.name.getMangledName(), t);
+      if (!release && (t.kind === TRAIT.Slot || t.kind === TRAIT.Const)) {
+        checkValue(p.value);
+      }
+      Object.defineProperty(object, t.name.getMangledName(), p);
     }
   }
 
