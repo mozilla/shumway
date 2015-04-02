@@ -196,6 +196,7 @@ module Shumway.Shell {
   var symbolFilterOption: Option;
   var microTaskDurationOption: Option;
   var microTaskCountOption: Option;
+  var maxFrameCountOption: Option;
   var repeatOption: Option;
   var loadPlayerGlobalCatalogOption: Option;
   var loadShellLibOption: Option;
@@ -225,6 +226,7 @@ module Shumway.Shell {
     symbolFilterOption = shellOptions.register(new Option("f", "filter", "string", "", "Symbol Filter"));
     microTaskDurationOption = shellOptions.register(new Option("md", "duration", "number", 0, "Micro task duration."));
     microTaskCountOption = shellOptions.register(new Option("mc", "count", "number", 0, "Micro task count."));
+    maxFrameCountOption = shellOptions.register(new Option("fc", "frameCount", "number", 0, "Frame count."));
     repeatOption = shellOptions.register(new Option("rp", "rp", "number", 1, "Repeat count."));
     loadPlayerGlobalCatalogOption = shellOptions.register(new Option("g", "playerGlobal", "boolean", false, "Load Player Global"));
     loadShellLibOption = shellOptions.register(new Option("s", "shell", "boolean", false, "Load Shell Global"));
@@ -384,13 +386,19 @@ module Shumway.Shell {
       } else if (file.endsWith(".abc")) {
         executeABCFiles([file]);
       } else if (file.endsWith(".swf")) {
-        executeSWFFile(file, microTaskDurationOption.value, microTaskCountOption.value);
+        executeSWFFile(file, microTaskDurationOption.value, microTaskCountOption.value, maxFrameCountOption.value);
       }
     });
     return true;
   }
 
-  function executeSWFFile(file: string, runDuration: number, runCount: number) {
+  function executeSWFFile(file: string, runDuration: number, runCount: number, frameCount: number) {
+    if (verbose) {
+      writer.writeLn("executeSWF: " + file +
+                     ", runDuration: " + runDuration +
+                     ", runCount: " + runCount +
+                     ", frameCount: " + frameCount);
+    }
     function runSWF(file: any) {
       // REDUX:
       // flash.display.Loader.reset();
@@ -399,16 +407,35 @@ module Shumway.Shell {
       var securityDomain = createSecurityDomain(builtinABCPath, null, null);
       var player = new Shumway.Player.Player(securityDomain, new ShellGFXServer());
       player.load(file);
+      return player;
     }
+
+    var player = null;
     var asyncLoading = true;
     if (asyncLoading) {
       (<any>Shumway.FileLoadingService.instance).setBaseUrl(file);
-      runSWF(file);
+      player = runSWF(file);
     } else {
       (<any>Shumway.FileLoadingService.instance).setBaseUrl(file);
-      runSWF(read(file, 'binary'));
+      player = runSWF(read(file, 'binary'));
     }
-    microTaskQueue.run(runDuration, runCount, true);
+
+    try {
+      microTaskQueue.run(runDuration, runCount, true, function () {
+        if (!frameCount) {
+          return true;
+        }
+        // Exit if we've executed enough frames.
+        return player.framesPlayed < frameCount;
+      });
+      if (verbose) {
+        writer.writeLn("executeSWF PASS: " + file);
+      }
+    } catch (x) {
+      if (verbose) {
+        writer.writeLn("executeSWF FAIL: " + file);
+      }
+    }
   }
 
   function executeJSONFile(file: string) {

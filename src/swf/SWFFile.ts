@@ -278,8 +278,6 @@ module Shumway.SWF {
         if (tempTag.tagCode === SWFTag.CODE_END) {
           if (rootTimelineMode) {
             this._endTagEncountered = true;
-            console.log('SWF load time: ' +
-                        ((Date.now() - this._loadStarted) * 0.001).toFixed(4) + 'sec');
           }
           return;
         }

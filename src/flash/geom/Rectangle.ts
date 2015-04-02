@@ -365,6 +365,15 @@ module Shumway.AVMX.AS.flash.geom {
       return "(x=" + this.x + ", y=" + this.y + ", w=" + this.width + ", h=" + this.height + ")";
     }
 
+    public hashCode(): number {
+      var hash = 0;
+      hash += this.x * 20 | 0;      hash *= 37;
+      hash += this.y * 20 | 0;      hash *= 37;
+      hash += this.width * 20 | 0;  hash *= 37;
+      hash += this.height * 20 | 0;
+      return hash;
+    }
+
     public writeExternal(output: flash.utils.IDataOutput) {
       output.writeFloat(this.x);
       output.writeFloat(this.y);

@@ -83,8 +83,10 @@ module Shumway.Shell {
      * Runs micro tasks for a certain |duration| and |count| whichever comes first. Optionally,
      * if the |clear| option is specified, the micro task queue is cleared even if not all the
      * tasks have been executed.
+     *
+     * If a |preCallback| function is specified, only continue execution if |preCallback()| returns true.
      */
-    run(duration: number = 0, count: number = 0, clear: boolean = false) {
+    run(duration: number = 0, count: number = 0, clear: boolean = false, preCallback: Function = null) {
       this.stopped = false;
       var executedTasks = 0;
       var stopAt = Date.now() + duration;
@@ -96,6 +98,9 @@ module Shumway.Shell {
           break;
         }
         var task = this.dequeue();
+        if (preCallback && !preCallback(task)) {
+          return;
+        }
         task.fn.apply(null, task.args);
         executedTasks ++;
       }

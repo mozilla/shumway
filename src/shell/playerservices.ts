@@ -31,7 +31,6 @@ module Shumway.Shell
 
     readAll(progress, complete) {
       setTimeout(function () {
-        console.log('Reading: ' + this.url);
         try {
           complete(read(this.url, 'binary'));
         } catch (e) {

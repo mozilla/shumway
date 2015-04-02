@@ -241,6 +241,10 @@ module Shumway.Player {
     private _eventLoopIsRunning: boolean;
     private _framesPlayed: number = 0;
 
+    get framesPlayed() {
+      return this._framesPlayed;
+    }
+
     private _writer: IndentingWriter;
 
     private _gfxService: IGFXService;
@@ -612,18 +616,12 @@ module Shumway.Player {
     }
 
     private _tracePlayer(): void {
-      var writer = this._writer;
-      writer.enter("Frame: " + this._framesPlayed);
-
-      Shumway.AVMX.counter.traceSorted(writer, true);
-      Shumway.AVMX.counter.clear();
-
-      Shumway.Player.counter.traceSorted(writer, true);
-      Shumway.Player.counter.clear();
-
-      writer.writeLn("advancableInstances: " +
-                     this.securityDomain.flash.display.DisplayObject.axClass._advancableInstances.length);
-      writer.outdent();
+      var stageHashCode = this._stage.hashCode();
+      var code = (stageHashCode < 0 ? 0xFFFFFFFF + stageHashCode + 1 : stageHashCode);
+      var stageHashCodeString = "0x" + ("00000000" + code.toString(16)).substr(-8);
+      this._writer.writeLn("Frame: " +
+                           String(this._framesPlayed).padLeft(' ', 4) + ": " + stageHashCodeString + " " +
+                           String(this._stage.getAncestorCount()).padLeft(' ', 4));
     }
 
     private _leaveEventLoop(): void {

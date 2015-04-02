@@ -1379,6 +1379,10 @@ module Shumway {
       }
       return (b << 16) | a;
     }
+
+    export function mixWords(a: number, b: number) {
+      return (((31 * a) | 0) + b) | 0;
+    }
   }
 
   /**
