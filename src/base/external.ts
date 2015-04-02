@@ -22,7 +22,6 @@ declare var ShumwayCom: {
   getWeakMapKeys: (weakMap) => Array<any>;
   userInput: () => void;
   fallback: () => void;
-  endActivation: () => void;
   reportIssue: (details?: string) => void;
   reportTelemetry: (data) => void;
   enableDebug: () => void;
