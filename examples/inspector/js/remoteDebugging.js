@@ -61,7 +61,6 @@ function remoteDebuggerInitServices() {
   ShumwayCom = {
     userInput: function () { remoteDebuggerSendMessage('userInput', undefined, true); },
     fallback: function () { remoteDebuggerSendMessage('fallback', undefined, true); },
-    endActivation: function () { remoteDebuggerSendMessage('endActivation', undefined, true); },
     reportIssue: function (details) { remoteDebuggerSendMessage('reportIssue', details, true); },
     reportTelemetry: function () { remoteDebuggerSendMessage('reportTelemetry', data, true); },
     enableDebug: function () { remoteDebuggerSendMessage('enableDebug', undefined, true); },
@@ -94,8 +93,6 @@ function remoteDebugger_onData(data) {
       var movieUrl = flashParams.url;
       var movieParams = flashParams.movieParams;
       executeFile(movieUrl, undefined, movieParams, true);
-
-      ShumwayCom.endActivation();
       break;
     case 'onExternalCallback':
       var call = data.detail;
