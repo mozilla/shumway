@@ -1,4 +1,4 @@
-#!/usr/bash
+#! /usr/bin/env bash
 
 java -jar utils/asc.jar -md -import build/libs/builtin.abc $1.as
 
