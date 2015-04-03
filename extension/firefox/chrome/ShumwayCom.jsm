@@ -562,7 +562,7 @@ ShumwayChromeActions.prototype = {
       var parentWindow = this.window.parent; // hosted page -- parent of PlayPreview frame
       var embedTag = this.embedTag;
       this.externalInterface = new ExternalInterface(parentWindow, embedTag, function (call) {
-        this.onExternalCallback(call);
+        return this.onExternalCallback(call);
       }.bind(this));
     }
 
