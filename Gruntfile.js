@@ -19,6 +19,9 @@ module.exports = function(grunt) {
   var VERSION_BASELINE = '8c92f57b7811f5ce54';
   var VERSION_BASE = '0.10.';
 
+  // require it at the top and pass in the grunt instance
+  require('time-grunt')(grunt);
+
   // work around a grunt bug where color output is written to non-tty output
   if (!process.stdout.isTTY) {
       grunt.option("color", false);

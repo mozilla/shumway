@@ -6,7 +6,6 @@ test/avm2/pass/xml-8.abc
 test/avm2/pass/xml-basic.abc
 test/avm2/pass/xml-anyname.abc
 test/avm2/pass/xml-5.abc
-test/avm2/pass/verifier.abc
 test/avm2/pass/xml-2.abc
 test/avm2/pass/xml-10.abc
 test/avm2/pass/proxy-4.abc

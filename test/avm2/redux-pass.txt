@@ -140,3 +140,4 @@ test/avm2/pass/for.abc
 test/avm2/pass/in-1.abc
 test/avm2/pass/dynamic-0.abc
 test/avm2/pass/trait-types-0.abc
+test/avm2/pass/verifier.abc
