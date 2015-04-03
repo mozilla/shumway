@@ -126,17 +126,19 @@ module.exports = function(grunt) {
                (grunt.option('verbose') ? '-v ' : '') +
           (grunt.option('tests') || expandFilePattern('test/gfx/pass/*.js'))
       },
-      smoke_parse_database: {
-        maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -p -r -po {} >> data.json.txt'
-      },
       smoke_play: {
         maxBuffer: Infinity,
         cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -x -md 1000 -v -tp 60 -v {}'
       },
+      // Run this to make sure the SWF parser still works.
+      test_swf_avm2_parse: {
+        maxBuffer: Infinity,
+        cmd: 'awk \'{print "test/ats/swfs/" $0}\' test/ats/avm2_swfs.txt | parallel --no-notice -X -N50 utils/jsshell/js build/ts/shell.js -p -v' +
+                   (grunt.option('verbose') ? '-v ' : '') + ' {}'
+      },
       smoke_parse: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -p -r ' +
+        cmd: 'find -L test/ats/swfs -name "*.swf" | head -n 1000 | parallel --no-notice -X -N50 utils/jsshell/js build/ts/shell.js -p -v ' +
              (grunt.option('verbose') ? '-v ' : '') + ' {}'
       },
       smoke_parse_images: {

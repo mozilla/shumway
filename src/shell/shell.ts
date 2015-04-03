@@ -207,6 +207,7 @@ module Shumway.Shell {
   var fuzzMillOption: Option;
   var writersOption: Option;
 
+  function Timeout() {}
   export function main(commandLineArguments: string []) {
     var systemOptions: Shumway.Options.OptionSet = Shumway.Settings.shumwayOptions;
     var shellOptions = systemOptions.register(new Shumway.Options.OptionSet("Shell Options"));
@@ -318,11 +319,16 @@ module Shumway.Shell {
         var start = dateNow();
         writer.debugLn("Parsing: " + file);
         profile && SWF.timelineBuffer.reset();
-        parseFile(file, symbolFilterOption.value.split(","));
-        var elapsed = dateNow() - start;
-        if (verbose) {
-          verbose && writer.writeLn("Total Parse Time: " + (elapsed).toFixed(2) + " ms.");
-          profile && SWF.timelineBuffer.createSnapshot().trace(writer);
+        try {
+          parsingCounter.clear();
+          parseFile(file, symbolFilterOption.value.split(","));
+          var elapsed = dateNow() - start;
+          if (verbose) {
+            writer.writeLn("Total Parse Time: " + (elapsed).toFixed(2) + " ms.");
+            profile && SWF.timelineBuffer.createSnapshot().trace(writer);
+          }
+        } catch (e) {
+          writer.writeLn("EXCEPTED: " + file);
         }
       });
     }
@@ -470,8 +476,7 @@ module Shumway.Shell {
           }
           timeout(10, function () {
             writer.writeLn("TIMEDOUT!");
-            throw new Error("Timeout");
-            return true;
+            throw new Timeout();
           });
           var buffer = new Uint8Array(read(file, "binary"));
           var abc = new ABCFile(buffer);
@@ -510,7 +515,7 @@ module Shumway.Shell {
           writer.writeLn("executeABC: " + file);
         }
         timeout(5, function () {
-          throw new Error("Timeout");
+          throw new Timeout();
         });
         var buffer = new Uint8Array(read(file, "binary"));
         var abc = new ABCFile(buffer);
@@ -613,6 +618,8 @@ module Shumway.Shell {
     return abcData;
   }
 
+  var parsingCounter = new Shumway.Metrics.Counter(true);
+
   /**
    * Parses file.
    */
@@ -620,7 +627,7 @@ module Shumway.Shell {
     var fileName = file.replace(/^.*[\\\/]/, '');
     function parseABC(buffer: Uint8Array) {
       var abcFile = new ABCFile(buffer, "ABC");
-      abcFile.trace(writer);
+      // abcFile.trace(writer);
     }
     var buffers = [];
     if (file.endsWith(".swf")) {
@@ -632,19 +639,31 @@ module Shumway.Shell {
         var startSWF = dateNow();
         var swfFile: Shumway.SWF.SWFFile;
         var loadListener: ILoadListener = {
-          onLoadOpen: function(file: Shumway.SWF.SWFFile) {
-            for (var i = 0; i < file.abcBlocks.length; i++) {
-              parseABC(file.abcBlocks[i].data);
+          onLoadOpen: function(swfFile: Shumway.SWF.SWFFile) {
+            if (swfFile && swfFile.abcBlocks) {
+              for (var i = 0; i < swfFile.abcBlocks.length; i++) {
+                parseABC(swfFile.abcBlocks[i].data);
+              }
+            }
+            if (swfFile instanceof Shumway.SWF.SWFFile) {
+              var dictionary = swfFile.dictionary;
+              for (var i = 0; i < dictionary.length; i++) {
+                if (dictionary[i]) {
+                  var s = performance.now();
+                  var symbol = swfFile.getSymbol(dictionary[i].id);
+                  parsingCounter.count(symbol.type, performance.now() - s);
+                }
+              }
+            } else if (swfFile instanceof Shumway.ImageFile) {
+              // ...
             }
           },
           onLoadProgress: function(update: LoadProgressUpdate) {
-
           },
           onLoadError: function() {
           },
           onLoadComplete: function() {
             writer.redLn("Load complete:");
-
           },
           onNewEagerlyParsedSymbols(dictionaryEntries: SWF.EagerlyParsedDictionaryEntry[],
                                     delta: number): Promise<any> {
@@ -659,6 +678,7 @@ module Shumway.Shell {
         if (verbose) {
           writer.redLns(x.stack);
         }
+        errors ++;
         return false;
       }
     } else if (file.endsWith(".abc")) {
