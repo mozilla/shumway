@@ -336,7 +336,27 @@ module Shumway.AVMX.AS {
 
     axSetProperty(mn: Multiname, value: any) {
       release || checkValue(value);
-      this[this.axResolveMultiname(mn)] = value;
+      if (typeof mn.name === 'number') {
+        release || assert(mn.isRuntimeName());
+        this[mn.name] = value;
+        return;
+      }
+      var name = asCoerceName(mn.name);
+      var namespaces = mn.namespaces;
+      if (mn.isRuntimeName() && isNumeric(name)) {
+        this[mn.name] = value;
+        return;
+      }
+      var t = this.traits.getTrait(namespaces, name);
+      if (t) {
+        var type = t.getType();
+        if (type) {
+          value = type.axCoerce(value);
+        }
+        this[t.name.getMangledName()] = value;
+      } else {
+        this['$Bg' + name] = value;
+      }
     }
 
     axGetProperty(mn: Multiname): any {
@@ -461,7 +481,7 @@ module Shumway.AVMX.AS {
 
     axGetSlot(i: number): any {
       var t = this.traits.getSlot(i);
-      var value = this[t.getName().getMangledName()];
+      var value = this[t.name.getMangledName()];
       release || checkValue(value);
       return value;
     }
@@ -469,7 +489,7 @@ module Shumway.AVMX.AS {
     axSetSlot(i: number, value: any) {
       release || checkValue(value);
       var t = this.traits.getSlot(i);
-      var name = t.getName().getMangledName();
+      var name = t.name.getMangledName();
       var type = t.getType();
       this[name] = type ? type.axCoerce(value) : value;
     }

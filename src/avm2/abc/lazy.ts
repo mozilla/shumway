@@ -228,7 +228,7 @@ module Shumway.AVMX {
         var name = <Multiname>trait.name;
         var j = result.indexOf(name.namespaces, name.name);
         var currentTrait = j > -1 ? traits[j] : null;
-        var runtimeTrait = new RuntimeTraitInfo(name, trait.kind);
+        var runtimeTrait = new RuntimeTraitInfo(name, trait.kind, trait.abc);
         if (name.namespaces[0].type === NamespaceType.Protected) {
           // Names for protected traits get canonicalized to the name of the type that initially
           // introduces the trait.
@@ -268,9 +268,11 @@ module Shumway.AVMX {
             // Only non-const slots need to be writable. Everything else is fixed.
             runtimeTrait.writable = true;
             var slotTrait = <SlotTraitInfo>trait;
+            runtimeTrait.slot = slotTrait.slot;
             runtimeTrait.value = slotTrait.getDefaultValue();
+            runtimeTrait.typeName = <Multiname>slotTrait.typeName;
             // TODO: Throw error for const without default.
-            result.addSlotTrait(slotTrait);
+            result.addSlotTrait(runtimeTrait);
         }
       }
       return result;
@@ -401,7 +403,7 @@ module Shumway.AVMX {
   }
 
   export class RuntimeTraits {
-    public slots: SlotTraitInfo [] = [];
+    public slots: RuntimeTraitInfo[] = [];
     private _nextSlotID: number = 1;
 
     constructor(public traits: RuntimeTraitInfo[], public superTraits: RuntimeTraits,
@@ -409,7 +411,7 @@ module Shumway.AVMX {
       // ..
     }
 
-    public addSlotTrait(trait: SlotTraitInfo) {
+    public addSlotTrait(trait: RuntimeTraitInfo) {
       var slot = trait.slot;
       if (!slot) {
         slot = trait.slot = this._nextSlotID++;
@@ -463,7 +465,7 @@ module Shumway.AVMX {
       return i >= 0 ? this.traits[i] : null;
     }
 
-    getSlot(i: number): SlotTraitInfo {
+    getSlot(i: number): RuntimeTraitInfo {
       return this.slots[i];
     }
   }
@@ -474,10 +476,26 @@ module Shumway.AVMX {
     writable: boolean;
     get: () => any;
     set: (v: any) => void;
+    slot: number;
     value: any;
+    typeName: Multiname;
 
-    constructor(public name: Multiname, public kind: TRAIT) {
-      // ..
+    private _type: AXClass;
+
+    constructor(public name: Multiname, public kind: TRAIT, private abc: ABCFile) {
+      this._type = undefined;
+      this.typeName = null;
+    }
+
+    getType(): AXClass {
+      if (this._type !== undefined) {
+        return this._type;
+      }
+      if (this.typeName === null) {
+        return this._type = null;
+      }
+      var type = this.abc.applicationDomain.getClass(this.typeName);
+      return this._type = (type && type.axCoerce) ? type : null;
     }
   }
 
@@ -490,7 +508,6 @@ module Shumway.AVMX {
   };
 
   export class SlotTraitInfo extends TraitInfo {
-    private _type: AXClass = undefined;
     constructor(
       abc: ABCFile,
       kind: TRAIT,
@@ -519,16 +536,6 @@ module Shumway.AVMX {
         return value === undefined ? null : value;
       }
       return this.abc.getConstant(this.defaultValueKind, this.defaultValueIndex);
-    }
-
-    getType(): AXClass {
-      if (this._type !== undefined) {
-        return this._type;
-      }
-      this._type = this.typeName ?
-                   this.abc.applicationDomain.getClass(<Multiname>this.typeName) :
-                   null;
-      return this._type;
     }
   }
 

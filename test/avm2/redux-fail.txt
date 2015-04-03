@@ -9,7 +9,6 @@ test/avm2/pass/xml-5.abc
 test/avm2/pass/verifier.abc
 test/avm2/pass/xml-2.abc
 test/avm2/pass/xml-10.abc
-test/avm2/pass/trait-types-0.abc
 test/avm2/pass/proxy-4.abc
 test/avm2/pass/proxy-3.abc
 test/avm2/pass/proxy-2.abc
