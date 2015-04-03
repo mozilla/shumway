@@ -37,7 +37,7 @@ function runSwfPlayer(flashParams) {
   Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal).then(function (securityDomain) {
     function runSWF(file, buffer, baseUrl) {
       var gfxService = new Shumway.Player.Window.WindowGFXService(securityDomain, window, window.parent);
-      var player = new Shumway.Player.Player(securityDomain, gfxService);
+      var player = new Shumway.Player.Player(securityDomain, gfxService, flashParams.env);
       player.defaultStageColor = flashParams.bgcolor;
       player.movieParams = flashParams.movieParams;
       player.stageAlign = (objectParams && (objectParams.salign || objectParams.align)) || '';

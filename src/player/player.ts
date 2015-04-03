@@ -250,6 +250,8 @@ module Shumway.Player {
     private _gfxService: IGFXService;
     private _gfxServiceObserver: GFXServiceObserver;
 
+    private _env: string;
+
     /**
      * If set, overrides SWF file background color.
      */
@@ -310,17 +312,17 @@ module Shumway.Player {
      */
     private _loaderUrl: string = null;
 
-    constructor(securityDomain: ISecurityDomain, gfxService: IGFXService) {
+    constructor(securityDomain: ISecurityDomain, gfxService: IGFXService, env: string = 'dev') {
       this.securityDomain = securityDomain;
       securityDomain.player = this;
       // Freeze in debug builds.
       release || Object.defineProperty(this, 'securityDomain', {value: securityDomain});
-
       release || Debug.assert(gfxService);
       this._writer = new IndentingWriter();
       this._gfxService = gfxService;
       this._gfxServiceObserver = new GFXServiceObserver(this);
       this._gfxService.addObserver(this._gfxServiceObserver);
+      this._env = env;
     }
 
     /**
@@ -531,8 +533,37 @@ module Shumway.Player {
 
     private _enterEventLoop(): void {
       this._eventLoopIsRunning = true;
-      this._eventLoopTick = this._eventLoopTick.bind(this);
-      this._eventLoopTick();
+      // this._eventLoopTick = this._eventLoopTick.bind(this);
+
+      var self = this;
+
+      if (this._env === 'test') {
+        flash.external.ExternalInterface._initJS();
+        flash.external.ExternalInterface._addCallback('__tick__', function (request: string, args: any []) {
+          console.log('tick');
+          self._eventLoopTick();
+        }, false);
+        flash.external.ExternalInterface._addCallback('__takeScreenshot__', function (request: string, args: any []) {
+
+        }, false);
+        this._eventLoopTick();
+        return;
+      }
+
+      function tick() {
+        // TODO: change this to the mode described in
+        // http://www.craftymind.com/2008/04/18/updated-elastic-racetrack-for-flash-9-and-avm2/
+        self._frameTimeout = setTimeout(tick, self._getFrameInterval());
+        self._eventLoopTick();
+      }
+
+      tick();
+    }
+
+    private _leaveEventLoop(): void {
+      release || assert (this._eventLoopIsRunning);
+      clearTimeout(this._frameTimeout);
+      this._eventLoopIsRunning = false;
     }
 
     private _enterRootLoadingLoop(): void {
@@ -545,6 +576,12 @@ module Shumway.Player {
           setTimeout(rootLoadingLoop, self._getFrameInterval());
           return;
         }
+        if (self._env === 'test' && !Loader.getRootLoader().content) {
+          Loader.processEvents();
+          setTimeout(rootLoadingLoop, self._getFrameInterval());
+          return;
+        }
+
         var stage = self._stage;
 
         var bgcolor = self.defaultStageColor !== undefined ?
@@ -577,11 +614,9 @@ module Shumway.Player {
     private _eventLoopTick(): void {
       var runFrameScripts = !playAllSymbolsOption.value;
       var dontSkipFrames = dontSkipFramesOption.value;
-      // TODO: change this to the mode described in
-      // http://www.craftymind.com/2008/04/18/updated-elastic-racetrack-for-flash-9-and-avm2/
-      this._frameTimeout = setTimeout(this._eventLoopTick, this._getFrameInterval());
-      if (!dontSkipFrames && (!frameEnabledOption.value && runFrameScripts ||
-                              this._shouldThrottleDownFrameExecution()))
+      if (!dontSkipFrames && (
+        !frameEnabledOption.value && runFrameScripts ||
+        this._shouldThrottleDownFrameExecution()))
       {
         return;
       }
@@ -619,12 +654,6 @@ module Shumway.Player {
       this._writer.writeLn("Frame: " +
                            String(this._framesPlayed).padLeft(' ', 4) + ": " + IntegerUtilities.toHEX(this._stage.hashCode()) + " " +
                            String(this._stage.getAncestorCount()).padLeft(' ', 4));
-    }
-
-    private _leaveEventLoop(): void {
-      release || assert (this._eventLoopIsRunning);
-      clearTimeout(this._frameTimeout);
-      this._eventLoopIsRunning = false;
     }
 
     private _playAllSymbols() {

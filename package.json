@@ -12,7 +12,8 @@
     "temp": "0.5.0",
     "yargs": "~1.2.1",
     "esprima": "1.2.2",
-    "estraverse": "1.5.1"
+    "estraverse": "1.5.1",
+    "mongojs": "~0.18.1"
   },
   "description": "Shumway is an HTML5 technology experiment that explores building a faithful and efficient renderer for the SWF file format without native code assistance.",
   "main": "Gruntfile.js",
@@ -21,21 +22,23 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "grunt travis --verbose"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/mozilla/shumway.git"
   },
   "author": "Mozilla Research",
-  "licenses" : [{
+  "licenses": [
+    {
       "type": "Apache",
       "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-  }],
+    }
+  ],
   "bugs": {
     "url": "https://github.com/mozilla/shumway/issues"
   },
-  "scripts": {
-    "test": "grunt travis --verbose"
+  "dependencies": {
+    "fast-html-parser": "^1.0.0"
   }
 }

@@ -31,8 +31,14 @@ module Shumway.SWF {
   import ImageDefinition = Parser.ImageDefinition;
   import ControlTags = Parser.ControlTags;
 
+  export enum CompressionMethod {
+    None,
+    Deflate,
+    LZMA
+  }
+
   export class SWFFile {
-    isCompressed: boolean;
+    compression: CompressionMethod;
     swfVersion: number;
     useAVM1: boolean;
     backgroundColor: number;
@@ -90,7 +96,7 @@ module Shumway.SWF {
         console.log('Create SWFFile');
       }
 
-      this.isCompressed = false;
+      this.compression = CompressionMethod.None;
       this.swfVersion = 0;
       this.useAVM1 = true;
       this.backgroundColor = 0xffffffff;
@@ -135,7 +141,7 @@ module Shumway.SWF {
       if (this._endTagEncountered) {
         return;
       }
-      if (this.isCompressed) {
+      if (this.compression !== CompressionMethod.None) {
         this._decompressor.push(bytes);
       } else {
         this.processDecompressedData(bytes);
@@ -144,7 +150,7 @@ module Shumway.SWF {
     }
 
     finishLoading() {
-      if (this.isCompressed) {
+      if (this.compression !== CompressionMethod.None) {
         this._decompressor.close();
         this._decompressor = null;
         this.scanLoadedData();
@@ -192,7 +198,11 @@ module Shumway.SWF {
       SWF.enterTimeline('Initialize SWFFile');
       var isDeflateCompressed = initialBytes[0] === 67;
       var isLzmaCompressed = initialBytes[0] === 90;
-      this.isCompressed = isDeflateCompressed || isLzmaCompressed;
+      if (isDeflateCompressed) {
+        this.compression = CompressionMethod.Deflate;
+      } else if (isLzmaCompressed) {
+        this.compression = CompressionMethod.LZMA;
+      }
       this.swfVersion = initialBytes[3];
       this._loadStarted = Date.now();
       this._uncompressedLength = readSWFLength(initialBytes);
@@ -200,7 +210,8 @@ module Shumway.SWF {
       // In some malformed SWFs, the parsed length in the header doesn't exactly match the actual size of the file. For
       // uncompressed files it seems to be safer to make the buffer large enough from the beginning to fit the entire
       // file than having to resize it later or risking an exception when reading out of bounds.
-      this.data = new Uint8Array(this.isCompressed ? this._uncompressedLength : this.bytesTotal);
+      this.data = new Uint8Array(this.compression === CompressionMethod.None ?
+                                 this.bytesTotal : this._uncompressedLength);
       this._dataStream = new Stream(this.data.buffer);
       this._dataStream.pos = 8;
       this._dataView = <DataView><any>this._dataStream;

@@ -162,7 +162,9 @@ module Shumway.SWF.Parser {
     CODE_REMOVE_OBJECT2                    = 28,
     CODE_START_SOUND                       = 15,
     CODE_START_SOUND2                      = 89,
-    CODE_VIDEO_FRAME                       = 61,
+    // We don't support VideoFrame tags for now so leave the next line commented to make the
+    // parser log a message if such a tag is encountered.
+    // CODE_VIDEO_FRAME                       = 61,
   }
 
   export enum PlaceObjectFlags {

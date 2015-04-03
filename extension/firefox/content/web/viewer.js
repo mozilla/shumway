@@ -163,10 +163,10 @@ var easelHost;
 function parseSwf(url, baseUrl, movieParams, objectParams) {
   var settings = ShumwayCom.getSettings();
   var compilerSettings = settings.compilerSettings;
+  var playerSettings = settings.playerSettings;
 
   // init misc preferences
-  var turboMode = settings.playerSettings.turboMode;
-  Shumway.GFX.hud.value = settings.playerSettings.hud;
+  Shumway.GFX.hud.value = playerSettings.hud;
   //forceHidpi.value = settings.playerSettings.forceHidpi;
 
   console.info("Compiler settings: " + JSON.stringify(compilerSettings));
@@ -196,7 +196,8 @@ function parseSwf(url, baseUrl, movieParams, objectParams) {
       movieParams: movieParams,
       objectParams: objectParams,
       displayParameters: displayParameters,
-      turboMode: turboMode,
+      turboMode: playerSettings.turboMode,
+      env: playerSettings.env,
       bgcolor: backgroundColor,
       url: url,
       baseUrl: baseUrl || url
