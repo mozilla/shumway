@@ -1418,6 +1418,9 @@ module Shumway.AVMX {
         return Object.create(this.tPrototype);
       });
       D(AXFunction.dPrototype, "axConstruct", axFunctionConstruct);
+      D(AXFunction.dPrototype, "value", function(){
+        //..
+      });
 
       D(AXFunction.dPrototype, "axCall", AS.ASFunction.prototype.axCall);
       D(AXFunction.dPrototype, "axApply", AS.ASFunction.prototype.axApply);
