@@ -159,6 +159,7 @@ var ShumwayCom = {
         function postSyncMessage(msg) {
           if (onSyncMessageCallback) {
             // the msg came from other content window
+            // waiveXrays are used due to bug 1150771.
             var reclonedMsg = Components.utils.cloneInto(Components.utils.waiveXrays(msg), content);
             var result = onSyncMessageCallback(reclonedMsg);
             // the result will be sent later to other content window
