@@ -179,6 +179,10 @@ module.exports = function(grunt) {
         cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance-pass.json | egrep -o "(PASSED|FAILED|EXCEPTED|TIMEDOUT)" | sort | uniq -c | tee test/avm2/acceptance-results.txt && ' +
              'diff test/avm2/acceptance-results.txt test/avm2/acceptance-baseline.txt'
       },
+      perf_avm2_acceptance: {
+        maxBuffer: Infinity,
+        cmd: 'utils/jsshell/js build/ts/shell.js -x -r --porcelain test/avm2/acceptance-pass.json > /dev/null 2>&1'
+      },
       // Same as above, but it doesn't do any post processing of stdout.
       test_avm2_acceptance_trace: {
         maxBuffer: Infinity,
@@ -612,7 +616,7 @@ module.exports = function(grunt) {
   grunt.registerTask('gfx-base', ['exec:build_gfx_base_ts']);
   grunt.registerTask('perf', ['exec:perf']);
   grunt.registerTask('gfx-test', ['exec:gfx-test']);
-  grunt.registerTask('build', [
+  grunt.registerTask('build', "Builds all modules.", [
     'parallel:base',
     'parallel:playerglobal',
     'exec:build_tools_ts',
@@ -628,19 +632,20 @@ module.exports = function(grunt) {
     'build',
     'gate'
   ]);
-  // Runs on travis. Run this if you want to make sure your local build will succeed on travis.
-  grunt.registerTask('travis', [
+  grunt.registerTask('travis', "Makes sure your local build will succeed on travis.", [
     'exec:install_js_travis',
     'exec:install_avmshell_travis',
     'build',
     'gate'
   ]);
-  // Run this before checking in any code.
-  grunt.registerTask('gate', [
+  grunt.registerTask('gate', "Run this before checking in any code.", [
     'tslint:all',
     'exec:spell',
     // 'closure', REDUX: Temporarily commented out.
     'test',
+  ]);
+  grunt.registerTask('perf-gate', "Run this before checking in any code to make sure you don't regress performance.", [
+    'exec:perf_avm2_acceptance'
   ]);
   grunt.registerTask('smoke', [
     'exec:smoke_parse'
