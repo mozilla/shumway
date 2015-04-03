@@ -514,10 +514,6 @@ module Shumway.AVMX.AS {
       return this.axResolveMultiname(mn) in this;
     }
 
-    axNextName(index: number): any {
-      return index - 1;
-    }
-
     axNextValue(index: number): any {
       return this._buffer[this._offset + index - 1];
     }
@@ -528,10 +524,6 @@ module Shumway.AVMX.AS {
         return nextNameIndex;
       }
       return 0;
-    }
-
-    axHasNext2(hasNext2Info: HasNext2Info) {
-      hasNext2Info.index = this.axNextNameIndex(hasNext2Info.index);
     }
   }
 }
