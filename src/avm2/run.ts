@@ -374,6 +374,7 @@ module Shumway.AVMX {
    * AS3 also overloads the `+` operator to concatenate XMLs/XMLLists instead of stringifying them.
    */
   export function asAdd(l: any, r: any, securityDomain: SecurityDomain): any {
+    release || assert(!(typeof l === "number" && typeof r === "number"), 'Inline number addition.');
     if (typeof l === "string" || typeof r === "string") {
       return String(l) + String(r);
     }
@@ -698,6 +699,8 @@ module Shumway.AVMX {
     asClass: ASClass;
     superClass: AXClass;
     classInfo: ClassInfo;
+    // Used to initialize Vectors.
+    defaultValue: any;
     tPrototype: AXObject;
     dPrototype: AXObject;
     axBox: any;
@@ -1277,6 +1280,7 @@ module Shumway.AVMX {
       this.prepareRootClassPrototype();
       var AXClass = this.prepareNativeClass("AXClass", "Class", false);
       AXClass.classInfo = this.system.findClassInfo("Class");
+      AXClass.defaultValue = null;
 
       var AXObject = this.prepareNativeClass("AXObject", "Object", false);
       AXObject.classInfo = this.system.findClassInfo("Object");

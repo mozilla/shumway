@@ -91,6 +91,14 @@ module Shumway.AVMX.AS {
       }
       this['$Bg' + name] = value;
     }
+
+    axNextName(index: number): any {
+      return index - 1;
+    }
+
+    axHasNext2(hasNext2Info: HasNext2Info) {
+      hasNext2Info.index = this.axNextNameIndex(hasNext2Info.index);
+    }
   }
 
   export class Vector extends ASObject {
@@ -142,6 +150,7 @@ module Shumway.AVMX.AS {
       defineNonEnumerableProperty(proto, '$Bgevery', asProto.every);
 
       defineNonEnumerableProperty(proto, '$Bgsort', asProto.sort);
+      defineNonEnumerableProperty(proto, '_buffer', []);
     }
 
     static axApply(self: GenericVector, args: any[]) {
@@ -188,52 +197,18 @@ module Shumway.AVMX.AS {
     axClass: AXClass;
 
     static type: AXClass;
+    static defaultValue: any = null;
 
     private _fixed: boolean;
     private _buffer: any [];
-    private _defaultValue: any;
 
     constructor (length: number /*uint*/ = 0, fixed: boolean = false) {
       false && super();
       length = length >>> 0; fixed = !!fixed;
       this._fixed = !!fixed;
       this._buffer = new Array(length);
-      // TODO: FIX ME
-      // this._defaultValue = type ? type.defaultValue : null;
-      this._fill(0, length, this._defaultValue);
+      this._fill(0, length, this.axClass.defaultValue);
     }
-
-    ///**
-    // * TODO: Need to really debug this, very tricky.
-    // */
-    //public static applyType(type: ASClass): ASClass {
-    //  function parameterizedVectorConstructor(length: number /*uint*/, fixed: boolean) {
-    //    // TODO: FIX ME
-    //    // Function.prototype.call.call(GenericVector.instanceConstructor, this, length, fixed, type);
-    //  };
-    //
-    //  function parameterizedVectorCallableConstructor(object) {
-    //    if (object instanceof Int32Vector) {
-    //      return object;
-    //    }
-    //    var length = object.asGetProperty(undefined, "length");
-    //    if (length !== undefined) {
-    //      var v = new parameterizedVectorConstructor(length, false);
-    //      for (var i = 0; i < length; i++) {
-    //        v.asSetNumericProperty(i, object.asGetPublicProperty(i));
-    //      }
-    //      return v;
-    //    }
-    //    Shumway.Debug.unexpected();
-    //  }
-    //
-    //  var parameterizedVector = <any>parameterizedVectorConstructor;
-    //  parameterizedVector.prototype = GenericVector.prototype;
-    //  parameterizedVector.instanceConstructor = parameterizedVector;
-    //  parameterizedVector.callableConstructor = parameterizedVectorCallableConstructor;
-    //  parameterizedVector.__proto__ = GenericVector;
-    //  return <any>parameterizedVector;
-    //}
 
     private _fill(index: number, length: number, value: any) {
       for (var i = 0; i < length; i++) {
@@ -469,7 +444,7 @@ module Shumway.AVMX.AS {
       value = value >>> 0;
       if (value > this._buffer.length) {
         for (var i = this._buffer.length; i < value; i++) {
-          this._buffer[i] = this._defaultValue;
+          this._buffer[i] = this.axClass.defaultValue;
         }
       } else {
         this._buffer.length = value;
@@ -526,9 +501,31 @@ module Shumway.AVMX.AS {
                                                         this.securityDomain);
       this._buffer[i] = this._coerce(v);
     }
-    //
-    //asHasNext2(hasNext2Info: HasNext2Info) {
-    //  hasNext2Info.index = this.asNextNameIndex(hasNext2Info.index)
-    //}
+
+    axHasPropertyInternal(mn: Multiname): boolean {
+      // Optimization for the common case of indexed element accesses.
+      if (typeof mn.name === 'number') {
+        release || assert(mn.isRuntimeName());
+        return mn.name >= 0 && mn.name < this._buffer.length;
+      }
+      var name = asCoerceName(mn.name);
+      if (mn.isRuntimeName() && isNumeric(name)) {
+        var index = toNumber(name);
+        return index >= 0 && index < this._buffer.length;
+      }
+      return this.axResolveMultiname(mn) in this;
+    }
+
+    axNextValue(index: number): any {
+      return this._buffer[index - 1];
+    }
+
+    axNextNameIndex(index: number): number {
+      var nextNameIndex = index + 1;
+      if (nextNameIndex <= this._buffer.length) {
+        return nextNameIndex;
+      }
+      return 0;
+    }
   }
 }
