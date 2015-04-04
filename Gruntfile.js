@@ -154,7 +154,7 @@ module.exports = function(grunt) {
       test_avm2_redux_pass: {
         cmd: 'cat test/avm2/redux-pass.txt | xargs utils/jsshell/js build/ts/shell.js -x > test/avm2/shumway.tmp; ' +
              // Run only one file at a time in Tamarin, so we skip over errors.
-             'cat test/avm2/redux-pass.txt | xargs -L 1 utils/tamarin-redux/bin/avmshell > test/avm2/tamarin.tmp; ' +
+             'cat test/avm2/redux-pass.txt | xargs -L 1 utils/tamarin-redux/bin/shell/avmshell > test/avm2/tamarin.tmp; ' +
              'diff test/avm2/shumway.tmp test/avm2/tamarin.tmp'
       },
       test_avm2_redux_fail: {
