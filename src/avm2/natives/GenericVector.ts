@@ -219,33 +219,40 @@ module Shumway.AVMX.AS {
 
     sort(sortBehavior?: any) {
       if (arguments.length === 0) {
-        return this._buffer.sort();
+        this._buffer.sort();
+        return this;
       }
       if (this.securityDomain.AXFunction.axIsType(sortBehavior)) {
-        return this._buffer.sort(<(a: any, b: any) => number>sortBehavior.value);
-      } else {
-        var options = sortBehavior|0;
-        release || assertNotImplemented (!(options & Int32Vector.UNIQUESORT), "UNIQUESORT");
-        release || assertNotImplemented (!(options & Int32Vector.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
-        if (options & GenericVector.NUMERIC) {
-          if (options & GenericVector.DESCENDING) {
-            return this._buffer.sort((a, b) => asCoerceNumber(b) - asCoerceNumber(a));
-          }
-          return this._buffer.sort((a, b) => asCoerceNumber(a) - asCoerceNumber(b));
-        }
-        if (options & GenericVector.CASEINSENSITIVE) {
-          if (options & GenericVector.DESCENDING) {
-            return this._buffer.sort((a, b) => <any>asCoerceString(b).toLowerCase() -
-                                               <any>asCoerceString(a).toLowerCase());
-          }
-          return this._buffer.sort((a, b) => <any>asCoerceString(a).toLowerCase() -
-                                             <any>asCoerceString(b).toLowerCase());
-        }
-        if (options & GenericVector.DESCENDING) {
-          return this._buffer.sort((a, b) => b - a);
-        }
-        return this._buffer.sort();
+        this._buffer.sort(<(a: any, b: any) => number>sortBehavior.value);
+        return this;
       }
+      var options = sortBehavior|0;
+      release || assertNotImplemented (!(options & Int32Vector.UNIQUESORT), "UNIQUESORT");
+      release || assertNotImplemented (!(options & Int32Vector.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
+      if (options & GenericVector.NUMERIC) {
+        if (options & GenericVector.DESCENDING) {
+          this._buffer.sort((a, b) => asCoerceNumber(b) - asCoerceNumber(a));
+          return this;
+        }
+        this._buffer.sort((a, b) => asCoerceNumber(a) - asCoerceNumber(b));
+        return this;
+      }
+      if (options & GenericVector.CASEINSENSITIVE) {
+        if (options & GenericVector.DESCENDING) {
+          this._buffer.sort((a, b) => <any>asCoerceString(b).toLowerCase() -
+                                      <any>asCoerceString(a).toLowerCase());
+          return this;
+        }
+        this._buffer.sort((a, b) => <any>asCoerceString(a).toLowerCase() -
+                                    <any>asCoerceString(b).toLowerCase());
+        return this;
+      }
+      if (options & GenericVector.DESCENDING) {
+        this._buffer.sort((a, b) => b - a);
+        return this;
+      }
+      this._buffer.sort();
+      return this;
     }
 
     /**
@@ -353,7 +360,10 @@ module Shumway.AVMX.AS {
       for (var i = 0; i < arguments.length; i++) {
         buffers.push(this._coerce(arguments[i])._buffer);
       }
-      return this._buffer.concat.apply(this._buffer, buffers);
+      var buffer = this._buffer.concat.apply(this._buffer, buffers);
+      var result = (<any>this).axClass.axConstruct([]);
+      result._buffer = buffer;
+      return result;
     }
 
     reverse() {
@@ -442,30 +452,6 @@ module Shumway.AVMX.AS {
       }
     }
 
-    //asNextName(index: number): any {
-    //  return index - 1;
-    //}
-    //
-    //asNextValue(index: number): any {
-    //  return this._buffer[index - 1];
-    //}
-    //
-    //asNextNameIndex(index: number): number {
-    //  var nextNameIndex = index + 1;
-    //  if (nextNameIndex <= this._buffer.length) {
-    //    return nextNameIndex;
-    //  }
-    //  return 0;
-    //}
-    //
-    //asHasProperty(namespaces, name, flags) {
-    //  if (GenericVector.prototype === this || !isNumeric(name)) {
-    //    return Object.prototype.asHasProperty.call(this, namespaces, name, flags);
-    //  }
-    //  var index = toNumber(name);
-    //  return index >= 0 && index < this._buffer.length;
-    //}
-    //
     axGetNumericProperty(i: number) {
       checkArguments && axCheckVectorGetNumericProperty(i, this._buffer.length,
                                                         this.securityDomain);
