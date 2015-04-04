@@ -732,16 +732,31 @@ module Shumway.AVMX {
             Debug.notImplemented(Bytecode[bc]);
         }
       } catch (e) {
-        var exceptions = body.exceptions;
-        if (!exceptions.length) {
-          throw e;
-        }
         // TODO: e = translateError(e);
 
         // All script exceptions must be primitive or have a security domain, if they don't then
         // this must be a VM exception.
-        checkValue(e);
+        if (!isValidASValue(e)) {
+          //checkValue(e);
+          // To be sure we don't let VM exceptions flow into the player, box them manually here,
+          // even in release builds.
+          var message = 'Uncaught VM-internal exception: ';
+          try {
+            message += e.toString();
+          } catch (e) {
+            message += '[Failed to stringify exception]';
+          }
+          // In the extension, we can just kill all the things.
+          var player = securityDomain['player'];
+          if (player) {
+            player.executeFSCommand('quit', [message]);
+          }
+          // In other packagings, at least throw a valid value.
+          var mn = Multiname.FromSimpleName('TypeError');
+          e = securityDomain.application.getClass(mn).axConstruct([message, -1]);
+        }
 
+        var exceptions = body.exceptions;
         for (var i = 0; i < exceptions.length; i++) {
           var handler = exceptions[i];
           if (pc >= handler.start && pc <= handler.end) {
