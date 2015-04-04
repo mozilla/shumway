@@ -13,4 +13,3 @@ test/avm2/pass/iss-1057.abc
 test/avm2/pass/iss-1034.abc
 test/avm2/pass/describeTypeJSON.abc
 test/avm2/pass/describetype.abc
-test/avm2/pass/base.abc

@@ -1780,6 +1780,8 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["flash.utils.Dictionary"] = flash.utils.Dictionary;
     builtinNativeClasses["flash.utils.ByteArray"]  = flash.utils.ByteArray;
 
+    builtinNativeClasses["avmplus.System"]  = flash.system.OriginalSystem;
+
     // Errors
     builtinNativeClasses["Error"]               = ASError;
     builtinNativeClasses["DefinitionError"]     = ASDefinitionError;
