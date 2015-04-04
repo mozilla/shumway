@@ -1396,6 +1396,11 @@ module Shumway {
       Random._state[1] = seed;
     }
 
+    public static reset() {
+      Random._state[0] = 0xDEAD;
+      Random._state[1] = 0xBEEF;
+    }
+
     public static next(): number {
       var s = this._state;
       var r0 = (Math.imul(18273, s[0] & 0xFFFF) + (s[0] >>> 16)) | 0;
@@ -3025,7 +3030,7 @@ module Shumway {
     toString(): string {
       return "{ " +
              "xMin: " + this._xMin + ", " +
-             "xMin: " + this._yMin + ", " +
+             "yMin: " + this._yMin + ", " +
              "xMax: " + this._xMax + ", " +
              "yMax: " + this._yMax +
              " }";

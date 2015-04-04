@@ -410,6 +410,8 @@ module Shumway.Shell {
       // flash.display.Loader.reset();
       // flash.display.DisplayObject.reset();
       // flash.display.MovieClip.reset();
+      Shumway.Random.reset();
+      Shumway.Shell.installTimeWarper();
       var securityDomain = createSecurityDomain(builtinABCPath, null, null);
       var player = new Shumway.Player.Player(securityDomain, new ShellGFXServer());
       player.load(file);
@@ -439,7 +441,7 @@ module Shumway.Shell {
       if (verbose) {
         writer.writeLn("executeSWF PASS: " + file);
       }
-      writer.writeLn(file + ": " + IntegerUtilities.toHEX(hash));
+      writer.writeLn("HASHCODE: " + file + ": " + IntegerUtilities.toHEX(hash));
     } catch (x) {
       writer.redLn('Exception: ' + '(' + x + ')');
       writer.redLns(x.stack);

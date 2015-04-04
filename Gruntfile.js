@@ -139,18 +139,10 @@ module.exports = function(grunt) {
         cmd: 'awk \'{print "test/ats/swfs/" $0}\' test/ats/avm2_swfs.txt | parallel --no-notice -X -N50 utils/jsshell/js build/ts/shell.js -p -v' +
                    (grunt.option('verbose') ? '-v ' : '') + ' {}'
       },
-      smoke_parse: {
+      test_swf_avm2: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/ats/swfs -name "*.swf" | head -n 1000 | parallel --no-notice -X -N50 utils/jsshell/js build/ts/shell.js -p -v ' +
-             (grunt.option('verbose') ? '-v ' : '') + ' {}'
-      },
-      smoke_parse_images: {
-        maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -p -r -f "CODE_DEFINE_BITS,CODE_DEFINE_BITS_JPEG2,CODE_DEFINE_BITS_JPEG3,CODE_DEFINE_BITS_JPEG4,CODE_JPEG_TABLES,CODE_DEFINE_BITS_LOSSLESS,CODE_DEFINE_BITS_LOSSLESS2" {}'
-      },
-      smoke_compile_baseline: {
-        maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N50 utils/jsshell/js build/ts/shell.js -c src/avm2/generated/playerGlobal/playerGlobal.min.abc {}'
+        cmd: 'cat test/ats/test_swf_avm2.txt | parallel --no-notice -X -N20 utils/jsshell/js build/ts/shell.js -x -fc 10 {} | egrep "HASHCODE" | sort | tee test/ats/test_swf_avm2_results.tmp && ' +
+             'diff test/ats/test_swf_avm2_results.tmp test/ats/test_swf_avm2_results_baseline.txt'
       },
       spell: {
         // TODO: Add more files.
@@ -176,17 +168,17 @@ module.exports = function(grunt) {
       // Runs tamarin acceptance tests and tests against the current baseline. If you get more tests to pass, update the baseline.
       test_avm2_acceptance: {
         maxBuffer: Infinity,
-        cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance-pass.json | egrep -o "(PASSED|FAILED|EXCEPTED|TIMEDOUT)" | sort | uniq -c | tee test/avm2/acceptance-results.txt && ' +
-             'diff test/avm2/acceptance-results.txt test/avm2/acceptance-baseline.txt'
+        cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance_pass.json | egrep -o "(PASSED|FAILED|EXCEPTED|TIMEDOUT)" | sort | uniq -c | tee test/avm2/acceptance_results.tmp && ' +
+             'diff test/avm2/acceptance_results.tmp test/avm2/acceptance_baseline.txt'
       },
       perf_avm2_acceptance: {
         maxBuffer: Infinity,
-        cmd: 'utils/jsshell/js build/ts/shell.js -x -r --porcelain test/avm2/acceptance-pass.json > /dev/null 2>&1'
+        cmd: 'utils/jsshell/js build/ts/shell.js -x -r --porcelain test/avm2/acceptance_pass.json > /dev/null 2>&1'
       },
       // Same as above, but it doesn't do any post processing of stdout.
       test_avm2_acceptance_trace: {
         maxBuffer: Infinity,
-        cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance-pass.json'
+        cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance_pass.json'
       },
       // Parses all ABCs in the acceptance suite. This is useful to run if you've made changes to the parser.
       test_avm2_acceptance_parse: {
@@ -197,8 +189,8 @@ module.exports = function(grunt) {
       // because the shell doesn't yet isolate player instances correctly.
       test_swf_acceptance: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort | tee test/swf/acceptance-results.txt && ' +
-             'diff test/swf/acceptance-results.txt test/swf/acceptance-baseline.txt'
+        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort | tee test/swf/acceptance_results.tmp && ' +
+             'diff test/swf/acceptance_results.tmp test/swf/acceptance_baseline.txt'
       },
       test_avm2_baseline: {
         cmd: 'node src/shell/numbers.js -c b -i ' + (grunt.option('include') || 'test/avm2/pass/') +
@@ -659,6 +651,7 @@ module.exports = function(grunt) {
     'exec:test_avm2_redux_pass',
     'exec:test_avm2_acceptance',
     'exec:test_swf_acceptance',
+    'exec:test_swf_avm2',
     'exec:unit_test'
     // 'exec:tracetest'
     // 'exec:tracetest_swfdec'
