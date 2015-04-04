@@ -62,7 +62,7 @@ module Shumway.AVMX {
     CpoolEntryWrongTypeError             : {code: 1033, message: "Cpool entry %1 is wrong type."},
     CheckTypeFailedError                 : {code: 1034, message: "Type Coercion failed: cannot convert %1 to %2."},
   //  IllegalSuperCallError                : {code: 1035, message: "Illegal super expression found in method %1."},
-  //  CannotAssignToMethodError            : {code: 1037, message: "Cannot assign to a method %1 on %2."},
+    CannotAssignToMethodError            : {code: 1037, message: "Cannot assign to a method %1 on %2."},
   //  RedefinedError                       : {code: 1038, message: "%1 is already defined."},
   //  CannotVerifyUntilReferencedError     : {code: 1039, message: "Cannot verify method until it is referenced."},
   //  CantUseInstanceofOnNonObjectError    : {code: 1040, message: "The right-hand side of instanceof must be a class or function."},

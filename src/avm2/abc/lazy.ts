@@ -122,6 +122,10 @@ module Shumway.AVMX {
       return <string>this.name;
     }
 
+    getKeyAt(i: number): string {
+      return this.abc.getString(this.keys[i]);
+    }
+
     getValueAt(i: number): string {
       return this.abc.getString(this.values[i]);
     }
@@ -525,6 +529,11 @@ module Shumway.AVMX {
       if (typeof this.typeName === "number") {
         this.typeName = this.abc.getMultiname(<number>this.typeName);
       }
+    }
+
+    getTypeName() {
+      this.resolve();
+      return <Multiname>this.typeName;
     }
 
     getDefaultValue(): any {
@@ -1182,6 +1191,12 @@ module Shumway.AVMX {
 
     public isPublic(): boolean {
       return this.type === NamespaceType.Public;
+    }
+
+    public get reflectedURI() {
+      // For public names without a URI, Tamarin uses `null`, we use `""`.
+      // Hence: special-casing for reflection.
+      return this.uri || this.type === NamespaceType.Public ? null : this.uri;
     }
 
     public static PUBLIC = new Namespace(null, NamespaceType.Public, "");
