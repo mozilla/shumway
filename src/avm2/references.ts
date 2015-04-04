@@ -38,7 +38,7 @@
 ///<reference path='natives/xml.ts' />
 // ///<reference path='natives/describeType.ts' />
 ///<reference path='natives/dictionary.ts' />
-// ///<reference path='natives/proxy.ts' />
+///<reference path='natives/proxy.ts' />
 ///<reference path='natives/date.ts' />
 ///<reference path='natives/byteArray.ts' />
 ///<reference path='natives/system.ts' />

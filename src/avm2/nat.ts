@@ -182,7 +182,7 @@ module Shumway.AVMX.AS {
 
   var rn = new Multiname(null, 0, CONSTANT.RTQNameL, [], null);
 
-  function makeMultiname(v: any, namespace?: Namespace) {
+  export function makeMultiname(v: any, namespace?: Namespace) {
     var rn = new Multiname(null, 0, CONSTANT.RTQNameL, [], null);
     rn.namespaces = namespace ? [namespace] : [];
     rn.name = v;
@@ -306,9 +306,7 @@ module Shumway.AVMX.AS {
     }
 
     native_hasOwnProperty(nm: string): boolean {
-      var qualifiedName = qualifyPublicName(asCoerceString(nm));
-      return this.hasOwnProperty(qualifiedName) ||
-             (<any>this).axClass.tPrototype.hasOwnProperty(qualifiedName);
+      return this.axHasOwnProperty(makeMultiname(nm));
     }
 
     native_propertyIsEnumerable(nm: string): boolean {
@@ -1668,10 +1666,10 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["String"]              = ASString;
     builtinNativeClasses["Array"]               = ASArray;
 
-    builtinNativeClasses["__AS3__.vec.Vector"] = Vector;
+    builtinNativeClasses["__AS3__.vec.Vector"]        = Vector;
     builtinNativeClasses["__AS3__.vec.Vector$object"] = GenericVector;
-    builtinNativeClasses["__AS3__.vec.Vector$int"] = Int32Vector;
-    builtinNativeClasses["__AS3__.vec.Vector$uint"] = Uint32Vector;
+    builtinNativeClasses["__AS3__.vec.Vector$int"]    = Int32Vector;
+    builtinNativeClasses["__AS3__.vec.Vector$uint"]   = Uint32Vector;
     builtinNativeClasses["__AS3__.vec.Vector$double"] = Float64Vector;
 
     builtinNativeClasses["Namespace"]           = ASNamespace;
@@ -1681,7 +1679,12 @@ module Shumway.AVMX.AS {
 
     builtinNativeClasses["Math"]                = ASMath;
     builtinNativeClasses["Date"]                = ASDate;
-    builtinNativeClasses["RegExp"]                = ASRegExp;
+    builtinNativeClasses["RegExp"]              = ASRegExp;
+    builtinNativeClasses["JSON"]                = ASJSON;
+
+    builtinNativeClasses["flash.utils.Proxy"]      = flash.utils.ASProxy;
+    builtinNativeClasses["flash.utils.Dictionary"] = flash.utils.Dictionary;
+    builtinNativeClasses["flash.utils.ByteArray"]  = flash.utils.ByteArray;
 
     // Errors
     builtinNativeClasses["Error"]               = ASError;
@@ -1700,9 +1703,6 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["flash.errors.EOFError"] = ASEOFError;
     builtinNativeClasses["flash.errors.MemoryError"] = ASMemoryError;
     builtinNativeClasses["flash.errors.IllegalOperationError"] = ASIllegalOperationError;
-    builtinNativeClasses["JSON"]                = ASJSON;
-    builtinNativeClasses["flash.utils.Dictionary"] = flash.utils.Dictionary;
-    builtinNativeClasses["flash.utils.ByteArray"] = flash.utils.ByteArray;
   }
 
   export function registerNativeClass(name: string, asClass: ASClass, alias: string = name,

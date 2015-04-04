@@ -141,3 +141,8 @@ test/avm2/pass/in-1.abc
 test/avm2/pass/dynamic-0.abc
 test/avm2/pass/trait-types-0.abc
 test/avm2/pass/verifier.abc
+test/avm2/pass/proxy-4.abc
+test/avm2/pass/proxy-3.abc
+test/avm2/pass/proxy-2.abc
+test/avm2/pass/proxy-1.abc
+test/avm2/pass/proxy-0.abc
