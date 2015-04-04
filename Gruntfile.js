@@ -151,15 +151,14 @@ module.exports = function(grunt) {
       lint_success: {
         cmd: 'echo "SUCCESS: no lint errors"'
       },
-      test_avm2_quick: {
-        cmd: 'node src/shell/numbers.js -i test/avm2/pass/ -c i -j ' + (+grunt.option('threads') || 9)
-      },
       test_avm2_redux_pass: {
-        cmd: 'node src/shell/numbers.js -i test/avm2/redux-pass.txt -c i -j ' + (+grunt.option('threads') || 9)
+        cmd: 'cat test/avm2/redux-pass.txt | xargs utils/jsshell/js build/ts/shell.js -x > test/avm2/shumway.tmp; ' +
+             // Run only one file at a time in Tamarin, so we skip over errors.
+             'cat test/avm2/redux-pass.txt | xargs -L 1 utils/tamarin-redux/bin/avmshell > test/avm2/tamarin.tmp; ' +
+             'colordiff -y test/avm2/shumway.tmp test/avm2/tamarin.tmp'
       },
-      test_avm2_redux: {
-        cmd: 'node src/shell/numbers.js -i test/avm2/redux-pass.txt -c i -j ' + (+grunt.option('threads') || 9) + " && " +
-             'node src/shell/numbers.js -i test/avm2/redux-fail.txt -c i -j ' + (+grunt.option('threads') || 9)
+      test_avm2_redux_fail: {
+        cmd: 'node src/shell/numbers.js -i test/avm2/redux-fail.txt -c i -j ' + (+grunt.option('threads') || 9)
       },
       test_avm2: {
         cmd: 'node src/shell/numbers.js -c icb -i ' + (grunt.option('include') || 'test/avm2/pass/') +
