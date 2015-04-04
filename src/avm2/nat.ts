@@ -370,11 +370,23 @@ module Shumway.AVMX.AS {
       }
       var t = this.traits.getTrait(mn.namespaces, name);
       if (t) {
+        var mangledName = t.name.getMangledName();
+        switch (t.kind) {
+          case TRAIT.Method:
+            this.securityDomain.throwError('ReferenceError', Errors.CannotAssignToMethodError, name,
+                                           (<AXObject><any>this).axClass.name.name);
+          // TODO: enable throwing after initialization has finished.
+          //case TRAIT.Const:
+          // Fallthrough.
+          case TRAIT.Getter:
+            this.securityDomain.throwError('ReferenceError', Errors.ConstWriteError, name,
+                                           (<AXObject><any>this).axClass.name.name);
+        }
         var type = t.getType();
         if (type) {
           value = type.axCoerce(value);
         }
-        this[t.name.getMangledName()] = value;
+        this[mangledName] = value;
       } else {
         this['$Bg' + name] = value;
       }
