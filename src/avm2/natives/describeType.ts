@@ -14,16 +14,10 @@
  * limitations under the License.
  */
 
-module Shumway.AVM2.AS {
+module Shumway.AVMX.AS {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVMX.asCoerceString;
-
-  import Multiname = Shumway.AVM2.ABC.Multiname;
-  import CONSTANT = Shumway.AVM2.ABC.CONSTANT;
-  import TRAIT = Shumway.AVM2.ABC.TRAIT;
-  import ClassInfo = Shumway.AVM2.ABC.ClassInfo;
-
 
   enum DescribeTypeFlags {
     HIDE_NSURI_METHODS  = 0x0001,
@@ -39,366 +33,298 @@ module Shumway.AVM2.AS {
     HIDE_OBJECT         = 0x0400
   }
 
-  // Public keys used multiple times while creating the description.
-  var declaredByKey = publicName("declaredBy");
-  var metadataKey = publicName("metadata");
-  var accessKey = publicName("access");
-  var uriKey = publicName("uri");
-  var nameKey = publicName("name");
-  var typeKey = publicName("type");
-  var returnTypeKey = publicName("returnType");
-  var valueKey = publicName("value");
-  var keyKey = publicName("key");
-  var parametersKey = publicName("parameters");
-  var optionalKey = publicName("optional");
-
-  export function describeTypeJSON(o: any, flags: number): any {
+  export function describeTypeJSON(securityDomain: SecurityDomain, o: any, flags: number): any {
     // Class traits aren't returned for numeric primitives, undefined, null, bound methods, or
     // non-class-constructor functions.
     var isInt = (o|0) === o;
     if (flags & DescribeTypeFlags.USE_ITRAITS && (isNullOrUndefined(o) || isInt)) {
       return null;
     }
-    var isBoundMethod = false;
-    if (o instanceof Function) {
-      if ('boundTo' in o) {
+    // Use the object's own securityDomain if we're not dealing with a primitive to make sure
+    // type checks are correct.
+    if (o.securityDomain) {
+      securityDomain = o.securityDomain;
+    }
+    o = securityDomain.box(o);
+
+    if (securityDomain.AXFunction.axIsType(o)) {
+      if (securityDomain.AXMethodClosure.axIsType(o)) {
         if (flags & DescribeTypeFlags.USE_ITRAITS) {
           return null;
         }
-        isBoundMethod = true;
-        // The check for non-class-constructor functions is very, very messy. :(
-      } else if ('methodInfo' in o && o['methodInfo'] && 'lastBoundMethod' in o['methodInfo']) {
+        // Non-bound functions with a `receiver` property are bare functions, not ctors.
+      } else if ('receiver' in o) {
         return null;
       }
     }
-    o = Object(o);
-    var cls: ASClass = o.classInfo ? o : Object.getPrototypeOf(o).class;
+    var cls: AXClass = o.hasOwnProperty('classInfo') ? o : o.axClass;
     release || assert(cls, "No class found for object " + o);
-    var isClass = cls === o && !(flags & DescribeTypeFlags.USE_ITRAITS);
+    var describeClass = cls === o && !(flags & DescribeTypeFlags.USE_ITRAITS);
     var info: ClassInfo = cls.classInfo;
 
-    var description: any = {};
+    var description: any = securityDomain.createObject();
     // For numeric literals that fit into ints, special case the name.
     if (isInt) {
-      description[nameKey] = 'int';
-      // Bound methods should be instances of MethodClosure, see bug 1057750. They're not, so
-      // we have to special case them here and below.
-    } else if (isBoundMethod) {
-      description[nameKey] = 'builtin.as$0::MethodClosure';
+      description.$Bgname = 'int';
     } else {
-      description[nameKey] = unmangledQualifiedName(info.instanceInfo.name);
+      description.$Bgname = info.instanceInfo.getName().toFQNString(true);
     }
     // More special casing for bound methods. See bug 1057750.
-    description[publicName("isDynamic")] = isClass ||
-                                           !(info.instanceInfo.flags & CONSTANT.ClassSealed) &&
-                                           !isBoundMethod;
-    description[publicName("isFinal")] = isClass ||
-                                         !!(info.instanceInfo.flags & CONSTANT.ClassFinal) ||
-                                         isBoundMethod;
+    description.$BgisDynamic = describeClass || !(info.instanceInfo.flags & CONSTANT.ClassSealed);
+    description.$BgisFinal = describeClass || !!(info.instanceInfo.flags & CONSTANT.ClassFinal);
     //TODO: verify that `isStatic` is false for all instances, true for classes
-    description[publicName("isStatic")] = isClass;
+    description.$BgisStatic = describeClass;
     if (flags & DescribeTypeFlags.INCLUDE_TRAITS) {
-      var traits = description[publicName("traits")] = addTraits(cls, info, isClass, flags);
-    }
-    // And yet more, truly ugly, special casing for bound methods. See bug 1057750.
-    if (isBoundMethod) {
-      traits[publicName("bases")].unshift('Function');
-      traits[publicName("accessors")][1][publicName("declaredBy")] = 'builtin.as$0::MethodClosure';
+      var traits = description.$Bgtraits = addTraits(cls, info, describeClass, flags);
     }
     return description;
   }
 
-  export function describeType(value: any, flags: number): ASXML {
-    var classDescription: any = describeTypeJSON(value, flags);
-    // Make sure all XML classes are fully initialized.
-    var systemDomain = Runtime.AVM2.instance.systemDomain;
-    systemDomain.getClass('XML');
-    systemDomain.getClass('XMLList');
-    systemDomain.getClass('QName');
-    systemDomain.getClass('Namespace');
-    var x: ASXML = new AS.ASXML('<type/>');
-    x.setProperty("name", true, classDescription[publicName('name')]);
-    var bases = classDescription[publicName('traits')][publicName('bases')];
-    if (bases.length) {
-      x.setProperty("base", true, bases[0]);
-    }
-    x.setProperty("isDynamic", true, classDescription[publicName('isDynamic')].toString());
-    x.setProperty("isFinal", true, classDescription[publicName('isFinal')].toString());
-    x.setProperty("isStatic", true, classDescription[publicName('isStatic')].toString());
-    describeTraits(x, classDescription[publicName('traits')]);
+  //export function describeType(securityDomain: SecurityDomain, value: any, flags: number): ASXML
+  // {
+  //  var classDescription: any = describeTypeJSON(value, flags);
+  //  // Make sure all XML classes are fully initialized.
+  //  var systemDomain = securityDomain.application;
+  //  systemDomain.getClass('XML');
+  //  systemDomain.getClass('XMLList');
+  //  systemDomain.getClass('QName');
+  //  systemDomain.getClass('Namespace');
+  //  var x: ASXML = new AS.ASXML('<type/>');
+  //  x.setProperty("name", true, classDescription[publicName('name')]);
+  //  var bases = classDescription[publicName('traits')][publicName('bases')];
+  //  if (bases.length) {
+  //    x.setProperty("base", true, bases[0]);
+  //  }
+  //  x.setProperty("isDynamic", true, classDescription[publicName('isDynamic')].toString());
+  //  x.setProperty("isFinal", true, classDescription[publicName('isFinal')].toString());
+  //  x.setProperty("isStatic", true, classDescription[publicName('isStatic')].toString());
+  //  describeTraits(x, classDescription[publicName('traits')]);
+  //
+  //  var instanceDescription: any = describeTypeJSON(value, flags |
+  // DescribeTypeFlags.USE_ITRAITS);
+  //  if (instanceDescription) {
+  //    var e: ASXML = new AS.ASXML('<factory/>');
+  //    e.setProperty('type', true, instanceDescription[publicName('name')]);
+  //    if (describeTraits(e, instanceDescription[publicName('traits')])) {
+  //      x.appendChild(e);
+  //    }
+  //  }
+  //  return x;
+  //}
+  //function describeTraits(x: ASXML, traits: any): boolean {
+  //  var traitsCount = 0;
+  //  var bases = traits[publicName('bases')];
+  //  for (var i = 0; bases && i < bases.length; i++) {
+  //    var base: string = bases[i];
+  //    var e: ASXML = new AS.ASXML('<extendsClass type="' + escapeAttributeValue(base) + '"/>');
+  //    x.appendChild(e);
+  //    traitsCount++;
+  //  }
+  //  var interfaces = traits[publicName('interfaces')];
+  //  for (var i = 0; interfaces && i < interfaces.length; i++) {
+  //    var e: ASXML = new AS.ASXML('<implementsInterface type="' +
+  //                                escapeAttributeValue(interfaces[i]) + '"/>');
+  //    x.appendChild(e);
+  //    traitsCount++;
+  //  }
+  //  if (traits[publicName('constructor')] !== null) {
+  //    var e: ASXML = new AS.ASXML('<constructor/>');
+  //    describeParams(e, traits[publicName('constructor')]);
+  //    x.appendChild(e);
+  //    traitsCount++;
+  //  }
+  //  var variables = traits[publicName('variables')];
+  //  for (var i = 0; variables && i < variables.length; i++) {
+  //    var variable: any = variables[i];
+  //    var nodeName = variable[publicName('access')] === 'readonly' ? 'constant' : 'variable';
+  //    var e: ASXML = new AS.ASXML('<' + nodeName +
+  //                                ' name="' + escapeAttributeValue(variable[publicName('name')])
+  // +
+  //                                '" type="' + variable[publicName('type')] + '"/>');
+  //    if (variable[publicName('uri')] !== null) {
+  //      e.setProperty('uri', true, variable[publicName('uri')]);
+  //    }
+  //    if (variable[publicName('metadata')] !== null) {
+  //      describeMetadataXML(e, variable[publicName('metadata')]);
+  //    }
+  //    x.appendChild(e);
+  //    traitsCount++;
+  //  }
+  //  var accessors = traits[publicName('accessors')];
+  //  for (var i = 0; accessors && i < accessors.length; i++) {
+  //    var accessor: any = accessors[i];
+  //    var e: ASXML = new AS.ASXML('<accessor ' +
+  //                                'name="' + escapeAttributeValue(accessor[publicName('name')]) +
+  //                                '" access="' + accessor[publicName('access')] +
+  //                                '" type="' + escapeAttributeValue(accessor[publicName('type')])
+  // + '" declaredBy="' + escapeAttributeValue(accessor[publicName('declaredBy')]) + '"/>'); if
+  // (accessor[publicName('uri')] !== null) { e.setProperty('uri', true,
+  // accessor[publicName('uri')]); } if (accessor[publicName('metadata')] !== null) {
+  // describeMetadataXML(e, accessor[publicName('metadata')]); } x.appendChild(e); traitsCount++; }
+  // var methods = traits[publicName('methods')]; for (var i = 0; methods && i < methods.length;
+  // i++) { var method: any = methods[i]; var e: ASXML = new AS.ASXML('<method ' + 'name="' +
+  // escapeAttributeValue(method[publicName('name')]) + '" declaredBy="' +
+  // escapeAttributeValue(method[publicName('declaredBy')]) + '" returnType="' +
+  // escapeAttributeValue(method[publicName('returnType')]) + '"/>'); describeParams(e,
+  // method[publicName('parameters')]); if (method[publicName('uri')] !== null) {
+  // e.setProperty('uri', true, method[publicName('uri')]); } if (method[publicName('metadata')]
+  // !== null) { describeMetadataXML(e, method[publicName('metadata')]); } x.appendChild(e);
+  // traitsCount++; } describeMetadataXML(x, traits[publicName('metadata')]); return traitsCount >
+  // 0; }  function describeParams(x: ASXML, parameters: any[]): void { if (!parameters) { return;
+  // } for (var i = 0; i < parameters.length; i++) { var p = parameters[i]; var f: ASXML = new
+  // AS.ASXML('<parameter index="' + (i + 1) + '" type="' +
+  // escapeAttributeValue(p[publicName('type')]) + '" optional="' + p[publicName('optional')] +
+  // '"/>'); x.appendChild(f); } }  function describeMetadataXML(x: ASXML, metadata: any[]): void {
+  // if (!metadata) { return; } for (var i = 0; i < metadata.length; i++) { var md = metadata[i];
+  // var m: ASXML = new AS.ASXML('<metadata name="' + escapeAttributeValue(md[publicName('name')])
+  // + '"/>'); var values = md[publicName('value')]; for (var j = 0; j < values.length; j++) { var
+  // value = values[j]; var a: ASXML = new AS.ASXML('<arg key="' +
+  // escapeAttributeValue(value[publicName('key')]) + '" value="' +
+  // escapeAttributeValue(value[publicName('value')]) + '"/>'); m.appendChild(a); }
+  // x.appendChild(m); } }
 
-    var instanceDescription: any = describeTypeJSON(value, flags | DescribeTypeFlags.USE_ITRAITS);
-    if (instanceDescription) {
-      var e: ASXML = new AS.ASXML('<factory/>');
-      e.setProperty('type', true, instanceDescription[publicName('name')]);
-      if (describeTraits(e, instanceDescription[publicName('traits')])) {
-        x.appendChild(e);
-      }
-    }
-    return x;
-  }
-  function describeTraits(x: ASXML, traits: any): boolean {
-    var traitsCount = 0;
-    var bases = traits[publicName('bases')];
-    for (var i = 0; bases && i < bases.length; i++) {
-      var base: string = bases[i];
-      var e: ASXML = new AS.ASXML('<extendsClass type="' + escapeAttributeValue(base) + '"/>');
-      x.appendChild(e);
-      traitsCount++;
-    }
-    var interfaces = traits[publicName('interfaces')];
-    for (var i = 0; interfaces && i < interfaces.length; i++) {
-      var e: ASXML = new AS.ASXML('<implementsInterface type="' +
-                                  escapeAttributeValue(interfaces[i]) + '"/>');
-      x.appendChild(e);
-      traitsCount++;
-    }
-    if (traits[publicName('constructor')] !== null) {
-      var e: ASXML = new AS.ASXML('<constructor/>');
-      describeParams(e, traits[publicName('constructor')]);
-      x.appendChild(e);
-      traitsCount++;
-    }
-    var variables = traits[publicName('variables')];
-    for (var i = 0; variables && i < variables.length; i++) {
-      var variable: any = variables[i];
-      var nodeName = variable[publicName('access')] === 'readonly' ? 'constant' : 'variable';
-      var e: ASXML = new AS.ASXML('<' + nodeName +
-                                  ' name="' + escapeAttributeValue(variable[publicName('name')]) +
-                                  '" type="' + variable[publicName('type')] + '"/>');
-      if (variable[publicName('uri')] !== null) {
-        e.setProperty('uri', true, variable[publicName('uri')]);
-      }
-      if (variable[publicName('metadata')] !== null) {
-        describeMetadataXML(e, variable[publicName('metadata')]);
-      }
-      x.appendChild(e);
-      traitsCount++;
-    }
-    var accessors = traits[publicName('accessors')];
-    for (var i = 0; accessors && i < accessors.length; i++) {
-      var accessor: any = accessors[i];
-      var e: ASXML = new AS.ASXML('<accessor ' +
-                                  'name="' + escapeAttributeValue(accessor[publicName('name')]) +
-                                  '" access="' + accessor[publicName('access')] +
-                                  '" type="' + escapeAttributeValue(accessor[publicName('type')]) +
-                                  '" declaredBy="' +
-                                  escapeAttributeValue(accessor[publicName('declaredBy')]) + '"/>');
-      if (accessor[publicName('uri')] !== null) {
-        e.setProperty('uri', true, accessor[publicName('uri')]);
-      }
-      if (accessor[publicName('metadata')] !== null) {
-        describeMetadataXML(e, accessor[publicName('metadata')]);
-      }
-      x.appendChild(e);
-      traitsCount++;
-    }
-    var methods = traits[publicName('methods')];
-    for (var i = 0; methods && i < methods.length; i++) {
-      var method: any = methods[i];
-      var e: ASXML = new AS.ASXML('<method ' +
-                                  'name="' + escapeAttributeValue(method[publicName('name')]) +
-                                  '" declaredBy="' +
-                                  escapeAttributeValue(method[publicName('declaredBy')]) +
-                                  '" returnType="' +
-                                  escapeAttributeValue(method[publicName('returnType')]) + '"/>');
-      describeParams(e, method[publicName('parameters')]);
-      if (method[publicName('uri')] !== null) {
-        e.setProperty('uri', true, method[publicName('uri')]);
-      }
-      if (method[publicName('metadata')] !== null) {
-        describeMetadataXML(e, method[publicName('metadata')]);
-      }
-      x.appendChild(e);
-      traitsCount++;
-    }
-    describeMetadataXML(x, traits[publicName('metadata')]);
-    return traitsCount > 0;
-  }
-
-  function describeParams(x: ASXML, parameters: any[]): void {
-    if (!parameters) {
-      return;
-    }
-    for (var i = 0; i < parameters.length; i++) {
-      var p = parameters[i];
-      var f: ASXML = new AS.ASXML('<parameter index="' + (i + 1) +
-                                  '" type="' + escapeAttributeValue(p[publicName('type')]) +
-                                  '" optional="' + p[publicName('optional')] + '"/>');
-      x.appendChild(f);
-    }
-  }
-
-  function describeMetadataXML(x: ASXML, metadata: any[]): void {
-    if (!metadata) {
-      return;
-    }
-    for (var i = 0; i < metadata.length; i++) {
-      var md = metadata[i];
-      var m: ASXML = new AS.ASXML('<metadata name="' +
-                                  escapeAttributeValue(md[publicName('name')]) + '"/>');
-      var values = md[publicName('value')];
-      for (var j = 0; j < values.length; j++) {
-        var value = values[j];
-        var a: ASXML = new AS.ASXML('<arg key="' + escapeAttributeValue(value[publicName('key')]) +
-                                    '" value="' +
-                                    escapeAttributeValue(value[publicName('value')]) + '"/>');
-        m.appendChild(a);
-      }
-      x.appendChild(m);
-    }
-  }
-
-  function publicName(str: string) {
-    return Multiname.getPublicQualifiedName(str);
-  }
-
-  function unmangledQualifiedName(mn) {
-    var name = mn.name;
-    var namespace = mn.namespaces[0];
-    if (namespace && namespace.uri) {
-      return namespace.uri + '::' + name;
-    }
-    return name;
-  }
-
-  function describeMetadataMap(map) {
-    if (!map) {
+  function describeMetadataList(securityDomain: SecurityDomain, list: MetadataInfo[]) {
+    if (!list) {
       return null;
     }
-    var result = [];
-    for (var key in map) {
+    var result = securityDomain.createArray([]);
+
+    for (var i = 0; i < list.length; i++) {
+      var metadata = list[i];
+      var key = metadata.getName();
       // Filter out the [native] metadata nodes. These are implementation details Flash doesn't
       // expose, so we don't, either.
       if (key === 'native') {
         continue;
       }
-      result.push(describeMetadata(map[key]));
+      result.push(describeMetadata(securityDomain, metadata));
     }
     return result;
   }
 
-  function describeMetadata(metadata) {
-    var result = {};
-    result[nameKey] = metadata.name;
-    result[valueKey] = metadata.value.map(function(value) {
-      var val = {};
-      val[valueKey] = value.value;
-      val[keyKey] = value.key;
-      return val;
-    });
+  function describeMetadata(securityDomain: SecurityDomain, metadata: MetadataInfo) {
+    var result = securityDomain.createObject();
+    result.$Bgname = metadata.name;
+    var values = [];
+    result.$Bgvalue = securityDomain.createArray(values);
+    for (var i = 0; i < metadata.keys.length; i++) {
+      var val = securityDomain.createObject();
+      val.$Bgvalue = metadata.getValueAt(i);
+      val.$Bgkey = metadata.getKeyAt(i);
+      values.push(val);
+    }
     return result;
   }
 
-  function addTraits(cls: ASClass, info: ClassInfo, describingClass: boolean,
+  function addTraits(cls: AXClass, info: ClassInfo, describingClass: boolean,
                      flags: DescribeTypeFlags) {
+    var securityDomain = cls.securityDomain;
     var includeBases = flags & DescribeTypeFlags.INCLUDE_BASES;
     var includeMethods = flags & DescribeTypeFlags.INCLUDE_METHODS && !describingClass;
-    var obj: any = {};
+    var obj = securityDomain.createObject();
 
-    var variablesVal = obj[publicName("variables")] =
-      flags & DescribeTypeFlags.INCLUDE_VARIABLES ? [] : null;
-    var accessorsVal = obj[publicName("accessors")] =
-      flags & DescribeTypeFlags.INCLUDE_ACCESSORS ? [] : null;
+    var variablesVal = obj.$Bgvariables =
+      flags & DescribeTypeFlags.INCLUDE_VARIABLES ? securityDomain.createArray([]) : null;
+    var accessorsVal = obj.$Bgaccessors =
+      flags & DescribeTypeFlags.INCLUDE_ACCESSORS ? securityDomain.createArray([]) : null;
 
-    var metadata: any[] = null;
-    if (flags & DescribeTypeFlags.INCLUDE_METADATA) {
-      // Somewhat absurdly, class metadata is only included when describing instances.
-      if (!describingClass) {
-        // This particular metadata list is always created, even if no metadata exists.
-        metadata = describeMetadataMap(info.metadata) || [];
-      } else {
-        metadata = [];
+    var metadataList: any[] = null;
+    // Somewhat absurdly, class metadata is only included when describing instances.
+    if (flags & DescribeTypeFlags.INCLUDE_METADATA && !describingClass) {
+      var metadata: MetadataInfo[] = info.trait.getMetadata();
+      if (metadata) {
+        metadataList = describeMetadataList(securityDomain, metadata);
       }
     }
-    obj[metadataKey] = metadata;
+      // This particular metadata list is always created, even if no metadata exists.
+    obj.$Bgmetadata = metadataList || securityDomain.createArray([]);
 
     // TODO: fill in.
-    obj[publicName("constructor")] = null;
+    obj.$Bgconstructor = null;
 
     if (flags & DescribeTypeFlags.INCLUDE_INTERFACES) {
-      var interfacesVal = obj[publicName("interfaces")] = [];
+      obj.$Bginterfaces = securityDomain.createArray([]);
       if (!describingClass) {
-        for (var key in cls.implementedInterfaces) {
-          var ifaceName = (<ASClass> cls.implementedInterfaces[key]).getQualifiedClassName();
-          interfacesVal.push(ifaceName);
-        }
+        var interfacesVal = obj.$Bginterfaces.value;
+        var interfaces = cls.classInfo.instanceInfo.getInterfaces(cls);
+        interfaces.forEach((iface) => interfacesVal.push(iface.name.toFQNString(true)));
       }
     } else {
-      obj[publicName("interfaces")] = null;
+      obj.$Bginterfaces = null;
     }
 
-    var methodsVal = obj[publicName("methods")] = includeMethods ? [] : null;
-    var basesVal = obj[publicName("bases")] = includeBases ? [] : null;
+    var methodsVal = obj.$Bgmethods = includeMethods ? securityDomain.createArray([]) : null;
+    var basesVal = obj.$Bgbases = includeBases ? securityDomain.createArray([]) : null;
 
-    var encounteredKeys: any = {};
+    var encounteredKeys: any = Object.create(null);
 
     // Needed for accessor-merging.
-    var encounteredGetters: any = {};
-    var encounteredSetters: any = {};
+    var encounteredGetters: any = Object.create(null);
+    var encounteredSetters: any = Object.create(null);
 
     var addBase = false;
     while (cls) {
-      var className = unmangledQualifiedName(cls.classInfo.instanceInfo.name);
+      var className = cls.classInfo.instanceInfo.getName().toFQNString(true);
       if (includeBases && addBase && !describingClass) {
         basesVal.push(className);
       } else {
         addBase = true;
       }
-      if (flags & DescribeTypeFlags.HIDE_OBJECT && cls === <any>ASObject) {
+      if (flags & DescribeTypeFlags.HIDE_OBJECT && cls === securityDomain.AXObject) {
         break;
       }
       if (!describingClass) {
-        describeTraits(cls.classInfo.instanceInfo.traits);
+        describeTraits(securityDomain, cls.classInfo.instanceInfo.traits.traits);
       } else {
-        describeTraits(cls.classInfo.traits);
+        describeTraits(securityDomain, cls.classInfo.traits.traits);
       }
-      cls = cls.baseClass;
+      cls = cls.superClass;
     }
+    release || assert(cls === securityDomain.AXObject);
     // When describing Class objects, the bases to add are always Class and Object.
     if (describingClass) {
       // When describing Class objects, accessors are ignored. *Except* the `prototype` accessor.
       if (flags & DescribeTypeFlags.INCLUDE_ACCESSORS) {
-        var val: any = {};
-        val[nameKey] = 'prototype';
-        val[typeKey] = '*';
-        val[accessKey] = "readonly";
-        val[metadataKey] = null;
-        val[uriKey] = null;
-        val[declaredByKey] = 'Class';
+        var val = securityDomain.createObject();
+        val.$Bgname = 'prototype';
+        val.$Bgtype = '*';
+        val.$Bgaccess = "readonly";
+        val.$Bgmetadata = null;
+        val.$Bguri = null;
+        val.$BgdeclaredBy = 'Class';
         accessorsVal.push(val);
       }
       if (includeBases) {
         basesVal.pop();
         basesVal.push('Class', 'Object');
-        cls = ASClass;
+        cls = securityDomain.AXClass;
       }
     }
 
     // Having a hot function closed over isn't all that great, but moving this out would involve
     // passing lots and lots of arguments. We might do that if performance becomes an issue.
-    function describeTraits(traits) {
-      release || assert(traits, "No traits array found on class" + cls.classInfo.instanceInfo.name);
+    function describeTraits(securityDomain: SecurityDomain, traits: TraitInfo[]) {
+      release || assert(traits, "No traits array found on class" + cls.name);
 
       // All types share some fields, but setting them in one place changes the order in which
       // they're defined - and hence show up in iteration. While it is somewhat unlikely that
       // real content relies on that order, tests certainly do, so we duplicate the code.
-      for (var i = traits.length; i--;) {
+      for (var i = 0; i < traits.length; i++) {
         var t = traits[i];
-        var ns = t.name.getNamespace();
+        var mn = t.getName();
+        var ns = mn.namespace;
         // Hide all non-public members whose namespace doesn't have a URI specified.
         // Or, if HIDE_NSURI_METHODS is set, hide those, too, because bugs in Flash.
-        if (!ns.isPublic() && !t.name.uri ||
-            (flags & DescribeTypeFlags.HIDE_NSURI_METHODS && ns.uri)) {
+        if (!ns.isPublic() && !ns.uri || (flags & DescribeTypeFlags.HIDE_NSURI_METHODS && ns.uri)) {
           continue;
         }
-        var name = unmangledQualifiedName(t.name);
+        var name = mn.toFQNString(true);
         if (encounteredGetters[name] !== encounteredSetters[name]) {
           var val = encounteredKeys[name];
-          val[accessKey] = 'readwrite';
+          val.$Bgaccess = 'readwrite';
           if (t.kind === TRAIT.Getter) {
-            val[typeKey] = t.methodInfo.returnType ?
-                              unmangledQualifiedName(t.methodInfo.returnType) : '*';
+            var type = (<MethodTraitInfo>t).getMethodInfo().getType();
+            val.$Bgtype = type ? type.name.toFQNString(true) : '*';
           }
           continue;
         }
@@ -407,42 +333,46 @@ module Shumway.AVM2.AS {
         }
         //TODO: check why we have public$$_init in `Object`
 
-        var val: any = {};
+        var val = securityDomain.createObject();
         encounteredKeys[name] = val;
+        var metadata: MetadataInfo[] = t.getMetadata();
         switch (t.kind) {
           case TRAIT.Const:
           case TRAIT.Slot:
             if (!(flags & DescribeTypeFlags.INCLUDE_VARIABLES)) {
               continue;
             }
-            val[nameKey] = name;
-            val[uriKey] = t.name.uri === undefined ? null : t.name.uri;
-            val[typeKey] = t.typeName ? unmangledQualifiedName(t.typeName) : '*';
-            val[accessKey] = "readwrite";
-            val[metadataKey] = flags & DescribeTypeFlags.INCLUDE_METADATA ?
-                                   describeMetadataMap(t.metadata) : null;
+            val.$Bgname = name;
+            val.$Bguri = ns.reflectedURI;
+            var typeName = (<SlotTraitInfo>t).getTypeName();
+            val.$Bgtype = typeName ? typeName.toFQNString(true) : '*';
+            val.$Bgaccess = "readwrite";
+            val.$Bgmetadata = flags & DescribeTypeFlags.INCLUDE_METADATA ?
+                              describeMetadataList(securityDomain, metadata) :
+                              null;
             variablesVal.push(val);
             break;
           case TRAIT.Method:
             if (!includeMethods) {
               continue;
             }
-            val[returnTypeKey] = t.methodInfo.returnType ?
-                                     unmangledQualifiedName(t.methodInfo.returnType) : '*';
-            val[metadataKey] = flags & DescribeTypeFlags.INCLUDE_METADATA ?
-                                   describeMetadataMap(t.metadata) : null;
-            val[nameKey] = name;
-            val[uriKey] = t.name.uri === undefined ? null : t.name.uri;
-            var parametersVal = val[parametersKey] = [];
-            var parameters = t.methodInfo.parameters;
+            var returnType = (<MethodTraitInfo>t).getMethodInfo().getType();
+            val.$BgreturnType = returnType ? returnType.name.toFQNString(true) : '*';
+            val.$Bgmetadata = flags & DescribeTypeFlags.INCLUDE_METADATA ?
+                              describeMetadataList(securityDomain, metadata) :
+                              null;
+            val.$Bgname = name;
+            val.$Bguri = ns.reflectedURI;
+            var parametersVal = val.$Bgparameters = securityDomain.createArray([]);
+            var parameters = (<MethodTraitInfo>t).getMethodInfo().parameters;
             for (var j = 0; j < parameters.length; j++) {
               var param = parameters[j];
-              var paramVal = {};
-              paramVal[typeKey] = param.type ? unmangledQualifiedName(param.type) : '*';
-              paramVal[optionalKey] = 'value' in param;
+              var paramVal = securityDomain.createObject();
+              paramVal.$Bgtype = param.type ? param.getType().toFQNString(true) : '*';
+              paramVal.$Bgoptional = 'value' in param;
               parametersVal.push(paramVal);
             }
-            val[declaredByKey] = className;
+            val.$BgdeclaredBy = className;
             methodsVal.push(val);
             break;
           case TRAIT.Getter:
@@ -450,21 +380,22 @@ module Shumway.AVM2.AS {
             if (!(flags & DescribeTypeFlags.INCLUDE_ACCESSORS) || describingClass) {
               continue;
             }
-            val[nameKey] = name;
+            val.$Bgname = name;
             if (t.kind === TRAIT.Getter) {
-              val[typeKey] = t.methodInfo.returnType ?
-                                 unmangledQualifiedName(t.methodInfo.returnType) : '*';
+              var returnType = (<MethodTraitInfo>t).getMethodInfo().getType();
+              val.$Bgtype = returnType ? returnType.name.toFQNString(true) : '*';
               encounteredGetters[name] = val;
             } else {
-              var paramType = t.methodInfo.parameters[0].type;
-              val[typeKey] = paramType ? unmangledQualifiedName(paramType) : '*';
+              var paramType = (<MethodTraitInfo>t).getMethodInfo().parameters[0].getType();
+              val.$Bgtype = paramType ? paramType.toFQNString(true) : '*';
               encounteredSetters[name] = val;
             }
-            val[accessKey] = t.kind === TRAIT.Getter ? "readonly" : "writeonly";
-            val[metadataKey] = flags & DescribeTypeFlags.INCLUDE_METADATA ?
-                                   describeMetadataMap(t.metadata) : null;
-            val[uriKey] = t.name.uri === undefined ? null : t.name.uri;
-            val[declaredByKey] = className;
+            val.$Bgaccess = t.kind === TRAIT.Getter ? "readonly" : "writeonly";
+            val.$Bgmetadata = flags & DescribeTypeFlags.INCLUDE_METADATA ?
+                              describeMetadataList(securityDomain, metadata) :
+                              null;
+            val.$Bguri = ns.reflectedURI;
+            val.$BgdeclaredBy = className;
             accessorsVal.push(val);
             break;
           default:
@@ -472,6 +403,14 @@ module Shumway.AVM2.AS {
             break;
         }
       }
+    }
+
+    // `methods` and `variables` are the only list that are `null`-ed if empty.
+    if (!methodsVal || methodsVal.value.length === 0) {
+      obj.$Bgmethods = null;
+    }
+    if (!variablesVal || variablesVal.value.length === 0) {
+      obj.$Bgvariables = null;
     }
 
       return obj;

@@ -1,6 +1,10 @@
 
 package avmplus {
 import avmplus.normalizeOutput;
+import avmplus.normalizeOutput;
+import avmplus.normalizeOutput;
+import avmplus.normalizeOutput;
+
 [metaData(name='class-metadata',secondField=true)]
   class A {
     public static var s0;
@@ -49,12 +53,13 @@ function normalizeOutput(description: String): String {
     trace('describing class:');
     trace(normalizeOutput(JSON.stringify(describeTypeJSON(B, FLASH10_FLAGS), null, 2)));
     trace('describing instance:');
-    trace(normalizeOutput(JSON.stringify(describeTypeJSON(new B(), FLASH10_FLAGS), null, 2)));
+    trace(normalizeOutput(JSON.stringify(describeTypeJSON(new A(), FLASH10_FLAGS), null, 2)));
 
     trace('describing `0`: ' + JSON.stringify(describeTypeJSON(0, USE_ITRAITS), null, 2));
     trace('describing `null`: ' + JSON.stringify(describeTypeJSON(null, USE_ITRAITS), null, 2));
     trace('describing anonymous function: ' + JSON.stringify(describeTypeJSON(function(){}, USE_ITRAITS), null, 2));
-    trace('describing bound function: ' + JSON.stringify(describeTypeJSON(A.staticMethod, USE_ITRAITS), null, 2));
+    trace('describing bound function itraits: ' + normalizeOutput(JSON.stringify(describeTypeJSON(A.staticMethod, USE_ITRAITS), null, 2)));
+    trace('describing bound function ctraits: \n' + normalizeOutput(JSON.stringify(describeTypeJSON(new B().car, FLASH10_FLAGS), null, 2)));
   })();
 
 }

@@ -153,11 +153,11 @@ module Shumway.AVMX.AS {
     }
 
     export function describeType(securityDomain: SecurityDomain, value: any, flags: number) {
-      //return Shumway.AVM2.AS.describeType(value, flags);
+      //return AS.describeType(value, flags);
     }
 
     export function describeTypeJSON(securityDomain: SecurityDomain, value: any, flags: number) {
-      //return Shumway.AVM2.AS.describeTypeJSON(value, flags);
+      return AS.describeTypeJSON(securityDomain, value, flags);
     }
   }
 

@@ -602,9 +602,10 @@ module Shumway.AVMX {
       var t = T[i];
       var p: PropertyDescriptor = t;
       if (p.value instanceof Namespace) {
-        // We can't call |object.securityDomain.AXNamespace.FromNamespace(...)| because the AXNamespace
-        // class may not have been loaded yet. However, at this point we do have a valid reference to
-        // |object.securityDomain.AXNamespace| because |prepareNativeClass| has been called.
+        // We can't call |object.securityDomain.AXNamespace.FromNamespace(...)| because the
+        // AXNamespace class may not have been loaded yet. However, at this point we do have a
+        // valid reference to |object.securityDomain.AXNamespace| because |prepareNativeClass| has
+        // been called.
         p = { value: AS.ASNamespace.FromNamespace.call(object.securityDomain.AXNamespace, p.value) };
       }
       if (!release && (t.kind === TRAIT.Slot || t.kind === TRAIT.Const)) {
@@ -699,6 +700,7 @@ module Shumway.AVMX {
     asClass: ASClass;
     superClass: AXClass;
     classInfo: ClassInfo;
+    name: Multiname;
     // Used to initialize Vectors.
     defaultValue: any;
     tPrototype: AXObject;
@@ -878,8 +880,7 @@ module Shumway.AVMX {
    * Throwing initializer for interfaces.
    */
   function axInterfaceInitializer() {
-    this.securityDomain.throwError("VerifierError", Errors.NotImplementedError,
-                                   this.classInfo.instanceInfo.name.name);
+    this.securityDomain.throwError("VerifierError", Errors.NotImplementedError, this.name.name);
   }
 
   /**
@@ -1047,23 +1048,6 @@ module Shumway.AVMX {
       var fn = Object.create(this.AXFunction.tPrototype);
       fn.value = value;
       return fn;
-    }
-
-    /**
-     * Used for factory types. This creates a class that by default behaves the same
-     * as its factory class but gives us the opportunity to override protocol
-     * handlers.
-     */
-    createSyntheticClass(superClass: AXClass): AXClass {
-      var axClass: AXClass = Object.create(superClass);
-      // Put the superClass tPrototype on the prototype chain so we have access
-      // to all factory protocol handlers by default.
-      axClass.tPrototype = Object.create(superClass.tPrototype);
-      axClass.tPrototype.axClass = axClass;
-      // We don't need a new dPrototype object.
-      axClass.dPrototype = superClass.dPrototype;
-      axClass.superClass = superClass;
-      return axClass;
     }
 
     createClass(classInfo: ClassInfo, superClass: AXClass, scope: Scope): AXClass {
@@ -1267,6 +1251,11 @@ module Shumway.AVMX {
       D(rootClassPrototype, "axIsInstanceOf", axIsInstanceOfObject);
       D(rootClassPrototype, "axConstruct", axConstruct);
       D(rootClassPrototype, "axApply", axDefaultApply);
+      Object.defineProperty(rootClassPrototype, 'name', {
+        get: function () {
+          return this.classInfo.instanceInfo.name;
+        }
+      });
 
       this.rootClassPrototype = rootClassPrototype;
     }
