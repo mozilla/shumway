@@ -186,6 +186,7 @@ module Shumway.Shell {
   var writer = new IndentingWriter();
 
   var parseOption: Option;
+  var scanParseOption: Option;
   var disassembleOption: Option;
   var compileOption: Option;
   var verboseOption: Option;
@@ -213,6 +214,7 @@ module Shumway.Shell {
     var shellOptions = systemOptions.register(new Shumway.Options.OptionSet("Shell Options"));
 
     parseOption = shellOptions.register(new Option("p", "parse", "boolean", false, "Parse File(s)"));
+    scanParseOption = shellOptions.register(new Option("sp", "scanParse", "boolean", false, "Scan/Parse File(s)"));
     disassembleOption = shellOptions.register(new Option("d", "disassemble", "boolean", false, "Disassemble File(s)"));
     compileOption = shellOptions.register(new Option("c", "compile", "boolean", false, "Compile File(s)"));
     verboseOption = shellOptions.register(new Option("v", "verbose", "boolean", false, "Verbose"));
@@ -638,10 +640,19 @@ module Shumway.Shell {
       var SWF_TAG_CODE_DO_ABC_ = SwfTag.CODE_DO_ABC_DEFINE;
       try {
         var buffer = read(file, "binary");
+        if (!((buffer[0] === 'F'.charCodeAt(0) || buffer[0] === 'C'.charCodeAt(0)) &&
+             buffer[1] === 'W'.charCodeAt(0) &&
+             buffer[2] === 'S'.charCodeAt(0))) {
+          writer.redLn("Cannot parse: " + file + " because it doesn't have a valid header. " + buffer[0] + " " + buffer[1] + " " + buffer[2]);
+          return
+        }
         var startSWF = dateNow();
         var swfFile: Shumway.SWF.SWFFile;
         var loadListener: ILoadListener = {
           onLoadOpen: function(swfFile: Shumway.SWF.SWFFile) {
+            if (scanParseOption.value) {
+              return;
+            }
             if (swfFile && swfFile.abcBlocks) {
               for (var i = 0; i < swfFile.abcBlocks.length; i++) {
                 parseABC(swfFile.abcBlocks[i].data);
