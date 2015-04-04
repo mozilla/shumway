@@ -14,3 +14,10 @@ test/avm2/pass/iss-1034.abc
 test/avm2/pass/describeTypeJSON.abc
 test/avm2/pass/describetype.abc
 test/avm2/pass/base.abc
+test/avm2/pass/str-0.abc
+test/avm2/pass/props-1.abc
+test/avm2/pass/for.abc
+test/avm2/pass/interfaceCast.abc
+test/avm2/pass/xml-replace.abc
+test/avm2/pass/xml-4.abc
+test/avm2/pass/interface-2.abc
