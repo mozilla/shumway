@@ -1873,7 +1873,7 @@ module Shumway {
     }
 
     writeComment(str: string) {
-      var lines = str.split("\n");
+      var lines = (str || '').split("\n");
       if (lines.length === 1) {
         this.writeLn("// " + lines[0]);
       } else {
@@ -1886,7 +1886,7 @@ module Shumway {
     }
 
     writeLns(str: string) {
-      var lines = str.split("\n");
+      var lines = (str || '').split("\n");
       for (var i = 0; i < lines.length; i++) {
         this.writeLn(lines[i]);
       }
@@ -1957,7 +1957,7 @@ module Shumway {
     }
 
     colorLns(color: string, str: string) {
-      var lines = str.split("\n");
+      var lines = (str || '').split("\n");
       for (var i = 0; i < lines.length; i++) {
         this.colorLn(color, lines[i]);
       }
