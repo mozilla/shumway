@@ -57,6 +57,7 @@ module Shumway.AVMX.AS {
       //}
 
       public axGetProperty(mn: Multiname): any {
+        // REDUX:
         //if (Dictionary.isTraitsOrDynamicPrototype(this)) {
         //  return _asGetProperty.call(this, namespaces, name, flags);
         //}
@@ -68,6 +69,7 @@ module Shumway.AVMX.AS {
       }
 
       public axSetProperty(mn: Multiname, value: any) {
+        // REDUX:
         //if (Dictionary.isTraitsOrDynamicPrototype(this)) {
         //  return _asSetProperty.call(this, namespaces, name, flags, value);
         //}
@@ -83,11 +85,13 @@ module Shumway.AVMX.AS {
       }
 
       // TODO: Not implemented yet.
+        // REDUX:
       // public asCallProperty(namesp aces: Namespace [], name: any, flags: number, isLex: boolean, args: any []) {
       //   notImplemented("asCallProperty");
       // }
 
       public axHasPropertyInternal(mn: Multiname) {
+        // REDUX:
         //if (Dictionary.isTraitsOrDynamicPrototype(this)) {
         //  return _asHasProperty.call(this, namespaces, name, flags);
         //}
@@ -99,6 +103,7 @@ module Shumway.AVMX.AS {
       }
 
       public axDeleteProperty(mn: Multiname) {
+        // REDUX:
         //if (Dictionary.isTraitsOrDynamicPrototype(this)) {
         //  return _asDeleteProperty.call(this, namespaces, name, flags);
         //}
@@ -115,6 +120,7 @@ module Shumway.AVMX.AS {
       }
 
       public axGetEnumerableKeys(): any [] {
+        // REDUX:
         //if (Dictionary.isTraitsOrDynamicPrototype(this)) {
         //  return _asGetEnumerableKeys.call(this);
         //}

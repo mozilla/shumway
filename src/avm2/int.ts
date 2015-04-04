@@ -454,7 +454,9 @@ module Shumway.AVMX {
             if (rn.name === undefined) {
               rn.name = '*';
             }
-            stack[stack.length - 1] = axGetDescendants(stack[stack.length - 1], rn, securityDomain);
+            result = axGetDescendants(stack[stack.length - 1], rn, securityDomain);
+            release || checkValue(result);
+            stack[stack.length - 1] = result;
             break;
           case Bytecode.NEWCATCH:
             stack.push(securityDomain.createCatch(body.exceptions[u30()], scope.topScope()));
@@ -467,7 +469,9 @@ module Shumway.AVMX {
           case Bytecode.GETLEX:
             popNameInto(stack, abc.getMultiname(u30()), rn);
             object = scope.topScope().findScopeProperty(rn, true, false);
-            stack.push(object.axGetProperty(rn));
+            result = object.axGetProperty(rn);
+            release || checkValue(result);
+            stack.push(result);
             break;
           case Bytecode.INITPROPERTY:
           case Bytecode.SETPROPERTY:
@@ -477,7 +481,9 @@ module Shumway.AVMX {
             break;
           case Bytecode.GETPROPERTY:
             popNameInto(stack, abc.getMultiname(u30()), rn);
-            stack[stack.length - 1] = peekBox().axGetProperty(rn);
+            result = peekBox().axGetProperty(rn);
+            release || checkValue(result);
+            stack[stack.length - 1] = result;
             break;
           case Bytecode.DELETEPROPERTY:
             popNameInto(stack, abc.getMultiname(u30()), rn);
@@ -485,7 +491,9 @@ module Shumway.AVMX {
             break;
           case Bytecode.GETSUPER:
             popNameInto(stack, abc.getMultiname(u30()), rn);
-            stack[stack.length - 1] = peekBox().axGetSuper(rn, savedScope);
+            result = peekBox().axGetSuper(rn, savedScope);
+            release || checkValue(result);
+            stack[stack.length - 1] = result;
             break;
           case Bytecode.SETSUPER:
             value = stack.pop();
@@ -505,14 +513,18 @@ module Shumway.AVMX {
             stack.push(scope.get(code[pc++]));
             break;
           case Bytecode.GETSLOT:
-            stack[stack.length - 1] = peekBox().axGetSlot(u30());
+            result = peekBox().axGetSlot(u30());
+            release || checkValue(result);
+            stack[stack.length - 1] = result;
             break;
           case Bytecode.SETSLOT:
             value = stack.pop();
             box(stack.pop()).axSetSlot(u30(), value);
             break;
           case Bytecode.GETGLOBALSLOT:
-            stack[stack.length - 1] = savedScope.global.object.axGetSlot(u30());
+            result = savedScope.global.object.axGetSlot(u30());
+            release || checkValue(result);
+            stack[stack.length - 1] = result;
             break;
           case Bytecode.SETGLOBALSLOT:
             value = stack.pop();

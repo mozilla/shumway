@@ -28,32 +28,19 @@ module Shumway.AVMX.AS {
 
   export class BaseVector extends ASObject {
     axGetProperty(mn: Multiname): any {
-      // Optimization for the common case of indexed element accesses.
-      if (typeof mn.name === 'number') {
+      var name = mn.name;
+      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
         release || assert(mn.isRuntimeName());
-        return this.axGetNumericProperty(mn.name);
-      }
-      var name = asCoerceName(mn.name);
-      if (mn.isRuntimeName() && isNumeric(name)) {
         return this.axGetNumericProperty(+name);
       }
-      var t = this.traits.getTrait(mn.namespaces, name);
-      if (t) {
-        return this[t.name.getMangledName()];
-      }
-      return this['$Bg' + name];
+      return super.axGetProperty(mn);
     }
 
     axSetProperty(mn: Multiname, value: any) {
       release || checkValue(value);
-      // Optimization for the common case of indexed element accesses.
-      if (typeof mn.name === 'number') {
+      var name = mn.name;
+      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
         release || assert(mn.isRuntimeName());
-        this.axSetNumericProperty(mn.name, value);
-        return;
-      }
-      var name = asCoerceName(mn.name);
-      if (mn.isRuntimeName() && isNumeric(name)) {
         this.axSetNumericProperty(+name, value);
         return;
       }
@@ -66,30 +53,19 @@ module Shumway.AVMX.AS {
     }
 
     axGetPublicProperty(nm: any): any {
-      // Optimization for the common case of indexed element accesses.
-      if (typeof nm === 'number') {
-        return this.axGetNumericProperty(nm);
+      if (typeof nm === 'number' || isNumeric(nm = asCoerceName(nm))) {
+        return this.axGetNumericProperty(+nm);
       }
-      var name = asCoerceName(nm);
-      if (isNumeric(name)) {
-        return this.axGetNumericProperty(+name);
-      }
-      return this['$Bg' + name];
+      return this['$Bg' + nm];
     }
 
     axSetPublicProperty(nm: any, value: any) {
       release || checkValue(value);
-      // Optimization for the common case of indexed element accesses.
-      if (typeof nm === 'number') {
-        this.axSetNumericProperty(nm, value);
+      if (typeof nm === 'number' || isNumeric(nm = asCoerceName(nm))) {
+        this.axSetNumericProperty(+nm, value);
         return;
       }
-      var name = asCoerceName(nm);
-      if (isNumeric(name)) {
-        this.axSetNumericProperty(+name, value);
-        return;
-      }
-      this['$Bg' + name] = value;
+      this['$Bg' + nm] = value;
     }
 
     axNextName(index: number): any {

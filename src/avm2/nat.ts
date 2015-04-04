@@ -189,6 +189,10 @@ module Shumway.AVMX.AS {
     return rn;
   }
 
+  function qualifyPublicName(v: any) {
+    return isIndex(v) ? v : '$Bg' + v;
+  }
+
 
   export function addPrototypeFunctionAlias(object: AXObject, name: string, fun: Function) {
     release || assert(name.indexOf('$Bg') === 0);
@@ -256,16 +260,19 @@ module Shumway.AVMX.AS {
     static axIsType: (value: any) => boolean;
 
     static getPrototypeOf: () => boolean;
-    static native_isPrototypeOf: (v: any) => boolean;
-    static native_hasOwnProperty: (v: any) => boolean;
-    static native_propertyIsEnumerable: (v: any) => boolean;
+    static native_isPrototypeOf: (nm: string) => boolean;
+    static native_hasOwnProperty: (nm: string) => boolean;
+    static native_propertyIsEnumerable: (nm: string) => boolean;
+    static native_setPropertyIsEnumerable: (nm: string, enumerable?: boolean) => boolean;
 
     static classInitializer() {
       var proto: any = this.dPrototype;
       var asProto: any = ASObject.prototype;
       addPrototypeFunctionAlias(proto, "$BghasOwnProperty", asProto.native_hasOwnProperty);
-      addPrototypeFunctionAlias(proto, "$BgpropertyIsEnumerable", asProto.native_propertyIsEnumerable);
-      addPrototypeFunctionAlias(proto, "$BgsetPropertyIsEnumerable", asProto.setPropertyIsEnumerable);
+      addPrototypeFunctionAlias(proto, "$BgpropertyIsEnumerable",
+                                asProto.native_propertyIsEnumerable);
+      addPrototypeFunctionAlias(proto, "$BgsetPropertyIsEnumerable",
+                                asProto.native_setPropertyIsEnumerable);
       addPrototypeFunctionAlias(proto, "$BgisPrototypeOf", asProto.native_isPrototypeOf);
     }
 
@@ -298,29 +305,50 @@ module Shumway.AVMX.AS {
       return false;
     }
 
-    native_hasOwnProperty(v: any): boolean {
-      return this.axHasOwnProperty(makeMultiname(v));
+    native_hasOwnProperty(nm: string): boolean {
+      var qualifiedName = qualifyPublicName(asCoerceString(nm));
+      return this.hasOwnProperty(qualifiedName) ||
+             (<any>this).axClass.tPrototype.hasOwnProperty(qualifiedName);
     }
 
-    native_propertyIsEnumerable(v: any): boolean {
-      return this.axHasOwnProperty(makeMultiname(v));
+    native_propertyIsEnumerable(nm: string): boolean {
+      var descriptor = Object.getOwnPropertyDescriptor(this, qualifyPublicName(asCoerceString(nm)));
+      return !!descriptor && descriptor.enumerable;
+    }
+
+    native_setPropertyIsEnumerable(nm: string, enumerable: boolean = true): void {
+      var qualifiedName = qualifyPublicName(asCoerceString(nm));
+      enumerable = !!enumerable;
+      var instanceInfo = (<any>this).axClass.classInfo.instanceInfo;
+      if (instanceInfo.isSealed()) {
+        this.securityDomain.throwError('ReferenceError', Errors.WriteSealedError, nm,
+                                       instanceInfo.name.name);
+      }
+      // Silently ignore trait properties.
+      var descriptor = Object.getOwnPropertyDescriptor((<any>this).axClass.tPrototype,
+                                                       qualifiedName);
+      if (descriptor) {
+        return;
+      }
+      var descriptor = Object.getOwnPropertyDescriptor(this, qualifiedName);
+      // ... and non-existent properties.
+      if (!descriptor) {
+        return;
+      }
+      if (descriptor.enumerable !== enumerable) {
+        descriptor.enumerable = enumerable;
+        Object.defineProperty(this, qualifiedName, descriptor);
+      }
     }
 
     axResolveMultiname(mn: Multiname): any {
-      if (typeof mn.name === 'number') {
+      var name = mn.name;
+      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
         release || assert(mn.isRuntimeName());
-        return mn.name;
+        return +name;
       }
-      var name = asCoerceName(mn.name);
-      var namespaces = mn.namespaces;
-      if (mn.isRuntimeName() && isNumeric(name)) {
-        return name;
-      }
-      var t = this.traits.getTrait(namespaces, name);
-      if (t) {
-        return t.name.getMangledName();
-      }
-      return '$Bg' + name;
+      var t = this.traits.getTrait(mn.namespaces, name);
+      return t ? t.name.getMangledName() : '$Bg' + name;
     }
 
     axHasProperty(mn: Multiname): boolean {
@@ -336,18 +364,13 @@ module Shumway.AVMX.AS {
 
     axSetProperty(mn: Multiname, value: any) {
       release || checkValue(value);
-      if (typeof mn.name === 'number') {
+      var name = mn.name;
+      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
         release || assert(mn.isRuntimeName());
-        this[mn.name] = value;
+        this[+name] = value;
         return;
       }
-      var name = asCoerceName(mn.name);
-      var namespaces = mn.namespaces;
-      if (mn.isRuntimeName() && isNumeric(name)) {
-        this[mn.name] = value;
-        return;
-      }
-      var t = this.traits.getTrait(namespaces, name);
+      var t = this.traits.getTrait(mn.namespaces, name);
       if (t) {
         var type = t.getType();
         if (type) {
@@ -439,7 +462,7 @@ module Shumway.AVMX.AS {
       // We have to check for trait properties too if a simple hasOwnProperty fails.
       // This is different to JavaScript's hasOwnProperty behaviour where hasOwnProperty returns
       // false for properties defined on the property chain and not on the instance itself.
-      return this.hasOwnProperty(name) || Object.getPrototypeOf(this).hasOwnProperty(name);
+      return this.hasOwnProperty(name) || (<any>this).axClass.tPrototype.hasOwnProperty(name);
     }
 
     axGetEnumerableKeys(): any [] {
@@ -608,6 +631,22 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, "$Bgfilter", asProto.filter);
       addPrototypeFunctionAlias(proto, "$Bgsort", asProto.sort);
       addPrototypeFunctionAlias(proto, "$BgsortOn", asProto.sortOn);
+
+      addPrototypeFunctionAlias(proto, "$BghasOwnProperty", asProto.native_hasOwnProperty);
+      addPrototypeFunctionAlias(proto, "$BgpropertyIsEnumerable",
+                                asProto.native_propertyIsEnumerable);
+    }
+
+    native_hasOwnProperty(nm: string): boolean {
+      return this.axHasOwnProperty(makeMultiname(nm));
+    }
+
+    native_propertyIsEnumerable(nm: string): boolean {
+      if (typeof nm === 'number' || isNumeric(nm = asCoerceName(nm))) {
+        var descriptor = Object.getOwnPropertyDescriptor(this.value, nm);
+        return !!descriptor && descriptor.enumerable;
+      }
+      super.native_propertyIsEnumerable(nm);
     }
 
     value: any [];
@@ -816,66 +855,40 @@ module Shumway.AVMX.AS {
     }
 
     axHasPropertyInternal(mn: Multiname): boolean {
-      // Optimization for the common case of array element accesses.
-      if (typeof mn.name === 'number') {
+      var name = mn.name;
+      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
         release || assert(mn.isRuntimeName());
-        return mn.name in this.value;
-      }
-      var name = asCoerceName(mn.name);
-      if (isNumeric(name)) {
         return name in this.value;
       }
-      var namespaces = mn.namespaces;
-      if (this.traits.indexOf(namespaces, name) > -1) {
+      if (this.traits.indexOf(mn.namespaces, name) > -1) {
         return true;
       }
       return '$Bg' + name in this;
     }
 
     axHasOwnProperty(mn: Multiname): boolean {
-      // Optimization for the common case of array element accesses.
-      if (typeof mn.name === 'number') {
+      var name = mn.name;
+      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
         release || assert(mn.isRuntimeName());
-        return this.value.hasOwnProperty(mn.name);
-      }
-      var name = asCoerceName(mn.name);
-      if (mn.isRuntimeName() && isNumeric(name)) {
         return this.value.hasOwnProperty(name);
       }
-      var t = this.traits.getTrait(mn.namespaces, name);
-      if (t) {
-        return true;
-      }
-      return this.hasOwnProperty('$Bg' + name);
+      return !!this.traits.getTrait(mn.namespaces, name) || this.hasOwnProperty('$Bg' + name);
     }
 
     axGetProperty(mn: Multiname): any {
-      // Optimization for the common case of array element accesses.
-      if (typeof mn.name === 'number') {
+      var name = mn.name;
+      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
         release || assert(mn.isRuntimeName());
-        return this.value[mn.name];
-      }
-      var name = asCoerceName(mn.name);
-      if (mn.isRuntimeName() && isNumeric(name)) {
         return this.value[name];
       }
-      var t = this.traits.getTrait(mn.namespaces, name);
-      if (t) {
-        return this[t.name.getMangledName()];
-      }
-      return this['$Bg' + name];
+      return super.axGetProperty(mn);
     }
 
     axSetProperty(mn: Multiname, value: any) {
       release || checkValue(value);
-      // Optimization for the common case of array element accesses.
-      if (typeof mn.name === 'number') {
+      var name = mn.name;
+      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
         release || assert(mn.isRuntimeName());
-        this.value[mn.name] = value;
-        return;
-      }
-      var name = asCoerceName(mn.name);
-      if (mn.isRuntimeName() && isNumeric(name)) {
         this.value[name] = value;
         return;
       }
@@ -888,46 +901,32 @@ module Shumway.AVMX.AS {
     }
 
     axDeleteProperty(mn: Multiname): any {
-      // Optimization for the common case of array element accesses.
-      if (typeof mn.name === 'number') {
+      var name = mn.name;
+      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
         release || assert(mn.isRuntimeName());
-        return delete this.value[mn.name];
-      }
-      var name = asCoerceName(mn.name);
-      var namespaces = mn.namespaces;
-      if (mn.isRuntimeName() && isNumeric(name)) {
         return delete this.value[name];
       }
       // Cannot delete array traits.
-      if (this.traits.getTrait(namespaces, name)) {
+      if (this.traits.getTrait(mn.namespaces, name)) {
         return false;
       }
       return delete this['$Bg' + name];
     }
 
-    axGetPublicProperty(nm: any): any {
-      // Optimization for the common case of array element accesses.
-      if (typeof nm === 'number') {
+    axGetPublicProperty(nm: string): any {
+      if (typeof nm === 'number' || isNumeric(nm = asCoerceName(nm))) {
         return this.value[nm];
       }
-      var name = asCoerceName(nm);
-      if (isNumeric(name)) {
-        return this.value[name];
-      }
-      return this['$Bg' + name];
+      return this['$Bg' + nm];
     }
 
-    axSetPublicProperty(nm: any, value: any) {
+    axSetPublicProperty(nm: string, value: any) {
       release || checkValue(value);
-      // Optimization for the common case of array element accesses.
-      if (typeof nm === 'number') {
+      if (typeof nm === 'number' || isNumeric(nm = asCoerceName(nm))) {
         this.value[nm] = value;
+        return;
       }
-      var name = asCoerceName(nm);
-      if (isNumeric(name)) {
-        this.value[name] = value;
-      }
-      this['$Bg' + name] = value;
+      this['$Bg' + nm] = value;
     }
   }
 

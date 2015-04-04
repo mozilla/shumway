@@ -79,7 +79,7 @@ module Shumway.AVMX {
   //  InvalidURIError                      : {code: 1052, message: "Invalid URI passed to %1 function."},
   //  IllegalOverrideError                 : {code: 1053, message: "Illegal override of %1 in %2."},
   //  IllegalExceptionHandlerError         : {code: 1054, message: "Illegal range or target offsets in exception handler."},
-  //  WriteSealedError                     : {code: 1056, message: "Cannot create property %1 on %2."},
+    WriteSealedError                     : {code: 1056, message: "Cannot create property %1 on %2."},
   //  IllegalSlotError                     : {code: 1057, message: "%1 can only contain methods."},
   //  IllegalOperandTypeError              : {code: 1058, message: "Illegal operand type: %1 must be %2."},
   //  ClassInfoOrderError                  : {code: 1059, message: "ClassInfo-%1 is referenced before definition."},
