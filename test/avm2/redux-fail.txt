@@ -8,12 +8,10 @@ test/avm2/pass/xml-anyname.abc
 test/avm2/pass/xml-5.abc
 test/avm2/pass/xml-2.abc
 test/avm2/pass/xml-10.abc
-test/avm2/pass/native-object.abc
 test/avm2/pass/iss-1057.abc
 test/avm2/pass/iss-1034.abc
 test/avm2/pass/describeTypeJSON.abc
 test/avm2/pass/describetype.abc
-test/avm2/pass/base.abc
 test/avm2/pass/str-0.abc
 test/avm2/pass/props-1.abc
 test/avm2/pass/for.abc

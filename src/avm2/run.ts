@@ -776,16 +776,16 @@ module Shumway.AVMX {
    * Make sure we bottom out at the securityDomain's objectPrototype.
    */
   export function safeGetPrototypeOf(object: AXObject): AXObject {
-    var prototype = Object.getPrototypeOf(object);
-    if (prototype.hasOwnProperty("traits")) {
-      return safeGetPrototypeOf(prototype);
-    }
-    if (!prototype.securityDomain) {
+    var axClass = object.axClass;
+    if (!axClass || axClass === axClass.securityDomain.AXObject) {
       return null;
     }
-    if (prototype.securityDomain.objectPrototype === object) {
-      return null;
+
+    var prototype = axClass.dPrototype;
+    if (prototype === object) {
+      prototype = axClass.superClass.dPrototype;
     }
+    release || assert(prototype.securityDomain);
     return prototype;
   }
 

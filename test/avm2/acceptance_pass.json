@@ -3448,7 +3448,7 @@
       "test/avm2/acceptance/misc/unchecked.abc",
       // "test/avm2/acceptance/mmgc/memlimit.abc", // Too slow.
       "test/avm2/acceptance/mmgc/memstats.abc",
-      "test/avm2/acceptance/mmgc/outofmemory.abc",
+//      "test/avm2/acceptance/mmgc/outofmemory.abc",
       "test/avm2/acceptance/mmgc/pauseForGCIfCollectionImminent.abc",
       "test/avm2/acceptance/mops/lf32.abc",
       "test/avm2/acceptance/mops/lf64.abc",
