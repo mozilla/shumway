@@ -716,6 +716,7 @@ module Shumway.AVMX {
   export interface AXFunction extends AXObject {
     axApply(thisArg: any, argArray?: any[]): any;
     axCall(thisArg: any): any;
+    value;
   }
 
   export interface AXMethodClosureClass extends AXClass {

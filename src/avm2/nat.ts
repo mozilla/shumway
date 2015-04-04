@@ -1560,88 +1560,182 @@ module Shumway.AVMX.AS {
   export class ASIllegalOperationError extends ASError {
   }
 
+  /**
+   * Transforms a JS value into an AS value.
+   */
+  export function transformJSValueToAS(securityDomain: SecurityDomain, value, deep: boolean) {
+    release || assert(typeof value !== 'function');
+    if (typeof value !== "object") {
+      return value;
+    }
+    if (isNullOrUndefined(value)) {
+      return value;
+    }
+    if (Array.isArray(value)) {
+      var list = [];
+      for (var i = 0; i < value.length; i++) {
+        var entry = value[i];
+        var axValue = deep ? transformJSValueToAS(securityDomain, entry, true) : entry;
+        list.push(axValue);
+      }
+      return securityDomain.createArray(list);
+    }
+    var keys = Object.keys(value);
+    var result = securityDomain.createObject();
+    for (var i = 0; i < keys.length; i++) {
+      var v = value[keys[i]];
+      if (deep) {
+        v = transformJSValueToAS(securityDomain, v, true);
+      }
+      result.axSetPublicProperty(keys[i], v);
+    }
+    return result;
+  }
+
+  /**
+   * Transforms an AS value into a JS value.
+   */
+  export function transformASValueToJS(securityDomain: SecurityDomain, value, deep: boolean) {
+    if (typeof value !== "object") {
+      return value;
+    }
+    if (isNullOrUndefined(value)) {
+      return value;
+    }
+    if (securityDomain.AXArray.axIsType(value)) {
+      var resultList = [];
+      var list = value.value;
+      for (var i = 0; i < list.length; i++) {
+        var entry = list[i];
+        var jsValue = deep ? transformASValueToJS(securityDomain, entry, true) : entry;
+        resultList.push(jsValue);
+      }
+      return resultList;
+    }
+    var keys = Object.keys(value);
+    var resultObject = {};
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      var jsKey = key;
+      if (!isNumeric(key)) {
+        release || assert(key.indexOf('$Bg') === 0);
+        jsKey = key.substr(3);
+      }
+      var v = value[key];
+      if (deep) {
+        v = transformASValueToJS(securityDomain, v, true);
+      }
+      resultObject[jsKey] = v;
+    }
+    return resultObject;
+  }
+
+  function walk(holder: any, name: string, reviver: Function) {
+    var val = holder[name];
+    if (Array.isArray(val)) {
+      var v: any[] = <any>val;
+      for (var i = 0, limit = v.length; i < limit; i++) {
+        var newElement = walk(v, asCoerceString(i), reviver);
+        if (newElement === undefined) {
+          delete v[i];
+        } else {
+          v[i] = newElement;
+        }
+      }
+    } else if (val !== null && typeof val !== 'boolean' && typeof val !== 'number' &&
+               typeof val !== 'string')
+    {
+
+      for (var p in val) {
+        if (!val.hasOwnProperty(p) || !Multiname.isPublicQualifiedName(p)) {
+          break;
+        }
+        var newElement = walk(val, p, reviver);
+        if (newElement === undefined) {
+          delete val[p];
+        } else {
+          val[p] = newElement;
+        }
+      }
+    }
+    return reviver.call(holder, name, val);
+  }
+
   export class ASJSON extends ASObject {
-    /**
-     * Transforms a JS value into an AS value.
-     */
-    static transformJSValueToAS(securityDomain: SecurityDomain, value, deep: boolean) {
-      release || assert(typeof value !== 'function');
-      if (typeof value !== "object") {
-        return value;
+
+
+    static parse(text: string, reviver: AXFunction): any {
+      text = asCoerceString(text);
+      if (text === null) {
+        this.securityDomain.throwError('SyntaxError', Errors.JSONInvalidParseInput);
       }
-      if (isNullOrUndefined(value)) {
-        return value;
+
+      var unfiltered: Object = transformJSValueToAS(this.securityDomain, JSON.parse(text), true);
+
+      if (reviver === null || arguments.length < 2) {
+        return unfiltered;
       }
-      if (Array.isArray(value)) {
-        var list = [];
-        for (var i = 0; i < value.length; i++) {
-          var entry = value[i];
-          var axValue = deep ? ASJSON.transformJSValueToAS(securityDomain, entry, true) : entry;
-          list.push(axValue);
-        }
-        return securityDomain.createArray(list);
-      }
-      var keys = Object.keys(value);
-      var result = securityDomain.createObject();
-      for (var i = 0; i < keys.length; i++) {
-        var v = value[keys[i]];
-        if (deep) {
-          v = ASJSON.transformJSValueToAS(securityDomain, v, true);
-        }
-        result.axSetPublicProperty(keys[i], v);
-      }
-      return result;
+      return walk({"": unfiltered}, "", reviver.value);
     }
 
-    /**
-     * Transforms an AS value into a JS value.
-     */
-    static transformASValueToJS(securityDomain: SecurityDomain, value, deep: boolean) {
-      if (typeof value !== "object") {
-        return value;
-      }
-      if (isNullOrUndefined(value)) {
-        return value;
-      }
-      if (securityDomain.AXArray.axIsType(value)) {
-        var resultList = [];
-        var list = value.value;
-        for (var i = 0; i < list.length; i++) {
-          var entry = list[i];
-          var jsValue = deep ? ASJSON.transformASValueToJS(securityDomain, entry, true) : entry;
-          resultList.push(jsValue);
+    static stringify(value: any, replacer = null, space = null): string {
+      // We deliberately deviate from ECMA-262 and throw on
+      // invalid replacer parameter.
+      if (replacer !== null) {
+        var securityDomain = typeof replacer === 'object' ? replacer.securityDomain : null;
+        if (!securityDomain || !(securityDomain.AXFunction.axIsType(replacer) ||
+                                 securityDomain.AXArray.axIsType(replacer)))
+        {
+          this.securityDomain.throwError('TypeError', Errors.JSONInvalidReplacer);
         }
-        return resultList;
       }
-      var keys = Object.keys(value);
-      var resultObject = {};
-      for (var i = 0; i < keys.length; i++) {
-        var key = keys[i];
-        var jsKey = key;
-        if (!isNumeric(key)) {
-          release || assert(key.indexOf('$Bg') === 0);
-          jsKey = key.substr(3);
-        }
-        var v = value[key];
-        if (deep) {
-          v = ASJSON.transformASValueToJS(securityDomain, v, true);
-        }
-        resultObject[jsKey] = v;
+
+      var gap;
+      if (typeof space === 'string') {
+        gap = space.length > 10 ? space.substring(0, 10) : space;
+      } else if (typeof space === 'number') {
+        gap = "          ".substring(0, Math.min(10, space | 0));
+      } else {
+        // We follow ECMA-262 and silently ignore invalid space parameter.
+        gap = "";
       }
-      return resultObject;
+
+      if (replacer === null) {
+        return this.stringifySpecializedToString(value, null, null, gap);
+      } else if (Array.isArray(replacer)) {
+        return this.stringifySpecializedToString(value, this.computePropertyList(replacer), null,
+                                                 gap);
+      } else { // replacer is Function
+        return this.stringifySpecializedToString(value, null, replacer, gap);
+      }
     }
 
-    private static parseCore(text: string): Object {
-      // REDUX:
-      //text = asCoerceString(text);
-      //return ASJSON.transformJSValueToAS(JSON.parse(text), true)
-      return;
+    // ECMA-262 5th ed, section 15.12.3 stringify, step 4.b
+    private static computePropertyList(r: any[]): string[] {
+      var propertyList = [];
+      var alreadyAdded = Object.create(null);
+      for (var i = 0, length = r.length; i < length; i++) {
+        if (!r.hasOwnProperty(<any>i)) {
+          continue;
+        }
+        var v = r[i];
+        var item: string = null;
+
+        if (typeof v === 'string') {
+          item = v;
+        } else if (typeof v === 'number') {
+          item = asCoerceString(v);
+        }
+        if (item !== null && !alreadyAdded[item]) {
+          alreadyAdded[item] = true;
+          propertyList.push(item);
+        }
+      }
+      return propertyList;
     }
 
     private static stringifySpecializedToString(value: Object, replacerArray: any [], replacerFunction: (key: string, value: any) => any, gap: string): string {
-      // REDUX:
-      // return JSON.stringify(ASJSON.transformASValueToJS(value, true), replacerFunction, gap);
-      return null;
+      return JSON.stringify(transformASValueToJS(this.securityDomain, value, true), replacerFunction, gap);
     }
   }
 

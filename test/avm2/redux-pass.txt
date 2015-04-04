@@ -146,3 +146,4 @@ test/avm2/pass/proxy-3.abc
 test/avm2/pass/proxy-2.abc
 test/avm2/pass/proxy-1.abc
 test/avm2/pass/proxy-0.abc
+test/avm2/pass/json.abc
