@@ -17,8 +17,6 @@
 module Shumway.AVMX.AS {
   import notImplemented = Shumway.Debug.notImplemented;
   import unexpected = Shumway.Debug.unexpected;
-  import Namespace = Shumway.AVMX.Namespace;
-  import Multiname = Shumway.AVMX.Multiname;
 
   import utf8decode = Shumway.StringUtilities.utf8decode;
   import utf8encode = Shumway.StringUtilities.utf8encode;
