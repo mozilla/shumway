@@ -1125,10 +1125,15 @@ module Shumway.AVMX.AS {
       return this.value.search(pattern);
     }
     slice(start?: number, end?: number) {
+      start = arguments.length < 1 ? 0 : start | 0;
+      end = arguments.length < 2 ? 0xffffffff : end | 0;
       return this.value.slice(start, end);
     }
     split(separator: string, limit?: number) {
-      return this.value.split(separator, limit);
+      separator = asCoerceString(separator);
+      limit = arguments.length < 2 ? 0xffffffff : limit | 0;
+      release || assert(typeof this.value === 'string');
+      return this.securityDomain.createArray(this.value.split(separator, limit));
     }
     substring(start: number, end?: number) {
       return this.value.substring(start, end);
@@ -1183,7 +1188,16 @@ module Shumway.AVMX.AS {
       return String.prototype.slice.call(this.value, start, end);
     }
     generic_split(separator: string, limit?: number) {
-      return String.prototype.split.call(this.value, separator, limit);
+      separator = asCoerceString(separator);
+      limit = arguments.length < 2 ? 0xffffffff : limit | 0;
+      var str;
+      if (this && typeof this.value === 'string') {
+        str = this.value;
+      } else {
+        str = asCoerceString(this);
+      }
+      var list = str.split(separator, limit);
+      return (<AXClass><any>this).securityDomain.createArray(list);
     }
     generic_substring(start: number, end?: number) {
       return String.prototype.substring.call(this.value, start, end);
