@@ -1131,6 +1131,7 @@ module Shumway.AVMX {
       }
 
       var uri = '';
+      var name;
       if (nameIndex > 0 && nameIndex < simpleName.length - 1) {
         name = simpleName.substring(nameIndex + 1).trim();
         uri = simpleName.substring(0, nameIndex).trim();
