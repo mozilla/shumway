@@ -1328,6 +1328,7 @@ module Shumway.AVMX.AS {
 
     static native_defaultSettings():Object {
       return {
+        __proto__: this.securityDomain.AXObject.tPrototype,
         $BgignoreComments: true,
         $BgignoreProcessingInstructions: true,
         $BgignoreWhitespace: true,
