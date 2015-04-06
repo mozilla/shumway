@@ -118,9 +118,9 @@ module Shumway.AVMX {
     }
 
     if (methodInfo.needsRest()) {
-      local.push(box(sliceArguments(callArgs, methodInfo.parameters.length)));
+      local.push(securityDomain.createArray(sliceArguments(callArgs, methodInfo.parameters.length)));
     } else if (methodInfo.needsArguments()) {
-      local.push(box(sliceArguments(callArgs, 0)));
+      local.push(securityDomain.createArray(sliceArguments(callArgs, 0)));
     }
 
     var args = [];

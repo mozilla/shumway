@@ -117,7 +117,8 @@ module Shumway.AVMX.AS {
         if (trait) {
           return super.axCallProperty(mn, args, isLex);
         }
-        return this[proxyPrefix + 'callProperty'](asCoerceString(mn.name), args);
+        var callArgs = [asCoerceString(mn.name)].concat(args);
+        return this[proxyPrefix + 'callProperty'].apply(this, callArgs);
       }
 
       public axHasProperty(mn: Multiname): any {
