@@ -292,8 +292,7 @@ module Shumway.AVMX.AS {
     getPrototypeOf: () => any;
 
     native_isPrototypeOf(v: any): boolean {
-      notImplemented("Object::isPrototypeOf");
-      return false;
+      return this.isPrototypeOf(this.securityDomain.box(v));
     }
 
     native_hasOwnProperty(nm: string): boolean {
