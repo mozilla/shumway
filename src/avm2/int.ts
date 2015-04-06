@@ -33,6 +33,10 @@ module Shumway.AVMX {
     public pop() {
       this.isWith.pop();
       this.stack.pop();
+      if (this.scopes.length > this.stack.length) {
+        this.scopes.length--;
+        release || assert(this.scopes.length === this.stack.length);
+      }
     }
 
     public topScope(): Scope {
@@ -714,12 +718,14 @@ module Shumway.AVMX {
           case Bytecode.SETLOCAL3:
             local[bc - Bytecode.SETLOCAL0] = stack.pop();
             break;
-          //case Bytecode.dxns:
-          //  Shumway.AVM2.AS.ASXML.defaultNamespace = strings[bc.index];
-          //  break;
-          //case Bytecode.dxnslate:
-          //  Shumway.AVM2.AS.ASXML.defaultNamespace = stack.pop();
-          //  break;
+          case Bytecode.DXNS:
+            securityDomain.AXNamespace.defaultNamespace = new Namespace(null, NamespaceType.Public,
+                                                                   abc.getString(u30()));
+            break;
+          case Bytecode.DXNSLATE:
+            securityDomain.AXNamespace.defaultNamespace = new Namespace(null, NamespaceType.Public,
+                                                                   stack.pop());
+            break;
           case Bytecode.DEBUG:
             pc ++; u30();
             pc ++; u30();
@@ -748,8 +754,11 @@ module Shumway.AVMX {
           }
           // In the extension, we can just kill all the things.
           var player = securityDomain['player'];
+          console.error(message);
           if (player) {
             player.executeFSCommand('quit', [message]);
+          } else if (typeof jsGlobal.quit === 'function') {
+            jsGlobal.quit();
           }
           // In other packagings, at least throw a valid value.
           var mn = Multiname.FromSimpleName('TypeError');

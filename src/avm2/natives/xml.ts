@@ -59,6 +59,7 @@ module Shumway.AVMX.AS {
   import notImplemented = Shumway.Debug.notImplemented;
 
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
+  import defineReadOnlyProperty = Shumway.ObjectUtilities.defineReadOnlyProperty;
 
   export function isXMLType(val: any, securityDomain: SecurityDomain): boolean {
     return typeof val === 'object' && val &&
@@ -278,9 +279,9 @@ module Shumway.AVMX.AS {
     }
     // The E4X spec says we must throw a TypeError for non-Boolean, Number, or String objects.
     // Flash thinks otherwise.
-    var parentString = '<parent xmlns="' +
-                       escapeAttributeValue(targetList.securityDomain.AXXML.defaultNamespace.uri) +
-                       '">' + value + '</parent>';
+    var defaultNamespace = targetList.securityDomain.AXNamespace.defaultNamespace;
+    var parentString = '<parent xmlns="' + escapeAttributeValue(defaultNamespace.uri) + '">' +
+                       value + '</parent>';
     var x = toXML(parentString, targetList.securityDomain);
     var children = x._children;
     if (!children) {
@@ -305,7 +306,7 @@ module Shumway.AVMX.AS {
       if (mn instanceof Multiname) {
         return mn;
       }
-      if (securityDomain.AXQName.dPrototype.isPrototypeOf(mn)) {
+      if (mn.axClass === securityDomain.AXQName) {
         // Object - If the input argument is a QName object,
         // return its Multiname.
         return mn.name;
@@ -340,10 +341,12 @@ module Shumway.AVMX.AS {
   }
 
   function coerceE4XMultiname(mn: Multiname, securityDomain: SecurityDomain) {
-    release || assert(!mn.isRuntime());
+    var out = mn.isAttribute() ? tmpAttributeMultiname : tmpMultiname;
 
-    var out = tmpMultiname;
-
+    // Queries of the foo[new QName('bar')] sort create this situation.
+    if (mn.name && mn.name.axClass === securityDomain.AXQName) {
+      mn = mn.name.name;
+    }
     if (mn.isQName()) {
       out.name = mn.name;
       out.namespaces = mn.namespaces;
@@ -351,7 +354,7 @@ module Shumway.AVMX.AS {
       if (mn.isAnyNamespace()) {
         out.namespaces = mn.namespaces;
       } else {
-        var defaultNS = securityDomain.AXXML.defaultNamespace;
+        var defaultNS = securityDomain.AXNamespace.defaultNamespace;
         var namespaces = mn.namespaces;
         var containsDefaultNS = false;
         for (var i = 0; i < namespaces.length; i++) {
@@ -370,10 +373,9 @@ module Shumway.AVMX.AS {
         }
       }
     }
-    out.kind = mn.kind;
 
     var name = mn.name;
-    if (mn.isAnyName() || name === '*') {
+    if (mn.isAnyName() || name === '*' || name === null) {
       out.name = null;
     } else if (name.length > 1 && name[0] === '@') {
       if (!out.isAttribute()) {
@@ -395,9 +397,9 @@ module Shumway.AVMX.AS {
 
   // 12.1 GetDefaultNamespace
   function getDefaultNamespace(securityDomain: SecurityDomain): Namespace {
-    // The scope's default xml namespace is stored in securityDomain.AXXML.defaultNamespace.
+    // The scope's default xml namespace is stored in securityDomain.AXNamespace.defaultNamespace.
     // TODO: don't be like this. Store the default namespace on the scope. Please.
-    return securityDomain.AXXML.defaultNamespace;
+    return securityDomain.AXNamespace.defaultNamespace;
   }
 
   /**
@@ -435,27 +437,28 @@ module Shumway.AVMX.AS {
     return true;
   }
 
-  var tmpAttributeMultiname = new Multiname(null, 0, CONSTANT.QNameA, [], '*');
-  var tmpMultiname = new Multiname(null, 0, CONSTANT.QName, [], '*');
+  var tmpAttributeMultiname = new Multiname(null, 0, CONSTANT.QNameA, [], null);
+  release || defineReadOnlyProperty(tmpAttributeMultiname, 'kind', CONSTANT.QNameA);
+  var tmpMultiname = new Multiname(null, 0, CONSTANT.QName, [], null);
+  release || defineReadOnlyProperty(tmpMultiname, 'kind', CONSTANT.QName);
   var anyMultiname = new Multiname(null, 0, CONSTANT.QName,
                                    [new Namespace(null, NamespaceType.Public, '')], null);
-  if (!release) {
-    Object.seal(anyMultiname);
-  }
+  release || Object.seal(anyMultiname);
 
   export class XMLParser {
     constructor(private securityDomain: SecurityDomain) {
     }
     private parseXml(s) {
+      var securityDomain = this.securityDomain;
       var i = 0, scopes: any [] = [{
         namespaces: [],
         lookup: {
           "xmlns": 'http://www.w3.org/2000/xmlns/',
           "xml": 'http://www.w3.org/XML/1998/namespace'
         },
-        inScopes: [this.securityDomain.AXXML.defaultNamespace],
+        inScopes: [this.securityDomain.AXNamespace.defaultNamespace],
         space: 'default',
-        xmlns: this.securityDomain.AXXML.defaultNamespace.uri
+        xmlns: this.securityDomain.AXNamespace.defaultNamespace.uri
       }];
       function resolveEntities(s) {
         return s.replace(/&([^;]+);/g, function(all, entity) {
@@ -506,11 +509,12 @@ module Shumway.AVMX.AS {
         var j = name.indexOf(':');
         if (j >= 0) {
           var prefix = name.substring(0,j);
+          var localName = name.substring(j + 1);
           var namespace = lookupNs(prefix);
           if (namespace === undefined) {
+            securityDomain.throwError('TypeError', Errors.XMLPrefixNotBound, prefix, localName);
             throw "Unknown namespace: " + prefix;
           }
-          var localName = name.substring(j + 1);
           return {
             name: namespace + '::' + localName,
             localName: localName,
@@ -660,7 +664,7 @@ module Shumway.AVMX.AS {
                     ns.prefix = prefix;
                     scope.namespaces.push(ns);
                   }
-                  delete contentAttributes[q];
+                  contentAttributes[q] = null;
                 } else if (attributeName === "xmlns") {
                   var uri = attribute.value;
                   if (lookupDefaultNs() !== uri) {
@@ -668,19 +672,10 @@ module Shumway.AVMX.AS {
                     var ns = new Namespace(null, NamespaceType.Public, uri);
                     scope.namespaces.push(ns);
                   }
-                  delete contentAttributes[q];
+                  contentAttributes[q] = null;
                 } else if (attributeName.substring(0, 4) === "xml:") {
                   var xmlAttrName = attributeName.substring(4);
-                  if (xmlAttrName !== 'space' &&
-                      xmlAttrName !== 'lang' &&
-                      xmlAttrName !== 'base' &&
-                      xmlAttrName !== 'id')
-                  {
-                    throw "Invalid xml attribute: " + attributeName;
-                  }
                   scope[xmlAttrName] = trimWhitespaces(attribute.value);
-                } else if (attributeName.substring(0, 3) === "xml") {
-                  throw "Invalid xml attribute";
                 } else {
                   // skip ordinary attributes until all xmlns have been handled
                 }
@@ -731,11 +726,11 @@ module Shumway.AVMX.AS {
       var parent = this.currentElement;
       this.elementsStack.push(parent);
       this.currentElement = createXML(this.securityDomain, ASXMLKind.Element, name.namespace,
-                                      name.name, name.prefix);
+                                      name.localName, name.prefix);
       for (var i = 0; i < attrs.length; ++i) {
         var rawAttr = attrs[i];
         var attr = createXML(this.securityDomain, ASXMLKind.Attribute, rawAttr.name.namespace,
-                             rawAttr.name.name, rawAttr.name.prefix);
+                             rawAttr.name.localName, rawAttr.name.prefix);
         attr._value = rawAttr.value;
         attr._parent = this.currentElement;
         this.currentElement._attributes.push(attr);
@@ -807,10 +802,11 @@ module Shumway.AVMX.AS {
 
   export class ASNamespace extends ASObject implements XMLType {
     public static instanceConstructor: any = ASNamespace;
-    static classInitializer: any = function() {
+    static classInitializer() {
       defineNonEnumerableProperty(this, '$Bglength', 2);
-      var proto: any = ASNamespace.prototype;
-      defineNonEnumerableProperty(proto, '$BgtoString', proto.toString);
+      var proto: any = this.dPrototype;
+      var asProto: any = ASNamespace.prototype;
+      defineNonEnumerableProperty(proto, '$BgtoString', asProto.toString);
     }
 
     private _ns: Namespace;
@@ -858,6 +854,8 @@ module Shumway.AVMX.AS {
       return result;
     }
 
+    public static defaultNamespace = new Namespace(null, NamespaceType.Public, '');
+
     axInitializer: (uriOrPrefix_?: any, uri_?: any) => any;
 
     /**
@@ -868,7 +866,7 @@ module Shumway.AVMX.AS {
      * Namespace (prefixValue, uriValue)
      */
     constructor(uriOrPrefix_?: any, uri_?: any) {
-      false && super();
+      super();
       // 1. Create a new Namespace object n
       var uri: string = "";
       var prefix: string = "";
@@ -880,24 +878,31 @@ module Shumway.AVMX.AS {
       // 3. Else if prefixValue is not specified
       else if (arguments.length === 1) {
         var uriValue = uriOrPrefix_;
-        // a. If Type(uriValue) is Object and uriValue.[[Class]] == "Namespace"
-        if (isObject(uriValue) &&
-            this.securityDomain.AXNamespace.dPrototype.isPrototypeOf(uriValue)) {
-          var uriValueAsNamespace: ASNamespace = uriValue;
-          // i. Let n.prefix = uriValue.prefix
-          prefix = uriValueAsNamespace.prefix;
-          // ii. Let n.uri = uriValue.uri
-          uri = uriValueAsNamespace.uri;
+        if (uriValue instanceof Namespace) {
+          this._ns = uriValue;
+          return;
         }
-        // b. Else if Type(uriValue) is Object and uriValue.[[Class]] == "QName" and uriValue.uri
-        // is not null
-        else if (isObject(uriValue) &&
-                 this.securityDomain.AXQName.dPrototype.isPrototypeOf(uriValue) &&
-                 (<ASQName>uriValue).uri !== null) {
-          // i. Let n.uri = uriValue.uri
-          uri = uriValue.uri;
-          // NOTE implementations that preserve prefixes in qualified names may also set n.prefix =
-          // uriValue.[[Prefix]]
+        release || checkValue(uriValue);
+        if (uriValue && typeof uriValue === 'object') {
+          // Non-spec'ed, but very useful:
+          // a. If Type(uriValue) is Object and uriValue.[[Class]] == "Namespace"
+          if (uriValue.axClass === this.securityDomain.AXNamespace) {
+            var uriValueAsNamespace: ASNamespace = uriValue;
+            // i. Let n.prefix = uriValue.prefix
+            prefix = uriValueAsNamespace.prefix;
+            // ii. Let n.uri = uriValue.uri
+            uri = uriValueAsNamespace.uri;
+          }
+          // b. Else if Type(uriValue) is Object and uriValue.[[Class]] == "QName" and uriValue.uri
+          // is not null
+          else if (uriValue.axClass === this.securityDomain.AXQName &&
+                   (<ASQName>uriValue).uri !== null)
+          {
+            // i. Let n.uri = uriValue.uri
+            uri = uriValue.uri;
+            // NOTE implementations that preserve prefixes in qualified names may also set n.prefix
+            // = uriValue.[[Prefix]]
+          }
         }
         // c. Else
         else {
@@ -919,7 +924,7 @@ module Shumway.AVMX.AS {
         var uriValue = uri_;
         // a. If Type(uriValue) is Object and uriValue.[[Class]] == "QName" and uriValue.uri is not
         // null
-        if (isObject(uriValue) && this.securityDomain.AXQName.dPrototype.isPrototypeOf(uriValue) &&
+        if (isObject(uriValue) && uriValue.axClass === this.securityDomain.AXQName &&
             (<ASQName>uriValue).uri !== null)
         {
           // i. Let n.uri = uriValue.uri
@@ -979,14 +984,14 @@ module Shumway.AVMX.AS {
     }
 
     toString() {
-      if (this === ASNamespace.prototype) {
+      if (this === this.axClass.dPrototype) {
         return '';
       }
       return this._ns.uri;
     }
 
     valueOf() {
-      if (this === ASNamespace.prototype) {
+      if (this === this.axClass.dPrototype) {
         return '';
       }
       return this._ns.uri;
@@ -1029,16 +1034,14 @@ module Shumway.AVMX.AS {
       var nameOrNS_ = args[0];
       var name_ = args[1];
       // 1. If Namespace is not specified and Type(Name) is Object and Name.[[Class]] == “QName”
-      if (args.length === 1 && isObject(nameOrNS_) &&
-          this.securityDomain.AXQName.dPrototype.isPrototypeOf(nameOrNS_))
-      {
+      if (args.length === 1 && nameOrNS_ && nameOrNS_.axClass === this.securityDomain.AXQName) {
         // a. Return Name
         return  nameOrNS_;
       }
 
       // 2. Create and return a new QName object exactly as if the QName constructor had been
       // called with the same arguments (section 13.3.2).
-      switch (arguments.length) {
+      switch (args.length) {
         case 0:
           return this.securityDomain.AXQName.Create();
         case 1:
@@ -1058,7 +1061,7 @@ module Shumway.AVMX.AS {
      * new QName (Namespace, Name)
      */
     constructor(nameOrNS_?: any, name_?: any) {
-      false && super();
+      super();
 
       var name;
       var namespace;
@@ -1073,8 +1076,7 @@ module Shumway.AVMX.AS {
       }
 
       // 1. If (Type(Name) is Object and Name.[[Class]] == "QName")
-      if (this.securityDomain.AXQName.dPrototype.isPrototypeOf(name))
-      {
+      if (name && name.axClass === this.securityDomain.AXQName) {
         // a. If (Namespace is not specified), return a copy of Name
         if (arguments.length < 2) {
           release || assert(name !== tmpMultiname && name !== tmpAttributeMultiname);
@@ -1096,7 +1098,7 @@ module Shumway.AVMX.AS {
         name = toString(name, this.securityDomain);
       }
       // 4. If (Namespace is undefined or not specified)
-      if (namespace === undefined || arguments.length < 2) {
+      if (namespace === undefined) {
         // a. If Name = "*"
         if (name === "*") {
           // i. Let Namespace = null
@@ -1115,15 +1117,15 @@ module Shumway.AVMX.AS {
       if (namespace !== null) {
         // a. Let Namespace be a new Namespace created as if by calling the constructor new
         // Namespace(Namespace)
-        if (!this.securityDomain.AXNamespace.dPrototype.isPrototypeOf(namespace)) {
+        if (namespace.axClass !== this.securityDomain.AXNamespace) {
           namespace = this.securityDomain.AXNamespace.Create(namespace);
-          ns = namespace._ns;
         }
+        ns = namespace._ns;
         //// b. Let q.uri = Namespace.uri
         //uri = namespace.uri;
         // NOTE implementations that preserve prefixes in qualified names may also set
         // q.[[Prefix]] to Namespace.prefix
-      } else {
+      //} else {
         // a. Let q.uri = null
         // NOTE implementations that preserve prefixes in qualified names may also set q.[[Prefix]]
         // to undefined
@@ -1135,7 +1137,7 @@ module Shumway.AVMX.AS {
 
     // E4X 11.5.1 The Abstract Equality Comparison Algorithm, step 3.b.
     equals(other: any): boolean {
-      return this.securityDomain.AXQName.dPrototype.isPrototypeOf(other) &&
+      return other && other.axClass === this.securityDomain.AXQName &&
              (<ASQName>other).uri === this.uri && (<ASQName>other).name.name === this.name.name ||
              typeof other === 'string' && this.toString() === other;
     }
@@ -1159,7 +1161,7 @@ module Shumway.AVMX.AS {
       if (this === ASQName.dPrototype) {
         return "";
       }
-      if (!(this.securityDomain.AXQName.dPrototype.isPrototypeOf(this))) {
+      if (!(this && this.axClass === this.securityDomain.AXQName)) {
         this.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
                                        "QName.prototype.toString");
       }
@@ -1232,9 +1234,9 @@ module Shumway.AVMX.AS {
       var proto: any = this.dPrototype;
       var asProto: any = ASXML.prototype;
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
-      defineNonEnumerableProperty(proto, '$BghasOwnProperty', proto.native_hasOwnProperty);
+      defineNonEnumerableProperty(proto, '$BghasOwnProperty', asProto.native_hasOwnProperty);
       defineNonEnumerableProperty(proto, '$BgpropertyIsEnumerable',
-                                  proto.native_propertyIsEnumerable);
+                                  asProto.native_propertyIsEnumerable);
 
       addPrototypeFunctionAlias(<any>this, '$BgvalueOf', asProto.valueOf);
       addPrototypeFunctionAlias(proto, '$Bgsettings', this.native_settings);
@@ -1336,7 +1338,6 @@ module Shumway.AVMX.AS {
       };
     }
 
-    public static defaultNamespace = new Namespace(null, NamespaceType.Public, '');
     private static _flags: ASXML_FLAGS = ASXML_FLAGS.ALL;
     private static _prettyIndent = 2;
     _attributes: ASXML[];
@@ -1589,7 +1590,7 @@ module Shumway.AVMX.AS {
       this._prettyIndent = newIndent;
     }
     toString(): string {
-      if (this.securityDomain.AXXML.isTraitsOrdPrototype(this)) {
+      if (this === this.axClass.dPrototype) {
         return '';
       }
       if (this.hasComplexContent()) {
@@ -1599,7 +1600,7 @@ module Shumway.AVMX.AS {
     }
     // 13.4.4.14 XML.prototype.hasOwnProperty ( P )
     native_hasOwnProperty(P: string): boolean {
-      if (this.securityDomain.AXXML.isTraitsOrdPrototype(this)) {
+      if (this === this.axClass.dPrototype) {
         return ASObject.prototype.native_hasOwnProperty.call(this, P);
       }
       var mn = toXMLName(P, this.securityDomain);
@@ -1638,7 +1639,7 @@ module Shumway.AVMX.AS {
       if (!(this.securityDomain.AXXML.dPrototype.isPrototypeOf(this))) {
         this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
-      if (this.securityDomain.AXQName.tPrototype.isPrototypeOf(arg)) {
+      if (arg && arg.axClass === this.securityDomain.AXQName) {
         return this.getProperty((<ASQName>arg).name);
       }
       arg = asCoerceString(arg);
@@ -1672,12 +1673,11 @@ module Shumway.AVMX.AS {
       }
       // Steps 2-3.
       var mn: Multiname;
-      if (typeof propertyName === 'string') {
-        mn = tmpMultiname;
-        mn.name = propertyName;
-      } else {
-        release || assert(this.securityDomain.AXQName.dPrototype.isPrototypeOf(propertyName));
+      if (propertyName && propertyName.axClass === this.securityDomain.AXQName) {
         mn = (<any>propertyName).name;
+      } else {
+        mn = tmpMultiname;
+        mn.name = toString(propertyName, this.securityDomain);
       }
       return this.getProperty(mn);
     }
@@ -1726,21 +1726,19 @@ module Shumway.AVMX.AS {
       return this._deepCopy();
     }
     // 9.1.1.8 [[Descendants]] (P)
-    descendants(name_: any = "*"): ASXMLList {
+    descendants(name: any): ASXMLList {
       if (!(this.securityDomain.AXXML.dPrototype.isPrototypeOf(this))) {
         this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       var xl = this.securityDomain.AXXMLList.CreateList(this, this._name);
-      var name = toXMLName(name_, this.securityDomain);
-      return this.descendantsInto(name, xl);
+      return this.descendantsInto(toXMLName(name, this.securityDomain), xl);
     }
-    elements(name: any = "*"): ASXMLList {
+    elements(name: any): ASXMLList {
       if (!(this.securityDomain.AXXML.dPrototype.isPrototypeOf(this))) {
         this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       // 13.4.4.13 XML.prototype.elements ( [ name ] )
-      tmpMultiname.name = name;
-      return this.getProperty(tmpMultiname);
+      return this.getProperty(toXMLName(name, this.securityDomain));
     }
     hasComplexContent(): boolean {
       if (!(this.securityDomain.AXXML.dPrototype.isPrototypeOf(this))) {
@@ -1938,18 +1936,17 @@ module Shumway.AVMX.AS {
       return this._parent || undefined;
     }
     // 13.4.4.28 XML.prototype.processingInstructions ( [ name ] )
-    processingInstructions(name: any = "*"): ASXMLList {
+    processingInstructions(name: any): ASXMLList {
       // Step 1 (implicit).
-      // Step 2.
-      var localName = toXMLName(name, this.securityDomain).name;
       // Step 3.
       var list = this.securityDomain.AXXMLList.CreateList(this, this._name);
       list._targetObject = this;
       list._targetProperty = null;
-      // Steps 4-5.
-      return this.processingInstructionsInto(name, localName, list);
+      // Steps 2,4-5.
+      return this.processingInstructionsInto(toXMLName(name, this.securityDomain), list);
     }
-    processingInstructionsInto(name: any, localName: string, list: ASXMLList) {
+    processingInstructionsInto(name: Multiname, list: ASXMLList) {
+      var localName = name || '*';
       // Step 4.
       var children = this._children;
       if (!children) {
@@ -1958,7 +1955,7 @@ module Shumway.AVMX.AS {
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
         if (child._kind === ASXMLKind.ProcessingInstruction &&
-            (name === '*' || child._name.name === localName)) {
+            (localName === '*' || child._name.name === localName)) {
           list._children.push(child);
         }
       }
@@ -1991,7 +1988,7 @@ module Shumway.AVMX.AS {
         }
       }
       var mn: Multiname;
-      if (this.securityDomain.AXQName.tPrototype.isPrototypeOf(p)) {
+      if (p && p.axClass === this.securityDomain.AXQName) {
         mn = (<ASQName>p).name;
       }
       mn = toXMLName(p, this.securityDomain);
@@ -2051,8 +2048,7 @@ module Shumway.AVMX.AS {
         return;
       }
       // Step 2.
-      if (this.securityDomain.AXQName.dPrototype.isPrototypeOf(name_) &&
-          (<ASQName>name_).uri === null) {
+      if (name_ && name_.axClass === this.securityDomain.AXQName && (<ASQName>name_).uri === null) {
         name_ = name_.localName;
       }
       // Step 3.
@@ -2223,11 +2219,10 @@ module Shumway.AVMX.AS {
       return 'XML';
     }
 
-    public static isTraitsOrdPrototype(value): boolean {
-      return value === this.tPrototype || value === this.dPrototype;
-    }
-
     axGetEnumerableKeys() {
+      if (this === this.axClass.dPrototype) {
+        return super.axGetEnumerableKeys();
+      }
       var keys = [];
       for (var i = 0; i < this._children.length; i++) {
         keys.push(this._children[i]._name.name);
@@ -2257,8 +2252,7 @@ module Shumway.AVMX.AS {
       } else {
         c = v._deepCopy();
       }
-      // Step 5.
-      var n = mn;
+      // Step 5 (implicit).
       // Step 6.
       if (mn.isAttribute()) {
         // Step 6.a. (Omitted, the name was just created by toXMLName.)
@@ -2289,7 +2283,7 @@ module Shumway.AVMX.AS {
         var newAttributes = this._attributes = [];
         for (var j = 0; attributes && j < attributes.length; j++) {
           var attribute = attributes[j];
-          if (attribute._name.equalsQName(n)) {
+          if (attribute._name.equalsQName(mn)) {
             // Step 6.e.1.
             if (!a) {
               a = attribute;
@@ -2304,10 +2298,10 @@ module Shumway.AVMX.AS {
         // Step 6.f.
         if (!a) {
           var uri = '';
-          if (n.namespaces.length === 1) {
-            uri = n.namespaces[0].uri;
+          if (mn.namespaces.length === 1) {
+            uri = mn.namespaces[0].uri;
           }
-          a = createXML(this.securityDomain, ASXMLKind.Attribute, uri, n.name);
+          a = createXML(this.securityDomain, ASXMLKind.Attribute, uri, mn.name);
           a._parent = this;
           newAttributes.push(a);
           // TODO: implement the namespace parts of step f.
@@ -2319,15 +2313,15 @@ module Shumway.AVMX.AS {
       }
 
       var i;
-      var primitiveAssign = !isXMLType(c, this.securityDomain) && n.name !== "*";
-      var isAny = n.isAnyName();
-      var isAnyNamespace = n.isAnyNamespace();
+      var isAny = mn.isAnyName();
+      var primitiveAssign = !isXMLType(c, this.securityDomain) && !isAny && mn.name !== '*';
+      var isAnyNamespace = mn.isAnyNamespace();
       for (var k = this.length() - 1; k >= 0; k--) {
         if ((isAny || this._children[k]._kind === ASXMLKind.Element &&
-          this._children[k]._name.name === n.name) &&
+          this._children[k]._name.name === mn.name) &&
           (isAnyNamespace ||
             this._children[k]._kind === ASXMLKind.Element &&
-            this._children[k]._name.matches(n))) {
+            this._children[k]._name.matches(mn))) {
           if (i !== undefined) {
             this.deleteByIndex(i);
           }
@@ -2337,8 +2331,8 @@ module Shumway.AVMX.AS {
       if (i === undefined) {
         i = this.length();
         if (primitiveAssign) {
-          var uri = n.uri;
-          var prefix = n.prefix;
+          var uri = mn.uri;
+          var prefix = mn.prefix;
           if (uri === null) {
             var defaultNamespace = getDefaultNamespace(this.securityDomain);
             uri = defaultNamespace.uri;
@@ -2346,7 +2340,7 @@ module Shumway.AVMX.AS {
           }
           var y = createXML(this.securityDomain, ASXMLKind.Element, uri, name, prefix);
           y._parent = this;
-          var ns = GetNamespace(n, null);
+          var ns = GetNamespace(mn, null);
           this.replace(String(i), y);
           y.addInScopeNamespace(ns);
         }
@@ -2363,7 +2357,7 @@ module Shumway.AVMX.AS {
     }
 
     axSetProperty(mn: Multiname, value: any) {
-      if (this.securityDomain.AXXML.isTraitsOrdPrototype(this)) {
+      if (this === this.axClass.dPrototype) {
         release || checkValue(value);
         this[this.axResolveMultiname(mn)] = value;
         return;
@@ -2375,20 +2369,20 @@ module Shumway.AVMX.AS {
     getProperty(mn: Multiname): any {
       release || assert(mn instanceof Multiname);
       // Step 1.
-      if (isIndex(mn) || isNumeric(mn)) {
+      var nm = mn.name;
+      if (isIndex(nm)) {
         // this is a shortcut to the E4X logic that wants us to create a new
         // XMLList with of size 1 and access it with the given index.
-        if ((mn.name|0) === 0) {
+        if ((nm|0) === 0) {
           return this;
         }
         return null;
       }
-      // Step 2.
-      var name = mn;
+      // Step 2 (implicit).
       // Step 3.
       var list = this.securityDomain.AXXMLList.CreateList(this, this._name);
       list._targetObject = this;
-      list._targetProperty = name;
+      list._targetProperty = mn;
       var length = 0;
       var anyName = mn.isAnyName();
       var anyNamespace = mn.isAnyNamespace();
@@ -2397,8 +2391,8 @@ module Shumway.AVMX.AS {
       if (mn.isAttribute()) {
         for (var i = 0; this._attributes && i < this._attributes.length; i++) {
           var v = this._attributes[i];
-          if ((anyName || v._name.name === name.name) &&
-              (anyNamespace || v._name.matches(name))) {
+          if ((anyName || v._name.name === nm) &&
+              (anyNamespace || v._name.matches(mn))) {
             list._children[length++] = v;
           }
         }
@@ -2407,8 +2401,8 @@ module Shumway.AVMX.AS {
       // Step 5.
       for (var i = 0; this._children && i < this._children.length; i++) {
         var v = this._children[i];
-        if ((anyName || v._kind === ASXMLKind.Element && v._name.name === name.name) &&
-            ((anyNamespace || v._kind === ASXMLKind.Element && v._name.matches(name)))) {
+        if ((anyName || v._kind === ASXMLKind.Element && v._name.name === nm) &&
+            ((anyNamespace || v._kind === ASXMLKind.Element && v._name.matches(mn)))) {
           list._children[length++] = v;
         }
       }
@@ -2417,7 +2411,7 @@ module Shumway.AVMX.AS {
     }
 
     axGetProperty(mn: Multiname): any {
-      if (this.securityDomain.AXXML.isTraitsOrdPrototype(this)) {
+      if (this === this.axClass.dPrototype) {
         var value = this[this.axResolveMultiname(mn)];
         release || checkValue(value);
         return value;
@@ -2426,11 +2420,11 @@ module Shumway.AVMX.AS {
     }
 
     // 9.1.1.6 [[HasProperty]] (P) (well, very roughly)
-    hasProperty(mn: Multiname) {
-      if (isIndex(mn)) {
+    hasProperty(mn: Multiname): boolean {
+      if (isIndex(mn.name)) {
         // this is a shortcut to the E4X logic that wants us to create a new
         // XMLList of size 1 and access it with the given index.
-        return Number(mn) === 0;
+        return (<any>mn.name|0) === 0;
       }
       var name = toXMLName(mn, this.securityDomain);
       var anyName = name.isAnyName();
@@ -2454,7 +2448,7 @@ module Shumway.AVMX.AS {
     }
 
     deleteProperty(mn: Multiname) {
-      if (isIndex(mn)) {
+      if (isIndex(mn.name)) {
         // This hasn't ever been implemented and silently does nothing in Tamarin (and Rhino).
         return true;
       }
@@ -2488,9 +2482,13 @@ module Shumway.AVMX.AS {
     }
 
     axHasProperty(mn: Multiname): boolean {
-      if (this.securityDomain.AXXML.isTraitsOrdPrototype(this)) {
-        return this.axHasPropertyInternal(mn);
+      if (this === this.axClass.dPrototype) {
+        return super.axHasPropertyInternal(mn);
       }
+      return this.axHasPropertyInternal(mn);
+    }
+
+    axHasPropertyInternal(mn: Multiname): boolean {
       if (this.hasProperty(mn)) {
         return true;
       }
@@ -2512,6 +2510,10 @@ module Shumway.AVMX.AS {
 
     axCallProperty(mn: Multiname, args: any []): any {
       var method = this[this.axResolveMultiname(mn)];
+      // The method might be dynamically defined on XML.prototype.
+      if (!method) {
+        method = this['$Bg' + mn.name];
+      }
       // Check if the method exists before calling it.
       if (method) {
         return method.axApply(this, args);
@@ -2680,9 +2682,9 @@ module Shumway.AVMX.AS {
       var proto: any = this.dPrototype;
       var asProto: any = ASXMLList.prototype;
       defineNonEnumerableProperty(proto, '$BgvalueOf', Object.prototype['$BgvalueOf']);
-      defineNonEnumerableProperty(proto, '$BghasOwnProperty', proto.native_hasOwnProperty);
+      defineNonEnumerableProperty(proto, '$BghasOwnProperty', asProto.native_hasOwnProperty);
       defineNonEnumerableProperty(proto, '$BgpropertyIsEnumerable',
-                                  proto.native_propertyIsEnumerable);
+                                  asProto.native_propertyIsEnumerable);
 
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
       addPrototypeFunctionAlias(proto, '$BgaddNamespace', asProto.addNamespace);
@@ -2880,7 +2882,7 @@ module Shumway.AVMX.AS {
       return isIndex(P) && (P|0) < this._children.length;
     }
     attribute(arg: any): ASXMLList {
-      if (arg === '*') {
+      if (arg === '*' || arg === undefined) {
         arg = null;
       }
       tmpAttributeMultiname.name = arg;
@@ -2888,7 +2890,7 @@ module Shumway.AVMX.AS {
     }
     attributes(): ASXMLList {
       // 13.5.4.3 XMLList.prototype.attributes ( )
-      return this.attribute('*');
+      return this.attribute(anyMultiname);
     }
     child(propertyName: any): ASXMLList {
       if (isIndex(propertyName)) {
@@ -2944,7 +2946,7 @@ module Shumway.AVMX.AS {
       // 13.5.4.9 XMLList.prototype.copy ( )
       return this._deepCopy();
     }
-    elements(name: any = "*"): ASXMLList {
+    elements(name: any): ASXMLList {
       // 13.5.4.11 XMLList.prototype.elements ( [ name ] )
       var mn = toXMLName(name, this.securityDomain);
       var xl = this.securityDomain.AXXMLList.CreateList(this._targetObject, mn);
@@ -3042,11 +3044,11 @@ module Shumway.AVMX.AS {
       return parent;
     }
     // 13.5.4.18 XMLList.prototype.processingInstructions ( [ name ] )
-    processingInstructions(name: any = "*"): ASXMLList {
+    processingInstructions(name_: any): ASXMLList {
       // (Numbering in the spec starts at 6.)
       // Step 6 (implicit).
       // Step 7.
-      var localName = toXMLName(name, this.securityDomain).name;
+      var name = toXMLName(name_, this.securityDomain);
       // Step 8.
       var list = this.securityDomain.AXXMLList.CreateList(this._targetObject, this._targetProperty);
       list._targetObject = this;
@@ -3054,7 +3056,7 @@ module Shumway.AVMX.AS {
       // Step 9.
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
-        children[i].processingInstructionsInto(name, localName, list);
+        children[i].processingInstructionsInto(name, list);
       }
       // Step 10.
       return list;
@@ -3220,19 +3222,17 @@ module Shumway.AVMX.AS {
       return this._children[0].setNamespace(ns);
     }
 
-    public static isTraitsOrdPrototype(value): boolean {
-      return value === this.securityDomain.AXXMLList.tPrototype ||
-             value === this.securityDomain.AXXMLList.dPrototype;
-    }
-
     axGetEnumerableKeys(): any [] {
+      if (this === this.axClass.dPrototype) {
+        return super.axGetEnumerableKeys();
+      }
       return Object.keys(this._children);
     }
 
     // 9.2.1.1 [[Get]] (P)
     getProperty(mn: Multiname): any {
-      if (isIndex(mn)) {
-        return this._children[mn.name];
+      if (isIndex(mn.name)) {
+        return this._children[mn.name|0];
       }
       var xl = this.securityDomain.AXXMLList.CreateList(this._targetObject, mn);
       this._children.forEach(function (v:any, i) {
@@ -3253,23 +3253,40 @@ module Shumway.AVMX.AS {
     }
 
     axGetProperty(mn: Multiname): any {
-      if (this.securityDomain.AXXMLList.isTraitsOrdPrototype(this)) {
+      if (this === this.axClass.dPrototype) {
         var value = this[this.axResolveMultiname(mn)];
         release || checkValue(value);
         return value;
       }
-      return this.getProperty(mn);
+      return this.getProperty(coerceE4XMultiname(mn, this.securityDomain));
     }
 
-    hasProperty(mn) {
-      if (isIndex(mn)) {
-        return Number(mn) < this._children.length;
+    axGetPublicProperty(nm): any {
+      if (this === this.axClass.dPrototype) {
+        var value = this[Multiname.getPublicMangledName(nm)];
+        release || checkValue(value);
+        return value;
+      }
+      if (isIndex(nm)) {
+        return this._children[nm | 0];
+      }
+      tmpMultiname.name = nm;
+      return this.getProperty(tmpMultiname);
+    }
+
+    hasProperty(mn: Multiname) {
+      if (isIndex(mn.name)) {
+        return Number(mn.name) < this._children.length;
       }
       // TODO scan children on property presence?
       return true;
     }
 
     axHasProperty(mn: Multiname): boolean {
+      return this.hasProperty(mn);
+    }
+
+    axHasPropertyInternal(mn: Multiname): boolean {
       return this.hasProperty(mn);
     }
 
@@ -3321,7 +3338,7 @@ module Shumway.AVMX.AS {
             y._kind = ASXMLKind.Attribute;
           }
           // Step 2.c.v.
-          else if (!this._targetProperty || this._targetProperty.name === '*') {
+          else if (!this._targetProperty || this._targetProperty.name === null) {
             y._name = null;
             y._kind = ASXMLKind.Text;
           }
@@ -3466,7 +3483,7 @@ module Shumway.AVMX.AS {
     }
 
     axSetProperty(mn: Multiname, value: any) {
-      if (this.securityDomain.AXXMLList.isTraitsOrdPrototype(this)) {
+      if (this === this.axClass.dPrototype) {
         release || checkValue(value);
         this[this.axResolveMultiname(mn)] = value;
         return;

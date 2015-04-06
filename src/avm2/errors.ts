@@ -105,7 +105,7 @@ module Shumway.AVMX {
   //  IllegalNamespaceError                : {code: 1080, message: "Illegal value for namespace."},
   //  ReadSealedErrorNs                    : {code: 1081, message: "Property %1 not found on %2 and there is no default value."},
   //  NoDefaultNamespaceError              : {code: 1082, message: "No default namespace has been set."},
-  //  XMLPrefixNotBound                    : {code: 1083, message: "The prefix \"%1\" for element \"%2\" is not bound."},
+    XMLPrefixNotBound                    : {code: 1083, message: "The prefix \"%1\" for element \"%2\" is not bound."},
   //  XMLBadQName                          : {code: 1084, message: "Element or attribute (\"%1\") does not match QName production: QName::=(NCName':')?NCName."},
   //  XMLUnterminatedElementTag            : {code: 1085, message: "The element type \"%1\" must be terminated by the matching end-tag \"</%2>\"."},
     XMLOnlyWorksWithOneItemLists         : {code: 1086, message: "The %1 method only works on lists containing one item."},

@@ -728,7 +728,6 @@ module Shumway.AVMX {
   export interface AXXMLClass extends AXClass {
     Create(value?: any): AS.ASXML;
     isTraitsOrdPrototype(xml: AS.ASXML): boolean;
-    defaultNamespace: Namespace;
     _flags: number;
     _prettyIndent: number;
     prettyPrinting: boolean;
@@ -746,6 +745,7 @@ module Shumway.AVMX {
   export interface AXNamespaceClass extends AXClass {
     Create(uriOrPrefix?: any, uri?: any): AS.ASNamespace;
     FromNamespace(ns: Namespace): AS.ASNamespace;
+    defaultNamespace: Namespace;
   }
 
   export interface AXQNameClass extends AXClass {
@@ -1093,9 +1093,9 @@ module Shumway.AVMX {
         this.initializeRuntimeTraits(axClass, superClass, classScope);
       }
 
-      // Add the |constructor| property on the class traits prototype so that all instances can
-      // get to their class constructor.
-      defineNonEnumerableProperty(axClass.tPrototype, "$Bgconstructor", axClass);
+      // Add the |constructor| property on the class dynamic prototype so that all instances can
+      // get to their class constructor, and FooClass.prototype.constructor returns FooClass.
+      defineNonEnumerableProperty(axClass.dPrototype, "$Bgconstructor", axClass);
 
       // Copy over all TS symbols.
       AS.tryLinkNativeClass(axClass);

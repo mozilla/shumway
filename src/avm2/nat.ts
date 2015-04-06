@@ -196,6 +196,7 @@ module Shumway.AVMX.AS {
 
   export function addPrototypeFunctionAlias(object: AXObject, name: string, fun: Function) {
     release || assert(name.indexOf('$Bg') === 0);
+    // REDUX: remove the need to box the function.
     defineNonEnumerableProperty(object, name, object.securityDomain.AXFunction.axBox(fun));
   }
 
@@ -1520,9 +1521,6 @@ module Shumway.AVMX.AS {
       super();
       this.$Bgmessage = asCoerceString(message);
       this._errorID = id | 0;
-
-      // This is gnarly but saves us from having individual ctors in all Error child classes.
-      // this.name = (<ASClass><any>this.constructor).dPrototype['$Bgname'];
     }
 
     $Bgmessage: string;

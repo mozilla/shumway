@@ -191,19 +191,4 @@ public final dynamic class XMLList extends Object
     public native function XMLList(value = void 0);
 }
 
-[native(cls="QNameClass", gc="exact", instance="QNameObject", methods="auto", construct="override")]
-public final class QName extends Object
-{
-    // E357 {DontDelete, ReadOnly}
-    public native function get localName():String
-
-    // E357 {DontDelete, ReadOnly}
-    public native function get uri();
-
-    AS3 native function valueOf():QName;
-    AS3 native function toString():String;
-
-    public native function QName(namespace = void 0, name = void 0);
-}
-
 }
