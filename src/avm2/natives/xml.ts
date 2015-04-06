@@ -1859,7 +1859,7 @@ module Shumway.AVMX.AS {
       // Step 4.
       if (arguments.length === 0) {
         // Step 4.b.
-        return GetNamespace(this._name, inScopeNS);
+        return this.securityDomain.AXNamespace.FromNamespace(GetNamespace(this._name, inScopeNS));
       }
       // Step 5.a.
       prefix = asCoerceString(prefix);
@@ -1867,7 +1867,7 @@ module Shumway.AVMX.AS {
       for (var i = 0; i < inScopeNS.length; i++) {
         var ns = inScopeNS[i];
         if (ns.prefix === prefix) {
-          return ns;
+          return this.securityDomain.AXNamespace.FromNamespace(ns);
         }
       }
       // Step 5.b alternate clause implicit.
@@ -2319,8 +2319,8 @@ module Shumway.AVMX.AS {
         if ((isAny || this._children[k]._kind === ASXMLKind.Element &&
           this._children[k]._name.name === mn.name) &&
           (isAnyNamespace ||
-            this._children[k]._kind === ASXMLKind.Element &&
-            this._children[k]._name.matches(mn))) {
+           this._children[k]._kind === ASXMLKind.Element &&
+           this._children[k]._name.matches(mn))) {
           if (i !== undefined) {
             this.deleteByIndex(i);
           }
@@ -2330,8 +2330,13 @@ module Shumway.AVMX.AS {
       if (i === undefined) {
         i = this.length();
         if (primitiveAssign) {
-          var uri = mn.uri;
-          var prefix = mn.prefix;
+          var ns = mn.namespaces[0];
+          var uri: string = null;
+          var prefix;
+          if (ns.uri !== null) {
+            uri = ns.uri;
+            prefix = ns.prefix;
+          }
           if (uri === null) {
             var defaultNamespace = getDefaultNamespace(this.securityDomain);
             uri = defaultNamespace.uri;
@@ -2339,8 +2344,8 @@ module Shumway.AVMX.AS {
           }
           var y = createXML(this.securityDomain, ASXMLKind.Element, uri, name, prefix);
           y._parent = this;
-          var ns = GetNamespace(mn, null);
           this.replace(String(i), y);
+          var ns = y._name.namespace;
           y.addInScopeNamespace(ns);
         }
       }
@@ -2604,13 +2609,14 @@ module Shumway.AVMX.AS {
           this._kind === ASXMLKind.Attribute) {
         return;
       }
-      if (ns.prefix !== undefined) {
-        if (ns.prefix === "" && this._name.uri === "") {
+      var prefix = ns.prefix;
+      if (prefix !== undefined) {
+        if (prefix === "" && this._name.uri === "") {
           return;
         }
         var match = null;
         this._inScopeNamespaces.forEach(function (v, i) {
-          if (v.prefix === ns.prefix) {
+          if (v.prefix === prefix) {
             match = v;
           }
         });
@@ -2621,11 +2627,11 @@ module Shumway.AVMX.AS {
             }
           });
         }
-        if (this._name.prefix === ns.prefix) {
+        if (this._name.prefix === prefix) {
           this._name.prefix = undefined;
         }
         this._attributes.forEach(function (v, i) {
-          if (v._name.prefix === ns.prefix) {
+          if (v._name.prefix === prefix) {
             v._name.prefix = undefined;
           }
         });

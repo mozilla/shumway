@@ -1058,6 +1058,11 @@ module Shumway.AVMX {
       return this.namespaces[0].prefix;
     }
 
+    public set prefix(prefix: string) {
+      release || assert(this.isQName());
+      this.namespaces[0].prefix = prefix;
+    }
+
     public equalsQName(mn: Multiname): boolean {
       release || assert(this.isQName());
       return this.name === mn.name && this.namespaces[0].uri === mn.namespaces[0].uri;
