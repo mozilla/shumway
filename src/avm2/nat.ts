@@ -284,19 +284,8 @@ module Shumway.AVMX.AS {
       // Nop.
     }
 
-    // REDUX:
-    static instanceConstructorNoInitialize = function () { notImplemented("instanceConstructorNoInitialize => axInitialize"); };
-
-    static isInstanceOf = function (x: any) { notImplemented("isInstanceOf"); return false; };
-    static isType = function (x: any) { notImplemented("isType"); return false; };
-    static isSubtypeOf = function (x: any) { notImplemented("isType"); return false; };
-    static class: any;
-    class: any;
-    instanceConstructorNoInitialize = function () { notImplemented("instanceConstructorNoInitialize => axInitialize"); };
-    isInstanceOf = function (x: any) { notImplemented("isInstanceOf"); return false; };
-    isType = function (x: any) { notImplemented("isType"); return false; };
-    isSubtypeOf = function (x: any) { notImplemented("isType"); return false; };
-
+    static axClass: any;
+    axClass: any;
 
     getPrototypeOf: () => any;
 
@@ -317,14 +306,13 @@ module Shumway.AVMX.AS {
     native_setPropertyIsEnumerable(nm: string, enumerable: boolean = true): void {
       var qualifiedName = qualifyPublicName(asCoerceString(nm));
       enumerable = !!enumerable;
-      var instanceInfo = (<any>this).axClass.classInfo.instanceInfo;
+      var instanceInfo = this.axClass.classInfo.instanceInfo;
       if (instanceInfo.isSealed()) {
         this.securityDomain.throwError('ReferenceError', Errors.WriteSealedError, nm,
                                        instanceInfo.name.name);
       }
       // Silently ignore trait properties.
-      var descriptor = Object.getOwnPropertyDescriptor((<any>this).axClass.tPrototype,
-                                                       qualifiedName);
+      var descriptor = Object.getOwnPropertyDescriptor(this.axClass.tPrototype, qualifiedName);
       if (descriptor) {
         return;
       }
@@ -374,13 +362,13 @@ module Shumway.AVMX.AS {
         switch (t.kind) {
           case TRAIT.Method:
             this.securityDomain.throwError('ReferenceError', Errors.CannotAssignToMethodError, name,
-                                           (<AXObject><any>this).axClass.name.name);
+                                           this.axClass.name.name);
           // TODO: enable throwing after initialization has finished.
           //case TRAIT.Const:
           // Fallthrough.
           case TRAIT.Getter:
             this.securityDomain.throwError('ReferenceError', Errors.ConstWriteError, name,
-                                           (<AXObject><any>this).axClass.name.name);
+                                           this.axClass.name.name);
         }
         var type = t.getType();
         if (type) {
@@ -472,7 +460,7 @@ module Shumway.AVMX.AS {
       // We have to check for trait properties too if a simple hasOwnProperty fails.
       // This is different to JavaScript's hasOwnProperty behaviour where hasOwnProperty returns
       // false for properties defined on the property chain and not on the instance itself.
-      return this.hasOwnProperty(name) || (<any>this).axClass.tPrototype.hasOwnProperty(name);
+      return this.hasOwnProperty(name) || this.axClass.tPrototype.hasOwnProperty(name);
     }
 
     axGetEnumerableKeys(): any [] {

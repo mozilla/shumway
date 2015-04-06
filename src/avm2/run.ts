@@ -823,18 +823,17 @@ module Shumway.AVMX {
      * don't rely on it.
      */
     next(object: AXObject, index: number) {
-      this.object = object;
-      this.index = index;
-      if (isNullOrUndefined(this.object)) {
+      if (isNullOrUndefined(object)) {
         this.index = 0;
         this.object = null;
         return;
+      } else {
+        this.object = object;
+        this.index = index;
       }
-      var object = this.object;
       var nextIndex = object.axNextNameIndex(this.index);
       if (nextIndex > 0) {
         this.index = nextIndex;
-        this.object = object;
         return;
       }
       // If there are no more properties in the object then follow the prototype chain.
