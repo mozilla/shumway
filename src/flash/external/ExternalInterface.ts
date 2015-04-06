@@ -46,7 +46,7 @@ module Shumway.AVMX.AS.flash.external {
     // static call: (functionName: string) => any;
 
     private static initialized: boolean = false;
-    private static registeredCallbacks: Shumway.MapObject<(request: string, args: any []) => any> = Object.create(null);
+    private static registeredCallbacks: Shumway.MapObject<Shumway.AVMX.AS.ASFunction> = Object.create(null);
 
     private static _getAvailable(): boolean {
       return ExternalInterfaceService.instance.enabled;
@@ -66,8 +66,8 @@ module Shumway.AVMX.AS.flash.external {
       if (!callback) {
         return;
       }
-      // REDUX:
-      // return callback(functionName, ASJSON.transformJSValueToAS(args, true));
+      var asArgs = transformJSValueToAS(callback.securityDomain, args, true);
+      return (<any>callback).call(null, functionName, asArgs);
     }
 
     static _getPropNames(obj: ASObject): any [] {
@@ -77,7 +77,7 @@ module Shumway.AVMX.AS.flash.external {
       return keys;
     }
 
-    static _addCallback(functionName: string, closure: (request: string, args: any []) => any, hasNullCallback: boolean): void {
+    static _addCallback(functionName: string, closure: Shumway.AVMX.AS.ASFunction, hasNullCallback: boolean): void {
       if (hasNullCallback) {
         ExternalInterfaceService.instance.unregisterCallback(functionName);
         delete ExternalInterface.registeredCallbacks[functionName];

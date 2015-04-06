@@ -539,13 +539,13 @@ module Shumway.Player {
 
       if (this._env === 'test') {
         flash.external.ExternalInterface._initJS();
-        flash.external.ExternalInterface._addCallback('__tick__', function (request: string, args: any []) {
+        flash.external.ExternalInterface._addCallback('__tick__', this.securityDomain.AXFunction.axBox(function () {
           console.log('tick');
           self._eventLoopTick();
-        }, false);
-        flash.external.ExternalInterface._addCallback('__takeScreenshot__', function (request: string, args: any []) {
-
-        }, false);
+        }), false);
+        flash.external.ExternalInterface._addCallback('__takeScreenshot__', this.securityDomain.AXFunction.axBox(function () {
+          // TODO
+        }), false);
         this._eventLoopTick();
         return;
       }
