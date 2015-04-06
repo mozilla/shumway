@@ -269,7 +269,7 @@ module Shumway.AVMX.AS.flash.display {
     get parameters(): Object {
       somewhatImplemented("public flash.display.LoaderInfo::get parameters");
       if (this._parameters) {
-        return Shumway.ObjectUtilities.cloneObject(this._parameters);
+        return transformJSValueToAS(this.securityDomain, this._parameters, false);
       }
       return {};
     }

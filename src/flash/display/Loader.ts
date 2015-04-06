@@ -433,19 +433,8 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     private _applyLoaderContext(context: LoaderContext) {
-      var parameters = {};
-      if (context && context.parameters) {
-        var contextParameters = context.parameters;
-        for (var key in contextParameters) {
-          var value = contextParameters[key];
-          if (!isString(value)) {
-            this.securityDomain.throwError('IllegalOperationError',
-                                           Errors.ObjectWithStringsParamError,
-                                           'LoaderContext.parameters');
-          }
-          parameters[key] = value;
-        }
-      }
+      var parameters = context && context.parameters ?
+        transformASValueToJS(this.securityDomain, context.parameters, false) : {};
       if (context && context.applicationDomain) {
         var domain = null;
         // REDUX:

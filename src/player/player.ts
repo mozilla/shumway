@@ -393,7 +393,7 @@ module Shumway.Player {
     private createLoaderContext() : flash.system.LoaderContext {
       var loaderContext = new this.securityDomain.flash.system.LoaderContext();
       if (this.movieParams) {
-        var parameters: any = {};
+        var parameters: any = this.securityDomain.createObject();
         for (var i in this.movieParams) {
           parameters.axSetPublicProperty(i, this.movieParams[i]);
         }
