@@ -2857,7 +2857,7 @@ module Shumway.AVMX.AS {
     // 13.5.4.12 XMLList.prototype.hasOwnProperty ( P )
     native_hasOwnProperty(P: string): boolean {
       P = asCoerceString(P);
-      if (this.securityDomain.AXXMLList.isTraitsOrdPrototype(this)) {
+      if (<any>this === this.securityDomain.AXXMLList.dPrototype) {
         return ASObject.prototype.native_hasOwnProperty.call(this, P);
       }
       if (isIndex(P)) {

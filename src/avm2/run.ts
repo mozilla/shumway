@@ -727,7 +727,6 @@ module Shumway.AVMX {
 
   export interface AXXMLClass extends AXClass {
     Create(value?: any): AS.ASXML;
-    isTraitsOrdPrototype(xml: AS.ASXML): boolean;
     _flags: number;
     _prettyIndent: number;
     prettyPrinting: boolean;
@@ -739,7 +738,6 @@ module Shumway.AVMX {
   export interface AXXMLListClass extends AXClass {
     Create(value?: any): AS.ASXMLList;
     CreateList(targetObject: AS.ASXML, targetProperty: Multiname): AS.ASXMLList;
-    isTraitsOrdPrototype(list: AS.ASXMLList): boolean;
   }
 
   export interface AXNamespaceClass extends AXClass {
