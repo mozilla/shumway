@@ -2401,7 +2401,7 @@ module Shumway.AVMX.AS {
       for (var i = 0; this._children && i < this._children.length; i++) {
         var v = this._children[i];
         if ((anyName || v._kind === ASXMLKind.Element && v._name.name === nm) &&
-            ((anyNamespace || v._kind === ASXMLKind.Element && v._name.matches(mn)))) {
+            ((anyNamespace || v._name.matches(mn)))) {
           list._children[length++] = v;
         }
       }
@@ -3230,24 +3230,29 @@ module Shumway.AVMX.AS {
 
     // 9.2.1.1 [[Get]] (P)
     getProperty(mn: Multiname): any {
-      if (isIndex(mn.name)) {
-        return this._children[mn.name|0];
+      var nm = mn.name;
+      if (isIndex(nm)) {
+        return this._children[nm|0];
       }
+      var isAnyName = nm === null || nm === '*';
+      var isAnyNamespace = mn.isAnyNamespace();
       var xl = this.securityDomain.AXXMLList.CreateList(this._targetObject, mn);
-      this._children.forEach(function (v:any, i) {
-        // a. If x[i].[[Class]] == "element",
+      var children = this._children;
+      for (var i = 0; i < children.length; i++) {
+        var v = children[i];
         if (v._kind === ASXMLKind.Element) {
           // i. Let gq be the result of calling the [[Get]] method of x[i] with argument P
-          var gq = v.getProperty(mn);
-          // ii. If gq.[[Length]] > 0, call the [[append]] method of list with argument gq
-          if (gq.length() > 0) {
-            var descendants = gq._children;
-            for (var j = 0; j < descendants.length; j++) {
-              xl._children.push(descendants[j]);
+          // We do this inline instead to reduce the amount of temporarily created XMLLists.
+          var descendants = v._children;
+          for (var j = 0; descendants && j < descendants.length; j++) {
+            var v = descendants[j];
+            if ((isAnyName || v._kind === ASXMLKind.Element && v._name.name === nm) &&
+                (isAnyNamespace || v._name.matches(mn))) {
+              xl._children.push(v);
             }
           }
         }
-      });
+      }
       return xl;
     }
 

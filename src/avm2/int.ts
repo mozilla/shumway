@@ -33,7 +33,7 @@ module Shumway.AVMX {
     public pop() {
       this.isWith.pop();
       this.stack.pop();
-      if (this.scopes.length > this.stack.length) {
+      if (this.scopes && this.scopes.length > this.stack.length) {
         this.scopes.length--;
         release || assert(this.scopes.length === this.stack.length);
       }
@@ -757,8 +757,8 @@ module Shumway.AVMX {
           console.error(message);
           if (player) {
             player.executeFSCommand('quit', [message]);
-          } else if (typeof jsGlobal.quit === 'function') {
-            jsGlobal.quit();
+          //} else if (typeof jsGlobal.quit === 'function') {
+          //  jsGlobal.quit();
           }
           // In other packagings, at least throw a valid value.
           var mn = Multiname.FromSimpleName('TypeError');
