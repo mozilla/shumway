@@ -196,6 +196,7 @@ module Shumway.AVMX.AS {
 
   export function addPrototypeFunctionAlias(object: AXObject, name: string, fun: Function) {
     release || assert(name.indexOf('$Bg') === 0);
+    release || assert(typeof fun === 'function');
     // REDUX: remove the need to box the function.
     defineNonEnumerableProperty(object, name, object.securityDomain.AXFunction.axBox(fun));
   }
@@ -440,16 +441,29 @@ module Shumway.AVMX.AS {
     }
 
     axCallProperty(mn: Multiname, args: any [], isLex: boolean): any {
-      return this[this.axResolveMultiname(mn)].axApply(isLex ? null : this, args);
+      var name = this.axResolveMultiname(mn);
+      var prop = this[name];
+      if (!prop) {
+        this.securityDomain.throwError('ReferenceError', Errors.UndefinedVarError, mn.name);
+      }
+      return prop.axApply(isLex ? null : this, args);
     }
 
     axCallSuper(mn: Multiname, scope: Scope, args: any []): any {
       var name = this.axResolveMultiname(mn);
       var fun = (<AXClass>scope.parent.object).tPrototype[name];
+      if (!fun) {
+        this.securityDomain.throwError('ReferenceError', Errors.UndefinedVarError, mn.name);
+      }
       return fun.axApply(this, args);
     }
     axConstructProperty(mn: Multiname, args: any []): any {
-      return this[this.axResolveMultiname(mn)].axConstruct(args);
+      var name = this.axResolveMultiname(mn);
+      var prop = this[name];
+      if (!prop) {
+        this.securityDomain.throwError('ReferenceError', Errors.UndefinedVarError, mn.name);
+      }
+      return prop.axConstruct(args);
     }
 
     axHasPropertyInternal(mn: Multiname): boolean {
@@ -465,10 +479,10 @@ module Shumway.AVMX.AS {
     }
 
     axGetEnumerableKeys(): any [] {
-      var tPrototype = Object.getPrototypeOf(this);
       if (this.securityDomain.isPrimitive(this)) {
         return [];
       }
+      var tPrototype = Object.getPrototypeOf(this);
       var keys = Object.keys(this);
       var result = [];
       for (var i = 0; i < keys.length; i++) {

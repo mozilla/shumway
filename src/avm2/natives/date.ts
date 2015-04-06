@@ -95,6 +95,7 @@ module Shumway.AVMX.AS {
     }
 
     toString()              { return this.value.toString(); }
+    toJSON()                { return this.value.toString(); }
     valueOf()               { return this.value.valueOf(); }
     setTime(value = 0)      { this.value.setTime(value); }
     toDateString()          { return this.value.toDateString(); }
