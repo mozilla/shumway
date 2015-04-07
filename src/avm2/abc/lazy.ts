@@ -962,34 +962,6 @@ module Shumway.AVMX {
       return this.isRuntimeName() ? "[" + this.name + "]" : this.name;
     }
 
-    public toString() {
-      var str = CONSTANT[this.kind] + " ";
-      str += this.isAttribute() ? "@" : "";
-      if (this.isRuntimeNamespace()) {
-        var namespaces = this.namespaces ? this.namespaces.map(x => String(x)).join(", ") : null;
-        str += "[" + namespaces + "]::" + this._nameToString();
-      } else if (this.isQName()) {
-        str += this.namespaces[0] + "::";
-        str += this._nameToString();
-      } else {
-        str += "{" + this.namespaces.map(x => String(x)).join(", ") + "}";
-        str += "::" + this._nameToString();
-      }
-      if (this.parameterType) {
-        str += "<" + this.parameterType + ">";
-      }
-      return str;
-    }
-
-    public toFQNString(useColons: boolean) {
-      release || assert(this.isQName());
-      var prefix = this.namespaces[0].uri;
-      if (prefix.length) {
-        prefix += (useColons ? '::' : '.');
-      }
-      return prefix + this.name;
-    }
-
     public isRuntime(): boolean {
       switch (this.kind) {
         case CONSTANT.QName:
@@ -1117,6 +1089,34 @@ module Shumway.AVMX {
         return name;
       }
       return "$Bg" + name;
+    }
+
+    public toFQNString(useColons: boolean) {
+      release || assert(this.isQName());
+      var prefix = this.namespaces[0].uri;
+      if (prefix.length) {
+        prefix += (useColons ? '::' : '.');
+      }
+      return prefix + this.name;
+    }
+
+    public toString() {
+      var str = CONSTANT[this.kind] + " ";
+      str += this.isAttribute() ? "@" : "";
+      if (this.isRuntimeNamespace()) {
+        var namespaces = this.namespaces ? this.namespaces.map(x => String(x)).join(", ") : null;
+        str += "[" + namespaces + "]::" + this._nameToString();
+      } else if (this.isQName()) {
+        str += this.namespaces[0] + "::";
+        str += this._nameToString();
+      } else {
+        str += "{" + this.namespaces.map(x => String(x)).join(", ") + "}";
+        str += "::" + this._nameToString();
+      }
+      if (this.parameterType) {
+        str += "<" + this.parameterType + ">";
+      }
+      return str;
     }
 
     /**

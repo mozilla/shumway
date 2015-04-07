@@ -441,28 +441,29 @@ module Shumway.AVMX.AS {
 
     axCallProperty(mn: Multiname, args: any [], isLex: boolean): any {
       var name = this.axResolveMultiname(mn);
-      var prop = this[name];
-      if (!prop) {
-        this.securityDomain.throwError('ReferenceError', Errors.UndefinedVarError, mn.name);
+      var fun = this[name];
+      if (!fun || !fun.axApply) {
+        this.securityDomain.throwError('ReferenceError', Errors.CallOfNonFunctionError, mn.name);
       }
-      return prop.axApply(isLex ? null : this, args);
+      return fun.axApply(isLex ? null : this, args);
     }
 
     axCallSuper(mn: Multiname, scope: Scope, args: any []): any {
       var name = this.axResolveMultiname(mn);
       var fun = (<AXClass>scope.parent.object).tPrototype[name];
-      if (!fun) {
-        this.securityDomain.throwError('ReferenceError', Errors.UndefinedVarError, mn.name);
+      if (!fun || !fun.axApply) {
+        this.securityDomain.throwError('ReferenceError', Errors.CallOfNonFunctionError, mn.name);
       }
       return fun.axApply(this, args);
     }
     axConstructProperty(mn: Multiname, args: any []): any {
       var name = this.axResolveMultiname(mn);
-      var prop = this[name];
-      if (!prop) {
-        this.securityDomain.throwError('ReferenceError', Errors.UndefinedVarError, mn.name);
+      var ctor = this[name];
+      if (!ctor || !ctor.axConstruct) {
+        this.securityDomain.throwError('ReferenceError', Errors.ConstructOfNonFunctionError,
+                                       mn.name);
       }
-      return prop.axConstruct(args);
+      return ctor.axConstruct(args);
     }
 
     axHasPropertyInternal(mn: Multiname): boolean {
@@ -1695,7 +1696,11 @@ module Shumway.AVMX.AS {
         this.securityDomain.throwError('SyntaxError', Errors.JSONInvalidParseInput);
       }
 
-      var unfiltered: Object = transformJSValueToAS(this.securityDomain, JSON.parse(text), true);
+      try {
+        var unfiltered: Object = transformJSValueToAS(this.securityDomain, JSON.parse(text), true);
+      } catch (e) {
+        this.securityDomain.throwError('SyntaxError', Errors.JSONInvalidParseInput);
+      }
 
       if (reviver === null || arguments.length < 2) {
         return unfiltered;
@@ -1760,7 +1765,11 @@ module Shumway.AVMX.AS {
     }
 
     private static stringifySpecializedToString(value: Object, replacerArray: any [], replacerFunction: (key: string, value: any) => any, gap: string): string {
-      return JSON.stringify(transformASValueToJS(this.securityDomain, value, true), replacerFunction, gap);
+      try {
+        return JSON.stringify(transformASValueToJS(this.securityDomain, value, true), replacerFunction, gap);
+      } catch (e) {
+        this.securityDomain.throwError('SyntaxError', Errors.JSONCyclicStructure);
+      }
     }
   }
 

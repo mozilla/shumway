@@ -899,6 +899,7 @@ module Shumway.AVMX {
     public AXClass: AXClass;
     public AXFunction: AXClass;
     public AXMethodClosure: AXMethodClosureClass;
+    public AXError: AXClass;
     public AXNumber: AXClass;
     public AXString: AXClass;
     public AXBoolean: AXClass;
@@ -964,15 +965,15 @@ module Shumway.AVMX {
 
     throwError(className: string, error: any, replacement1?: any,
                replacement2?: any, replacement3?: any, replacement4?: any) {
-      var message = formatErrorMessage.apply(null, sliceArguments(arguments, 1));
-      this.throwErrorFromVM(className, message, error.code);
+      throw this.createError.apply(this, arguments);
     }
 
-    throwErrorFromVM(errorClass: string, message: string, id: number) {
-      rn.namespaces = [Namespace.PUBLIC];
-      rn.name = errorClass;
-      var axClass: AXClass = <any>this.application.getProperty(rn, true, true);
-      throw axClass.axConstruct([message, id]);
+    createError(className: string, error: any, replacement1?: any,
+               replacement2?: any, replacement3?: any, replacement4?: any) {
+      var message = formatErrorMessage.apply(null, sliceArguments(arguments, 1));
+      var mn = new Multiname(null, 0, CONSTANT.RTQNameL, [Namespace.PUBLIC], className);
+      var axClass: AXClass = <any>this.application.getProperty(mn, true, true);
+      return axClass.axConstruct([message, error.code]);
     }
 
     applyType(axClass: AXClass, types: AXClass []): AXClass {
@@ -1434,6 +1435,7 @@ module Shumway.AVMX {
       });
 
       this.prepareNativeClass("AXMethodClosure", "MethodClosure", false);
+      this.prepareNativeClass("AXError", "Error", false);
       this.prepareNativeClass("AXRegExp", "RegExp", false);
 
       this.prepareNativeClass("AXMath", "Math", false);

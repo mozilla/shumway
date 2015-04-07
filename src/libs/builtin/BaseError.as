@@ -1,5 +1,3 @@
-/* -*- c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*- */
-/* vi: set ts=4 sw=4 expandtab: (add to ~/.vimrc: set modeline modelines=5) */
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
@@ -37,21 +35,18 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
+package
+{
+  [native(cls="ErrorClass")]
+  public dynamic class Error {
+    public native function Error(message = "", id = 0);
 
-// each class is in its own file, we include them all here
-// so they end up in a single script that initializes all
-// at once, in the order of includes below.
+    public native function getStackTrace():String;
+    public native static function getErrorMessage(index:int):String;
 
-include "Object.as"
-include "Class.as"
-include "Function.as"
-// This needs to be in the very first script, because Namespace is used as default
-include "Namespace.as"
-include "Boolean.as"
-include "Number.as"
-include "String.as"
-include "Array.as"
-include "actionscript.lang.as"
-include "shumway.toplevel.as"
-include "../shell/System.as"
-include "BaseError.as"
+    // avm+ specific utility method
+    public native static function throwError(type:Class, index:uint, ...rest);
+
+    public native function get errorID():int;
+  }
+}
