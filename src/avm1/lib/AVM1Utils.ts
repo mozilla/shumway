@@ -38,20 +38,8 @@ module Shumway.AVM1.Lib {
     public onUnbind(target: IAVM1SymbolBase): void {}
   }
 
-  export class AVM1NativeObject extends ASObject {
-    _context: AVM1Context;
-
-    public get context() {
-      return this._context;
-    }
-
-    public initAVM1ObjectInstance(context: AVM1Context) {
-      release || Debug.assert(context);
-      this._context = context;
-    }
-  }
-
-  export class AVM1SymbolBase<T extends flash.display.DisplayObject> extends AVM1NativeObject implements IAVM1SymbolBase, IAVM1EventPropertyObserver {
+  // TODO replace to AVM1NativeSymbolObject
+  export class AVM1SymbolBase<T extends flash.display.DisplayObject> extends AVM1Object implements IAVM1SymbolBase, IAVM1EventPropertyObserver {
     public get isAVM1Instance(): boolean {
       return !!this._as3Object;
     }
@@ -63,7 +51,8 @@ module Shumway.AVM1.Lib {
     }
 
     public initAVM1SymbolInstance(context: AVM1Context, as3Object: T) {
-      this.initAVM1ObjectInstance(context);
+      AVM1Object.call(this, context);
+
       release || Debug.assert(as3Object);
       this._as3Object = as3Object;
     }
@@ -78,7 +67,7 @@ module Shumway.AVM1.Lib {
       this._eventsMap = eventsMap;
       this._eventsListeners = Object.create(null);
       var observer = this;
-      var context = this.context;
+      var context = (<any>this).context;
       events.forEach(function (event: AVM1EventHandler) {
         eventsMap[event.propertyName] = event;
         context.registerEventPropertyObserver(event.propertyName, observer);
@@ -162,16 +151,16 @@ module Shumway.AVM1.Lib {
   }
 
   export function avm1BroadcastEvent(context: AVM1Context, target: any, propertyName: string, args: any[] = null): void {
-    var handler: Function = context.utils.getProperty(target, propertyName);
-    if (isFunction(handler)) {
-      handler.apply(target, args);
+    var handler: AVM1Function = context.utils.getProperty(target, propertyName);
+    if (handler instanceof AVM1Function) {
+      handler.alCall(target, args);
     }
-    var _listeners = context.utils.getProperty(this, '_listeners');
-    if (Array.isArray(_listeners)) {
-      _listeners.forEach(function (listener) {
-        var handlerOnListener:Function = context.utils.getProperty(listener, propertyName);
-        if (isFunction(handlerOnListener)) {
-          handlerOnListener.apply(target, args);
+    var _listeners = context.utils.getProperty(target, '_listeners');
+    if (_listeners instanceof Natives.AVM1ArrayNative) {
+      _listeners.value.forEach(function (listener) {
+        var handlerOnListener: AVM1Function = context.utils.getProperty(listener, propertyName);
+        if (handlerOnListener instanceof AVM1Function) {
+          handlerOnListener.alCall(target, args);
         }
       });
     }
@@ -189,12 +178,12 @@ module Shumway.AVM1.Lib {
       });
     }
 
-    static resolveTarget<T extends IAVM1SymbolBase>(target_mc: any = undefined): T {
+    static resolveTarget<T extends IAVM1SymbolBase>(target_mc: any = undefined): any {
       return AVM1Context.instance.resolveTarget(target_mc);
     }
 
     // Temporary solution as suggested by Yury. Will be refactored soon.
-    static resolveMovieClip<T extends IAVM1SymbolBase>(target: any = undefined): T {
+    static resolveMovieClip<T extends IAVM1SymbolBase>(target: any = undefined): any {
       return target ? AVM1Context.instance.resolveTarget(target) : undefined;
     }
 
@@ -227,27 +216,20 @@ module Shumway.AVM1.Lib {
 
   function createAVM1Object(ctor, nativeObject: flash.display.DisplayObject, context: AVM1Context) {
     // We need to walk on __proto__ to find right ctor.prototype.
-    var proto = ctor.axGetPublicProperty('prototype');
-    while (proto && !proto.initAVM1SymbolInstance) {
-      proto = proto.asGetPublicProperty('__proto__');
+    var proto = ctor.alPrototypeProperty;
+    while (proto && !(<any>proto).initAVM1SymbolInstance) {
+      proto = proto.alGet('__proto__');
     }
     release || Debug.assert(proto);
-    if (!release) { // Just to verify prototype chain
-      function CheckClass() {}
-      CheckClass.prototype = context.securityDomain.AXObject.tPrototype;
-      Debug.assert(proto instanceof CheckClass);
-    }
-    var avm1Object = Object.create(proto); // context.securityDomain.createObject();
-    avm1Object.axSetPublicProperty('__proto__', ctor.axGetPublicProperty('prototype'));
-    avm1Object.axDefinePublicProperty('__constructor__', {
-      value: ctor,
-      writable: true,
-      enumerable: false,
-      configurable: false
+    var avm1Object = Object.create(proto);
+    (<any>proto).initAVM1SymbolInstance.call(avm1Object, context, nativeObject);
+    avm1Object._setPrototype(ctor.alPrototypeProperty);
+    avm1Object.alSetOwnProperty('__constructor__', {
+      flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
+      value: ctor
     });
     (<any>nativeObject)._as2Object = avm1Object;
-    (<IAVM1SymbolBase>avm1Object).initAVM1SymbolInstance(context, nativeObject);
-    ctor.value.axCall(avm1Object); // REDUX ? why not ctor.axCall(avm1Object)
+    ctor.alCall(avm1Object);
     return avm1Object;
   }
 
@@ -278,7 +260,7 @@ module Shumway.AVM1.Lib {
     return null;
   }
 
-  export function wrapAVM1Object<T extends ASObject>(securityDomain: ISecurityDomain, obj: T, members: string[]): T  {
+  export function wrapAVM1Object<T>(securityDomain: ISecurityDomain, obj: T, members: string[]): any  {
     var wrap: any;
     var lastPrototype: any;
     if (typeof obj === 'function') {
@@ -334,8 +316,8 @@ module Shumway.AVM1.Lib {
     return wrap;
   }
 
-  export function wrapAVM1Class<T extends ASObject>(securityDomain: ISecurityDomain, fn: T, staticMembers: string[], members: string[]): T  {
-    var wrappedFn = wrapAVM1Object(securityDomain, fn, staticMembers);
+  export function wrapAVM1Class<T>(securityDomain: ISecurityDomain, fn: T, staticMembers: string[], members: string[]): any  {
+    var wrappedFn: ASObject = wrapAVM1Object(securityDomain, fn, staticMembers);
     var prototype = (<any>fn).prototype;
     var wrappedPrototype = wrapAVM1Object(securityDomain, prototype, members);
     wrappedFn.axSetPublicProperty('prototype', wrappedPrototype);

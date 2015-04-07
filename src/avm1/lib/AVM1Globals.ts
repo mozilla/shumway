@@ -19,49 +19,31 @@
 module Shumway.AVM1.Lib {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import forEachPublicProperty = Shumway.AVMX.forEachPublicProperty;
   import assert = Shumway.Debug.assert;
-  import flash = Shumway.AVMX.AS.flash;
-  import ASObject = Shumway.AVMX.AS.ASObject;
-  import ASFunction = Shumway.AVMX.AS.ASFunction;
-  import AXClass = Shumway.AVMX.AXClass;
+
+  import flash = Shumway.AVMX.AS.flash; // REDUX remove
 
   var _escape: (str: string) => string = jsGlobal.escape;
 
   var _internalTimeouts: number[] = [];
 
-  export class AVM1Globals extends ASObject {
-    static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1Globals {
-      return wrapAVM1Class(securityDomain, AVM1Globals,
-        [],
-        ['_global', 'flash', 'ASSetPropFlags', 'call', 'chr', 'clearInterval', 'clearTimeout',
-          'duplicateMovieClip', 'fscommand', 'escape', 'unescape', 'getTimer', 'getURL',
-          'getVersion', 'gotoAndPlay', 'gotoAndStop', 'ifFrameLoaded', 'int', 'length=>length_',
-          'loadMovie', 'loadMovieNum', 'loadVariables', 'loadVariablesNum', 'mbchr', 'mblength', 'mbord',
-          'mbsubstring', 'nextFrame', 'nextScene', 'ord', 'play', 'prevFrame', 'prevScene',
-          'print', 'printAsBitmap', 'printAsBitmapNum', 'printNum', 'random',
-          'removeMovieClip', 'setInterval', 'setTimeout', 'showRedrawRegions',
-          'startDrag', 'stop', 'stopDrag', 'substring', 'targetPath', 'toggleHighQuality',
-          'trace', 'unloadMovie', 'unloadMovieNum', 'updateAfterEvent',
+  export class AVM1Globals extends AVM1Object {
+    public static createGlobalsObject(context: AVM1Context): AVM1Globals {
+      var globals = new AVM1Globals(context);
+      wrapAVM1NativeMembers(context, globals, globals,
+        ['flash', 'ASSetPropFlags', 'clearInterval', 'clearTimeout',
+          'escape', 'unescape', 'setInterval', 'setTimeout', 'showRedrawRegions',
+          'trace', 'updateAfterEvent',
           'NaN', 'Infinity', 'isFinite', 'isNaN', 'parseFloat', 'parseInt', 'undefined',
-          'Object', 'Function','Array', 'Number', 'Math', 'Boolean', 'Date', 'RegExp', 'String',
+          'Object', 'Function','Array', 'Number', 'Math', 'Boolean', 'Date', 'String',
           'MovieClip', 'AsBroadcaster', 'System', 'Stage', 'Button',
           'TextField', 'Color', 'Key', 'Mouse', 'MovieClipLoader',
-          'Sound', 'SharedObject', 'ContextMenu', 'ContextMenuItem', 'TextFormat',
-          'toString','$asfunction=>asfunction']);
+          'Sound', 'SharedObject', 'ContextMenu', 'ContextMenuItem', 'TextFormat'], false);
+      return globals;
     }
 
-    // TODO: change this when entering a domain.
-    public static instance: AVM1Globals;
-
-    public _global: AVM1Globals;
-    public flash: ASObject;
-
     constructor(context: AVM1Context) {
-      super();
-
-      AVM1Globals.instance = this;
-      this._global = this;
+      super(context);
 
       this._initBuiltins(context);
 
@@ -71,27 +53,11 @@ module Shumway.AVM1.Lib {
       }
     }
 
-    public asfunction(link) {
-      notImplemented('AVM1Globals.$asfunction');
-    }
+    public flash: AVM1Object;
 
     public ASSetPropFlags(obj: any, children: any, flags: any, allowFalse: any): any {
       // flags (from bit 0): dontenum, dontdelete, readonly, ....
       // TODO
-    }
-
-    public call(frame) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>();
-      var as3Object = nativeTarget.as3Object;
-      var frameNum = as3Object._getAbsFrameNumber(<any>frame, null);
-      if (frameNum === undefined) {
-        return;
-      }
-      as3Object.callFrame(frameNum);
-    }
-
-    public chr(number) {
-      return String.fromCharCode(number);
     }
 
     public clearInterval(id: number /* uint */): void {
@@ -109,56 +75,6 @@ module Shumway.AVM1.Lib {
         delete _internalTimeouts[id - 1];
       }
     }
-
-    public duplicateMovieClip(target, newname, depth) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(target);
-      nativeTarget.duplicateMovieClip(newname, depth, null);
-    }
-
-    public fscommand(command: string, args?: string) {
-      return this.securityDomain.flash.system.fscommand(command, args);
-    }
-
-    public getAVM1Property(target, index) {
-      var nativeTarget = AVM1Utils.resolveTarget(target);
-      return nativeTarget[PropertiesIndexMap[index]];
-    }
-
-    public getTimer(): number {
-      return Shumway.AVMX.AS.FlashUtilScript_getTimer(this.securityDomain);
-    }
-
-    public getURL(url, target?, method?) {
-      var request = new this.securityDomain.flash.net.URLRequest(String(url));
-      if (method) {
-        request.method = method;
-      }
-      if (typeof target === 'string' && target.indexOf('_level') === 0) {
-        this.loadMovieNum(url, +target.substr(6), method);
-        return;
-      }
-      Shumway.AVMX.AS.FlashNetScript_navigateToURL(this.securityDomain, request, target);
-    }
-
-    public getVersion() {
-      return flash.system.Capabilities.version;
-    }
-
-    _addToPendingScripts(subject: any, fn: Function, args: any [] = null): any {
-      release || assert(fn, 'invalid function in _addToPendingScripts');
-      var currentContext = AVM1Context.instance;
-      var defaultTarget = currentContext.resolveTarget(undefined);
-      currentContext.addToPendingScripts(function () {
-        currentContext.enterContext(function () {
-          try {
-            (<Function><any> fn).apply(subject, args);
-          } catch (ex) {
-            console.error('AVM1 pending script error: ' + ex.message);
-          }
-        }, defaultTarget);
-      });
-    }
-
 
     /**
      * AVM1 escapes slightly more characters than JS's encodeURIComponent, and even more than
@@ -188,6 +104,224 @@ module Shumway.AVM1.Lib {
 
     public unescape(str: string): string {
       return decodeURIComponent(str);
+    }
+
+    public setInterval(): any {
+      // AVM1 setInterval silently swallows everything that vaguely looks like an error.
+      if (arguments.length < 2) {
+        return undefined;
+      }
+      var args: any[] = [];
+      if (typeof arguments[0] === 'function') {
+        args = <any>arguments;
+      } else {
+        if (arguments.length < 3) {
+          return undefined;
+        }
+        var obj: any = arguments[0];
+        var funName: any = arguments[1];
+        if (!(obj && typeof obj === 'object' && typeof funName === 'string')) {
+          return undefined;
+        }
+        args[0] = function (): void {
+          // TODO add AVM1 property resolution (and case ignore)
+          obj.asCallPublicProperty(funName, arguments);
+        };
+        for (var i = 2; i < arguments.length; i++) {
+          args.push(arguments[i]);
+        }
+      }
+      // Unconditionally coerce interval to int, as one would do.
+      args[1] |= 0;
+      var internalId = setInterval.apply(null, args);
+      return _internalTimeouts.push(internalId);
+    }
+
+    public setTimeout() {
+      // AVM1 setTimeout silently swallows most things that vaguely look like errors.
+      if (arguments.length < 2 || typeof arguments[0] !== 'function')
+      {
+        return undefined;
+      }
+      // Unconditionally coerce interval to int, as one would do.
+      arguments[1] |= 0;
+      var internalId = setTimeout.apply(null, arguments);
+      return _internalTimeouts.push(internalId);
+    }
+
+    public showRedrawRegions(enable, color) {
+      // flash.profiler.showRedrawRegions.apply(null, arguments);
+      notImplemented('AVM1Globals.showRedrawRegions');
+    }
+
+    public trace(expression: any): any {
+      // REDUX
+      (<any>this.context).actions.trace(expression);
+    }
+
+    public updateAfterEvent() {
+      // flash.events.TimerEvent.updateAfterEvent
+      somewhatImplemented('AVM1Globals.updateAfterEvent');
+    }
+
+    // built-ins
+    public NaN: number = Number.NaN;
+    public Infinity: number = Number.POSITIVE_INFINITY;
+    public isFinite: (n: number)=> boolean = isFinite;
+    public isNaN: (n: number) => boolean = isNaN;
+    public parseFloat: (str: string) => number = parseFloat;
+    public parseInt: (s: string, radix?: number) => number = parseInt;
+    public undefined: any = undefined;
+
+    public Object: AVM1Object;
+    public Function: AVM1Object;
+    public Array: AVM1Object;
+    public Number: AVM1Object;
+    public Math: AVM1Object;
+    public Boolean: AVM1Object;
+    public Date: AVM1Object;
+    public String: AVM1Object;
+
+    public MovieClip: AVM1Object;
+    public AsBroadcaster: AVM1Object;
+    public System: AVM1Object;
+    public Stage: AVM1Object;
+    public Button: AVM1Object;
+    public TextField: AVM1Object;
+    public Color: AVM1Object;
+    public Key: AVM1Object;
+    public Mouse: AVM1Object;
+    public MovieClipLoader: AVM1Object;
+
+    public Sound: AVM1Object;
+    public SharedObject: AVM1Object;
+    public ContextMenu: AVM1Object;
+    public ContextMenuItem: AVM1Object;
+    public TextFormat: AVM1Object;
+
+    private _initBuiltins(context: AVM1Context) {
+      var builtins = context.builtins;
+
+      this.Object = builtins.Object;
+      this.Function = builtins.Function;
+      this.Array = builtins.Array;
+      this.Number = builtins.Number;
+      this.Math = builtins.Math;
+      this.Boolean = builtins.Boolean;
+      this.Date = undefined; // wrapAVM1Builtin(securityDomain.AXDate);
+      this.String = builtins.String;
+
+      this.MovieClip = AVM1MovieClip.createAVM1Class(context);
+      this.AsBroadcaster = AVM1Broadcaster.createAVM1Class(context);
+      this.System = undefined; // AVM1System.createAVM1Class(securityDomain);
+      this.Stage = AVM1Stage.createAVM1Class(context);
+      this.Button = undefined; // AVM1Button.createAVM1Class(securityDomain);
+      this.TextField = AVM1TextField.createAVM1Class(context);
+      this.Color = undefined; // AVM1Color.createAVM1Class(securityDomain);
+      this.Key = AVM1Key.createAVM1Class(context);
+      this.Mouse = AVM1Mouse.createAVM1Class(context);
+      this.MovieClipLoader = undefined; // AVM1MovieClipLoader.createAVM1Class(securityDomain);
+
+      this.Sound = undefined; // AVM1Sound.createAVM1Class(securityDomain);
+      this.SharedObject = undefined; // wrapAVM1Builtin(securityDomain.flash.net.SharedObject.axClass);
+      this.ContextMenu = undefined; // wrapAVM1Builtin(securityDomain.flash.ui.ContextMenu.axClass);
+      this.ContextMenuItem = undefined; // wrapAVM1Builtin(securityDomain.flash.ui.ContextMenuItem.axClass);
+      this.TextFormat = undefined; // AVM1TextFormat.createAVM1Class(securityDomain);
+
+      AVM1Broadcaster.initialize(context, this.Stage);
+      AVM1Broadcaster.initialize(context, this.Key);
+      AVM1Broadcaster.initialize(context, this.Mouse);
+    }
+
+    private _initializeFlashObject(context: AVM1Context): void {
+      this.flash = alNewObject(context);
+      var display: AVM1Object = alNewObject(context);
+      //display.axSetPublicProperty('BitmapData', AVM1BitmapData.createAVM1Class(securityDomain));
+      this.flash.alPut('display', display);
+      var external: AVM1Object = alNewObject(context);
+      //external.axSetPublicProperty('ExternalInterface', AVM1ExternalInterface.createAVM1Class(securityDomain));
+      this.flash.alPut('external', external);
+      var filters: AVM1Object = alNewObject(context);
+      this.flash.alPut('filters', filters);
+      var geom: AVM1Object = alNewObject(context);
+      //geom.axSetPublicProperty('ColorTransform', wrapAVM1Builtin(securityDomain.flash.geom.ColorTransform.axClass));
+      //geom.axSetPublicProperty('Matrix', wrapAVM1Builtin(securityDomain.flash.geom.Matrix.axClass));
+      //geom.axSetPublicProperty('Point', wrapAVM1Builtin(securityDomain.flash.geom.Point.axClass));
+      //geom.axSetPublicProperty('Rectangle', wrapAVM1Builtin(securityDomain.flash.geom.Rectangle.axClass));
+      //geom.axSetPublicProperty('Transform', AVM1Transform.createAVM1Class(securityDomain));
+      this.flash.alPut('geom', geom);
+      var text: AVM1Object = alNewObject(context);
+      this.flash.alPut('text', text);
+    }
+  }
+
+  export class AVM1NativeActions {
+    public constructor(public context: AVM1Context) {
+      // TODO ?
+    }
+
+    public asfunction(link) {
+      notImplemented('AVM1Globals.$asfunction');
+    }
+
+    public call(frame) {
+      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>();
+      var as3Object = nativeTarget.as3Object;
+      var frameNum = as3Object._getAbsFrameNumber(<any>frame, null);
+      if (frameNum === undefined) {
+        return;
+      }
+      as3Object.callFrame(frameNum);
+    }
+
+    public chr(number) {
+      return String.fromCharCode(number);
+    }
+
+    public duplicateMovieClip(target, newname, depth) {
+      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(target);
+      nativeTarget.duplicateMovieClip(newname, depth, null);
+    }
+
+    public fscommand(command: string, args?: string) {
+      return this.context.securityDomain.flash.system.fscommand(command, args);
+    }
+
+    public getAVM1Property(target, index) {
+      var nativeTarget = AVM1Utils.resolveTarget(target);
+      return nativeTarget[PropertiesIndexMap[index]];
+    }
+
+    public getTimer(): number {
+      return Shumway.AVMX.AS.FlashUtilScript_getTimer(this.context.securityDomain);
+    }
+
+    public getURL(url, target?, method?) {
+      var securityDomain = AVM1Context.instance.securityDomain;
+      var request = new securityDomain.flash.net.URLRequest(String(url));
+      if (method) {
+        request.method = method;
+      }
+      if (typeof target === 'string' && target.indexOf('_level') === 0) {
+        this.loadMovieNum(url, +target.substr(6), method);
+        return;
+      }
+      Shumway.AVMX.AS.FlashNetScript_navigateToURL(securityDomain, request, target);
+    }
+
+    _addToPendingScripts(subject: any, fn: Function, args: any [] = null): any {
+      release || assert(fn, 'invalid function in _addToPendingScripts');
+      var currentContext = AVM1Context.instance;
+      var defaultTarget = currentContext.resolveTarget(undefined);
+      currentContext.addToPendingScripts(function () {
+        currentContext.enterContext(function () {
+          try {
+            (<Function><any> fn).apply(subject, args);
+          } catch (ex) {
+            console.error('AVM1 pending script error: ' + ex.message);
+          }
+        }, defaultTarget);
+      });
     }
 
     public gotoAndPlay(scene, frame?) {
@@ -235,7 +369,7 @@ module Shumway.AVM1.Lib {
         return;
       }
       var loadLevel: boolean = typeof target === 'string' &&
-                               target.indexOf('_level') === 0;
+        target.indexOf('_level') === 0;
       var levelNumber: number;
       if (loadLevel) {
         var levelStr: string = target.charAt(6);
@@ -299,7 +433,7 @@ module Shumway.AVM1.Lib {
       function completeHandler(event: flash.events.Event): void {
         loader.removeEventListener(flash.events.Event.COMPLETE, completeHandler);
         release || Debug.assert(typeof loader.data === 'object');
-        forEachPublicProperty(loader.data, function (key, value) {
+        Shumway.AVMX.forEachPublicProperty(loader.data, function (key, value) {
           context.utils.setProperty(nativeTarget, key, value);
         });
         if (nativeTarget instanceof AVM1MovieClip) {
@@ -384,58 +518,11 @@ module Shumway.AVM1.Lib {
       nativeTarget.removeMovieClip();
     }
 
-    public setInterval(): any {
-      // AVM1 setInterval silently swallows everything that vaguely looks like an error.
-      if (arguments.length < 2) {
-        return undefined;
-      }
-      var args: any[] = [];
-      if (typeof arguments[0] === 'function') {
-        args = <any>arguments;
-      } else {
-        if (arguments.length < 3) {
-          return undefined;
-        }
-        var obj: any = arguments[0];
-        var funName: any = arguments[1];
-        if (!(obj && typeof obj === 'object' && typeof funName === 'string')) {
-          return undefined;
-        }
-        args[0] = function (): void {
-          // TODO add AVM1 property resolution (and case ignore)
-          obj.asCallPublicProperty(funName, arguments);
-        };
-        for (var i = 2; i < arguments.length; i++) {
-          args.push(arguments[i]);
-        }
-      }
-      // Unconditionally coerce interval to int, as one would do.
-      args[1] |= 0;
-      var internalId = setInterval.apply(null, args);
-      return _internalTimeouts.push(internalId);
-    }
-
     public setAVM1Property(target, index, value) {
       var nativeTarget = AVM1Utils.resolveTarget(target);
       nativeTarget[PropertiesIndexMap[index]] = value;
     }
 
-    public setTimeout() {
-      // AVM1 setTimeout silently swallows most things that vaguely look like errors.
-      if (arguments.length < 2 || typeof arguments[0] !== 'function')
-      {
-        return undefined;
-      }
-      // Unconditionally coerce interval to int, as one would do.
-      arguments[1] |= 0;
-      var internalId = setTimeout.apply(null, arguments);
-      return _internalTimeouts.push(internalId);
-    }
-
-    public showRedrawRegions(enable, color) {
-      // flash.profiler.showRedrawRegions.apply(null, arguments);
-      notImplemented('AVM1Globals.showRedrawRegions');
-    }
     public startDrag(target, lock, left, top, right, bottom) {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(target);
       nativeTarget.startDrag(lock, arguments.length < 3 ? null :
@@ -463,9 +550,8 @@ module Shumway.AVM1.Lib {
       // flash.display.Stage.quality
       notImplemented('AVM1Globals.toggleHighQuality');
     }
-
-    public trace(expression: any): any {
-      Shumway.AVMX.AS.Natives.print(this.securityDomain, expression); // REDUX
+    public trace(expression) {
+      Shumway.AVMX.AS.Natives.print(this.context.securityDomain, expression);
     }
 
     public unloadMovie(target) {
@@ -475,109 +561,6 @@ module Shumway.AVM1.Lib {
     public unloadMovieNum(level) {
       var nativeTarget = AVM1Utils.resolveLevel(level);
       nativeTarget.unloadMovie();
-    }
-    public updateAfterEvent() {
-      // flash.events.TimerEvent.updateAfterEvent
-      somewhatImplemented('AVM1Globals.updateAfterEvent');
-    }
-
-    // built-ins
-    public NaN: number = Number.NaN;
-    public Infinity: number = Number.POSITIVE_INFINITY;
-    public isFinite: (n: number)=> boolean = isFinite;
-    public isNaN: (n: number) => boolean = isNaN;
-    public parseFloat: (str: string) => number = parseFloat;
-    public parseInt: (s: string, radix?: number) => number = parseInt;
-
-    public Object: ASObject;
-    public Function: ASObject;
-    public Array: ASObject;
-    public Number: ASObject;
-    public Math: ASObject;
-    public Boolean: ASObject;
-    public Date: ASObject;
-    public RegExp: ASObject;
-    public String: ASObject;
-
-    public undefined: any = undefined;
-    public MovieClip: ASObject;
-    public AsBroadcaster: ASObject;
-    public System: ASObject;
-    public Stage: ASObject;
-    public Button: ASObject;
-    public TextField: ASObject;
-    public Color: ASObject;
-    public Key: ASObject;
-    public Mouse: ASObject;
-    public MovieClipLoader: ASObject;
-
-    public Sound: ASObject;
-    public SharedObject: ASObject;
-    public ContextMenu: ASObject;
-    public ContextMenuItem: ASObject;
-    public TextFormat: ASObject;
-
-    private _initBuiltins(context: AVM1Context) {
-      var securityDomain = this.securityDomain;
-
-      this.Object = wrapAVM1Builtin(securityDomain.AXObject);
-      this.Function = wrapAVM1Builtin(securityDomain.AXFunction);
-      this.Array = wrapAVM1Builtin(securityDomain.AXArray);
-      this.Number = wrapAVM1Builtin(securityDomain.AXNumber);
-      this.Math = wrapAVM1Builtin(securityDomain.AXMath);
-      this.Boolean = wrapAVM1Builtin(securityDomain.AXBoolean);
-      this.Date = wrapAVM1Builtin(securityDomain.AXDate);
-      this.RegExp = wrapAVM1Builtin(securityDomain.AXRegExp);
-      this.String = wrapAVM1Builtin(securityDomain.AXString);
-
-      this.MovieClip = AVM1MovieClip.createAVM1Class(securityDomain);
-      this.AsBroadcaster = AVM1Broadcaster.createAVM1Class(securityDomain);
-      this.System = AVM1System.createAVM1Class(securityDomain);
-      this.Stage = AVM1Stage.createAVM1Class(securityDomain);
-      this.Button = AVM1Button.createAVM1Class(securityDomain);
-      this.TextField = AVM1TextField.createAVM1Class(securityDomain);
-      this.Color = AVM1Color.createAVM1Class(securityDomain);
-      this.Key = AVM1Key.createAVM1Class(securityDomain);
-      this.Mouse = AVM1Mouse.createAVM1Class(securityDomain);
-      this.MovieClipLoader = AVM1MovieClipLoader.createAVM1Class(securityDomain);
-
-      this.Sound = AVM1Sound.createAVM1Class(securityDomain);
-      this.SharedObject = wrapAVM1Builtin(securityDomain.flash.net.SharedObject.axClass);
-      this.ContextMenu = wrapAVM1Builtin(securityDomain.flash.ui.ContextMenu.axClass);
-      this.ContextMenuItem = wrapAVM1Builtin(securityDomain.flash.ui.ContextMenuItem.axClass);
-      this.TextFormat = AVM1TextFormat.createAVM1Class(securityDomain);
-
-      AVM1Broadcaster.initializeWithContext(this.Stage, context);
-      AVM1Broadcaster.initializeWithContext(this.Key, context);
-      AVM1Broadcaster.initializeWithContext(this.Mouse, context);
-    }
-
-    private _initializeFlashObject(context: AVM1Context): void {
-      var securityDomain = this.securityDomain;
-
-      this.flash = securityDomain.createObject();
-      this.flash.axSetPublicProperty('_MovieClip', this.MovieClip); // ???
-      var display: ASObject = securityDomain.createObject();
-      display.axSetPublicProperty('BitmapData', AVM1BitmapData.createAVM1Class(securityDomain));
-      this.flash.axSetPublicProperty('display', display);
-      var external: ASObject = securityDomain.createObject();
-      external.axSetPublicProperty('ExternalInterface', AVM1ExternalInterface.createAVM1Class(securityDomain));
-      this.flash.axSetPublicProperty('external', external);
-      var filters: ASObject = securityDomain.createObject();
-      this.flash.axSetPublicProperty('filters', filters);
-      var geom: ASObject = securityDomain.createObject();
-      geom.axSetPublicProperty('ColorTransform', wrapAVM1Builtin(securityDomain.flash.geom.ColorTransform.axClass));
-      geom.axSetPublicProperty('Matrix', wrapAVM1Builtin(securityDomain.flash.geom.Matrix.axClass));
-      geom.axSetPublicProperty('Point', wrapAVM1Builtin(securityDomain.flash.geom.Point.axClass));
-      geom.axSetPublicProperty('Rectangle', wrapAVM1Builtin(securityDomain.flash.geom.Rectangle.axClass));
-      geom.axSetPublicProperty('Transform', AVM1Transform.createAVM1Class(securityDomain));
-      this.flash.axSetPublicProperty('geom', geom);
-      var text: ASObject = securityDomain.createObject();
-      this.flash.axSetPublicProperty('text', text);
-    }
-
-    public toString() {
-      return '[type Object]';
     }
   }
 

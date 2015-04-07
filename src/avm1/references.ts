@@ -20,6 +20,8 @@
 ///<reference path='stream.ts' />
 ///<reference path='parser.ts' />
 ///<reference path='analyze.ts' />
+///<reference path='runtime.ts' />
+///<reference path='natives.ts' />
 ///<reference path='context.ts' />
 ///<reference path='interpreter.ts' />
 ///<reference path='lib/AVM1Utils.ts' />

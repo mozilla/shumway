@@ -21,19 +21,21 @@ module Shumway.AVM1.Lib {
   import assert = Shumway.Debug.assert;
   import ASObject = Shumway.AVMX.AS.ASObject;
 
-  export class AVM1Key extends ASObject {
+  export class AVM1Key extends AVM1Object {
     public static DOWN: number = 40;
     public static LEFT: number = 37;
     public static RIGHT: number = 39;
     public static UP: number = 38;
 
-    private static _keyStates: any[] = [];
+    private static _keyStates: any[] = []; // REDUX mutates
     private static _lastKeyCode: number = 0;
 
-    public static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1Key {
-      return wrapAVM1Class(securityDomain, AVM1Key,
+    public static createAVM1Class(context: AVM1Context): AVM1Object {
+      var wrapped = wrapAVM1NativeClass(context, false, AVM1Key,
         ['DOWN', 'LEFT', 'RIGHT', 'UP', 'isDown'],
         []);
+      (<any>wrapped)._bind = AVM1Key._bind; // REDUX
+      return wrapped;
     }
 
     public static _bind(stage: flash.display.Stage, context: AVM1Context) {
@@ -41,18 +43,18 @@ module Shumway.AVM1.Lib {
         var keyCode = e.axGetPublicProperty('keyCode');
         AVM1Key._lastKeyCode = keyCode;
         AVM1Key._keyStates[keyCode] = 1;
-        (<any>context.globals.Key).axCallPublicProperty('broadcastMessage', ['onKeyDown']); // REDUX
+        alCallProperty(context.globals.Key, 'broadcastMessage', ['onKeyDown']);
       }, false);
 
       stage.addEventListener('keyUp', function (e: flash.events.KeyboardEvent) {
         var keyCode = e.axGetPublicProperty('keyCode');
         AVM1Key._lastKeyCode = keyCode;
         delete AVM1Key._keyStates[keyCode];
-        (<any>context.globals.Key).axCallPublicProperty('broadcastMessage', ['onKeyUp']); // REDUX
+        alCallProperty(context.globals.Key, 'broadcastMessage', ['onKeyUp']);
       }, false);
     }
 
-    public static isDown(code) {
+    public static isDown(context: AVM1Context, code) {
       return !!AVM1Key._keyStates[code];
     }
 

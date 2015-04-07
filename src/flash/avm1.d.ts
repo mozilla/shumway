@@ -36,15 +36,15 @@ declare module Shumway.AVM1 {
     function initializeAVM1Object(as3Object, context: AVM1Context,
                                   placeObjectTag: Shumway.SWF.PlaceObjectTag);
     function installObjectMethods(context: AVM1Context);
-    class AVM1Globals extends ASClass {
+    class AVM1Globals {
       Key: typeof AVM1Key;
       Mouse: typeof AVM1Mouse;
     }
-    class AVM1MovieClip extends ASClass {}
-    class AVM1Key extends ASClass {
+    class AVM1MovieClip {}
+    class AVM1Key {
       static _bind(stage: flash.display.Stage, context: AVM1Context);
     }
-    class AVM1Mouse extends ASClass {
+    class AVM1Mouse {
       static _bind(stage: flash.display.Stage, context: AVM1Context);
     }
   }

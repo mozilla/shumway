@@ -56,17 +56,31 @@ module Shumway.AVM1 {
     }
   }
 
+  export interface IAVM1Builtins {
+    Object: AVM1Object;
+    Function: AVM1Object;
+    Boolean: AVM1Object;
+    Number: AVM1Object;
+    String: AVM1Object;
+    Array: AVM1Object;
+    Math: AVM1Object;
+  }
+
   export class AVM1Context {
     public static instance: AVM1Context = null;
     public root: AVM1MovieClip;
     public loaderInfo: Shumway.AVMX.AS.flash.display.LoaderInfo;
     public securityDomain: ISecurityDomain;
     public globals: AVM1Globals;
+    public builtins: IAVM1Builtins;
     public actionsDataFactory: ActionsDataFactory;
     constructor() {
       this.root = null;
       this.globals = null;
       this.actionsDataFactory = new ActionsDataFactory();
+
+      this.builtins = <any>{};
+      Shumway.AVM1.Natives.installBuiltins(this);
     }
 
     public utils: IAVM1RuntimeUtils;

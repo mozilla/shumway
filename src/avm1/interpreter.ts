@@ -16,15 +16,9 @@
 
 
 module Shumway.AVM1 {
-  import Multiname = Shumway.AVMX.Multiname;
-  import ASObject = Shumway.AVMX.AS.ASObject;
-  import forEachPublicProperty = Shumway.AVMX.forEachPublicProperty;
-  var construct = null; // REDUX: Shumway.AVM2.Runtime.construct;
   import isNumeric = Shumway.isNumeric;
   import isFunction = Shumway.isFunction;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
-  import sliceArguments = Shumway.AVMX.sliceArguments;
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
   import Telemetry = Shumway.Telemetry;
@@ -163,6 +157,7 @@ module Shumway.AVM1 {
     pendingScripts;
     defaultTarget;
     currentTarget;
+    actions: Lib.AVM1NativeActions;
 
     private assets: MapObject<number>;
     private assetsSymbols: Array<any>;
@@ -173,8 +168,8 @@ module Shumway.AVM1 {
       super();
       this.loaderInfo = loaderInfo;
       this.securityDomain = loaderInfo.securityDomain; // REDUX:
-      var GlobalsClass = Lib.AVM1Globals.createAVM1Class(loaderInfo.securityDomain);
-      this.globals = GlobalsClass.axConstruct([this]);
+      this.globals = Lib.AVM1Globals.createGlobalsObject(this);
+      this.actions = new Lib.AVM1NativeActions(this);
       this.initialScope = new AVM1ScopeListItem(this.globals, null);
       this.assets = {};
       // TODO: remove this list and always retrieve symbols from LoaderInfo.
@@ -220,7 +215,7 @@ module Shumway.AVM1 {
       this.assetsSymbols[symbolId] = symbolProps;
     }
     registerClass(className: string, theClass) {
-      className = asCoerceString(className);
+      className = alCoerceString(className);
       if (className === null) {
         avm1Warn('Cannot register class for symbol: className is missing');
         return null;
@@ -233,7 +228,7 @@ module Shumway.AVM1 {
       this.assetsClasses[symbolId] = theClass;
     }
     getAsset(className: string) : AVM1ExportedSymbol {
-      className = asCoerceString(className);
+      className = alCoerceString(className);
       if (className === null) {
         return undefined;
       }
@@ -413,6 +408,10 @@ module Shumway.AVM1 {
     return as2GetType(value) !== 'object' ? value : value.valueOf();
   }
 
+  function as2GetCurrentContext() : AVM1Context {
+    return AVM1Context.instance;
+  }
+
   function as2GetCurrentSwfVersion() : number {
     return AVM1Context.instance.loaderInfo.swfVersion;
   }
@@ -501,19 +500,8 @@ module Shumway.AVM1 {
       case 'movieclip':
         return (<Lib.AVM1MovieClip> value).__targetPath;
       case 'object':
-        if (typeof value === 'function' &&
-            value.axGetPublicProperty('toString') ===
-            (<any>AVMX.AS.ASFunction).traitsPrototype.axGetPublicProperty('toString')) { // REDUX
-          // Printing AVM1 thing instead of 'function Function() {}' when
-          // native AS3 Function.prototype.toString is found.
-          return '[type Function]';
-        }
-        var result = value.axCallPublicProperty('toString', null);
-        if (typeof result === 'string') {
-          return result;
-        }
-        return typeof value === 'function' ? '[type Function]'
-          : '[type Object]';
+        var result = alToString(as2GetCurrentContext(), value);
+        return result;
     }
   }
 
@@ -563,45 +551,29 @@ module Shumway.AVM1 {
   }
 
   interface ResolvePropertyResult {
-    link;
+    link: AVM1Object;
     name;
   }
 
   // internal cachable results to avoid GC
   var __resolvePropertyResult: ResolvePropertyResult = {
-    link: undefined,
+    link: null,
     name: null
   };
 
   function avm1EnumerateProperties(obj, fn: (link, name)=>void, thisArg?): void {
-    var processed = Object.create(null);
-    // TODO ignore deleted properties
-    do {
-      forEachPublicProperty(obj, function (name) {
-        if (processed[name]) {
-          return; // skipping already reported properties
-        }
-        fn.call(thisArg, obj, name);
-        processed[name] = true;
-      });
-      // checking entire prototype chain
-      obj = obj.axGetPublicProperty('__proto__');
-    } while (obj);
+    var processed = Object.create(null); // TODO remove/refactor
+    alForEachProperty(obj, function (name) {
+      if (processed[name]) {
+        return; // skipping already reported properties
+      }
+      fn.call(thisArg, obj, name);
+      processed[name] = true;
+    });
   }
 
-  function avm1CheckLinkProperty(obj, name: string): ResolvePropertyResult {
-    // TODO ignore deleted properties
-    do {
-      if (obj.axHasPublicProperty(name)) {
-        __resolvePropertyResult.link = obj;
-        __resolvePropertyResult.name = name;
-        return __resolvePropertyResult;
-      }
-      // checking entire prototype chain
-      obj = obj.axGetPublicProperty('__proto__');
-    } while (obj);
-    return null;
-  }
+  //__resolvePropertyResult.link = obj;
+  //__resolvePropertyResult.name = name;
 
   function avm1ResolveProperty(obj, name: string, normalize: boolean): ResolvePropertyResult {
     // AVM1 just ignores lookups on non-existant containers
@@ -609,18 +581,20 @@ module Shumway.AVM1 {
       avm1Warn("AVM1 warning: cannot look up member '" + name + "' on undefined object");
       return null;
     }
-    var result: ResolvePropertyResult;
-    obj = Object(obj);
+
+    var avm1Obj: AVM1Object = alToObject(as2GetCurrentContext(), obj);
     // checking if avm2 public property is present
-    if ((result = avm1CheckLinkProperty(obj, name)) !== null) {
-      return result;
+    if (avm1Obj.alHasProperty(name)) {
+      __resolvePropertyResult.link = avm1Obj;
+      __resolvePropertyResult.name = name;
+      return __resolvePropertyResult;
     }
 
     // versions 6 and below ignore identifier case
     if (isNumeric(name) ||
         as2GetCurrentSwfVersion() > 6) {
       if (normalize) {
-        __resolvePropertyResult.link = obj;
+        __resolvePropertyResult.link = avm1Obj;
         __resolvePropertyResult.name = name;
         return __resolvePropertyResult;
       }
@@ -629,8 +603,10 @@ module Shumway.AVM1 {
 
     // First checking all lowercase property.
     var lowerCaseName = name.toLowerCase();
-    if ((result = avm1CheckLinkProperty(obj, lowerCaseName)) !== null) {
-      return result;
+    if (avm1Obj.alHasProperty(lowerCaseName)) {
+      __resolvePropertyResult.link = avm1Obj;
+      __resolvePropertyResult.name = lowerCaseName;
+      return __resolvePropertyResult;
     }
 
     // Checking the dictionary of the well-known normalized names.
@@ -641,8 +617,10 @@ module Shumway.AVM1 {
       });
     }
     var normalizedName = as2IdentifiersCaseMap[lowerCaseName] || null;
-    if (normalizedName && (result = avm1CheckLinkProperty(obj, normalizedName)) !== null) {
-      return result;
+    if (normalizedName && avm1Obj.alHasProperty(normalizedName)) {
+      __resolvePropertyResult.link = avm1Obj;
+      __resolvePropertyResult.name = normalizedName;
+      return __resolvePropertyResult;
     }
 
     // Just enumerating through existing properties.
@@ -677,7 +655,7 @@ module Shumway.AVM1 {
 
   function as2GetProperty(obj, name: string): any {
     var resolved = avm1ResolveProperty(obj, name, false);
-    return resolved ? resolved.link.axGetPublicProperty(resolved.name) : undefined;
+    return resolved ? resolved.link.alGet(resolved.name) : undefined;
   }
 
   function as2SetProperty(obj, name: string, value: any): any {
@@ -685,13 +663,7 @@ module Shumway.AVM1 {
     if (!resolved) {
       return; // probably obj is undefined or null
     }
-    var definition = resolved.link.axGetPropertyDescriptor(undefined, resolved.name, 0);
-    if (definition && !('value' in definition)) {
-      // Using setter or getter
-      resolved.link.axSetPublicProperty(resolved.name, value);
-    } else {
-      obj.axSetPublicProperty(resolved.name, value);
-    }
+    resolved.link.alPut(resolved.name, value);
     as2SyncEvents(resolved.name);
   }
 
@@ -712,39 +684,27 @@ module Shumway.AVM1 {
     return ex;
   }
 
-  function as2SetupInternalProperties(obj, proto, ctor) {
-    obj.axSetPublicProperty('__proto__', proto);
-    obj.axDefinePublicProperty('__constructor__', {
-      value: ctor,
-      writable: true,
-      enumerable: false,
-      configurable: false
-    });
-  }
-
   function as2Construct(ctor, args) {
     var result;
     if (isAvm2Class(ctor)) {
       // Some built-in and AVM2 classes we can use
-      result = construct(ctor, args);
+      throw new Error('not implemented'); // REDUX result = construct(ctor, args);
       //  __proto__ and __constructor__ can be assigned later
-      as2SetupInternalProperties(result, ctor.axGetPublicProperty('prototype'), ctor);
-    } else if (isFunction(ctor)) {
+    } else if (alIsFunction(ctor)) {
       // Finding right prototype object
-      var proto = ctor.axGetPublicProperty('prototype');
-      while (proto && !proto.initAVM1ObjectInstance) {
-        proto = proto.axGetPublicProperty('__proto__');
-      }
-      result = proto ? Object.create(proto) : {};
-      as2SetupInternalProperties(result, ctor.axGetPublicProperty('prototype'), ctor);
-      if (proto) {
-        proto.initAVM1ObjectInstance.call(result, AVM1Context.instance);
-      }
-      ctor.apply(result, args);
+      //var proto = ctor.axGetPublicProperty('prototype');
+      //while (proto && !proto.initAVM1ObjectInstance) {
+      //  proto = proto.axGetPublicProperty('__proto__');
+      //}
+      result = (<AVM1Function>ctor).alConstruct(args);
     } else {
       // AVM1 simply ignores attempts to invoke non-methods.
       return undefined;
     }
+    result.alSetOwnProperty('__constructor__', {
+      flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
+      value: ctor
+    });
     return result;
   }
 
@@ -789,11 +749,11 @@ module Shumway.AVM1 {
     return obj instanceof Shumway.AVMX.AS.ASClass;
   }
 
-  interface AVM1Function {
-    instanceConstructor: Function;
-    debugName: string; // for AVM2 debugging
-    name: string; // Function's name
-  }
+  //interface AVM1Function {
+  //  instanceConstructor: Function;
+  //  debugName: string; // for AVM2 debugging
+  //  name: string; // Function's name
+  //}
 
   export function executeActions(actionsData: AVM1ActionsData, as2Context: AVM1Context, scope) {
     var context = <AVM1ContextImpl> as2Context;
@@ -853,9 +813,6 @@ module Shumway.AVM1 {
     return obj;
   }
 
-  class AVM1Object extends Shumway.AVMX.AS.ASObject {
-  }
-
   function createBuiltinType(obj, args: any[]) {
     if (obj === Array) {
       // special case of array
@@ -885,7 +842,7 @@ module Shumway.AVM1 {
       }
     }
     if (obj === Object) {
-      return new AVM1Object();
+      return alNewObject(as2GetCurrentContext());
     }
     return undefined;
   }
@@ -896,7 +853,7 @@ module Shumway.AVM1 {
 
   interface ExecutionContext {
     context: AVM1ContextImpl;
-    global: Lib.AVM1Globals;
+    actions: Lib.AVM1NativeActions;
     scopeContainer: AVM1ScopeListItem;
     scope: any;
     actionTracer: ActionTracer;
@@ -932,7 +889,6 @@ module Shumway.AVM1 {
     }
     function avm1SetTarget(ectx: ExecutionContext, targetPath: string) {
       var currentContext = ectx.context;
-      var _global = ectx.global;
 
       if (!targetPath) {
         currentContext.currentTarget = null;
@@ -961,7 +917,6 @@ module Shumway.AVM1 {
                                 registersAllocation: ArgumentAssignment[],
                                 suppressArguments: ArgumentAssignmentType) {
       var currentContext = ectx.context;
-      var _global = ectx.global;
       var scopeContainer = ectx.scopeContainer;
       var scope = ectx.scope;
       var actionTracer = ectx.actionTracer;
@@ -1008,8 +963,8 @@ module Shumway.AVM1 {
 
         var newScopeContainer;
         // Builds function closure (it shall return 'this' in toString).
-        var newScope: any = currentContext.securityDomain.createObject();
-        newScope.axSetPublicProperty('toString', currentContext.securityDomain.boxFunction(function () {
+        var newScope: any = new AVM1Object(currentContext);
+        newScope.alPut('toString', new AVM1NativeFunction(currentContext, function () {
           return this;
         }));
 
@@ -1020,15 +975,15 @@ module Shumway.AVM1 {
         var frame = currentContext.pushCallFrame(thisArg, fn, arguments);
 
         if (!(suppressArguments & ArgumentAssignmentType.Arguments)) {
-          argumentsClone = sliceArguments(arguments, 0);
-          newScope.axSetPublicProperty('arguments', argumentsClone);
+          argumentsClone = Array.prototype.slice.call(arguments, 0);
+          newScope.alPut('arguments', argumentsClone);
         }
         if (!(suppressArguments & ArgumentAssignmentType.This)) {
-          newScope.axSetPublicProperty('this', thisArg);
+          newScope.alPut('this', thisArg);
         }
         if (!(suppressArguments & ArgumentAssignmentType.Super)) {
           supperWrapper = new AVM1SuperWrapper(frame);
-          newScope.axSetPublicProperty('super', supperWrapper);
+          newScope.alPut('super', supperWrapper);
         }
         newScopeContainer = scopeContainer.create(newScope);
         var i;
@@ -1044,7 +999,7 @@ module Shumway.AVM1 {
                 registers[i] = thisArg;
                 break;
               case ArgumentAssignmentType.Arguments:
-                argumentsClone = argumentsClone || sliceArguments(arguments, 0);
+                argumentsClone = argumentsClone || Array.prototype.slice.call(arguments, 0);
                 registers[i] = argumentsClone;
                 break;
               case ArgumentAssignmentType.Super:
@@ -1052,7 +1007,7 @@ module Shumway.AVM1 {
                 registers[i] = supperWrapper;
                 break;
               case ArgumentAssignmentType.Global:
-                registers[i] = _global;
+                registers[i] = currentContext.globals;
                 break;
               case ArgumentAssignmentType.Parent:
                 registers[i] = scope.axGetPublicProperty('_parent');
@@ -1067,7 +1022,7 @@ module Shumway.AVM1 {
           if (skipArguments && skipArguments[i]) {
             continue;
           }
-          newScope.axSetPublicProperty(parametersNames[i], arguments[i]);
+          newScope.alPut(parametersNames[i], arguments[i]);
         }
 
         var result;
@@ -1094,11 +1049,10 @@ module Shumway.AVM1 {
         return result;
       });
 
-      var fnObj: AVM1Function = <AVM1Function> <any> fn;
-      fnObj.instanceConstructor = fn;
-      fnObj.debugName = 'avm1 ' + (functionName || '<function>');
+      var fnObj: AVM1Function = new AVM1NativeFunction(as2GetCurrentContext(), fn);
+      (<any>fn).debugName = 'avm1 ' + (functionName || '<function>');
       if (functionName) {
-        fnObj.name = functionName;
+        (<any>fn).name = functionName;
       }
       return fn;
     }
@@ -1108,8 +1062,8 @@ module Shumway.AVM1 {
       for (var p = scopeContainer; p; p = p.next) {
         var resolved = avm1ResolveProperty(p.scope, propertyName, false);
         if (resolved) {
-          resolved.link.axSetPublicProperty(resolved.name, undefined); // in some cases we need to cleanup events binding
-          return resolved.link.asDeleteProperty(undefined, resolved.name, 0);
+          // resolved.link.axSetPublicProperty(resolved.name, undefined); // in some cases we need to cleanup events binding
+          return resolved.link.alDeleteProperty(resolved.name);
         }
       }
       return false;
@@ -1132,7 +1086,6 @@ module Shumway.AVM1 {
     }
 
     function avm1ResolveVariableName(ectx: ExecutionContext, variableName: string, normalize: boolean): ResolveVariableResult {
-      var _global = ectx.global;
       var currentContext = ectx.context;
       var obj, name, i, resolved;
       if (variableName.indexOf(':') >= 0) {
@@ -1150,7 +1103,7 @@ module Shumway.AVM1 {
         // new object reference
         var objPath = variableName.split('.');
         name = objPath.pop();
-        obj = _global;
+        obj = currentContext.globals;
         for (i = 0; i < objPath.length; i++) {
           resolved = avm1ResolveProperty(obj, objPath[i], false);
           obj = resolved && resolved.link.axGetPublicProperty(resolved.name);
@@ -1214,9 +1167,9 @@ module Shumway.AVM1 {
 
       // TODO refactor that
       if (variableName === 'this') {
-        scope.axDefinePublicProperty('this', {
+        scope.alSetOwnProperty('this', {
+          flags: AVM1PropertyFlags.NATIVE_MEMBER,
           value: currentTarget,
-          configurable: true
         });
         __resolveVariableResult.obj = scope;
         __resolveVariableResult.link = scope;
@@ -1316,73 +1269,55 @@ module Shumway.AVM1 {
 
     // SWF 3 actions
     function avm1_0x81_ActionGotoFrame(ectx: ExecutionContext, args: any[]) {
-      var _global = ectx.global;
-
       var frame: number = args[0];
       var play: boolean = args[1];
       if (play) {
-        _global.gotoAndPlay(frame + 1);
+        ectx.actions.gotoAndPlay(frame + 1);
       } else {
-        _global.gotoAndStop(frame + 1);
+        ectx.actions.gotoAndStop(frame + 1);
       }
     }
     function avm1_0x83_ActionGetURL(ectx: ExecutionContext, args: any[]) {
-      var _global = ectx.global;
+      var actions = ectx.actions;
 
       var urlString: string = args[0];
       var targetString: string = args[1];
-      _global.getURL(urlString, targetString);
+      ectx.actions.getURL(urlString, targetString);
     }
     function avm1_0x04_ActionNextFrame(ectx: ExecutionContext) {
-      var _global = ectx.global;
-
-      _global.nextFrame();
+      ectx.actions.nextFrame();
     }
     function avm1_0x05_ActionPreviousFrame(ectx: ExecutionContext) {
-      var _global = ectx.global;
-
-      _global.prevFrame();
+      ectx.actions.prevFrame();
     }
     function avm1_0x06_ActionPlay(ectx: ExecutionContext) {
-      var _global = ectx.global;
-
-      _global.play();
+      ectx.actions.play();
     }
     function avm1_0x07_ActionStop(ectx: ExecutionContext) {
-      var _global = ectx.global;
-
-      _global.stop();
+      ectx.actions.stop();
     }
     function avm1_0x08_ActionToggleQuality(ectx: ExecutionContext) {
-      var _global = ectx.global;
-
-      _global.toggleHighQuality();
+      ectx.actions.toggleHighQuality();
     }
     function avm1_0x09_ActionStopSounds(ectx: ExecutionContext) {
-      var _global = ectx.global;
-
-      _global.stopAllSounds();
+      ectx.actions.stopAllSounds();
     }
     function avm1_0x8A_ActionWaitForFrame(ectx: ExecutionContext, args: any[]) {
-      var _global = ectx.global;
-
       var frame: number = args[0];
       var count: number = args[1];
-      return !_global.ifFrameLoaded(frame);
+      return !ectx.actions.ifFrameLoaded(frame);
     }
     function avm1_0x8B_ActionSetTarget(ectx: ExecutionContext, args: any[]) {
       var targetName: string = args[0];
       avm1SetTarget(ectx, targetName);
     }
     function avm1_0x8C_ActionGoToLabel(ectx: ExecutionContext, args: any[]) {
-      var _global = ectx.global;
-
       var label: string = args[0];
       var play: boolean = args[1];
       if (play) {
-        _global.gotoAndPlay(label);
+        ectx.actions.gotoAndPlay(label);
       } else {
-        _global.gotoAndStop(label);
+        ectx.actions.gotoAndStop(label);
       }
     }
     // SWF 4 actions
@@ -1495,17 +1430,15 @@ module Shumway.AVM1 {
     }
     function avm1_0x14_ActionStringLength(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var _global = ectx.global;
 
       var sa = as2ToString(stack.pop());
-      stack.push(_global.length_(sa));
+      stack.push(ectx.actions.length_(sa));
     }
     function avm1_0x31_ActionMBStringLength(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var _global = ectx.global;
 
       var sa = as2ToString(stack.pop());
-      stack.push(_global.length_(sa));
+      stack.push(ectx.actions.length_(sa));
     }
     function avm1_0x21_ActionStringAdd(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1516,21 +1449,19 @@ module Shumway.AVM1 {
     }
     function avm1_0x15_ActionStringExtract(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var _global = ectx.global;
 
       var count = stack.pop();
       var index = stack.pop();
       var value = as2ToString(stack.pop());
-      stack.push(_global.substring(value, index, count));
+      stack.push(ectx.actions.substring(value, index, count));
     }
     function avm1_0x35_ActionMBStringExtract(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var _global = ectx.global;
 
       var count = stack.pop();
       var index = stack.pop();
       var value = as2ToString(stack.pop());
-      stack.push(_global.mbsubstring(value, index, count));
+      stack.push(ectx.actions.mbsubstring(value, index, count));
     }
     function avm1_0x29_ActionStringLess(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1543,40 +1474,35 @@ module Shumway.AVM1 {
     }
     function avm1_0x18_ActionToInteger(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var _global = ectx.global;
 
-      stack.push(_global.int(stack.pop()));
+      stack.push(ectx.actions.int(stack.pop()));
     }
     function avm1_0x32_ActionCharToAscii(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var _global = ectx.global;
 
       var ch = stack.pop();
-      var charCode = _global.ord(ch);
+      var charCode = ectx.actions.ord(ch);
       stack.push(charCode);
     }
     function avm1_0x36_ActionMBCharToAscii(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var _global = ectx.global;
 
       var ch = stack.pop();
-      var charCode = _global.mbord(ch);
+      var charCode = ectx.actions.mbord(ch);
       stack.push(charCode);
     }
     function avm1_0x33_ActionAsciiToChar(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var _global = ectx.global;
 
       var charCode = +stack.pop();
-      var ch = _global.chr(charCode);
+      var ch = ectx.actions.chr(charCode);
       stack.push(ch);
     }
     function avm1_0x37_ActionMBAsciiToChar(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var _global = ectx.global;
 
       var charCode = +stack.pop();
-      var ch = _global.mbchr(charCode);
+      var ch = ectx.actions.mbchr(charCode);
       stack.push(ch);
     }
     function avm1_0x99_ActionJump(ectx: ExecutionContext, args: any[]) {
@@ -1590,10 +1516,9 @@ module Shumway.AVM1 {
     }
     function avm1_0x9E_ActionCall(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var _global = ectx.global;
 
       var label = stack.pop();
-      _global.call(label);
+      ectx.actions.call(label);
     }
     function avm1_0x1C_ActionGetVariable(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1604,7 +1529,7 @@ module Shumway.AVM1 {
       stack.push(undefined);
 
       var resolved = avm1ResolveGetVariable(ectx, variableName);
-      stack[sp] = resolved ? resolved.link.axGetPublicProperty(resolved.name) : undefined;
+      stack[sp] = resolved ? resolved.link.alGet(resolved.name) : undefined;
     }
     function avm1_0x1D_ActionSetVariable(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1613,12 +1538,11 @@ module Shumway.AVM1 {
       var variableName = '' + stack.pop();
       var resolved = avm1ResolveSetVariable(ectx, variableName);
       if (resolved) {
-        resolved.link.axSetPublicProperty(resolved.name, value);
+        resolved.link.alPut(resolved.name, value);
         as2SyncEvents(resolved.name);
       }
     }
     function avm1_0x9A_ActionGetURL2(ectx: ExecutionContext, args: any[]) {
-      var _global = ectx.global;
       var stack = ectx.stack;
 
       var flags: number = args[0];
@@ -1633,15 +1557,14 @@ module Shumway.AVM1 {
       var loadTargetFlag = flags & 1 << 6;
       var loadVariablesFlag = flags & 1 << 7;
       if (loadVariablesFlag) {
-        _global.loadVariables(url, target, sendVarsMethod);
+        ectx.actions.loadVariables(url, target, sendVarsMethod);
       } else if (!loadTargetFlag) {
-        _global.getURL(url, target, sendVarsMethod);
+        ectx.actions.getURL(url, target, sendVarsMethod);
       } else {
-        _global.loadMovie(url, target, sendVarsMethod);
+        ectx.actions.loadMovie(url, target, sendVarsMethod);
       }
     }
     function avm1_0x9F_ActionGotoFrame2(ectx: ExecutionContext, args: any[]) {
-      var _global = ectx.global;
       var stack = ectx.stack;
 
       var flags: number = args[0];
@@ -1649,8 +1572,8 @@ module Shumway.AVM1 {
       if (!!(flags & 2)) {
         gotoParams.push(args[1]);
       }
-      var gotoMethod = !!(flags & 1) ? _global.gotoAndPlay : _global.gotoAndStop;
-      gotoMethod.apply(_global, gotoParams);
+      var gotoMethod = !!(flags & 1) ? ectx.actions.gotoAndPlay : ectx.actions.gotoAndStop;
+      gotoMethod.apply(ectx.actions, gotoParams);
     }
     function avm1_0x20_ActionSetTarget2(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1659,7 +1582,6 @@ module Shumway.AVM1 {
       avm1SetTarget(ectx, target);
     }
     function avm1_0x22_ActionGetProperty(ectx: ExecutionContext) {
-      var _global = ectx.global;
       var stack = ectx.stack;
 
       var index = stack.pop();
@@ -1668,35 +1590,31 @@ module Shumway.AVM1 {
       var sp = stack.length;
       stack.push(undefined);
 
-      stack[sp] = _global.getAVM1Property(target, index);
+      stack[sp] = ectx.actions.getAVM1Property(target, index);
     }
     function avm1_0x23_ActionSetProperty(ectx: ExecutionContext) {
-      var _global = ectx.global;
       var stack = ectx.stack;
 
       var value = stack.pop();
       var index = stack.pop();
       var target = stack.pop();
-      _global.setAVM1Property(target, index, value);
+      ectx.actions.setAVM1Property(target, index, value);
     }
     function avm1_0x24_ActionCloneSprite(ectx: ExecutionContext) {
-      var _global = ectx.global;
       var stack = ectx.stack;
 
       var depth = stack.pop();
       var target = stack.pop();
       var source = stack.pop();
-      _global.duplicateMovieClip(source, target, depth);
+      ectx.actions.duplicateMovieClip(source, target, depth);
     }
     function avm1_0x25_ActionRemoveSprite(ectx: ExecutionContext) {
-      var _global = ectx.global;
       var stack = ectx.stack;
 
       var target = stack.pop();
-      _global.removeMovieClip(target);
+      ectx.actions.removeMovieClip(target);
     }
     function avm1_0x27_ActionStartDrag(ectx: ExecutionContext) {
-      var _global = ectx.global;
       var stack = ectx.stack;
 
       var target = stack.pop();
@@ -1712,40 +1630,34 @@ module Shumway.AVM1 {
         dragParams = dragParams.concat(constrain.x1, constrain.y1,
           constrain.x2, constrain.y2);
       }
-      _global.startDrag.apply(_global, dragParams);
+      ectx.actions.startDrag.apply(ectx.actions, dragParams);
     }
     function avm1_0x28_ActionEndDrag(ectx: ExecutionContext) {
-      var _global = ectx.global;
-
-      _global.stopDrag();
+      ectx.actions.stopDrag();
     }
     function avm1_0x8D_ActionWaitForFrame2(ectx: ExecutionContext, args: any[]) {
-      var _global = ectx.global;
       var stack = ectx.stack;
 
       var count: number = args[0];
       var frame = stack.pop();
-      return !_global.ifFrameLoaded(frame);
+      return !ectx.actions.ifFrameLoaded(frame);
     }
     function avm1_0x26_ActionTrace(ectx: ExecutionContext) {
-      var _global = ectx.global;
       var stack = ectx.stack;
 
       var value = stack.pop();
       // undefined is always 'undefined' for trace (even for SWF6).
-      _global.trace(value === undefined ? 'undefined' : as2ToString(value));
+      ectx.actions.trace(value === undefined ? 'undefined' : as2ToString(value));
     }
     function avm1_0x34_ActionGetTime(ectx: ExecutionContext) {
-      var _global = ectx.global;
       var stack = ectx.stack;
 
-      stack.push(_global.getTimer());
+      stack.push(ectx.actions.getTimer());
     }
     function avm1_0x30_ActionRandomNumber(ectx: ExecutionContext) {
-      var _global = ectx.global;
       var stack = ectx.stack;
 
-      stack.push(_global.random(stack.pop()));
+      stack.push(ectx.actions.random(stack.pop()));
     }
     // SWF 5
     function avm1_0x3D_ActionCallFunction(ectx: ExecutionContext) {
@@ -1759,16 +1671,16 @@ module Shumway.AVM1 {
 
       // TODO fix this bind scope lookup, e.g. calling function in with() might require binding
       var resolved = avm1ResolveGetVariable(ectx, functionName);
-      var fn = resolved ? resolved.link.axGetPublicProperty(resolved.name) : undefined;
+      var fn = resolved ? resolved.link.alGet(resolved.name) : undefined;
       // AVM1 simply ignores attempts to invoke non-functions.
-      if (!fn || !(fn.value instanceof Function)) {
+      if (!(fn instanceof AVM1Function)) {
         avm1Warn("AVM1 warning: function '" + functionName +
                                           (fn ? "' is not callable" : "' is undefined"));
         return;
       }
       release || assert(stack.length === sp + 1);
       // REDUX
-      stack[sp] = fn.axApply(resolved.obj || null, args);
+      stack[sp] = fn.alCall(resolved.obj || null, args);
     }
     function avm1_0x52_ActionCallMethod(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1833,7 +1745,7 @@ module Shumway.AVM1 {
       }
 
       // AVM1 simply ignores attempts to invoke non-methods.
-      if (!isFunction(fn)) {
+      if (!(fn instanceof AVM1Function)) {
         avm1Warn("AVM1 warning: method '" + methodName + "' on object", obj,
                                         (isNullOrUndefined(fn) ?
                                                                "is undefined" :
@@ -1842,7 +1754,7 @@ module Shumway.AVM1 {
       }
       release || assert(stack.length === sp + 1);
       frame.setCallee(target, superArg, fn, args);
-      stack[sp] = fn.apply(target, args);
+      stack[sp] = fn.alCall(target, args);
       frame.resetCallee();
     }
     function avm1_0x88_ActionConstantPool(ectx: ExecutionContext, args: any[]) {
@@ -1860,7 +1772,7 @@ module Shumway.AVM1 {
       var fn = avm1DefineFunction(ectx, functionBody, functionName,
         functionParams, 4, null, 0);
       if (functionName) {
-        scope.axSetPublicProperty(functionName, fn);
+        scope.alPut(functionName, fn);
       } else {
         stack.push(fn);
       }
@@ -1871,14 +1783,14 @@ module Shumway.AVM1 {
 
       var value = stack.pop();
       var name = stack.pop();
-      scope.axSetPublicProperty(name, value);
+      scope.alPut(name, value);
     }
     function avm1_0x41_ActionDefineLocal2(ectx: ExecutionContext) {
       var stack = ectx.stack;
       var scope = ectx.scope;
 
       var name = stack.pop();
-      scope.axSetPublicProperty(name, undefined);
+      scope.alPut(name, undefined);
     }
     function avm1_0x3A_ActionDelete(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1902,7 +1814,7 @@ module Shumway.AVM1 {
       var objectName = stack.pop();
       stack.push(null);
       var resolved = avm1ResolveGetVariable(ectx, objectName);
-      var obj = resolved ? resolved.link.axGetPublicProperty(resolved.name) : undefined;
+      var obj = resolved ? resolved.link.alGet(resolved.name) : undefined;
       // AVM1 just ignores lookups on non-existant containers. We warned in GetVariable already.
       if (isNullOrUndefined(obj)) {
         return;
@@ -1953,12 +1865,15 @@ module Shumway.AVM1 {
 
       var count = +stack.pop();
       count = fixArgsCount(count, stack.length >> 1);
-      var obj: ASObject = ectx.context.securityDomain.createObject();
-      as2SetupInternalProperties(obj, null, AVM1Object);
+      var obj: AVM1Object = alNewObject(ectx.context);
+      obj.alSetOwnProperty('__constructor__', {
+        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
+        value: ectx.context.builtins.Object
+      });
       for (var i = 0; i < count; i++) {
         var value = stack.pop();
         var name = stack.pop();
-        obj.axSetPublicProperty(name, value);
+        obj.alPut(name, value);
       }
       stack.push(obj);
     }
@@ -1986,7 +1901,7 @@ module Shumway.AVM1 {
         ctor = obj;
       } else {
         var resolvedName = as2ResolveProperty(obj, methodName, false);
-        ctor = obj.axGetPublicProperty(resolvedName);
+        ctor = obj.alGet(resolvedName);
       }
 
       var result = as2Construct(ctor, args);
@@ -2006,7 +1921,7 @@ module Shumway.AVM1 {
       stack.push(undefined);
 
       var resolved = avm1ResolveGetVariable(ectx, objectName);
-      var obj = resolved ? resolved.link.axGetPublicProperty(resolved.name) : undefined;
+      var obj = resolved ? resolved.link.alGet(resolved.name) : undefined;
 
       var result = createBuiltinType(obj, args);
       if (result === undefined) {
@@ -2236,11 +2151,11 @@ module Shumway.AVM1 {
 
       var fn = avm1DefineFunction(ectx, functionBody, functionName,
         functionParams, registerCount, registerAllocation, suppressArguments);
-      fn = ectx.context.securityDomain.boxFunction(fn);
+      var fnObj = new AVM1NativeFunction(ectx.context, fn);
       if (functionName) {
-        scope.axSetPublicProperty(functionName, fn);
+        scope.alPut(functionName, fnObj);
       } else {
-        stack.push(fn);
+        stack.push(fnObj);
       }
     }
     function avm1_0x69_ActionExtends(ectx: ExecutionContext) {
@@ -2293,14 +2208,13 @@ module Shumway.AVM1 {
     }
     function avm1_0x2D_ActionFSCommand2(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var _global = ectx.global;
 
       var args = avm1ReadFunctionArgs(stack);
 
       var sp = stack.length;
       stack.push(undefined);
 
-      var result = _global.fscommand.apply(null, args);
+      var result = ectx.actions.fscommand.apply(null, args);
       stack[sp] = result;
     }
     function avm1_0x89_ActionStrictMode(ectx: ExecutionContext, args: any[]) {
@@ -2851,7 +2765,7 @@ module Shumway.AVM1 {
 
       var executionContext = {
         context: currentContext,
-        global: currentContext.globals,
+        actions: currentContext.actions,
         scopeContainer: scopeContainer,
         scope: scope,
         actionTracer: actionTracer,
@@ -3042,7 +2956,7 @@ module Shumway.AVM1 {
             for(var q = 0; q < stack.length; q++) {
               var item = stack[q];
               if (item && typeof item === 'object') {
-                var constr = item.axGetPublicProperty('__constructor__');
+                var constr = item.alGet('__constructor__');
                 stackDump.push('[' + (constr ? constr.name : 'Object') + ']');
 
               } else {

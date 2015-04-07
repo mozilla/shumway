@@ -20,7 +20,7 @@ module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
   import ASObject = Shumway.AVMX.AS.ASObject;
 
-  export class AVM1Sound extends AVM1NativeObject {
+  export class AVM1Sound {
     static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1Sound {
       return wrapAVM1Class(securityDomain, AVM1Sound,
         [],
@@ -35,7 +35,6 @@ module Shumway.AVM1.Lib {
     private _linkageID: string;
 
     public constructor(target_mc) {
-      super();
       this._target = AVM1Utils.resolveTarget(target_mc);
       this._sound = null;
       this._channel = null;
@@ -43,7 +42,7 @@ module Shumway.AVM1.Lib {
     }
 
     public attachSound(id: string): void {
-      var symbol = this.context.getAsset(id);
+      var symbol = (<any>this).context.getAsset(id);
       if (!symbol) {
         return;
       }

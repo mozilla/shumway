@@ -19,10 +19,6 @@
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
   import assert = Shumway.Debug.assert;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
-
-  import Multiname = Shumway.AVMX.Multiname;
-  import Namespace = Shumway.AVMX.Namespace;
 
   class AVM1MovieClipButtonModeEvent extends AVM1EventHandler {
     constructor(public propertyName: string,
@@ -38,8 +34,8 @@ module Shumway.AVM1.Lib {
   }
 
   export class AVM1MovieClip extends AVM1SymbolBase<flash.display.MovieClip> {
-    public static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1MovieClip {
-      return wrapAVM1Class(securityDomain, AVM1MovieClip,
+    public static createAVM1Class(context: AVM1Context): AVM1Object {
+      return wrapAVM1NativeClass(context, true, AVM1MovieClip,
         [],
         ['_alpha', 'attachAudio', 'attachBitmap', 'attachMovie',
           'beginFill', 'beginBitmapFill', 'beginGradientFill', 'blendMode',
@@ -63,11 +59,6 @@ module Shumway.AVM1.Lib {
 
     private _boundExecuteFrameScripts: () => void;
     private _frameScripts: AVM1.AVM1ActionsData[][];
-
-    constructor() {
-      super();
-      // TODO fail or do nothing?
-    }
 
     private get graphics() : flash.display.Graphics {
       return this.as3Object.graphics;
@@ -93,7 +84,7 @@ module Shumway.AVM1.Lib {
     }
 
     private _lookupChildByName(name: string): flash.display.DisplayObject {
-      name = asCoerceString(name);
+      name = alCoerceString(name);
       return this.as3Object._lookupChildByName(name);
     }
 
@@ -362,10 +353,11 @@ module Shumway.AVM1.Lib {
     }
 
     public globalToLocal(pt) {
+      var securityDomain = this.context.securityDomain;
       var tmp: flash.geom.Point = this.as3Object.globalToLocal(
-        new flash.geom.Point(pt.asGetPublicProperty('x'), pt.asGetPublicProperty('y')));
-      pt.axSetPublicProperty('x', tmp.x);
-      pt.axSetPublicProperty('y', tmp.y);
+        new securityDomain.flash.geom.Point(pt.alGet('x'), pt.alGet('y')));
+      pt.alPut('x', tmp.x);
+      pt.alPut('y', tmp.y);
     }
 
     public gotoAndPlay(frame) {
@@ -441,14 +433,16 @@ module Shumway.AVM1.Lib {
     }
 
     public loadVariables(url: string, method?: string) {
-      this.context.globals._loadVariables(this, url, method);
+      // REDUX move _loadVariables here?
+      (<any>this.context).actions._loadVariables(this, url, method);
     }
 
     public localToGlobal(pt) {
+      var securityDomain = this.context.securityDomain;
       var tmp: flash.geom.Point = this.as3Object.localToGlobal(
-        new flash.geom.Point(pt.asGetPublicProperty('x'), pt.asGetPublicProperty('y')));
-      pt.axSetPublicProperty('x', tmp.x);
-      pt.axSetPublicProperty('y', tmp.y);
+        new securityDomain.flash.geom.Point(pt.alGet('x'), pt.alGet('y')));
+      pt.alPut('x', tmp.x);
+      pt.alPut('y', tmp.y);
     }
 
     public get _lockroot() {
@@ -761,48 +755,34 @@ module Shumway.AVM1.Lib {
       return null;
     }
 
-    public axGetProperty(mn: Shumway.AVMX.Multiname) {
-      if (super.axHasProperty(mn)) {
-        return super.axGetProperty(mn);
+    public alGetOwnProperty(name): AVM1PropertyDescriptor {
+      var desc = super.alGetOwnProperty(name);
+      if (desc) {
+        return desc;
       }
       if (typeof name === 'string' && name[0] === '_') {
         var level = this._resolveLevelNProperty(name);
         if (level) {
-          return level;
+          return {
+            flags: AVM1PropertyFlags.NATIVE_MEMBER,
+            value: level
+          };
         }
       }
-      // REDUX
-      /*
-      var resolved = resolveMultinameProperty(namespaces, name, flags);
-      if (Multiname.isPublicQualifiedName(resolved) && this.isAVM1Instance) {
-        return this.__lookupChild((<any>Multiname).getNameFromPublicQualifiedName(resolved)); // REDUX
+      if (this.isAVM1Instance) {
+        var child = this.__lookupChild(name);
+        if (child) {
+          return {
+            flags: AVM1PropertyFlags.NATIVE_MEMBER,
+            value: child
+          };
+        }
       }
-      */
       return undefined;
     }
 
-    public axHasProperty(mn: Shumway.AVMX.Multiname): boolean {
-      if (super.axHasProperty(mn)) {
-        return true;
-      }
-      if (typeof name === 'string' && name[0] === '_') {
-        var level = this._resolveLevelNProperty(name);
-        if (level) {
-          return true;
-        }
-      }
-      // REDUX
-      /*
-      var resolved = resolveMultinameProperty(namespaces, name, flags);
-      if (Multiname.isPublicQualifiedName(resolved) && this.isAVM1Instance) {
-        return !!this.__lookupChild((<any>Multiname).getNameFromPublicQualifiedName(resolved)); // REDUX
-      }
-      */
-      return false;
-    }
-
-    public axGetEnumerableKeys(): any [] {
-      var keys = super.axGetEnumerableKeys();
+    public alGetOwnPropertiesKeys(): any [] {
+      var keys = super.alGetOwnPropertiesKeys();
       // if it's a movie listing the children as well
       if (!this.isAVM1Instance) {
         return keys; // not initialized yet
@@ -812,8 +792,8 @@ module Shumway.AVM1.Lib {
       for (var i = 0, length = as3MovieClip._children.length; i < length; i++) {
         var child = as3MovieClip._children[i];
         var name = child.name;
-        if (!super.axHasPublicProperty(name)) {
-          keys.push('REDUX!' + name); // REDUX
+        if (!super.alHasProperty(name)) {
+          keys.push(name); // REDUX remove duplicates
         }
       }
       return keys;

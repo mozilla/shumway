@@ -17,8 +17,6 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import ASObject = Shumway.AVMX.AS.ASObject;
-
   function _updateAllSymbolEvents(symbolInstance: IAVM1SymbolBase) {
     if (!symbolInstance.isAVM1Instance) {
       return;
@@ -26,41 +24,45 @@ module Shumway.AVM1.Lib {
     symbolInstance.updateAllEvents();
   }
 
-  export class AVM1Broadcaster extends ASObject {
-    private static _context: AVM1Context;
-
-    public static setAVM1Context(context: AVM1Context) {
-      this._context = context;
+  export class AVM1Broadcaster extends AVM1Object {
+    public static createAVM1Class(context: AVM1Context): AVM1Object {
+      return wrapAVM1NativeClass(context, true, AVM1Broadcaster, ['initialize'], []);
     }
 
-    public static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1Broadcaster {
-      return wrapAVM1Class(securityDomain, AVM1Broadcaster, ['initialize'], []);
-    }
-
-    public static initialize(obj: any): void {
-      AVM1Broadcaster.initializeWithContext(obj, AVM1Context.instance);
-    }
-
-    public static initializeWithContext(obj: any, context: AVM1Context): void {
-      obj.axSetPublicProperty('_listeners', context.securityDomain.createArray([]));
-      obj.axSetPublicProperty('broadcastMessage', context.securityDomain.boxFunction(function broadcastMessage(eventName: string, ...args): void {
-        avm1BroadcastEvent(context, this, eventName, context.securityDomain.createArray(args));
-      }));
-      obj.axSetPublicProperty('addListener', context.securityDomain.boxFunction(function addListener(listener: any): void {
-        var listeners: any[] = context.utils.getProperty(this, '_listeners');
-        listeners.push(listener);
-        _updateAllSymbolEvents(<any>this);
-      }));
-      obj.axSetPublicProperty('removeListener', context.securityDomain.boxFunction(function removeListener(listener: any): boolean {
-        var listeners: any[] = context.utils.getProperty(this, '_listeners');
-        var i = listeners.indexOf(listener);
-        if (i < 0) {
-          return false;
-        }
-        listeners.splice(i, 1);
-        _updateAllSymbolEvents(<any>this);
-        return true;
-      }));
+    public static initialize(context: AVM1Context, obj: AVM1Object): void {
+      obj.alSetOwnProperty('_listeners', {
+        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
+        value: new Natives.AVM1ArrayNative(context, [])
+      });
+      obj.alSetOwnProperty('broadcastMessage', {
+        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
+        value: new AVM1NativeFunction(context, function broadcastMessage(eventName: string, ...args): void {
+          avm1BroadcastEvent(context, this, eventName, args);
+        })
+      });
+      obj.alSetOwnProperty('addListener', {
+        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
+        value: new AVM1NativeFunction(context, function addListener(listener: any): void {
+          // REDUX
+          var listeners: any[] = context.utils.getProperty(this, '_listeners').value;
+          listeners.push(listener);
+          _updateAllSymbolEvents(<any>this);
+        })
+      });
+      obj.alSetOwnProperty('removeListener', {
+        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
+        value: new AVM1NativeFunction(context, function removeListener(listener: any): boolean {
+          // REDUX
+          var listeners: any[] = context.utils.getProperty(this, '_listeners').value;
+          var i = listeners.indexOf(listener);
+          if (i < 0) {
+            return false;
+          }
+          listeners.splice(i, 1);
+          _updateAllSymbolEvents(<any>this);
+          return true;
+        })
+      });
     }
   }
 }

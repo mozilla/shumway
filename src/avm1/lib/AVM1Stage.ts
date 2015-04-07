@@ -17,14 +17,14 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import ASObject = Shumway.AVMX.AS.ASObject;
-
-  export class AVM1Stage extends ASObject {
-    public static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1Stage {
-      return wrapAVM1Class(securityDomain, AVM1Stage,
+  export class AVM1Stage extends AVM1Object {
+    public static createAVM1Class(context: AVM1Context): AVM1Object {
+      var wrapped = new AVM1Stage(context);
+      wrapAVM1NativeMembers(context, wrapped, AVM1Stage,
         ['align', 'displayState', 'fullScreenSourceRect', 'height', 'scaleMode',
           'showMenu', 'width'],
-        []);
+        false);
+      return wrapped;
     }
 
     public static get align() { return AVM1Utils.currentStage.align; }
