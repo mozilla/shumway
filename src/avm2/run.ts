@@ -304,7 +304,8 @@ module Shumway.AVMX {
 
   export function axCheckFilter(value, securityDomain: SecurityDomain) {
     if (!value || !AS.isXMLCollection(value, securityDomain)) {
-      throw "TypeError operand of checkFilter not of XML type";
+      var className = value && value.axClass ? value.axClass.name.toFQNString(false) : '[unknown]';
+      this.securityDomain.throwError('RangeError', Errors.FilterError, className);
     }
     return value;
   }

@@ -376,7 +376,7 @@ module Shumway.AVMX.AS.flash.display {
           resolver.registerImage(<Timeline.EagerlyResolvedSymbol><any>symbol, data);
           break;
         default:
-          throw new Error('Unsupported assert type: ' + data.type);
+          console.warn('Unsupported asset type: ' + data.type);
       }
     }
 

@@ -89,8 +89,21 @@ module Shumway.AVMX.AS {
       return false;
     }
 
-    export var decodeURI: (encodedURI: string) => string = wrapJSGlobalFunction(jsGlobal.decodeURI);
-    export var decodeURIComponent: (encodedURIComponent: string) =>  string = wrapJSGlobalFunction(jsGlobal.decodeURIComponent);
+    export function decodeURI(securityDomain: SecurityDomain, encodedURI: string): string {
+      try {
+        return jsGlobal.decodeURI(encodedURI);
+      } catch (e) {
+        securityDomain.throwError('URIError', Errors.InvalidURIError, 'decodeURI');
+      }
+    }
+
+    export function decodeURIComponent(securityDomain: SecurityDomain, encodedURI: string): string {
+      try {
+        return jsGlobal.decodeURIComponent(encodedURI);
+      } catch (e) {
+        securityDomain.throwError('URIError', Errors.InvalidURIError, 'decodeURIComponent');
+      }
+    }
     export var encodeURI: (uri: string) => string = wrapJSGlobalFunction(jsGlobal.encodeURI);
     export var encodeURIComponent: (uriComponent: string) => string = wrapJSGlobalFunction(jsGlobal.encodeURIComponent);
     export var isNaN: (number: number) => boolean = wrapJSGlobalFunction(jsGlobal.isNaN);
@@ -1243,6 +1256,14 @@ module Shumway.AVMX.AS {
     value: number;
 
     toString(radix: number) {
+      if (arguments.length === 0) {
+        radix = 10;
+      } else {
+        radix = radix|0;
+        if (radix < 2 || radix > 36) {
+          this.securityDomain.throwError('RangeError', Errors.InvalidRadixError, radix);
+        }
+      }
       return this.value.toString(radix);
     }
 
@@ -1251,14 +1272,26 @@ module Shumway.AVMX.AS {
     }
 
     toExponential(p): string {
+      p = p|0;
+      if (p < 0 || p > 20) {
+        this.securityDomain.throwError('RangeError', Errors.InvalidPrecisionError);
+      }
       return this.value.toExponential(p);
     }
 
     toPrecision(p): string {
+      p = p|0;
+      if (p < 1 || p > 21) {
+        this.securityDomain.throwError('RangeError', Errors.InvalidPrecisionError);
+      }
       return this.value.toPrecision(p);
     }
 
     toFixed(p): string {
+      p = p|0;
+      if (p < 0 || p > 20) {
+        this.securityDomain.throwError('RangeError', Errors.InvalidPrecisionError);
+      }
       return this.value.toFixed(p);
     }
 
@@ -1269,7 +1302,7 @@ module Shumway.AVMX.AS {
 
   export class ASInt extends ASNumber {
     public static staticNatives: any [] = [Math];
-    public static instanceNatives: any [] = [Number.prototype];
+    public static instanceNatives: any [] = [ASNumber.prototype];
 
     static classInitializer() {
       var proto: any = this.dPrototype;
@@ -1281,7 +1314,7 @@ module Shumway.AVMX.AS {
 
   export class ASUint extends ASNumber {
     public static staticNatives: any [] = [Math];
-    public static instanceNatives: any [] = [Number.prototype];
+    public static instanceNatives: any [] = [ASNumber.prototype];
 
     static classInitializer() {
       var proto: any = this.dPrototype;
@@ -1364,7 +1397,11 @@ module Shumway.AVMX.AS {
         }
         pattern = this._parse(source);
       }
-      this.value = new RegExp(pattern, flags);
+      try {
+        this.value = new RegExp(pattern, flags);
+      } catch (e) {
+        this.value = new RegExp('^not matching anything, hopefully±$', flags);
+      }
       this._source = source;
     }
 
