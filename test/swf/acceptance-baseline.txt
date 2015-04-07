@@ -1,2 +1,0 @@
-test/swf/demo.swf: 0x70bfa636
-test/swf/main.swf: 0xf9e6533c

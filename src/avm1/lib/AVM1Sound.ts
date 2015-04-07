@@ -49,7 +49,7 @@ module Shumway.AVM1.Lib {
 
       var props: flash.media.SoundSymbol = Object.create(symbol.symbolProps);
       var sound: flash.media.Sound = (<any>flash.media.Sound).initializeFrom(props); // REDUX
-      flash.media.Sound.instanceConstructorNoInitialize.call(sound);
+      //flash.media.Sound.instanceConstructorNoInitialize.call(sound);
       this._linkageID = id;
       this._sound = sound;
     }

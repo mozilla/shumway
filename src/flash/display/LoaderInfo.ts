@@ -269,7 +269,7 @@ module Shumway.AVMX.AS.flash.display {
     get parameters(): Object {
       somewhatImplemented("public flash.display.LoaderInfo::get parameters");
       if (this._parameters) {
-        return Shumway.ObjectUtilities.cloneObject(this._parameters);
+        return transformJSValueToAS(this.securityDomain, this._parameters, false);
       }
       return {};
     }
@@ -376,7 +376,7 @@ module Shumway.AVMX.AS.flash.display {
           resolver.registerImage(<Timeline.EagerlyResolvedSymbol><any>symbol, data);
           break;
         default:
-          throw new Error('Unsupported assert type: ' + data.type);
+          console.warn('Unsupported asset type: ' + data.type);
       }
     }
 

@@ -304,7 +304,8 @@ module Shumway.AVMX {
 
   export function axCheckFilter(value, securityDomain: SecurityDomain) {
     if (!value || !AS.isXMLCollection(value, securityDomain)) {
-      throw "TypeError operand of checkFilter not of XML type";
+      var className = value && value.axClass ? value.axClass.name.toFQNString(false) : '[unknown]';
+      this.securityDomain.throwError('RangeError', Errors.FilterError, className);
     }
     return value;
   }
@@ -379,8 +380,7 @@ module Shumway.AVMX {
       return String(l) + String(r);
     }
     if (AS.isXMLCollection(l, securityDomain) && AS.isXMLCollection(r, securityDomain)) {
-      // FIXME
-      // return AS.ASXMLList.addXML(l, r);
+      return AS.ASXMLList.addXML(l, r);
     }
     return l + r;
   }
@@ -602,9 +602,10 @@ module Shumway.AVMX {
       var t = T[i];
       var p: PropertyDescriptor = t;
       if (p.value instanceof Namespace) {
-        // We can't call |object.securityDomain.AXNamespace.FromNamespace(...)| because the AXNamespace
-        // class may not have been loaded yet. However, at this point we do have a valid reference to
-        // |object.securityDomain.AXNamespace| because |prepareNativeClass| has been called.
+        // We can't call |object.securityDomain.AXNamespace.FromNamespace(...)| because the
+        // AXNamespace class may not have been loaded yet. However, at this point we do have a
+        // valid reference to |object.securityDomain.AXNamespace| because |prepareNativeClass| has
+        // been called.
         p = { value: AS.ASNamespace.FromNamespace.call(object.securityDomain.AXNamespace, p.value) };
       }
       if (!release && (t.kind === TRAIT.Slot || t.kind === TRAIT.Const)) {
@@ -699,6 +700,7 @@ module Shumway.AVMX {
     asClass: ASClass;
     superClass: AXClass;
     classInfo: ClassInfo;
+    name: Multiname;
     // Used to initialize Vectors.
     defaultValue: any;
     tPrototype: AXObject;
@@ -716,6 +718,7 @@ module Shumway.AVMX {
   export interface AXFunction extends AXObject {
     axApply(thisArg: any, argArray?: any[]): any;
     axCall(thisArg: any): any;
+    value;
   }
 
   export interface AXMethodClosureClass extends AXClass {
@@ -724,8 +727,6 @@ module Shumway.AVMX {
 
   export interface AXXMLClass extends AXClass {
     Create(value?: any): AS.ASXML;
-    isTraitsOrdPrototype(xml: AS.ASXML): boolean;
-    defaultNamespace: Namespace;
     _flags: number;
     _prettyIndent: number;
     prettyPrinting: boolean;
@@ -737,12 +738,12 @@ module Shumway.AVMX {
   export interface AXXMLListClass extends AXClass {
     Create(value?: any): AS.ASXMLList;
     CreateList(targetObject: AS.ASXML, targetProperty: Multiname): AS.ASXMLList;
-    isTraitsOrdPrototype(list: AS.ASXMLList): boolean;
   }
 
   export interface AXNamespaceClass extends AXClass {
     Create(uriOrPrefix?: any, uri?: any): AS.ASNamespace;
     FromNamespace(ns: Namespace): AS.ASNamespace;
+    defaultNamespace: Namespace;
   }
 
   export interface AXQNameClass extends AXClass {
@@ -775,16 +776,16 @@ module Shumway.AVMX {
    * Make sure we bottom out at the securityDomain's objectPrototype.
    */
   export function safeGetPrototypeOf(object: AXObject): AXObject {
-    var prototype = Object.getPrototypeOf(object);
-    if (prototype.hasOwnProperty("traits")) {
-      return safeGetPrototypeOf(prototype);
-    }
-    if (!prototype.securityDomain) {
+    var axClass = object.axClass;
+    if (!axClass || axClass === axClass.securityDomain.AXObject) {
       return null;
     }
-    if (prototype.securityDomain.objectPrototype === object) {
-      return null;
+
+    var prototype = axClass.dPrototype;
+    if (prototype === object) {
+      prototype = axClass.superClass.dPrototype;
     }
+    release || assert(prototype.securityDomain);
     return prototype;
   }
 
@@ -820,18 +821,17 @@ module Shumway.AVMX {
      * don't rely on it.
      */
     next(object: AXObject, index: number) {
-      this.object = object;
-      this.index = index;
-      if (isNullOrUndefined(this.object)) {
+      if (isNullOrUndefined(object)) {
         this.index = 0;
         this.object = null;
         return;
+      } else {
+        this.object = object;
+        this.index = index;
       }
-      var object = this.object;
       var nextIndex = object.axNextNameIndex(this.index);
       if (nextIndex > 0) {
         this.index = nextIndex;
-        this.object = object;
         return;
       }
       // If there are no more properties in the object then follow the prototype chain.
@@ -877,8 +877,7 @@ module Shumway.AVMX {
    * Throwing initializer for interfaces.
    */
   function axInterfaceInitializer() {
-    this.securityDomain.throwError("VerifierError", Errors.NotImplementedError,
-                                   this.classInfo.instanceInfo.name.name);
+    this.securityDomain.throwError("VerifierError", Errors.NotImplementedError, this.name.name);
   }
 
   /**
@@ -900,6 +899,7 @@ module Shumway.AVMX {
     public AXClass: AXClass;
     public AXFunction: AXClass;
     public AXMethodClosure: AXMethodClosureClass;
+    public AXError: AXClass;
     public AXNumber: AXClass;
     public AXString: AXClass;
     public AXBoolean: AXClass;
@@ -965,15 +965,15 @@ module Shumway.AVMX {
 
     throwError(className: string, error: any, replacement1?: any,
                replacement2?: any, replacement3?: any, replacement4?: any) {
-      var message = formatErrorMessage.apply(null, sliceArguments(arguments, 1));
-      this.throwErrorFromVM(className, message, error.code);
+      throw this.createError.apply(this, arguments);
     }
 
-    throwErrorFromVM(errorClass: string, message: string, id: number) {
-      rn.namespaces = [Namespace.PUBLIC];
-      rn.name = errorClass;
-      var axClass: AXClass = <any>this.application.getProperty(rn, true, true);
-      throw axClass.axConstruct([message, id]);
+    createError(className: string, error: any, replacement1?: any,
+               replacement2?: any, replacement3?: any, replacement4?: any) {
+      var message = formatErrorMessage.apply(null, sliceArguments(arguments, 1));
+      var mn = new Multiname(null, 0, CONSTANT.RTQNameL, [Namespace.PUBLIC], className);
+      var axClass: AXClass = <any>this.application.getProperty(mn, true, true);
+      return axClass.axConstruct([message, error.code]);
     }
 
     applyType(axClass: AXClass, types: AXClass []): AXClass {
@@ -1048,23 +1048,6 @@ module Shumway.AVMX {
       return fn;
     }
 
-    /**
-     * Used for factory types. This creates a class that by default behaves the same
-     * as its factory class but gives us the opportunity to override protocol
-     * handlers.
-     */
-    createSyntheticClass(superClass: AXClass): AXClass {
-      var axClass: AXClass = Object.create(superClass);
-      // Put the superClass tPrototype on the prototype chain so we have access
-      // to all factory protocol handlers by default.
-      axClass.tPrototype = Object.create(superClass.tPrototype);
-      axClass.tPrototype.axClass = axClass;
-      // We don't need a new dPrototype object.
-      axClass.dPrototype = superClass.dPrototype;
-      axClass.superClass = superClass;
-      return axClass;
-    }
-
     createClass(classInfo: ClassInfo, superClass: AXClass, scope: Scope): AXClass {
       var instanceInfo = classInfo.instanceInfo;
       var className = instanceInfo.getName().name;
@@ -1109,9 +1092,9 @@ module Shumway.AVMX {
         this.initializeRuntimeTraits(axClass, superClass, classScope);
       }
 
-      // Add the |constructor| property on the class traits prototype so that all instances can
-      // get to their class constructor.
-      defineNonEnumerableProperty(axClass.tPrototype, "$Bgconstructor", axClass);
+      // Add the |constructor| property on the class dynamic prototype so that all instances can
+      // get to their class constructor, and FooClass.prototype.constructor returns FooClass.
+      defineNonEnumerableProperty(axClass.dPrototype, "$Bgconstructor", axClass);
 
       // Copy over all TS symbols.
       AS.tryLinkNativeClass(axClass);
@@ -1266,6 +1249,11 @@ module Shumway.AVMX {
       D(rootClassPrototype, "axIsInstanceOf", axIsInstanceOfObject);
       D(rootClassPrototype, "axConstruct", axConstruct);
       D(rootClassPrototype, "axApply", axDefaultApply);
+      Object.defineProperty(rootClassPrototype, 'name', {
+        get: function () {
+          return this.classInfo.instanceInfo.name;
+        }
+      });
 
       this.rootClassPrototype = rootClassPrototype;
     }
@@ -1447,6 +1435,7 @@ module Shumway.AVMX {
       });
 
       this.prepareNativeClass("AXMethodClosure", "MethodClosure", false);
+      this.prepareNativeClass("AXError", "Error", false);
       this.prepareNativeClass("AXRegExp", "RegExp", false);
 
       this.prepareNativeClass("AXMath", "Math", false);

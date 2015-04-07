@@ -138,17 +138,21 @@ function runIFramePlayer(data) {
   container.appendChild(playerWorkerIFrame);
 }
 
-function executeFile(file, buffer, movieParams, remoteDebugging) {
-  var filename = file.split('?')[0].split('#')[0];
+/**
+ * The |path| argument can be a comma delimited list of files, but this only works for .abc files at the moment.
+ */
+function executeFile(path, buffer, movieParams, remoteDebugging) {
+  var fileNames = path.split('?')[0].split('#')[0].split(",");
+  var fileName = fileNames[0];
 
-  file = new URL(file, document.location.href).href;
+  var files = fileNames.map(function (file) {
+    return new URL(file, document.location.href).href;
+  });
 
-  var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
-  var sysMode = sysCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-  var appMode = appCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  var file = files[0];
 
-  if (state.useIFramePlayer && filename.endsWith(".swf")) {
-    runIFramePlayer({sysMode: sysMode, appMode: appMode,
+  if (state.useIFramePlayer && fileName.endsWith(".swf")) {
+    runIFramePlayer({sysMode: false, appMode: false,
       movieParams: movieParams, file: file, asyncLoading: asyncLoading,
       stageAlign: state.salign, stageScale: state.scale,
       fileReadChunkSize: state.fileReadChunkSize, loaderURL: state.loaderURL,
@@ -182,28 +186,26 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
     Shumway.FileLoadingService.instance.init(file, state.fileReadChunkSize);
   }
 
-  // All execution paths must now load AVM2.
-  if (!appCompiler.value) {
-    showMessage("Running in the Interpreter");
-  }
-
   Shumway.SystemResourcesLoadingService.instance =
     new Shumway.Player.BrowserSystemResourcesLoadingService(builtinPath, playerglobalInfo, shellAbcPath);
 
-  if (filename.endsWith(".abc")) {
+  if (fileName.endsWith(".abc")) {
     Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Shell).then(function (securityDomain) {
       function runAbc(file, buffer) {
         securityDomain.system.loadAndExecuteABC(new Shumway.AVMX.ABCFile(new Uint8Array(buffer)));
       }
-      if (!buffer) {
+      function shift() {
+        var file = files.shift();
         new BinaryFileReader(file).readAll(null, function(buffer) {
           runAbc(file, buffer);
+          if (files.length) {
+            shift();
+          }
         });
-      } else {
-        runAbc(file, buffer);
       }
+      shift();
     });
-  } else if (filename.endsWith(".swf")) {
+  } else if (fileName.endsWith(".swf")) {
     Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal).then(function (securityDomain) {
       function runSWF(file, buffer) {
         var swfURL = Shumway.FileLoadingService.instance.resolveUrl(file);
@@ -249,11 +251,11 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
         runSWF(file, buffer);
       }
     });
-  } else if (filename.endsWith(".js") || filename.endsWith("/")) {
+  } else if (fileName.endsWith(".js") || fileName.endsWith("/")) {
     Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal).then(function (securityDomain) {
       jsGlobal.securityDomain = securityDomain;
       Shumway.AVMX.AS.installClassLoaders(securityDomain.application, jsGlobal);
-      executeUnitTests(filename);
+      executeUnitTests(fileName);
     });
   }
 }

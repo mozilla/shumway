@@ -89,8 +89,21 @@ module Shumway.AVMX.AS {
       return false;
     }
 
-    export var decodeURI: (encodedURI: string) => string = wrapJSGlobalFunction(jsGlobal.decodeURI);
-    export var decodeURIComponent: (encodedURIComponent: string) =>  string = wrapJSGlobalFunction(jsGlobal.decodeURIComponent);
+    export function decodeURI(securityDomain: SecurityDomain, encodedURI: string): string {
+      try {
+        return jsGlobal.decodeURI(encodedURI);
+      } catch (e) {
+        securityDomain.throwError('URIError', Errors.InvalidURIError, 'decodeURI');
+      }
+    }
+
+    export function decodeURIComponent(securityDomain: SecurityDomain, encodedURI: string): string {
+      try {
+        return jsGlobal.decodeURIComponent(encodedURI);
+      } catch (e) {
+        securityDomain.throwError('URIError', Errors.InvalidURIError, 'decodeURIComponent');
+      }
+    }
     export var encodeURI: (uri: string) => string = wrapJSGlobalFunction(jsGlobal.encodeURI);
     export var encodeURIComponent: (uriComponent: string) => string = wrapJSGlobalFunction(jsGlobal.encodeURIComponent);
     export var isNaN: (number: number) => boolean = wrapJSGlobalFunction(jsGlobal.isNaN);
@@ -153,11 +166,11 @@ module Shumway.AVMX.AS {
     }
 
     export function describeType(securityDomain: SecurityDomain, value: any, flags: number) {
-      //return Shumway.AVM2.AS.describeType(value, flags);
+      //return AS.describeType(value, flags);
     }
 
     export function describeTypeJSON(securityDomain: SecurityDomain, value: any, flags: number) {
-      //return Shumway.AVM2.AS.describeTypeJSON(value, flags);
+      return AS.describeTypeJSON(securityDomain, value, flags);
     }
   }
 
@@ -182,16 +195,22 @@ module Shumway.AVMX.AS {
 
   var rn = new Multiname(null, 0, CONSTANT.RTQNameL, [], null);
 
-  function makeMultiname(v: any, namespace?: Namespace) {
+  export function makeMultiname(v: any, namespace?: Namespace) {
     var rn = new Multiname(null, 0, CONSTANT.RTQNameL, [], null);
     rn.namespaces = namespace ? [namespace] : [];
     rn.name = v;
     return rn;
   }
 
+  function qualifyPublicName(v: any) {
+    return isIndex(v) ? v : '$Bg' + v;
+  }
+
 
   export function addPrototypeFunctionAlias(object: AXObject, name: string, fun: Function) {
     release || assert(name.indexOf('$Bg') === 0);
+    release || assert(typeof fun === 'function');
+    // REDUX: remove the need to box the function.
     defineNonEnumerableProperty(object, name, object.securityDomain.AXFunction.axBox(fun));
   }
 
@@ -256,17 +275,21 @@ module Shumway.AVMX.AS {
     static axIsType: (value: any) => boolean;
 
     static getPrototypeOf: () => boolean;
-    static native_isPrototypeOf: (v: any) => boolean;
-    static native_hasOwnProperty: (v: any) => boolean;
-    static native_propertyIsEnumerable: (v: any) => boolean;
+    static native_isPrototypeOf: (nm: string) => boolean;
+    static native_hasOwnProperty: (nm: string) => boolean;
+    static native_propertyIsEnumerable: (nm: string) => boolean;
+    static native_setPropertyIsEnumerable: (nm: string, enumerable?: boolean) => boolean;
 
     static classInitializer() {
       var proto: any = this.dPrototype;
       var asProto: any = ASObject.prototype;
       addPrototypeFunctionAlias(proto, "$BghasOwnProperty", asProto.native_hasOwnProperty);
-      addPrototypeFunctionAlias(proto, "$BgpropertyIsEnumerable", asProto.native_propertyIsEnumerable);
-      addPrototypeFunctionAlias(proto, "$BgsetPropertyIsEnumerable", asProto.setPropertyIsEnumerable);
+      addPrototypeFunctionAlias(proto, "$BgpropertyIsEnumerable",
+                                asProto.native_propertyIsEnumerable);
+      addPrototypeFunctionAlias(proto, "$BgsetPropertyIsEnumerable",
+                                asProto.native_setPropertyIsEnumerable);
       addPrototypeFunctionAlias(proto, "$BgisPrototypeOf", asProto.native_isPrototypeOf);
+      addPrototypeFunctionAlias(proto, '$BgtoLocaleString', asProto.toString);
     }
 
     static _init() {
@@ -277,50 +300,56 @@ module Shumway.AVMX.AS {
       // Nop.
     }
 
-    // REDUX:
-    static instanceConstructorNoInitialize = function () { notImplemented("instanceConstructorNoInitialize => axInitialize"); };
-
-    static isInstanceOf = function (x: any) { notImplemented("isInstanceOf"); return false; };
-    static isType = function (x: any) { notImplemented("isType"); return false; };
-    static isSubtypeOf = function (x: any) { notImplemented("isType"); return false; };
-    static class: any;
-    class: any;
-    instanceConstructorNoInitialize = function () { notImplemented("instanceConstructorNoInitialize => axInitialize"); };
-    isInstanceOf = function (x: any) { notImplemented("isInstanceOf"); return false; };
-    isType = function (x: any) { notImplemented("isType"); return false; };
-    isSubtypeOf = function (x: any) { notImplemented("isType"); return false; };
-
+    static axClass: any;
+    axClass: any;
 
     getPrototypeOf: () => any;
 
     native_isPrototypeOf(v: any): boolean {
-      notImplemented("Object::isPrototypeOf");
-      return false;
+      return this.isPrototypeOf(this.securityDomain.box(v));
     }
 
-    native_hasOwnProperty(v: any): boolean {
-      return this.axHasOwnProperty(makeMultiname(v));
+    native_hasOwnProperty(nm: string): boolean {
+      return this.axHasOwnProperty(makeMultiname(nm));
     }
 
-    native_propertyIsEnumerable(v: any): boolean {
-      return this.axHasOwnProperty(makeMultiname(v));
+    native_propertyIsEnumerable(nm: string): boolean {
+      var descriptor = Object.getOwnPropertyDescriptor(this, qualifyPublicName(asCoerceString(nm)));
+      return !!descriptor && descriptor.enumerable;
+    }
+
+    native_setPropertyIsEnumerable(nm: string, enumerable: boolean = true): void {
+      var qualifiedName = qualifyPublicName(asCoerceString(nm));
+      enumerable = !!enumerable;
+      var instanceInfo = this.axClass.classInfo.instanceInfo;
+      if (instanceInfo.isSealed()) {
+        this.securityDomain.throwError('ReferenceError', Errors.WriteSealedError, nm,
+                                       instanceInfo.name.name);
+      }
+      // Silently ignore trait properties.
+      var descriptor = Object.getOwnPropertyDescriptor(this.axClass.tPrototype, qualifiedName);
+      if (descriptor) {
+        return;
+      }
+      var descriptor = Object.getOwnPropertyDescriptor(this, qualifiedName);
+      // ... and non-existent properties.
+      if (!descriptor) {
+        return;
+      }
+      if (descriptor.enumerable !== enumerable) {
+        descriptor.enumerable = enumerable;
+        Object.defineProperty(this, qualifiedName, descriptor);
+      }
     }
 
     axResolveMultiname(mn: Multiname): any {
-      if (typeof mn.name === 'number') {
+      var name = mn.name;
+      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
         release || assert(mn.isRuntimeName());
-        return mn.name;
+        return +name;
       }
-      var name = asCoerceName(mn.name);
-      var namespaces = mn.namespaces;
-      if (mn.isRuntimeName() && isNumeric(name)) {
-        return name;
-      }
-      var t = this.traits.getTrait(namespaces, name);
-      if (t) {
-        return t.name.getMangledName();
-      }
-      return '$Bg' + name;
+      var t = this.traits.getTrait(mn.namespaces, name);
+      return t ? t.name.getMangledName() : '$Bg' + name;
     }
 
     axHasProperty(mn: Multiname): boolean {
@@ -336,24 +365,31 @@ module Shumway.AVMX.AS {
 
     axSetProperty(mn: Multiname, value: any) {
       release || checkValue(value);
-      if (typeof mn.name === 'number') {
+      var name = mn.name;
+      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
         release || assert(mn.isRuntimeName());
-        this[mn.name] = value;
+        this[+name] = value;
         return;
       }
-      var name = asCoerceName(mn.name);
-      var namespaces = mn.namespaces;
-      if (mn.isRuntimeName() && isNumeric(name)) {
-        this[mn.name] = value;
-        return;
-      }
-      var t = this.traits.getTrait(namespaces, name);
+      var t = this.traits.getTrait(mn.namespaces, name);
       if (t) {
+        var mangledName = t.name.getMangledName();
+        switch (t.kind) {
+          case TRAIT.Method:
+            this.securityDomain.throwError('ReferenceError', Errors.CannotAssignToMethodError, name,
+                                           this.axClass.name.name);
+          // TODO: enable throwing after initialization has finished.
+          //case TRAIT.Const:
+          // Fallthrough.
+          case TRAIT.Getter:
+            this.securityDomain.throwError('ReferenceError', Errors.ConstWriteError, name,
+                                           this.axClass.name.name);
+        }
         var type = t.getType();
         if (type) {
           value = type.axCoerce(value);
         }
-        this[t.name.getMangledName()] = value;
+        this[mangledName] = value;
       } else {
         this['$Bg' + name] = value;
       }
@@ -418,16 +454,30 @@ module Shumway.AVMX.AS {
     }
 
     axCallProperty(mn: Multiname, args: any [], isLex: boolean): any {
-      return this[this.axResolveMultiname(mn)].axApply(isLex ? null : this, args);
+      var name = this.axResolveMultiname(mn);
+      var fun = this[name];
+      if (!fun || !fun.axApply) {
+        this.securityDomain.throwError('ReferenceError', Errors.CallOfNonFunctionError, mn.name);
+      }
+      return fun.axApply(isLex ? null : this, args);
     }
 
     axCallSuper(mn: Multiname, scope: Scope, args: any []): any {
       var name = this.axResolveMultiname(mn);
       var fun = (<AXClass>scope.parent.object).tPrototype[name];
+      if (!fun || !fun.axApply) {
+        this.securityDomain.throwError('ReferenceError', Errors.CallOfNonFunctionError, mn.name);
+      }
       return fun.axApply(this, args);
     }
     axConstructProperty(mn: Multiname, args: any []): any {
-      return this[this.axResolveMultiname(mn)].axConstruct(args);
+      var name = this.axResolveMultiname(mn);
+      var ctor = this[name];
+      if (!ctor || !ctor.axConstruct) {
+        this.securityDomain.throwError('ReferenceError', Errors.ConstructOfNonFunctionError,
+                                       mn.name);
+      }
+      return ctor.axConstruct(args);
     }
 
     axHasPropertyInternal(mn: Multiname): boolean {
@@ -439,14 +489,14 @@ module Shumway.AVMX.AS {
       // We have to check for trait properties too if a simple hasOwnProperty fails.
       // This is different to JavaScript's hasOwnProperty behaviour where hasOwnProperty returns
       // false for properties defined on the property chain and not on the instance itself.
-      return this.hasOwnProperty(name) || Object.getPrototypeOf(this).hasOwnProperty(name);
+      return this.hasOwnProperty(name) || this.axClass.tPrototype.hasOwnProperty(name);
     }
 
     axGetEnumerableKeys(): any [] {
-      var tPrototype = Object.getPrototypeOf(this);
       if (this.securityDomain.isPrimitive(this)) {
         return [];
       }
+      var tPrototype = Object.getPrototypeOf(this);
       var keys = Object.keys(this);
       var result = [];
       for (var i = 0; i < keys.length; i++) {
@@ -608,6 +658,23 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, "$Bgfilter", asProto.filter);
       addPrototypeFunctionAlias(proto, "$Bgsort", asProto.sort);
       addPrototypeFunctionAlias(proto, "$BgsortOn", asProto.sortOn);
+
+      addPrototypeFunctionAlias(proto, "$BghasOwnProperty", asProto.native_hasOwnProperty);
+      addPrototypeFunctionAlias(proto, "$BgpropertyIsEnumerable",
+                                asProto.native_propertyIsEnumerable);
+      addPrototypeFunctionAlias(proto, '$BgtoLocaleString', asProto.toString);
+    }
+
+    native_hasOwnProperty(nm: string): boolean {
+      return this.axHasOwnProperty(makeMultiname(nm));
+    }
+
+    native_propertyIsEnumerable(nm: string): boolean {
+      if (typeof nm === 'number' || isNumeric(nm = asCoerceName(nm))) {
+        var descriptor = Object.getOwnPropertyDescriptor(this.value, nm);
+        return !!descriptor && descriptor.enumerable;
+      }
+      super.native_propertyIsEnumerable(nm);
     }
 
     value: any [];
@@ -816,66 +883,40 @@ module Shumway.AVMX.AS {
     }
 
     axHasPropertyInternal(mn: Multiname): boolean {
-      // Optimization for the common case of array element accesses.
-      if (typeof mn.name === 'number') {
+      var name = mn.name;
+      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
         release || assert(mn.isRuntimeName());
-        return mn.name in this.value;
-      }
-      var name = asCoerceName(mn.name);
-      if (isNumeric(name)) {
         return name in this.value;
       }
-      var namespaces = mn.namespaces;
-      if (this.traits.indexOf(namespaces, name) > -1) {
+      if (this.traits.indexOf(mn.namespaces, name) > -1) {
         return true;
       }
       return '$Bg' + name in this;
     }
 
     axHasOwnProperty(mn: Multiname): boolean {
-      // Optimization for the common case of array element accesses.
-      if (typeof mn.name === 'number') {
+      var name = mn.name;
+      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
         release || assert(mn.isRuntimeName());
-        return this.value.hasOwnProperty(mn.name);
-      }
-      var name = asCoerceName(mn.name);
-      if (mn.isRuntimeName() && isNumeric(name)) {
         return this.value.hasOwnProperty(name);
       }
-      var t = this.traits.getTrait(mn.namespaces, name);
-      if (t) {
-        return true;
-      }
-      return this.hasOwnProperty('$Bg' + name);
+      return !!this.traits.getTrait(mn.namespaces, name) || this.hasOwnProperty('$Bg' + name);
     }
 
     axGetProperty(mn: Multiname): any {
-      // Optimization for the common case of array element accesses.
-      if (typeof mn.name === 'number') {
+      var name = mn.name;
+      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
         release || assert(mn.isRuntimeName());
-        return this.value[mn.name];
-      }
-      var name = asCoerceName(mn.name);
-      if (mn.isRuntimeName() && isNumeric(name)) {
         return this.value[name];
       }
-      var t = this.traits.getTrait(mn.namespaces, name);
-      if (t) {
-        return this[t.name.getMangledName()];
-      }
-      return this['$Bg' + name];
+      return super.axGetProperty(mn);
     }
 
     axSetProperty(mn: Multiname, value: any) {
       release || checkValue(value);
-      // Optimization for the common case of array element accesses.
-      if (typeof mn.name === 'number') {
+      var name = mn.name;
+      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
         release || assert(mn.isRuntimeName());
-        this.value[mn.name] = value;
-        return;
-      }
-      var name = asCoerceName(mn.name);
-      if (mn.isRuntimeName() && isNumeric(name)) {
         this.value[name] = value;
         return;
       }
@@ -888,46 +929,32 @@ module Shumway.AVMX.AS {
     }
 
     axDeleteProperty(mn: Multiname): any {
-      // Optimization for the common case of array element accesses.
-      if (typeof mn.name === 'number') {
+      var name = mn.name;
+      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
         release || assert(mn.isRuntimeName());
-        return delete this.value[mn.name];
-      }
-      var name = asCoerceName(mn.name);
-      var namespaces = mn.namespaces;
-      if (mn.isRuntimeName() && isNumeric(name)) {
         return delete this.value[name];
       }
       // Cannot delete array traits.
-      if (this.traits.getTrait(namespaces, name)) {
+      if (this.traits.getTrait(mn.namespaces, name)) {
         return false;
       }
       return delete this['$Bg' + name];
     }
 
-    axGetPublicProperty(nm: any): any {
-      // Optimization for the common case of array element accesses.
-      if (typeof nm === 'number') {
+    axGetPublicProperty(nm: string): any {
+      if (typeof nm === 'number' || isNumeric(nm = asCoerceName(nm))) {
         return this.value[nm];
       }
-      var name = asCoerceName(nm);
-      if (isNumeric(name)) {
-        return this.value[name];
-      }
-      return this['$Bg' + name];
+      return this['$Bg' + nm];
     }
 
-    axSetPublicProperty(nm: any, value: any) {
+    axSetPublicProperty(nm: string, value: any) {
       release || checkValue(value);
-      // Optimization for the common case of array element accesses.
-      if (typeof nm === 'number') {
+      if (typeof nm === 'number' || isNumeric(nm = asCoerceName(nm))) {
         this.value[nm] = value;
+        return;
       }
-      var name = asCoerceName(nm);
-      if (isNumeric(name)) {
-        this.value[name] = value;
-      }
-      this['$Bg' + name] = value;
+      this['$Bg' + nm] = value;
     }
   }
 
@@ -1116,10 +1143,15 @@ module Shumway.AVMX.AS {
       return this.value.search(pattern);
     }
     slice(start?: number, end?: number) {
+      start = arguments.length < 1 ? 0 : start | 0;
+      end = arguments.length < 2 ? 0xffffffff : end | 0;
       return this.value.slice(start, end);
     }
     split(separator: string, limit?: number) {
-      return this.value.split(separator, limit);
+      separator = asCoerceString(separator);
+      limit = arguments.length < 2 ? 0xffffffff : limit | 0;
+      release || assert(typeof this.value === 'string');
+      return this.securityDomain.createArray(this.value.split(separator, limit));
     }
     substring(start: number, end?: number) {
       return this.value.substring(start, end);
@@ -1174,7 +1206,16 @@ module Shumway.AVMX.AS {
       return String.prototype.slice.call(this.value, start, end);
     }
     generic_split(separator: string, limit?: number) {
-      return String.prototype.split.call(this.value, separator, limit);
+      separator = asCoerceString(separator);
+      limit = arguments.length < 2 ? 0xffffffff : limit | 0;
+      var str;
+      if (this && typeof this.value === 'string') {
+        str = this.value;
+      } else {
+        str = asCoerceString(this);
+      }
+      var list = str.split(separator, limit);
+      return (<AXClass><any>this).securityDomain.createArray(list);
     }
     generic_substring(start: number, end?: number) {
       return String.prototype.substring.call(this.value, start, end);
@@ -1217,6 +1258,14 @@ module Shumway.AVMX.AS {
     value: number;
 
     toString(radix: number) {
+      if (arguments.length === 0) {
+        radix = 10;
+      } else {
+        radix = radix|0;
+        if (radix < 2 || radix > 36) {
+          this.securityDomain.throwError('RangeError', Errors.InvalidRadixError, radix);
+        }
+      }
       return this.value.toString(radix);
     }
 
@@ -1225,14 +1274,30 @@ module Shumway.AVMX.AS {
     }
 
     toExponential(p): string {
+      p = p|0;
+      if (p < 0 || p > 20) {
+        this.securityDomain.throwError('RangeError', Errors.InvalidPrecisionError);
+      }
       return this.value.toExponential(p);
     }
 
     toPrecision(p): string {
+      if (!p) {
+        p = 1;
+      } else {
+        p = p|0;
+      }
+      if (p < 1 || p > 21) {
+        this.securityDomain.throwError('RangeError', Errors.InvalidPrecisionError);
+      }
       return this.value.toPrecision(p);
     }
 
     toFixed(p): string {
+      p = p|0;
+      if (p < 0 || p > 20) {
+        this.securityDomain.throwError('RangeError', Errors.InvalidPrecisionError);
+      }
       return this.value.toFixed(p);
     }
 
@@ -1243,7 +1308,7 @@ module Shumway.AVMX.AS {
 
   export class ASInt extends ASNumber {
     public static staticNatives: any [] = [Math];
-    public static instanceNatives: any [] = [Number.prototype];
+    public static instanceNatives: any [] = [ASNumber.prototype];
 
     static classInitializer() {
       var proto: any = this.dPrototype;
@@ -1255,7 +1320,7 @@ module Shumway.AVMX.AS {
 
   export class ASUint extends ASNumber {
     public static staticNatives: any [] = [Math];
-    public static instanceNatives: any [] = [Number.prototype];
+    public static instanceNatives: any [] = [ASNumber.prototype];
 
     static classInitializer() {
       var proto: any = this.dPrototype;
@@ -1338,7 +1403,11 @@ module Shumway.AVMX.AS {
         }
         pattern = this._parse(source);
       }
-      this.value = new RegExp(pattern, flags);
+      try {
+        this.value = new RegExp(pattern, flags);
+      } catch (e) {
+        this.value = new RegExp('^not matching anything, hopefully±$', flags);
+      }
       this._source = source;
     }
 
@@ -1509,9 +1578,6 @@ module Shumway.AVMX.AS {
       super();
       this.$Bgmessage = asCoerceString(message);
       this._errorID = id | 0;
-
-      // This is gnarly but saves us from having individual ctors in all Error child classes.
-      // this.name = (<ASClass><any>this.constructor).dPrototype['$Bgname'];
     }
 
     $Bgmessage: string;
@@ -1563,88 +1629,190 @@ module Shumway.AVMX.AS {
   export class ASIllegalOperationError extends ASError {
   }
 
+  /**
+   * Transforms a JS value into an AS value.
+   */
+  export function transformJSValueToAS(securityDomain: SecurityDomain, value, deep: boolean) {
+    release || assert(typeof value !== 'function');
+    if (typeof value !== "object") {
+      return value;
+    }
+    if (isNullOrUndefined(value)) {
+      return value;
+    }
+    if (Array.isArray(value)) {
+      var list = [];
+      for (var i = 0; i < value.length; i++) {
+        var entry = value[i];
+        var axValue = deep ? transformJSValueToAS(securityDomain, entry, true) : entry;
+        list.push(axValue);
+      }
+      return securityDomain.createArray(list);
+    }
+    var keys = Object.keys(value);
+    var result = securityDomain.createObject();
+    for (var i = 0; i < keys.length; i++) {
+      var v = value[keys[i]];
+      if (deep) {
+        v = transformJSValueToAS(securityDomain, v, true);
+      }
+      result.axSetPublicProperty(keys[i], v);
+    }
+    return result;
+  }
+
+  /**
+   * Transforms an AS value into a JS value.
+   */
+  export function transformASValueToJS(securityDomain: SecurityDomain, value, deep: boolean) {
+    if (typeof value !== "object") {
+      return value;
+    }
+    if (isNullOrUndefined(value)) {
+      return value;
+    }
+    if (securityDomain.AXArray.axIsType(value)) {
+      var resultList = [];
+      var list = value.value;
+      for (var i = 0; i < list.length; i++) {
+        var entry = list[i];
+        var jsValue = deep ? transformASValueToJS(securityDomain, entry, true) : entry;
+        resultList.push(jsValue);
+      }
+      return resultList;
+    }
+    var keys = Object.keys(value);
+    var resultObject = {};
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      var jsKey = key;
+      if (!isNumeric(key)) {
+        release || assert(key.indexOf('$Bg') === 0);
+        jsKey = key.substr(3);
+      }
+      var v = value[key];
+      if (deep) {
+        v = transformASValueToJS(securityDomain, v, true);
+      }
+      resultObject[jsKey] = v;
+    }
+    return resultObject;
+  }
+
+  function walk(holder: any, name: string, reviver: Function) {
+    var val = holder[name];
+    if (Array.isArray(val)) {
+      var v: any[] = <any>val;
+      for (var i = 0, limit = v.length; i < limit; i++) {
+        var newElement = walk(v, asCoerceString(i), reviver);
+        if (newElement === undefined) {
+          delete v[i];
+        } else {
+          v[i] = newElement;
+        }
+      }
+    } else if (val !== null && typeof val !== 'boolean' && typeof val !== 'number' &&
+               typeof val !== 'string')
+    {
+
+      for (var p in val) {
+        if (!val.hasOwnProperty(p) || !Multiname.isPublicQualifiedName(p)) {
+          break;
+        }
+        var newElement = walk(val, p, reviver);
+        if (newElement === undefined) {
+          delete val[p];
+        } else {
+          val[p] = newElement;
+        }
+      }
+    }
+    return reviver.call(holder, name, val);
+  }
+
   export class ASJSON extends ASObject {
-    /**
-     * Transforms a JS value into an AS value.
-     */
-    static transformJSValueToAS(securityDomain: SecurityDomain, value, deep: boolean) {
-      release || assert(typeof value !== 'function');
-      if (typeof value !== "object") {
-        return value;
+
+
+    static parse(text: string, reviver: AXFunction): any {
+      text = asCoerceString(text);
+      if (text === null) {
+        this.securityDomain.throwError('SyntaxError', Errors.JSONInvalidParseInput);
       }
-      if (isNullOrUndefined(value)) {
-        return value;
+
+      try {
+        var unfiltered: Object = transformJSValueToAS(this.securityDomain, JSON.parse(text), true);
+      } catch (e) {
+        this.securityDomain.throwError('SyntaxError', Errors.JSONInvalidParseInput);
       }
-      if (Array.isArray(value)) {
-        var list = [];
-        for (var i = 0; i < value.length; i++) {
-          var entry = value[i];
-          var axValue = deep ? ASJSON.transformJSValueToAS(securityDomain, entry, true) : entry;
-          list.push(axValue);
-        }
-        return securityDomain.createArray(list);
+
+      if (reviver === null || arguments.length < 2) {
+        return unfiltered;
       }
-      var keys = Object.keys(value);
-      var result = securityDomain.createObject();
-      for (var i = 0; i < keys.length; i++) {
-        var v = value[keys[i]];
-        if (deep) {
-          v = ASJSON.transformJSValueToAS(securityDomain, v, true);
-        }
-        result.axSetPublicProperty(keys[i], v);
-      }
-      return result;
+      return walk({"": unfiltered}, "", reviver.value);
     }
 
-    /**
-     * Transforms an AS value into a JS value.
-     */
-    static transformASValueToJS(securityDomain: SecurityDomain, value, deep: boolean) {
-      if (typeof value !== "object") {
-        return value;
-      }
-      if (isNullOrUndefined(value)) {
-        return value;
-      }
-      if (securityDomain.AXArray.axIsType(value)) {
-        var resultList = [];
-        var list = value.value;
-        for (var i = 0; i < list.length; i++) {
-          var entry = list[i];
-          var jsValue = deep ? ASJSON.transformASValueToJS(securityDomain, entry, true) : entry;
-          resultList.push(jsValue);
+    static stringify(value: any, replacer = null, space = null): string {
+      // We deliberately deviate from ECMA-262 and throw on
+      // invalid replacer parameter.
+      if (replacer !== null) {
+        var securityDomain = typeof replacer === 'object' ? replacer.securityDomain : null;
+        if (!securityDomain || !(securityDomain.AXFunction.axIsType(replacer) ||
+                                 securityDomain.AXArray.axIsType(replacer)))
+        {
+          this.securityDomain.throwError('TypeError', Errors.JSONInvalidReplacer);
         }
-        return resultList;
       }
-      var keys = Object.keys(value);
-      var resultObject = {};
-      for (var i = 0; i < keys.length; i++) {
-        var key = keys[i];
-        var jsKey = key;
-        if (!isNumeric(key)) {
-          release || assert(key.indexOf('$Bg') === 0);
-          jsKey = key.substr(3);
-        }
-        var v = value[key];
-        if (deep) {
-          v = ASJSON.transformASValueToJS(securityDomain, v, true);
-        }
-        resultObject[jsKey] = v;
+
+      var gap;
+      if (typeof space === 'string') {
+        gap = space.length > 10 ? space.substring(0, 10) : space;
+      } else if (typeof space === 'number') {
+        gap = "          ".substring(0, Math.min(10, space | 0));
+      } else {
+        // We follow ECMA-262 and silently ignore invalid space parameter.
+        gap = "";
       }
-      return resultObject;
+
+      if (replacer === null) {
+        return this.stringifySpecializedToString(value, null, null, gap);
+      } else if (Array.isArray(replacer)) {
+        return this.stringifySpecializedToString(value, this.computePropertyList(replacer), null,
+                                                 gap);
+      } else { // replacer is Function
+        return this.stringifySpecializedToString(value, null, replacer, gap);
+      }
     }
 
-    private static parseCore(text: string): Object {
-      // REDUX:
-      //text = asCoerceString(text);
-      //return ASJSON.transformJSValueToAS(JSON.parse(text), true)
-      return;
+    // ECMA-262 5th ed, section 15.12.3 stringify, step 4.b
+    private static computePropertyList(r: any[]): string[] {
+      var propertyList = [];
+      var alreadyAdded = Object.create(null);
+      for (var i = 0, length = r.length; i < length; i++) {
+        if (!r.hasOwnProperty(<any>i)) {
+          continue;
+        }
+        var v = r[i];
+        var item: string = null;
+
+        if (typeof v === 'string') {
+          item = v;
+        } else if (typeof v === 'number') {
+          item = asCoerceString(v);
+        }
+        if (item !== null && !alreadyAdded[item]) {
+          alreadyAdded[item] = true;
+          propertyList.push(item);
+        }
+      }
+      return propertyList;
     }
 
     private static stringifySpecializedToString(value: Object, replacerArray: any [], replacerFunction: (key: string, value: any) => any, gap: string): string {
-      // REDUX:
-      // return JSON.stringify(ASJSON.transformASValueToJS(value, true), replacerFunction, gap);
-      return null;
+      try {
+        return JSON.stringify(transformASValueToJS(this.securityDomain, value, true), replacerFunction, gap);
+      } catch (e) {
+        this.securityDomain.throwError('SyntaxError', Errors.JSONCyclicStructure);
+      }
     }
   }
 
@@ -1669,10 +1837,10 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["String"]              = ASString;
     builtinNativeClasses["Array"]               = ASArray;
 
-    builtinNativeClasses["__AS3__.vec.Vector"] = Vector;
+    builtinNativeClasses["__AS3__.vec.Vector"]        = Vector;
     builtinNativeClasses["__AS3__.vec.Vector$object"] = GenericVector;
-    builtinNativeClasses["__AS3__.vec.Vector$int"] = Int32Vector;
-    builtinNativeClasses["__AS3__.vec.Vector$uint"] = Uint32Vector;
+    builtinNativeClasses["__AS3__.vec.Vector$int"]    = Int32Vector;
+    builtinNativeClasses["__AS3__.vec.Vector$uint"]   = Uint32Vector;
     builtinNativeClasses["__AS3__.vec.Vector$double"] = Float64Vector;
 
     builtinNativeClasses["Namespace"]           = ASNamespace;
@@ -1682,7 +1850,14 @@ module Shumway.AVMX.AS {
 
     builtinNativeClasses["Math"]                = ASMath;
     builtinNativeClasses["Date"]                = ASDate;
-    builtinNativeClasses["RegExp"]                = ASRegExp;
+    builtinNativeClasses["RegExp"]              = ASRegExp;
+    builtinNativeClasses["JSON"]                = ASJSON;
+
+    builtinNativeClasses["flash.utils.Proxy"]      = flash.utils.ASProxy;
+    builtinNativeClasses["flash.utils.Dictionary"] = flash.utils.Dictionary;
+    builtinNativeClasses["flash.utils.ByteArray"]  = flash.utils.ByteArray;
+
+    builtinNativeClasses["avmplus.System"]  = flash.system.OriginalSystem;
 
     // Errors
     builtinNativeClasses["Error"]               = ASError;
@@ -1701,9 +1876,6 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["flash.errors.EOFError"] = ASEOFError;
     builtinNativeClasses["flash.errors.MemoryError"] = ASMemoryError;
     builtinNativeClasses["flash.errors.IllegalOperationError"] = ASIllegalOperationError;
-    builtinNativeClasses["JSON"]                = ASJSON;
-    builtinNativeClasses["flash.utils.Dictionary"] = flash.utils.Dictionary;
-    builtinNativeClasses["flash.utils.ByteArray"] = flash.utils.ByteArray;
   }
 
   export function registerNativeClass(name: string, asClass: ASClass, alias: string = name,

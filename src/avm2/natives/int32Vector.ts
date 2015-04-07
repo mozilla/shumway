@@ -374,19 +374,23 @@ module Shumway.AVMX.AS {
 
     sort(sortBehavior?: any) {
       if (arguments.length === 0) {
-        return Array.prototype.sort.call(this._view());
+        Array.prototype.sort.call(this._view());
+        return this;
       }
       if (this.securityDomain.AXFunction.axIsType(sortBehavior)) {
-        return Array.prototype.sort.call(this._view(), sortBehavior.value);
+        Array.prototype.sort.call(this._view(), sortBehavior.value);
+        return this;
       }
       var options = sortBehavior | 0;
       release || assertNotImplemented(!(options & Int32Vector.UNIQUESORT), "UNIQUESORT");
       release || assertNotImplemented(!(options & Int32Vector.RETURNINDEXEDARRAY),
                                       "RETURNINDEXEDARRAY");
       if (options & Int32Vector.DESCENDING) {
-        return Array.prototype.sort.call(this._view(), (a, b) => b - a);
+        Array.prototype.sort.call(this._view(), (a, b) => b - a);
+      } else {
+        Array.prototype.sort.call(this._view(), (a, b) => a - b);
       }
-      return Array.prototype.sort.call(this._view(), (a, b) => a - b);
+      return this;
     }
 
     shift() {

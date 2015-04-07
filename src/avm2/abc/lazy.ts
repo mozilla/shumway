@@ -122,6 +122,10 @@ module Shumway.AVMX {
       return <string>this.name;
     }
 
+    getKeyAt(i: number): string {
+      return this.abc.getString(this.keys[i]);
+    }
+
     getValueAt(i: number): string {
       return this.abc.getString(this.values[i]);
     }
@@ -525,6 +529,11 @@ module Shumway.AVMX {
       if (typeof this.typeName === "number") {
         this.typeName = this.abc.getMultiname(<number>this.typeName);
       }
+    }
+
+    getTypeName() {
+      this.resolve();
+      return <Multiname>this.typeName;
     }
 
     getDefaultValue(): any {
@@ -953,34 +962,6 @@ module Shumway.AVMX {
       return this.isRuntimeName() ? "[" + this.name + "]" : this.name;
     }
 
-    public toString() {
-      var str = CONSTANT[this.kind] + " ";
-      str += this.isAttribute() ? "@" : "";
-      if (this.isRuntimeNamespace()) {
-        var namespaces = this.namespaces ? this.namespaces.map(x => String(x)).join(", ") : null;
-        str += "[" + namespaces + "]::" + this._nameToString();
-      } else if (this.isQName()) {
-        str += this.namespaces[0] + "::";
-        str += this._nameToString();
-      } else {
-        str += "{" + this.namespaces.map(x => String(x)).join(", ") + "}";
-        str += "::" + this._nameToString();
-      }
-      if (this.parameterType) {
-        str += "<" + this.parameterType + ">";
-      }
-      return str;
-    }
-
-    public toFQNString(useColons: boolean) {
-      release || assert(this.isQName());
-      var prefix = this.namespaces[0].uri;
-      if (prefix.length) {
-        prefix += (useColons ? '::' : '.');
-      }
-      return prefix + this.name;
-    }
-
     public isRuntime(): boolean {
       switch (this.kind) {
         case CONSTANT.QName:
@@ -1049,6 +1030,11 @@ module Shumway.AVMX {
       return this.namespaces[0].prefix;
     }
 
+    public set prefix(prefix: string) {
+      release || assert(this.isQName());
+      this.namespaces[0].prefix = prefix;
+    }
+
     public equalsQName(mn: Multiname): boolean {
       release || assert(this.isQName());
       return this.name === mn.name && this.namespaces[0].uri === mn.namespaces[0].uri;
@@ -1105,6 +1091,34 @@ module Shumway.AVMX {
       return "$Bg" + name;
     }
 
+    public toFQNString(useColons: boolean) {
+      release || assert(this.isQName());
+      var prefix = this.namespaces[0].uri;
+      if (prefix.length) {
+        prefix += (useColons ? '::' : '.');
+      }
+      return prefix + this.name;
+    }
+
+    public toString() {
+      var str = CONSTANT[this.kind] + " ";
+      str += this.isAttribute() ? "@" : "";
+      if (this.isRuntimeNamespace()) {
+        var namespaces = this.namespaces ? this.namespaces.map(x => String(x)).join(", ") : null;
+        str += "[" + namespaces + "]::" + this._nameToString();
+      } else if (this.isQName()) {
+        str += this.namespaces[0] + "::";
+        str += this._nameToString();
+      } else {
+        str += "{" + this.namespaces.map(x => String(x)).join(", ") + "}";
+        str += "::" + this._nameToString();
+      }
+      if (this.parameterType) {
+        str += "<" + this.parameterType + ">";
+      }
+      return str;
+    }
+
     /**
      * Removes the public prefix, or returns undefined if the prefix doesn't exist.
      */
@@ -1122,6 +1136,7 @@ module Shumway.AVMX {
       }
 
       var uri = '';
+      var name;
       if (nameIndex > 0 && nameIndex < simpleName.length - 1) {
         name = simpleName.substring(nameIndex + 1).trim();
         uri = simpleName.substring(0, nameIndex).trim();
@@ -1182,6 +1197,12 @@ module Shumway.AVMX {
 
     public isPublic(): boolean {
       return this.type === NamespaceType.Public;
+    }
+
+    public get reflectedURI() {
+      // For public names without a URI, Tamarin uses `null`, we use `""`.
+      // Hence: special-casing for reflection.
+      return this.uri || this.type === NamespaceType.Public ? null : this.uri;
     }
 
     public static PUBLIC = new Namespace(null, NamespaceType.Public, "");

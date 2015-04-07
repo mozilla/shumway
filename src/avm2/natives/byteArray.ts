@@ -17,8 +17,6 @@
 module Shumway.AVMX.AS {
   import notImplemented = Shumway.Debug.notImplemented;
   import unexpected = Shumway.Debug.unexpected;
-  import Namespace = Shumway.AVMX.Namespace;
-  import Multiname = Shumway.AVMX.Multiname;
 
   import utf8decode = Shumway.StringUtilities.utf8decode;
   import utf8encode = Shumway.StringUtilities.utf8encode;
@@ -228,15 +226,10 @@ module Shumway.AVMX.AS {
       length: number;
 
       axGetPublicProperty(nm: any): any {
-        // Optimization for the common case of indexed element accesses.
-        if (typeof nm === 'number') {
+        if (typeof nm === 'number' || isNumeric(nm = asCoerceName(nm))) {
           return this.axGetNumericProperty(nm);
         }
-        var name = asCoerceName(nm);
-        if (isNumeric(name)) {
-          return this.axGetNumericProperty(+name);
-        }
-        return this['$Bg' + name];
+        return this['$Bg' + nm];
       }
 
       axGetNumericProperty(nm: number) {
@@ -246,16 +239,11 @@ module Shumway.AVMX.AS {
 
       axSetPublicProperty(nm: any, value: any) {
         release || checkValue(value);
-        // Optimization for the common case of indexed element accesses.
-        if (typeof nm === 'number') {
-          return this.axSetNumericProperty(nm, value);
-        }
-        var name = asCoerceName(nm);
-        if (isNumeric(name)) {
-          this.axSetNumericProperty(+name, value);
+        if (typeof nm === 'number' || isNumeric(nm = asCoerceName(nm))) {
+          this.axSetNumericProperty(nm, value);
           return;
         }
-        this['$Bg' + name] = value;
+        this['$Bg' + nm] = value;
       }
 
       axSetNumericProperty(nm: number, value: any) {
@@ -264,32 +252,20 @@ module Shumway.AVMX.AS {
       }
 
       axGetProperty(mn: Multiname): any {
-        // Optimization for the common case of indexed element accesses.
-        if (typeof mn.name === 'number') {
+        var name = mn.name;
+        if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
           release || assert(mn.isRuntimeName());
-          return (<any>this).getValue(mn.name);
+          return (<any>this).getValue(+name);
         }
-        var name = asCoerceName(mn.name);
-        if (mn.isRuntimeName() && isNumeric(name)) {
-          return (<any>this).getValue(name);
-        }
-        var t = this.traits.getTrait(mn.namespaces, name);
-        if (t) {
-          return this[t.name.getMangledName()];
-        }
+        return super.axGetProperty(mn);
       }
 
       axSetProperty(mn: Multiname, value: any): void {
         release || checkValue(value);
-        // Optimization for the common case of indexed element accesses.
-        if (typeof mn.name === 'number') {
+        var name = mn.name;
+        if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
           release || assert(mn.isRuntimeName());
-          (<any>this).setValue(mn.name, value);
-          return;
-        }
-        var name = asCoerceName(mn.name);
-        if (mn.isRuntimeName() && isNumeric(name)) {
-          (<any>this).setValue(name, value);
+          (<any>this).setValue(+name, value);
           return;
         }
         var t = this.traits.getTrait(mn.namespaces, name);

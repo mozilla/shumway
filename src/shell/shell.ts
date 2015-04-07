@@ -186,6 +186,7 @@ module Shumway.Shell {
   var writer = new IndentingWriter();
 
   var parseOption: Option;
+  var scanParseOption: Option;
   var disassembleOption: Option;
   var compileOption: Option;
   var verboseOption: Option;
@@ -213,6 +214,7 @@ module Shumway.Shell {
     var shellOptions = systemOptions.register(new Shumway.Options.OptionSet("Shell Options"));
 
     parseOption = shellOptions.register(new Option("p", "parse", "boolean", false, "Parse File(s)"));
+    scanParseOption = shellOptions.register(new Option("sp", "scanParse", "boolean", false, "Scan/Parse File(s)"));
     disassembleOption = shellOptions.register(new Option("d", "disassemble", "boolean", false, "Disassemble File(s)"));
     compileOption = shellOptions.register(new Option("c", "compile", "boolean", false, "Compile File(s)"));
     verboseOption = shellOptions.register(new Option("v", "verbose", "boolean", false, "Verbose"));
@@ -272,7 +274,7 @@ module Shumway.Shell {
     microTaskQueue = new Shumway.Shell.MicroTasksQueue();
 
     if (porcelainOutputOption.value) {
-      console.info = console.log = console.warn = console.error = function () {};
+      console.info = console.log = console.warn = console.error = jsGlobal.print = function () {};
     }
 
     profile = profileOption.value;
@@ -410,6 +412,8 @@ module Shumway.Shell {
       // flash.display.Loader.reset();
       // flash.display.DisplayObject.reset();
       // flash.display.MovieClip.reset();
+      Shumway.Random.reset();
+      Shumway.Shell.installTimeWarper();
       var securityDomain = createSecurityDomain(builtinABCPath, null, null);
       var player = new Shumway.Player.Player(securityDomain, new ShellGFXServer());
       player.load(file);
@@ -439,7 +443,7 @@ module Shumway.Shell {
       if (verbose) {
         writer.writeLn("executeSWF PASS: " + file);
       }
-      writer.writeLn(file + ": " + IntegerUtilities.toHEX(hash));
+      writer.writeLn("HASHCODE: " + file + ": " + IntegerUtilities.toHEX(hash));
     } catch (x) {
       writer.redLn('Exception: ' + '(' + x + ')');
       writer.redLns(x.stack);
@@ -487,13 +491,13 @@ module Shumway.Shell {
           if (e > 100) {
             printErr("Test: " + file + " is very slow (" + e.toFixed() + " ms), consider disabling it.");
           }
-          if (verbose) {
-            writer.writeLn("executeABC PASS: " + file);
-          }
+          //if (verbose) {
+          //  writer.writeLn("executeABC PASS: " + file);
+          //}
         } catch (x) {
-          if (verbose) {
-            writer.writeLn("executeABC FAIL: " + file);
-          }
+          //if (verbose) {
+          //  writer.writeLn("executeABC FAIL: " + file);
+          //}
           writer.writeLn("EXCEPTED: " + file);
           try {
             writer.redLn('Exception: ' + '(' + x + ')');
@@ -636,10 +640,19 @@ module Shumway.Shell {
       var SWF_TAG_CODE_DO_ABC_ = SwfTag.CODE_DO_ABC_DEFINE;
       try {
         var buffer = read(file, "binary");
+        if (!((buffer[0] === 'F'.charCodeAt(0) || buffer[0] === 'C'.charCodeAt(0)) &&
+             buffer[1] === 'W'.charCodeAt(0) &&
+             buffer[2] === 'S'.charCodeAt(0))) {
+          writer.redLn("Cannot parse: " + file + " because it doesn't have a valid header. " + buffer[0] + " " + buffer[1] + " " + buffer[2]);
+          return
+        }
         var startSWF = dateNow();
         var swfFile: Shumway.SWF.SWFFile;
         var loadListener: ILoadListener = {
           onLoadOpen: function(swfFile: Shumway.SWF.SWFFile) {
+            if (scanParseOption.value) {
+              return;
+            }
             if (swfFile && swfFile.abcBlocks) {
               for (var i = 0; i < swfFile.abcBlocks.length; i++) {
                 parseABC(swfFile.abcBlocks[i].data);

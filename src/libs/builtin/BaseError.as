@@ -35,38 +35,18 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-
 package
 {
-  [native(cls="NamespaceClass")]
-  public final class Namespace
-  {
-    // E357 {DontDelete, ReadOnly}
-    public native function get prefix();
+  [native(cls="ErrorClass")]
+  public dynamic class Error {
+    public native function Error(message = "", id = 0);
 
-    // E357 {DontDelete, ReadOnly}
-    public native function get uri():String;
+    public native function getStackTrace():String;
+    public native static function getErrorMessage(index:int):String;
 
-    AS3 native function valueOf():String;
+    // avm+ specific utility method
+    public native static function throwError(type:Class, index:uint, ...rest);
 
-    AS3 native function toString():String;
-
-    // Dummy constructor function
-    public native function Namespace(prefix = void 0, uri = void 0 );
-  }
-
-  [native(cls="QNameClass")]
-  public final class QName extends Object
-  {
-    // E357 {DontDelete, ReadOnly}
-    public native function get localName():String
-
-    // E357 {DontDelete, ReadOnly}
-    public native function get uri();
-
-    AS3 native function valueOf():QName;
-    AS3 native function toString():String;
-
-    public native function QName(namespace = void 0, name = void 0);
+    public native function get errorID():int;
   }
 }

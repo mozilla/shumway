@@ -122,7 +122,7 @@ module Shumway.AVM1.Lib {
       props.avm1SymbolClass = symbol.theClass;
 
       var mc:flash.display.MovieClip = (<any>flash).display.MovieClip.initializeFrom(props);
-      flash.display.MovieClip.instanceConstructorNoInitialize.call(mc);
+      //flash.display.MovieClip.instanceConstructorNoInitialize.call(mc);
 
       return mc;
     }
