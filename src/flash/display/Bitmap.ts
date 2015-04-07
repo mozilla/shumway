@@ -33,7 +33,8 @@ module Shumway.AVMX.AS.flash.display {
       // If the symbol class inherits from Bitmap, we are already within its initializer.
       // Make sure to create a BitmapData instance here to avoid recursively calling the
       // initializer again.
-      if (symbolClass.isSubtypeOf(this.securityDomain.flash.display.Bitmap.axClass)) {
+      var bitmapClass = this.securityDomain.flash.display.Bitmap.axClass;
+      if (bitmapClass.dPrototype.isPrototypeOf((<any>symbolClass).dPrototype)) {
         symbolClass = this.securityDomain.flash.display.BitmapData.axClass;
       }
       // TODO: I don't think BitmapData symbol objects can change, so they don't need back
