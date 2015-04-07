@@ -380,8 +380,7 @@ module Shumway.AVMX {
       return String(l) + String(r);
     }
     if (AS.isXMLCollection(l, securityDomain) && AS.isXMLCollection(r, securityDomain)) {
-      // FIXME
-      // return AS.ASXMLList.addXML(l, r);
+      return AS.ASXMLList.addXML(l, r);
     }
     return l + r;
   }

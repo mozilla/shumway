@@ -491,13 +491,13 @@ module Shumway.Shell {
           if (e > 100) {
             printErr("Test: " + file + " is very slow (" + e.toFixed() + " ms), consider disabling it.");
           }
-          if (verbose) {
-            writer.writeLn("executeABC PASS: " + file);
-          }
+          //if (verbose) {
+          //  writer.writeLn("executeABC PASS: " + file);
+          //}
         } catch (x) {
-          if (verbose) {
-            writer.writeLn("executeABC FAIL: " + file);
-          }
+          //if (verbose) {
+          //  writer.writeLn("executeABC FAIL: " + file);
+          //}
           writer.writeLn("EXCEPTED: " + file);
           try {
             writer.redLn('Exception: ' + '(' + x + ')');

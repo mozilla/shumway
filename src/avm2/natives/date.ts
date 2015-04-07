@@ -25,6 +25,7 @@ module Shumway.AVMX.AS {
       var proto: any = this.dPrototype;
       var asProto: any = ASDate.prototype;
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
+      addPrototypeFunctionAlias(proto, '$BgtoLocaleString', asProto.toString);
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
 
       addPrototypeFunctionAlias(proto, '$BgtoDateString', asProto.toDateString);
@@ -78,6 +79,10 @@ module Shumway.AVMX.AS {
 
     static UTC(year: number, month: number, date: number = 1, hour: number = 0, minute: number = 0, second: number = 0, millisecond: number = 0) {
       return Date.parse.apply(null, arguments);
+    }
+
+    static axCoerce(value) {
+      return this.axConstruct([value]);
     }
 
     constructor(yearOrTimevalue: any, month: number, date: number = 1, hour: number = 0, minute: number = 0, second: number = 0, millisecond: number = 0) {

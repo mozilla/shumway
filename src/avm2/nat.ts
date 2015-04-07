@@ -289,6 +289,7 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, "$BgsetPropertyIsEnumerable",
                                 asProto.native_setPropertyIsEnumerable);
       addPrototypeFunctionAlias(proto, "$BgisPrototypeOf", asProto.native_isPrototypeOf);
+      addPrototypeFunctionAlias(proto, '$BgtoLocaleString', asProto.toString);
     }
 
     static _init() {
@@ -661,6 +662,7 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, "$BghasOwnProperty", asProto.native_hasOwnProperty);
       addPrototypeFunctionAlias(proto, "$BgpropertyIsEnumerable",
                                 asProto.native_propertyIsEnumerable);
+      addPrototypeFunctionAlias(proto, '$BgtoLocaleString', asProto.toString);
     }
 
     native_hasOwnProperty(nm: string): boolean {
@@ -1280,7 +1282,11 @@ module Shumway.AVMX.AS {
     }
 
     toPrecision(p): string {
-      p = p|0;
+      if (!p) {
+        p = 1;
+      } else {
+        p = p|0;
+      }
       if (p < 1 || p > 21) {
         this.securityDomain.throwError('RangeError', Errors.InvalidPrecisionError);
       }

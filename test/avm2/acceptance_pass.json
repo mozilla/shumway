@@ -3065,10 +3065,10 @@
       "test/avm2/acceptance/as3/Array/regress_733384.abc",
       "test/avm2/acceptance/as3/asc/import-with-float4-helper.abc",
       "test/avm2/acceptance/as3/ByteArray/ByteArray.abc",
-      "test/avm2/acceptance/as3/ByteArray/ByteArray_bug662851.abc",
-      "test/avm2/acceptance/as3/ByteArray/ByteArray_bug763519.abc",
-      "test/avm2/acceptance/as3/ByteArray/ByteArrayLzma.abc",
-      "test/avm2/acceptance/as3/ByteArray/ByteArrayLzmaThirdParty.abc",
+//      "test/avm2/acceptance/as3/ByteArray/ByteArray_bug662851.abc",
+//      "test/avm2/acceptance/as3/ByteArray/ByteArray_bug763519.abc",
+//      "test/avm2/acceptance/as3/ByteArray/ByteArrayLzma.abc",
+//      "test/avm2/acceptance/as3/ByteArray/ByteArrayLzmaThirdParty.abc",
       "test/avm2/acceptance/as3/Definitions/Classes/ClassDef/bug113887/bug113887.abc",
       "test/avm2/acceptance/as3/Definitions/Classes/ClassDef/bug113887.abc",
       "test/avm2/acceptance/as3/Definitions/Classes/ClassDef/Bug118272Package/BugTest.abc",
@@ -3506,8 +3506,8 @@
       "test/avm2/acceptance/regress/bug_558863.abc",
       "test/avm2/acceptance/regress/bug_559565.abc",
       "test/avm2/acceptance/regress/bug_561191.abc",
-      "test/avm2/acceptance/regress/bug_561249a.abc",
-      "test/avm2/acceptance/regress/bug_561249b.abc",
+//      "test/avm2/acceptance/regress/bug_561249a.abc",
+//      "test/avm2/acceptance/regress/bug_561249b.abc",
       "test/avm2/acceptance/regress/bug_564839.abc",
       "test/avm2/acceptance/regress/bug_588041.abc",
       "test/avm2/acceptance/regress/bug_593383.abc",
@@ -3536,11 +3536,11 @@
       "test/avm2/acceptance/regress/security/bug_550269.abc",
       "test/avm2/acceptance/regress/security/bug_663469.abc",
       "test/avm2/acceptance/Utils.abc",
-      "test/avm2/acceptance/versioning/bugcompat.abc",
+//      "test/avm2/acceptance/versioning/bugcompat.abc",
       "test/avm2/acceptance/versioning/bugcompat_support/bugcompat_leaf.abc",
-      "test/avm2/acceptance/versioning/bugcompat_support/bugcompat_test.abc",
-      "test/avm2/acceptance/versioning/classes.abc",
-      "test/avm2/acceptance/versioning/globals.abc"
+      "test/avm2/acceptance/versioning/bugcompat_support/bugcompat_test.abc"
+//      "test/avm2/acceptance/versioning/classes.abc",
+//      "test/avm2/acceptance/versioning/globals.abc"
     ]
   ]
 ]
