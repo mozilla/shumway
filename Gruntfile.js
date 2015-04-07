@@ -651,7 +651,7 @@ module.exports = function(grunt) {
     'exec:test_avm2_redux_pass',
     'exec:test_avm2_acceptance',
     'exec:test_swf_acceptance',
-    'exec:test_swf_avm2',
+    //'exec:test_swf_avm2',
     'exec:unit_test'
     // 'exec:tracetest'
     // 'exec:tracetest_swfdec'
