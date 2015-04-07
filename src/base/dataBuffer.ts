@@ -17,6 +17,7 @@
 ///<reference path='references.ts' />
 module Shumway.ArrayUtilities {
   import notImplemented = Shumway.Debug.notImplemented;
+  import assert = Shumway.Debug.assert;
 
   import utf8decode = Shumway.StringUtilities.utf8decode;
   import utf8encode = Shumway.StringUtilities.utf8encode;
