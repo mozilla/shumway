@@ -214,6 +214,13 @@ module Shumway.AVMX.AS {
     defineNonEnumerableProperty(object, name, object.securityDomain.AXFunction.axBox(fun));
   }
 
+  export function checkReceiverType(receiver: AXObject, type: AXClass, methodName: string) {
+    if (!type.dPrototype.isPrototypeOf(receiver)) {
+      receiver.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
+                                         methodName);
+    }
+  }
+
   /**
    * MetaobjectProtocol base traps. Inherit some or all of these to
    * implement custom behaviour.
@@ -1266,10 +1273,19 @@ module Shumway.AVMX.AS {
           this.securityDomain.throwError('RangeError', Errors.InvalidRadixError, radix);
         }
       }
+      if (this.axClass !== this.securityDomain.AXNumber) {
+        this.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
+                                       'Number.prototype.toString');
+      }
+
       return this.value.toString(radix);
     }
 
     valueOf() {
+      if (this.axClass !== this.securityDomain.AXNumber) {
+        this.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
+                                       'Number.prototype.valueOf');
+      }
       return this.value;
     }
 
@@ -1277,6 +1293,9 @@ module Shumway.AVMX.AS {
       p = p|0;
       if (p < 0 || p > 20) {
         this.securityDomain.throwError('RangeError', Errors.InvalidPrecisionError);
+      }
+      if (this.axClass !== this.securityDomain.AXNumber) {
+        return 'NaN';
       }
       return this.value.toExponential(p);
     }
@@ -1290,6 +1309,9 @@ module Shumway.AVMX.AS {
       if (p < 1 || p > 21) {
         this.securityDomain.throwError('RangeError', Errors.InvalidPrecisionError);
       }
+      if (this.axClass !== this.securityDomain.AXNumber) {
+        return 'NaN';
+      }
       return this.value.toPrecision(p);
     }
 
@@ -1297,6 +1319,9 @@ module Shumway.AVMX.AS {
       p = p|0;
       if (p < 0 || p > 20) {
         this.securityDomain.throwError('RangeError', Errors.InvalidPrecisionError);
+      }
+      if (this.axClass !== this.securityDomain.AXNumber) {
+        return 'NaN';
       }
       return this.value.toFixed(p);
     }
@@ -1312,9 +1337,34 @@ module Shumway.AVMX.AS {
 
     static classInitializer() {
       var proto: any = this.dPrototype;
-      var asProto: any = ASNumber.prototype;
+      var asProto: any = ASInt.prototype;
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
+    }
+
+    toString(radix: number) {
+      if (arguments.length === 0) {
+        radix = 10;
+      } else {
+        radix = radix|0;
+        if (radix < 2 || radix > 36) {
+          this.securityDomain.throwError('RangeError', Errors.InvalidRadixError, radix);
+        }
+      }
+      if (this.axClass !== this.securityDomain.AXNumber) {
+        this.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
+                                       'Number.prototype.toString');
+      }
+
+      return this.value.toString(radix);
+    }
+
+    valueOf() {
+      if (this.axClass !== this.securityDomain.AXNumber) {
+        this.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
+                                       'Number.prototype.valueOf');
+      }
+      return this.value;
     }
   }
 
@@ -1324,9 +1374,34 @@ module Shumway.AVMX.AS {
 
     static classInitializer() {
       var proto: any = this.dPrototype;
-      var asProto: any = ASNumber.prototype;
+      var asProto: any = ASUint.prototype;
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
+    }
+
+    toString(radix: number) {
+      if (arguments.length === 0) {
+        radix = 10;
+      } else {
+        radix = radix|0;
+        if (radix < 2 || radix > 36) {
+          this.securityDomain.throwError('RangeError', Errors.InvalidRadixError, radix);
+        }
+      }
+      if (this.axClass !== this.securityDomain.AXNumber) {
+        this.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
+                                       'Number.prototype.toString');
+      }
+
+      return this.value.toString(radix);
+    }
+
+    valueOf() {
+      if (this.axClass !== this.securityDomain.AXNumber) {
+        this.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
+                                       'Number.prototype.valueOf');
+      }
+      return this.value;
     }
   }
 
