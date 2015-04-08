@@ -114,7 +114,10 @@ module Shumway.AVMX {
       rn = p.getType();
       if (rn && !rn.isAnyName()) {
         type = scope.topScope().getScopeProperty(rn, true, false);
-        interpreterWriter && interpreterWriter.writeLn("Coercing argument to: " + type);
+        interpreterWriter && interpreterWriter.writeLn("Coercing argument to type " +
+                                                       (type.axClass ?
+                                                        type.axClass.name.toFQNString(false) :
+                                                        type));
         arg = type.axCoerce(arg);
       }
 
@@ -190,7 +193,10 @@ module Shumway.AVMX {
 
     interpretLabel:
     while (true) {
-      interpreterWriter && interpreterWriter.greenLn("" + pc + ": " + Bytecode[code[pc]] + " [" + stack.map(x => x == undefined ? String(x) : x.toString()).join(", ") + "]");
+      interpreterWriter && interpreterWriter.greenLn("" + pc + ": " + Bytecode[code[pc]] + " [" +
+                                                     stack.map(
+                                                         x => stringifyStackEntry(x)).join(", ") +
+                                                     "]");
       try {
         bc = code[pc++];
         switch (bc) {
@@ -808,6 +814,7 @@ module Shumway.AVMX {
         return obj;
       }
     }
+    var message: string;
     switch (bc) {
       case Bytecode.CALL:
         if (!value || !value.axApply) {
@@ -899,10 +906,30 @@ module Shumway.AVMX {
           return securityDomain.createError('TypeError', Errors.ConvertUndefinedToObjectError);
         }
         break;
+      default:
+        // Pattern-match some otherwise-annoying-to-convert exceptions. This is all best-effort,
+        // so we fail if we're not sure about something.
+        if (!internalError || typeof internalError.message !== 'string' ||
+            typeof internalError.stack !== 'string' ||
+            typeof internalError.name !== 'string') {
+          break;
+        }
+        message = internalError.message;
+        var stack = internalError.stack.split('\n');
+        var lastFunctionEntry = stack[0].indexOf('at ') === 0 ? stack[0].substr(3) : stack[0];
+        switch (internalError.name) {
+          case 'TypeError':
+            if (lastFunctionEntry.indexOf('AXBasePrototype_valueOf') === 0 ||
+                lastFunctionEntry.indexOf('AXBasePrototype_toString') === 0)
+            {
+              return securityDomain.createError('TypeError', Errors.CallOfNonFunctionError,
+                                                'value');
+            }
+        }
     }
     // To be sure we don't let VM exceptions flow into the player, box them manually here,
     // even in release builds.
-    var message = 'Uncaught VM-internal exception during op ' + Bytecode[bc] + ': ';
+    message = 'Uncaught VM-internal exception during op ' + Bytecode[bc] + ': ';
     try {
       message += internalError.toString();
     } catch (e) {
@@ -918,5 +945,19 @@ module Shumway.AVMX {
     }
     // In other packagings, at least throw a valid value.
     return securityDomain.createError('Error', Errors.InternalErrorIV);
+  }
+
+  function stringifyStackEntry(x: any) {
+    if (!x || !x.toString) {
+      return String(x);
+    }
+    if (x.$BgtoString && x.$BgtoString.isInterpreted) {
+      return '<unprintable ' + (x.axClass ? x.axClass.name.toFQNString(false) : 'object') + '>';
+    }
+    try {
+      return x.toString();
+    } catch (e) {
+      return '<unprintable ' + (x.axClass ? x.axClass.name.toFQNString(false) : 'object') + '>';
+    }
   }
 }

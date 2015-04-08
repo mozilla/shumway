@@ -15,9 +15,6 @@
  */
 
 module Shumway.AVMX.AS {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import unexpected = Shumway.Debug.unexpected;
-
   export class ASDate extends ASObject {
     value: Date;
 
@@ -99,77 +96,77 @@ module Shumway.AVMX.AS {
       }
     }
 
-    toString()              { return this.value.toString(); }
-    toJSON()                { return this.value.toString(); }
-    valueOf()               { return this.value.valueOf(); }
-    setTime(value = 0)      { this.value.setTime(value); }
-    toDateString()          { return this.value.toDateString(); }
-    toTimeString()          { return this.value.toTimeString(); }
-    toLocaleString()        { return this.value.toLocaleString(); }
-    toLocaleDateString()    { return this.value.toLocaleDateString(); }
-    toLocaleTimeString()    { return this.value.toLocaleTimeString(); }
-    toUTCString()           { return this.value.toUTCString(); }
+    toString()              { return !(this.value instanceof Date) ? 'Invalid Date' : this.value.toString(); }
+    toJSON()                { return !(this.value instanceof Date) ? 'Invalid Date' : this.value.toString(); }
+    valueOf()               { return !(this.value instanceof Date) ? NaN : this.value.valueOf(); }
+    setTime(value = 0)      { return !(this.value instanceof Date) ? NaN : this.value.setTime(value); }
+    toDateString()          { return !(this.value instanceof Date) ? 'Invalid Date' : this.value.toDateString(); }
+    toTimeString()          { return !(this.value instanceof Date) ? 'Invalid Date' : this.value.toTimeString(); }
+    toLocaleString()        { return !(this.value instanceof Date) ? 'Invalid Date' : this.value.toLocaleString(); }
+    toLocaleDateString()    { return !(this.value instanceof Date) ? 'Invalid Date' : this.value.toLocaleDateString(); }
+    toLocaleTimeString()    { return !(this.value instanceof Date) ? 'Invalid Date' : this.value.toLocaleTimeString(); }
+    toUTCString()           { return !(this.value instanceof Date) ? 'Invalid Date' : this.value.toUTCString(); }
 
-    getUTCFullYear()        { return this.value.getUTCFullYear(); }
-    getUTCMonth()           { return this.value.getUTCMonth(); }
-    getUTCDate()            { return this.value.getUTCDate(); }
-    getUTCDay()             { return this.value.getUTCDay(); }
-    getUTCHours()           { return this.value.getUTCHours(); }
-    getUTCMinutes()         { return this.value.getUTCMinutes(); }
-    getUTCSeconds()         { return this.value.getUTCSeconds(); }
-    getUTCMilliseconds()    { return this.value.getUTCMilliseconds(); }
-    getFullYear()           { return this.value.getFullYear(); }
-    getMonth()              { return this.value.getMonth(); }
-    getDate()               { return this.value.getDate(); }
-    getDay()                { return this.value.getDay(); }
-    getHours()              { return this.value.getHours(); }
-    getMinutes()            { return this.value.getMinutes(); }
-    getSeconds()            { return this.value.getSeconds(); }
-    getMilliseconds()       { return this.value.getMilliseconds(); }
-    getTimezoneOffset()     { return this.value.getTimezoneOffset(); }
-    getTime()               { return this.value.getTime(); }
+    getUTCFullYear()        { return !(this.value instanceof Date) ? NaN : this.value.getUTCFullYear(); }
+    getUTCMonth()           { return !(this.value instanceof Date) ? NaN : this.value.getUTCMonth(); }
+    getUTCDate()            { return !(this.value instanceof Date) ? NaN : this.value.getUTCDate(); }
+    getUTCDay()             { return !(this.value instanceof Date) ? NaN : this.value.getUTCDay(); }
+    getUTCHours()           { return !(this.value instanceof Date) ? NaN : this.value.getUTCHours(); }
+    getUTCMinutes()         { return !(this.value instanceof Date) ? NaN : this.value.getUTCMinutes(); }
+    getUTCSeconds()         { return !(this.value instanceof Date) ? NaN : this.value.getUTCSeconds(); }
+    getUTCMilliseconds()    { return !(this.value instanceof Date) ? NaN : this.value.getUTCMilliseconds(); }
+    getFullYear()           { return !(this.value instanceof Date) ? NaN : this.value.getFullYear(); }
+    getMonth()              { return !(this.value instanceof Date) ? NaN : this.value.getMonth(); }
+    getDate()               { return !(this.value instanceof Date) ? NaN : this.value.getDate(); }
+    getDay()                { return !(this.value instanceof Date) ? NaN : this.value.getDay(); }
+    getHours()              { return !(this.value instanceof Date) ? NaN : this.value.getHours(); }
+    getMinutes()            { return !(this.value instanceof Date) ? NaN : this.value.getMinutes(); }
+    getSeconds()            { return !(this.value instanceof Date) ? NaN : this.value.getSeconds(); }
+    getMilliseconds()       { return !(this.value instanceof Date) ? NaN : this.value.getMilliseconds(); }
+    getTimezoneOffset()     { return !(this.value instanceof Date) ? NaN : this.value.getTimezoneOffset(); }
+    getTime()               { return !(this.value instanceof Date) ? NaN : this.value.getTime(); }
 
     setFullYear(year: number, month: number, date: number) {
-      this.value.setFullYear.apply(this.value, arguments);
+      return !(this.value instanceof Date) ? NaN : this.value.setFullYear.apply(this.value, arguments);
     }
     setMonth(month: number, date: number) {
-      this.value.setMonth.apply(this.value, arguments);
+      return !(this.value instanceof Date) ? NaN : this.value.setMonth.apply(this.value, arguments);
     }
     setDate(date: number) {
-      this.value.setDate.apply(this.value, arguments);
+      return !(this.value instanceof Date) ? NaN : this.value.setDate.apply(this.value, arguments);
     }
     setHours(hour: number, minutes: number, seconds: number, milliseconds: number) {
-      this.value.setHours.apply(this.value, arguments);
+      return !(this.value instanceof Date) ? NaN : this.value.setHours.apply(this.value, arguments);
     }
     setMinutes(minutes: number, seconds: number, milliseconds: number) {
-      this.value.setMinutes.apply(this.value, arguments);
+      return !(this.value instanceof Date) ? NaN : this.value.setMinutes.apply(this.value, arguments);
     }
     setSeconds(seconds: number, milliseconds: number) {
-      this.value.setSeconds.apply(this.value, arguments);
+      return !(this.value instanceof Date) ? NaN : this.value.setSeconds.apply(this.value, arguments);
     }
     setMilliseconds(milliseconds: number) {
-      this.value.setMilliseconds.apply(this.value, arguments);
+      return !(this.value instanceof Date) ? NaN : this.value.setMilliseconds.apply(this.value, arguments);
     }
     setUTCFullYear(year: number, month: number, date: number) {
-      this.value.setUTCFullYear.apply(this.value, arguments);
+      return !(this.value instanceof Date) ? NaN : this.value.setUTCFullYear.apply(this.value, arguments);
     }
     setUTCMonth(month: number, date: number) {
-      this.value.setUTCMonth.apply(this.value, arguments);
+      return !(this.value instanceof Date) ? NaN : this.value.setUTCMonth.apply(this.value, arguments);
     }
     setUTCDate(date: number) {
-      this.value.setUTCDate.apply(this.value, arguments);
+      return !(this.value instanceof Date) ? NaN : this.value.setUTCDate.apply(this.value, arguments);
     }
     setUTCHours(hour: number, minutes: number, seconds: number, milliseconds: number) {
-      this.value.setUTCHours.apply(this.value, arguments);
+      return !(this.value instanceof Date) ? NaN : this.value.setUTCHours.apply(this.value, arguments);
     }
     setUTCMinutes(minutes: number, seconds: number, milliseconds: number) {
-      this.value.setUTCMinutes.apply(this.value, arguments);
+      return !(this.value instanceof Date) ? NaN : this.value.setUTCMinutes.apply(this.value, arguments);
     }
     setUTCSeconds(seconds: number, milliseconds: number) {
-      this.value.setUTCSeconds.apply(this.value, arguments);
+      return !(this.value instanceof Date) ? NaN : this.value.setUTCSeconds.apply(this.value, arguments);
     }
     setUTCMilliseconds(milliseconds: number) {
-      this.value.setUTCMilliseconds.apply(this.value, arguments);
+      return !(this.value instanceof Date) ? NaN : this.value.setUTCMilliseconds.apply(this.value, arguments);
     }
 
     get fullYear(): number {
