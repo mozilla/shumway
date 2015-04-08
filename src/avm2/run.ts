@@ -961,8 +961,14 @@ module Shumway.AVMX {
     }
 
     applyType(axClass: AXClass, types: AXClass []): AXClass {
-      release || assert(axClass.classInfo.instanceInfo.getName().name === "Vector");
-      release || assert(types.length === 1);
+      var vectorProto = (<AXClass><any>this.ObjectVector.axClass).superClass.dPrototype;
+      if (!vectorProto.isPrototypeOf(axClass.dPrototype)) {
+        this.throwError('TypeError', Errors.TypeAppOfNonParamType);
+      }
+      if (types.length !== 1) {
+        this.throwError('TypeError', Errors.WrongTypeArgCountError, '__AS3__.vec::Vector', 1,
+                        types.length);
+      }
       var type = types[0] || this.AXObject;
       return this.getVectorClass(type);
     }
