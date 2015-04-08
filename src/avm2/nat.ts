@@ -1101,7 +1101,8 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, '$BgtoUpperCase', asProto.generic_toUpperCase);
       addPrototypeFunctionAlias(proto, '$BgtoLocaleUpperCase', asProto.generic_toUpperCase);
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
-      addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
+      addPrototypeFunctionAlias(proto, '$BgtoString', asProto.public_toString);
+      addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.public_valueOf);
     }
 
     value: string;
@@ -1179,7 +1180,7 @@ module Shumway.AVMX.AS {
       return this.value.toUpperCase();
     }
 
-    // The String.prototype versions of these methods  are generic, so the implementation is
+    // The String.prototype versions of these methods are generic, so the implementation is
     // different.
 
     generic_indexOf(char: string) {
@@ -1231,7 +1232,7 @@ module Shumway.AVMX.AS {
       return String.prototype.substr.call(this.value, from, length);
     }
     generic_toLowerCase() {
-      return String.prototype.toLowerCase.call(this.value);
+      return (this).toLowerCase();
     }
     generic_toUpperCase() {
       return String.prototype.toUpperCase.call(this.value);
@@ -1240,7 +1241,29 @@ module Shumway.AVMX.AS {
     toString() {
       return this.value.toString();
     }
+
+    public_toString() {
+      if (<any>this === this.securityDomain.AXString.dPrototype) {
+        return '';
+      }
+      if (this.axClass !== this.securityDomain.AXString) {
+        this.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
+                                       'String.prototype.toString');
+      }
+      return this.value.toString();
+    }
+
     valueOf() {
+      return this.value.valueOf();
+    }
+    public_valueOf() {
+      if (<any>this === this.securityDomain.AXString.dPrototype) {
+        return '';
+      }
+      if (this.axClass !== this.securityDomain.AXString) {
+        this.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
+                                       'String.prototype.valueOf');
+      }
       return this.value.valueOf();
     }
 
