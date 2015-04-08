@@ -404,10 +404,23 @@ module Shumway.AVMX {
   }
 
   function axFunctionConstruct(argArray?: any []) {
-    release || assert(this.prototype);
-    var object = Object.create(this.prototype);
+    var prototype = this.prototype;
+    // AS3 allows setting null/undefined prototypes. In order to make our value checking work,
+    // we need to set a null-prototype that has the right inheritance chain. Since AS3 doesn't
+    // have `__proto__` or `getPrototypeOf`, this is completely hidden from content.
+    if (isNullOrUndefined(prototype)) {
+      prototype = this.securityDomain.AXFunctionUndefinedPrototype;
+    }
+    release || assert(typeof prototype === 'object');
+    release || checkValue(prototype);
+    var object = Object.create(prototype);
+    object.__ctorFunction = this;
     this.value.apply(object, argArray);
     return object;
+  }
+
+  function axFunctionIsInstanceOf(obj: any) {
+    return obj && obj.__ctorFunction === this;
   }
 
   export function axTypeOf(x: any, securityDomain: SecurityDomain): string {
@@ -900,6 +913,12 @@ module Shumway.AVMX {
     private AXGlobalPrototype;
     private AXActivationPrototype;
     private AXCatchPrototype;
+    private _AXFunctionUndefinedPrototype;
+
+    public get AXFunctionUndefinedPrototype() {
+      return this._AXFunctionUndefinedPrototype ||
+             (this._AXFunctionUndefinedPrototype = this.createObject());
+    }
 
     public objectPrototype: AXObject;
     private rootClassPrototype: AXObject;
@@ -1401,6 +1420,7 @@ module Shumway.AVMX {
         return Object.create(this.tPrototype);
       });
       D(AXFunction.dPrototype, "axConstruct", axFunctionConstruct);
+      D(AXFunction.dPrototype, "axIsInstanceOf", axFunctionIsInstanceOf);
       D(AXFunction.dPrototype, "value", function(){
         //..
       });

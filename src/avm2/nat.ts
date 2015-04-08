@@ -973,18 +973,25 @@ module Shumway.AVMX.AS {
     }
 
     private _prototype: AXObject;
+    private _prototypeInitialzed: boolean = false;
     protected value: Function;
     protected receiver: {scope: Scope};
 
     get prototype(): AXObject {
-      if (!this._prototype) {
+      if (!this._prototypeInitialzed) {
         this._prototype = Object.create(this.securityDomain.AXObject.tPrototype);
+        this._prototypeInitialzed = true;
       }
       return this._prototype;
     }
 
     set prototype(prototype: AXObject) {
-      assert (prototype, "What do we need to do if we pass null here?");
+      if (isNullOrUndefined(prototype)) {
+        prototype = undefined;
+      } else if (typeof prototype !== 'object' || this.securityDomain.isPrimitive(prototype)) {
+        this.securityDomain.throwError('TypeError', Errors.PrototypeTypeError);
+      }
+      this._prototypeInitialzed = true;
       this._prototype = prototype;
     }
 
