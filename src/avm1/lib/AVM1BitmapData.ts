@@ -18,21 +18,24 @@
 
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
 
-  export class AVM1BitmapData extends flash.display.BitmapData {
-    static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1BitmapData {
-      var wrapped = AVM1Proxy.wrap(securityDomain, AVM1BitmapData, null);
-      wrapped.axSetPublicProperty('loadBitmap', securityDomain.boxFunction(AVM1BitmapData.loadBitmap));
-      return wrapped;
+  export class AVM1BitmapData extends AVM1Proxy<flash.display.BitmapData> {
+    static createAVM1Class(context: AVM1Context): AVM1Object {
+      return AVM1Proxy.wrap<AVM1BitmapData>(context, AVM1BitmapData, ['loadBitmap'], []);
     }
 
-    static loadBitmap(symbolId: string): flash.display.BitmapData {
-      symbolId = asCoerceString(symbolId);
-      var symbol = AVM1Context.instance.getAsset(symbolId);
+    public avm1Constructor() {
+      var as3Object = new this.context.securityDomain.flash.display.BitmapData(); // REDUX parameters
+      this.setTarget(as3Object);
+    }
+
+    static loadBitmap(context: AVM1Context, symbolId: string): AVM1BitmapData {
+      symbolId = alCoerceString(context, symbolId);
+      var symbol = context.getAsset(symbolId);
       if (symbol && symbol.symbolProps instanceof flash.display.BitmapSymbol) {
-        var bitmap = (<any>AVM1BitmapData).initializeFrom(symbol); // REDUX
-        bitmap.class.instanceConstructorNoInitialize.call(bitmap);
+        // REDUX
+        var bitmap = undefined; /// (<any>AVM1BitmapData).initializeFrom(symbol);
+        // bitmap.class.instanceConstructorNoInitialize.call(bitmap);
         return bitmap;
       }
       return null;

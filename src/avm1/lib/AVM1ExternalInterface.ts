@@ -18,22 +18,22 @@
 
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
-  import ASObject = Shumway.AVMX.AS.ASObject;
 
-  export class AVM1ExternalInterface extends ASObject {
-    static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1ExternalInterface {
-      return wrapAVM1Class(securityDomain, AVM1ExternalInterface,
+  export class AVM1ExternalInterface extends AVM1Object {
+    static createAVM1Class(context: AVM1Context): AVM1Object {
+      return wrapAVM1NativeClass(context, false, AVM1ExternalInterface,
         ['available', 'addCallback', 'call'],
         []);
     }
 
     public static get available(): boolean {
-      return this.securityDomain.flash.external.ExternalInterface.available;
+      return false; // REDUX this.securityDomain.flash.external.ExternalInterface.available;
     }
 
     public static addCallback(methodName: string, instance: any, method: Function): boolean {
       try {
-        this.securityDomain.flash.external.ExternalInterface.addCallback(methodName, function () {
+        var securityDomain; // REDUX
+        securityDomain.flash.external.ExternalInterface.addCallback(methodName, function () {
           return method.apply(instance, arguments);
         });
         return true;
@@ -44,7 +44,8 @@ module Shumway.AVM1.Lib {
 
     public static call(methodName: string): any {
       var args = Array.prototype.slice.call(arguments, 0);
-      return this.securityDomain.flash.external.ExternalInterface.call(args);
+      var securityDomain; // REDUX
+      return securityDomain.flash.external.ExternalInterface.call(args);
     }
   }
 }

@@ -71,22 +71,34 @@ module Shumway.AVM1 {
       var self = this;
       this.alSetOwnProperty('__proto__', {
         flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.DONT_ENUM,
-        get: { alCall: function (thisArg: any, args?: any[]): any { return self._getPrototype(); }},
-        set: { alCall: function (thisArg: any, args?: any[]): any { self._setPrototype(args[0]); }},
+        get: { alCall: function (thisArg: any, args?: any[]): any { return self.alPrototype; }},
+        set: { alCall: function (thisArg: any, args?: any[]): any { self.alPrototype = args[0]; }}
       });
     }
 
-    _getPrototype(): AVM1Object {
+    get alPrototype(): AVM1Object {
       return this._prototype;
     }
 
-    _setPrototype(v: AVM1Object) {
+    set alPrototype(v: AVM1Object) {
+      // checking for circular references
+      var p = v;
+      while (p) {
+        if (p === this) {
+          return; // possible loop in __proto__ chain is found
+        }
+        p = p.alPrototype;
+      }
       // TODO recursive chain check
       this._prototype = v;
     }
 
-    public get alPrototypeProperty(): AVM1Object {
+    public alGetPrototypeProperty(): any {
       return this.alGet('prototype');
+    }
+
+    public alPutPrototypeProperty(v: any): void {
+      this.alPut('prototype', v);
     }
 
     public alGetOwnProperty(p): AVM1PropertyDescriptor {
@@ -95,10 +107,18 @@ module Shumway.AVM1 {
 
     public alSetOwnProperty(p, desc: AVM1PropertyDescriptor): void {
       this._ownProperties[escapeAVM1Property(p)] = desc;
+      if (!release) {
+        if ((desc.flags & AVM1PropertyFlags.DATA) && !(desc.flags & AVM1PropertyFlags.DONT_ENUM)) {
+          Object.defineProperty(this, '$Bg' + p, {value: desc.value, enumerable: true, configurable: true});
+        }
+      }
     }
 
     public alDeleteOwnProperty(p) {
       delete this._ownProperties[escapeAVM1Property(p)];
+      if (!release) {
+        delete this['$Bg' + p];
+      }
     }
 
     public alGetOwnPropertiesKeys(): string[] {
@@ -253,7 +273,7 @@ module Shumway.AVM1 {
   export class AVM1Function extends AVM1Object {
     public constructor(context: AVM1Context) {
       super(context);
-      this._setPrototype(context.builtins.Function.alPrototypeProperty);
+      this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
     }
   }
 
@@ -284,23 +304,27 @@ module Shumway.AVM1 {
     }
   }
 
+  // REDUX inherit this class in interpreter (vs using fn)
   export class AVM1EvalFunction extends AVM1Function {
-    public constructor(context: AVM1Context) {
+    private _fn: Function;
+    public constructor(context: AVM1Context, fn: Function) {
       super(context);
+      this._fn = fn;
+      this.alPutPrototypeProperty(alNewObject(context));
     }
     public alConstruct(args?: any[]): AVM1Object  {
       var obj = new AVM1Object(this.context);
-      var objPrototype = this.alPrototypeProperty;
+      var objPrototype = this.alGetPrototypeProperty();
       if (!(objPrototype instanceof AVM1Object)) {
-        objPrototype = this.context.builtins.Object.alPrototypeProperty;
+        objPrototype = this.context.builtins.Object.alGetPrototypeProperty();
       }
-      obj._setPrototype(objPrototype);
+      obj.alPrototype = objPrototype;
       var result = this.alCall(obj, args);
       return result instanceof AVM1Object ? result : obj;
     }
 
     public alCall(thisArg: any, args?: any[]): any {
-      throw new Error('not implemented: AVM1EvalFunction.alCall');
+      return this._fn.apply(thisArg, args);
     }
   }
 
@@ -427,7 +451,7 @@ module Shumway.AVM1 {
 
   export function alNewObject(context: AVM1Context): AVM1Object {
     var obj = new AVM1Object(context);
-    obj._setPrototype(context.builtins.Object.alPrototypeProperty);
+    obj.alPrototype = context.builtins.Object.alGetPrototypeProperty();
     return obj;
   }
 
@@ -439,67 +463,18 @@ module Shumway.AVM1 {
     return 'Object';
   }
 
-  export function wrapAVM1NativeMembers(context: AVM1Context, wrap: AVM1Object, obj: any, members: string[], prefixFunctions: boolean = false): void  {
-    function wrapFunctionWithPrefix(fn) {
-      return function () {
-        var args = Array.prototype.slice.call(arguments, 0);
-        args.unshift(context);
-        return fn.apply(this, args);
-      };
+  export function alCoerceString(context: AVM1Context, x) {
+    if (x instanceof AVM1Object) {
+      return alToString(context, x);
     }
-
-    if (!members) {
-      return;
-    }
-    members.forEach(function (memberName) {
-      var desc;
-      for (var p = obj; p; p = Object.getPrototypeOf(p)) {
-        desc = Object.getOwnPropertyDescriptor(p, memberName);
-        if (desc) {
-          break;
-        }
-      }
-      if (!desc) {
-        return;
-      }
-      if (desc.get || desc.set) {
-        wrap.alSetOwnProperty(memberName, {
-          flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE,
-          get: new AVM1NativeFunction(context, desc.get),
-          set: new AVM1NativeFunction(context, desc.set)
-        })
-      } else {
-        var value = desc.value;
-        if (typeof value === 'function') {
-          value = new AVM1NativeFunction(context,
-            prefixFunctions ? wrapFunctionWithPrefix(value) : value);
-        }
-        wrap.alSetOwnProperty(memberName, {
-          flags: AVM1PropertyFlags.NATIVE_MEMBER,
-          value: value
-        })
-      }
-    });
-  }
-
-  export function wrapAVM1NativeClass(context: AVM1Context, wrapAsFunction: boolean, cls: Function, staticMembers: string[], members: string[]): AVM1Object  {
-    var wrappedFn = wrapAsFunction ?
-      new AVM1NativeFunction(context, function () {}, function () {}) :
-      new AVM1Object(context);
-    wrapAVM1NativeMembers(context, wrappedFn, cls, staticMembers, true);
-    var wrappedPrototype = Object.create(cls.prototype);
-    cls.call(wrappedPrototype, context);
-    wrapAVM1NativeMembers(context, wrappedPrototype, cls.prototype, members, false);
-    wrappedFn.alPut('prototype', wrappedPrototype);
-    wrappedPrototype.alSetOwnProperty('constructor', {
-      flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-      value: wrappedFn
-    });
-    return wrappedFn;
-  }
-
-  export function alCoerceString(x) {
     return Shumway.AVMX.asCoerceString(x);
+  }
+
+  export function alIsIndex(context: AVM1Context, p) {
+    if (p instanceof AVM1Object) {
+      return isIndex(alToString(context, p));
+    }
+    return isIndex(p);
   }
 
   export function alForEachProperty(obj: AVM1Object, fn: (name: string) => void, thisArg?: any) {

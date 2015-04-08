@@ -213,20 +213,20 @@ module Shumway.AVM1.Lib {
 
       this.MovieClip = AVM1MovieClip.createAVM1Class(context);
       this.AsBroadcaster = AVM1Broadcaster.createAVM1Class(context);
-      this.System = undefined; // AVM1System.createAVM1Class(securityDomain);
+      this.System = AVM1System.createAVM1Class(context);
       this.Stage = AVM1Stage.createAVM1Class(context);
-      this.Button = undefined; // AVM1Button.createAVM1Class(securityDomain);
+      this.Button = AVM1Button.createAVM1Class(context);
       this.TextField = AVM1TextField.createAVM1Class(context);
-      this.Color = undefined; // AVM1Color.createAVM1Class(securityDomain);
+      this.Color = AVM1Color.createAVM1Class(context);
       this.Key = AVM1Key.createAVM1Class(context);
       this.Mouse = AVM1Mouse.createAVM1Class(context);
-      this.MovieClipLoader = undefined; // AVM1MovieClipLoader.createAVM1Class(securityDomain);
+      this.MovieClipLoader = AVM1MovieClipLoader.createAVM1Class(context);
 
-      this.Sound = undefined; // AVM1Sound.createAVM1Class(securityDomain);
+      this.Sound = AVM1Sound.createAVM1Class(context);
       this.SharedObject = undefined; // wrapAVM1Builtin(securityDomain.flash.net.SharedObject.axClass);
       this.ContextMenu = undefined; // wrapAVM1Builtin(securityDomain.flash.ui.ContextMenu.axClass);
       this.ContextMenuItem = undefined; // wrapAVM1Builtin(securityDomain.flash.ui.ContextMenuItem.axClass);
-      this.TextFormat = undefined; // AVM1TextFormat.createAVM1Class(securityDomain);
+      this.TextFormat = AVM1TextFormat.createAVM1Class(context);
 
       AVM1Broadcaster.initialize(context, this.Stage);
       AVM1Broadcaster.initialize(context, this.Key);
@@ -236,10 +236,10 @@ module Shumway.AVM1.Lib {
     private _initializeFlashObject(context: AVM1Context): void {
       this.flash = alNewObject(context);
       var display: AVM1Object = alNewObject(context);
-      //display.axSetPublicProperty('BitmapData', AVM1BitmapData.createAVM1Class(securityDomain));
+      display.alPut('BitmapData', AVM1BitmapData.createAVM1Class(context));
       this.flash.alPut('display', display);
       var external: AVM1Object = alNewObject(context);
-      //external.axSetPublicProperty('ExternalInterface', AVM1ExternalInterface.createAVM1Class(securityDomain));
+      external.alPut('ExternalInterface', AVM1ExternalInterface.createAVM1Class(context));
       this.flash.alPut('external', external);
       var filters: AVM1Object = alNewObject(context);
       this.flash.alPut('filters', filters);
@@ -248,7 +248,7 @@ module Shumway.AVM1.Lib {
       //geom.axSetPublicProperty('Matrix', wrapAVM1Builtin(securityDomain.flash.geom.Matrix.axClass));
       //geom.axSetPublicProperty('Point', wrapAVM1Builtin(securityDomain.flash.geom.Point.axClass));
       //geom.axSetPublicProperty('Rectangle', wrapAVM1Builtin(securityDomain.flash.geom.Rectangle.axClass));
-      //geom.axSetPublicProperty('Transform', AVM1Transform.createAVM1Class(securityDomain));
+      geom.alPut('Transform', AVM1Transform.createAVM1Class(context));
       this.flash.alPut('geom', geom);
       var text: AVM1Object = alNewObject(context);
       this.flash.alPut('text', text);
@@ -284,7 +284,7 @@ module Shumway.AVM1.Lib {
     }
 
     public fscommand(command: string, args?: string) {
-      return this.context.securityDomain.flash.system.fscommand(command, args);
+      return this.context.securityDomain.flash.system.fscommand.axCall(null, this.context.securityDomain, command, args);
     }
 
     public getAVM1Property(target, index) {

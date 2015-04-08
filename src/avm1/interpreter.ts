@@ -215,7 +215,7 @@ module Shumway.AVM1 {
       this.assetsSymbols[symbolId] = symbolProps;
     }
     registerClass(className: string, theClass) {
-      className = alCoerceString(className);
+      className = alCoerceString(this, className);
       if (className === null) {
         avm1Warn('Cannot register class for symbol: className is missing');
         return null;
@@ -228,7 +228,7 @@ module Shumway.AVM1 {
       this.assetsClasses[symbolId] = theClass;
     }
     getAsset(className: string) : AVM1ExportedSymbol {
-      className = alCoerceString(className);
+      className = alCoerceString(this, className);
       if (className === null) {
         return undefined;
       }
@@ -535,7 +535,7 @@ module Shumway.AVM1 {
       return typeof obj === 'object';
     }
 
-    var baseProto = constructor.axGetPublicProperty('prototype');
+    var baseProto = constructor.alGetPrototypeProperty();
     if (!baseProto) {
       return false;
     }
@@ -544,7 +544,7 @@ module Shumway.AVM1 {
       if (proto === baseProto) {
         return true; // found the type if the chain
       }
-      proto = proto.axGetPublicProperty('__proto__');
+      proto = proto.alPrototype;
     }
     // TODO interface check
     return false;
@@ -686,16 +686,7 @@ module Shumway.AVM1 {
 
   function as2Construct(ctor, args) {
     var result;
-    if (isAvm2Class(ctor)) {
-      // Some built-in and AVM2 classes we can use
-      throw new Error('not implemented'); // REDUX result = construct(ctor, args);
-      //  __proto__ and __constructor__ can be assigned later
-    } else if (alIsFunction(ctor)) {
-      // Finding right prototype object
-      //var proto = ctor.axGetPublicProperty('prototype');
-      //while (proto && !proto.initAVM1ObjectInstance) {
-      //  proto = proto.axGetPublicProperty('__proto__');
-      //}
+    if (alIsFunction(ctor)) {
       result = (<AVM1Function>ctor).alConstruct(args);
     } else {
       // AVM1 simply ignores attempts to invoke non-methods.
@@ -728,8 +719,8 @@ module Shumway.AVM1 {
       proto = resolved.link;
     }
 
-    // Skippig one chain link
-    proto = proto.axGetPublicProperty('__proto__');
+    // Skipping one chain link
+    proto = proto.alPrototype;
     if (!proto) {
       return null;
     }
@@ -743,10 +734,6 @@ module Shumway.AVM1 {
       name: resolved.name,
       obj: resolved.link.axGetPublicProperty(resolved.name)
     };
-  }
-
-  function isAvm2Class(obj): boolean {
-    return obj instanceof Shumway.AVMX.AS.ASClass;
   }
 
   //interface AVM1Function {
@@ -813,36 +800,30 @@ module Shumway.AVM1 {
     return obj;
   }
 
-  function createBuiltinType(obj, args: any[]) {
-    if (obj === Array) {
-      // special case of array
-      var result = args;
-      if (args.length == 1 && typeof args[0] === 'number') {
-        result = [];
-        result.length = args[0];
-      }
-      return result;
+  function createBuiltinType(context: AVM1Context, obj, args: any[]) {
+    var builtins = context.builtins;
+    if (obj === builtins.Array || obj === builtins.Object) {
+      return obj.alConstruct(args);
     }
-    if (obj === Boolean || obj === Number || obj === String || obj === Function) {
-      return obj.apply(null, args);
+    if (obj === builtins.Boolean || obj === builtins.Number ||
+        obj === builtins.String || obj === builtins.Function) {
+      return obj.alConstruct(args).value;
     }
     if (obj === Date) {
-      switch (args.length) {
-        case 0:
-          return new Date();
-        case 1:
-          return new Date(args[0]);
-        default:
-          return new Date(args[0], args[1],
-            args.length > 2 ? args[2] : 1,
-            args.length > 3 ? args[3] : 0,
-            args.length > 4 ? args[4] : 0,
-            args.length > 5 ? args[5] : 0,
-            args.length > 6 ? args[6] : 0);
-      }
-    }
-    if (obj === Object) {
-      return alNewObject(as2GetCurrentContext());
+      // REDUX
+      //switch (args.length) {
+      //  case 0:
+      //    return new Date();
+      //  case 1:
+      //    return new Date(args[0]);
+      //  default:
+      //    return new Date(args[0], args[1],
+      //      args.length > 2 ? args[2] : 1,
+      //      args.length > 3 ? args[3] : 0,
+      //      args.length > 4 ? args[4] : 0,
+      //      args.length > 5 ? args[5] : 0,
+      //      args.length > 6 ? args[6] : 0);
+      //}
     }
     return undefined;
   }
@@ -915,7 +896,7 @@ module Shumway.AVM1 {
                                 parametersNames: string[],
                                 registersCount: number,
                                 registersAllocation: ArgumentAssignment[],
-                                suppressArguments: ArgumentAssignmentType) {
+                                suppressArguments: ArgumentAssignmentType): AVM1Function {
       var currentContext = ectx.context;
       var scopeContainer = ectx.scopeContainer;
       var scope = ectx.scope;
@@ -1049,12 +1030,12 @@ module Shumway.AVM1 {
         return result;
       });
 
-      var fnObj: AVM1Function = new AVM1NativeFunction(as2GetCurrentContext(), fn);
+      var fnObj: AVM1Function = new AVM1EvalFunction(as2GetCurrentContext(), fn);
       (<any>fn).debugName = 'avm1 ' + (functionName || '<function>');
       if (functionName) {
         (<any>fn).name = functionName;
       }
-      return fn;
+      return fnObj;
     }
     function avm1DeleteProperty(ectx, propertyName) {
       var scopeContainer = ectx.scopeContainer;
@@ -1673,7 +1654,7 @@ module Shumway.AVM1 {
       var resolved = avm1ResolveGetVariable(ectx, functionName);
       var fn = resolved ? resolved.link.alGet(resolved.name) : undefined;
       // AVM1 simply ignores attempts to invoke non-functions.
-      if (!(fn instanceof AVM1Function)) {
+      if (!alIsFunction(fn)) {
         avm1Warn("AVM1 warning: function '" + functionName +
                                           (fn ? "' is not callable" : "' is undefined"));
         return;
@@ -1745,7 +1726,7 @@ module Shumway.AVM1 {
       }
 
       // AVM1 simply ignores attempts to invoke non-methods.
-      if (!(fn instanceof AVM1Function)) {
+      if (!alIsFunction(fn)) {
         avm1Warn("AVM1 warning: method '" + methodName + "' on object", obj,
                                         (isNullOrUndefined(fn) ?
                                                                "is undefined" :
@@ -1857,7 +1838,7 @@ module Shumway.AVM1 {
     function avm1_0x42_ActionInitArray(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
-      var obj = avm1ReadFunctionArgs(stack);
+      var obj = new Natives.AVM1ArrayNative(ectx.context, avm1ReadFunctionArgs(stack));
       stack.push(obj);
     }
     function avm1_0x43_ActionInitObject(ectx: ExecutionContext) {
@@ -1923,7 +1904,7 @@ module Shumway.AVM1 {
       var resolved = avm1ResolveGetVariable(ectx, objectName);
       var obj = resolved ? resolved.link.alGet(resolved.name) : undefined;
 
-      var result = createBuiltinType(obj, args);
+      var result = createBuiltinType(ectx.context, obj, args);
       if (result === undefined) {
         // obj in not a built-in type
         result = as2Construct(obj, args);
@@ -2151,11 +2132,10 @@ module Shumway.AVM1 {
 
       var fn = avm1DefineFunction(ectx, functionBody, functionName,
         functionParams, registerCount, registerAllocation, suppressArguments);
-      var fnObj = new AVM1NativeFunction(ectx.context, fn);
       if (functionName) {
-        scope.alPut(functionName, fnObj);
+        scope.alPut(functionName, fn);
       } else {
-        stack.push(fnObj);
+        stack.push(fn);
       }
     }
     function avm1_0x69_ActionExtends(ectx: ExecutionContext) {
@@ -2163,10 +2143,13 @@ module Shumway.AVM1 {
 
       var constrSuper = stack.pop();
       var constr = stack.pop();
-      var prototype = constr.axGetPublicProperty('prototype');
-      var prototypeSuper = constrSuper.axGetPublicProperty('prototype');
-      prototype.axSetPublicProperty('__proto__', prototypeSuper);
-      prototype.axSetPublicProperty('__constructor__', constrSuper);
+      var prototype = constr.alGetPrototypeProperty();
+      var prototypeSuper = constrSuper.alGetPrototypeProperty();
+      prototype.alPrototype = prototypeSuper;
+      prototype.alSetOwnProperty('__constructor__', {
+        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
+        value: constrSuper
+      });
     }
     function avm1_0x2B_ActionCastOp(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -2214,7 +2197,7 @@ module Shumway.AVM1 {
       var sp = stack.length;
       stack.push(undefined);
 
-      var result = ectx.actions.fscommand.apply(null, args);
+      var result = ectx.actions.fscommand.apply(ectx.actions, args);
       stack[sp] = result;
     }
     function avm1_0x89_ActionStrictMode(ectx: ExecutionContext, args: any[]) {

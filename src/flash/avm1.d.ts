@@ -26,8 +26,8 @@ declare module Shumway.AVM1 {
     addAsset(className: string, symbolId: number, symbolProps);
     executeActions(actionsData: AVM1ActionsData, scopeObj);
     flushPendingScripts();
+    setStage(stage: flash.display.Stage): void;
 
-    globals: Lib.AVM1Globals;
     root: Lib.AVM1MovieClip;
     securityDomain: ISecurityDomain;
   }
@@ -35,17 +35,6 @@ declare module Shumway.AVM1 {
     function getAVM1Object(obj, context: AVM1Context);
     function initializeAVM1Object(as3Object, context: AVM1Context,
                                   placeObjectTag: Shumway.SWF.PlaceObjectTag);
-    function installObjectMethods(context: AVM1Context);
-    class AVM1Globals {
-      Key: typeof AVM1Key;
-      Mouse: typeof AVM1Mouse;
-    }
     class AVM1MovieClip {}
-    class AVM1Key {
-      static _bind(stage: flash.display.Stage, context: AVM1Context);
-    }
-    class AVM1Mouse {
-      static _bind(stage: flash.display.Stage, context: AVM1Context);
-    }
   }
 }

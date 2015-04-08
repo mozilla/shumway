@@ -18,21 +18,20 @@
 
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
-  import ASObject = Shumway.AVMX.AS.ASObject;
 
-  export class AVM1System extends ASObject {
-    static createAVM1Class(securityDomain: ISecurityDomain):typeof AVM1System {
-      return wrapAVM1Class(securityDomain, AVM1System,
+  export class AVM1System extends AVM1Object {
+    static createAVM1Class(context: AVM1Context): AVM1Object {
+      return wrapAVM1NativeClass(context, false, AVM1System,
         ['capabilities', 'security'],
         []);
     }
 
     public static get capabilities() {
-      return flash.system.Capabilities;
+      return undefined; // REDUX flash.system.Capabilities;
     }
 
     public static get security() {
-      return flash.system.Security;
+      return undefined; // REDUX flash.system.Security;
     }
   }
 }

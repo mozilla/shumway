@@ -18,23 +18,19 @@
 
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
-  import ASObject = Shumway.AVMX.AS.ASObject;
 
-  export class AVM1MovieClipLoader extends ASObject {
-    static createAVM1Class(securityDomain: ISecurityDomain):typeof AVM1MovieClipLoader {
-      return wrapAVM1Class(securityDomain, AVM1MovieClipLoader,
+  export class AVM1MovieClipLoader extends AVM1Object {
+    static createAVM1Class(context: AVM1Context): AVM1Object {
+      return wrapAVM1NativeClass(context, true, AVM1MovieClipLoader,
         [],
-        ['loadClip', 'unloadClip', 'getProgress']);
-    }
-
-    public initAVM1ObjectInstance(context: AVM1Context) {
+        ['loadClip', 'unloadClip', 'getProgress'],
+        AVM1MovieClipLoader.prototype.avm1Constructor);
     }
 
     private _loader: flash.display.Loader;
     private _target: IAVM1SymbolBase;
 
-    constructor() {
-      super();
+    public avm1Constructor() {
       this._loader = new flash.display.Loader();
     }
 

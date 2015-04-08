@@ -19,132 +19,58 @@
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
   import notImplemented = Shumway.Debug.notImplemented;
-  import Namespace = Shumway.AVMX.Namespace;
-  import ASObject = Shumway.AVMX.AS.ASObject;
 
-  var _asGetProperty = null; // REDUX Object.prototype.asGetProperty;
-  var _asSetProperty = null; // REDUX Object.prototype.asSetProperty;
-  var _asCallProperty = null; // REDUX Object.prototype.asCallProperty;
-  var _asHasProperty = null; // REDUX Object.prototype.asHasProperty;
-  var _asHasOwnProperty = null; // REDUX Object.prototype.asHasOwnProperty;
-  var _asHasTraitProperty = null; // REDUX Object.prototype.asHasTraitProperty;
-  var _asDeleteProperty = null; // REDUX Object.prototype.asDeleteProperty;
-
-  export class AVM1Proxy<T> extends ASObject {
+  export class AVM1Proxy<T> extends AVM1Function {
     private _target:T;
 
-    constructor() {
-      super();
+    constructor(context: AVM1Context) {
+      super(context);
     }
 
-    public setTarget(target:T) {
-      this._target = target;
+    public setTarget(value: T) {
+      this._target = value;
     }
 
-    private _isInternalProperty(namespaces:Namespace [], name:any, flags:number):boolean {
-      if (!this._target) {
-        return true;
+    public alGetOwnProperty(p): AVM1PropertyDescriptor {
+      var desc = super.alGetOwnProperty(p);
+      if (desc) {
+        return desc;
       }
-      if (namespaces) {
-        return true;
+      var target = <any>this._target;
+      if (target && target.axHasPublicProperty(p)) {
+        var value = target.axGetPublicProperty(p);
+        return {
+          flags: AVM1PropertyFlags.DATA,
+          value: typeof value !== 'function' ? value :
+            new AVM1NativeFunction(this.context, value.bind(target))
+        };
       }
-      if (name === '__proto__' || name === '__constructor__') {
-        return true;
-      }
-      return false;
+      return undefined;
     }
 
-    public asGetProperty(namespaces:Namespace [], name:any, flags:number) {
-      var self:Object = this;
-      if (this._isInternalProperty(namespaces, name, flags)) {
-        return _asGetProperty.call(self, namespaces, name, flags);
-      }
-      return (<any>this._target).axGetPublicProperty(name); // REDUX
-    }
-
-    public asGetNumericProperty(name:number) {
-      return (<any>this._target).asGetNumericProperty(name); // REDUX
-    }
-
-    public asSetNumericProperty(name:number, value) {
-      return (<any>this._target).asSetNumericProperty(name, value); // REDUX
-    }
-
-    public asSetProperty(namespaces:Namespace [], name:any, flags:number, value:any) {
-      var self:Object = this;
-      if (this._isInternalProperty(namespaces, name, flags)) {
-        _asSetProperty.call(self, namespaces, name, flags, value);
+    public alSetOwnProperty(p, v: AVM1PropertyDescriptor) {
+      var desc = super.alGetOwnProperty(p);
+      if (desc) {
+        super.alSetOwnProperty(p, v);
         return;
       }
-      return (<any>this._target).axSetPublicProperty(name, value); // REDUX
-    }
-
-    public asCallProperty(namespaces:Namespace [], name:any, flags:number, isLex:boolean, args:any []):any {
-      var self:Object = this;
-      if (this._isInternalProperty(namespaces, name, flags)) {
-        return _asCallProperty.call(self, namespaces, name, flags, false, args);
+      var target = <any>this._target;
+      if (target && target.axHasPublicProperty(p)) {
+        // TODO shall we check for native function?
+        target.axSetPublicProperty(p, v.value);
+        return;
       }
-      return (<any>this._target).axCallPublicProperty(name, args); // REDUX
     }
 
-    public asHasProperty(namespaces:Namespace [], name:any, flags:number):any {
-      var self:Object = this;
-      if (this._isInternalProperty(namespaces, name, flags)) {
-        return _asHasProperty.call(self, namespaces, name, flags);
-      }
-      return (<any>this._target).asHasProperty(undefined, name, 0); // REDUX
-    }
-
-    public asHasOwnProperty(namespaces:Namespace [], name:any, flags:number):any {
-      var self:Object = this;
-      if (this._isInternalProperty(namespaces, name, flags)) {
-        return _asHasOwnProperty.call(self, namespaces, name, flags);
-      }
-      return (<any>this._target).asHasOwnProperty(undefined, name, 0); // REDUX
-    }
-
-    public asDeleteProperty(namespaces:Namespace [], name:any, flags:number):any {
-      var self:Object = this;
-      if (_asHasTraitProperty.call(self, namespaces, name, flags)) {
-        return _asDeleteProperty.call(self, namespaces, name, flags);
-      }
-      notImplemented("AVM1Proxy asDeleteProperty");
-      return false;
-    }
-
-    public asNextName(index:number):any {
-      notImplemented("AVM1Proxy asNextName");
-    }
-
-    public asNextValue(index:number):any {
-      notImplemented("AVM1Proxy asNextValue");
-    }
-
-    public asNextNameIndex(index:number):number {
-      notImplemented("AVM1Proxy asNextNameIndex");
-      return;
-    }
-
-    public proxyNativeMethod(name:string) {
-      var boundMethod = this._target[name].bind(this._target);
-      (<any>this._target).axSetPublicProperty(name, boundMethod); // REDUX
-    }
-
-    public static wrap<T>(securityDomain: ISecurityDomain, cls: T, natives: { methods?: string[]; }) {
-      // REDUX
-      var wrapped = <any>function () {
-        var nativeThis: any = Object.create((<any>cls).prototype);
-        AVM1TextFormat.apply(nativeThis, arguments);
-
-        var proxy: AVM1Proxy<T> = this;
-        proxy.setTarget(nativeThis);
-
-        if (natives && natives.methods) {
-          natives.methods.forEach(proxy.proxyNativeMethod, proxy);
-        }
-      };
-      wrapped.prototype = AVM1Proxy.prototype;
-      return securityDomain.boxFunction(wrapped);
+    public static wrap<T>(context: AVM1Context, cls: any /* typeof AVM1Proxy<T> */,
+                          staticMethods: string[], methods: string[]): AVM1Object {
+      var wrapped = new AVM1NativeFunction(context, null, cls.prototype.avm1Constructor);
+      wrapAVM1NativeMembers(context, wrapped, cls, staticMethods, true);
+      var wrappedProto = new AVM1Proxy<T>(context);
+      wrappedProto.alPrototype = context.builtins.Object.alGetPrototypeProperty();
+      wrapAVM1NativeMembers(context, wrappedProto, cls.prototype, methods, false);
+      wrapped.alPutPrototypeProperty(wrappedProto);
+      return wrapped;
     }
   }
 }
