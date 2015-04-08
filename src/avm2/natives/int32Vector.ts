@@ -506,36 +506,38 @@ module Shumway.AVMX.AS {
     }
 
     axGetNumericProperty(nm: number) {
-      release || assert(isIndex(nm));
+      release || assert(isNumeric(nm));
       var length = this._length;
-      if (nm < 0 || nm >= length) {
+      var idx = nm | 0;
+      if (idx < 0 || idx >= length || idx != nm) {
         this.securityDomain.throwError("RangeError", Errors.OutOfRangeError, nm, length);
       }
-      return this._buffer[this._offset + nm];
+      return this._buffer[this._offset + idx];
     }
 
     axSetNumericProperty(nm: number, v: any) {
-      release || assert(isIndex(nm));
+      release || assert(isNumeric(nm));
       var length = this._length;
-      if (nm < 0 || nm > length || (nm === length && this._fixed)) {
+      var idx = nm | 0;
+      if (idx < 0 || idx > length || idx != nm || (idx === length && this._fixed)) {
         this.securityDomain.throwError("RangeError", Errors.OutOfRangeError, nm, length);
       }
-      if (nm === this._length) {
+      if (idx === this._length) {
         this._ensureCapacity(this._length + 1);
         this._length++;
       }
-      this._buffer[this._offset + nm] = v;
+      this._buffer[this._offset + idx] = v;
     }
 
     axHasPropertyInternal(mn: Multiname): boolean {
       // Optimization for the common case of indexed element accesses.
-      if (typeof mn.name === 'number') {
+      if ((<any>mn.name | 0) === mn.name) {
         release || assert(mn.isRuntimeName());
         return mn.name >= 0 && mn.name < this._length;
       }
       var name = asCoerceName(mn.name);
-      if (mn.isRuntimeName() && isNumeric(name)) {
-        var index = toNumber(name);
+      if (mn.isRuntimeName() && isIndex(name)) {
+        var index = <any>name >>> 0;
         return index >= 0 && index < this._length;
       }
       return this.axResolveMultiname(mn) in this;
