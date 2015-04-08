@@ -489,50 +489,49 @@ module Shumway.AVMX.AS.flash.net {
           break;
         case VideoPlaybackEvent.PlayStart:
           this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
-            false, false, wrapJSObject({code: "NetStream.Play.Start", level: "status"})));
+            false, false, this.securityDomain.createObjectFromJS({code: "NetStream.Play.Start", level: "status"})));
           break;
         case VideoPlaybackEvent.PlayStop:
           this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
-            false, false, wrapJSObject({code: "NetStream.Buffer.Flush", level: "status"})));
+            false, false, this.securityDomain.createObjectFromJS({code: "NetStream.Buffer.Flush", level: "status"})));
           this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
-            false, false, wrapJSObject({code: "NetStream.Play.Stop", level: "status"})));
+            false, false, this.securityDomain.createObjectFromJS({code: "NetStream.Play.Stop", level: "status"})));
 
           flash.media.SoundMixer._unregisterSoundSource(this);
           break;
         case VideoPlaybackEvent.BufferFull:
           this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
-            false, false, wrapJSObject({code: "NetStream.Buffer.Full", level: "status"})));
+            false, false, this.securityDomain.createObjectFromJS({code: "NetStream.Buffer.Full", level: "status"})));
           break;
         case VideoPlaybackEvent.BufferEmpty:
           this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
-            false, false, wrapJSObject({code: "NetStream.Buffer.Empty", level: "status"})));
+            false, false, this.securityDomain.createObjectFromJS({code: "NetStream.Buffer.Empty", level: "status"})));
           break;
         case VideoPlaybackEvent.Error:
           var code = data.code === 4 ? "NetStream.Play.NoSupportedTrackFound" :
               data.code === 3 ? "NetStream.Play.FileStructureInvalid" : "NetStream.Play.StreamNotFound";
           this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
-            false, false, wrapJSObject({code: code, level: "error"})));
+            false, false, this.securityDomain.createObjectFromJS({code: code, level: "error"})));
           break;
         case VideoPlaybackEvent.Pause:
           this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
-            false, false, wrapJSObject({code: "NetStream.Pause.Notify", level: "status"})));
+            false, false, this.securityDomain.createObjectFromJS({code: "NetStream.Pause.Notify", level: "status"})));
           break;
         case VideoPlaybackEvent.Unpause:
           this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
-            false, false, wrapJSObject({code: "NetStream.Unpause.Notify", level: "status"})));
+            false, false, this.securityDomain.createObjectFromJS({code: "NetStream.Unpause.Notify", level: "status"})));
           break;
         case VideoPlaybackEvent.Seeking:
           this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
-            false, false, wrapJSObject({code: "NetStream.Seek.Notify", level: "status"})));
+            false, false, this.securityDomain.createObjectFromJS({code: "NetStream.Seek.Notify", level: "status"})));
           break;
         case VideoPlaybackEvent.Seeked:
           this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
-            false, false, wrapJSObject({code: "NetStream.Seek.Complete", level: "status"})));
+            false, false, this.securityDomain.createObjectFromJS({code: "NetStream.Seek.Complete", level: "status"})));
           break;
         case VideoPlaybackEvent.Metadata:
           if (this._client) {
-            // REDUX: Create a valid empty object here.
-            var metadata: ASObject = null; // {};
+            var metadata: ASObject = this.securityDomain.createObject();
             metadata.axSetPublicProperty('width', data.videoWidth);
             metadata.axSetPublicProperty('height', data.videoHeight);
             metadata.axSetPublicProperty('duration', data.duration);
@@ -645,7 +644,7 @@ module Shumway.AVMX.AS.flash.net {
         } else {
           setTimeout(() => {
             this._netStream.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
-              false, false, wrapJSObject({code: "NetStream.Play.NoSupportedTrackFound", level: "error"})));
+              false, false, this._securityDomain.createObjectFromJS({code: "NetStream.Play.NoSupportedTrackFound", level: "error"})));
           });
           return;
         }

@@ -1649,16 +1649,7 @@ module Shumway.AVMX.AS {
       }
       return securityDomain.createArray(list);
     }
-    var keys = Object.keys(value);
-    var result = securityDomain.createObject();
-    for (var i = 0; i < keys.length; i++) {
-      var v = value[keys[i]];
-      if (deep) {
-        v = transformJSValueToAS(securityDomain, v, true);
-      }
-      result.axSetPublicProperty(keys[i], v);
-    }
-    return result;
+    return securityDomain.createObjectFromJS(value, deep);
   }
 
   /**

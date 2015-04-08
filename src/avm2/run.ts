@@ -126,22 +126,6 @@ module Shumway.AVMX {
                                      type.classInfo.instanceInfo.getClassName());
     }
   }
-  export function wrapJSObject(object) {
-    // REDUX:
-    notImplemented("wrapJSObject");
-    return null;
-    //var wrapper = Object.create(object);
-    //for (var i in object) {
-    //  Object.defineProperty(wrapper, Multiname.getPublicQualifiedName(i), (function (object, i) {
-    //    return {
-    //      get: function () { return object[i] },
-    //      set: function (value) { object[i] = value; },
-    //      enumerable: true
-    //    };
-    //  })(object, i));
-    //}
-    //return wrapper;
-  }
 
   export function forEachPublicProperty(object: AXObject, callbackfn: (property: any, value: any) => void, thisArg?: any) {
     // REDUX: Do we need to walk the proto chain here?
@@ -1018,6 +1002,22 @@ module Shumway.AVMX {
      */
     createObject() {
       return Object.create(this.AXObject.tPrototype);
+    }
+
+    /**
+     * Takes a JS Object and transforms it into an AXObject.
+     */
+    createObjectFromJS(value: Object, deep: boolean = false) {
+      var keys = Object.keys(value);
+      var result = this.createObject();
+      for (var i = 0; i < keys.length; i++) {
+        var v = value[keys[i]];
+        if (deep) {
+          v = AS.transformJSValueToAS(this, v, true);
+        }
+        result.axSetPublicProperty(keys[i], v);
+      }
+      return result;
     }
 
     /**
