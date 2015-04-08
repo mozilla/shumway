@@ -1,2 +1,3 @@
 HASHCODE: test/swf/demo.swf: 0x036f4e67
 HASHCODE: test/swf/main.swf: 0x91ecfd12
+HASHCODE: test/swf/pac.swf: 0xe0efeb40
