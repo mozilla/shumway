@@ -302,16 +302,23 @@ module Shumway.AVMX {
       } else {
         method = AS.getMethodOrAccessorNative(methodTraitInfo);
       }
+      if (!release) {
+        method.toString = function () {
+          return "Native " + methodTraitInfo.toString();
+        };
+        method.isInterpreted = false;
+      }
     } else {
       method = function () {
         var self = this === jsGlobal ? scope.global.object : this;
         return interpret(self, methodInfo, scope, <any>arguments);
       };
-    }
-    if (!release) {
-      method.toString = function () {
-        return "Interpret " + methodTraitInfo.toString();
-      };
+      if (!release) {
+        method.toString = function () {
+          return "Interpreted " + methodTraitInfo.toString();
+        };
+        method.isInterpreted = true;
+      }
     }
     methodTraitInfo.method = method;
     return method;

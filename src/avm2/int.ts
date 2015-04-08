@@ -114,7 +114,10 @@ module Shumway.AVMX {
       rn = p.getType();
       if (rn && !rn.isAnyName()) {
         type = scope.topScope().getScopeProperty(rn, true, false);
-        interpreterWriter && interpreterWriter.writeLn("Coercing argument to: " + type);
+        interpreterWriter && interpreterWriter.writeLn("Coercing argument to type " +
+                                                       (type.axClass ?
+                                                        type.axClass.name.toFQNString(false) :
+                                                        type));
         arg = type.axCoerce(arg);
       }
 
@@ -926,6 +929,9 @@ module Shumway.AVMX {
   function stringifyStackEntry(x: any) {
     if (!x || !x.toString) {
       return String(x);
+    }
+    if (x.$BgtoString && x.$BgtoString.isInterpreted) {
+      return '<unprintable ' + (x.axClass ? x.axClass.name.toFQNString(false) : 'object') + '>';
     }
     try {
       return x.toString();
