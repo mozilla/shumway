@@ -419,22 +419,6 @@ module Shumway.AVMX {
     }
   }
 
-  export function axCheckVectorSetNumericProperty(i: number, length: number, fixed: boolean,
-                                                  securityDomain: SecurityDomain) {
-    if (i < 0 || i > length || (i === length && fixed) || !isNumeric(i)) {
-      securityDomain.throwError("RangeError", Errors.OutOfRangeError, i, length);
-    }
-  }
-
-  export function axCheckVectorGetNumericProperty(i: number, length: number,
-                                                  securityDomain: SecurityDomain) {
-    if (i < 0 || i >= length || !isNumeric(i)) {
-      securityDomain.throwError("RangeError", Errors.OutOfRangeError, i, length);
-    }
-  }
-
-  var rn = new Multiname(null, 0, CONSTANT.RTQNameL, [Namespace.PUBLIC], null);
-
   function axFunctionConstruct(argArray?: any []) {
     release || assert(this.prototype);
     var object = Object.create(this.prototype);

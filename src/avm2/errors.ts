@@ -160,7 +160,7 @@ module Shumway.AVMX {
     InvalidRangeError                    : {code: 1506, message: "The specified range is invalid."},
     NullArgumentError                    : {code: 1507, message: "Argument %1 cannot be null."},
     InvalidArgumentError                 : {code: 1508, message: "The value specified for argument %1 is invalid."},
-  //  ArrayFilterNonNullObjectError        : {code: 1510, message: "When the callback argument is a method of a class, the optional this argument must be null."},
+    ArrayFilterNonNullObjectError        : {code: 1510, message: "When the callback argument is a method of a class, the optional this argument must be null."},
     InvalidParamError                    : {code: 2004, message: "One of the parameters is invalid."},
     ParamRangeError                      : {code: 2006, message: "The supplied index is out of bounds."},
     NullPointerError                     : {code: 2007, message: "Parameter %1 must be non-null."},

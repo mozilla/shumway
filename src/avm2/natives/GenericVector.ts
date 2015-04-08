@@ -15,11 +15,6 @@
  */
 
 module Shumway.AVMX.AS {
-  /**
-   * Check arguments and throw the appropriate errors.
-   */
-  var checkArguments = true;
-
   import assert = Shumway.Debug.assert;
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
@@ -72,8 +67,23 @@ module Shumway.AVMX.AS {
       return index - 1;
     }
 
-    axHasNext2(hasNext2Info: HasNext2Info) {
-      hasNext2Info.index = this.axNextNameIndex(hasNext2Info.index);
+    /**
+     * Throws exceptions for the cases where Flash does, and returns false if the callback
+     * is null or undefined. In that case, the calling function returns its default value.
+     */
+    checkVectorMethodArgs(callback: AXCallable, thisObject: any): boolean {
+      if (isNullOrUndefined(callback)) {
+        return false;
+      }
+      var securityDomain = this.securityDomain;
+      if (!securityDomain.isCallable(callback)) {
+        securityDomain.throwError("TypeError", Errors.CheckTypeFailedError);
+      }
+      if ((<any>callback).axClass === securityDomain.AXMethodClosure &&
+          !isNullOrUndefined(thisObject)) {
+        securityDomain.throwError("TypeError", Errors.ArrayFilterNonNullObjectError);
+      }
+      return true;
     }
   }
 
@@ -99,6 +109,27 @@ module Shumway.AVMX.AS {
 
     static classInitializer() {
       var proto: any = this.dPrototype;
+      var tProto: any = this.tPrototype;
+
+      // Fix up MOP handlers to not apply to the dynamic prototype, which is a plain object.
+      tProto.axGetProperty = proto.axGetProperty;
+      tProto.axGetNumericProperty = proto.axGetNumericProperty;
+      tProto.axSetProperty = proto.axSetProperty;
+      tProto.axSetNumericProperty = proto.axSetNumericProperty;
+      tProto.axHasPropertyInternal = proto.axHasPropertyInternal;
+      tProto.axNextName = proto.axNextName;
+      tProto.axNextNameIndex = proto.axNextNameIndex;
+      tProto.axNextValue = proto.axNextValue;
+
+      proto.axGetProperty = ASObject.prototype.axGetProperty;
+      proto.axGetNumericProperty = ASObject.prototype.axGetNumericProperty;
+      proto.axSetProperty = ASObject.prototype.axSetProperty;
+      proto.axSetNumericProperty = ASObject.prototype.axSetNumericProperty;
+      proto.axHasPropertyInternal = ASObject.prototype.axHasPropertyInternal;
+      proto.axNextName = ASObject.prototype.axNextName;
+      proto.axNextNameIndex = ASObject.prototype.axNextNameIndex;
+      proto.axNextValue = ASObject.prototype.axNextValue;
+
       var asProto: any = GenericVector.prototype;
       defineNonEnumerableProperty(proto, '$Bgjoin', asProto.join);
       // Same as join, see VectorImpl.as in Tamarin repository.
@@ -126,7 +157,7 @@ module Shumway.AVMX.AS {
       defineNonEnumerableProperty(proto, '$Bgevery', asProto.every);
 
       defineNonEnumerableProperty(proto, '$Bgsort', asProto.sort);
-      defineNonEnumerableProperty(proto, '_buffer', []);
+      defineNonEnumerableProperty(proto, 'checkVectorMethodArgs', asProto.checkVectorMethodArgs);
     }
 
     static axApply(self: GenericVector, args: any[]) {
@@ -256,11 +287,14 @@ module Shumway.AVMX.AS {
     }
 
     /**
-     * Executes a |callback| function with three arguments: element, index, the vector itself as well
-     * as passing the |thisObject| as |this| for each of the elements in the vector. If any of the
-     * callbacks return |false| the function terminates, otherwise it returns |true|.
+     * Executes a |callback| function with three arguments: element, index, the vector itself as
+     * well as passing the |thisObject| as |this| for each of the elements in the vector. If any of
+     * the callbacks return |false| the function terminates, otherwise it returns |true|.
      */
     every(callback: Function, thisObject: Object) {
+      if (!this.checkVectorMethodArgs(callback, thisObject)) {
+        return true;
+      }
       for (var i = 0; i < this._buffer.length; i++) {
         if (!callback.call(thisObject, this.axGetNumericProperty(i), i, this)) {
           return false;
@@ -271,11 +305,14 @@ module Shumway.AVMX.AS {
 
     /**
      * Filters the elements for which the |callback| method returns |true|. The |callback| function
-     * is called with three arguments: element, index, the vector itself as well as passing the |thisObject|
-     * as |this| for each of the elements in the vector.
+     * is called with three arguments: element, index, the vector itself as well as passing the
+     * |thisObject| as |this| for each of the elements in the vector.
      */
     filter(callback, thisObject) {
       var v = <GenericVector><any>this.axClass.axConstruct([0, false]);
+      if (!this.checkVectorMethodArgs(callback, thisObject)) {
+        return v;
+      }
       for (var i = 0; i < this._buffer.length; i++) {
         if (callback.call(thisObject, this.axGetNumericProperty(i), i, this)) {
           v.push(this.axGetNumericProperty(i));
@@ -284,11 +321,20 @@ module Shumway.AVMX.AS {
       return v;
     }
 
+    map(callback, thisObject) {
+      var v = <GenericVector><any>this.axClass.axConstruct([this.length, false]);
+      if (!this.checkVectorMethodArgs(callback, thisObject)) {
+        return v;
+      }
+      for (var i = 0; i < this._buffer.length; i++) {
+        v.push(this._coerce(callback.call(thisObject, this.axGetNumericProperty(i), i, this)));
+      }
+      return v;
+    }
+
     some(callback, thisObject) {
-      if (arguments.length !== 2) {
-        this.securityDomain.throwError("ArgumentError", Errors.WrongArgumentCountError);
-      } else if (!this.securityDomain.isCallable(callback)) {
-        this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
+      if (!this.checkVectorMethodArgs(callback, thisObject)) {
+        return false;
       }
       for (var i = 0; i < this._buffer.length; i++) {
         if (callback.call(thisObject, this.axGetNumericProperty(i), i, this)) {
@@ -299,8 +345,8 @@ module Shumway.AVMX.AS {
     }
 
     forEach(callback, thisObject) {
-      if (!this.securityDomain.isCallable(callback)) {
-        this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
+      if (!this.checkVectorMethodArgs(callback, thisObject)) {
+        return;
       }
       for (var i = 0; i < this._buffer.length; i++) {
         callback.call(thisObject, this.axGetNumericProperty(i), i, this);
@@ -326,17 +372,6 @@ module Shumway.AVMX.AS {
 
     lastIndexOf(searchElement, fromIndex = 0x7fffffff) {
       return this._buffer.lastIndexOf(searchElement, fromIndex);
-    }
-
-    map(callback, thisObject) {
-      if (!this.securityDomain.isCallable(callback)) {
-        this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
-      }
-      var v = <GenericVector><any>this.axClass.axConstruct([0, false]);
-      for (var i = 0; i < this._buffer.length; i++) {
-        v.push(callback.call(thisObject, this.axGetNumericProperty(i), i, this));
-      }
-      return v;
     }
 
     push(arg1?, arg2?, arg3?, arg4?, arg5?, arg6?, arg7?, arg8?/*...rest*/) {
@@ -452,16 +487,21 @@ module Shumway.AVMX.AS {
       }
     }
 
-    axGetNumericProperty(i: number) {
-      checkArguments && axCheckVectorGetNumericProperty(i, this._buffer.length,
-                                                        this.securityDomain);
-      return this._buffer[i];
+    axGetNumericProperty(nm: number) {
+      release || assert(isIndex(nm));
+      if (nm < 0 || nm >= this._buffer.length) {
+        this.securityDomain.throwError("RangeError", Errors.OutOfRangeError, nm,
+                                       this._buffer.length);
+      }
+      return this._buffer[nm];
     }
-
-    axSetNumericProperty(i: number, v) {
-      checkArguments && axCheckVectorSetNumericProperty(i, this._buffer.length, this._fixed,
-                                                        this.securityDomain);
-      this._buffer[i] = this._coerce(v);
+    axSetNumericProperty(nm: number, v: any) {
+      release || assert(isIndex(nm));
+      var length = this._buffer.length;
+      if (nm < 0 || nm > length || (nm === length && this._fixed)) {
+        this.securityDomain.throwError("RangeError", Errors.OutOfRangeError, nm, length);
+      }
+      this._buffer[nm] = this._coerce(v);
     }
 
     axHasPropertyInternal(mn: Multiname): boolean {

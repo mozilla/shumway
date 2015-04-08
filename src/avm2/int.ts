@@ -190,7 +190,10 @@ module Shumway.AVMX {
 
     interpretLabel:
     while (true) {
-      interpreterWriter && interpreterWriter.greenLn("" + pc + ": " + Bytecode[code[pc]] + " [" + stack.map(x => x == undefined ? String(x) : x.toString()).join(", ") + "]");
+      interpreterWriter && interpreterWriter.greenLn("" + pc + ": " + Bytecode[code[pc]] + " [" +
+                                                     stack.map(
+                                                         x => stringifyStackEntry(x)).join(", ") +
+                                                     "]");
       try {
         bc = code[pc++];
         switch (bc) {
@@ -918,5 +921,16 @@ module Shumway.AVMX {
     }
     // In other packagings, at least throw a valid value.
     return securityDomain.createError('Error', Errors.InternalErrorIV);
+  }
+
+  function stringifyStackEntry(x: any) {
+    if (!x || !x.toString) {
+      return String(x);
+    }
+    try {
+      return x.toString();
+    } catch (e) {
+      return '<unprintable ' + (x.axClass ? x.axClass.name.toFQNString(false) : 'object') + '>';
+    }
   }
 }
