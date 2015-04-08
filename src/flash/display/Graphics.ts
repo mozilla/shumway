@@ -17,7 +17,7 @@
 // Class: Graphics
 module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import clamp = Shumway.NumberUtilities.clamp;
   import Bounds = Shumway.Bounds;
   import assert = Shumway.Debug.assert;
@@ -509,9 +509,9 @@ module Shumway.AVMX.AS.flash.display {
       color = color >>> 0 & 0xffffff;
       alpha = Math.round(clamp(+alpha, -1, 1) * 0xff);
       pixelHinting = !!pixelHinting;
-      scaleMode = asCoerceString(scaleMode);
-      caps = asCoerceString(caps);
-      joints = asCoerceString(joints);
+      scaleMode = axCoerceString(scaleMode);
+      caps = axCoerceString(caps);
+      joints = axCoerceString(joints);
       miterLimit = clamp(+miterLimit | 0, 0, 0xff);
 
       // Flash stops drawing strokes whenever a thickness is supplied that can't be coerced to a
@@ -525,19 +525,19 @@ module Shumway.AVMX.AS.flash.display {
       this._setStrokeWidth(thickness);
 
       // If `scaleMode` is invalid, "normal" is used.
-      var lineScaleMode = LineScaleMode.toNumber(asCoerceString(scaleMode));
+      var lineScaleMode = LineScaleMode.toNumber(axCoerceString(scaleMode));
       if (lineScaleMode < 0) {
         lineScaleMode = LineScaleMode.toNumber(LineScaleMode.NORMAL);
       }
 
       // If `caps` is invalid, "normal" is used.
-      var capsStyle = CapsStyle.toNumber(asCoerceString(caps));
+      var capsStyle = CapsStyle.toNumber(axCoerceString(caps));
       if (capsStyle < 0) {
         capsStyle = CapsStyle.toNumber(CapsStyle.ROUND);
       }
 
       // If `joints` is invalid, "normal" is used.
-      var jointStyle = JointStyle.toNumber(asCoerceString(joints));
+      var jointStyle = JointStyle.toNumber(axCoerceString(joints));
       if (jointStyle < 0) {
         jointStyle = JointStyle.toNumber(JointStyle.ROUND);
       }
@@ -829,7 +829,7 @@ module Shumway.AVMX.AS.flash.display {
     drawPath(commands: GenericVector, data: GenericVector, winding: string = "evenOdd"): void {
       commands = commands;
       data = data;
-      winding = asCoerceString(winding);
+      winding = axCoerceString(winding);
       notImplemented("public flash.display.Graphics::drawPath");
       return;
     }
@@ -839,7 +839,7 @@ module Shumway.AVMX.AS.flash.display {
       vertices = vertices;
       indices = indices;
       uvtData = uvtData;
-      culling = asCoerceString(culling);
+      culling = axCoerceString(culling);
       notImplemented("public flash.display.Graphics::drawTriangles");
       return;
     }
@@ -1298,7 +1298,7 @@ module Shumway.AVMX.AS.flash.display {
       if (isNullOrUndefined(type)) {
         this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'type');
       }
-      var gradientType = GradientType.toNumber(asCoerceString(type));
+      var gradientType = GradientType.toNumber(axCoerceString(type));
       if (gradientType < 0) {
         this.securityDomain.throwError("ArgumentError", Errors.InvalidEnumError, "type");
       }
@@ -1357,13 +1357,13 @@ module Shumway.AVMX.AS.flash.display {
       }
 
       // If `spreadMethod` is invalid, "pad" is used.
-      var spread = SpreadMethod.toNumber(asCoerceString(spreadMethod));
+      var spread = SpreadMethod.toNumber(axCoerceString(spreadMethod));
       if (spread < 0) {
         spread = SpreadMethod.toNumber(SpreadMethod.PAD);
       }
 
       // If `interpolationMethod` is invalid, "rgb" is used.
-      var interpolation = InterpolationMethod.toNumber(asCoerceString(interpolationMethod));
+      var interpolation = InterpolationMethod.toNumber(axCoerceString(interpolationMethod));
       if (interpolation < 0) {
         interpolation = InterpolationMethod.toNumber(InterpolationMethod.RGB);
       }

@@ -16,7 +16,7 @@
 // Class: Matrix
 module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import Bounds = Shumway.Bounds;
 

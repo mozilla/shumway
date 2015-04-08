@@ -205,19 +205,19 @@ module Shumway.AVMX {
     return x;
   }
 
-  export function asCoerceInt(x): number {
+  export function axCoerceInt(x): number {
     return x | 0;
   }
 
-  export function asCoerceUint(x): number {
+  export function axCoerceUint(x): number {
     return x >>> 0;
   }
 
-  export function asCoerceNumber(x): number {
+  export function axCoerceNumber(x): number {
     return +x;
   }
 
-  export function asCoerceBoolean(x): boolean {
+  export function axCoerceBoolean(x): boolean {
     return !!x;
   }
 
@@ -225,7 +225,7 @@ module Shumway.AVMX {
    * Similar to |toString| but returns |null| for |null| or |undefined| instead
    * of "null" or "undefined".
    */
-  export function asCoerceString(x): string {
+  export function axCoerceString(x): string {
     if (typeof x === "string") {
       return x;
     } else if (x == undefined) {
@@ -235,10 +235,10 @@ module Shumway.AVMX {
   }
 
   /**
-   * Same as |asCoerceString| except for returning "null" instead of |null| for
+   * Same as |axCoerceString| except for returning "null" instead of |null| for
    * |null| or |undefined|, and calls |toString| instead of (implicitly) |valueOf|.
    */
-  export function asCoerceName(x): string {
+  export function axCoerceName(x): string {
     if (typeof x === "string") {
       return x;
     } else if (x == undefined) {
@@ -247,7 +247,7 @@ module Shumway.AVMX {
     return x.toString();
   }
 
-  export function asConvertString(x): string {
+  export function axConvertString(x): string {
     if (typeof x === "string") {
       return x;
     }
@@ -358,7 +358,7 @@ module Shumway.AVMX {
    *
    * AS3 also overloads the `+` operator to concatenate XMLs/XMLLists instead of stringifying them.
    */
-  export function asAdd(l: any, r: any, securityDomain: SecurityDomain): any {
+  export function axAdd(l: any, r: any, securityDomain: SecurityDomain): any {
     release || assert(!(typeof l === "number" && typeof r === "number"), 'Inline number addition.');
     if (typeof l === "string" || typeof r === "string") {
       return String(l) + String(r);
@@ -369,7 +369,7 @@ module Shumway.AVMX {
     return l + r;
   }
 
-  export function asEquals(left: any, right: any, securityDomain: SecurityDomain): boolean {
+  export function axEquals(left: any, right: any, securityDomain: SecurityDomain): boolean {
     // See E4X spec, 11.5 Equality Operators for why this is required.
     if (AS.isXMLType(left, securityDomain)) {
       return left.equals(right);
@@ -1474,19 +1474,19 @@ module Shumway.AVMX {
       var AXPrimitiveBox = this.prepareNativeClass("AXPrimitiveBox", "PrimitiveBox", false);
       D(AXPrimitiveBox.dPrototype, '$BgtoString',
         AXFunction.axBox(function () { return this.value.toString(); }));
-      var AXBoolean = this.preparePrimitiveClass("AXBoolean", "Boolean", asCoerceBoolean, false,
-                                                 asCoerceBoolean, axIsTypeBoolean, axIsTypeBoolean);
+      var AXBoolean = this.preparePrimitiveClass("AXBoolean", "Boolean", axCoerceBoolean, false,
+                                                 axCoerceBoolean, axIsTypeBoolean, axIsTypeBoolean);
 
-      var AXString = this.preparePrimitiveClass("AXString", "String", asConvertString, '',
-                                                 asCoerceString, axIsTypeString, axIsTypeString);
+      var AXString = this.preparePrimitiveClass("AXString", "String", axConvertString, '',
+                                                 axCoerceString, axIsTypeString, axIsTypeString);
 
-      var AXNumber = this.preparePrimitiveClass("AXNumber", "Number", asCoerceNumber, 0,
-                                                asCoerceNumber, axIsTypeNumber, axIsTypeNumber);
+      var AXNumber = this.preparePrimitiveClass("AXNumber", "Number", axCoerceNumber, 0,
+                                                axCoerceNumber, axIsTypeNumber, axIsTypeNumber);
 
-      var AXInt = this.preparePrimitiveClass("AXInt", "int", asCoerceInt, 0, asCoerceInt,
+      var AXInt = this.preparePrimitiveClass("AXInt", "int", axCoerceInt, 0, axCoerceInt,
                                              axIsTypeInt, axFalse);
 
-      var AXUint = this.preparePrimitiveClass("AXUint", "uint", asCoerceUint, 0, asCoerceUint,
+      var AXUint = this.preparePrimitiveClass("AXUint", "uint", axCoerceUint, 0, axCoerceUint,
                                               axIsTypeUint, axFalse);
 
       // Install class loaders on the security domain.

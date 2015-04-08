@@ -16,7 +16,7 @@
 // Class: Security
 module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
   export class Security extends ASObject {
@@ -78,22 +78,22 @@ module Shumway.AVMX.AS.flash.system {
         Array.prototype.join.call(arguments, "\", \"") + "\"]");
       var whitelist: ICrossDomainSWFLoadingWhitelist = this.securityDomain.player;
       for (var i = 0; i < arguments.length; i++) {
-        whitelist.addToSWFLoadingWhitelist(asCoerceString(arguments[i]), false);
+        whitelist.addToSWFLoadingWhitelist(axCoerceString(arguments[i]), false);
       }
     }
     static allowInsecureDomain(): void {
       somewhatImplemented("public flash.system.Security::static allowInsecureDomain");
       var whitelist: ICrossDomainSWFLoadingWhitelist = this.securityDomain.player;
       for (var i = 0; i < arguments.length; i++) {
-        whitelist.addToSWFLoadingWhitelist(asCoerceString(arguments[i]), true);
+        whitelist.addToSWFLoadingWhitelist(axCoerceString(arguments[i]), true);
       }
     }
     static loadPolicyFile(url: string): void {
-      url = asCoerceString(url);
+      url = axCoerceString(url);
       somewhatImplemented("public flash.system.Security::static loadPolicyFile");
     }
     static showSettings(panel: string = "default"): void {
-      panel = asCoerceString(panel);
+      panel = axCoerceString(panel);
       notImplemented("public flash.system.Security::static showSettings"); return;
     }
     static duplicateSandboxBridgeInputArguments(toplevel: ASObject, args: any []): any [] {

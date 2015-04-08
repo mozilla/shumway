@@ -16,10 +16,10 @@
 // Class: MouseAutomationAction
 module Shumway.AVMX.AS.flash.automation {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class MouseAutomationAction extends flash.automation.AutomationAction {
     constructor (type: string, stageX: number = 0, stageY: number = 0, delta: number /*int*/ = 0) {
-      type = asCoerceString(type); stageX = +stageX; stageY = +stageY; delta = delta | 0;
+      type = axCoerceString(type); stageX = +stageX; stageY = +stageY; delta = delta | 0;
       super();
     }
     // Static   JS -> AS Bindings

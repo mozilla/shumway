@@ -16,7 +16,7 @@
 /// <reference path='../references.ts'/>
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import FileLoadingService = Shumway.FileLoadingService;
 
   export class URLStream extends flash.events.EventDispatcher implements flash.utils.IDataInput {
@@ -60,7 +60,7 @@ module Shumway.AVMX.AS.flash.net {
       return this._buffer.endian;
     }
     set endian(type: string) {
-      type = asCoerceString(type);
+      type = axCoerceString(type);
       this._buffer.endian = type;
     }
     get diskCacheEnabled(): boolean {
@@ -168,7 +168,7 @@ module Shumway.AVMX.AS.flash.net {
       notImplemented("public flash.net.URLStream::readDouble"); return;
     }
     readMultiByte(length: number /*uint*/, charSet: string): string {
-      length = length >>> 0; charSet = asCoerceString(charSet);
+      length = length >>> 0; charSet = axCoerceString(charSet);
       notImplemented("public flash.net.URLStream::readMultiByte"); return;
     }
     readUTF(): string {

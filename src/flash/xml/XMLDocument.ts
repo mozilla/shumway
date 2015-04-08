@@ -17,10 +17,10 @@
 module Shumway.AVMX.AS.flash.xml {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class XMLDocument extends flash.xml.XMLNode {
     constructor (source: string = null) {
-      source = asCoerceString(source);
+      source = axCoerceString(source);
       super(undefined, undefined);
     }
     // Static   JS -> AS Bindings

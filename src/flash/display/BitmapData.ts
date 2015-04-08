@@ -19,7 +19,7 @@ module Shumway.AVMX.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import swap32 = Shumway.IntegerUtilities.swap32;
   import premultiplyARGB = Shumway.ColorUtilities.premultiplyARGB;
   import unpremultiplyARGB = Shumway.ColorUtilities.unpremultiplyARGB;
@@ -597,10 +597,10 @@ module Shumway.AVMX.AS.flash.display {
       source = source;
       matrix = matrix;
       colorTransform = colorTransform;
-      blendMode = asCoerceString(blendMode);
+      blendMode = axCoerceString(blendMode);
       clipRect = clipRect;
       smoothing = !!smoothing;
-      quality = asCoerceString(quality);
+      quality = axCoerceString(quality);
       notImplemented("public flash.display.BitmapData::drawWithQuality");
       return;
     }
@@ -808,7 +808,7 @@ module Shumway.AVMX.AS.flash.display {
       sourceBitmapData = sourceBitmapData;
       sourceRect = sourceRect;
       destPoint = destPoint;
-      operation = asCoerceString(operation);
+      operation = axCoerceString(operation);
       threshold = threshold >>> 0;
       color = color >>> 0;
       mask = mask >>> 0;

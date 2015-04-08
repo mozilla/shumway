@@ -16,7 +16,7 @@
 // Class: ISimpleTextSelection
 module Shumway.AVMX.AS.flash.accessibility {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export interface ISimpleTextSelection {
     
     // JS -> AS Bindings

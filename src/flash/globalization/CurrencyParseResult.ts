@@ -16,7 +16,7 @@
 // Class: CurrencyParseResult
 module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class CurrencyParseResult extends ASObject {
     
     // Called whenever the class is initialized.
@@ -30,7 +30,7 @@ module Shumway.AVMX.AS.flash.globalization {
     
     constructor (value: number = NaN, symbol: string = "") {
       super();
-      value = +value; symbol = asCoerceString(symbol);
+      value = +value; symbol = axCoerceString(symbol);
     }
     
     // JS -> AS Bindings
@@ -49,7 +49,7 @@ module Shumway.AVMX.AS.flash.globalization {
       // return this._currencyString;
     }
     ctor(value: number, symbol: string): void {
-      value = +value; symbol = asCoerceString(symbol);
+      value = +value; symbol = axCoerceString(symbol);
       notImplemented("public flash.globalization.CurrencyParseResult::ctor"); return;
     }
   }

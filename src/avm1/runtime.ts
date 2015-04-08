@@ -467,7 +467,7 @@ module Shumway.AVM1 {
     if (x instanceof AVM1Object) {
       return alToString(context, x);
     }
-    return Shumway.AVMX.asCoerceString(x);
+    return Shumway.AVMX.axCoerceString(x);
   }
 
   export function alIsIndex(context: AVM1Context, p) {

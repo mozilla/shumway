@@ -15,11 +15,11 @@
  */
 // Class: StageCaptureEvent
 module Shumway.AVMX.AS.flash.automation {
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import notImplemented = Shumway.Debug.notImplemented;
   export class StageCaptureEvent extends flash.events.Event {
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, url: string = "", checksum: number /*uint*/ = 0) {
-      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; url = asCoerceString(url); checksum = checksum >>> 0;
+      type = axCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; url = axCoerceString(url); checksum = checksum >>> 0;
       super(undefined, undefined, undefined);
     }
     // Static   JS -> AS Bindings

@@ -16,7 +16,7 @@
 // Class: DynamicPropertyOutput
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class DynamicPropertyOutput extends ASObject implements IDynamicPropertyOutput {
     
     // Called whenever the class is initialized.
@@ -38,7 +38,7 @@ module Shumway.AVMX.AS.flash.net {
     // AS -> JS Bindings
     
     writeDynamicProperty(name: string, value: any): void {
-      name = asCoerceString(name);
+      name = axCoerceString(name);
       notImplemented("packageInternal flash.net.DynamicPropertyOutput::writeDynamicProperty"); return;
     }
   }

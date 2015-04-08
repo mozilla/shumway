@@ -16,7 +16,7 @@
 // Class: EOFError
 module Shumway.AVMX.AS.flash.errors {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class EOFError extends flash.errors.IOError {
     
     // Called whenever the class is initialized.

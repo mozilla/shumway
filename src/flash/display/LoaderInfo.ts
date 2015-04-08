@@ -18,7 +18,7 @@ module Shumway.AVMX.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   import SWFFile = Shumway.SWF.SWFFile;
   import SWFFrame = Shumway.SWF.SWFFrame;

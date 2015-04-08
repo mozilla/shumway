@@ -16,7 +16,7 @@
 // Class: GroupSpecifier
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class GroupSpecifier extends ASObject {
     
     // Called whenever the class is initialized.
@@ -30,7 +30,7 @@ module Shumway.AVMX.AS.flash.net {
     
     constructor (name: string) {
       super();
-      name = asCoerceString(name);
+      name = axCoerceString(name);
     }
     
     // JS -> AS Bindings

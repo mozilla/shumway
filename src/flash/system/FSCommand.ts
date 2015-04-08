@@ -15,15 +15,15 @@
  */
 // Class: FSCommand
 module Shumway.AVMX.AS.flash.system {
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   export interface IFSCommandListener {
     executeFSCommand(command: string, args: string);
   }
 
   export function fscommand(securityDomain: ISecurityDomain, command: string, args: string): void {
-    command = asCoerceString(command);
-    args = asCoerceString(args);
+    command = axCoerceString(command);
+    args = axCoerceString(args);
     console.log('FSCommand: ' + command + '; ' + args);
     command = command.toLowerCase();
     if (command === 'debugger') {

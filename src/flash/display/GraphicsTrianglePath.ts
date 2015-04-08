@@ -16,7 +16,7 @@
 // Class: GraphicsTrianglePath
 module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class GraphicsTrianglePath extends ASObject implements IGraphicsPath, IGraphicsData {
     
     // Called whenever the class is initialized.
@@ -34,7 +34,7 @@ module Shumway.AVMX.AS.flash.display {
       this.vertices = vertices;
       this.indices = indices;
       this.uvtData = uvtData;
-      this.culling = asCoerceString(culling);
+      this.culling = axCoerceString(culling);
     }
     
     // JS -> AS Bindings

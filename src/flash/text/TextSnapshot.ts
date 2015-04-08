@@ -16,7 +16,7 @@
 // Class: TextSnapshot
 module Shumway.AVMX.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class TextSnapshot extends ASObject {
     
     // Called whenever the class is initialized.
@@ -38,7 +38,7 @@ module Shumway.AVMX.AS.flash.text {
       // return this._charCount;
     }
     findText(beginIndex: number /*int*/, textToFind: string, caseSensitive: boolean): number /*int*/ {
-      beginIndex = beginIndex | 0; textToFind = asCoerceString(textToFind); caseSensitive = !!caseSensitive;
+      beginIndex = beginIndex | 0; textToFind = axCoerceString(textToFind); caseSensitive = !!caseSensitive;
       notImplemented("public flash.text.TextSnapshot::findText"); return;
     }
     getSelected(beginIndex: number /*int*/, endIndex: number /*int*/): boolean {

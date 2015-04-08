@@ -160,7 +160,7 @@ module Shumway.AVMX.AS {
      * Returns the class with the specified name, or |null| if no such class exists.
      */
     export function getDefinitionByName(securityDomain: SecurityDomain, name: string): AXClass {
-      name = asCoerceString(name).replace("::", ".");
+      name = axCoerceString(name).replace("::", ".");
       var mn = Multiname.FromFQNString(name, NamespaceType.Public);
       return securityDomain.application.getClass(mn);
     }
@@ -321,12 +321,12 @@ module Shumway.AVMX.AS {
     }
 
     native_propertyIsEnumerable(nm: string): boolean {
-      var descriptor = Object.getOwnPropertyDescriptor(this, qualifyPublicName(asCoerceString(nm)));
+      var descriptor = Object.getOwnPropertyDescriptor(this, qualifyPublicName(axCoerceString(nm)));
       return !!descriptor && descriptor.enumerable;
     }
 
     native_setPropertyIsEnumerable(nm: string, enumerable: boolean = true): void {
-      var qualifiedName = qualifyPublicName(asCoerceString(nm));
+      var qualifiedName = qualifyPublicName(axCoerceString(nm));
       enumerable = !!enumerable;
       var instanceInfo = this.axClass.classInfo.instanceInfo;
       if (instanceInfo.isSealed()) {
@@ -351,7 +351,7 @@ module Shumway.AVMX.AS {
 
     axResolveMultiname(mn: Multiname): any {
       var name = mn.name;
-      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
+      if (typeof name === 'number' || isNumeric(name = axCoerceName(name))) {
         release || assert(mn.isRuntimeName());
         return +name;
       }
@@ -373,7 +373,7 @@ module Shumway.AVMX.AS {
     axSetProperty(mn: Multiname, value: any) {
       release || checkValue(value);
       var name = mn.name;
-      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
+      if (typeof name === 'number' || isNumeric(name = axCoerceName(name))) {
         release || assert(mn.isRuntimeName());
         this[+name] = value;
         return;
@@ -425,7 +425,7 @@ module Shumway.AVMX.AS {
     }
 
     axGetSuper(mn: Multiname, scope: Scope): any {
-      var name = asCoerceName(mn.name);
+      var name = axCoerceName(mn.name);
       var namespaces = mn.namespaces;
       var trait = (<AXClass>scope.parent.object).tPrototype.traits.getTrait(namespaces, name);
       var value;
@@ -440,7 +440,7 @@ module Shumway.AVMX.AS {
 
     axSetSuper(mn: Multiname, scope: Scope, value: any) {
       release || checkValue(value);
-      var name = asCoerceName(mn.name);
+      var name = axCoerceName(mn.name);
       var namespaces = mn.namespaces;
       var trait = (<AXClass>scope.parent.object).tPrototype.traits.getTrait(namespaces, name);
       if (trait.kind === TRAIT.Setter || trait.kind === TRAIT.GetterSetter) {
@@ -452,7 +452,7 @@ module Shumway.AVMX.AS {
 
     axDeleteProperty(mn: Multiname): any {
       // Cannot delete traits.
-      var name = asCoerceName(mn.name);
+      var name = axCoerceName(mn.name);
       var namespaces = mn.namespaces;
       if (this.traits.getTrait(namespaces, name)) {
         return false;
@@ -677,7 +677,7 @@ module Shumway.AVMX.AS {
     }
 
     native_propertyIsEnumerable(nm: string): boolean {
-      if (typeof nm === 'number' || isNumeric(nm = asCoerceName(nm))) {
+      if (typeof nm === 'number' || isNumeric(nm = axCoerceName(nm))) {
         var descriptor = Object.getOwnPropertyDescriptor(this.value, nm);
         return !!descriptor && descriptor.enumerable;
       }
@@ -891,7 +891,7 @@ module Shumway.AVMX.AS {
 
     axHasPropertyInternal(mn: Multiname): boolean {
       var name = mn.name;
-      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
+      if (typeof name === 'number' || isNumeric(name = axCoerceName(name))) {
         release || assert(mn.isRuntimeName());
         return name in this.value;
       }
@@ -903,7 +903,7 @@ module Shumway.AVMX.AS {
 
     axHasOwnProperty(mn: Multiname): boolean {
       var name = mn.name;
-      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
+      if (typeof name === 'number' || isNumeric(name = axCoerceName(name))) {
         release || assert(mn.isRuntimeName());
         return this.value.hasOwnProperty(name);
       }
@@ -912,7 +912,7 @@ module Shumway.AVMX.AS {
 
     axGetProperty(mn: Multiname): any {
       var name = mn.name;
-      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
+      if (typeof name === 'number' || isNumeric(name = axCoerceName(name))) {
         release || assert(mn.isRuntimeName());
         return this.value[name];
       }
@@ -922,7 +922,7 @@ module Shumway.AVMX.AS {
     axSetProperty(mn: Multiname, value: any) {
       release || checkValue(value);
       var name = mn.name;
-      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
+      if (typeof name === 'number' || isNumeric(name = axCoerceName(name))) {
         release || assert(mn.isRuntimeName());
         this.value[name] = value;
         return;
@@ -937,7 +937,7 @@ module Shumway.AVMX.AS {
 
     axDeleteProperty(mn: Multiname): any {
       var name = mn.name;
-      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
+      if (typeof name === 'number' || isNumeric(name = axCoerceName(name))) {
         release || assert(mn.isRuntimeName());
         return delete this.value[name];
       }
@@ -949,7 +949,7 @@ module Shumway.AVMX.AS {
     }
 
     axGetPublicProperty(nm: string): any {
-      if (typeof nm === 'number' || isNumeric(nm = asCoerceName(nm))) {
+      if (typeof nm === 'number' || isNumeric(nm = axCoerceName(nm))) {
         return this.value[nm];
       }
       return this['$Bg' + nm];
@@ -957,7 +957,7 @@ module Shumway.AVMX.AS {
 
     axSetPublicProperty(nm: string, value: any) {
       release || checkValue(value);
-      if (typeof nm === 'number' || isNumeric(nm = asCoerceName(nm))) {
+      if (typeof nm === 'number' || isNumeric(nm = axCoerceName(nm))) {
         this.value[nm] = value;
         return;
       }
@@ -1163,7 +1163,7 @@ module Shumway.AVMX.AS {
       return this.value.slice(start, end);
     }
     split(separator: string, limit?: number) {
-      separator = asCoerceString(separator);
+      separator = axCoerceString(separator);
       limit = arguments.length < 2 ? 0xffffffff : limit | 0;
       release || assert(typeof this.value === 'string');
       return this.securityDomain.createArray(this.value.split(separator, limit));
@@ -1221,13 +1221,13 @@ module Shumway.AVMX.AS {
       return String.prototype.slice.call(this.value, start, end);
     }
     generic_split(separator: string, limit?: number) {
-      separator = asCoerceString(separator);
+      separator = axCoerceString(separator);
       limit = arguments.length < 2 ? 0xffffffff : limit | 0;
       var str;
       if (this && typeof this.value === 'string') {
         str = this.value;
       } else {
-        str = asCoerceString(this);
+        str = axCoerceString(this);
       }
       var list = str.split(separator, limit);
       return (<AXClass><any>this).securityDomain.createArray(list);
@@ -1636,19 +1636,19 @@ module Shumway.AVMX.AS {
       if (!result) {
         return null;
       }
-      var asResult = this.securityDomain.createArray(<string []>result);
-      asResult.axSetPublicProperty('index', result.index);
-      asResult.axSetPublicProperty('input', result.input);
+      var axResult = this.securityDomain.createArray(<string []>result);
+      axResult.axSetPublicProperty('index', result.index);
+      axResult.axSetPublicProperty('input', result.input);
       var captureNames = this._captureNames;
       for (var i = 0; i < captureNames.length; i++) {
         var name = captureNames[i];
         if (name !== null) {
           var value = result[i + 1] || '';
           result[name] = value;
-          asResult.axSetPublicProperty(name, value);
+          axResult.axSetPublicProperty(name, value);
         }
       }
-      return asResult;
+      return axResult;
     }
 
     test(str: string = ''): boolean {
@@ -1681,7 +1681,7 @@ module Shumway.AVMX.AS {
 
     constructor(message: any, id: any) {
       super();
-      this.$Bgmessage = asCoerceString(message);
+      this.$Bgmessage = axCoerceString(message);
       this._errorID = id | 0;
     }
 
@@ -1800,7 +1800,7 @@ module Shumway.AVMX.AS {
     if (Array.isArray(val)) {
       var v: any[] = <any>val;
       for (var i = 0, limit = v.length; i < limit; i++) {
-        var newElement = walk(v, asCoerceString(i), reviver);
+        var newElement = walk(v, axCoerceString(i), reviver);
         if (newElement === undefined) {
           delete v[i];
         } else {
@@ -1830,7 +1830,7 @@ module Shumway.AVMX.AS {
 
 
     static parse(text: string, reviver: AXFunction): any {
-      text = asCoerceString(text);
+      text = axCoerceString(text);
       if (text === null) {
         this.securityDomain.throwError('SyntaxError', Errors.JSONInvalidParseInput);
       }
@@ -1893,7 +1893,7 @@ module Shumway.AVMX.AS {
         if (typeof v === 'string') {
           item = v;
         } else if (typeof v === 'number') {
-          item = asCoerceString(v);
+          item = axCoerceString(v);
         }
         if (item !== null && !alreadyAdded[item]) {
           alreadyAdded[item] = true;
@@ -2040,7 +2040,7 @@ module Shumway.AVMX.AS {
   }
 
   function Toplevel_registerClassAlias(securityDomain: SecurityDomain, aliasName, classObject) {
-    aliasName = asCoerceString(aliasName);
+    aliasName = axCoerceString(aliasName);
     if (!aliasName) {
       securityDomain.throwError('TypeError', Errors.NullPointerError, 'aliasName');
     }
@@ -2053,7 +2053,7 @@ module Shumway.AVMX.AS {
   }
 
   function Toplevel_getClassByAlias(securityDomain: SecurityDomain, aliasName: string) {
-    aliasName = asCoerceString(aliasName);
+    aliasName = axCoerceString(aliasName);
     if (!aliasName) {
       securityDomain.throwError('TypeError', Errors.NullPointerError, 'aliasName');
     }

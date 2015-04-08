@@ -15,7 +15,7 @@
  */
 // Class: EventDispatcher
 module Shumway.AVMX.AS.flash.events {
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
   import assert = Shumway.Debug.assert;
 
@@ -280,7 +280,7 @@ module Shumway.AVMX.AS.flash.events {
       if (isNullOrUndefined(type)) {
         this.securityDomain.throwError("TypeError", Errors.NullPointerError, "type");
       }
-      type = asCoerceString(type);
+      type = axCoerceString(type);
       useCapture = !!useCapture;
       priority |= 0;
       useWeakReference = !!useWeakReference;
@@ -311,7 +311,7 @@ module Shumway.AVMX.AS.flash.events {
       if (isNullOrUndefined(type)) {
         this.securityDomain.throwError("TypeError", Errors.NullPointerError, "type");
       }
-      type = asCoerceString(type);
+      type = axCoerceString(type);
       var listeners = this._getListeners(!!useCapture);
       var list = listeners[type];
       if (list) {
@@ -350,7 +350,7 @@ module Shumway.AVMX.AS.flash.events {
       if (isNullOrUndefined(type)) {
         this.securityDomain.throwError("TypeError", Errors.NullPointerError, "type");
       }
-      type = asCoerceString(type);
+      type = axCoerceString(type);
       return this._hasEventListener(type);
     }
 
@@ -363,7 +363,7 @@ module Shumway.AVMX.AS.flash.events {
       if (isNullOrUndefined(type)) {
         this.securityDomain.throwError("TypeError", Errors.NullPointerError, "type");
       }
-      type = asCoerceString(type);
+      type = axCoerceString(type);
       if (this._hasEventListener(type)) {
         return true;
       }

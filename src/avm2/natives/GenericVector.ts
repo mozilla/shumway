@@ -24,7 +24,7 @@ module Shumway.AVMX.AS {
   export class BaseVector extends ASObject {
     axGetProperty(mn: Multiname): any {
       var nm = mn.name;
-      nm = typeof nm === 'number' ? nm : asCoerceName(nm);
+      nm = typeof nm === 'number' ? nm : axCoerceName(nm);
       if ((<any>nm | 0) === nm || isNumeric(nm)) {
         release || assert(mn.isRuntimeName());
         return this.axGetNumericProperty(typeof nm === 'number' ? nm : nm | 0);
@@ -35,7 +35,7 @@ module Shumway.AVMX.AS {
     axSetProperty(mn: Multiname, value: any) {
       release || checkValue(value);
       var nm = mn.name;
-      nm = typeof nm === 'number' ? nm : asCoerceName(nm);
+      nm = typeof nm === 'number' ? nm : axCoerceName(nm);
       if ((<any>nm | 0) === nm || isNumeric(nm)) {
         release || assert(mn.isRuntimeName());
         this.axSetNumericProperty(typeof nm === 'number' ? nm : nm | 0, value);
@@ -50,7 +50,7 @@ module Shumway.AVMX.AS {
     }
 
     axGetPublicProperty(nm: any): any {
-      nm = typeof nm === 'number' ? nm : asCoerceName(nm);
+      nm = typeof nm === 'number' ? nm : axCoerceName(nm);
       if ((<any>nm | 0) === nm || isNumeric(nm)) {
         return this.axGetNumericProperty(typeof nm === 'number' ? nm : nm | 0);
       }
@@ -59,7 +59,7 @@ module Shumway.AVMX.AS {
 
     axSetPublicProperty(nm: any, value: any) {
       release || checkValue(value);
-      nm = typeof nm === 'number' ? nm : asCoerceName(nm);
+      nm = typeof nm === 'number' ? nm : axCoerceName(nm);
       if ((<any>nm | 0) === nm || isNumeric(nm)) {
         this.axSetNumericProperty(typeof nm === 'number' ? nm : nm | 0, value);
         return;
@@ -231,25 +231,25 @@ module Shumway.AVMX.AS {
      * Can't use Array.prototype.toString because it doesn't print |null|s the same way as AS3.
      */
     toString() {
-      var str = "";
+      var result = [];
       for (var i = 0; i < this._buffer.length; i++) {
-        str += this._buffer[i];
-        if (i < this._buffer.length - 1) {
-          str += ",";
-        }
+        var entry = this._buffer[i];
+        result.push(entry === null ? 'null' : (entry + ''));
       }
-      return str;
+      return result.join(',');
     }
 
     toLocaleString() {
-      var str = "";
+      var result = [];
       for (var i = 0; i < this._buffer.length; i++) {
-        str += this._buffer[i].asCallPublicProperty('toLocaleString');
-        if (i < this._buffer.length - 1) {
-          str += ",";
+        var entry = this._buffer[i];
+        if (entry && typeof entry === 'object') {
+          result.push(entry.$BgtoLocaleString());
+        } else {
+          result.push(entry + '');
         }
       }
-      return str;
+      return result.join(',');
     }
 
     sort(sortBehavior?: any) {
@@ -266,20 +266,20 @@ module Shumway.AVMX.AS {
       release || assertNotImplemented (!(options & Int32Vector.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
       if (options & GenericVector.NUMERIC) {
         if (options & GenericVector.DESCENDING) {
-          this._buffer.sort((a, b) => asCoerceNumber(b) - asCoerceNumber(a));
+          this._buffer.sort((a, b) => axCoerceNumber(b) - axCoerceNumber(a));
           return this;
         }
-        this._buffer.sort((a, b) => asCoerceNumber(a) - asCoerceNumber(b));
+        this._buffer.sort((a, b) => axCoerceNumber(a) - axCoerceNumber(b));
         return this;
       }
       if (options & GenericVector.CASEINSENSITIVE) {
         if (options & GenericVector.DESCENDING) {
-          this._buffer.sort((a, b) => <any>asCoerceString(b).toLowerCase() -
-                                      <any>asCoerceString(a).toLowerCase());
+          this._buffer.sort((a, b) => <any>axCoerceString(b).toLowerCase() -
+                                      <any>axCoerceString(a).toLowerCase());
           return this;
         }
-        this._buffer.sort((a, b) => <any>asCoerceString(a).toLowerCase() -
-                                    <any>asCoerceString(b).toLowerCase());
+        this._buffer.sort((a, b) => <any>axCoerceString(a).toLowerCase() -
+                                    <any>axCoerceString(b).toLowerCase());
         return this;
       }
       if (options & GenericVector.DESCENDING) {
@@ -516,7 +516,7 @@ module Shumway.AVMX.AS {
         release || assert(mn.isRuntimeName());
         return mn.name >= 0 && mn.name < this._buffer.length;
       }
-      var name = asCoerceName(mn.name);
+      var name = axCoerceName(mn.name);
       if (mn.isRuntimeName() && isIndex(name)) {
         var index = <any>name >>> 0;
         return index >= 0 && index < this._buffer.length;

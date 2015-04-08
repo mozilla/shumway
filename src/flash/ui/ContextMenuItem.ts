@@ -16,7 +16,7 @@
 // Class: ContextMenuItem
 module Shumway.AVMX.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class ContextMenuItem extends flash.display.NativeMenuItem {
     
     // Called whenever the class is initialized.
@@ -31,7 +31,7 @@ module Shumway.AVMX.AS.flash.ui {
     constructor (caption: string, separatorBefore: boolean = false,
                  enabled: boolean = true, visible: boolean = true) {
       super();
-      caption = asCoerceString(caption); separatorBefore = !!separatorBefore; enabled = !!enabled; visible = !!visible;
+      caption = axCoerceString(caption); separatorBefore = !!separatorBefore; enabled = !!enabled; visible = !!visible;
       this._caption = caption ? caption : "";
       this._separatorBefore = separatorBefore;
       this._enabled = enabled;
@@ -49,7 +49,7 @@ module Shumway.AVMX.AS.flash.ui {
       return this._caption;
     }
     set caption(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       this._caption = value;
     }
     get separatorBefore(): boolean {

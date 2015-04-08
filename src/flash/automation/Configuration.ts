@@ -26,7 +26,7 @@ module Shumway.AVMX.AS.flash.automation {
       notImplemented("public flash.automation.Configuration::get testAutomationConfiguration"); return;
     }
     set deviceConfiguration(configData: string) {
-      configData = asCoerceString(configData);
+      configData = axCoerceString(configData);
       notImplemented("public flash.automation.Configuration::set deviceConfiguration"); return;
     }
     get deviceConfiguration(): string {

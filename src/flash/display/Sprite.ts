@@ -17,7 +17,7 @@
 module Shumway.AVMX.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   import Timeline = Shumway.Timeline;
   import SwfTag = Shumway.SWF.Parser.SwfTag;

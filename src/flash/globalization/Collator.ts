@@ -16,7 +16,7 @@
 // Class: Collator
 module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class Collator extends ASObject {
     
     // Called whenever the class is initialized.
@@ -29,7 +29,7 @@ module Shumway.AVMX.AS.flash.globalization {
     static instanceSymbols: string [] = null; // [];
     
     constructor (requestedLocaleIDName: string, initialMode: string = "sorting") {
-      requestedLocaleIDName = asCoerceString(requestedLocaleIDName); initialMode = asCoerceString(initialMode);
+      requestedLocaleIDName = axCoerceString(requestedLocaleIDName); initialMode = axCoerceString(initialMode);
       super();
     }
     
@@ -117,15 +117,15 @@ module Shumway.AVMX.AS.flash.globalization {
       // return this._requestedLocaleIDName;
     }
     compare(string1: string, string2: string): number /*int*/ {
-      string1 = asCoerceString(string1); string2 = asCoerceString(string2);
+      string1 = axCoerceString(string1); string2 = axCoerceString(string2);
       notImplemented("public flash.globalization.Collator::compare"); return;
     }
     equals(string1: string, string2: string): boolean {
-      string1 = asCoerceString(string1); string2 = asCoerceString(string2);
+      string1 = axCoerceString(string1); string2 = axCoerceString(string2);
       notImplemented("public flash.globalization.Collator::equals"); return;
     }
     ctor(requestedLocaleIDName: string, initialMode: string): void {
-      requestedLocaleIDName = asCoerceString(requestedLocaleIDName); initialMode = asCoerceString(initialMode);
+      requestedLocaleIDName = axCoerceString(requestedLocaleIDName); initialMode = axCoerceString(initialMode);
       notImplemented("public flash.globalization.Collator::ctor"); return;
     }
   }

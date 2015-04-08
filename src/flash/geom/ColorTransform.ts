@@ -16,7 +16,7 @@
 // Class: ColorTransform
 module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   import toS16 = Shumway.IntegerUtilities.toS16;
   import clampS8U8 = Shumway.IntegerUtilities.clampS8U8;

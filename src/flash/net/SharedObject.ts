@@ -16,7 +16,7 @@
 // Class: SharedObject
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
   interface IStorage {
@@ -72,11 +72,11 @@ module Shumway.AVMX.AS.flash.net {
     // AS -> JS Bindings
     private static _defaultObjectEncoding: number /*uint*/ = 3 /* AMF3 */;
     static deleteAll(url: string): number /*int*/ {
-      url = asCoerceString(url);
+      url = axCoerceString(url);
       notImplemented("public flash.net.SharedObject::static deleteAll"); return;
     }
     static getDiskUsage(url: string): number /*int*/ {
-      url = asCoerceString(url);
+      url = axCoerceString(url);
       notImplemented("public flash.net.SharedObject::static getDiskUsage"); return;
     }
     static _create(path: string, data: any): SharedObject {
@@ -88,7 +88,7 @@ module Shumway.AVMX.AS.flash.net {
       return obj;
     }
     static getLocal(name: string, localPath: string = null, secure: boolean = false): flash.net.SharedObject {
-      name = asCoerceString(name); localPath = asCoerceString(localPath); secure = !!secure;
+      name = axCoerceString(name); localPath = axCoerceString(localPath); secure = !!secure;
       var path = (localPath || '') + '/' + name;
       if (SharedObject._sharedObjects[path]) {
         return SharedObject._sharedObjects[path];
@@ -104,7 +104,7 @@ module Shumway.AVMX.AS.flash.net {
       return so;
     }
     static getRemote(name: string, remotePath: string = null, persistence: any = false, secure: boolean = false): flash.net.SharedObject {
-      name = asCoerceString(name); remotePath = asCoerceString(remotePath); secure = !!secure;
+      name = axCoerceString(name); remotePath = axCoerceString(remotePath); secure = !!secure;
       notImplemented("public flash.net.SharedObject::static getRemote"); return;
     }
     static get defaultObjectEncoding(): number /*uint*/ {
@@ -140,7 +140,7 @@ module Shumway.AVMX.AS.flash.net {
       // this._client = object;
     }
     setDirty(propertyName: string): void {
-      propertyName = asCoerceString(propertyName);
+      propertyName = axCoerceString(propertyName);
       somewhatImplemented("public flash.net.SharedObject::setDirty");
     }
     invoke(index: number /*uint*/): any {

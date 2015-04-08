@@ -16,7 +16,7 @@
 // Class: GraphicsPath
 module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class GraphicsPath extends ASObject implements IGraphicsPath, IGraphicsData {
     
     // Called whenever the class is initialized.
@@ -32,7 +32,7 @@ module Shumway.AVMX.AS.flash.display {
       super();
       this.commands = commands;
       this.data = data;
-      this.winding = asCoerceString(winding);
+      this.winding = axCoerceString(winding);
     }
     
     // JS -> AS Bindings
