@@ -23,41 +23,45 @@ module Shumway.AVMX.AS {
 
   export class BaseVector extends ASObject {
     axGetProperty(mn: Multiname): any {
-      var name = mn.name;
-      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
+      var nm = mn.name;
+      nm = typeof nm === 'number' ? nm : asCoerceName(nm);
+      if ((<any>nm | 0) === nm && nm > -1 || isIndex(nm)) {
         release || assert(mn.isRuntimeName());
-        return this.axGetNumericProperty(+name);
+        return this.axGetNumericProperty(nm >>> 0);
       }
       return super.axGetProperty(mn);
     }
 
     axSetProperty(mn: Multiname, value: any) {
       release || checkValue(value);
-      var name = mn.name;
-      if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
+      var nm = mn.name;
+      nm = typeof nm === 'number' ? nm : asCoerceName(nm);
+      if ((<any>nm | 0) === nm && nm > -1 || isIndex(nm)) {
         release || assert(mn.isRuntimeName());
-        this.axSetNumericProperty(+name, value);
+        this.axSetNumericProperty(nm >>> 0, value);
         return;
       }
-      var t = this.traits.getTrait(mn.namespaces, name);
+      var t = this.traits.getTrait(mn.namespaces, nm);
       if (t) {
         this[t.name.getMangledName()] = value;
         return;
       }
-      this['$Bg' + name] = value;
+      this['$Bg' + nm] = value;
     }
 
     axGetPublicProperty(nm: any): any {
-      if (typeof nm === 'number' || isNumeric(nm = asCoerceName(nm))) {
-        return this.axGetNumericProperty(+nm);
+      nm = typeof nm === 'number' ? nm : asCoerceName(nm);
+      if ((<any>nm | 0) === nm && nm > -1 || isIndex(nm)) {
+        return this.axGetNumericProperty(nm >>> 0);
       }
       return this['$Bg' + nm];
     }
 
     axSetPublicProperty(nm: any, value: any) {
       release || checkValue(value);
-      if (typeof nm === 'number' || isNumeric(nm = asCoerceName(nm))) {
-        this.axSetNumericProperty(+nm, value);
+      nm = typeof nm === 'number' ? nm : asCoerceName(nm);
+      if ((<any>nm | 0) === nm && nm > -1 || isIndex(nm)) {
+        this.axSetNumericProperty(nm >>> 0, value);
         return;
       }
       this['$Bg' + nm] = value;
@@ -506,13 +510,13 @@ module Shumway.AVMX.AS {
 
     axHasPropertyInternal(mn: Multiname): boolean {
       // Optimization for the common case of indexed element accesses.
-      if (typeof mn.name === 'number') {
+      if ((<any>mn.name | 0) === mn.name && mn.name > -1) {
         release || assert(mn.isRuntimeName());
         return mn.name >= 0 && mn.name < this._buffer.length;
       }
       var name = asCoerceName(mn.name);
-      if (mn.isRuntimeName() && isNumeric(name)) {
-        var index = toNumber(name);
+      if (mn.isRuntimeName() && isIndex(name)) {
+        var index = <any>name >>> 0;
         return index >= 0 && index < this._buffer.length;
       }
       return this.axResolveMultiname(mn) in this;
