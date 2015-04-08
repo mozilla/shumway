@@ -851,9 +851,7 @@ module Shumway.AVMX.AS.flash.display {
      */
     private _ensureBitmapData() {
       if (this._isRemoteDirty) {
-        var serializer = null; // REDUX:
-                               // Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
-        var data = serializer.requestBitmapData(this);
+        var data = this.securityDomain.player.requestBitmapData(this);
         this._setData(data.getBytes(), ImageType.StraightAlphaRGBA);
         this._isRemoteDirty = false;
         this._isDirty = false;
@@ -881,6 +879,7 @@ module Shumway.AVMX.AS.flash.display {
     drawToBitmap(bitmapData: flash.display.BitmapData, source: flash.display.IBitmapDrawable,
                  matrix: flash.geom.Matrix, colorTransform: flash.geom.ColorTransform,
                  blendMode: string, clipRect: flash.geom.Rectangle, smoothing: boolean);
+    requestBitmapData(bitmapData: BitmapData): DataBuffer;
   }
 
   export class BitmapSymbol extends Timeline.DisplaySymbol

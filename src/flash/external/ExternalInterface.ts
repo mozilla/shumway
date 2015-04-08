@@ -71,10 +71,7 @@ module Shumway.AVMX.AS.flash.external {
     }
 
     static _getPropNames(obj: ASObject): any [] {
-      var keys = [];
-      // REDUX:
-      // forEachPublicProperty(obj, function (key) { keys.push(key); }, null);
-      return keys;
+      return (<AXObject><any>obj).axGetEnumerableKeys();
     }
 
     static _addCallback(functionName: string, closure: Shumway.AVMX.AS.ASFunction, hasNullCallback: boolean): void {

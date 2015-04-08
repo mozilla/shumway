@@ -27,5 +27,6 @@ module Shumway.Player {
   export interface SWFPlayer extends IBitmapDataSerializer, IFSCommandListener, IVideoElementService,
                                      IAssetResolver, IRootElementService, ICrossDomainSWFLoadingWhitelist {
     syncDisplayObject(displayObject: flash.display.DisplayObject, async: boolean);
+    requestRendering();
   }
 }
