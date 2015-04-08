@@ -84,7 +84,7 @@ module Shumway.AVM1.Lib {
     }
 
     private _lookupChildByName(name: string): flash.display.DisplayObject {
-      name = alCoerceString(name);
+      name = alCoerceString(this.context, name);
       return this.as3Object._lookupChildByName(name);
     }
 
@@ -121,8 +121,9 @@ module Shumway.AVM1.Lib {
       props.avm1Name = name;
       props.avm1SymbolClass = symbol.theClass;
 
-      var mc:flash.display.MovieClip = (<any>flash).display.MovieClip.initializeFrom(props);
-      //flash.display.MovieClip.instanceConstructorNoInitialize.call(mc);
+      // REDUX
+      var mc:flash.display.MovieClip; // = this.context.securityDomain.flash.display.MovieClip.initializeFrom(props);
+      //this.context.securityDomain.flash.display.MovieClip.instanceConstructorNoInitialize.call(mc);
 
       return mc;
     }
@@ -196,7 +197,7 @@ module Shumway.AVM1.Lib {
     }
 
     public createEmptyMovieClip(name, depth): AVM1MovieClip {
-      var mc: flash.display.MovieClip = new flash.display.MovieClip();
+      var mc: flash.display.MovieClip = new this.context.securityDomain.flash.display.MovieClip();
       mc.name = name;
       return <AVM1MovieClip>this._insertChildAtDepth(mc, depth);
     }
@@ -755,6 +756,19 @@ module Shumway.AVM1.Lib {
       return null;
     }
 
+    private _cachedPropertyResult;
+    private _getCachedPropertyResult(value) {
+      if (!this._cachedPropertyResult) {
+        this._cachedPropertyResult = {
+          flags: AVM1PropertyFlags.NATIVE_MEMBER,
+          value: value
+        };
+      } else {
+        this._cachedPropertyResult.value = value;
+      }
+      return this._cachedPropertyResult;
+    }
+
     public alGetOwnProperty(name): AVM1PropertyDescriptor {
       var desc = super.alGetOwnProperty(name);
       if (desc) {
@@ -763,19 +777,16 @@ module Shumway.AVM1.Lib {
       if (typeof name === 'string' && name[0] === '_') {
         var level = this._resolveLevelNProperty(name);
         if (level) {
-          return {
-            flags: AVM1PropertyFlags.NATIVE_MEMBER,
-            value: level
-          };
+          return this._getCachedPropertyResult(level);
+        }
+        if (name === '_global') {
+          return this._getCachedPropertyResult(this.context.globals);
         }
       }
       if (this.isAVM1Instance) {
         var child = this.__lookupChild(name);
         if (child) {
-          return {
-            flags: AVM1PropertyFlags.NATIVE_MEMBER,
-            value: child
-          };
+          return this._getCachedPropertyResult(child);
         }
       }
       return undefined;

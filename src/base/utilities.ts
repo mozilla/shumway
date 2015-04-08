@@ -1840,6 +1840,14 @@ module Shumway {
     private _out: (s: string, o?: any) => void;
     private _outNoNewline: (s: string) => void;
 
+    get suppressOutput() {
+      return this._suppressOutput;
+    }
+
+    set suppressOutput(val: boolean) {
+      this._suppressOutput = val;
+    }
+
     constructor(suppressOutput: boolean = false, out?) {
       this._tab = "  ";
       this._padding = "";

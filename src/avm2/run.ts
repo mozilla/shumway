@@ -589,6 +589,25 @@ module Shumway.AVMX {
   // SecurityDomain.
   export var AXBasePrototype = null;
 
+  function AXBasePrototype_$BgtoString() {
+    // Dynamic prototypes just return [object Object], so we have to special-case them.
+    // Since the dynamic object is the one holding the direct reference to `classInfo`,
+    // we can check for that.
+    var name = this.hasOwnProperty('classInfo') ?
+               'Object' :
+               this.classInfo.instanceInfo.name.name;
+    return Shumway.StringUtilities.concat3("[object ", name, "]");
+  };
+  function AXBasePrototype_toString() {
+    return this.$BgtoString.axCall(this);
+  };
+  function AXBasePrototype_$BgvalueOf() {
+    return this;
+  };
+  function AXBasePrototype_valueOf() {
+    return this.$BgvalueOf.axCall(this);
+  };
+
   /**
    * Execute this lazily because we want to make sure the AS package is available.
    */
@@ -629,24 +648,10 @@ module Shumway.AVMX {
     D(AXBasePrototype, "isPrototypeOf", Object.prototype.isPrototypeOf);
     D(AXBasePrototype, "hasOwnProperty", Object.prototype.hasOwnProperty);
 
-    AXBasePrototype.$BgtoString = function () {
-      // Dynamic prototypes just return [object Object], so we have to special-case them.
-      // Since the dynamic object is the one holding the direct reference to `classInfo`,
-      // we can check for that.
-      var name = this.hasOwnProperty('classInfo') ?
-                 'Object' :
-                 this.classInfo.instanceInfo.name.name;
-      return Shumway.StringUtilities.concat3("[object ", name, "]");
-    };
-    AXBasePrototype.toString = function () {
-      return this.$BgtoString.axCall(this);
-    };
-    AXBasePrototype.$BgvalueOf = function () {
-      return this;
-    };
-    AXBasePrototype.valueOf = function () {
-      return this.$BgvalueOf.axCall(this);
-    };
+    AXBasePrototype.$BgtoString = AXBasePrototype_$BgtoString;
+    AXBasePrototype.toString = AXBasePrototype_toString;
+    AXBasePrototype.$BgvalueOf = AXBasePrototype_$BgvalueOf;
+    AXBasePrototype.valueOf = AXBasePrototype_valueOf;
   }
 
   export interface AXObject extends ITraits, IMetaobjectProtocol {
@@ -939,7 +944,7 @@ module Shumway.AVMX {
     createError(className: string, error: any, replacement1?: any,
                replacement2?: any, replacement3?: any, replacement4?: any) {
       var message = formatErrorMessage.apply(null, sliceArguments(arguments, 1));
-      var mn = new Multiname(null, 0, CONSTANT.RTQNameL, [Namespace.PUBLIC], className);
+      var mn = Multiname.FromFQNString(className, NamespaceType.Public);
       var axClass: AXClass = <any>this.application.getProperty(mn, true, true);
       return axClass.axConstruct([message, error.code]);
     }

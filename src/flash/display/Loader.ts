@@ -675,12 +675,10 @@ module Shumway.AVMX.AS.flash.display {
         context = contentLoaderInfo._avm1Context = this.loaderInfo._avm1Context;
       } else {
         context = Shumway.AVM1.AVM1Context.create(contentLoaderInfo);
-        Shumway.AVM1.Lib.installObjectMethods(context);
         contentLoaderInfo._avm1Context = context;
         var display = this.securityDomain.flash.display;
         if (this === display.Loader.axClass.getRootLoader()) {
-          context.globals.Key._bind(this._stage, context);
-          context.globals.Mouse._bind(this._stage, context);
+          context.setStage(this._stage);
           display.MovieClip.axClass.frameNavigationModel = flash.display.FrameNavigationModel.SWF1;
         }
       }

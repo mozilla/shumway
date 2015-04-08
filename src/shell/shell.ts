@@ -274,7 +274,8 @@ module Shumway.Shell {
     microTaskQueue = new Shumway.Shell.MicroTasksQueue();
 
     if (porcelainOutputOption.value) {
-      console.info = console.log = console.warn = console.error = jsGlobal.print = function () {};
+      console.info = console.log = console.warn = console.error = function () {};
+      writer.suppressOutput = true;
     }
 
     profile = profileOption.value;

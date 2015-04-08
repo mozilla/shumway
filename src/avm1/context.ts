@@ -100,5 +100,10 @@ module Shumway.AVM1 {
 
     public enterContext(fn: Function, defaultTarget): void {}
     public executeActions(actionsData: AVM1ActionsData, scopeObj): void {}
+
+    public setStage(stage: Shumway.AVMX.AS.flash.display.Stage): void {
+      (<any>this.globals.Key)._bind(stage, this);
+      (<any>this.globals.Mouse)._bind(stage, this);
+    }
   }
 }

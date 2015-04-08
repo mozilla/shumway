@@ -214,16 +214,16 @@ module Shumway.AVM1.Lib {
     }
   }
 
-  function createAVM1Object(ctor, nativeObject: flash.display.DisplayObject, context: AVM1Context) {
+  function createAVM1NativeObject(ctor, nativeObject: flash.display.DisplayObject, context: AVM1Context) {
     // We need to walk on __proto__ to find right ctor.prototype.
-    var proto = ctor.alPrototypeProperty;
+    var proto = ctor.alGetPrototypeProperty();
     while (proto && !(<any>proto).initAVM1SymbolInstance) {
-      proto = proto.alGet('__proto__');
+      proto = proto.alPrototype;
     }
     release || Debug.assert(proto);
     var avm1Object = Object.create(proto);
     (<any>proto).initAVM1SymbolInstance.call(avm1Object, context, nativeObject);
-    avm1Object._setPrototype(ctor.alPrototypeProperty);
+    avm1Object.alPrototype = ctor.alGetPrototypeProperty();
     avm1Object.alSetOwnProperty('__constructor__', {
       flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
       value: ctor
@@ -243,15 +243,15 @@ module Shumway.AVM1.Lib {
     var securityDomain = context.securityDomain;
     if (securityDomain.flash.display.MovieClip.axClass.axIsType(as3Object)) {
       if (<flash.display.MovieClip>as3Object._avm1SymbolClass) {
-        return createAVM1Object(<flash.display.MovieClip>as3Object._avm1SymbolClass, as3Object, context);
+        return createAVM1NativeObject(<flash.display.MovieClip>as3Object._avm1SymbolClass, as3Object, context);
       }
-      return createAVM1Object(context.globals.MovieClip, as3Object, context);
+      return createAVM1NativeObject(context.globals.MovieClip, as3Object, context);
     }
     if (securityDomain.flash.display.SimpleButton.axClass.axIsType(as3Object)) {
-      return createAVM1Object(context.globals.Button, as3Object, context);
+      return createAVM1NativeObject(context.globals.Button, as3Object, context);
     }
     if (securityDomain.flash.text.TextField.axClass.axIsType(as3Object)) {
-      return createAVM1Object(context.globals.TextField, as3Object, context);
+      return createAVM1NativeObject(context.globals.TextField, as3Object, context);
     }
     if (securityDomain.flash.display.BitmapData.axClass.axIsType(as3Object)) {
       return new as3Object;
@@ -260,144 +260,64 @@ module Shumway.AVM1.Lib {
     return null;
   }
 
-  export function wrapAVM1Object<T>(securityDomain: ISecurityDomain, obj: T, members: string[]): any  {
-    var wrap: any;
-    var lastPrototype: any;
-    if (typeof obj === 'function') {
-      wrap = securityDomain.boxFunction(function () {
-        return (<any>obj).apply(this, arguments);
-      });
-      lastPrototype = Function.prototype;
-    } else {
-      release || Debug.assert(typeof obj === 'object' && obj !== null);
-      wrap = securityDomain.createObject();
-      lastPrototype = ASObject.prototype;
+  export function wrapAVM1NativeMembers(context: AVM1Context, wrap: AVM1Object, obj: any, members: string[], prefixFunctions: boolean = false): void  {
+    function wrapFunctionWithPrefix(fn) {
+      return function () {
+        var args = Array.prototype.slice.call(arguments, 0);
+        args.unshift(context);
+        return fn.apply(this, args);
+      };
     }
-    // Coping all members
-    var p = obj;
-    do {
-      Object.getOwnPropertyNames(p).forEach(function (name) {
-        if (wrap.hasOwnProperty(name)) {
-          // Object.defineProperty will error e.g. on function name or length
-          return;
-        }
-        Object.defineProperty(wrap, name,
-          Object.getOwnPropertyDescriptor(p, name));
-      });
-      p = Object.getPrototypeOf(p);
-    } while (p !== lastPrototype);
 
     if (!members) {
-      return wrap;
-    }
-    members.forEach(function (memberName) {
-      var definedAs = memberName;
-      // We can re-map property names by specifying memberName in the format:
-      //   "as2_property_name=>ts_property_name"
-      var i = memberName.indexOf('=>');
-      if (i >= 0) {
-        definedAs = memberName.substring(0, i);
-        memberName = memberName.substring(i + 2);
-      }
-
-      var getter = function() {
-        return this[memberName];
-      };
-      var setter = function(value) {
-        this[memberName] = value;
-      };
-      wrap.axDefinePublicProperty(definedAs, {
-        get: getter,
-        set: setter,
-        enumerable: false,
-        configurable: true
-      });
-    });
-    return wrap;
-  }
-
-  export function wrapAVM1Class<T>(securityDomain: ISecurityDomain, fn: T, staticMembers: string[], members: string[]): any  {
-    var wrappedFn: ASObject = wrapAVM1Object(securityDomain, fn, staticMembers);
-    var prototype = (<any>fn).prototype;
-    var wrappedPrototype = wrapAVM1Object(securityDomain, prototype, members);
-    wrappedFn.axSetPublicProperty('prototype', wrappedPrototype);
-    (<any>wrappedFn).prototype = wrappedPrototype; // REDUX ? why axContruct is using prototype vs $Bgprototype
-    return wrappedFn;
-  }
-
-  export function wrapAVM1Builtin(avm2Class: any): ASObject {
-    return avm2Class.securityDomain.boxFunction(function () {
-      return avm2Class.axConstruct.call(this, arguments);
-    });
-  }
-
-  var isAvm1ObjectMethodsInstalled: boolean = false;
-
-  export function installObjectMethods(context: AVM1Context): any {
-    if (isAvm1ObjectMethodsInstalled) {
       return;
     }
-    isAvm1ObjectMethodsInstalled = true;
-    var securityDomain = context.securityDomain;
-    var c: any = securityDomain.AXObject, p = c.axGetPublicProperty('prototype');
-    c.axSetPublicProperty('registerClass', securityDomain.boxFunction(function registerClass(name, theClass) {
-      AVM1Context.instance.registerClass(name, theClass);
-    }));
-    p.axDefinePublicProperty('addProperty', {
-      value: function addProperty(name, getter, setter) {
-        if (typeof name !== 'string' || name === '') {
-          return false;
+    members.forEach(function (memberName) {
+      var desc;
+      for (var p = obj; p; p = Object.getPrototypeOf(p)) {
+        desc = Object.getOwnPropertyDescriptor(p, memberName);
+        if (desc) {
+          break;
         }
-        if (typeof getter !== 'function') {
-          return false;
+      }
+      if (!desc) {
+        return;
+      }
+      if (desc.get || desc.set) {
+        wrap.alSetOwnProperty(memberName, {
+          flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE,
+          get: new AVM1NativeFunction(context, desc.get),
+          set: new AVM1NativeFunction(context, desc.set)
+        })
+      } else {
+        var value = desc.value;
+        if (typeof value === 'function') {
+          value = new AVM1NativeFunction(context,
+            prefixFunctions ? wrapFunctionWithPrefix(value) : value);
         }
-        if (typeof setter !== 'function' && setter !== null) {
-          return false;
-        }
-        this.axDefinePublicProperty(name, {
-          get: getter,
-          set: setter || undefined,
-          configurable: true,
-          enumerable: true
-        });
-        return true;
-      },
-      writable: false,
-      enumerable: false,
-      configurable: false
+        wrap.alSetOwnProperty(memberName, {
+          flags: AVM1PropertyFlags.NATIVE_MEMBER,
+          value: value
+        })
+      }
     });
-    // TODO move this initialization closer to the interpreter
-    Object.defineProperty(p, '__proto__avm1', {
-      value: null,
-      writable: true,
-      enumerable: false
-    });
-    p.axDefinePublicProperty('__proto__', {
-      get: function () {
-        return this.__proto__avm1;
-      },
-      set: function (proto) {
-        if (proto === this.__proto__avm1) {
-          return;
-        }
-        if (!proto) {
-          this.__proto__avm1 = null;
-          return;
-        }
+  }
 
-        // checking for circular references
-        var p = proto;
-        while (p) {
-          if (p === this) {
-            return; // potencial loop found
-          }
-          p = p.__proto__avm1;
-        }
-        this.__proto__avm1 = proto;
-      },
-      enumerable: false,
-      configurable: false
+  export function wrapAVM1NativeClass(context: AVM1Context, wrapAsFunction: boolean, cls: any, staticMembers: string[], members: string[], cstr?: Function): AVM1Object  {
+    var wrappedFn = wrapAsFunction ?
+      new AVM1NativeFunction(context, cstr || function () { }, function () {
+        // Doing nothing when AVM1 object is constructed directly.
+      }) :
+      new AVM1Object(context);
+    wrapAVM1NativeMembers(context, wrappedFn, cls, staticMembers, true);
+    var wrappedPrototype = new cls(context);
+    wrapAVM1NativeMembers(context, wrappedPrototype, cls.prototype, members, false);
+    wrappedFn.alPut('prototype', wrappedPrototype);
+    wrappedPrototype.alSetOwnProperty('constructor', {
+      flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
+      value: wrappedFn
     });
+    return wrappedFn;
   }
 
   // TODO: type arguments strongly

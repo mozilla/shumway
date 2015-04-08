@@ -25,9 +25,9 @@ module Shumway.AVMX.AS {
     axGetProperty(mn: Multiname): any {
       var nm = mn.name;
       nm = typeof nm === 'number' ? nm : asCoerceName(nm);
-      if ((<any>nm | 0) === nm && nm > -1 || isIndex(nm)) {
+      if ((<any>nm | 0) === nm || isNumeric(nm)) {
         release || assert(mn.isRuntimeName());
-        return this.axGetNumericProperty(nm >>> 0);
+        return this.axGetNumericProperty(typeof nm === 'number' ? nm : nm | 0);
       }
       return super.axGetProperty(mn);
     }
@@ -36,9 +36,9 @@ module Shumway.AVMX.AS {
       release || checkValue(value);
       var nm = mn.name;
       nm = typeof nm === 'number' ? nm : asCoerceName(nm);
-      if ((<any>nm | 0) === nm && nm > -1 || isIndex(nm)) {
+      if ((<any>nm | 0) === nm || isNumeric(nm)) {
         release || assert(mn.isRuntimeName());
-        this.axSetNumericProperty(nm >>> 0, value);
+        this.axSetNumericProperty(typeof nm === 'number' ? nm : nm | 0, value);
         return;
       }
       var t = this.traits.getTrait(mn.namespaces, nm);
@@ -51,8 +51,8 @@ module Shumway.AVMX.AS {
 
     axGetPublicProperty(nm: any): any {
       nm = typeof nm === 'number' ? nm : asCoerceName(nm);
-      if ((<any>nm | 0) === nm && nm > -1 || isIndex(nm)) {
-        return this.axGetNumericProperty(nm >>> 0);
+      if ((<any>nm | 0) === nm || isNumeric(nm)) {
+        return this.axGetNumericProperty(typeof nm === 'number' ? nm : nm | 0);
       }
       return this['$Bg' + nm];
     }
@@ -60,8 +60,8 @@ module Shumway.AVMX.AS {
     axSetPublicProperty(nm: any, value: any) {
       release || checkValue(value);
       nm = typeof nm === 'number' ? nm : asCoerceName(nm);
-      if ((<any>nm | 0) === nm && nm > -1 || isIndex(nm)) {
-        this.axSetNumericProperty(nm >>> 0, value);
+      if ((<any>nm | 0) === nm || isNumeric(nm)) {
+        this.axSetNumericProperty(typeof nm === 'number' ? nm : nm | 0, value);
         return;
       }
       this['$Bg' + nm] = value;
@@ -81,7 +81,7 @@ module Shumway.AVMX.AS {
       }
       var securityDomain = this.securityDomain;
       if (!securityDomain.isCallable(callback)) {
-        securityDomain.throwError("TypeError", Errors.CheckTypeFailedError);
+        securityDomain.throwError("TypeError", Errors.CheckTypeFailedError, callback, 'Function');
       }
       if ((<any>callback).axClass === securityDomain.AXMethodClosure &&
           !isNullOrUndefined(thisObject)) {
@@ -492,25 +492,27 @@ module Shumway.AVMX.AS {
     }
 
     axGetNumericProperty(nm: number) {
-      release || assert(isIndex(nm));
-      if (nm < 0 || nm >= this._buffer.length) {
+      release || assert(isNumeric(nm));
+      var idx = nm | 0;
+      if (idx < 0 || idx >= this._buffer.length || idx != nm) {
         this.securityDomain.throwError("RangeError", Errors.OutOfRangeError, nm,
                                        this._buffer.length);
       }
-      return this._buffer[nm];
+      return this._buffer[idx];
     }
     axSetNumericProperty(nm: number, v: any) {
-      release || assert(isIndex(nm));
+      release || assert(isNumeric(nm));
       var length = this._buffer.length;
-      if (nm < 0 || nm > length || (nm === length && this._fixed)) {
+      var idx = nm | 0;
+      if (idx < 0 || idx > length || idx != nm || (idx === length && this._fixed)) {
         this.securityDomain.throwError("RangeError", Errors.OutOfRangeError, nm, length);
       }
-      this._buffer[nm] = this._coerce(v);
+      this._buffer[idx] = this._coerce(v);
     }
 
     axHasPropertyInternal(mn: Multiname): boolean {
       // Optimization for the common case of indexed element accesses.
-      if ((<any>mn.name | 0) === mn.name && mn.name > -1) {
+      if ((<any>mn.name | 0) === mn.name) {
         release || assert(mn.isRuntimeName());
         return mn.name >= 0 && mn.name < this._buffer.length;
       }

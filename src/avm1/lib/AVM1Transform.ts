@@ -18,19 +18,18 @@
 
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
-  import ASObject = Shumway.AVMX.AS.ASObject;
 
-  export class AVM1Transform extends ASObject {
-    static createAVM1Class(securityDomain: ISecurityDomain):typeof AVM1Transform {
-      return wrapAVM1Class(securityDomain, AVM1Transform,
+  export class AVM1Transform extends AVM1Object {
+    static createAVM1Class(context: AVM1Context): AVM1Object {
+      return wrapAVM1NativeClass(context, true, AVM1Transform,
         [],
-        ['matrix', 'concatenatedMatrix', 'colorTransform', 'pixelBounds']);
+        ['matrix', 'concatenatedMatrix', 'colorTransform', 'pixelBounds'],
+        AVM1Transform.prototype.avm1Constructor);
     }
 
     private _target:IAVM1SymbolBase;
 
-    public constructor(target_mc) {
-      super();
+    public avm1Constructor(target_mc) {
       this._target = AVM1Utils.resolveTarget(target_mc);
     }
 
@@ -48,23 +47,23 @@ module Shumway.AVM1.Lib {
       }
       // It accepts random objects with a,b,c,d,tx,ty properties
       var m = this.matrix;
-      if (value.asHasProperty(undefined, 'a', 0)) {
-        m.a = value.asGetPublicProperty('a');
+      if (value.alHasProperty('a')) {
+        m.a = value.alGet('a');
       }
-      if (value.asHasProperty(undefined, 'b', 0)) {
-        m.b = value.asGetPublicProperty('b');
+      if (value.alHasProperty('b')) {
+        m.b = value.alGet('b');
       }
-      if (value.asHasProperty(undefined, 'c', 0)) {
-        m.c = value.asGetPublicProperty('c');
+      if (value.alHasProperty('c')) {
+        m.c = value.alGet('c');
       }
-      if (value.asHasProperty(undefined, 'd', 0)) {
-        m.d = value.asGetPublicProperty('d');
+      if (value.alHasProperty('d')) {
+        m.d = value.alGet('d');
       }
-      if (value.asHasProperty(undefined, 'tx', 0)) {
-        m.tx = value.asGetPublicProperty('tx');
+      if (value.alHasProperty('tx')) {
+        m.tx = value.alGet('tx');
       }
-      if (value.asHasProperty(undefined, 'ty', 0)) {
-        m.ty = value.asGetPublicProperty('ty');
+      if (value.alHasProperty('ty')) {
+        m.ty = value.alGet('ty');
       }
       this._target.as3Object.transform.matrix = m;
     }

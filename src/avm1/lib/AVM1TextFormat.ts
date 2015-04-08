@@ -18,28 +18,24 @@
 
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
-  import ASObject = Shumway.AVMX.AS.ASObject;
 
-  export class AVM1TextFormat extends flash.text.TextFormat {
-    static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1TextFormat {
-      return AVM1Proxy.wrap(securityDomain, AVM1TextFormat, {
-        methods: ['getTextExtent']
-      });
+  export class AVM1TextFormat extends AVM1Proxy<flash.text.TextFormat> {
+    static createAVM1Class(context: AVM1Context): AVM1Object {
+      return AVM1Proxy.wrap<flash.text.TextFormat>(context, AVM1TextFormat, [], ['getTextExtent']);
     }
 
-    constructor(font?: string, size?: number, color?: number, bold?: boolean,
+    public avm1Constructor(font?: string, size?: number, color?: number, bold?: boolean,
                 italic?: boolean, underline?: boolean, url?: string, target?: string,
                 align?: string, leftMargin?: number, rightMargin?: number,
                 indent?: number, leading?: number) {
-      false && super(font, size, color, bold, italic, underline, url, target, align, leftMargin, rightMargin, indent, leading);
-      flash.text.TextFormat.apply(this, arguments);
+      var as3Object = new this.context.securityDomain.flash.text.TextFormat(); // REDUX parameters
+      super.setTarget(as3Object);
     }
 
-    private static _measureTextField: flash.text.TextField;
+    private static _measureTextField: flash.text.TextField; // REDUX security domain
 
     public getTextExtent(text: string, width?: number) {
-      text = asCoerceString(text);
+      text = alCoerceString(this.context, text);
       width = +width;
 
       var measureTextField = AVM1TextFormat._measureTextField;
@@ -55,19 +51,19 @@ module Shumway.AVM1.Lib {
       } else {
         measureTextField.wordWrap = false;
       }
-      measureTextField.defaultTextFormat = this;
+      measureTextField.defaultTextFormat = undefined; // REDUX this;
       measureTextField.text = text;
-      var result: ASObject = <any> {}; // REDUX
+      var result: AVM1Object = alNewObject(this.context);
       var textWidth = measureTextField.textWidth;
       var textHeight = measureTextField.textHeight;
-      result.axSetPublicProperty('width', textWidth);
-      result.axSetPublicProperty('height', textHeight);
-      result.axSetPublicProperty('textFieldWidth', textWidth + 4);
-      result.axSetPublicProperty('textFieldHeight', textHeight + 4);
+      result.alPut('width', textWidth);
+      result.alPut('height', textHeight);
+      result.alPut('textFieldWidth', textWidth + 4);
+      result.alPut('textFieldHeight', textHeight + 4);
       var metrics = measureTextField.getLineMetrics(0);
-      result.axSetPublicProperty('ascent',
+      result.alPut('ascent',
         metrics.asGetPublicProperty('ascent'));
-      result.axSetPublicProperty('descent',
+      result.alPut('descent',
         metrics.asGetPublicProperty('descent'));
       return result;
     }
