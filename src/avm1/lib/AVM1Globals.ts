@@ -112,8 +112,9 @@ module Shumway.AVM1.Lib {
         return undefined;
       }
       var args: any[] = [];
-      if (typeof arguments[0] === 'function') {
-        args = <any>arguments;
+      if (alIsFunction(arguments[0])) {
+        var fn: AVM1Function = arguments[0];
+        args.push(fn.toJSFunction(), arguments[1]);
       } else {
         if (arguments.length < 3) {
           return undefined;
@@ -123,29 +124,35 @@ module Shumway.AVM1.Lib {
         if (!(obj && typeof obj === 'object' && typeof funName === 'string')) {
           return undefined;
         }
-        args[0] = function (): void {
+        args.push(function () {
           // TODO add AVM1 property resolution (and case ignore)
-          obj.asCallPublicProperty(funName, arguments);
-        };
-        for (var i = 2; i < arguments.length; i++) {
-          args.push(arguments[i]);
-        }
+          alCallProperty(obj, funName, Array.prototype.slice.call(arguments, 0));
+        });
+      }
+      for (var i = 2; i < arguments.length; i++) {
+        args.push(arguments[i]);
       }
       // Unconditionally coerce interval to int, as one would do.
-      args[1] |= 0;
+      args[1] = alToInteger(this.context, args[1]);
       var internalId = setInterval.apply(null, args);
       return _internalTimeouts.push(internalId);
     }
 
     public setTimeout() {
       // AVM1 setTimeout silently swallows most things that vaguely look like errors.
-      if (arguments.length < 2 || typeof arguments[0] !== 'function')
-      {
+      if (arguments.length < 2 || !alIsFunction(arguments[0])) {
         return undefined;
       }
+      var args: any[] = [];
+      var fn: AVM1Function = arguments[0];
+      args.push(fn.toJSFunction());
       // Unconditionally coerce interval to int, as one would do.
-      arguments[1] |= 0;
-      var internalId = setTimeout.apply(null, arguments);
+      args.push(alToInteger(this.context, arguments[1]));
+      for (var i = 2; i < arguments.length; i++) {
+        args.push(arguments[i]);
+      }
+
+      var internalId = setTimeout.apply(null, args);
       return _internalTimeouts.push(internalId);
     }
 

@@ -39,6 +39,11 @@ module Shumway.AVM1.Natives {
     }
 
     public _toString() {
+      if (alIsFunction(this)) {
+        debugger;
+        // Really weird case of functions.
+        return '[type ' + alGetObjectClass(this) + ']';
+      }
       return '[object ' + alGetObjectClass(this) + ']';
     }
   }
@@ -49,7 +54,7 @@ module Shumway.AVM1.Natives {
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       var proto = context.builtins.Object.alGetPrototypeProperty();
       this.alSetOwnProperty('prototype', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
         value: proto
       });
       proto.alSetOwnProperty('constructor', {
@@ -59,13 +64,13 @@ module Shumway.AVM1.Natives {
 
       var self = this;
       this.alSetOwnProperty('registerClass', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
         value: new AVM1NativeFunction(context, function registerClass(name, theClass) {
           context.registerClass(name, theClass);
         })
       });
       this.alSetOwnProperty('addProperty', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
         value: new AVM1NativeFunction(context, function addProperty(name, getter, setter) {
           if (typeof name !== 'string' || name === '') {
             return false;
@@ -124,11 +129,11 @@ module Shumway.AVM1.Natives {
       var context = this.context;
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
       this.alSetOwnProperty('call', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
         value: new AVM1NativeFunction(context, this.call)
       });
       this.alSetOwnProperty('apply', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
         value: new AVM1NativeFunction(context, this.apply)
       });
     }
@@ -149,7 +154,7 @@ module Shumway.AVM1.Natives {
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       var proto = context.builtins.Function.alGetPrototypeProperty();
       this.alSetOwnProperty('prototype', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
         value: proto
       });
       proto.alSetOwnProperty('constructor', {
@@ -190,14 +195,12 @@ module Shumway.AVM1.Natives {
     }
 
     public _valueOf() {
-      // TODO type check
-      var native: AVM1BooleanNative = <any>this;
+      var native = alEnsureType<AVM1BooleanNative>(this, AVM1BooleanNative);
       return native.value;
     }
 
     public _toString() {
-      // TODO type check
-      var native: AVM1BooleanNative = <any>this;
+      var native = alEnsureType<AVM1BooleanNative>(this, AVM1BooleanNative);
       return native.value ? 'true' : 'false';
     }
   }
@@ -208,7 +211,7 @@ module Shumway.AVM1.Natives {
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       var proto = new AVM1BooleanPrototype(context);
       this.alSetOwnProperty('prototype', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
         value: proto
       });
       proto.alSetOwnProperty('constructor', {
@@ -258,14 +261,12 @@ module Shumway.AVM1.Natives {
     }
 
     public _valueOf() {
-      // TODO type check
-      var native: AVM1NumberNative = <any>this;
+      var native = alEnsureType<AVM1NumberNative>(this, AVM1NumberNative);
       return native.value;
     }
 
     public _toString(radix) {
-      // TODO type check
-      var native: AVM1NumberNative = <any>this;
+      var native = alEnsureType<AVM1NumberNative>(this, AVM1NumberNative);
       return native.value.toString(radix || 10);
     }
   }
@@ -276,7 +277,7 @@ module Shumway.AVM1.Natives {
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       var proto = new AVM1NumberPrototype(context);
       this.alSetOwnProperty('prototype', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
         value: proto
       });
       proto.alSetOwnProperty('constructor', {
@@ -285,7 +286,7 @@ module Shumway.AVM1.Natives {
       });
 
       this.alSetOwnProperty('NaN', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
         value: NaN
       });
       // TODO more constants
@@ -332,14 +333,12 @@ module Shumway.AVM1.Natives {
     }
 
     public _valueOf() {
-      // TODO type check
-      var native: AVM1StringNative = <any>this;
+      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
       return native.value;
     }
 
     public _toString() {
-      // TODO type check
-      var native: AVM1StringNative = <any>this;
+      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
       return native.value;
     }
   }
@@ -350,7 +349,7 @@ module Shumway.AVM1.Natives {
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       var proto = new AVM1StringPrototype(context);
       this.alSetOwnProperty('prototype', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
         value: proto
       });
       proto.alSetOwnProperty('constructor', {
@@ -493,7 +492,7 @@ module Shumway.AVM1.Natives {
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       var proto = new AVM1ArrayPrototype(context);
       this.alSetOwnProperty('prototype', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
         value: proto
       });
       proto.alSetOwnProperty('constructor', {

@@ -22,7 +22,8 @@ module Shumway.AVM1 {
     READ_ONLY = 4,
     DATA = 64,
     ACCESSOR = 128,
-    NATIVE_MEMBER = DATA | DONT_DELETE | DONT_ENUM | READ_ONLY,
+    NATIVE_MEMBER = DATA | DONT_DELETE | DONT_ENUM,
+    NATIVE_ACCESSOR = ACCESSOR | DONT_DELETE | DONT_ENUM,
     ASSETPROP_MASK = DONT_DELETE | DONT_ENUM | READ_ONLY
   }
 
@@ -223,30 +224,30 @@ module Shumway.AVM1 {
     public alDefaultValue(hint: AVM1DefaultValueHint = AVM1DefaultValueHint.NUMBER): any {
       if (hint === AVM1DefaultValueHint.STRING) {
         var toString = this.alGet('toString');
-        if (toString instanceof AVM1Object) {
+        if (alIsFunction(toString)) {
           var str = toString.alCall(this);
           return str;
         }
         var valueOf = this.alGet('valueOf');
-        if (valueOf instanceof AVM1Object) {
+        if (alIsFunction(valueOf)) {
           var val = valueOf.alCall(this);
           return val;
         }
       } else {
         release || Debug.assert(hint === AVM1DefaultValueHint.NUMBER);
         var valueOf = this.alGet('valueOf');
-        if (valueOf instanceof AVM1Object) {
+        if (alIsFunction(valueOf)) {
           var val = valueOf.alCall(this);
           return val;
         }
         var toString = this.alGet('toString');
-        if (toString instanceof AVM1Object) {
+        if (alIsFunction(toString)) {
           var str = toString.alCall(this);
           return str;
         }
       }
       // TODO is this a default?
-      return '[type ' + alGetObjectClass(this) + ']';
+      return this;
     }
 
     public alConstruct(args?: any[]): AVM1Object {
@@ -274,6 +275,13 @@ module Shumway.AVM1 {
     public constructor(context: AVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
+    }
+
+    public toJSFunction(): Function {
+      var fn = this;
+      return function () {
+        fn.alCall(null, Array.prototype.slice.call(arguments, 0));
+      };
     }
   }
 
@@ -371,8 +379,7 @@ module Shumway.AVM1 {
         if (v === null) {
           return 0;
         }
-        // TODO
-        return v;
+        return NaN;
       case 'boolean':
         return v ? 1 : 0;
       case 'number':
@@ -415,8 +422,7 @@ module Shumway.AVM1 {
         if (v === null) {
           return 'null';
         }
-        // TODO
-        return v;
+        return '[type ' + alGetObjectClass(v) + ']';
       case 'boolean':
         return v ? 'true' : 'false';
       case 'number':

@@ -306,13 +306,23 @@ module Shumway.AVM1.Lib {
   export function wrapAVM1NativeClass(context: AVM1Context, wrapAsFunction: boolean, cls: any, staticMembers: string[], members: string[], cstr?: Function): AVM1Object  {
     var wrappedFn = wrapAsFunction ?
       new AVM1NativeFunction(context, cstr || function () { }, function () {
-        // Doing nothing when AVM1 object is constructed directly.
+        // Creating simple AVM1 object
+        var obj = new AVM1Object(context);
+        obj.alPrototype = wrappedPrototype;
+        obj.alSetOwnProperty('__constructor__', {
+          flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
+          value: wrappedFn
+        });
+        return obj;
       }) :
       new AVM1Object(context);
     wrapAVM1NativeMembers(context, wrappedFn, cls, staticMembers, true);
     var wrappedPrototype = new cls(context);
     wrapAVM1NativeMembers(context, wrappedPrototype, cls.prototype, members, false);
-    wrappedFn.alPut('prototype', wrappedPrototype);
+    wrappedFn.alSetOwnProperty('prototype', {
+      flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+      value: wrappedPrototype
+    });
     wrappedPrototype.alSetOwnProperty('constructor', {
       flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
       value: wrappedFn
