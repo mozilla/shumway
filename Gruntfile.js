@@ -143,9 +143,13 @@ module.exports = function(grunt) {
         maxBuffer: Infinity,
         cmd: 'cat test/ats/test_swf_avm2.txt | parallel -k --no-notice -X -N50 utils/jsshell/js build/ts/shell.js --noColor -x -fc 10 {} > test/ats/test_swf_avm2.run && ' +
              'diff test/ats/test_swf_avm2.run test/ats/test_swf_avm2.baseline;'
-             // 'cat test/ats/test_swf_avm2.run | grep "Not Implemented\|Uncaught VM-internal"'
       },
-      spell: {
+      // Greps for errors in the |test_swf_avm2| output.
+      warn_swf_avm2: {
+        cmd: 'cat test/ats/test_swf_avm2.run | grep "Not Implemented\\|Uncaught VM-internal"; ' +
+             'cat test/avm2/test_avm2_acceptance.run | grep "Not Implemented\\|Uncaught VM-internal"'
+      },
+      warn_spell: {
         // TODO: Add more files.
         cmd: 'node utils/spell/spell.js build/ts/flash.js build/ts/avm2.js'
       },
@@ -172,8 +176,7 @@ module.exports = function(grunt) {
       test_avm2_acceptance: {
         maxBuffer: Infinity,
         cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance_pass.json | tee test/avm2/test_avm2_acceptance.run | egrep -o "(PASSED|FAILED|EXCEPTED|VM-internal|TIMEDOUT)" | sort | uniq -c | tee test/avm2/acceptance.run && ' +
-             'diff test/avm2/acceptance.run test/avm2/acceptance.baseline && ' +
-             'cat test/avm2/tee test/avm2/test_avm2_acceptance.run | egrep "(FAILED|EXCEPTED)"'
+             'diff test/avm2/acceptance.run test/avm2/acceptance.baseline'
       },
       perf_avm2_acceptance: {
         maxBuffer: Infinity,
@@ -193,7 +196,7 @@ module.exports = function(grunt) {
       // because the shell doesn't yet isolate player instances correctly.
       test_swf_acceptance: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel -k --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort | tee test/swf/acceptance.run && ' +
+        cmd: 'find -L test/swf -name "*.swf" | parallel -k --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort > test/swf/acceptance.run && ' +
              'diff test/swf/acceptance.run test/swf/acceptance.baseline'
       },
       test_avm2_baseline: {
@@ -636,10 +639,16 @@ module.exports = function(grunt) {
   ]);
   grunt.registerTask('gate', "Run this before checking in any code.", [
     'tslint:all',
-    'exec:spell',
     // 'closure', REDUX: Temporarily commented out.
     'test',
+    'warn'
   ]);
+
+  grunt.registerTask('warn', "Run this before checking in any code to report warnings.", [
+    'exec:warn_spell',
+    'exec:warn_swf_avm2'
+  ]);
+
   grunt.registerTask('perf-gate', "Run this before checking in any code to make sure you don't regress performance.", [
     'exec:perf_avm2_acceptance'
   ]);
@@ -655,7 +664,7 @@ module.exports = function(grunt) {
     'exec:test_avm2_pass',
     'exec:test_avm2_acceptance',
     'exec:test_swf_acceptance',
-    //'exec:test_swf_avm2',
+    'exec:test_swf_avm2',
     'exec:unit_test'
     // 'exec:tracetest'
     // 'exec:tracetest_swfdec'
