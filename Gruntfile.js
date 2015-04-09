@@ -198,12 +198,18 @@ module.exports = function(grunt) {
         maxBuffer: Infinity,
         cmd: 'find -L test/avm2/acceptance -name "*.abc" | parallel -k --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -d -v {}'
       },
-      // Runs SWFs and tests against the current baseline. If you get more tests to pass, update the baseline. This currently only runs 1 file at a time
-      // because the shell doesn't yet isolate player instances correctly.
+      // Runs SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
       test_swf_acceptance: {
         maxBuffer: Infinity,
         cmd: 'find -L test/swf -name "*.swf" | parallel -k --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort > test/swf/acceptance.run && ' +
              'diff test/swf/acceptance.run test/swf/acceptance.baseline'
+      },
+      // Runs archive SWFs and tests against the current baseline. If you get more tests to pass, update the baseline. For now, we c
+      test_arch_acceptance: {
+        maxBuffer: Infinity,
+        cmd: 'find -L test/arch/swfs -name "*.swf" | parallel -k --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort > test/arch/acceptance.run;' +
+             'echo "Output saved to test/arch/acceptance.run, at some point create a baseline and stick to it."'
+             // 'diff test/arch/acceptance.run test/arch/acceptance.baseline'
       },
       test_avm2_baseline: {
         cmd: 'node src/shell/numbers.js -c b -i ' + (grunt.option('include') || 'test/avm2/pass/') +
