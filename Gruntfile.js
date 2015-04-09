@@ -205,9 +205,11 @@ module.exports = function(grunt) {
              'diff test/swf/acceptance.run test/swf/acceptance.baseline'
       },
       // Runs archive SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
+      // TODO: We need to pass the -k flag to parallel to keep the output in the right order, do what once we're ready
+      // to make this part of grunt gate.
       test_arch_acceptance: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/arch/swfs -name "*.swf" | parallel -k --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort > test/arch/acceptance.run;' +
+        cmd: 'find -L test/arch/swfs -name "*.swf" | parallel --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | tee test/arch/acceptance.run;' +
              'echo "Output saved to test/arch/acceptance.run, at some point create a baseline and stick to it."'
              // 'diff test/arch/acceptance.run test/arch/acceptance.baseline'
       },
