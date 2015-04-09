@@ -15,7 +15,7 @@
  */
 // Class: GestureEvent
 module Shumway.AVMX.AS.flash.events {
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   export class GestureEvent extends flash.events.Event {
 
@@ -28,7 +28,7 @@ module Shumway.AVMX.AS.flash.events {
                 phase: string = null, localX: number = 0, localY: number = 0,
                 ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false) {
       super(type, bubbles, cancelable);
-      this._phase = asCoerceString(phase);
+      this._phase = axCoerceString(phase);
       this._localX = +localX;
       this._localY = +localY;
       this._ctrlKey = !!ctrlKey;
@@ -96,7 +96,7 @@ module Shumway.AVMX.AS.flash.events {
       return this._phase;
     }
     set phase(value: string) {
-      this._phase = asCoerceString(value);
+      this._phase = axCoerceString(value);
     }
 
     updateAfterEvent(): void {
@@ -105,7 +105,7 @@ module Shumway.AVMX.AS.flash.events {
 
     NativeCtor(phase: string, localX: number, localY: number,
                ctrlKey: boolean, altKey: boolean, shiftKey: boolean) {
-      this._phase = asCoerceString(phase);
+      this._phase = axCoerceString(phase);
       this._localX = +localX;
       this._localY = +localY;
       this._ctrlKey = !!ctrlKey;

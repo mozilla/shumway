@@ -249,7 +249,7 @@ module Shumway.AVMX.AS {
     }
     // The E4X spec says we must throw a TypeError for non-Boolean, Number, or String objects.
     // Flash thinks otherwise.
-    var x = securityDomain.xmlParser.parseFromString(asCoerceString(v));
+    var x = securityDomain.xmlParser.parseFromString(axCoerceString(v));
     var length = x.length();
     if (length === 0) {
       return createXML(securityDomain, ASXMLKind.Text);
@@ -1409,7 +1409,7 @@ module Shumway.AVMX.AS {
         // engine.
       }
       // Step 4.
-      return this.hasSimpleContent() && this.toString() === asCoerceString(other);
+      return this.hasSimpleContent() && this.toString() === axCoerceString(other);
       // The remaining steps are implemented by other means in the interpreter/compiler.
     }
 
@@ -1641,7 +1641,7 @@ module Shumway.AVMX.AS {
       if (arg && arg.axClass === this.securityDomain.AXQName) {
         return this.getProperty((<ASQName>arg).name);
       }
-      arg = asCoerceString(arg);
+      arg = axCoerceString(arg);
       if (arg === '*') {
         arg = null;
       }
@@ -1862,7 +1862,7 @@ module Shumway.AVMX.AS {
         return this.securityDomain.AXNamespace.FromNamespace(GetNamespace(this._name, inScopeNS));
       }
       // Step 5.a.
-      prefix = asCoerceString(prefix);
+      prefix = axCoerceString(prefix);
       // Step 5.b-c.
       for (var i = 0; i < inScopeNS.length; i++) {
         var ns = inScopeNS[i];
@@ -2273,7 +2273,7 @@ module Shumway.AVMX.AS {
           }
           // Step 6.c.
         } else {
-          c = asCoerceString(c);
+          c = axCoerceString(c);
         }
         // Step 6.d.
         var a: ASXML = null;
@@ -2865,7 +2865,7 @@ module Shumway.AVMX.AS {
 
     // 13.5.4.12 XMLList.prototype.hasOwnProperty ( P )
     native_hasOwnProperty(P: string): boolean {
-      P = asCoerceString(P);
+      P = axCoerceString(P);
       if (<any>this === this.securityDomain.AXXMLList.dPrototype) {
         return ASObject.prototype.native_hasOwnProperty.call(this, P);
       }

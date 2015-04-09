@@ -41,12 +41,14 @@ module Shumway {
       // If library is shell.abc, then just go ahead and run it now since
       // it's not worth doing it lazily given that it is so small.
       if (!!(libraries & AVM2LoadLibrariesFlags.Shell)) {
-        // REDUX:
+        var shellABC = new Shumway.AVMX.ABCFile(new Uint8Array(buffer));
+        securityDomain.system.loadAndExecuteABC(shellABC);
         result.resolve(securityDomain);
-        //SystemResourcesLoadingService.instance.load(SystemResourceId.ShellAbc).then(function (buffer) {
-        //  avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "shell.abc"));
-        //  result.resolve(avm2);
-        //}, result.reject);
+        SystemResourcesLoadingService.instance.load(SystemResourceId.ShellAbc).then(function (buffer) {
+          var shellABC = new Shumway.AVMX.ABCFile(new Uint8Array(buffer));
+          securityDomain.system.loadAndExecuteABC(shellABC);
+          result.resolve(securityDomain);
+        }, result.reject);
         return;
       }
 
@@ -61,7 +63,6 @@ module Shumway {
             SWF.leaveTimeline();
             result.resolve(securityDomain);
           }, result.reject);
-        return;
       }
 
       result.resolve(securityDomain);

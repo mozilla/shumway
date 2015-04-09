@@ -17,7 +17,7 @@
 module Shumway.AVMX.AS.flash.filters {
 
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   export class DisplacementMapFilter extends flash.filters.BitmapFilter {
 
@@ -128,7 +128,7 @@ module Shumway.AVMX.AS.flash.filters {
     }
     set mode(value: string) {
       somewhatImplemented("public flash.filters.DisplacementMapFilter::set mode");
-      this._mode = asCoerceString(value);
+      this._mode = axCoerceString(value);
     }
 
     get color(): number /*uint*/ {

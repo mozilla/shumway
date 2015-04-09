@@ -35,11 +35,11 @@ module Shumway.AVMX.AS {
         notImplemented("public flash.system.IME::static get conversionMode"); return;
       }
       static set conversionMode(mode: string) {
-        mode = asCoerceString(mode);
+        mode = axCoerceString(mode);
         notImplemented("public flash.system.IME::static set conversionMode"); return;
       }
       static setCompositionString(composition: string): void {
-        composition = asCoerceString(composition);
+        composition = axCoerceString(composition);
         notImplemented("public flash.system.IME::static setCompositionString"); return;
       }
       static doConversion(): void {
@@ -66,7 +66,7 @@ module Shumway.AVMX.AS {
       }
 
       static setClipboard(string: string): void {
-        string = asCoerceString(string);
+        string = axCoerceString(string);
         if (ClipboardService.instance === null) {
           console.warn('setClipboard is only available in the Firefox extension');
           return;

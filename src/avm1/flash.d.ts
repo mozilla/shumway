@@ -213,7 +213,7 @@ declare module Shumway.AVMX.AS.flash {
       stageHeight: number;
     }
 
-    class DisplaySymbol {
+    class DisplaySymbol extends Timeline.Symbol {
       id: number;
     }
     class BitmapSymbol extends DisplaySymbol {}
@@ -390,9 +390,10 @@ declare module Shumway.AVMX.AS.flash {
   }
 }
 
-declare module Shumway.AVM2.AS {
+declare module Shumway.AVMX.AS {
   function FlashUtilScript_getTimer();
   function FlashNetScript_navigateToURL(request, window_);
+  function constructClassFromSymbol(symbol: Timeline.Symbol, axClass: ASClass);
 }
 
 declare module Shumway.Timeline {
@@ -402,4 +403,5 @@ declare module Shumway.Timeline {
       actionsData: Uint8Array;
       actionsBlock: AVM1.AVM1ActionsData;
     }
+    class Symbol { }
 }

@@ -16,7 +16,7 @@
 // Class: ContextMenu
 module Shumway.AVMX.AS.flash.ui {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class ContextMenu extends flash.display.NativeMenu {
     
     static classInitializer: any = null;

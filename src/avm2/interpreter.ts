@@ -21,7 +21,7 @@ module Shumway.AVM2 {
   import asGetSlot = Shumway.AVM2.Runtime.asGetSlot;
   import asSetSlot = Shumway.AVM2.Runtime.asSetSlot;
   import asCoerce = Shumway.AVM2.Runtime.asCoerce;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import asAsType = Shumway.AVM2.Runtime.asAsType;
   import asTypeOf = Shumway.AVM2.Runtime.asTypeOf;
   import asIsInstanceOf = Shumway.AVM2.Runtime.asIsInstanceOf;
@@ -227,12 +227,12 @@ module Shumway.AVM2 {
           case OP.ifeq:
             b = stack.pop();
             a = stack.pop();
-            pc = asEquals(a, b) ? bc.offset : pc + 1;
+            pc = axEquals(a, b) ? bc.offset : pc + 1;
             continue;
           case OP.ifne:
             b = stack.pop();
             a = stack.pop();
-            pc = !asEquals(a, b) ? bc.offset : pc + 1;
+            pc = !axEquals(a, b) ? bc.offset : pc + 1;
             continue;
           case OP.ifstricteq:
             b = stack.pop();
@@ -462,7 +462,7 @@ module Shumway.AVM2 {
             asSetSlot(object, bc.index, value);
             break;
           case OP.convert_s:
-            stack[stack.length - 1] = asCoerceString(stack[stack.length - 1]);
+            stack[stack.length - 1] = axCoerceString(stack[stack.length - 1]);
             break;
           case OP.esc_xattr:
             stack[stack.length - 1] = Runtime.escapeXMLAttribute(stack[stack.length - 1]);
@@ -495,7 +495,7 @@ module Shumway.AVM2 {
           case OP.coerce_a:
             /* NOP */ break;
           case OP.coerce_s:
-            stack[stack.length - 1] = asCoerceString(stack[stack.length - 1]);
+            stack[stack.length - 1] = axCoerceString(stack[stack.length - 1]);
             break;
           case OP.astype:
             stack[stack.length - 2] = asAsType(domain.getType(multinames[bc.index]), stack[stack.length - 1]);
@@ -565,7 +565,7 @@ module Shumway.AVM2 {
             stack[stack.length - 2] ^= stack.pop();
             break;
           case OP.equals:
-            stack[stack.length - 2] = asEquals(stack[stack.length - 2], stack.pop());
+            stack[stack.length - 2] = axEquals(stack[stack.length - 2], stack.pop());
             break;
           case OP.strictequals:
             stack[stack.length - 2] = stack[stack.length - 2] === stack.pop();

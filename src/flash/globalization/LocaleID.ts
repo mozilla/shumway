@@ -16,7 +16,7 @@
 // Class: LocaleID
 module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class LocaleID extends ASObject {
     
     // Called whenever the class is initialized.
@@ -30,7 +30,7 @@ module Shumway.AVMX.AS.flash.globalization {
     
     constructor (name: string) {
       super();
-      name = asCoerceString(name);
+      name = axCoerceString(name);
     }
     
     // JS -> AS Bindings
@@ -39,7 +39,7 @@ module Shumway.AVMX.AS.flash.globalization {
     
     // AS -> JS Bindings
     static determinePreferredLocales(want: ASVector<any>, have: ASVector<any>, keyword: string = "userinterface"): ASVector<any> {
-      want = want; have = have; keyword = asCoerceString(keyword);
+      want = want; have = have; keyword = axCoerceString(keyword);
       notImplemented("public flash.globalization.LocaleID::static determinePreferredLocales"); return;
     }
     
@@ -72,7 +72,7 @@ module Shumway.AVMX.AS.flash.globalization {
       notImplemented("public flash.globalization.LocaleID::isRightToLeft"); return;
     }
     ctor(name: string): void {
-      name = asCoerceString(name);
+      name = axCoerceString(name);
       notImplemented("public flash.globalization.LocaleID::ctor"); return;
     }
   }

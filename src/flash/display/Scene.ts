@@ -15,7 +15,7 @@
  */
 // Class: Scene
 module Shumway.AVMX.AS.flash.display {
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class Scene extends ASObject {
 
     static classInitializer: any = null;
@@ -24,7 +24,7 @@ module Shumway.AVMX.AS.flash.display {
 
     constructor (name: string, labels: FrameLabel[], offset: number, numFrames: number /*int*/) {
       super();
-      this._name = asCoerceString(name);
+      this._name = axCoerceString(name);
       // Note: creating Scene objects in ActionScript, while possible, is undocumented and entirely
       // useless. Luckily, that also means that they're not very carefully implemented.
       // Specifically, the `labels` array isn't cloned during construction or when returned from

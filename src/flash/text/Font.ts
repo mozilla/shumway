@@ -16,7 +16,7 @@
 // Class: Font
 module Shumway.AVMX.AS.flash.text {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import assert = Debug.assert;
 
   import FontStyle = flash.text.FontStyle;
@@ -954,7 +954,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     hasGlyphs(str: string): boolean {
-      str = asCoerceString(str);
+      str = axCoerceString(str);
       somewhatImplemented('Font#hasGlyphs');
       return true;
     }

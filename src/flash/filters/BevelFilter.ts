@@ -17,7 +17,7 @@
 module Shumway.AVMX.AS.flash.filters {
 
   import Rectangle = flash.geom.Rectangle;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import assert = Shumway.Debug.assert;
 
   export class BevelFilter extends flash.filters.BitmapFilter {
@@ -202,7 +202,7 @@ module Shumway.AVMX.AS.flash.filters {
       return this._type;
     }
     set type(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       if (value === null) {
         this.securityDomain.throwError("TypeError", Errors.NullPointerError, "type");
       } else {

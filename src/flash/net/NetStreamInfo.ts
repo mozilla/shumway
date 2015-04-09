@@ -58,8 +58,8 @@ module Shumway.AVMX.AS.flash.net {
       this.videoLossRate = +videoLossRate;
       this.metaData = metaData;
       this.xmpData = xmpData;
-      this.uri = asCoerceString(uri);
-      this.resourceName = asCoerceString(resourceName);
+      this.uri = axCoerceString(uri);
+      this.resourceName = axCoerceString(resourceName);
       this.isLive = !!isLive;
     }
     

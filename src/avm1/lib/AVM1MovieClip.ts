@@ -123,6 +123,7 @@ module Shumway.AVM1.Lib {
 
       // REDUX
       var mc:flash.display.MovieClip; // = this.context.securityDomain.flash.display.MovieClip.initializeFrom(props);
+      mc = Shumway.AVMX.AS.constructClassFromSymbol(props, this.context.securityDomain.flash.display.MovieClip.axClass);
       //this.context.securityDomain.flash.display.MovieClip.instanceConstructorNoInitialize.call(mc);
 
       return mc;
@@ -350,7 +351,7 @@ module Shumway.AVM1.Lib {
       if (method) {
         request.method = method;
       }
-      Shumway.AVM2.AS.FlashNetScript_navigateToURL(request, window);
+      Shumway.AVMX.AS.FlashNetScript_navigateToURL(request, window);
     }
 
     public globalToLocal(pt) {

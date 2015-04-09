@@ -17,7 +17,6 @@
 
 module Shumway.AVM1 {
   import isNumeric = Shumway.isNumeric;
-  import isFunction = Shumway.isFunction;
   import notImplemented = Shumway.Debug.notImplemented;
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
@@ -572,9 +571,6 @@ module Shumway.AVM1 {
     });
   }
 
-  //__resolvePropertyResult.link = obj;
-  //__resolvePropertyResult.name = name;
-
   function avm1ResolveProperty(obj, name: string, normalize: boolean): ResolvePropertyResult {
     // AVM1 just ignores lookups on non-existant containers
     if (isNullOrUndefined(obj)) {
@@ -711,6 +707,10 @@ module Shumway.AVM1 {
     var resolved;
     var proto = (frame.inSequence && frame.previousFrame.calleeSuper);
     if (!proto) {
+      // REDUX
+      avm1Warn('super does not work yet');
+      return;
+
       // Skip prototype chain until first specified member is found
       resolved = avm1ResolveProperty(frame.currentThis, propertyName, false);
       if (!resolved) {
@@ -732,7 +732,7 @@ module Shumway.AVM1 {
     return {
       target: resolved.link,
       name: resolved.name,
-      obj: resolved.link.axGetPublicProperty(resolved.name)
+      obj: resolved.link.alGet(resolved.name)
     };
   }
 
@@ -828,8 +828,10 @@ module Shumway.AVM1 {
     return undefined;
   }
 
-  class AVM1SuperWrapper {
-    constructor(public callFrame: AVM1CallFrame) {}
+  class AVM1SuperWrapper extends AVM1Object {
+    public constructor(context: AVM1Context, public callFrame: AVM1CallFrame) {
+      super(context);
+    }
   }
 
   interface ExecutionContext {
@@ -963,7 +965,7 @@ module Shumway.AVM1 {
           newScope.alPut('this', thisArg);
         }
         if (!(suppressArguments & ArgumentAssignmentType.Super)) {
-          supperWrapper = new AVM1SuperWrapper(frame);
+          supperWrapper = new AVM1SuperWrapper(currentContext, frame);
           newScope.alPut('super', supperWrapper);
         }
         newScopeContainer = scopeContainer.create(newScope);
@@ -984,14 +986,14 @@ module Shumway.AVM1 {
                 registers[i] = argumentsClone;
                 break;
               case ArgumentAssignmentType.Super:
-                supperWrapper = supperWrapper || new AVM1SuperWrapper(frame);
+                supperWrapper = supperWrapper || new AVM1SuperWrapper(currentContext, frame);
                 registers[i] = supperWrapper;
                 break;
               case ArgumentAssignmentType.Global:
                 registers[i] = currentContext.globals;
                 break;
               case ArgumentAssignmentType.Parent:
-                registers[i] = scope.axGetPublicProperty('_parent');
+                registers[i] = scope.alGet('_parent');
                 break;
               case ArgumentAssignmentType.Root:
                 registers[i] = currentContext.resolveLevel(0);
@@ -1087,7 +1089,7 @@ module Shumway.AVM1 {
         obj = currentContext.globals;
         for (i = 0; i < objPath.length; i++) {
           resolved = avm1ResolveProperty(obj, objPath[i], false);
-          obj = resolved && resolved.link.axGetPublicProperty(resolved.name);
+          obj = resolved && resolved.link.alGet(resolved.name);
           if (!obj) {
             avm1Warn(objPath.slice(0, i + 1) + ' is undefined');
             return null;
@@ -1232,7 +1234,7 @@ module Shumway.AVM1 {
           caughtError = e;
         } else {
           if (typeof catchTarget === 'string') { // TODO catchIsRegisterFlag?
-            scope.axSetPublicProperty(catchTarget, e.error);
+            scope.alPut(catchTarget, e.error);
           } else {
             registers[catchTarget] = e.error;
           }
@@ -1701,9 +1703,9 @@ module Shumway.AVM1 {
           target = obj;
         }
         // AVM1 simply ignores attempts to invoke non-functions.
-        if (isFunction(fn)) {
+        if (alIsFunction(fn)) {
           frame.setCallee(target, superArg, fn, args);
-          stack[sp] = fn.apply(target, args);
+          stack[sp] = fn.alCall(target, args);
           frame.resetCallee();
         } else {
           avm1Warn("AVM1 warning: obj '" + obj + (obj ? "' is not callable" : "' is undefined"));

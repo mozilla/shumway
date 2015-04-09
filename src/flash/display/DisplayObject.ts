@@ -29,7 +29,7 @@ module Shumway.AVMX.AS.flash.display {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import abstractMethod = Shumway.Debug.abstractMethod;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import checkNullParameter = Shumway.AVMX.checkNullParameter;
   import assert = Shumway.Debug.assert;
   import unexpected = Shumway.Debug.unexpected;
@@ -1518,7 +1518,7 @@ module Shumway.AVMX.AS.flash.display {
 
     set name(value: string) {
       checkNullParameter(value, "name", this.securityDomain);
-      this._name = asCoerceString(value);
+      this._name = axCoerceString(value);
     }
 
     get parent(): DisplayObjectContainer {
@@ -1547,7 +1547,7 @@ module Shumway.AVMX.AS.flash.display {
 
     set blendMode(value: string) {
       this._stopTimelineAnimation();
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       if (value === this._blendMode) {
         return;
       }

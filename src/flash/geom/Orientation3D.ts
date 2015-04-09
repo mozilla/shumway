@@ -16,7 +16,7 @@
 // Class: Orientation3D
 module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class Orientation3D extends ASObject {
     
     // Called whenever the class is initialized.

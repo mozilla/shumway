@@ -16,7 +16,7 @@
 // Class: ApplicationDomain
 module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import RuntimeApplicationDomain = Shumway.AVMX.ApplicationDomain;
 
 
@@ -74,7 +74,7 @@ module Shumway.AVMX.AS.flash.system {
   //    // this._domainMemory = mem;
   //  }
   //  getDefinition(name: string): Object {
-  //    name = asCoerceString(name);
+  //    name = axCoerceString(name);
   //    if (name) {
   //      var simpleName = name.replace("::", ".");
   //      return this._runtimeDomain.getProperty(Multiname.fromSimpleName(simpleName), true, true);
@@ -82,7 +82,7 @@ module Shumway.AVMX.AS.flash.system {
   //    return null;
   //  }
   //  hasDefinition(name: string): boolean {
-  //    name = asCoerceString(name);
+  //    name = axCoerceString(name);
   //    if (name) {
   //      var simpleName = name.replace("::", ".");
   //      return !!this._runtimeDomain.findDomainProperty(Multiname.fromSimpleName(simpleName), false, false);

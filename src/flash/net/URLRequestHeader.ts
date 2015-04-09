@@ -15,7 +15,7 @@
  */
 // Class: URLRequestHeader
 module Shumway.AVMX.AS.flash.net {
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   export class URLRequestHeader extends ASObject {
     
@@ -30,8 +30,8 @@ module Shumway.AVMX.AS.flash.net {
     
     constructor (name: string = "", value: string = "") {
       super();
-      this.name = asCoerceString(name);
-      this.value = asCoerceString(value);
+      this.name = axCoerceString(name);
+      this.value = axCoerceString(value);
     }
     
     name: string;

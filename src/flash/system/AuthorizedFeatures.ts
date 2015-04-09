@@ -40,7 +40,7 @@ module Shumway.AVMX.AS.flash.system {
       notImplemented("public flash.system.AuthorizedFeatures::enableDiskCache"); return;
     }
     isFeatureEnabled(feature: string, data: string = null): boolean {
-      feature = asCoerceString(feature); data = asCoerceString(data);
+      feature = axCoerceString(feature); data = axCoerceString(data);
       notImplemented("public flash.system.AuthorizedFeatures::isFeatureEnabled"); return;
     }
     isNegativeToken(): boolean {

@@ -16,7 +16,7 @@
 // Class: H264Profile
 module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class H264Profile extends ASObject {
     
     // Called whenever the class is initialized.

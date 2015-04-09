@@ -15,7 +15,7 @@
  */
 // Class: TextFormat
 module Shumway.AVMX.AS.flash.text {
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import roundHalfEven = Shumway.NumberUtilities.roundHalfEven;
   import notImplemented = Shumway.Debug.notImplemented;
 
@@ -74,7 +74,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set align(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       //if (TextFormatAlign.toNumber(value) < 0) {
       //  this.securityDomain.throwError("ArgumentError", Errors.InvalidEnumError, "align");
       //}
@@ -118,7 +118,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set display(value: string) {
-      this._display = asCoerceString(value);
+      this._display = axCoerceString(value);
     }
 
     get font(): string {
@@ -126,7 +126,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set font(value: string) {
-      this._font = asCoerceString(value);
+      this._font = axCoerceString(value);
     }
 
     get style(): string {
@@ -222,7 +222,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set target(value: string) {
-      this._target = asCoerceString(value);
+      this._target = axCoerceString(value);
     }
 
     get underline(): Object {
@@ -238,7 +238,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set url(value: string) {
-      this._url = asCoerceString(value);
+      this._url = axCoerceString(value);
     }
 
     /**
@@ -447,7 +447,7 @@ module Shumway.AVMX.AS.flash.text {
         // When parsing colors, whitespace is trimmed away, and all numbers are accepted, as long
         // as they make up the full string after the "#", without any non-numeric pre- or suffix.
         // This implementation is somewhat atrocious, but it should be reasonably fast and works.
-        var colorStr = asCoerceString(v).trim().toLowerCase();
+        var colorStr = axCoerceString(v).trim().toLowerCase();
         if (colorStr[0] === '#') {
           var numericPart = colorStr.substr(1);
           while (numericPart[0] === '0') {

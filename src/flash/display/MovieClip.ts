@@ -18,7 +18,7 @@ module Shumway.AVMX.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
   import clamp = Shumway.NumberUtilities.clamp;
   import Telemetry = Shumway.Telemetry;
@@ -407,7 +407,7 @@ module Shumway.AVMX.AS.flash.display {
       var legacyMode = navigationModel !== FrameNavigationModel.SWF10;
       var scene: Scene;
       if (sceneName !== null) {
-        sceneName = asCoerceString(sceneName);
+        sceneName = axCoerceString(sceneName);
         var scenes = this._scenes;
         release || assert (scenes.length, "There should be at least one scene defined.");
         for (var i = 0; i < scenes.length; i++) {
@@ -702,8 +702,8 @@ module Shumway.AVMX.AS.flash.display {
                                        'flash.display::MovieClip/gotoAndPlay()', 1,
                                        arguments.length);
       }
-      scene = asCoerceString(scene);
-      frame = asCoerceString(frame) + ''; // The asCoerceString returns `null` for `undefined`.
+      scene = axCoerceString(scene);
+      frame = axCoerceString(frame) + ''; // The axCoerceString returns `null` for `undefined`.
       this.play();
       this._gotoFrame(frame, scene);
     }
@@ -715,8 +715,8 @@ module Shumway.AVMX.AS.flash.display {
                                        'flash.display::MovieClip/gotoAndPlay()', 1,
                                        arguments.length);
       }
-      scene = asCoerceString(scene);
-      frame = asCoerceString(frame) + ''; // The asCoerceString returns `null` for `undefined`.
+      scene = axCoerceString(scene);
+      frame = axCoerceString(frame) + ''; // The axCoerceString returns `null` for `undefined`.
       this.stop();
       this._gotoFrame(frame, scene);
     }

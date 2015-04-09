@@ -15,7 +15,7 @@
  */
 // Class: URLVariables
 module Shumway.AVMX.AS.flash.net {
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   declare var escape;
   declare var unescape;
@@ -35,7 +35,7 @@ module Shumway.AVMX.AS.flash.net {
     _ignoreDecodingErrors: boolean;
 
     decode(source: string): void {
-      source = asCoerceString(source);
+      source = axCoerceString(source);
       var variables = source.split('&');
       for (var i = 0; i < variables.length; i++) {
         var p = variables[i];

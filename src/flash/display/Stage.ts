@@ -18,7 +18,7 @@ module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import assert = Shumway.Debug.assert;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   export class Stage extends flash.display.DisplayObjectContainer {
 
@@ -127,7 +127,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     set scaleMode(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       if (flash.display.StageScaleMode.toNumber(value) < 0) {
         this.securityDomain.throwError("ArgumentError", Errors.InvalidEnumError, "scaleMode");
       }
@@ -139,7 +139,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     set align(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       var n = flash.display.StageAlign.toNumber(value);
       release || assert (n >= 0);
       this._align = flash.display.StageAlign.fromNumber(n);
@@ -239,7 +239,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     set colorCorrection(value: string) {
-      //this._colorCorrection = asCoerceString(value);
+      //this._colorCorrection = axCoerceString(value);
       notImplemented("public flash.display.Stage::set colorCorrection"); return;
     }
 
@@ -262,7 +262,7 @@ module Shumway.AVMX.AS.flash.display {
     set quality(value: string)  {
       // TODO: The *linear versions return just *, stripping the "linear" part
       // Value is compared case-insensitively, and has default handling, so '' is ok.
-      value = (asCoerceString(value) || '').toLowerCase();
+      value = (axCoerceString(value) || '').toLowerCase();
       if (flash.display.StageQuality.toNumber(value) < 0) {
         value = flash.display.StageQuality.HIGH;
       }
@@ -274,7 +274,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     set displayState(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       // TODO: This should only be allowed if the embedding page allows full screen mode.
       if (flash.display.StageDisplayState.toNumber(value) < 0) {
         value = flash.display.StageDisplayState.NORMAL;

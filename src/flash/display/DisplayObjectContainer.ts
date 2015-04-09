@@ -18,7 +18,7 @@
 module Shumway.AVMX.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import mixHash = Shumway.HashUtilities.mixHash;
   import checkParameterType = Shumway.AVMX.checkParameterType;
   import clamp = Shumway.NumberUtilities.clamp;
@@ -435,7 +435,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     getChildByName(name: string): DisplayObject {
-      name = asCoerceString(name);
+      name = axCoerceString(name);
 
       var child = this._lookupChildByName(name);
       if (child) {

@@ -16,7 +16,7 @@
 // Class: XMLSocket
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class XMLSocket extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -30,7 +30,7 @@ module Shumway.AVMX.AS.flash.net {
     
     constructor (host: string = null, port: number /*int*/ = 0) {
       super();
-      host = asCoerceString(host); port = port | 0;
+      host = axCoerceString(host); port = port | 0;
     }
     
     // JS -> AS Bindings

@@ -364,7 +364,7 @@ module Shumway.AVM2.Runtime {
   export function resolveMultinameProperty(namespaces: Namespace [], name: string, flags: number) {
     var self: Object = this;
     if (isNullOrUndefined(name)) {
-      name = String(asCoerceString(name));
+      name = String(axCoerceString(name));
     } else if (typeof name === "object") {
       name = String(name);
     }
@@ -910,7 +910,7 @@ module Shumway.AVM2.Runtime {
     return AS.escapeElementValue(value);
   }
 
-  export function asEquals(left: any, right: any): boolean {
+  export function axEquals(left: any, right: any): boolean {
     // See E4X spec, 11.5 Equality Operators for why this is required.
     if (isXMLType(left)) {
       return left.equals(right);
@@ -925,15 +925,15 @@ module Shumway.AVM2.Runtime {
     release || assert(multiname.isQName());
     switch (Multiname.getQualifiedName(multiname)) {
       case Multiname.Int:
-        return asCoerceInt(value);
+        return axCoerceInt(value);
       case Multiname.Uint:
-        return asCoerceUint(value);
+        return axCoerceUint(value);
       case Multiname.String:
-        return asCoerceString(value);
+        return axCoerceString(value);
       case Multiname.Number:
-        return asCoerceNumber(value);
+        return axCoerceNumber(value);
       case Multiname.Boolean:
-        return asCoerceBoolean(value);
+        return axCoerceBoolean(value);
       case Multiname.Object:
         return asCoerceObject(value);
     }
@@ -948,7 +948,7 @@ module Shumway.AVM2.Runtime {
    * Similar to |toString| but returns |null| for |null| or |undefined| instead
    * of "null" or "undefined".
    */
-  export function asCoerceString(x): string {
+  export function axCoerceString(x): string {
     if (typeof x === "string") {
       return x;
     } else if (x == undefined) {
@@ -957,19 +957,19 @@ module Shumway.AVM2.Runtime {
     return x.toString();
   }
 
-  export function asCoerceInt(x): number {
+  export function axCoerceInt(x): number {
     return x | 0;
   }
 
-  export function asCoerceUint(x): number {
+  export function axCoerceUint(x): number {
     return x >>> 0;
   }
 
-  export function asCoerceNumber(x): number {
+  export function axCoerceNumber(x): number {
     return +x;
   }
 
-  export function asCoerceBoolean(x): boolean {
+  export function axCoerceBoolean(x): boolean {
     return !!x;
   }
 
@@ -1894,15 +1894,15 @@ var asCreateActivation = Shumway.AVM2.Runtime.asCreateActivation;
 var asIsInstanceOf = Shumway.AVM2.Runtime.asIsInstanceOf;
 var asIsType = Shumway.AVM2.Runtime.asIsType;
 var asAsType = Shumway.AVM2.Runtime.asAsType;
-var asEquals = Shumway.AVM2.Runtime.asEquals;
+var axEquals = Shumway.AVM2.Runtime.axEquals;
 var asTypeOf = Shumway.AVM2.Runtime.asTypeOf;
 var asCoerceByMultiname = Shumway.AVM2.Runtime.asCoerceByMultiname;
 var asCoerce = Shumway.AVM2.Runtime.asCoerce;
-var asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-var asCoerceInt = Shumway.AVM2.Runtime.asCoerceInt;
-var asCoerceUint = Shumway.AVM2.Runtime.asCoerceUint;
-var asCoerceNumber = Shumway.AVM2.Runtime.asCoerceNumber;
-var asCoerceBoolean = Shumway.AVM2.Runtime.asCoerceBoolean;
+var axCoerceString = Shumway.AVM2.Runtime.axCoerceString;
+var axCoerceInt = Shumway.AVM2.Runtime.axCoerceInt;
+var axCoerceUint = Shumway.AVM2.Runtime.axCoerceUint;
+var axCoerceNumber = Shumway.AVM2.Runtime.axCoerceNumber;
+var axCoerceBoolean = Shumway.AVM2.Runtime.axCoerceBoolean;
 var asCoerceObject = Shumway.AVM2.Runtime.asCoerceObject;
 var asCompare = Shumway.AVM2.Runtime.asCompare;
 var asAdd = Shumway.AVM2.Runtime.asAdd;

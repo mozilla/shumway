@@ -16,7 +16,7 @@
 // Class: TextureBase
 module Shumway.AVMX.AS.flash.display3D.textures {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class TextureBase extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.

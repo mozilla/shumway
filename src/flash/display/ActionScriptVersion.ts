@@ -16,7 +16,7 @@
 // Class: ActionScriptVersion
 module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class ActionScriptVersion extends ASObject {
     
     // Called whenever the class is initialized.

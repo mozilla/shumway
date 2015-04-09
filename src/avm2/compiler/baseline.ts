@@ -1050,7 +1050,7 @@ module Shumway.AVM2.Compiler {
     emitIfEq(block: Bytecode, bc: Bytecode, negate: boolean) {
       var y = this.pop();
       var x = this.pop();
-      var condition = "asEquals(" + x + ", " + y + ")";
+      var condition = "axEquals(" + x + ", " + y + ")";
       if (negate) {
         condition = "!" + condition;
       }
@@ -1289,7 +1289,7 @@ module Shumway.AVM2.Compiler {
         return;
       }
       var val = this.peek();
-      this.blockEmitter.writeLn(val + ' = asCoerceString(' + val + ');');
+      this.blockEmitter.writeLn(val + ' = axCoerceString(' + val + ');');
     }
 
     emitInstanceof() {
@@ -1338,7 +1338,7 @@ module Shumway.AVM2.Compiler {
 
     emitEquals() {
       var right = this.pop();
-      this.emitReplace('asEquals(' + this.peek() + ', ' + right + ')');
+      this.emitReplace('axEquals(' + this.peek() + ', ' + right + ')');
     }
 
     emitUnaryOp(operator: string) {
@@ -1398,7 +1398,7 @@ module Shumway.AVM2.Compiler {
       case Multiname.Uint:
         return value + ' >>> 0';
       case Multiname.String:
-        return 'asCoerceString(' + value + ')';
+        return 'axCoerceString(' + value + ')';
       case Multiname.Number:
         return '+' + value;
       case Multiname.Boolean:

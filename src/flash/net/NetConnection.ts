@@ -16,7 +16,7 @@
 // Class: NetConnection
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import Telemetry = Shumway.Telemetry;
 
@@ -76,7 +76,7 @@ module Shumway.AVMX.AS.flash.net {
       return this._uri;
     }
     connect(command: string): void {
-      command = asCoerceString(command);
+      command = axCoerceString(command);
 
       somewhatImplemented("public flash.net.NetConnection::connect");
       this._uri = command;
@@ -164,7 +164,7 @@ module Shumway.AVMX.AS.flash.net {
       return this._proxyType;
     }
     set proxyType(ptype: string) {
-      ptype = asCoerceString(ptype);
+      ptype = axCoerceString(ptype);
       somewhatImplemented("public flash.net.NetConnection::set proxyType");
       this._proxyType = ptype;
     }

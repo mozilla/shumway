@@ -16,7 +16,7 @@
 // Class: Shader
 module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class Shader extends ASObject {
     
     // Called whenever the class is initialized.
@@ -57,7 +57,7 @@ module Shumway.AVMX.AS.flash.display {
       // return this._precisionHint;
     }
     set precisionHint(p: string) {
-      p = asCoerceString(p);
+      p = axCoerceString(p);
       notImplemented("public flash.display.Shader::set precisionHint"); return;
       // this._precisionHint = p;
     }

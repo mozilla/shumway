@@ -16,7 +16,7 @@
 // Class: ShaderParameter
 module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class ShaderParameter extends ASObject {
     
     // Called whenever the class is initialized.

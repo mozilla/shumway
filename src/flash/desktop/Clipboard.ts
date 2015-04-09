@@ -15,9 +15,9 @@
  */
 // Class: Clipboard
 module Shumway.AVMX.AS.flash.desktop {
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class Clipboard extends ASObject {
     
     // Called whenever the class is initialized.
@@ -56,7 +56,7 @@ module Shumway.AVMX.AS.flash.desktop {
       notImplemented("public flash.desktop.Clipboard::clear"); return;
     }
     clearData(format: string): void {
-      format = asCoerceString(format);
+      format = axCoerceString(format);
       notImplemented("public flash.desktop.Clipboard::clearData"); return;
     }
   }

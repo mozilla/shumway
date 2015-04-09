@@ -16,7 +16,7 @@
 // Class: GraphicsGradientFill
 module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class GraphicsGradientFill extends ASObject implements IGraphicsFill, IGraphicsData {
     
     // Called whenever the class is initialized.
@@ -30,13 +30,13 @@ module Shumway.AVMX.AS.flash.display {
     
     constructor (type: string = "linear", colors: any [] = null, alphas: any [] = null, ratios: any [] = null, matrix: any = null, spreadMethod: any = "pad", interpolationMethod: string = "rgb", focalPointRatio: number = 0) {
       super();
-      this.type = asCoerceString(type);
+      this.type = axCoerceString(type);
       this.colors = colors;
       this.alphas = alphas;
       this.ratios = ratios;
       this.matrix = matrix;
       this.spreadMethod = spreadMethod;
-      this.interpolationMethod = asCoerceString(interpolationMethod);
+      this.interpolationMethod = axCoerceString(interpolationMethod);
       this.focalPointRatio = +focalPointRatio;
     }
     

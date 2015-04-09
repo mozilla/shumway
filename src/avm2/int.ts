@@ -270,13 +270,13 @@ module Shumway.AVMX {
             b = stack.pop();
             a = stack.pop();
             offset = s24();
-            pc = asEquals(a, b, securityDomain) ? pc + offset : pc;
+            pc = axEquals(a, b, securityDomain) ? pc + offset : pc;
             continue;
           case Bytecode.IFNE:
             b = stack.pop();
             a = stack.pop();
             offset = s24();
-            pc = !asEquals(a, b, securityDomain) ? pc + offset : pc;
+            pc = !axEquals(a, b, securityDomain) ? pc + offset : pc;
             continue;
           case Bytecode.IFSTRICTEQ:
             b = stack.pop();
@@ -582,10 +582,10 @@ module Shumway.AVMX {
             stack[stack.length - 1] = !!stack[stack.length - 1];
             break;
           case Bytecode.COERCE_S:
-            stack[stack.length - 1] = asCoerceString(stack[stack.length - 1]);
+            stack[stack.length - 1] = axCoerceString(stack[stack.length - 1]);
             break;
           case Bytecode.CONVERT_S:
-            stack[stack.length - 1] = asConvertString(stack[stack.length - 1]);
+            stack[stack.length - 1] = axConvertString(stack[stack.length - 1]);
             break;
           case Bytecode.CHECKFILTER:
             stack[stack.length - 1] = axCheckFilter(stack[stack.length - 1], securityDomain);
@@ -640,7 +640,7 @@ module Shumway.AVMX {
             if (typeof a === "number" && typeof b === "number") {
               stack[stack.length - 1] = a + b;
             } else {
-              stack[stack.length - 1] = asAdd(a, b, securityDomain);
+              stack[stack.length - 1] = axAdd(a, b, securityDomain);
             }
             break;
           case Bytecode.SUBTRACT:
@@ -674,7 +674,7 @@ module Shumway.AVMX {
             stack[stack.length - 2] ^= stack.pop();
             break;
           case Bytecode.EQUALS:
-            stack[stack.length - 2] = asEquals(stack[stack.length - 2], stack.pop(),
+            stack[stack.length - 2] = axEquals(stack[stack.length - 2], stack.pop(),
                                                securityDomain);
             break;
           case Bytecode.STRICTEQUALS:

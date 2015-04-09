@@ -17,7 +17,7 @@
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   import assert = Shumway.Debug.assert;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import events = Shumway.AVMX.AS.flash.events;
   import net = Shumway.AVMX.AS.flash.net;
@@ -48,7 +48,7 @@ module Shumway.AVMX.AS.flash.net {
     constructor (connection: flash.net.NetConnection, peerID: string = "connectToFMS") {
       super();
       this._connection = connection;
-      this._peerID = asCoerceString(peerID);
+      this._peerID = axCoerceString(peerID);
       this._id = flash.display.DisplayObject.getNextSyncID();
       this._isDirty = true;
       this._soundTransform = new this.securityDomain.flash.media.SoundTransform();
@@ -170,7 +170,7 @@ module Shumway.AVMX.AS.flash.net {
       flash.media.SoundMixer._registerSoundSource(this);
 
       // (void) -> void ???
-      url = asCoerceString(url);
+      url = axCoerceString(url);
 
       var service: IVideoElementService = this.securityDomain.player;
       service.registerEventListener(this._id, this.processVideoEvent.bind(this));
@@ -830,7 +830,7 @@ module Shumway.AVMX.AS.flash.net {
     appendBytesAction(netStreamAppendBytesAction: string) {
       release || assert(this._state === VideoStreamState.OPENED_DATA_GENERATION ||
                         this._state === VideoStreamState.OPENED);
-      netStreamAppendBytesAction = asCoerceString(netStreamAppendBytesAction);
+      netStreamAppendBytesAction = axCoerceString(netStreamAppendBytesAction);
       // TODO Ignoring reset actions for now.
       if (netStreamAppendBytesAction === 'endSequence') {
         if (!this._decoder) { // Probably pushed not enough data.

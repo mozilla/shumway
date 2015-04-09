@@ -17,7 +17,7 @@
 module Shumway.AVMX.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class TextLine extends flash.display.DisplayObjectContainer {
     
     // Called whenever the class is initialized.
@@ -144,7 +144,7 @@ module Shumway.AVMX.AS.flash.text.engine {
       // return this._validity;
     }
     set validity(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.text.engine.TextLine::set validity"); return;
       // this._validity = value;
     }
@@ -197,7 +197,7 @@ module Shumway.AVMX.AS.flash.text.engine {
       notImplemented("public flash.text.engine.TextLine::getAtomGraphic"); return;
     }
     getBaselinePosition(baseline: string): number {
-      baseline = asCoerceString(baseline);
+      baseline = axCoerceString(baseline);
       notImplemented("public flash.text.engine.TextLine::getBaselinePosition"); return;
     }
     dump(): string {

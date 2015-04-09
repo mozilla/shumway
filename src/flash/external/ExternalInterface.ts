@@ -16,7 +16,7 @@
 // Class: ExternalInterface
 module Shumway.AVMX.AS.flash.external {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import Telemetry = Shumway.Telemetry;
   import ExternalInterfaceService = Shumway.ExternalInterfaceService;
 
@@ -71,10 +71,7 @@ module Shumway.AVMX.AS.flash.external {
     }
 
     static _getPropNames(obj: ASObject): any [] {
-      var keys = [];
-      // REDUX:
-      // forEachPublicProperty(obj, function (key) { keys.push(key); }, null);
-      return keys;
+      return (<AXObject><any>obj).axGetEnumerableKeys();
     }
 
     static _addCallback(functionName: string, closure: Shumway.AVMX.AS.ASFunction, hasNullCallback: boolean): void {
@@ -88,12 +85,12 @@ module Shumway.AVMX.AS.flash.external {
     }
 
     static _evalJS(expression: string): string {
-      expression = asCoerceString(expression);
+      expression = axCoerceString(expression);
       return ExternalInterfaceService.instance.eval(expression);
     }
 
     static _callOut(request: string): string {
-      request = asCoerceString(request);
+      request = axCoerceString(request);
       return ExternalInterfaceService.instance.call(request);
     }
 

@@ -16,7 +16,7 @@
 // Class: URLRequest
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   export class URLRequest extends ASObject {
     
@@ -31,7 +31,7 @@ module Shumway.AVMX.AS.flash.net {
 
     constructor (url: string = null) {
       super();
-      this._url = asCoerceString(url);
+      this._url = axCoerceString(url);
       this._method = 'GET';
       this._data = null;
       this._digest = null;
@@ -56,7 +56,7 @@ module Shumway.AVMX.AS.flash.net {
       return this._url;
     }
     set url(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       this._url = value;
     }
     get data(): ASObject {
@@ -69,7 +69,7 @@ module Shumway.AVMX.AS.flash.net {
       return this._method;
     }
     set method(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       if (value !== 'get' && value !== 'GET' &&
           value !== 'post' && value !== 'POST') {
         this.securityDomain.throwError('ArgumentError', Errors.InvalidArgumentError);
@@ -80,7 +80,7 @@ module Shumway.AVMX.AS.flash.net {
       return this._contentType;
     }
     set contentType(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       this._contentType = value;
     }
     get requestHeaders(): any [] {
@@ -96,7 +96,7 @@ module Shumway.AVMX.AS.flash.net {
       return this._digest;
     }
     set digest(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       this._digest = value;
     }
 
