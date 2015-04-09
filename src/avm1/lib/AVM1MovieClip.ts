@@ -647,7 +647,7 @@ module Shumway.AVM1.Lib {
     }
 
     public toString() {
-      return this.as3Object.toString();
+      return this.__targetPath;
     }
 
     public unloadMovie() {
