@@ -43,7 +43,7 @@ module Shumway.AVMX.AS.flash.events {
     clone(): Event {
       var textEvent = new this.securityDomain.flash.events.TextEvent(this.type, this.bubbles,
                                                                      this.cancelable, this.text);
-      this.copyNativeData(textEvent);
+      //this.copyNativeData(textEvent);
       return textEvent;
     }
 

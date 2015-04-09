@@ -438,6 +438,14 @@ module Shumway.AVMX {
               stack[stack.length - 1] = result;
             }
             break;
+          //case Bytecode.CALLSTATIC:
+          //  index = u30();
+          //  argCount = u30();
+          //  popManyInto(stack, argCount, args);
+          //  value = abc.getMetadataInfo(index);
+          //  var receiver = box(stack[stack.length - 1]);
+          //  stack.push(value.axApply(receiver, args));
+          //  break;
           case Bytecode.APPLYTYPE:
             popManyInto(stack, u30(), args);
             stack[stack.length - 1] = securityDomain.applyType(stack[stack.length - 1], args);
