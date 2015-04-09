@@ -24,8 +24,8 @@ module Shumway.Player.Test {
     private _worker;
     private _fontOrImageRequests: PromiseWrapper<any>[];
 
-    constructor(securityDomain: ISecurityDomain) {
-      super(securityDomain);
+    constructor(sec: ISecurityDomain) {
+      super(sec);
 
       // TODO this is temporary worker to test postMessage tranfers
       this._worker = Shumway.Player.Test.FakeSyncWorker.instance;

@@ -29,7 +29,7 @@ declare module Shumway.AVM1 {
     setStage(stage: flash.display.Stage): void;
 
     root: Lib.AVM1MovieClip;
-    securityDomain: ISecurityDomain;
+    sec: ISecurityDomain;
   }
   export module Lib {
     function getAVM1Object(obj, context: AVM1Context);

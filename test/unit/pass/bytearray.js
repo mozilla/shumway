@@ -16,7 +16,7 @@
 
 (function graphicsTests() {
   var ByteArray = flash.utils.ByteArray;
-  var AXObject = ByteArray.axClass.securityDomain.AXObject;
+  var AXObject = ByteArray.axClass.sec.AXObject;
 
   unitTests.push(basics);
   unitTests.push(readBytes);

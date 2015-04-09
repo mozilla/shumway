@@ -31,7 +31,7 @@ module Shumway.AVMX.AS.flash.events {
     static TIMER_COMPLETE: string = "timerComplete";
 
     clone(): Event {
-      return new this.securityDomain.flash.events.TimerEvent(this.type, this.bubbles,
+      return new this.sec.flash.events.TimerEvent(this.type, this.bubbles,
                                                              this.cancelable);
     }
 
@@ -40,7 +40,7 @@ module Shumway.AVMX.AS.flash.events {
     }
 
     updateAfterEvent(): void {
-      this.securityDomain.player.requestRendering();
+      this.sec.player.requestRendering();
     }
   }
 }

@@ -55,7 +55,7 @@ module Shumway.AVMX.AS.flash.ui {
                                 data: MouseEventAndPointData,
                                 relatedObject: flash.display.InteractiveObject = null) {
       var localPoint = target.globalToLocal(data.point);
-      var event = new this.stage.securityDomain.flash.events.MouseEvent (
+      var event = new this.stage.sec.flash.events.MouseEvent (
         type,
         type !== events.MouseEvent.ROLL_OVER &&
         type !== events.MouseEvent.ROLL_OUT &&
@@ -82,7 +82,7 @@ module Shumway.AVMX.AS.flash.ui {
       }
 
       var globalPoint = data.point;
-      var mouseClass = this.stage.securityDomain.flash.ui.Mouse.axClass;
+      var mouseClass = this.stage.sec.flash.ui.Mouse.axClass;
       mouseClass.updateCurrentPosition(globalPoint);
 
       var currentTarget = this.currentTarget;
@@ -209,7 +209,7 @@ module Shumway.AVMX.AS.flash.ui {
 
     // Called whenever the class is initialized.
     static classInitializer() {
-      this._currentPosition = new this.securityDomain.flash.geom.Point();
+      this._currentPosition = new this.sec.flash.geom.Point();
       this._cursor = MouseCursor.AUTO;
       this.draggableObject = null;
     }
@@ -235,7 +235,7 @@ module Shumway.AVMX.AS.flash.ui {
     static set cursor(value: string) {
       value = axCoerceString(value);
       if (MouseCursor.toNumber(value) < 0) {
-        this.securityDomain.throwError("ArgumentError", Errors.InvalidParamError, "cursor");
+        this.sec.throwError("ArgumentError", Errors.InvalidParamError, "cursor");
       }
       this._cursor = value;
     }

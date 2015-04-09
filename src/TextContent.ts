@@ -99,7 +99,7 @@ module Shumway {
 
   export class TextContent implements Shumway.Remoting.IRemotable {
     _id: number;
-    _securityDomain: ISecurityDomain;
+    sec: ISecurityDomain;
 
     private _bounds: Bounds;
     private _plainText: string;
@@ -117,9 +117,9 @@ module Shumway {
     matrix: flash.geom.Matrix;
     coords: number[];
 
-    constructor(securityDomain: ISecurityDomain, defaultTextFormat?: flash.text.TextFormat) {
-      this._securityDomain = securityDomain;
-      this._id = securityDomain.flash.display.DisplayObject.axClass.getNextSyncID();
+    constructor(sec: ISecurityDomain, defaultTextFormat?: flash.text.TextFormat) {
+      this.sec = sec;
+      this._id = sec.flash.display.DisplayObject.axClass.getNextSyncID();
       this._bounds = new Bounds(0, 0, 0, 0);
       this._plainText = '';
       this._backgroundColor = 0;
@@ -129,7 +129,7 @@ module Shumway {
       this._scrollV = 1;
       this._scrollH = 0;
       this.flags = TextContentFlags.None;
-      this.defaultTextFormat = defaultTextFormat || new securityDomain.flash.text.TextFormat();
+      this.defaultTextFormat = defaultTextFormat || new sec.flash.text.TextFormat();
       this.textRuns = [];
       this.textRunData = new DataBuffer();
       this.matrix = null;
@@ -456,7 +456,7 @@ module Shumway {
       var size = +textFormat.size;
       textRunData.writeInt(size);
 
-      var fontClass = this._securityDomain.flash.text.Font.axClass;
+      var fontClass = this.sec.flash.text.Font.axClass;
       var font = fontClass.getByNameAndStyle(textFormat.font, textFormat.style) ||
                  fontClass.getDefaultFont();
       if (font.fontType === flash.text.FontType.EMBEDDED) {

@@ -342,7 +342,7 @@ function displayTests() {
     neq(o.filters, a);
     neq(o.filters, o.filters);
     var D = new flash.filters.DropShadowFilter ();
-    o.filters = securityDomain.createArray([D]);
+    o.filters = sec.createArray([D]);
     D.distance = 10;
     eq(o.filters.value[0].distance, 4);
     o.filters.value[0].distance = 19;

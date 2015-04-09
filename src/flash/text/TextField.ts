@@ -117,7 +117,7 @@ module Shumway.AVMX.AS.flash.text {
       this._useRichTextClipboard = false;
       this._lineMetricsData = null;
 
-      var defaultTextFormat = new this.securityDomain.flash.text.TextFormat(
+      var defaultTextFormat = new this.sec.flash.text.TextFormat(
         Font.DEFAULT_FONT_SERIF,
         12,
         0,
@@ -128,7 +128,7 @@ module Shumway.AVMX.AS.flash.text {
         '',
         TextFormatAlign.LEFT
       );
-      this._textContent = new Shumway.TextContent(this.securityDomain, defaultTextFormat);
+      this._textContent = new Shumway.TextContent(this.sec, defaultTextFormat);
     }
 
     _setFillAndLineBoundsFromSymbol(symbol: Timeline.DisplaySymbol) {
@@ -248,7 +248,7 @@ module Shumway.AVMX.AS.flash.text {
     set antiAliasType(antiAliasType: string) {
       antiAliasType = axCoerceString(antiAliasType);
       if (AntiAliasType.toNumber(antiAliasType) < 0) {
-        this.securityDomain.throwError("ArgumentError", Errors.InvalidParamError, "antiAliasType");
+        this.sec.throwError("ArgumentError", Errors.InvalidParamError, "antiAliasType");
       }
       this._antiAliasType = antiAliasType;
     }
@@ -263,7 +263,7 @@ module Shumway.AVMX.AS.flash.text {
         return;
       }
       if (TextFieldAutoSize.toNumber(value) < 0) {
-        this.securityDomain.throwError("ArgumentError", Errors.InvalidParamError, "autoSize");
+        this.sec.throwError("ArgumentError", Errors.InvalidParamError, "autoSize");
       }
       this._autoSize = value;
       this._textContent.autoSize = TextFieldAutoSize.toNumber(value);
@@ -622,7 +622,7 @@ module Shumway.AVMX.AS.flash.text {
       if (!this._hasFlags(DisplayObjectFlags.DirtyTextContent)) {
         return;
       }
-      var serializer = this.securityDomain.player;
+      var serializer = this.sec.player;
       var lineMetricsData = serializer.syncDisplayObject(this, false);
       var textWidth = lineMetricsData.readInt();
       var textHeight = lineMetricsData.readInt();
@@ -673,7 +673,7 @@ module Shumway.AVMX.AS.flash.text {
       charIndex = charIndex | 0;
       somewhatImplemented("public flash.text.TextField::getCharBoundaries");
       var fakeCharHeight = this.textHeight, fakeCharWidth = fakeCharHeight * 0.75;
-      return new this.securityDomain.flash.geom.Rectangle(charIndex * fakeCharWidth, 0,
+      return new this.sec.flash.geom.Rectangle(charIndex * fakeCharWidth, 0,
                                                           fakeCharWidth, fakeCharHeight);
     }
     getCharIndexAtPoint(x: number, y: number): number /*int*/ {
@@ -700,7 +700,7 @@ module Shumway.AVMX.AS.flash.text {
     getLineMetrics(lineIndex: number /*int*/): flash.text.TextLineMetrics {
       lineIndex = lineIndex | 0;
       if (lineIndex < 0 || lineIndex > this._numLines - 1) {
-        this.securityDomain.throwError('RangeError', Errors.ParamRangeError);
+        this.sec.throwError('RangeError', Errors.ParamRangeError);
       }
       this._ensureLineMetrics();
       var lineMetricsData = this._lineMetricsData;
@@ -713,7 +713,7 @@ module Shumway.AVMX.AS.flash.text {
       var descent = lineMetricsData.readInt();
       var leading = lineMetricsData.readInt();
       var height = ascent + descent + leading;
-      return new this.securityDomain.flash.text.TextLineMetrics(x, width, height, ascent, descent,
+      return new this.sec.flash.text.TextLineMetrics(x, width, height, ascent, descent,
                                                                 leading);
     }
 
@@ -749,7 +749,7 @@ module Shumway.AVMX.AS.flash.text {
         }
       }
       if (endIndex <= beginIndex || endIndex > maxIndex) {
-        this.securityDomain.throwError('RangeError', Errors.ParamRangeError);
+        this.sec.throwError('RangeError', Errors.ParamRangeError);
       }
       var format: TextFormat;
       var textRuns = this._textContent.textRuns;
@@ -817,7 +817,7 @@ module Shumway.AVMX.AS.flash.text {
         }
       }
       if (beginIndex > maxIndex || endIndex > maxIndex) {
-        this.securityDomain.throwError('RangeError', Errors.ParamRangeError);
+        this.sec.throwError('RangeError', Errors.ParamRangeError);
       }
       if (endIndex <= beginIndex) {
         return;
@@ -859,23 +859,23 @@ module Shumway.AVMX.AS.flash.text {
     variableName: string = null;
     textContent: Shumway.TextContent = null;
 
-    constructor(data: Timeline.SymbolData, securityDomain: ISecurityDomain) {
-      super(data, securityDomain.flash.text.TextField.axClass, true);
+    constructor(data: Timeline.SymbolData, sec: ISecurityDomain) {
+      super(data, sec.flash.text.TextField.axClass, true);
     }
 
     static FromTextData(data: any, loaderInfo: flash.display.LoaderInfo): TextSymbol {
-      var securityDomain = loaderInfo.securityDomain;
-      var symbol = new TextSymbol(data, securityDomain);
+      var sec = loaderInfo.sec;
+      var symbol = new TextSymbol(data, sec);
       symbol._setBoundsFromData(data);
       var tag = data.tag;
       if (data.static) {
         symbol.dynamic = false;
-        symbol.symbolClass = securityDomain.flash.text.StaticText.axClass;
+        symbol.symbolClass = sec.flash.text.StaticText.axClass;
         if (tag.initialText) {
-          var textContent = new Shumway.TextContent(securityDomain);
+          var textContent = new Shumway.TextContent(sec);
           textContent.bounds = symbol.lineBounds;
           textContent.parseHtml(tag.initialText, null, false);
-          textContent.matrix = new securityDomain.flash.geom.Matrix();
+          textContent.matrix = new sec.flash.geom.Matrix();
           textContent.matrix.copyFromUntyped(data.matrix);
           textContent.coords = data.coords;
           symbol.textContent = textContent;

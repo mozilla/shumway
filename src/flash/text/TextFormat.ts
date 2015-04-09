@@ -76,7 +76,7 @@ module Shumway.AVMX.AS.flash.text {
     set align(value: string) {
       value = axCoerceString(value);
       //if (TextFormatAlign.toNumber(value) < 0) {
-      //  this.securityDomain.throwError("ArgumentError", Errors.InvalidEnumError, "align");
+      //  this.sec.throwError("ArgumentError", Errors.InvalidEnumError, "align");
       //}
       this._align = value;
     }
@@ -211,7 +211,7 @@ module Shumway.AVMX.AS.flash.text {
 
     set tabStops(value: any []) {
       if (!(value instanceof Array)) {
-        this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError, value,
+        this.sec.throwError("ArgumentError", Errors.CheckTypeFailedError, value,
                                        'Array');
       }
       this._tabStops = value;
@@ -272,7 +272,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     clone(): TextFormat {
-      return new this.securityDomain.flash.text.TextFormat(
+      return new this.sec.flash.text.TextFormat(
         this.font,
         this.size,
         this.color,

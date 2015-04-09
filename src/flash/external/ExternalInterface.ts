@@ -66,7 +66,7 @@ module Shumway.AVMX.AS.flash.external {
       if (!callback) {
         return;
       }
-      var asArgs = transformJSValueToAS(callback.securityDomain, args, true);
+      var asArgs = transformJSValueToAS(callback.sec, args, true);
       return (<any>callback).call(null, functionName, asArgs);
     }
 

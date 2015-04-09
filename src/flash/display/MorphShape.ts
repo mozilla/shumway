@@ -60,12 +60,12 @@ module Shumway.AVMX.AS.flash.display {
   export class MorphShapeSymbol extends flash.display.ShapeSymbol {
     morphFillBounds: Bounds;
     morphLineBounds: Bounds;
-    constructor(data: Timeline.SymbolData, securityDomain: ISecurityDomain) {
-      super(data, securityDomain.flash.display.MorphShape.axClass);
+    constructor(data: Timeline.SymbolData, sec: ISecurityDomain) {
+      super(data, sec.flash.display.MorphShape.axClass);
     }
 
     static FromData(data: any, loaderInfo: flash.display.LoaderInfo): MorphShapeSymbol {
-      var symbol = new MorphShapeSymbol(data, loaderInfo.securityDomain);
+      var symbol = new MorphShapeSymbol(data, loaderInfo.sec);
       symbol._setBoundsFromData(data);
       symbol.graphics = flash.display.Graphics.FromData(data);
       symbol.processRequires(data.require, loaderInfo);

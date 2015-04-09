@@ -59,7 +59,7 @@ module Shumway.AVMX.AS {
   var writer = new IndentingWriter();
 
   function wrapJSGlobalFunction(fun) {
-    return function(securityDomain, ...args) {
+    return function(sec, ...args) {
       return fun.apply(jsGlobal, args);
     };
   }
@@ -69,7 +69,7 @@ module Shumway.AVMX.AS {
    */
   export module Natives {
 
-    export function print(securityDomain: SecurityDomain, expression: any, arg1?: any, arg2?: any,
+    export function print(sec: SecurityDomain, expression: any, arg1?: any, arg2?: any,
                           arg3?: any, arg4?: any) {
       var args = Array.prototype.slice.call(arguments, 1);
       jsGlobal.print.apply(null, args);
@@ -89,19 +89,19 @@ module Shumway.AVMX.AS {
       return false;
     }
 
-    export function decodeURI(securityDomain: SecurityDomain, encodedURI: string): string {
+    export function decodeURI(sec: SecurityDomain, encodedURI: string): string {
       try {
         return jsGlobal.decodeURI(encodedURI);
       } catch (e) {
-        securityDomain.throwError('URIError', Errors.InvalidURIError, 'decodeURI');
+        sec.throwError('URIError', Errors.InvalidURIError, 'decodeURI');
       }
     }
 
-    export function decodeURIComponent(securityDomain: SecurityDomain, encodedURI: string): string {
+    export function decodeURIComponent(sec: SecurityDomain, encodedURI: string): string {
       try {
         return jsGlobal.decodeURIComponent(encodedURI);
       } catch (e) {
-        securityDomain.throwError('URIError', Errors.InvalidURIError, 'decodeURIComponent');
+        sec.throwError('URIError', Errors.InvalidURIError, 'decodeURIComponent');
       }
     }
     export var encodeURI: (uri: string) => string = wrapJSGlobalFunction(jsGlobal.encodeURI);
@@ -145,32 +145,32 @@ module Shumway.AVMX.AS {
      * Returns the fully qualified class name of the base class of the object specified by the
      * |value| parameter.
      */
-    export function getQualifiedSuperclassName(securityDomain: SecurityDomain, value: any) {
+    export function getQualifiedSuperclassName(sec: SecurityDomain, value: any) {
       if (isNullOrUndefined(value)) {
         return "null";
       }
-      value = securityDomain.box(value);
+      value = sec.box(value);
       // The value might be from another domain, so don't use passed-in the current SecurityDomain.
-      var axClass = value.securityDomain.AXClass.axIsType(value) ?
+      var axClass = value.sec.AXClass.axIsType(value) ?
                     (<AXClass>value).superClass :
                     value.axClass.superClass;
-      return getQualifiedClassName(securityDomain, axClass);
+      return getQualifiedClassName(sec, axClass);
     }
     /**
      * Returns the class with the specified name, or |null| if no such class exists.
      */
-    export function getDefinitionByName(securityDomain: SecurityDomain, name: string): AXClass {
+    export function getDefinitionByName(sec: SecurityDomain, name: string): AXClass {
       name = axCoerceString(name).replace("::", ".");
       var mn = Multiname.FromFQNString(name, NamespaceType.Public);
-      return securityDomain.application.getClass(mn);
+      return sec.application.getClass(mn);
     }
 
-    export function describeType(securityDomain: SecurityDomain, value: any, flags: number) {
+    export function describeType(sec: SecurityDomain, value: any, flags: number) {
       //return AS.describeType(value, flags);
     }
 
-    export function describeTypeJSON(securityDomain: SecurityDomain, value: any, flags: number) {
-      return AS.describeTypeJSON(securityDomain, value, flags);
+    export function describeTypeJSON(sec: SecurityDomain, value: any, flags: number) {
+      return AS.describeTypeJSON(sec, value, flags);
     }
   }
 
@@ -211,12 +211,12 @@ module Shumway.AVMX.AS {
     release || assert(name.indexOf('$Bg') === 0);
     release || assert(typeof fun === 'function');
     // REDUX: remove the need to box the function.
-    defineNonEnumerableProperty(object, name, object.securityDomain.AXFunction.axBox(fun));
+    defineNonEnumerableProperty(object, name, object.sec.AXFunction.axBox(fun));
   }
 
   export function checkReceiverType(receiver: AXObject, type: AXClass, methodName: string) {
     if (!type.dPrototype.isPrototypeOf(receiver)) {
-      receiver.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
+      receiver.sec.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
                                          methodName);
     }
   }
@@ -227,7 +227,7 @@ module Shumway.AVMX.AS {
    */
   export class ASObject implements IMetaobjectProtocol {
     traits: RuntimeTraits;
-    securityDomain: ISecurityDomain;
+    sec: ISecurityDomain;
 
     // Declare all instance ASObject fields as statics here so that the TS
     // compiler can convert ASClass class objects to ASObject instances.
@@ -238,7 +238,7 @@ module Shumway.AVMX.AS {
     protected static _methodClosureCache: any;
     static classNatives: Object [];
     static instanceNatives: Object [];
-    static securityDomain: ISecurityDomain;
+    static sec: ISecurityDomain;
     static classSymbols = null;
     static instanceSymbols = null;
     static classInfo: ClassInfo;
@@ -313,7 +313,7 @@ module Shumway.AVMX.AS {
     getPrototypeOf: () => any;
 
     native_isPrototypeOf(v: any): boolean {
-      return this.isPrototypeOf(this.securityDomain.box(v));
+      return this.isPrototypeOf(this.sec.box(v));
     }
 
     native_hasOwnProperty(nm: string): boolean {
@@ -330,7 +330,7 @@ module Shumway.AVMX.AS {
       enumerable = !!enumerable;
       var instanceInfo = this.axClass.classInfo.instanceInfo;
       if (instanceInfo.isSealed()) {
-        this.securityDomain.throwError('ReferenceError', Errors.WriteSealedError, nm,
+        this.sec.throwError('ReferenceError', Errors.WriteSealedError, nm,
                                        instanceInfo.name.name);
       }
       // Silently ignore trait properties.
@@ -383,13 +383,13 @@ module Shumway.AVMX.AS {
         var mangledName = t.name.getMangledName();
         switch (t.kind) {
           case TRAIT.Method:
-            this.securityDomain.throwError('ReferenceError', Errors.CannotAssignToMethodError, name,
+            this.sec.throwError('ReferenceError', Errors.CannotAssignToMethodError, name,
                                            this.axClass.name.name);
           // TODO: enable throwing after initialization has finished.
           //case TRAIT.Const:
           // Fallthrough.
           case TRAIT.Getter:
-            this.securityDomain.throwError('ReferenceError', Errors.ConstWriteError, name,
+            this.sec.throwError('ReferenceError', Errors.ConstWriteError, name,
                                            this.axClass.name.name);
         }
         var type = t.getType();
@@ -419,7 +419,7 @@ module Shumway.AVMX.AS {
       var cache = this._methodClosureCache || (this._methodClosureCache = Object.create(null));
       var method = cache[name];
       if (!method) {
-        method = cache[name] = this.securityDomain.AXMethodClosure.Create(<any>this, this[name]);
+        method = cache[name] = this.sec.AXMethodClosure.Create(<any>this, this[name]);
       }
       return method;
     }
@@ -464,7 +464,7 @@ module Shumway.AVMX.AS {
       var name = this.axResolveMultiname(mn);
       var fun = this[name];
       if (!fun || !fun.axApply) {
-        this.securityDomain.throwError('ReferenceError', Errors.CallOfNonFunctionError, mn.name);
+        this.sec.throwError('ReferenceError', Errors.CallOfNonFunctionError, mn.name);
       }
       return fun.axApply(isLex ? null : this, args);
     }
@@ -473,7 +473,7 @@ module Shumway.AVMX.AS {
       var name = this.axResolveMultiname(mn);
       var fun = (<AXClass>scope.parent.object).tPrototype[name];
       if (!fun || !fun.axApply) {
-        this.securityDomain.throwError('ReferenceError', Errors.CallOfNonFunctionError, mn.name);
+        this.sec.throwError('ReferenceError', Errors.CallOfNonFunctionError, mn.name);
       }
       return fun.axApply(this, args);
     }
@@ -481,7 +481,7 @@ module Shumway.AVMX.AS {
       var name = this.axResolveMultiname(mn);
       var ctor = this[name];
       if (!ctor || !ctor.axConstruct) {
-        this.securityDomain.throwError('ReferenceError', Errors.ConstructOfNonFunctionError,
+        this.sec.throwError('ReferenceError', Errors.ConstructOfNonFunctionError,
                                        mn.name);
       }
       return ctor.axConstruct(args);
@@ -500,7 +500,7 @@ module Shumway.AVMX.AS {
     }
 
     axGetEnumerableKeys(): any [] {
-      if (this.securityDomain.isPrimitive(this)) {
+      if (this.sec.isPrimitive(this)) {
         return [];
       }
       var tPrototype = Object.getPrototypeOf(this);
@@ -687,11 +687,11 @@ module Shumway.AVMX.AS {
     value: any [];
 
     public static axApply(self: ASArray, args: any[]): ASArray {
-      return this.securityDomain.createArray(Array.apply(Array, args));
+      return this.sec.createArray(Array.apply(Array, args));
     }
 
     public static axConstruct(args: any[]): ASArray {
-      return this.securityDomain.createArray(Array.apply(Array, args));
+      return this.sec.createArray(Array.apply(Array, args));
     }
 
     push() {
@@ -714,19 +714,19 @@ module Shumway.AVMX.AS {
       var value = this.value.slice();
       for (var i = 0; i < arguments.length; i++) {
         var a = arguments[i];
-        // Treat all objects with a `securityDomain` property and a value that's an Array as
+        // Treat all objects with a `sec` property and a value that's an Array as
         // concat-spreadable.
         // TODO: verify that this is correct.
-        if (typeof a === 'object' && a && a.securityDomain && Array.isArray(a.value)) {
+        if (typeof a === 'object' && a && a.sec && Array.isArray(a.value)) {
           value.push.apply(value, a.value);
         } else {
           value.push(a);
         }
       }
-      return this.securityDomain.createArray(value);
+      return this.sec.createArray(value);
     }
     slice(startIndex: number, endIndex: number) {
-      return this.securityDomain.createArray(this.value.slice(startIndex, endIndex));
+      return this.sec.createArray(this.value.slice(startIndex, endIndex));
     }
     join(sep: string) {
       return this.value.join(sep);
@@ -756,7 +756,7 @@ module Shumway.AVMX.AS {
       return this.value.forEach(callbackfn.value, thisArg);
     }
     map(callbackfn: {value}, thisArg?) {
-      return this.securityDomain.createArray(this.value.map(callbackfn.value, thisArg));
+      return this.sec.createArray(this.value.map(callbackfn.value, thisArg));
     }
     filter(callbackfn: {value: Function}, thisArg?) {
       var result = [];
@@ -766,11 +766,11 @@ module Shumway.AVMX.AS {
           result.push(o[i]);
         }
       }
-      return this.securityDomain.createArray(result);
+      return this.sec.createArray(result);
     }
 
     toLocaleString(): string {
-      var value = this.securityDomain.AXArray.axCoerce(this).value;
+      var value = this.sec.AXArray.axCoerce(this).value;
 
       var out: string = "";
       for (var i = 0, n = value.length; i < n; i++) {
@@ -790,7 +790,7 @@ module Shumway.AVMX.AS {
       if (arguments.length === 0) {
         return undefined;
       }
-      return this.securityDomain.createArray(o.splice.apply(o, arguments));
+      return this.sec.createArray(o.splice.apply(o, arguments));
     }
 
     sort(): any {
@@ -801,7 +801,7 @@ module Shumway.AVMX.AS {
       }
       var compareFunction;
       var options = 0;
-      if (this.securityDomain.AXFunction.axIsInstanceOf(arguments[0])) {
+      if (this.sec.AXFunction.axIsInstanceOf(arguments[0])) {
         compareFunction = arguments[0].value;
       } else if (isNumber(arguments[0])) {
         options = arguments[0];
@@ -826,7 +826,7 @@ module Shumway.AVMX.AS {
 
     sortOn(names: any, options: any): any {
       if (arguments.length === 0) {
-        this.securityDomain.throwError(
+        this.sec.throwError(
                    "ArgumentError", Errors.WrongArgumentCountError,
                    "Array/http://adobe.com/AS3/2006/builtin::sortOn()", "1", "0");
       }
@@ -979,7 +979,7 @@ module Shumway.AVMX.AS {
 
     get prototype(): AXObject {
       if (!this._prototypeInitialzed) {
-        this._prototype = Object.create(this.securityDomain.AXObject.tPrototype);
+        this._prototype = Object.create(this.sec.AXObject.tPrototype);
         this._prototypeInitialzed = true;
       }
       return this._prototype;
@@ -988,8 +988,8 @@ module Shumway.AVMX.AS {
     set prototype(prototype: AXObject) {
       if (isNullOrUndefined(prototype)) {
         prototype = undefined;
-      } else if (typeof prototype !== 'object' || this.securityDomain.isPrimitive(prototype)) {
-        this.securityDomain.throwError('TypeError', Errors.PrototypeTypeError);
+      } else if (typeof prototype !== 'object' || this.sec.isPrimitive(prototype)) {
+        this.sec.throwError('TypeError', Errors.PrototypeTypeError);
       }
       this._prototypeInitialzed = true;
       this._prototype = prototype;
@@ -1034,7 +1034,7 @@ module Shumway.AVMX.AS {
       defineNonEnumerableProperty(proto, '$Bgapply', asProto.apply);
     }
     static Create(receiver: AXObject, method: Function) {
-      var closure: ASMethodClosure = Object.create(this.securityDomain.AXMethodClosure.tPrototype);
+      var closure: ASMethodClosure = Object.create(this.sec.AXMethodClosure.tPrototype);
       closure.receiver = <any>receiver;
       closure.value = method;
       return closure;
@@ -1045,7 +1045,7 @@ module Shumway.AVMX.AS {
     }
 
     set prototype(prototype: AXObject) {
-      this.securityDomain.throwError("ReferenceError", Errors.ConstWriteError, "prototype",
+      this.sec.throwError("ReferenceError", Errors.ConstWriteError, "prototype",
                                      "MethodClosure");
     }
 
@@ -1133,26 +1133,26 @@ module Shumway.AVMX.AS {
       return this.value.localeCompare.apply(this.value, arguments);
     }
     match(pattern) {
-      if (this.securityDomain.AXRegExp.axIsType(pattern)) {
+      if (this.sec.AXRegExp.axIsType(pattern)) {
         pattern = pattern.value;
       }
       var result = this.value.match(pattern);
       if (!result) {
         return null;
       }
-      return this.securityDomain.createArray(result);
+      return this.sec.createArray(result);
     }
     replace(pattern, repl) {
-      if (this.securityDomain.AXRegExp.axIsType(pattern)) {
+      if (this.sec.AXRegExp.axIsType(pattern)) {
         pattern = pattern.value;
       }
-      if (this.securityDomain.AXFunction.axIsType(repl)) {
+      if (this.sec.AXFunction.axIsType(repl)) {
         repl = repl.value;
       }
       return this.value.replace(pattern, repl);
     }
     search(pattern) {
-      if (this.securityDomain.AXRegExp.axIsType(pattern)) {
+      if (this.sec.AXRegExp.axIsType(pattern)) {
         pattern = pattern.value;
       }
       return this.value.search(pattern);
@@ -1166,7 +1166,7 @@ module Shumway.AVMX.AS {
       separator = axCoerceString(separator);
       limit = arguments.length < 2 ? 0xffffffff : limit | 0;
       release || assert(typeof this.value === 'string');
-      return this.securityDomain.createArray(this.value.split(separator, limit));
+      return this.sec.createArray(this.value.split(separator, limit));
     }
     substring(start: number, end?: number) {
       return this.value.substring(start, end);
@@ -1230,7 +1230,7 @@ module Shumway.AVMX.AS {
         str = axCoerceString(this);
       }
       var list = str.split(separator, limit);
-      return (<AXClass><any>this).securityDomain.createArray(list);
+      return (<AXClass><any>this).sec.createArray(list);
     }
     generic_substring(start: number, end?: number) {
       return String.prototype.substring.call(this.value, start, end);
@@ -1250,11 +1250,11 @@ module Shumway.AVMX.AS {
     }
 
     public_toString() {
-      if (<any>this === this.securityDomain.AXString.dPrototype) {
+      if (<any>this === this.sec.AXString.dPrototype) {
         return '';
       }
-      if (this.axClass !== this.securityDomain.AXString) {
-        this.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
+      if (this.axClass !== this.sec.AXString) {
+        this.sec.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
                                        'String.prototype.toString');
       }
       return this.value.toString();
@@ -1264,11 +1264,11 @@ module Shumway.AVMX.AS {
       return this.value.valueOf();
     }
     public_valueOf() {
-      if (<any>this === this.securityDomain.AXString.dPrototype) {
+      if (<any>this === this.sec.AXString.dPrototype) {
         return '';
       }
-      if (this.axClass !== this.securityDomain.AXString) {
-        this.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
+      if (this.axClass !== this.sec.AXString) {
+        this.sec.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
                                        'String.prototype.valueOf');
       }
       return this.value.valueOf();
@@ -1300,11 +1300,11 @@ module Shumway.AVMX.AS {
       } else {
         radix = radix|0;
         if (radix < 2 || radix > 36) {
-          this.securityDomain.throwError('RangeError', Errors.InvalidRadixError, radix);
+          this.sec.throwError('RangeError', Errors.InvalidRadixError, radix);
         }
       }
-      if (this.axClass !== this.securityDomain.AXNumber) {
-        this.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
+      if (this.axClass !== this.sec.AXNumber) {
+        this.sec.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
                                        'Number.prototype.toString');
       }
 
@@ -1312,8 +1312,8 @@ module Shumway.AVMX.AS {
     }
 
     valueOf() {
-      if (this.axClass !== this.securityDomain.AXNumber) {
-        this.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
+      if (this.axClass !== this.sec.AXNumber) {
+        this.sec.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
                                        'Number.prototype.valueOf');
       }
       return this.value;
@@ -1322,9 +1322,9 @@ module Shumway.AVMX.AS {
     toExponential(p): string {
       p = p|0;
       if (p < 0 || p > 20) {
-        this.securityDomain.throwError('RangeError', Errors.InvalidPrecisionError);
+        this.sec.throwError('RangeError', Errors.InvalidPrecisionError);
       }
-      if (this.axClass !== this.securityDomain.AXNumber) {
+      if (this.axClass !== this.sec.AXNumber) {
         return 'NaN';
       }
       return this.value.toExponential(p);
@@ -1337,9 +1337,9 @@ module Shumway.AVMX.AS {
         p = p|0;
       }
       if (p < 1 || p > 21) {
-        this.securityDomain.throwError('RangeError', Errors.InvalidPrecisionError);
+        this.sec.throwError('RangeError', Errors.InvalidPrecisionError);
       }
-      if (this.axClass !== this.securityDomain.AXNumber) {
+      if (this.axClass !== this.sec.AXNumber) {
         return 'NaN';
       }
       return this.value.toPrecision(p);
@@ -1348,9 +1348,9 @@ module Shumway.AVMX.AS {
     toFixed(p): string {
       p = p|0;
       if (p < 0 || p > 20) {
-        this.securityDomain.throwError('RangeError', Errors.InvalidPrecisionError);
+        this.sec.throwError('RangeError', Errors.InvalidPrecisionError);
       }
-      if (this.axClass !== this.securityDomain.AXNumber) {
+      if (this.axClass !== this.sec.AXNumber) {
         return 'NaN';
       }
       return this.value.toFixed(p);
@@ -1378,11 +1378,11 @@ module Shumway.AVMX.AS {
       } else {
         radix = radix|0;
         if (radix < 2 || radix > 36) {
-          this.securityDomain.throwError('RangeError', Errors.InvalidRadixError, radix);
+          this.sec.throwError('RangeError', Errors.InvalidRadixError, radix);
         }
       }
-      if (this.axClass !== this.securityDomain.AXNumber) {
-        this.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
+      if (this.axClass !== this.sec.AXNumber) {
+        this.sec.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
                                        'Number.prototype.toString');
       }
 
@@ -1390,8 +1390,8 @@ module Shumway.AVMX.AS {
     }
 
     valueOf() {
-      if (this.axClass !== this.securityDomain.AXNumber) {
-        this.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
+      if (this.axClass !== this.sec.AXNumber) {
+        this.sec.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
                                        'Number.prototype.valueOf');
       }
       return this.value;
@@ -1415,11 +1415,11 @@ module Shumway.AVMX.AS {
       } else {
         radix = radix|0;
         if (radix < 2 || radix > 36) {
-          this.securityDomain.throwError('RangeError', Errors.InvalidRadixError, radix);
+          this.sec.throwError('RangeError', Errors.InvalidRadixError, radix);
         }
       }
-      if (this.axClass !== this.securityDomain.AXNumber) {
-        this.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
+      if (this.axClass !== this.sec.AXNumber) {
+        this.sec.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
                                        'Number.prototype.toString');
       }
 
@@ -1427,8 +1427,8 @@ module Shumway.AVMX.AS {
     }
 
     valueOf() {
-      if (this.axClass !== this.securityDomain.AXNumber) {
-        this.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
+      if (this.axClass !== this.sec.AXNumber) {
+        this.sec.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
                                        'Number.prototype.valueOf');
       }
       return this.value;
@@ -1473,9 +1473,9 @@ module Shumway.AVMX.AS {
       var source;
       if (pattern === undefined) {
         pattern = source = '';
-      } else if (this.securityDomain.AXRegExp.axIsType(pattern)) {
+      } else if (this.sec.AXRegExp.axIsType(pattern)) {
         if (flags) {
-          this.securityDomain.throwError("TypeError", Errors.RegExpFlagsArgumentError);
+          this.sec.throwError("TypeError", Errors.RegExpFlagsArgumentError);
         }
         source = pattern.source;
         pattern = pattern.value;
@@ -1636,7 +1636,7 @@ module Shumway.AVMX.AS {
       if (!result) {
         return null;
       }
-      var axResult = this.securityDomain.createArray(<string []>result);
+      var axResult = this.sec.createArray(<string []>result);
       axResult.axSetPublicProperty('index', result.index);
       axResult.axSetPublicProperty('input', result.input);
       var captureNames = this._captureNames;
@@ -1737,7 +1737,7 @@ module Shumway.AVMX.AS {
   /**
    * Transforms a JS value into an AS value.
    */
-  export function transformJSValueToAS(securityDomain: SecurityDomain, value, deep: boolean) {
+  export function transformJSValueToAS(sec: SecurityDomain, value, deep: boolean) {
     release || assert(typeof value !== 'function');
     if (typeof value !== "object") {
       return value;
@@ -1749,30 +1749,30 @@ module Shumway.AVMX.AS {
       var list = [];
       for (var i = 0; i < value.length; i++) {
         var entry = value[i];
-        var axValue = deep ? transformJSValueToAS(securityDomain, entry, true) : entry;
+        var axValue = deep ? transformJSValueToAS(sec, entry, true) : entry;
         list.push(axValue);
       }
-      return securityDomain.createArray(list);
+      return sec.createArray(list);
     }
-    return securityDomain.createObjectFromJS(value, deep);
+    return sec.createObjectFromJS(value, deep);
   }
 
   /**
    * Transforms an AS value into a JS value.
    */
-  export function transformASValueToJS(securityDomain: SecurityDomain, value, deep: boolean) {
+  export function transformASValueToJS(sec: SecurityDomain, value, deep: boolean) {
     if (typeof value !== "object") {
       return value;
     }
     if (isNullOrUndefined(value)) {
       return value;
     }
-    if (securityDomain.AXArray.axIsType(value)) {
+    if (sec.AXArray.axIsType(value)) {
       var resultList = [];
       var list = value.value;
       for (var i = 0; i < list.length; i++) {
         var entry = list[i];
-        var jsValue = deep ? transformASValueToJS(securityDomain, entry, true) : entry;
+        var jsValue = deep ? transformASValueToJS(sec, entry, true) : entry;
         resultList.push(jsValue);
       }
       return resultList;
@@ -1788,7 +1788,7 @@ module Shumway.AVMX.AS {
       }
       var v = value[key];
       if (deep) {
-        v = transformASValueToJS(securityDomain, v, true);
+        v = transformASValueToJS(sec, v, true);
       }
       resultObject[jsKey] = v;
     }
@@ -1832,13 +1832,13 @@ module Shumway.AVMX.AS {
     static parse(text: string, reviver: AXFunction): any {
       text = axCoerceString(text);
       if (text === null) {
-        this.securityDomain.throwError('SyntaxError', Errors.JSONInvalidParseInput);
+        this.sec.throwError('SyntaxError', Errors.JSONInvalidParseInput);
       }
 
       try {
-        var unfiltered: Object = transformJSValueToAS(this.securityDomain, JSON.parse(text), true);
+        var unfiltered: Object = transformJSValueToAS(this.sec, JSON.parse(text), true);
       } catch (e) {
-        this.securityDomain.throwError('SyntaxError', Errors.JSONInvalidParseInput);
+        this.sec.throwError('SyntaxError', Errors.JSONInvalidParseInput);
       }
 
       if (reviver === null || arguments.length < 2) {
@@ -1851,11 +1851,9 @@ module Shumway.AVMX.AS {
       // We deliberately deviate from ECMA-262 and throw on
       // invalid replacer parameter.
       if (replacer !== null) {
-        var securityDomain = typeof replacer === 'object' ? replacer.securityDomain : null;
-        if (!securityDomain || !(securityDomain.AXFunction.axIsType(replacer) ||
-                                 securityDomain.AXArray.axIsType(replacer)))
-        {
-          this.securityDomain.throwError('TypeError', Errors.JSONInvalidReplacer);
+        var sec = typeof replacer === 'object' ? replacer.sec : null;
+        if (!sec || !(sec.AXFunction.axIsType(replacer) || sec.AXArray.axIsType(replacer))) {
+          this.sec.throwError('TypeError', Errors.JSONInvalidReplacer);
         }
       }
 
@@ -1905,9 +1903,9 @@ module Shumway.AVMX.AS {
 
     private static stringifySpecializedToString(value: Object, replacerArray: any [], replacerFunction: (key: string, value: any) => any, gap: string): string {
       try {
-        return JSON.stringify(transformASValueToJS(this.securityDomain, value, true), replacerFunction, gap);
+        return JSON.stringify(transformASValueToJS(this.sec, value, true), replacerFunction, gap);
       } catch (e) {
-        this.securityDomain.throwError('SyntaxError', Errors.JSONCyclicStructure);
+        this.sec.throwError('SyntaxError', Errors.JSONCyclicStructure);
       }
     }
   }
@@ -1991,46 +1989,43 @@ module Shumway.AVMX.AS {
   registerNativeClass("__AS3__.vec.Vector$uint", Uint32Vector, 'Uint32Vector', NamespaceType.PackageInternal);
   registerNativeClass("__AS3__.vec.Vector$double", Float64Vector, 'Float64Vector', NamespaceType.PackageInternal);
 
-  function FlashUtilScript_getDefinitionByName(securityDomain: SecurityDomain,
-                                              name: string): ASClass {
+  function FlashUtilScript_getDefinitionByName(sec: SecurityDomain, name: string): ASClass {
     var simpleName = String(name).replace("::", ".");
-    return <any>securityDomain.application.getClass(Multiname.FromSimpleName(simpleName));
+    return <any>sec.application.getClass(Multiname.FromSimpleName(simpleName));
   }
 
-  export function FlashUtilScript_getTimer(securityDomain: SecurityDomain) {
-    return Date.now() - (<any>securityDomain).flash.display.Loader.axClass.runtimeStartTime;
+  export function FlashUtilScript_getTimer(sec: SecurityDomain) {
+    return Date.now() - (<any>sec).flash.display.Loader.axClass.runtimeStartTime;
   }
 
-  export function FlashNetScript_navigateToURL(securityDomain: SecurityDomain, request, window_) {
+  export function FlashNetScript_navigateToURL(sec: SecurityDomain, request, window_) {
     if (request === null || request === undefined) {
-      securityDomain.throwError('TypeError', Errors.NullPointerError, 'request');
+      sec.throwError('TypeError', Errors.NullPointerError, 'request');
     }
-    var RequestClass = (<any>securityDomain).flash.net.URLRequest.axClass;
+    var RequestClass = (<any>sec).flash.net.URLRequest.axClass;
     if (!RequestClass.axIsType(request)) {
-      securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, request,
-                                'flash.net.URLRequest');
+      sec.throwError('TypeError', Errors.CheckTypeFailedError, request, 'flash.net.URLRequest');
     }
     var url = request.url;
     if (isNullOrUndefined(url)) {
-      securityDomain.throwError('TypeError', Errors.NullPointerError, 'url');
+      sec.throwError('TypeError', Errors.NullPointerError, 'url');
     }
     if (url.toLowerCase().indexOf('fscommand:') === 0) {
-      var fscommand = (<any>securityDomain).flash.system.fscommand.value;
-      fscommand(securityDomain, url.substring('fscommand:'.length), window_);
+      var fscommand = (<any>sec).flash.system.fscommand.value;
+      fscommand(sec, url.substring('fscommand:'.length), window_);
       return;
     }
     // TODO handle other methods than GET
     FileLoadingService.instance.navigateTo(url, window_);
   }
 
-  function FlashNetScript_sendToURL(securityDomain: SecurityDomain, request) {
+  function FlashNetScript_sendToURL(sec: SecurityDomain, request) {
     if (isNullOrUndefined(request)) {
-      securityDomain.throwError('TypeError', Errors.NullPointerError, 'request');
+      sec.throwError('TypeError', Errors.NullPointerError, 'request');
     }
-    var RequestClass = (<any>securityDomain).flash.net.URLRequest.axClass;
+    var RequestClass = (<any>sec).flash.net.URLRequest.axClass;
     if (!RequestClass.axIsType(request)) {
-      securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, request,
-                                     'flash.net.URLRequest');
+      sec.throwError('TypeError', Errors.CheckTypeFailedError, request, 'flash.net.URLRequest');
     }
     var session = FileLoadingService.instance.createSession();
     session.onprogress = function () {
@@ -2039,28 +2034,28 @@ module Shumway.AVMX.AS {
     session.open(request);
   }
 
-  function Toplevel_registerClassAlias(securityDomain: SecurityDomain, aliasName, classObject) {
+  function Toplevel_registerClassAlias(sec: SecurityDomain, aliasName, classObject) {
     aliasName = axCoerceString(aliasName);
     if (!aliasName) {
-      securityDomain.throwError('TypeError', Errors.NullPointerError, 'aliasName');
+      sec.throwError('TypeError', Errors.NullPointerError, 'aliasName');
     }
     if (!classObject) {
-      securityDomain.throwError('TypeError', Errors.NullPointerError, 'classObject');
+      sec.throwError('TypeError', Errors.NullPointerError, 'classObject');
     }
 
-    securityDomain.classAliases.classes.set(classObject, aliasName);
-    securityDomain.classAliases.names[aliasName] = classObject;
+    sec.classAliases.classes.set(classObject, aliasName);
+    sec.classAliases.names[aliasName] = classObject;
   }
 
-  function Toplevel_getClassByAlias(securityDomain: SecurityDomain, aliasName: string) {
+  function Toplevel_getClassByAlias(sec: SecurityDomain, aliasName: string) {
     aliasName = axCoerceString(aliasName);
     if (!aliasName) {
-      securityDomain.throwError('TypeError', Errors.NullPointerError, 'aliasName');
+      sec.throwError('TypeError', Errors.NullPointerError, 'aliasName');
     }
 
-    var classObject = securityDomain.classAliases.names[aliasName];
+    var classObject = sec.classAliases.names[aliasName];
     if (!classObject) {
-      securityDomain.throwError('ReferenceError', Errors.ClassNotFoundError, aliasName);
+      sec.throwError('ReferenceError', Errors.ClassNotFoundError, aliasName);
     }
     return classObject;
   }
@@ -2404,12 +2399,12 @@ module Shumway.AVMX.AS {
    *
    * Note that this doesn't use memoizers and doesn't run the functions' AS3 script.
    */
-  export function installNativeFunctions(securityDomain: SecurityDomain) {
+  export function installNativeFunctions(sec: SecurityDomain) {
     for (var i in nativeFunctions) {
       var pathTokens = i.split('.');
       var funName = pathTokens.pop();
-      var container = createContainersFromPath(pathTokens, securityDomain);
-      container[funName] = securityDomain.boxFunction(nativeFunctions[i]);
+      var container = createContainersFromPath(pathTokens, sec);
+      container[funName] = sec.boxFunction(nativeFunctions[i]);
     }
   }
 }

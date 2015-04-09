@@ -45,7 +45,7 @@ module Shumway.AVMX.AS.flash.display {
       this._displayState = null;
       this._fullScreenSourceRect = null;
       this._mouseLock = false;
-      var objectVectorClass = this.securityDomain.getVectorClass(this.securityDomain.AXObject);
+      var objectVectorClass = this.sec.getVectorClass(this.sec.AXObject);
       this._stageVideos = <any>objectVectorClass.axConstruct([0, true]);
       this._stage3Ds = null; // TODO
       this._colorARGB = 0xFFFFFFFF;
@@ -129,7 +129,7 @@ module Shumway.AVMX.AS.flash.display {
     set scaleMode(value: string) {
       value = axCoerceString(value);
       if (flash.display.StageScaleMode.toNumber(value) < 0) {
-        this.securityDomain.throwError("ArgumentError", Errors.InvalidEnumError, "scaleMode");
+        this.sec.throwError("ArgumentError", Errors.InvalidEnumError, "scaleMode");
       }
       this._scaleMode = value;
     }
@@ -213,7 +213,7 @@ module Shumway.AVMX.AS.flash.display {
         this._stageContainerWidth = width;
         this._stageContainerHeight = height;
         if (this.scaleMode === StageScaleMode.NO_SCALE) {
-          this.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(flash.events.Event.RESIZE));
+          this.dispatchEvent(this.sec.flash.events.Event.axClass.getInstance(flash.events.Event.RESIZE));
         }
       }
     }
@@ -319,7 +319,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     set alpha(alpha: number) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
 
     get alpha(): number {
@@ -459,167 +459,167 @@ module Shumway.AVMX.AS.flash.display {
       return this._name;
     }
     set name(value: string) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get mask(): DisplayObject {
       return this._mask;
     }
     set mask(value: DisplayObject) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get visible(): boolean {
       return this._hasFlags(DisplayObjectFlags.Visible);
     }
     set visible(value: boolean) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get x(): number {
       return this._getX();
     }
     set x(value: number) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get y(): number {
       return this._getY();
     }
     set y(value: number) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get z(): number {
       return this._z;
     }
     set z(value: number) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get scaleX(): number {
       return Math.abs(this._scaleX);
     }
     set scaleX(value: number) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get scaleY(): number {
       return this._scaleY;
     }
     set scaleY(value: number) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get scaleZ(): number {
       return this._scaleZ;
     }
     set scaleZ(value: number) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get rotation(): number {
       return this._rotation;
     }
     set rotation(value: number) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get rotationX(): number {
       return this._rotationX;
     }
     set rotationX(value: number) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get rotationY(): number {
       return this._rotationX;
     }
     set rotationY(value: number) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get rotationZ(): number {
       return this._rotationX;
     }
     set rotationZ(value: number) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get cacheAsBitmap(): boolean {
       return this._getCacheAsBitmap();
     }
     set cacheAsBitmap(value: boolean) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get opaqueBackground(): any {
       return this._opaqueBackground;
     }
     set opaqueBackground(value: any) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get scrollRect(): flash.geom.Rectangle {
       return this._getScrollRect();
     }
     set scrollRect(value: geom.Rectangle) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get filters() {
       return this._getFilters();
     }
     set filters(value: ASArray) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get blendMode(): string {
       return this._blendMode;
     }
     set blendMode(value: string) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get transform(): flash.geom.Transform {
       return this._getTransform();
     }
     set transform(value: geom.Transform) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get accessibilityProperties(): flash.accessibility.AccessibilityProperties {
       return this._accessibilityProperties;
     }
     set accessibilityProperties(value: accessibility.AccessibilityProperties) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get scale9Grid(): flash.geom.Rectangle {
       return this._getScale9Grid();
     }
     set scale9Grid(value: geom.Rectangle) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get tabEnabled(): boolean {
       return this._tabEnabled;
     }
     set tabEnabled(value: boolean) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get tabIndex(): number /*int*/ {
       return this._tabIndex;
     }
     set tabIndex(value: number) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get focusRect(): any {
       return this._focusRect;
     }
     set focusRect(value: any) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get mouseEnabled(): boolean {
       return this._mouseEnabled;
     }
     set mouseEnabled(value: boolean) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get accessibilityImplementation(): flash.accessibility.AccessibilityImplementation {
       return this._accessibilityImplementation;
     }
     set accessibilityImplementation(value: accessibility.AccessibilityImplementation) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get textSnapshot(): text.TextSnapshot {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
       return null;
     }
     get contextMenu(): flash.ui.ContextMenu {
       return this._contextMenu;
     }
     set contextMenu(value: ui.ContextMenu) {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
   }
 }

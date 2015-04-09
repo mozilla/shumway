@@ -157,12 +157,12 @@
     g.clear();
 
     try {
-      g.beginBitmapFill(securityDomain.createObject());
+      g.beginBitmapFill(sec.createObject());
       assertUnreachable("beginBitmapFill with invalid bitmap argument throws");
     } catch (e) {
     }
     try {
-      g.beginBitmapFill(bitmap, securityDomain.createObject());
+      g.beginBitmapFill(bitmap, sec.createObject());
       assertUnreachable("beginBitmapFill with non-matrix 2nd argument throws");
     } catch (e) {
     }
@@ -336,12 +336,12 @@
     g.clear();
 
     try {
-      g.lineBitmapStyle(securityDomain.createObject());
+      g.lineBitmapStyle(sec.createObject());
       assertUnreachable("lineBitmapStyle with invalid bitmap argument throws");
     } catch (e) {
     }
     try {
-      g.lineBitmapStyle(bitmap, securityDomain.createObject());
+      g.lineBitmapStyle(bitmap, sec.createObject());
       assertUnreachable("lineBitmapStyle with non-matrix 2nd argument throws");
     } catch (e) {
     }

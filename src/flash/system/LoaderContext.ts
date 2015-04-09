@@ -24,21 +24,19 @@ module Shumway.AVMX.AS.flash.system {
     static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static instanceSymbols: string [] = ["checkPolicyFile!", "applicationDomain!", "securityDomain!", "allowCodeImport!", "requestedContentParent!", "parameters!", "imageDecodingPolicy!"];
+    static instanceSymbols: string [] = ["checkPolicyFile!", "applicationDomain!", "sec!", "allowCodeImport!", "requestedContentParent!", "parameters!", "imageDecodingPolicy!"];
     
     constructor (checkPolicyFile: boolean = false, applicationDomain: flash.system.ApplicationDomain = null, securityDomain: flash.system.SecurityDomain = null) {
       super();
       this.checkPolicyFile = checkPolicyFile;
-      // REDUX: Name conflict.
-      // this.applicationDomain = applicationDomain;
-      // this.securityDomain = securityDomain;
+      this.applicationDomain = applicationDomain;
+      this.securityDomain = securityDomain;
       this.imageDecodingPolicy = flash.system.ImageDecodingPolicy.ON_DEMAND;
     }
     
     checkPolicyFile: boolean;
     applicationDomain: flash.system.ApplicationDomain;
-    // REDUX: Name conflict.
-    // securityDomain: flash.system.SecurityDomain;
+    securityDomain: flash.system.SecurityDomain;
     allowCodeImport: boolean;
     requestedContentParent: flash.display.DisplayObjectContainer;
     parameters: ASObject;

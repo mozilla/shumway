@@ -89,23 +89,23 @@ module Shumway.AVMX.AS.flash.net {
 
       somewhatImplemented("public flash.net.NetConnection::connect");
       this._uri = command;
-      var netStatusEventCtor = this.securityDomain.flash.events.NetStatusEvent;
+      var netStatusEventCtor = this.sec.flash.events.NetStatusEvent;
       if (!command) {
         this._connected = true;
         this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS, false, false,
-          this.securityDomain.createObjectFromJS({ level : 'status', code : 'NetConnection.Connect.Success'})));
+          this.sec.createObjectFromJS({ level : 'status', code : 'NetConnection.Connect.Success'})));
       } else {
         var parsedURL = RtmpJs.parseConnectionString(command);
         if (!parsedURL || !parsedURL.host ||
             (parsedURL.protocol !== 'rtmp' && parsedURL.protocol !== 'rtmpt' && parsedURL.protocol !== 'rtmps')) {
           this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS, false, false,
-            this.securityDomain.createObjectFromJS({ level : 'status', code : 'NetConnection.Connect.Failed'})));
+            this.sec.createObjectFromJS({ level : 'status', code : 'NetConnection.Connect.Failed'})));
           return;
         }
 
-        var service: display.IRootElementService = this.securityDomain.player;
+        var service: display.IRootElementService = this.sec.player;
 
-        var rtmpProps = this.securityDomain.createObjectFromJS({
+        var rtmpProps = this.sec.createObjectFromJS({
           app: parsedURL.app,
           flashver: flash.system.Capabilities.version,
           swfUrl: service.swfUrl,
@@ -137,9 +137,9 @@ module Shumway.AVMX.AS.flash.net {
         };
         rtmpConnection.onconnected = function (e) {
           this._connected = true;
-          this.dispatchEvent(new this.securityDomain.flash.events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+          this.dispatchEvent(new this.sec.flash.events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false,
-            this.securityDomain.createObjectFromJS({ level : 'status', code : 'NetConnection.Connect.Success'})));
+            this.sec.createObjectFromJS({ level : 'status', code : 'NetConnection.Connect.Success'})));
         }.bind(this);
         rtmpConnection.onstreamcreated = function (e) {
           console.log('#streamcreated: ' + e.streamId);

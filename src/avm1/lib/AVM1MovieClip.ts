@@ -122,9 +122,9 @@ module Shumway.AVM1.Lib {
       props.avm1SymbolClass = symbol.theClass;
 
       // REDUX
-      var mc:flash.display.MovieClip; // = this.context.securityDomain.flash.display.MovieClip.initializeFrom(props);
-      mc = Shumway.AVMX.AS.constructClassFromSymbol(props, this.context.securityDomain.flash.display.MovieClip.axClass);
-      //this.context.securityDomain.flash.display.MovieClip.instanceConstructorNoInitialize.call(mc);
+      var mc:flash.display.MovieClip; // = this.context.sec.flash.display.MovieClip.initializeFrom(props);
+      mc = Shumway.AVMX.AS.constructClassFromSymbol(props, this.context.sec.flash.display.MovieClip.axClass);
+      //this.context.sec.flash.display.MovieClip.instanceConstructorNoInitialize.call(mc);
 
       return mc;
     }
@@ -190,7 +190,7 @@ module Shumway.AVM1.Lib {
       var nativeAS3Object = this.as3Object;
       nativeAS3Object.addTimelineObjectAtDepth(mc, Math.min(nativeAS3Object.numChildren, depth));
       // Bitmaps aren't reflected in AVM1, so the rest here doesn't apply.
-      if (this.context.securityDomain.flash.display.Bitmap.axIsType(mc)) {
+      if (this.context.sec.flash.display.Bitmap.axIsType(mc)) {
         return null;
       }
       var as2mc = getAVM1Object(mc, this.context);
@@ -198,7 +198,7 @@ module Shumway.AVM1.Lib {
     }
 
     public createEmptyMovieClip(name, depth): AVM1MovieClip {
-      var mc: flash.display.MovieClip = new this.context.securityDomain.flash.display.MovieClip();
+      var mc: flash.display.MovieClip = new this.context.sec.flash.display.MovieClip();
       mc.name = name;
       return <AVM1MovieClip>this._insertChildAtDepth(mc, depth);
     }
@@ -312,7 +312,7 @@ module Shumway.AVM1.Lib {
         // child is null if it hasn't been constructed yet. This can happen in InitActionBlocks.
         if (child && child._depth === depth) {
           // Somewhat absurdly, this method returns the mc if a bitmap is at the given depth.
-          if (this.context.securityDomain.flash.display.Bitmap.axIsType(child)) {
+          if (this.context.sec.flash.display.Bitmap.axIsType(child)) {
             return this;
           }
           return getAVM1Object(child, this.context);
@@ -355,9 +355,9 @@ module Shumway.AVM1.Lib {
     }
 
     public globalToLocal(pt) {
-      var securityDomain = this.context.securityDomain;
+      var sec = this.context.sec;
       var tmp: flash.geom.Point = this.as3Object.globalToLocal(
-        new securityDomain.flash.geom.Point(pt.alGet('x'), pt.alGet('y')));
+        new sec.flash.geom.Point(pt.alGet('x'), pt.alGet('y')));
       pt.alPut('x', tmp.x);
       pt.alPut('y', tmp.y);
     }
@@ -440,9 +440,9 @@ module Shumway.AVM1.Lib {
     }
 
     public localToGlobal(pt) {
-      var securityDomain = this.context.securityDomain;
+      var sec = this.context.sec;
       var tmp: flash.geom.Point = this.as3Object.localToGlobal(
-        new securityDomain.flash.geom.Point(pt.alGet('x'), pt.alGet('y')));
+        new sec.flash.geom.Point(pt.alGet('x'), pt.alGet('y')));
       pt.alPut('x', tmp.x);
       pt.alPut('y', tmp.y);
     }

@@ -25,7 +25,7 @@ module Shumway.AVM1.Lib {
     }
 
     public avm1Constructor() {
-      var as3Object = new this.context.securityDomain.flash.display.BitmapData(); // REDUX parameters
+      var as3Object = new this.context.sec.flash.display.BitmapData(); // REDUX parameters
       this.setTarget(as3Object);
     }
 

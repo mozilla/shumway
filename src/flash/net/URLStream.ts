@@ -32,7 +32,7 @@ module Shumway.AVMX.AS.flash.net {
 
     constructor () {
       super();
-      this._buffer = new this.securityDomain.flash.utils.ByteArray();
+      this._buffer = new this.sec.flash.utils.ByteArray();
       this._writePosition = 0;
       this._connected = false;
     }
@@ -86,7 +86,7 @@ module Shumway.AVMX.AS.flash.net {
       var session = FileLoadingService.instance.createSession();
       var self = this;
       var initStream = true;
-      var eventsPackage = this.securityDomain.flash.events;
+      var eventsPackage = this.sec.flash.events;
       session.onprogress = function (data, progressState) {
         var readPosition = self._buffer.position;
         self._buffer.position = self._writePosition;
@@ -114,13 +114,13 @@ module Shumway.AVMX.AS.flash.net {
         httpHeaders.split(/(?:\n|\r?\n)/g).forEach(function (h) {
           var m = /^([^:]+): (.*)$/.exec(h);
           if (m) {
-            headers.push(new self.securityDomain.flash.net.URLRequestHeader(m[1], m[2]));
+            headers.push(new self.sec.flash.net.URLRequestHeader(m[1], m[2]));
             if (m[1] === 'Location') { // Headers have redirect location
               location = m[2];
             }
           }
         });
-        var boxedHeaders = self.securityDomain.createArray(headers);
+        var boxedHeaders = self.sec.createArray(headers);
         httpStatusEvent.axSetPublicProperty('responseHeaders', boxedHeaders);
         httpStatusEvent.axSetPublicProperty('responseURL', location);
         self.dispatchEvent(httpStatusEvent);
@@ -135,7 +135,7 @@ module Shumway.AVMX.AS.flash.net {
     readBytes(bytes: flash.utils.ByteArray, offset: number /*uint*/ = 0, length: number /*uint*/ = 0): void {
       offset = offset >>> 0; length = length >>> 0;
       if (length < 0) {
-        this.securityDomain.throwError('ArgumentError', Errors.InvalidArgumentError, "length");
+        this.sec.throwError('ArgumentError', Errors.InvalidArgumentError, "length");
       }
 
       this._buffer.readBytes(bytes, offset, length);

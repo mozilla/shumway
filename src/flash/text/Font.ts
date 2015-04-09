@@ -794,7 +794,7 @@ module Shumway.AVMX.AS.flash.text {
 
       this._id = symbol.syncId;
       this._fontName = symbol.name;
-      var Font = this.securityDomain.flash.text.Font.axClass;
+      var Font = this.sec.flash.text.Font.axClass;
       this._fontFamily = Font.resolveFontName(symbol.name);
       if (symbol.bold) {
         if (symbol.italic) {
@@ -860,7 +860,7 @@ module Shumway.AVMX.AS.flash.text {
       }
 
       if (!font) {
-        var font = new this.securityDomain.flash.text.Font();
+        var font = new this.sec.flash.text.Font();
         font._fontName = names[0];
         font._fontFamily = this.resolveFontName(names[0].toLowerCase());
         font._fontStyle = style;
@@ -922,7 +922,7 @@ module Shumway.AVMX.AS.flash.text {
      */
     static registerEmbeddedFont(fontMapping: {name: string; style: string; id: number},
                                 loaderInfo: flash.display.LoaderInfo): void {
-      var syncId = this.securityDomain.flash.display.DisplayObject.axClass.getNextSyncID();
+      var syncId = this.sec.flash.display.DisplayObject.axClass.getNextSyncID();
       var resolverProp = {
         get: this.resolveEmbeddedFont.bind(Font, loaderInfo, fontMapping.id, syncId),
         configurable: true
@@ -969,12 +969,12 @@ module Shumway.AVMX.AS.flash.text {
     metrics: any;
     syncId: number;
 
-    constructor(data: Timeline.SymbolData, securityDomain: ISecurityDomain) {
-      super(data, securityDomain.flash.text.Font.axClass);
+    constructor(data: Timeline.SymbolData, sec: ISecurityDomain) {
+      super(data, sec.flash.text.Font.axClass);
     }
 
     static FromData(data: any, loaderInfo: display.LoaderInfo): FontSymbol {
-      var symbol = new FontSymbol(data, loaderInfo.securityDomain);
+      var symbol = new FontSymbol(data, loaderInfo.sec);
       // Immediately mark glyph-less fonts as ready.
       symbol.ready = !data.metrics;
       symbol.name = data.name;

@@ -298,7 +298,7 @@ module Shumway.AVMX {
           var mn = methodTraitInfo.getName();
           method = AS.getNative(mn.uri + '.' + mn.name);
         }
-        method = createGlobalNative(method, scope.object.securityDomain);
+        method = createGlobalNative(method, scope.object.sec);
       } else {
         method = AS.getMethodOrAccessorNative(methodTraitInfo);
       }
@@ -324,16 +324,16 @@ module Shumway.AVMX {
     return method;
   }
 
-  function createGlobalNative(native: Function, securityDomain: SecurityDomain) {
+  function createGlobalNative(native: Function, sec: SecurityDomain) {
 
     return function() {
       switch (arguments.length) {
-        case 0: return native(securityDomain);
-        case 1: return native(securityDomain, arguments[0]);
-        case 2: return native(securityDomain, arguments[0], arguments[1]);
-        case 3: return native(securityDomain, arguments[0], arguments[1], arguments[2]);
+        case 0: return native(sec);
+        case 1: return native(sec, arguments[0]);
+        case 2: return native(sec, arguments[0], arguments[1]);
+        case 3: return native(sec, arguments[0], arguments[1], arguments[2]);
         default:
-          var args: any[] = [securityDomain];
+          var args: any[] = [sec];
           for (var i = 0; i < arguments.length; i++) {
             args.push(arguments[i]);
           }
@@ -1524,7 +1524,7 @@ module Shumway.AVMX {
      */
     public getMultiname(i: number): Multiname {
       if (i < 0 || i >= this._multinameOffsets.length) {
-        this.applicationDomain.securityDomain.throwError("VerifierError",
+        this.applicationDomain.sec.throwError("VerifierError",
                                                          Errors.CpoolIndexRangeError, i,
                                                          this._multinameOffsets.length);
       }
@@ -1545,7 +1545,7 @@ module Shumway.AVMX {
      */
     public getNamespace(i: number): Namespace {
       if (i < 0 || i >= this._namespaceOffsets.length) {
-        this.applicationDomain.securityDomain.throwError("VerifierError",
+        this.applicationDomain.sec.throwError("VerifierError",
                                                          Errors.CpoolIndexRangeError, i,
                                                          this._namespaceOffsets.length);
       }
@@ -1583,7 +1583,7 @@ module Shumway.AVMX {
           type = NamespaceType.Private;
           break;
         default:
-          this.applicationDomain.securityDomain.throwError("VerifierError",
+          this.applicationDomain.sec.throwError("VerifierError",
                                                            Errors.CpoolEntryWrongTypeError, i);
       }
       if (uri && type !== NamespaceType.Private) {
@@ -1604,7 +1604,7 @@ module Shumway.AVMX {
      */
     public getNamespaceSet(i: number): Namespace [] {
       if (i < 0 || i >= this._namespaceSets.length) {
-        this.applicationDomain.securityDomain.throwError("VerifierError",
+        this.applicationDomain.sec.throwError("VerifierError",
                                                          Errors.CpoolIndexRangeError, i,
                                                          this._namespaceSets.length);
       }
@@ -1833,7 +1833,7 @@ module Shumway.AVMX {
           trait = classInfo.trait = new ClassTraitInfo(this, kind, name, slot, classInfo);
           break;
         default:
-          this.applicationDomain.securityDomain.throwError("VerifierError",
+          this.applicationDomain.sec.throwError("VerifierError",
                                                            Errors.UnsupportedTraitsKindError, kind);
       }
 

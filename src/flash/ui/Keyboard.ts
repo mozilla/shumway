@@ -54,7 +54,7 @@ module Shumway.AVMX.AS.flash.ui {
 
       if (this.target) {
         var isKeyUp = event.type === 'keyup';
-        this.target.dispatchEvent(new this.target.securityDomain.flash.events.KeyboardEvent (
+        this.target.dispatchEvent(new this.target.sec.flash.events.KeyboardEvent (
           isKeyUp ? 'keyUp' : 'keyDown',
           true,
           false,

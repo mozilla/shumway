@@ -76,14 +76,14 @@ module Shumway.AVMX.AS.flash.system {
     static allowDomain(): void {
       somewhatImplemented("public flash.system.Security::static allowDomain [\"" +
         Array.prototype.join.call(arguments, "\", \"") + "\"]");
-      var whitelist: ICrossDomainSWFLoadingWhitelist = this.securityDomain.player;
+      var whitelist: ICrossDomainSWFLoadingWhitelist = this.sec.player;
       for (var i = 0; i < arguments.length; i++) {
         whitelist.addToSWFLoadingWhitelist(axCoerceString(arguments[i]), false);
       }
     }
     static allowInsecureDomain(): void {
       somewhatImplemented("public flash.system.Security::static allowInsecureDomain");
-      var whitelist: ICrossDomainSWFLoadingWhitelist = this.securityDomain.player;
+      var whitelist: ICrossDomainSWFLoadingWhitelist = this.sec.player;
       for (var i = 0; i < arguments.length; i++) {
         whitelist.addToSWFLoadingWhitelist(axCoerceString(arguments[i]), true);
       }

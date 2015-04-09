@@ -44,7 +44,7 @@ module Shumway.AVMX.AS.flash.display {
       release || assert(this._symbol);
       var symbol = this._symbol;
       release || assert(symbol.syncId);
-      this._rect = new this.securityDomain.flash.geom.Rectangle(0, 0, symbol.width, symbol.height);
+      this._rect = new this.sec.flash.geom.Rectangle(0, 0, symbol.width, symbol.height);
       this._transparent = true;
       this._id = symbol.syncId;
       if (symbol.type === ImageType.PremultipliedAlphaARGB ||
@@ -78,9 +78,9 @@ module Shumway.AVMX.AS.flash.display {
       if (width > BitmapData.MAXIMUM_WIDTH || width <= 0 ||
           height > BitmapData.MAXIMUM_HEIGHT || height <= 0 ||
           width * height > BitmapData.MAXIMUM_DIMENSION) {
-        this.securityDomain.throwError('ArgumentError', Errors.InvalidBitmapData);
+        this.sec.throwError('ArgumentError', Errors.InvalidBitmapData);
       }
-      this._rect = new this.securityDomain.flash.geom.Rectangle(0, 0, width, height);
+      this._rect = new this.sec.flash.geom.Rectangle(0, 0, width, height);
       this._transparent = transparent;
       this._id = flash.display.DisplayObject.getNextSyncID();
       this._setData(new Uint8Array(width * height * 4), ImageType.PremultipliedAlphaARGB);
@@ -299,7 +299,7 @@ module Shumway.AVMX.AS.flash.display {
     clone(): flash.display.BitmapData {
       somewhatImplemented("public flash.display.BitmapData::clone");
       // This should be coping the buffer not the view.
-      var bd = new this.securityDomain.flash.display.BitmapData(this._rect.width, this._rect.height, this._transparent,
+      var bd = new this.sec.flash.display.BitmapData(this._rect.width, this._rect.height, this._transparent,
                                                                 this._solidFillColorPBGRA);
       bd._view.set(this._view);
       return bd;
@@ -582,7 +582,7 @@ module Shumway.AVMX.AS.flash.display {
          colorTransform: flash.geom.ColorTransform = null, blendMode: string = null,
          clipRect: flash.geom.Rectangle = null, smoothing: boolean = false): void {
       somewhatImplemented("public flash.display.BitmapData::draw");
-      var serializer: IBitmapDataSerializer = this.securityDomain.player;
+      var serializer: IBitmapDataSerializer = this.sec.player;
       if (matrix) {
         matrix = matrix.clone().toTwipsInPlace();
       }
@@ -851,7 +851,7 @@ module Shumway.AVMX.AS.flash.display {
      */
     private _ensureBitmapData() {
       if (this._isRemoteDirty) {
-        var data = this.securityDomain.player.requestBitmapData(this);
+        var data = this.sec.player.requestBitmapData(this);
         this._setData(data.getBytes(), ImageType.StraightAlphaRGBA);
         this._isRemoteDirty = false;
         this._isDirty = false;
@@ -892,17 +892,17 @@ module Shumway.AVMX.AS.flash.display {
 
     private sharedInstance: flash.display.BitmapData;
 
-    constructor(data: Timeline.SymbolData, securityDomain: ISecurityDomain) {
-      super(data, securityDomain.flash.display.BitmapData.axClass, false);
+    constructor(data: Timeline.SymbolData, sec: ISecurityDomain) {
+      super(data, sec.flash.display.BitmapData.axClass, false);
       this.ready = false;
     }
 
     static FromData(data: any, loaderInfo: LoaderInfo): BitmapSymbol {
-      var symbol = new BitmapSymbol(data, loaderInfo.securityDomain);
+      var symbol = new BitmapSymbol(data, loaderInfo.sec);
       // For non-decoded images, we don't yet have dimensions.
       symbol.width = data.width || -1;
       symbol.height = data.height || -1;
-      symbol.syncId = loaderInfo.securityDomain.flash.display.DisplayObject.axClass.getNextSyncID();
+      symbol.syncId = loaderInfo.sec.flash.display.DisplayObject.axClass.getNextSyncID();
       symbol.data = data.data;
       switch (data.mimeType) {
         case "application/octet-stream":

@@ -31,18 +31,18 @@ module Shumway.AVMX.AS.flash.system {
         return;
       }
       var parentRuntimeDomain: RuntimeApplicationDomain = null;
-      if (this.securityDomain.flash.system.ApplicationDomain.axIsType(parentDomainOrRuntimeDomain)) {
+      if (this.sec.flash.system.ApplicationDomain.axIsType(parentDomainOrRuntimeDomain)) {
         parentRuntimeDomain = (<ApplicationDomain>parentDomainOrRuntimeDomain)._runtimeDomain;
       } else {
-        parentRuntimeDomain = this.securityDomain.system;
+        parentRuntimeDomain = this.sec.system;
       }
-      this._runtimeDomain = new RuntimeApplicationDomain(this.securityDomain, parentRuntimeDomain);
+      this._runtimeDomain = new RuntimeApplicationDomain(this.sec, parentRuntimeDomain);
     }
 
     // This must return a new object each time.
     static get currentDomain(): flash.system.ApplicationDomain {
       // REDUX
-      return new this.securityDomain.flash.system.ApplicationDomain(this.securityDomain.application);
+      return new this.sec.flash.system.ApplicationDomain(this.sec.application);
     }
 
     static get MIN_DOMAIN_MEMORY_LENGTH(): number /*uint*/ {
@@ -52,7 +52,7 @@ module Shumway.AVMX.AS.flash.system {
 
     get parentDomain(): flash.system.ApplicationDomain {
       if (this._runtimeDomain.parent) {
-        return new this.securityDomain.flash.system.ApplicationDomain(this._runtimeDomain.parent);
+        return new this.sec.flash.system.ApplicationDomain(this._runtimeDomain.parent);
       }
       return null;
     }

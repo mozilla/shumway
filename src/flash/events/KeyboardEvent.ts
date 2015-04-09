@@ -84,7 +84,7 @@ module Shumway.AVMX.AS.flash.events {
     }
 
     clone(): Event {
-      return new this.securityDomain.flash.events.KeyboardEvent(this.type, this.bubbles,
+      return new this.sec.flash.events.KeyboardEvent(this.type, this.bubbles,
                                                                 this.cancelable, this.charCode,
                                                                 this.keyCode, this.keyLocation,
                                                                 this.ctrlKey, this.altKey,
@@ -98,7 +98,7 @@ module Shumway.AVMX.AS.flash.events {
     }
 
     updateAfterEvent(): void {
-      this.securityDomain.player.requestRendering();
+      this.sec.player.requestRendering();
     }
   }
 }

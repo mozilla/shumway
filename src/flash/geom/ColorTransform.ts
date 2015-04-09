@@ -208,7 +208,7 @@ module Shumway.AVMX.AS.flash.geom {
     }
 
     public clone(): ColorTransform {
-      return new this.securityDomain.flash.geom.ColorTransform(
+      return new this.sec.flash.geom.ColorTransform(
         this.redMultiplier,
         this.greenMultiplier,
         this.blueMultiplier,

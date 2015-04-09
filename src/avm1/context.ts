@@ -70,7 +70,7 @@ module Shumway.AVM1 {
     public static instance: AVM1Context = null;
     public root: AVM1MovieClip;
     public loaderInfo: Shumway.AVMX.AS.flash.display.LoaderInfo;
-    public securityDomain: ISecurityDomain;
+    public sec: ISecurityDomain;
     public globals: AVM1Globals;
     public builtins: IAVM1Builtins;
     public actionsDataFactory: ActionsDataFactory;

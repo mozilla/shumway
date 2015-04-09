@@ -54,7 +54,7 @@ module Shumway.AVMX.AS.flash.filters {
       }
       // obj.angle is represented in radians, the api needs degrees
       var angle: number = obj.angle * 180 / Math.PI;
-      return new this.securityDomain.flash.filters.BevelFilter(
+      return new this.sec.flash.filters.BevelFilter(
         obj.distance,
         angle,
         highlightColor,
@@ -204,7 +204,7 @@ module Shumway.AVMX.AS.flash.filters {
     set type(value: string) {
       value = axCoerceString(value);
       if (value === null) {
-        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "type");
+        this.sec.throwError("TypeError", Errors.NullPointerError, "type");
       } else {
         if (value === BitmapFilterType.INNER || value === BitmapFilterType.OUTER) {
           this._type = value;
@@ -215,7 +215,7 @@ module Shumway.AVMX.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return new this.securityDomain.flash.filters.BevelFilter(
+      return new this.sec.flash.filters.BevelFilter(
         this._distance,
         this._angle,
         this._highlightColor,

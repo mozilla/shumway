@@ -215,7 +215,7 @@ module Shumway.AVM1.Lib {
       this.Number = builtins.Number;
       this.Math = builtins.Math;
       this.Boolean = builtins.Boolean;
-      this.Date = undefined; // wrapAVM1Builtin(securityDomain.AXDate);
+      this.Date = undefined; // wrapAVM1Builtin(sec.AXDate);
       this.String = builtins.String;
 
       this.MovieClip = AVM1MovieClip.createAVM1Class(context);
@@ -230,9 +230,9 @@ module Shumway.AVM1.Lib {
       this.MovieClipLoader = AVM1MovieClipLoader.createAVM1Class(context);
 
       this.Sound = AVM1Sound.createAVM1Class(context);
-      this.SharedObject = undefined; // wrapAVM1Builtin(securityDomain.flash.net.SharedObject.axClass);
-      this.ContextMenu = undefined; // wrapAVM1Builtin(securityDomain.flash.ui.ContextMenu.axClass);
-      this.ContextMenuItem = undefined; // wrapAVM1Builtin(securityDomain.flash.ui.ContextMenuItem.axClass);
+      this.SharedObject = undefined; // wrapAVM1Builtin(sec.flash.net.SharedObject.axClass);
+      this.ContextMenu = undefined; // wrapAVM1Builtin(sec.flash.ui.ContextMenu.axClass);
+      this.ContextMenuItem = undefined; // wrapAVM1Builtin(sec.flash.ui.ContextMenuItem.axClass);
       this.TextFormat = AVM1TextFormat.createAVM1Class(context);
 
       AVM1Broadcaster.initialize(context, this.Stage);
@@ -251,10 +251,10 @@ module Shumway.AVM1.Lib {
       var filters: AVM1Object = alNewObject(context);
       this.flash.alPut('filters', filters);
       var geom: AVM1Object = alNewObject(context);
-      //geom.axSetPublicProperty('ColorTransform', wrapAVM1Builtin(securityDomain.flash.geom.ColorTransform.axClass));
-      //geom.axSetPublicProperty('Matrix', wrapAVM1Builtin(securityDomain.flash.geom.Matrix.axClass));
-      //geom.axSetPublicProperty('Point', wrapAVM1Builtin(securityDomain.flash.geom.Point.axClass));
-      //geom.axSetPublicProperty('Rectangle', wrapAVM1Builtin(securityDomain.flash.geom.Rectangle.axClass));
+      //geom.axSetPublicProperty('ColorTransform', wrapAVM1Builtin(sec.flash.geom.ColorTransform.axClass));
+      //geom.axSetPublicProperty('Matrix', wrapAVM1Builtin(sec.flash.geom.Matrix.axClass));
+      //geom.axSetPublicProperty('Point', wrapAVM1Builtin(sec.flash.geom.Point.axClass));
+      //geom.axSetPublicProperty('Rectangle', wrapAVM1Builtin(sec.flash.geom.Rectangle.axClass));
       geom.alPut('Transform', AVM1Transform.createAVM1Class(context));
       this.flash.alPut('geom', geom);
       var text: AVM1Object = alNewObject(context);
@@ -291,7 +291,7 @@ module Shumway.AVM1.Lib {
     }
 
     public fscommand(command: string, args?: string) {
-      return this.context.securityDomain.flash.system.fscommand.axCall(null, this.context.securityDomain, command, args);
+      return this.context.sec.flash.system.fscommand.axCall(null, this.context.sec, command, args);
     }
 
     public getAVM1Property(target, index) {
@@ -300,12 +300,12 @@ module Shumway.AVM1.Lib {
     }
 
     public getTimer(): number {
-      return Shumway.AVMX.AS.FlashUtilScript_getTimer(this.context.securityDomain);
+      return Shumway.AVMX.AS.FlashUtilScript_getTimer(this.context.sec);
     }
 
     public getURL(url, target?, method?) {
-      var securityDomain = AVM1Context.instance.securityDomain;
-      var request = new securityDomain.flash.net.URLRequest(String(url));
+      var sec = AVM1Context.instance.sec;
+      var request = new sec.flash.net.URLRequest(String(url));
       if (method) {
         request.method = method;
       }
@@ -313,7 +313,7 @@ module Shumway.AVM1.Lib {
         this.loadMovieNum(url, +target.substr(6), method);
         return;
       }
-      Shumway.AVMX.AS.FlashNetScript_navigateToURL(securityDomain, request, target);
+      Shumway.AVMX.AS.FlashNetScript_navigateToURL(sec, request, target);
     }
 
     _addToPendingScripts(subject: any, fn: Function, args: any [] = null): any {
@@ -558,7 +558,7 @@ module Shumway.AVM1.Lib {
       notImplemented('AVM1Globals.toggleHighQuality');
     }
     public trace(expression) {
-      Shumway.AVMX.AS.Natives.print(this.context.securityDomain, expression);
+      Shumway.AVMX.AS.Natives.print(this.context.sec, expression);
     }
 
     public unloadMovie(target) {

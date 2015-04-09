@@ -62,10 +62,10 @@ module Shumway.AVMX.AS.flash.display {
       if (this._rootLoader) {
         return this._rootLoader;
       }
-      var loader = new this.securityDomain.flash.display.Loader();
+      var loader = new this.sec.flash.display.Loader();
       // The root loader gets a default name, but it's not visible and hence the instance id must
       // not be used up.
-      this.securityDomain.flash.display.DisplayObject.axClass._instanceID--;
+      this.sec.flash.display.DisplayObject.axClass._instanceID--;
       // The root loaderInfo's `loader` property is always null.
       loader._contentLoaderInfo._loader = null;
       this._rootLoader = loader;
@@ -73,7 +73,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     static reset() {
-      this.securityDomain.flash.display.Loader.axClass._loadQueue.forEach(loader => loader.unload());
+      this.sec.flash.display.Loader.axClass._loadQueue.forEach(loader => loader.unload());
       Loader.classInitializer();
     }
 
@@ -100,12 +100,12 @@ module Shumway.AVMX.AS.flash.display {
      * processing.
      */
     static processEvents() {
-      var loaderClass = this.securityDomain.flash.display.Loader.axClass;
+      var loaderClass = this.sec.flash.display.Loader.axClass;
       loaderClass.processEarlyEvents();
       loaderClass.processLateEvents();
     }
     private static processEarlyEvents() {
-      var loaderClass = this.securityDomain.flash.display.Loader.axClass;
+      var loaderClass = this.sec.flash.display.Loader.axClass;
       var queue = loaderClass._loadQueue;
       for (var i = 0; i < queue.length; i++) {
         var instance = queue[i];
@@ -126,7 +126,7 @@ module Shumway.AVMX.AS.flash.display {
         if (instance._loadStatus === LoadStatus.Opened && instance._content) {
           enterTimeline("Loader.INIT");
           try {
-            loaderInfo.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.INIT));
+            loaderInfo.dispatchEvent(this.sec.flash.events.Event.axClass.getInstance(events.Event.INIT));
           } catch (e) {
             console.warn('caught error under loaderInfo INIT event:', e);
           }
@@ -134,10 +134,10 @@ module Shumway.AVMX.AS.flash.display {
           instance._loadStatus = LoadStatus.Initialized;
           // Only for the root loader, progress events for the data loaded up until now are
           // dispatched here.
-          if (instance === this.securityDomain.flash.display.Loader.axClass._rootLoader) {
+          if (instance === this.sec.flash.display.Loader.axClass._rootLoader) {
             enterTimeline("Loader.Progress", 'rootLoader');
             try {
-              loaderInfo.dispatchEvent(new this.securityDomain.flash.events.ProgressEvent(
+              loaderInfo.dispatchEvent(new this.sec.flash.events.ProgressEvent(
                                                                 events.ProgressEvent.PROGRESS,
                                                                 false, false,
                                                                 loaderInfo.bytesLoaded,
@@ -156,7 +156,7 @@ module Shumway.AVMX.AS.flash.display {
           instance._loadStatus = LoadStatus.Complete;
           enterTimeline("Loader.Complete");
           try {
-            loaderInfo.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.COMPLETE));
+            loaderInfo.dispatchEvent(this.sec.flash.events.Event.axClass.getInstance(events.Event.COMPLETE));
           } catch (e) {
             console.warn('caught error under loaderInfo COMPLETE event: ', e);
           }
@@ -166,7 +166,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     private static processLateEvents() {
-      var queue = this.securityDomain.flash.display.Loader.axClass._loadQueue;
+      var queue = this.sec.flash.display.Loader.axClass._loadQueue;
       for (var i = 0; i < queue.length; i++) {
         var instance = queue[i];
         release || assert(instance._loadStatus !== LoadStatus.Complete);
@@ -179,13 +179,13 @@ module Shumway.AVMX.AS.flash.display {
         }
         instance._queuedLoadUpdate = null;
 
-        var progressEventCtor = this.securityDomain.flash.events.ProgressEvent;
+        var progressEventCtor = this.sec.flash.events.ProgressEvent;
         if (instance._loadStatus === LoadStatus.Unloaded) {
           // OPEN is only dispatched when loading external resources, not for loadBytes.
           if (instance._loadingType === LoadingType.External) {
             enterTimeline("Loader.Open");
             try {
-              loaderInfo.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.OPEN));
+              loaderInfo.dispatchEvent(this.sec.flash.events.Event.axClass.getInstance(events.Event.OPEN));
             } catch (e) {
               console.warn('caught error under loaderInfo OPEN event: ', e);
             }
@@ -223,18 +223,18 @@ module Shumway.AVMX.AS.flash.display {
     constructor () {
       super();
 
-      var displayObjectClass = this.securityDomain.flash.display.DisplayObject.axClass;
+      var displayObjectClass = this.sec.flash.display.DisplayObject.axClass;
       displayObjectClass._advancableInstances.push(this);
       this._content = null;
-      if (this.securityDomain.flash.display.Loader.axClass._rootLoader) {
+      if (this.sec.flash.display.Loader.axClass._rootLoader) {
         // Loader reserves the next instance ID to use for the loaded content.
         // This isn't needed for the first, root, loader, because that uses "root1" as the name.
         this._contentID = displayObjectClass._instanceID++;
       } else {
         // The root loader itself doesn't get an ID.
-        //this.securityDomain.flash.display.DisplayObject.axClass._instanceID--;
+        //this.sec.flash.display.DisplayObject.axClass._instanceID--;
       }
-      var loaderInfoCtor = this.securityDomain.flash.display.LoaderInfo;
+      var loaderInfoCtor = this.sec.flash.display.LoaderInfo;
       this._contentLoaderInfo = new loaderInfoCtor(loaderInfoCtor.axClass.CtorToken);
       this._contentLoaderInfo._loader = this;
 
@@ -249,7 +249,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     _setStage(stage: Stage) {
-      release || assert(this === this.securityDomain.flash.display.Loader.axClass.getRootLoader());
+      release || assert(this === this.sec.flash.display.Loader.axClass.getRootLoader());
       this._stage = stage;
     }
 
@@ -258,8 +258,8 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     _constructFrame() {
-      if (this === this.securityDomain.flash.display.Loader.axClass.getRootLoader() && this._content) {
-        this.securityDomain.flash.display.DisplayObject.axClass._advancableInstances.remove(this);
+      if (this === this.sec.flash.display.Loader.axClass.getRootLoader() && this._content) {
+        this.sec.flash.display.DisplayObject.axClass._advancableInstances.remove(this);
         this._children[0] = this._content;
         this._constructChildren();
         this._children.length = 0;
@@ -269,27 +269,27 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     addChild(child: DisplayObject): DisplayObject {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
       return null;
     }
 
     addChildAt(child: DisplayObject, index: number): DisplayObject {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
       return null;
     }
 
     removeChild(child: DisplayObject): DisplayObject {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
       return null;
     }
 
     removeChildAt(index: number): DisplayObject {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
       return null;
     }
 
     setChildIndex(child: DisplayObject, index: number): void {
-      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
     }
 
     // AS -> JS Bindings
@@ -329,7 +329,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     _getJPEGLoaderContextdeblockingfilter(context: flash.system.LoaderContext): number {
-      if (this.securityDomain.flash.system.JPEGLoaderContext.axClass.axIsType(context)) {
+      if (this.sec.flash.system.JPEGLoaderContext.axClass.axIsType(context)) {
         return (<flash.system.JPEGLoaderContext>context).deblockingFilter;
       }
       return 0.0;
@@ -345,7 +345,7 @@ module Shumway.AVMX.AS.flash.display {
 
     private _canLoadSWFFromDomain(url: string): boolean {
       url = FileLoadingService.instance.resolveUrl(url);
-      var whitelist: ICrossDomainSWFLoadingWhitelist = this.securityDomain.player;
+      var whitelist: ICrossDomainSWFLoadingWhitelist = this.sec.player;
       return whitelist.checkDomainForSWFLoading(url);
     }
 
@@ -372,7 +372,7 @@ module Shumway.AVMX.AS.flash.display {
       }.bind(this, this._fileLoader, request._toFileRequest()));
 
       this._queuedLoadUpdate = null;
-      var loaderClass = this.securityDomain.flash.display.Loader.axClass;
+      var loaderClass = this.sec.flash.display.Loader.axClass;
       release || assert(loaderClass._loadQueue.indexOf(this) === -1);
       loaderClass._loadQueue.push(this);
     }
@@ -394,15 +394,15 @@ module Shumway.AVMX.AS.flash.display {
       // Just passing in the bytes won't do, because the buffer can contain slop at the end.
       this._fileLoader.loadBytes(new Uint8Array((<any>data).bytes, 0, data.length));
 
-      var loaderClass = this.securityDomain.flash.display.Loader.axClass;
+      var loaderClass = this.sec.flash.display.Loader.axClass;
       release || assert(loaderClass._loadQueue.indexOf(this) === -1);
       loaderClass._loadQueue.push(this);
     }
 
     close(): void {
-      var queueIndex = this.securityDomain.flash.display.Loader.axClass._loadQueue.indexOf(this);
+      var queueIndex = this.sec.flash.display.Loader.axClass._loadQueue.indexOf(this);
       if (queueIndex > -1) {
-        this.securityDomain.flash.display.Loader.axClass._loadQueue.splice(queueIndex, 1);
+        this.sec.flash.display.Loader.axClass._loadQueue.splice(queueIndex, 1);
       }
       this._contentLoaderInfo.reset();
       if (!this._fileLoader) {
@@ -421,7 +421,7 @@ module Shumway.AVMX.AS.flash.display {
       this._content = null;
       this._contentLoaderInfo._loader = null;
       this._loadStatus = LoadStatus.Unloaded;
-      this.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.UNLOAD));
+      this.dispatchEvent(this.sec.flash.events.Event.axClass.getInstance(events.Event.UNLOAD));
     }
     unload() {
       this._unload(false, false);
@@ -434,7 +434,7 @@ module Shumway.AVMX.AS.flash.display {
 
     private _applyLoaderContext(context: LoaderContext) {
       var parameters = context && context.parameters ?
-        transformASValueToJS(this.securityDomain, context.parameters, false) : {};
+        transformASValueToJS(this.sec, context.parameters, false) : {};
       if (context && context.applicationDomain) {
         var domain = null;
         // REDUX:
@@ -484,14 +484,14 @@ module Shumway.AVMX.AS.flash.display {
       };
       var symbol = BitmapSymbol.FromData(data, this._contentLoaderInfo);
       this._imageSymbol = symbol;
-      var resolver: Timeline.IAssetResolver = this.securityDomain.player;
+      var resolver: Timeline.IAssetResolver = this.sec.player;
       resolver.registerImage(symbol, data);
       release || assert(symbol.resolveAssetPromise);
     }
 
     private _applyDecodedImage(symbol: BitmapSymbol) {
       var bitmapData = symbol.createSharedInstance();
-      this._content = new this.securityDomain.flash.display.Bitmap(bitmapData);
+      this._content = new this.sec.flash.display.Bitmap(bitmapData);
       this._contentLoaderInfo._width = this._content.width * 20;
       this._contentLoaderInfo._height = this._content.height * 20;
       this.addTimelineObjectAtDepth(this._content, 0);
@@ -511,7 +511,7 @@ module Shumway.AVMX.AS.flash.display {
       }
 
       if (loaderInfo._allowCodeExecution) {
-        var system = this.securityDomain.system;
+        var system = this.sec.system;
 
         var abcBlocksLoaded = file.abcBlocks.length;
         var abcBlocksLoadedDelta = abcBlocksLoaded - loaderInfo._abcBlocksLoaded;
@@ -555,7 +555,7 @@ module Shumway.AVMX.AS.flash.display {
         var fontsLoadedDelta = fontsLoaded - loaderInfo._fontsLoaded;
         if (fontsLoadedDelta > 0) {
           for (var i = loaderInfo._fontsLoaded; i < fontsLoaded; i++) {
-            this.securityDomain.flash.text.Font.axClass.registerEmbeddedFont(file.fonts[i],
+            this.sec.flash.text.Font.axClass.registerEmbeddedFont(file.fonts[i],
                                                                              loaderInfo);
           }
           loaderInfo._fontsLoaded = fontsLoaded;
@@ -633,15 +633,15 @@ module Shumway.AVMX.AS.flash.display {
       var root = constructClassFromSymbol(symbol, symbol.symbolClass);
       // The initial SWF's root object gets a default of 'root1', which doesn't use up a
       // DisplayObject instance ID. For the others, we have reserved on in `_contentID`.
-      this.securityDomain.flash.display.DisplayObject.axClass._instanceID--;
-      var loaderClass = this.securityDomain.flash.display.Loader.axClass;
+      this.sec.flash.display.DisplayObject.axClass._instanceID--;
+      var loaderClass = this.sec.flash.display.Loader.axClass;
       if (this === loaderClass._rootLoader) {
         root._name = 'root1';
       } else {
         root._name = 'instance' + this._contentID;
       }
 
-      if (this.securityDomain.flash.display.MovieClip.axClass.axIsType(root)) {
+      if (this.sec.flash.display.MovieClip.axClass.axIsType(root)) {
         this._addScenesToMovieClip(<MovieClip>root, sceneData, symbol.numFrames);
       }
 
@@ -651,14 +651,14 @@ module Shumway.AVMX.AS.flash.display {
       if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
         root = this._initAvm1Root(root);
       } else if (this === loaderClass.getRootLoader()) {
-        var movieClipClass = this.securityDomain.flash.display.MovieClip.axClass;
+        var movieClipClass = this.sec.flash.display.MovieClip.axClass;
         movieClipClass.frameNavigationModel = loaderInfo.swfVersion < 10 ?
                                               flash.display.FrameNavigationModel.SWF9 :
                                               flash.display.FrameNavigationModel.SWF10;
       }
       this._content = root;
       if (this === loaderClass.getRootLoader()) {
-        this.securityDomain.flash.display.Loader.runtimeStartTime = Date.now();
+        this.sec.flash.display.Loader.runtimeStartTime = Date.now();
         this._stage.setRoot(root);
       } else {
         this.addTimelineObjectAtDepth(root, 0);
@@ -676,7 +676,7 @@ module Shumway.AVMX.AS.flash.display {
       } else {
         context = Shumway.AVM1.AVM1Context.create(contentLoaderInfo);
         contentLoaderInfo._avm1Context = context;
-        var display = this.securityDomain.flash.display;
+        var display = this.sec.flash.display;
         if (this === display.Loader.axClass.getRootLoader()) {
           context.setStage(this._stage);
           display.MovieClip.axClass.frameNavigationModel = flash.display.FrameNavigationModel.SWF1;
@@ -707,7 +707,7 @@ module Shumway.AVMX.AS.flash.display {
                             false,
                             Number.MAX_VALUE);
 
-      var avm1Movie = new this.securityDomain.flash.display.AVM1Movie(<MovieClip>root);
+      var avm1Movie = new this.sec.flash.display.AVM1Movie(<MovieClip>root);
 
       // transfer parameters
       var parameters = this._contentLoaderInfo._parameters;

@@ -27,13 +27,13 @@ module Shumway.AVM1.Lib {
     }
 
     public static get available(): boolean {
-      return false; // REDUX this.securityDomain.flash.external.ExternalInterface.available;
+      return false; // REDUX this.sec.flash.external.ExternalInterface.available;
     }
 
     public static addCallback(methodName: string, instance: any, method: Function): boolean {
       try {
-        var securityDomain; // REDUX
-        securityDomain.flash.external.ExternalInterface.addCallback(methodName, function () {
+        var sec; // REDUX
+        sec.flash.external.ExternalInterface.addCallback(methodName, function () {
           return method.apply(instance, arguments);
         });
         return true;
@@ -44,8 +44,8 @@ module Shumway.AVM1.Lib {
 
     public static call(methodName: string): any {
       var args = Array.prototype.slice.call(arguments, 0);
-      var securityDomain; // REDUX
-      return securityDomain.flash.external.ExternalInterface.call(args);
+      var sec; // REDUX
+      return sec.flash.external.ExternalInterface.call(args);
     }
   }
 }

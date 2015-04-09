@@ -123,8 +123,8 @@ module Shumway.Remoting.Player {
         if (cursor === MouseCursor.AUTO) {
           var node = currentMouseTarget;
           do {
-            if (stage.securityDomain.flash.display.SimpleButton.axClass.axIsType(node) ||
-                (stage.securityDomain.flash.display.Sprite.axClass.axIsType(node) &&
+            if (stage.sec.flash.display.SimpleButton.axClass.axIsType(node) ||
+                (stage.sec.flash.display.Sprite.axClass.axIsType(node) &&
                  (<flash.display.Sprite>node).buttonMode) &&
                  (<any>currentMouseTarget).useHandCursor)
             {
@@ -193,7 +193,7 @@ module Shumway.Remoting.Player {
       this.output.writeInt(textContent._id);
       this.output.writeInt(-1);
       this._writeRectangle(textContent.bounds);
-      var identity = textContent._securityDomain.flash.geom.Matrix.axClass.FROZEN_IDENTITY_MATRIX;
+      var identity = textContent.sec.flash.geom.Matrix.axClass.FROZEN_IDENTITY_MATRIX;
       this._writeMatrix(textContent.matrix || identity);
       this.output.writeInt(textContent.backgroundColor);
       this.output.writeInt(textContent.borderColor);
@@ -253,7 +253,7 @@ module Shumway.Remoting.Player {
       var hasMiscellaneousProperties = displayObject._hasFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
 
       var video: Video = null;
-      if (displayObject.securityDomain.flash.media.Video.axClass.axIsType(displayObject)) {
+      if (displayObject.sec.flash.media.Video.axClass.axIsType(displayObject)) {
         video = <Video>displayObject;
       }
 
@@ -270,7 +270,7 @@ module Shumway.Remoting.Player {
         hasMask = displayObject._hasFlags(DisplayObjectFlags.DirtyMask);
       }
       var bitmap: Bitmap = null;
-      if (displayObject.securityDomain.flash.display.Bitmap.axClass.axIsType(displayObject)) {
+      if (displayObject.sec.flash.display.Bitmap.axClass.axIsType(displayObject)) {
         bitmap = <Bitmap>displayObject;
       }
 
@@ -384,7 +384,7 @@ module Shumway.Remoting.Player {
       }
 
       var bitmap: Bitmap = null;
-      if (displayObject.securityDomain.flash.display.Bitmap.axClass.axIsType(displayObject)) {
+      if (displayObject.sec.flash.display.Bitmap.axClass.axIsType(displayObject)) {
         bitmap = <Bitmap>displayObject;
         if (bitmap.bitmapData) {
           this.writeBitmapData(bitmap.bitmapData);
@@ -393,7 +393,7 @@ module Shumway.Remoting.Player {
       }
 
       var video: Video = null;
-      if (displayObject.securityDomain.flash.media.Video.axClass.axIsType(displayObject)) {
+      if (displayObject.sec.flash.media.Video.axClass.axIsType(displayObject)) {
         video = <Video>displayObject;
         if (video._netStream) {
           this.writeNetStream(video._netStream, video._getContentBounds());
@@ -409,7 +409,7 @@ module Shumway.Remoting.Player {
     {
       this.output.writeInt(MessageTag.DrawToBitmap);
       this.output.writeInt(bitmapData._id);
-      if (bitmapData.securityDomain.flash.display.BitmapData.axClass.axIsType(source)) {
+      if (bitmapData.sec.flash.display.BitmapData.axClass.axIsType(source)) {
         this.output.writeInt(IDMask.Asset | source._id);
       } else {
         this.output.writeInt(source._id);
@@ -455,11 +455,11 @@ module Shumway.Remoting.Player {
         this.output.writeInt(0);
         return;
       }
-      var securityDomain = filters[0].securityDomain;
+      var sec = filters[0].sec;
       var count = 0;
-      var blurFilterClass = securityDomain.flash.filters.BlurFilter.axClass;
-      var dropShadowFilterClass = securityDomain.flash.filters.DropShadowFilter.axClass;
-      var glowFilterClass = securityDomain.flash.filters.GlowFilter.axClass;
+      var blurFilterClass = sec.flash.filters.BlurFilter.axClass;
+      var dropShadowFilterClass = sec.flash.filters.DropShadowFilter.axClass;
+      var glowFilterClass = sec.flash.filters.GlowFilter.axClass;
       for (var i = 0; i < filters.length; i++) {
         if (blurFilterClass.axIsType(filters[i]) ||
             dropShadowFilterClass.axIsType(filters[i]) ||
@@ -557,7 +557,7 @@ module Shumway.Remoting.Player {
 
   export class PlayerChannelDeserializer {
 
-    constructor(private securityDomain: ISecurityDomain, private input: IDataInput,
+    constructor(private sec: ISecurityDomain, private input: IDataInput,
                 private inputAssets: any[]) {
       // ..
     }
@@ -596,7 +596,7 @@ module Shumway.Remoting.Player {
       return {
         tag: MessageTag.MouseEvent,
         type: type,
-        point: new this.securityDomain.flash.geom.Point(pX, pY),
+        point: new this.sec.flash.geom.Point(pX, pY),
         ctrlKey: !!(flags & KeyboardEventFlags.CtrlKey),
         altKey: !!(flags & KeyboardEventFlags.AltKey),
         shiftKey: !!(flags & KeyboardEventFlags.ShiftKey),

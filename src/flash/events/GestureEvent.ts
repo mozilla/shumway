@@ -114,7 +114,7 @@ module Shumway.AVMX.AS.flash.events {
     }
 
     clone(): Event {
-      return new this.securityDomain.flash.events.GestureEvent(this.type, this.bubbles,
+      return new this.sec.flash.events.GestureEvent(this.type, this.bubbles,
                                                                this.cancelable, this.phase,
                                                                this.localX, this.localY,
                                                                this.ctrlKey, this.altKey,

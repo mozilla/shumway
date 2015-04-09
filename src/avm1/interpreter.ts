@@ -166,7 +166,7 @@ module Shumway.AVM1 {
     constructor(loaderInfo: Shumway.AVMX.AS.flash.display.LoaderInfo) {
       super();
       this.loaderInfo = loaderInfo;
-      this.securityDomain = loaderInfo.securityDomain; // REDUX:
+      this.sec = loaderInfo.sec; // REDUX:
       this.globals = Lib.AVM1Globals.createGlobalsObject(this);
       this.actions = new Lib.AVM1NativeActions(this);
       this.initialScope = new AVM1ScopeListItem(this.globals, null);

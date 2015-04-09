@@ -50,7 +50,7 @@ module Shumway.AVMX.AS.flash.ui {
       index = index | 0;
 
       somewhatImplemented("public flash.ui.GameInput::static getDeviceAt");
-      this.securityDomain.throwError("RangeError", Errors.ParamRangeError, "index");
+      this.sec.throwError("RangeError", Errors.ParamRangeError, "index");
       return null;
     }
     

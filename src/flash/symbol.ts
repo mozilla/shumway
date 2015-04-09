@@ -55,7 +55,7 @@ module Shumway.Timeline {
       release || assert (isInteger(data.id));
       this.data = data;
       if (data.className) {
-        var system = symbolDefaultClass.securityDomain.system;
+        var system = symbolDefaultClass.sec.system;
         try {
           var symbolClass = system.getClass(AVMX.Multiname.FromFQNString(data.className,
                                                                          AVMX.NamespaceType.Public));
@@ -99,12 +99,12 @@ module Shumway.Timeline {
     buffer: Uint8Array;
     byteLength: number;
 
-    constructor(data: SymbolData, securityDomain: ISecurityDomain) {
-      super(data, securityDomain.flash.utils.ByteArray.axClass);
+    constructor(data: SymbolData, sec: ISecurityDomain) {
+      super(data, sec.flash.utils.ByteArray.axClass);
     }
 
     static FromData(data: any, loaderInfo: flash.display.LoaderInfo): BinarySymbol {
-      var symbol = new BinarySymbol(data, loaderInfo.securityDomain);
+      var symbol = new BinarySymbol(data, loaderInfo.sec);
       symbol.buffer = data.data;
       symbol.byteLength = data.data.byteLength;
       return symbol;

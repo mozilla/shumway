@@ -44,7 +44,7 @@ module Shumway.AVMX.AS.flash.net {
           if (this._ignoreDecodingErrors) {
             j = p.length;
           } else {
-            this.securityDomain.throwError('Error', Errors.DecodeParamError);
+            this.sec.throwError('Error', Errors.DecodeParamError);
           }
         }
         var name = unescape(p.substring(0, j).split('+').join(' '));

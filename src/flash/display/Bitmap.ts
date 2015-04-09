@@ -33,9 +33,9 @@ module Shumway.AVMX.AS.flash.display {
       // If the symbol class inherits from Bitmap, we are already within its initializer.
       // Make sure to create a BitmapData instance here to avoid recursively calling the
       // initializer again.
-      var bitmapClass = this.securityDomain.flash.display.Bitmap.axClass;
+      var bitmapClass = this.sec.flash.display.Bitmap.axClass;
       if (bitmapClass.dPrototype.isPrototypeOf((<any>symbolClass).dPrototype)) {
-        symbolClass = this.securityDomain.flash.display.BitmapData.axClass;
+        symbolClass = this.sec.flash.display.BitmapData.axClass;
       }
       // TODO: I don't think BitmapData symbol objects can change, so they don't need back
       // references to this Bitmap.
@@ -70,7 +70,7 @@ module Shumway.AVMX.AS.flash.display {
 
     set pixelSnapping(value: string) {
       if (PixelSnapping.toNumber(value) < 0) {
-        this.securityDomain.throwError("ArgumentError", Errors.InvalidEnumError, "pixelSnapping");
+        this.sec.throwError("ArgumentError", Errors.InvalidEnumError, "pixelSnapping");
       }
       this._pixelSnapping = axCoerceString(value);
     }

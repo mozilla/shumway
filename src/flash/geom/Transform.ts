@@ -29,7 +29,7 @@ module Shumway.AVMX.AS.flash.geom {
     constructor (displayObject: flash.display.DisplayObject) {
       super();
       if (!displayObject) {
-        this.securityDomain.throwError("ArgumentError", Errors.NullPointerError, "displayObject");
+        this.sec.throwError("ArgumentError", Errors.NullPointerError, "displayObject");
       }
       this._displayObject = displayObject;
     }
@@ -73,14 +73,14 @@ module Shumway.AVMX.AS.flash.geom {
     }
 
     set matrix3D(m: flash.geom.Matrix3D) {
-      if (!(this.securityDomain.flash.geom.Matrix3D.axIsType(m))) {
-        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, m,
+      if (!(this.sec.flash.geom.Matrix3D.axIsType(m))) {
+        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, m,
                                        'flash.geom.Matrix3D');
       }
 
       var raw = m.rawData;
       // TODO why is this not a 3D matrix?
-      this.matrix = new this.securityDomain.flash.geom.Matrix (
+      this.matrix = new this.sec.flash.geom.Matrix (
         raw.axGetPublicProperty(0),
         raw.axGetPublicProperty(1),
         raw.axGetPublicProperty(4),

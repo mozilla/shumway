@@ -33,22 +33,22 @@ module Shumway.AVMX.AS {
     HIDE_OBJECT         = 0x0400
   }
 
-  export function describeTypeJSON(securityDomain: SecurityDomain, o: any, flags: number): any {
+  export function describeTypeJSON(sec: SecurityDomain, o: any, flags: number): any {
     // Class traits aren't returned for numeric primitives, undefined, null, bound methods, or
     // non-class-constructor functions.
     var isInt = (o|0) === o;
     if (flags & DescribeTypeFlags.USE_ITRAITS && (isNullOrUndefined(o) || isInt)) {
       return null;
     }
-    // Use the object's own securityDomain if we're not dealing with a primitive to make sure
+    // Use the object's own sec if we're not dealing with a primitive to make sure
     // type checks are correct.
-    if (o.securityDomain) {
-      securityDomain = o.securityDomain;
+    if (o.sec) {
+      sec = o.sec;
     }
-    o = securityDomain.box(o);
+    o = sec.box(o);
 
-    if (securityDomain.AXFunction.axIsType(o)) {
-      if (securityDomain.AXMethodClosure.axIsType(o)) {
+    if (sec.AXFunction.axIsType(o)) {
+      if (sec.AXMethodClosure.axIsType(o)) {
         if (flags & DescribeTypeFlags.USE_ITRAITS) {
           return null;
         }
@@ -62,7 +62,7 @@ module Shumway.AVMX.AS {
     var describeClass = cls === o && !(flags & DescribeTypeFlags.USE_ITRAITS);
     var info: ClassInfo = cls.classInfo;
 
-    var description: any = securityDomain.createObject();
+    var description: any = sec.createObject();
     // For numeric literals that fit into ints, special case the name.
     if (isInt) {
       description.$Bgname = 'int';
@@ -80,11 +80,11 @@ module Shumway.AVMX.AS {
     return description;
   }
 
-  //export function describeType(securityDomain: SecurityDomain, value: any, flags: number): ASXML
+  //export function describeType(sec: SecurityDomain, value: any, flags: number): ASXML
   // {
   //  var classDescription: any = describeTypeJSON(value, flags);
   //  // Make sure all XML classes are fully initialized.
-  //  var systemDomain = securityDomain.application;
+  //  var systemDomain = sec.application;
   //  systemDomain.getClass('XML');
   //  systemDomain.getClass('XMLList');
   //  systemDomain.getClass('QName');
@@ -183,11 +183,11 @@ module Shumway.AVMX.AS {
   // escapeAttributeValue(value[publicName('value')]) + '"/>'); m.appendChild(a); }
   // x.appendChild(m); } }
 
-  function describeMetadataList(securityDomain: SecurityDomain, list: MetadataInfo[]) {
+  function describeMetadataList(sec: SecurityDomain, list: MetadataInfo[]) {
     if (!list) {
       return null;
     }
-    var result = securityDomain.createArray([]);
+    var result = sec.createArray([]);
 
     for (var i = 0; i < list.length; i++) {
       var metadata = list[i];
@@ -197,18 +197,18 @@ module Shumway.AVMX.AS {
       if (key === 'native') {
         continue;
       }
-      result.push(describeMetadata(securityDomain, metadata));
+      result.push(describeMetadata(sec, metadata));
     }
     return result;
   }
 
-  function describeMetadata(securityDomain: SecurityDomain, metadata: MetadataInfo) {
-    var result = securityDomain.createObject();
+  function describeMetadata(sec: SecurityDomain, metadata: MetadataInfo) {
+    var result = sec.createObject();
     result.$Bgname = metadata.name;
     var values = [];
-    result.$Bgvalue = securityDomain.createArray(values);
+    result.$Bgvalue = sec.createArray(values);
     for (var i = 0; i < metadata.keys.length; i++) {
-      var val = securityDomain.createObject();
+      var val = sec.createObject();
       val.$Bgvalue = metadata.getValueAt(i);
       val.$Bgkey = metadata.getKeyAt(i);
       values.push(val);
@@ -218,32 +218,32 @@ module Shumway.AVMX.AS {
 
   function addTraits(cls: AXClass, info: ClassInfo, describingClass: boolean,
                      flags: DescribeTypeFlags) {
-    var securityDomain = cls.securityDomain;
+    var sec = cls.sec;
     var includeBases = flags & DescribeTypeFlags.INCLUDE_BASES;
     var includeMethods = flags & DescribeTypeFlags.INCLUDE_METHODS && !describingClass;
-    var obj = securityDomain.createObject();
+    var obj = sec.createObject();
 
     var variablesVal = obj.$Bgvariables =
-      flags & DescribeTypeFlags.INCLUDE_VARIABLES ? securityDomain.createArray([]) : null;
+      flags & DescribeTypeFlags.INCLUDE_VARIABLES ? sec.createArray([]) : null;
     var accessorsVal = obj.$Bgaccessors =
-      flags & DescribeTypeFlags.INCLUDE_ACCESSORS ? securityDomain.createArray([]) : null;
+      flags & DescribeTypeFlags.INCLUDE_ACCESSORS ? sec.createArray([]) : null;
 
     var metadataList: any[] = null;
     // Somewhat absurdly, class metadata is only included when describing instances.
     if (flags & DescribeTypeFlags.INCLUDE_METADATA && !describingClass) {
       var metadata: MetadataInfo[] = info.trait.getMetadata();
       if (metadata) {
-        metadataList = describeMetadataList(securityDomain, metadata);
+        metadataList = describeMetadataList(sec, metadata);
       }
     }
       // This particular metadata list is always created, even if no metadata exists.
-    obj.$Bgmetadata = metadataList || securityDomain.createArray([]);
+    obj.$Bgmetadata = metadataList || sec.createArray([]);
 
     // TODO: fill in.
     obj.$Bgconstructor = null;
 
     if (flags & DescribeTypeFlags.INCLUDE_INTERFACES) {
-      obj.$Bginterfaces = securityDomain.createArray([]);
+      obj.$Bginterfaces = sec.createArray([]);
       if (!describingClass) {
         var interfacesVal = obj.$Bginterfaces.value;
         var interfaces = cls.classInfo.instanceInfo.getInterfaces(cls);
@@ -253,8 +253,8 @@ module Shumway.AVMX.AS {
       obj.$Bginterfaces = null;
     }
 
-    var methodsVal = obj.$Bgmethods = includeMethods ? securityDomain.createArray([]) : null;
-    var basesVal = obj.$Bgbases = includeBases ? securityDomain.createArray([]) : null;
+    var methodsVal = obj.$Bgmethods = includeMethods ? sec.createArray([]) : null;
+    var basesVal = obj.$Bgbases = includeBases ? sec.createArray([]) : null;
 
     var encounteredKeys: any = Object.create(null);
 
@@ -270,22 +270,22 @@ module Shumway.AVMX.AS {
       } else {
         addBase = true;
       }
-      if (flags & DescribeTypeFlags.HIDE_OBJECT && cls === securityDomain.AXObject) {
+      if (flags & DescribeTypeFlags.HIDE_OBJECT && cls === sec.AXObject) {
         break;
       }
       if (!describingClass) {
-        describeTraits(securityDomain, cls.classInfo.instanceInfo.traits.traits);
+        describeTraits(sec, cls.classInfo.instanceInfo.traits.traits);
       } else {
-        describeTraits(securityDomain, cls.classInfo.traits.traits);
+        describeTraits(sec, cls.classInfo.traits.traits);
       }
       cls = cls.superClass;
     }
-    release || assert(cls === securityDomain.AXObject);
+    release || assert(cls === sec.AXObject);
     // When describing Class objects, the bases to add are always Class and Object.
     if (describingClass) {
       // When describing Class objects, accessors are ignored. *Except* the `prototype` accessor.
       if (flags & DescribeTypeFlags.INCLUDE_ACCESSORS) {
-        var val = securityDomain.createObject();
+        var val = sec.createObject();
         val.$Bgname = 'prototype';
         val.$Bgtype = '*';
         val.$Bgaccess = "readonly";
@@ -297,13 +297,13 @@ module Shumway.AVMX.AS {
       if (includeBases) {
         basesVal.pop();
         basesVal.push('Class', 'Object');
-        cls = securityDomain.AXClass;
+        cls = sec.AXClass;
       }
     }
 
     // Having a hot function closed over isn't all that great, but moving this out would involve
     // passing lots and lots of arguments. We might do that if performance becomes an issue.
-    function describeTraits(securityDomain: SecurityDomain, traits: TraitInfo[]) {
+    function describeTraits(sec: SecurityDomain, traits: TraitInfo[]) {
       release || assert(traits, "No traits array found on class" + cls.name);
 
       // All types share some fields, but setting them in one place changes the order in which
@@ -333,7 +333,7 @@ module Shumway.AVMX.AS {
         }
         //TODO: check why we have public$$_init in `Object`
 
-        var val = securityDomain.createObject();
+        var val = sec.createObject();
         encounteredKeys[name] = val;
         var metadata: MetadataInfo[] = t.getMetadata();
         switch (t.kind) {
@@ -348,7 +348,7 @@ module Shumway.AVMX.AS {
             val.$Bgtype = typeName ? typeName.toFQNString(true) : '*';
             val.$Bgaccess = "readwrite";
             val.$Bgmetadata = flags & DescribeTypeFlags.INCLUDE_METADATA ?
-                              describeMetadataList(securityDomain, metadata) :
+                              describeMetadataList(sec, metadata) :
                               null;
             variablesVal.push(val);
             break;
@@ -359,15 +359,15 @@ module Shumway.AVMX.AS {
             var returnType = (<MethodTraitInfo>t).getMethodInfo().getType();
             val.$BgreturnType = returnType ? returnType.name.toFQNString(true) : '*';
             val.$Bgmetadata = flags & DescribeTypeFlags.INCLUDE_METADATA ?
-                              describeMetadataList(securityDomain, metadata) :
+                              describeMetadataList(sec, metadata) :
                               null;
             val.$Bgname = name;
             val.$Bguri = ns.reflectedURI;
-            var parametersVal = val.$Bgparameters = securityDomain.createArray([]);
+            var parametersVal = val.$Bgparameters = sec.createArray([]);
             var parameters = (<MethodTraitInfo>t).getMethodInfo().parameters;
             for (var j = 0; j < parameters.length; j++) {
               var param = parameters[j];
-              var paramVal = securityDomain.createObject();
+              var paramVal = sec.createObject();
               paramVal.$Bgtype = param.type ? param.getType().toFQNString(true) : '*';
               paramVal.$Bgoptional = 'value' in param;
               parametersVal.push(paramVal);
@@ -392,7 +392,7 @@ module Shumway.AVMX.AS {
             }
             val.$Bgaccess = t.kind === TRAIT.Getter ? "readonly" : "writeonly";
             val.$Bgmetadata = flags & DescribeTypeFlags.INCLUDE_METADATA ?
-                              describeMetadataList(securityDomain, metadata) :
+                              describeMetadataList(sec, metadata) :
                               null;
             val.$Bguri = ns.reflectedURI;
             val.$BgdeclaredBy = className;

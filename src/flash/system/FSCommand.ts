@@ -21,7 +21,7 @@ module Shumway.AVMX.AS.flash.system {
     executeFSCommand(command: string, args: string);
   }
 
-  export function fscommand(securityDomain: ISecurityDomain, command: string, args: string): void {
+  export function fscommand(sec: ISecurityDomain, command: string, args: string): void {
     command = axCoerceString(command);
     args = axCoerceString(args);
     console.log('FSCommand: ' + command + '; ' + args);
@@ -33,6 +33,6 @@ module Shumway.AVMX.AS.flash.system {
       return;
     }
 
-    securityDomain.player.executeFSCommand(command, args);
+    sec.player.executeFSCommand(command, args);
   }
 }
