@@ -27,7 +27,7 @@ module Shumway.ArrayUtilities {
   import floatToInt32 = Shumway.IntegerUtilities.floatToInt32;
   import int32ToFloat = Shumway.IntegerUtilities.int32ToFloat;
 
-  function asCoerceString(x): string {
+  function axCoerceString(x): string {
     if (typeof x === "string") {
       return x;
     } else if (x == undefined) {
@@ -582,14 +582,14 @@ module Shumway.ArrayUtilities {
     }
 
     writeUTF(value: string): void {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       var bytes = utf8decode(value);
       this.writeShort(bytes.length);
       this.writeRawBytes(bytes);
     }
 
     writeUTFBytes(value: string): void {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       var bytes = utf8decode(value);
       this.writeRawBytes(bytes);
     }
@@ -663,7 +663,7 @@ module Shumway.ArrayUtilities {
     }
 
     set endian(type: string) {
-      type = asCoerceString(type);
+      type = axCoerceString(type);
       if (type === "auto") {
         this._littleEndian = DataBuffer._nativeLittleEndian;
       } else {
@@ -680,12 +680,12 @@ module Shumway.ArrayUtilities {
     }
 
     writeMultiByte(value: string, charSet: string): void {
-      value = asCoerceString(value); charSet = asCoerceString(charSet);
+      value = axCoerceString(value); charSet = axCoerceString(charSet);
       notImplemented("packageInternal flash.utils.ObjectOutput::writeMultiByte"); return;
     }
 
     readMultiByte(length: number /*uint*/, charSet: string): string {
-      length = length >>> 0; charSet = asCoerceString(charSet);
+      length = length >>> 0; charSet = axCoerceString(charSet);
       notImplemented("packageInternal flash.utils.ObjectInput::readMultiByte"); return;
     }
 
@@ -806,7 +806,7 @@ module Shumway.ArrayUtilities {
       if (arguments.length === 0) {
         algorithm = 'zlib';
       } else {
-        algorithm = asCoerceString(algorithm);
+        algorithm = axCoerceString(algorithm);
       }
 
       var deflate: Deflate;
@@ -836,7 +836,7 @@ module Shumway.ArrayUtilities {
       if (arguments.length === 0) {
         algorithm = 'zlib';
       } else {
-        algorithm = asCoerceString(algorithm);
+        algorithm = axCoerceString(algorithm);
       }
 
       var inflate: IDataDecoder;

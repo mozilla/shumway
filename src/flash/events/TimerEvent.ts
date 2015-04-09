@@ -40,8 +40,7 @@ module Shumway.AVMX.AS.flash.events {
     }
 
     updateAfterEvent(): void {
-      // REDUX:
-      // Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'].requestRendering();
+      this.securityDomain.player.requestRendering();
     }
   }
 }

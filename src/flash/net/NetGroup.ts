@@ -16,7 +16,7 @@
 // Class: NetGroup
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class NetGroup extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -30,7 +30,7 @@ module Shumway.AVMX.AS.flash.net {
     
     constructor (connection: flash.net.NetConnection, groupspec: string) {
       super();
-      connection = connection; groupspec = asCoerceString(groupspec);
+      connection = connection; groupspec = axCoerceString(groupspec);
     }
     
     // JS -> AS Bindings
@@ -67,7 +67,7 @@ module Shumway.AVMX.AS.flash.net {
       // return this._info;
     }
     convertPeerIDToGroupAddress(peerID: string): string {
-      peerID = asCoerceString(peerID);
+      peerID = axCoerceString(peerID);
       notImplemented("public flash.net.NetGroup::convertPeerIDToGroupAddress"); return;
     }
     get localCoverageFrom(): string {

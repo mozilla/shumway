@@ -16,7 +16,7 @@
 // Class: ClipboardFormats
 module Shumway.AVMX.AS.flash.desktop {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class ClipboardFormats extends ASObject {
     
     // Called whenever the class is initialized.

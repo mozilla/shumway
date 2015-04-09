@@ -28,7 +28,7 @@ module Shumway.AVMX.AS.flash.events {
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 state: string = null, targetFrameRate: number = 0) {
       super(type, bubbles, cancelable);
-      this.state = asCoerceString(state);
+      this.state = axCoerceString(state);
       this.targetFrameRate = +targetFrameRate;
     }
 

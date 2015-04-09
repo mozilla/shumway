@@ -17,7 +17,7 @@
 module Shumway.AVMX.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class EastAsianJustifier extends flash.text.engine.TextJustifier {
     
     // Called whenever the class is initialized.
@@ -33,7 +33,7 @@ module Shumway.AVMX.AS.flash.text.engine {
     static instanceSymbols: string [] = null; // ["clone"];
     
     constructor (locale: string = "ja", lineJustification: string = "allButLast", justificationStyle: string = "pushInKinsoku") {
-      locale = asCoerceString(locale); lineJustification = asCoerceString(lineJustification); justificationStyle = asCoerceString(justificationStyle);
+      locale = axCoerceString(locale); lineJustification = axCoerceString(lineJustification); justificationStyle = axCoerceString(justificationStyle);
       false && super(undefined, undefined);
       dummyConstructor("public flash.text.engine.EastAsianJustifier");
     }
@@ -51,7 +51,7 @@ module Shumway.AVMX.AS.flash.text.engine {
       // return this._justificationStyle;
     }
     set justificationStyle(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.text.engine.EastAsianJustifier::set justificationStyle"); return;
       // this._justificationStyle = value;
     }

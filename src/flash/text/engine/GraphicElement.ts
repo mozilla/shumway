@@ -17,7 +17,7 @@
 module Shumway.AVMX.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class GraphicElement extends flash.text.engine.ContentElement {
     
     // Called whenever the class is initialized.
@@ -33,7 +33,7 @@ module Shumway.AVMX.AS.flash.text.engine {
     static instanceSymbols: string [] = null; // [];
     
     constructor (graphic: flash.display.DisplayObject = null, elementWidth: number = 15, elementHeight: number = 15, elementFormat: flash.text.engine.ElementFormat = null, eventMirror: flash.events.EventDispatcher = null, textRotation: string = "rotate0") {
-      graphic = graphic; elementWidth = +elementWidth; elementHeight = +elementHeight; elementFormat = elementFormat; eventMirror = eventMirror; textRotation = asCoerceString(textRotation);
+      graphic = graphic; elementWidth = +elementWidth; elementHeight = +elementHeight; elementFormat = elementFormat; eventMirror = eventMirror; textRotation = axCoerceString(textRotation);
       false && super(undefined, undefined, undefined);
       dummyConstructor("public flash.text.engine.GraphicElement");
     }

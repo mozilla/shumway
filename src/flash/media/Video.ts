@@ -17,7 +17,7 @@
 module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import assert = Shumway.Debug.assert;
   export class Video extends flash.display.DisplayObject {
     static classInitializer: any = null;

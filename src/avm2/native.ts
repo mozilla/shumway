@@ -37,7 +37,7 @@ module Shumway.AVM2.AS {
   import isPrototypeWriteable = Shumway.ObjectUtilities.isPrototypeWriteable;
   import getOwnPropertyDescriptor = Shumway.ObjectUtilities.getOwnPropertyDescriptor;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import assert = Shumway.Debug.assert;
@@ -907,7 +907,7 @@ module Shumway.AVM2.AS {
     public static classInfo: ClassInfo;
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
-    public static coerce: (value: any) => boolean = Runtime.asCoerceBoolean;
+    public static coerce: (value: any) => boolean = Runtime.axCoerceBoolean;
 
     static classInitializer: any = function() {
       defineNonEnumerableProperty(this, '$Bglength', 1);
@@ -964,7 +964,7 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [Math];
     public static instanceNatives: any [] = [Number.prototype];
     public static defaultValue: any = Number(0);
-    public static coerce: (value: any) => number = Runtime.asCoerceNumber;
+    public static coerce: (value: any) => number = Runtime.axCoerceNumber;
 
     static classInitializer: any = function() {
       defineNonEnumerableProperty(this, '$Bglength', 1);
@@ -1017,7 +1017,7 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [Math];
     public static instanceNatives: any [] = [Number.prototype];
     public static defaultValue: any = 0;
-    public static coerce: (value: any) => number = Runtime.asCoerceInt;
+    public static coerce: (value: any) => number = Runtime.axCoerceInt;
 
     static classInitializer: any = function() {
       defineNonEnumerableProperty(this, '$Bglength', 1);
@@ -1064,7 +1064,7 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [Math];
     public static instanceNatives: any [] = [Number.prototype];
     public static defaultValue: any = 0;
-    public static coerce: (value: any) => number = Runtime.asCoerceUint;
+    public static coerce: (value: any) => number = Runtime.axCoerceUint;
 
     static classInitializer: any = function() {
       defineNonEnumerableProperty(this, '$Bglength', 1);
@@ -1110,7 +1110,7 @@ module Shumway.AVM2.AS {
     public static classInfo: ClassInfo;
     public static staticNatives: any [] = [String];
     public static instanceNatives: any [] = [String.prototype];
-    public static coerce: (value: any) => string = Runtime.asCoerceString;
+    public static coerce: (value: any) => string = Runtime.axCoerceString;
 
     static classInitializer: any = function() {
       defineNonEnumerableProperty(this, '$Bglength', 1);
@@ -1170,7 +1170,7 @@ module Shumway.AVM2.AS {
     //  if (re instanceof XRegExp) {
     //    return this.search(re);
     //  }
-    //  return (<string><any>this).indexOf(asCoerceString(re));
+    //  return (<string><any>this).indexOf(axCoerceString(re));
     //}
 
     toUpperCase() {
@@ -1384,7 +1384,7 @@ module Shumway.AVM2.AS {
     if (Array.isArray(val)) {
       var v: any[] = <any>val;
       for (var i = 0, limit = v.length; i < limit; i++) {
-        var newElement = walk(v, asCoerceString(i), reviver);
+        var newElement = walk(v, axCoerceString(i), reviver);
         if (newElement === undefined) {
           delete v[i];
         } else {
@@ -1416,7 +1416,7 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [] = null;
 
     static parse(text: string, reviver: Function): any {
-      text = asCoerceString(text);
+      text = axCoerceString(text);
       if (text === null) {
         throwError('SyntaxError', Errors.JSONInvalidParseInput);
       }
@@ -1471,7 +1471,7 @@ module Shumway.AVM2.AS {
         if (typeof v === 'string') {
           item = v;
         } else if (typeof v === 'number') {
-          item = asCoerceString(v);
+          item = axCoerceString(v);
         }
         if (item !== null && !alreadyAdded[item]) {
           alreadyAdded[item] = true;
@@ -1564,7 +1564,7 @@ module Shumway.AVM2.AS {
 
     constructor(msg: any, id: any) {
       false && super();
-      this.message = asCoerceString(msg);
+      this.message = axCoerceString(msg);
       this._errorID = id|0;
       // This is gnarly but saves us from having individual ctors in all Error child classes.
       this.name = (<ASClass><any>this.constructor).dynamicPrototype['$Bgname'];

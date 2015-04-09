@@ -17,7 +17,7 @@
 module Shumway.AVMX.AS.flash.events {
   import assert = Shumway.Debug.assert;
   import unexpected = Shumway.Debug.unexpected;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class Event extends ASObject {
 
     static axClass: typeof Event;
@@ -74,7 +74,7 @@ module Shumway.AVMX.AS.flash.events {
 
     constructor(type: string, bubbles: boolean, cancelable: boolean) {
       false && super();
-      this._type = asCoerceString(type);
+      this._type = axCoerceString(type);
       this._bubbles = !!bubbles;
       this._cancelable = !!cancelable;
 

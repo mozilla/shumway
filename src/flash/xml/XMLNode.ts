@@ -16,16 +16,16 @@
 // Class: XMLNode
 module Shumway.AVMX.AS.flash.xml {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class XMLNode extends ASObject {
     constructor (type: number /*uint*/, value: string) {
-      type = type >>> 0; value = asCoerceString(value);
+      type = type >>> 0; value = axCoerceString(value);
       super();
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings
     static escapeXML(value: string): string {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.xml.XMLNode::static escapeXML"); return;
     }
     // Instance JS -> AS Bindings

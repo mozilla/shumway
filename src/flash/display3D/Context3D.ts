@@ -15,9 +15,9 @@
  */
 // Class: Context3D
 module Shumway.AVMX.AS.flash.display3D {
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class Context3D extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -79,23 +79,23 @@ module Shumway.AVMX.AS.flash.display3D {
       notImplemented("public flash.display3D.Context3D::setProgram"); return;
     }
     setProgramConstantsFromVector(programType: string, firstRegister: number /*int*/, data: ASVector<any>, numRegisters: number /*int*/ = -1): void {
-      programType = asCoerceString(programType); firstRegister = firstRegister | 0; data = data; numRegisters = numRegisters | 0;
+      programType = axCoerceString(programType); firstRegister = firstRegister | 0; data = data; numRegisters = numRegisters | 0;
       notImplemented("public flash.display3D.Context3D::setProgramConstantsFromVector"); return;
     }
     setProgramConstantsFromMatrix(programType: string, firstRegister: number /*int*/, matrix: flash.geom.Matrix3D, transposedMatrix: boolean = false): void {
-      programType = asCoerceString(programType); firstRegister = firstRegister | 0; matrix = matrix; transposedMatrix = !!transposedMatrix;
+      programType = axCoerceString(programType); firstRegister = firstRegister | 0; matrix = matrix; transposedMatrix = !!transposedMatrix;
       notImplemented("public flash.display3D.Context3D::setProgramConstantsFromMatrix"); return;
     }
     setProgramConstantsFromByteArray(programType: string, firstRegister: number /*int*/, numRegisters: number /*int*/, data: flash.utils.ByteArray, byteArrayOffset: number /*uint*/): void {
-      programType = asCoerceString(programType); firstRegister = firstRegister | 0; numRegisters = numRegisters | 0; data = data; byteArrayOffset = byteArrayOffset >>> 0;
+      programType = axCoerceString(programType); firstRegister = firstRegister | 0; numRegisters = numRegisters | 0; data = data; byteArrayOffset = byteArrayOffset >>> 0;
       notImplemented("public flash.display3D.Context3D::setProgramConstantsFromByteArray"); return;
     }
     setVertexBufferAt(index: number /*int*/, buffer: flash.display3D.VertexBuffer3D, bufferOffset: number /*int*/ = 0, format: string = "float4"): void {
-      index = index | 0; buffer = buffer; bufferOffset = bufferOffset | 0; format = asCoerceString(format);
+      index = index | 0; buffer = buffer; bufferOffset = bufferOffset | 0; format = axCoerceString(format);
       notImplemented("public flash.display3D.Context3D::setVertexBufferAt"); return;
     }
     setBlendFactors(sourceFactor: string, destinationFactor: string): void {
-      sourceFactor = asCoerceString(sourceFactor); destinationFactor = asCoerceString(destinationFactor);
+      sourceFactor = axCoerceString(sourceFactor); destinationFactor = axCoerceString(destinationFactor);
       notImplemented("public flash.display3D.Context3D::setBlendFactors"); return;
     }
     setColorMask(red: boolean, green: boolean, blue: boolean, alpha: boolean): void {
@@ -103,15 +103,15 @@ module Shumway.AVMX.AS.flash.display3D {
       notImplemented("public flash.display3D.Context3D::setColorMask"); return;
     }
     setDepthTest(depthMask: boolean, passCompareMode: string): void {
-      depthMask = !!depthMask; passCompareMode = asCoerceString(passCompareMode);
+      depthMask = !!depthMask; passCompareMode = axCoerceString(passCompareMode);
       notImplemented("public flash.display3D.Context3D::setDepthTest"); return;
     }
     setCulling(triangleFaceToCull: string): void {
-      triangleFaceToCull = asCoerceString(triangleFaceToCull);
+      triangleFaceToCull = axCoerceString(triangleFaceToCull);
       notImplemented("public flash.display3D.Context3D::setCulling"); return;
     }
     setStencilActions(triangleFace: string = "frontAndBack", compareMode: string = "always", actionOnBothPass: string = "keep", actionOnDepthFail: string = "keep", actionOnDepthPassStencilFail: string = "keep"): void {
-      triangleFace = asCoerceString(triangleFace); compareMode = asCoerceString(compareMode); actionOnBothPass = asCoerceString(actionOnBothPass); actionOnDepthFail = asCoerceString(actionOnDepthFail); actionOnDepthPassStencilFail = asCoerceString(actionOnDepthPassStencilFail);
+      triangleFace = axCoerceString(triangleFace); compareMode = axCoerceString(compareMode); actionOnBothPass = axCoerceString(actionOnBothPass); actionOnDepthFail = axCoerceString(actionOnDepthFail); actionOnDepthPassStencilFail = axCoerceString(actionOnDepthPassStencilFail);
       notImplemented("public flash.display3D.Context3D::setStencilActions"); return;
     }
     setStencilReferenceValue(referenceValue: number /*uint*/, readMask: number /*uint*/ = 255, writeMask: number /*uint*/ = 255): void {
@@ -131,11 +131,11 @@ module Shumway.AVMX.AS.flash.display3D {
       notImplemented("public flash.display3D.Context3D::createIndexBuffer"); return;
     }
     createTexture(width: number /*int*/, height: number /*int*/, format: string, optimizeForRenderToTexture: boolean, streamingLevels: number /*int*/ = 0): flash.display3D.textures.Texture {
-      width = width | 0; height = height | 0; format = asCoerceString(format); optimizeForRenderToTexture = !!optimizeForRenderToTexture; streamingLevels = streamingLevels | 0;
+      width = width | 0; height = height | 0; format = axCoerceString(format); optimizeForRenderToTexture = !!optimizeForRenderToTexture; streamingLevels = streamingLevels | 0;
       notImplemented("public flash.display3D.Context3D::createTexture"); return;
     }
     createCubeTexture(size: number /*int*/, format: string, optimizeForRenderToTexture: boolean, streamingLevels: number /*int*/ = 0): flash.display3D.textures.CubeTexture {
-      size = size | 0; format = asCoerceString(format); optimizeForRenderToTexture = !!optimizeForRenderToTexture; streamingLevels = streamingLevels | 0;
+      size = size | 0; format = axCoerceString(format); optimizeForRenderToTexture = !!optimizeForRenderToTexture; streamingLevels = streamingLevels | 0;
       notImplemented("public flash.display3D.Context3D::createCubeTexture"); return;
     }
     createProgram(): flash.display3D.Program3D {

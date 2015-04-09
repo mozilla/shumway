@@ -226,7 +226,7 @@ module Shumway.AVMX.AS {
       length: number;
 
       axGetPublicProperty(nm: any): any {
-        if (typeof nm === 'number' || isNumeric(nm = asCoerceName(nm))) {
+        if (typeof nm === 'number' || isNumeric(nm = axCoerceName(nm))) {
           return this.axGetNumericProperty(nm);
         }
         return this['$Bg' + nm];
@@ -239,7 +239,7 @@ module Shumway.AVMX.AS {
 
       axSetPublicProperty(nm: any, value: any) {
         release || checkValue(value);
-        if (typeof nm === 'number' || isNumeric(nm = asCoerceName(nm))) {
+        if (typeof nm === 'number' || isNumeric(nm = axCoerceName(nm))) {
           this.axSetNumericProperty(nm, value);
           return;
         }
@@ -253,7 +253,7 @@ module Shumway.AVMX.AS {
 
       axGetProperty(mn: Multiname): any {
         var name = mn.name;
-        if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
+        if (typeof name === 'number' || isNumeric(name = axCoerceName(name))) {
           release || assert(mn.isRuntimeName());
           return (<any>this).getValue(+name);
         }
@@ -263,7 +263,7 @@ module Shumway.AVMX.AS {
       axSetProperty(mn: Multiname, value: any): void {
         release || checkValue(value);
         var name = mn.name;
-        if (typeof name === 'number' || isNumeric(name = asCoerceName(name))) {
+        if (typeof name === 'number' || isNumeric(name = axCoerceName(name))) {
           release || assert(mn.isRuntimeName());
           (<any>this).setValue(+name, value);
           return;

@@ -16,7 +16,7 @@
 // Class: SoundMixer
 module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
   export interface ISoundSource {
@@ -74,7 +74,7 @@ module Shumway.AVMX.AS.flash.media {
       // return SoundMixer._audioPlaybackMode;
     }
     static set audioPlaybackMode(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.media.SoundMixer::set audioPlaybackMode"); return;
       // SoundMixer._audioPlaybackMode = value;
     }

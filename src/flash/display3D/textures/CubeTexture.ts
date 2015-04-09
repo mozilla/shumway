@@ -16,7 +16,7 @@
 // Class: CubeTexture
 module Shumway.AVMX.AS.flash.display3D.textures {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class CubeTexture extends flash.display3D.textures.TextureBase {
     
     // Called whenever the class is initialized.

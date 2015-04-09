@@ -17,7 +17,7 @@
 module Shumway.AVMX.AS.flash.ui {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class Multitouch extends ASObject {
     
     // Called whenever the class is initialized.
@@ -44,7 +44,7 @@ module Shumway.AVMX.AS.flash.ui {
       // return this._inputMode;
     }
     static set inputMode(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.ui.Multitouch::set inputMode"); return;
       // this._inputMode = value;
     }

@@ -16,7 +16,7 @@
 // Class: Bitmap
 module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import assert = Shumway.Debug.assert;
 
   export class Bitmap extends flash.display.DisplayObject {
@@ -55,7 +55,7 @@ module Shumway.AVMX.AS.flash.display {
       super();
       if (!this._symbol) {
         this.bitmapData = bitmapData;
-        this._pixelSnapping = asCoerceString(pixelSnapping);
+        this._pixelSnapping = axCoerceString(pixelSnapping);
         this._smoothing = !!smoothing;
       }
     }
@@ -72,7 +72,7 @@ module Shumway.AVMX.AS.flash.display {
       if (PixelSnapping.toNumber(value) < 0) {
         this.securityDomain.throwError("ArgumentError", Errors.InvalidEnumError, "pixelSnapping");
       }
-      this._pixelSnapping = asCoerceString(value);
+      this._pixelSnapping = axCoerceString(value);
     }
 
     get smoothing(): boolean {

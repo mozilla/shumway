@@ -16,7 +16,7 @@
 // Class: GameInputDevice
 module Shumway.AVMX.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class GameInputDevice extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.

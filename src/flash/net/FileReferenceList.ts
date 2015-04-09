@@ -16,7 +16,7 @@
 // Class: FileReferenceList
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class FileReferenceList extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.

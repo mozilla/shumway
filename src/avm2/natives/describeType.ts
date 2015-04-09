@@ -17,7 +17,7 @@
 module Shumway.AVMX.AS {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   enum DescribeTypeFlags {
     HIDE_NSURI_METHODS  = 0x0001,

@@ -73,7 +73,7 @@ module Shumway.AVMX {
     UnsupportedTraitsKindError           : {code: 1045, message: "Unsupported traits kind=%1."},
   //  MethodInfoOrderError                 : {code: 1046, message: "MethodInfo-%1 referenced before definition."},
   //  MissingEntryPointError               : {code: 1047, message: "No entry point was found."},
-  //  PrototypeTypeError                   : {code: 1049, message: "Prototype objects must be vanilla Objects."},
+    PrototypeTypeError                   : {code: 1049, message: "Prototype objects must be vanilla Objects."},
   //  ConvertToPrimitiveError              : {code: 1050, message: "Cannot convert %1 to primitive."},
   //  IllegalEarlyBindingError             : {code: 1051, message: "Illegal early binding access to %1."},
     InvalidURIError                      : {code: 1052, message: "Invalid URI passed to %1 function."},

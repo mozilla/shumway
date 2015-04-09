@@ -19,7 +19,7 @@ module Shumway.AVMX.AS.flash.text {
   import assert = Shumway.Debug.assert;
   import warning = Shumway.Debug.warning;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import clamp = Shumway.NumberUtilities.clamp;
 
@@ -185,8 +185,8 @@ module Shumway.AVMX.AS.flash.text {
 
     // AS -> JS Bindings
     static isFontCompatible(fontName: string, fontStyle: string): boolean {
-      fontName = asCoerceString(fontName);
-      fontStyle = asCoerceString(fontStyle);
+      fontName = axCoerceString(fontName);
+      fontStyle = axCoerceString(fontStyle);
       var font = Font.getByNameAndStyle(fontName, fontStyle);
       if (!font) {
         return false;
@@ -246,7 +246,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set antiAliasType(antiAliasType: string) {
-      antiAliasType = asCoerceString(antiAliasType);
+      antiAliasType = axCoerceString(antiAliasType);
       if (AntiAliasType.toNumber(antiAliasType) < 0) {
         this.securityDomain.throwError("ArgumentError", Errors.InvalidParamError, "antiAliasType");
       }
@@ -258,7 +258,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set autoSize(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       if (value === this._autoSize) {
         return;
       }
@@ -376,7 +376,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set gridFitType(gridFitType: string) {
-      gridFitType = asCoerceString(gridFitType);
+      gridFitType = axCoerceString(gridFitType);
       release || assert (flash.text.GridFitType.toNumber(gridFitType) >= 0);
       this._gridFitType = gridFitType;
     }
@@ -386,7 +386,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set htmlText(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       // Flash resets the bold and italic flags when an html value is set on a text field created
       // from a symbol.
       if (this._symbol) {
@@ -462,7 +462,7 @@ module Shumway.AVMX.AS.flash.text {
 
     set restrict(value: string) {
       somewhatImplemented("public flash.text.TextField::set restrict");
-      this._restrict = asCoerceString(value);
+      this._restrict = axCoerceString(value);
     }
 
     // Returns the current vertical scrolling position in lines.
@@ -530,7 +530,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set text(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       if (value === this._textContent.plainText) {
         return;
       }
@@ -570,7 +570,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set type(value: string) {
-      this._type = asCoerceString(value);
+      this._type = axCoerceString(value);
     }
 
     get wordWrap(): boolean {
@@ -600,7 +600,7 @@ module Shumway.AVMX.AS.flash.text {
       notImplemented("public flash.text.TextField::copyRichText");
     }
     pasteRichText(richText: string) {
-      richText = asCoerceString(richText);
+      richText = axCoerceString(richText);
       notImplemented("public flash.text.TextField::pasteRichText");
     }
 
@@ -613,7 +613,7 @@ module Shumway.AVMX.AS.flash.text {
     insertXMLText(beginIndex: number, endIndex: number, richText: String, pasting: Boolean): void {
       beginIndex = +beginIndex;
       endIndex = +endIndex;
-      richText = asCoerceString(richText);
+      richText = axCoerceString(richText);
       pasting = !!pasting;
       notImplemented("public flash.text.TextField::insertXMLText");
     }
@@ -666,7 +666,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     appendText(newText: string) {
-      this._textContent.appendText(asCoerceString(newText));
+      this._textContent.appendText(axCoerceString(newText));
     }
 
     getCharBoundaries(charIndex: number /*int*/): flash.geom.Rectangle {

@@ -17,7 +17,7 @@
 module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class Microphone extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -88,7 +88,7 @@ module Shumway.AVMX.AS.flash.media {
       // return this._codec;
     }
     set codec(codec: string) {
-      codec = asCoerceString(codec);
+      codec = axCoerceString(codec);
       notImplemented("public flash.media.Microphone::set codec"); return;
       // this._codec = codec;
     }

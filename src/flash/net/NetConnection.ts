@@ -16,7 +16,7 @@
 // Class: NetConnection
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import Telemetry = Shumway.Telemetry;
 
@@ -76,7 +76,7 @@ module Shumway.AVMX.AS.flash.net {
       return this._uri;
     }
     connect(command: string): void {
-      command = asCoerceString(command);
+      command = axCoerceString(command);
 
       somewhatImplemented("public flash.net.NetConnection::connect");
       this._uri = command;
@@ -84,19 +84,19 @@ module Shumway.AVMX.AS.flash.net {
       if (!command) {
         this._connected = true;
         this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS, false, false,
-          wrapJSObject({ level : 'status', code : 'NetConnection.Connect.Success'})));
+          this.securityDomain.createObjectFromJS({ level : 'status', code : 'NetConnection.Connect.Success'})));
       } else {
         var parsedURL = RtmpJs.parseConnectionString(command);
         if (!parsedURL || !parsedURL.host ||
             (parsedURL.protocol !== 'rtmp' && parsedURL.protocol !== 'rtmpt' && parsedURL.protocol !== 'rtmps')) {
           this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS, false, false,
-            wrapJSObject({ level : 'status', code : 'NetConnection.Connect.Failed'})));
+            this.securityDomain.createObjectFromJS({ level : 'status', code : 'NetConnection.Connect.Failed'})));
           return;
         }
 
         var service: display.IRootElementService = this.securityDomain.player;
 
-        var rtmpProps = wrapJSObject({
+        var rtmpProps = this.securityDomain.createObjectFromJS({
           app: parsedURL.app,
           flashver: flash.system.Capabilities.version,
           swfUrl: service.swfUrl,
@@ -130,7 +130,7 @@ module Shumway.AVMX.AS.flash.net {
           this._connected = true;
           this.dispatchEvent(new this.securityDomain.flash.events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false,
-            wrapJSObject({ level : 'status', code : 'NetConnection.Connect.Success'})));
+            this.securityDomain.createObjectFromJS({ level : 'status', code : 'NetConnection.Connect.Success'})));
         }.bind(this);
         rtmpConnection.onstreamcreated = function (e) {
           console.log('#streamcreated: ' + e.streamId);
@@ -164,7 +164,7 @@ module Shumway.AVMX.AS.flash.net {
       return this._proxyType;
     }
     set proxyType(ptype: string) {
-      ptype = asCoerceString(ptype);
+      ptype = axCoerceString(ptype);
       somewhatImplemented("public flash.net.NetConnection::set proxyType");
       this._proxyType = ptype;
     }

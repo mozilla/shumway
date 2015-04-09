@@ -16,7 +16,7 @@
 // Class: NumberFormatter
 module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class NumberFormatter extends ASObject {
     
     // Called whenever the class is initialized.
@@ -30,7 +30,7 @@ module Shumway.AVMX.AS.flash.globalization {
     
     constructor (requestedLocaleIDName: string) {
       super();
-      requestedLocaleIDName = asCoerceString(requestedLocaleIDName);
+      requestedLocaleIDName = axCoerceString(requestedLocaleIDName);
     }
     
     // JS -> AS Bindings
@@ -89,7 +89,7 @@ module Shumway.AVMX.AS.flash.globalization {
       // return this._groupingPattern;
     }
     set groupingPattern(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.globalization.NumberFormatter::set groupingPattern"); return;
       // this._groupingPattern = value;
     }
@@ -107,7 +107,7 @@ module Shumway.AVMX.AS.flash.globalization {
       // return this._decimalSeparator;
     }
     set decimalSeparator(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.globalization.NumberFormatter::set decimalSeparator"); return;
       // this._decimalSeparator = value;
     }
@@ -116,7 +116,7 @@ module Shumway.AVMX.AS.flash.globalization {
       // return this._groupingSeparator;
     }
     set groupingSeparator(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.globalization.NumberFormatter::set groupingSeparator"); return;
       // this._groupingSeparator = value;
     }
@@ -125,7 +125,7 @@ module Shumway.AVMX.AS.flash.globalization {
       // return this._negativeSymbol;
     }
     set negativeSymbol(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.globalization.NumberFormatter::set negativeSymbol"); return;
       // this._negativeSymbol = value;
     }
@@ -157,11 +157,11 @@ module Shumway.AVMX.AS.flash.globalization {
       // this._trailingZeros = value;
     }
     parse(parseString: string): flash.globalization.NumberParseResult {
-      parseString = asCoerceString(parseString);
+      parseString = axCoerceString(parseString);
       notImplemented("public flash.globalization.NumberFormatter::parse"); return;
     }
     parseNumber(parseString: string): number {
-      parseString = asCoerceString(parseString);
+      parseString = axCoerceString(parseString);
       notImplemented("public flash.globalization.NumberFormatter::parseNumber"); return;
     }
     formatInt(value: number /*int*/): string {
@@ -177,7 +177,7 @@ module Shumway.AVMX.AS.flash.globalization {
       notImplemented("public flash.globalization.NumberFormatter::formatNumber"); return;
     }
     ctor(requestedLocaleIDName: string): void {
-      requestedLocaleIDName = asCoerceString(requestedLocaleIDName);
+      requestedLocaleIDName = axCoerceString(requestedLocaleIDName);
       notImplemented("public flash.globalization.NumberFormatter::ctor"); return;
     }
   }

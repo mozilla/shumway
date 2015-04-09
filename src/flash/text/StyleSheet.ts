@@ -17,7 +17,7 @@
 module Shumway.AVMX.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import assert = Debug.assert;
 
   export interface Style {
@@ -61,7 +61,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     getStyle(styleName: string): Style {
-      styleName = asCoerceString(styleName);
+      styleName = axCoerceString(styleName);
       var style = this._rules[styleName.toLowerCase()];
       if (!style) {
         return this.securityDomain.createObject(); // note that documentation is lying about `null`;
@@ -70,7 +70,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     applyStyle(textFormat: TextFormat, styleName: string): TextFormat {
-      styleName = asCoerceString(styleName);
+      styleName = axCoerceString(styleName);
       var style = this._rules[styleName.toLowerCase()];
       if (style) {
         return textFormat.transform(style);
@@ -82,7 +82,7 @@ module Shumway.AVMX.AS.flash.text {
       if (typeof styleObject !== 'object') {
         return;
       }
-      styleName = asCoerceString(styleName);
+      styleName = axCoerceString(styleName);
       this._rules[styleName.toLowerCase()] = transformASValueToJS(this.securityDomain,
                                                                   styleObject, false);
     }
@@ -106,7 +106,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     parseCSS(css: string) {
-      css = asCoerceString(css) + '';
+      css = axCoerceString(css) + '';
       var length = css.length;
       var index = skipWhitespace(css, 0, length);
       // Styles are only added once parsing completed successfully. Invalid syntax anywhere discards all new styles.

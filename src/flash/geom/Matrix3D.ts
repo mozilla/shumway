@@ -16,7 +16,7 @@
 // Class: Matrix3D
 module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   /*
    * _matrix stores data by columns
@@ -238,11 +238,11 @@ module Shumway.AVMX.AS.flash.geom {
       m[1] = m[2] = m[3] = m[4] = m[6] = m[7] = m[8] = m[9] = m[11] = m[12] = m[13] = m[14] = 0;
     }
     decompose(orientationStyle: string = "eulerAngles"): Float64Vector {
-      orientationStyle = asCoerceString(orientationStyle);
+      orientationStyle = axCoerceString(orientationStyle);
       notImplemented("public flash.geom.Matrix3D::decompose"); return;
     }
     recompose(components: Float64Vector, orientationStyle: string = "eulerAngles"): boolean {
-      orientationStyle = asCoerceString(orientationStyle);
+      orientationStyle = axCoerceString(orientationStyle);
       notImplemented("public flash.geom.Matrix3D::recompose"); return;
     }
     appendTranslation(x: number, y: number, z: number): void {

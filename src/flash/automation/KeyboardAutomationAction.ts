@@ -16,10 +16,10 @@
 // Class: KeyboardAutomationAction
 module Shumway.AVMX.AS.flash.automation {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class KeyboardAutomationAction extends flash.automation.AutomationAction {
     constructor (type: string, keyCode: number /*uint*/ = 0) {
-      type = asCoerceString(type); keyCode = keyCode >>> 0;
+      type = axCoerceString(type); keyCode = keyCode >>> 0;
       super();
     }
     // Static   JS -> AS Bindings

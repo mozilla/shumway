@@ -15,7 +15,7 @@
  */
 
 module Shumway.AVMX.AS {
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
 
   export module flash.utils {
@@ -90,7 +90,7 @@ module Shumway.AVMX.AS {
             return this.axGetMethod(name);
           }
         } else {
-          value = this[proxyPrefix + 'getProperty'](asCoerceString(mn.name));
+          value = this[proxyPrefix + 'getProperty'](axCoerceString(mn.name));
         }
         return value;
       }
@@ -109,7 +109,7 @@ module Shumway.AVMX.AS {
           super.axSetProperty(mn, value);
           return;
         }
-        this[proxyPrefix + 'setProperty'](asCoerceString(mn.name), value);
+        this[proxyPrefix + 'setProperty'](axCoerceString(mn.name), value);
       }
 
       public axCallProperty(mn: Multiname, args: any[], isLex: boolean): any {
@@ -117,7 +117,7 @@ module Shumway.AVMX.AS {
         if (trait) {
           return super.axCallProperty(mn, args, isLex);
         }
-        var callArgs = [asCoerceString(mn.name)].concat(args);
+        var callArgs = [axCoerceString(mn.name)].concat(args);
         return this[proxyPrefix + 'callProperty'].apply(this, callArgs);
       }
 
@@ -130,7 +130,7 @@ module Shumway.AVMX.AS {
         if (trait) {
           return true;
         }
-        return this[proxyPrefix + 'hasProperty'](asCoerceString(mn.name));
+        return this[proxyPrefix + 'hasProperty'](axCoerceString(mn.name));
       }
 
       public axDeleteProperty(mn: Multiname): any {
@@ -138,7 +138,7 @@ module Shumway.AVMX.AS {
         if (trait) {
           return delete this[trait.name.getMangledName()];
         }
-        return this[proxyPrefix + 'deleteProperty'](asCoerceString(mn.name));
+        return this[proxyPrefix + 'deleteProperty'](axCoerceString(mn.name));
       }
 
       public axNextName(index: number): any {

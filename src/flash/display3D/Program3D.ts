@@ -16,7 +16,7 @@
 // Class: Program3D
 module Shumway.AVMX.AS.flash.display3D {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class Program3D extends ASObject {
     
     // Called whenever the class is initialized.

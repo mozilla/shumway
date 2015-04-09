@@ -16,7 +16,7 @@
 // Class: Camera
 module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class Camera extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -47,7 +47,7 @@ module Shumway.AVMX.AS.flash.media {
       // return this._isSupported;
     }
     static getCamera(name: string = null): flash.media.Camera {
-      name = asCoerceString(name);
+      name = axCoerceString(name);
       notImplemented("public flash.media.Camera::static getCamera"); return;
     }
     static _scanHardware(): void {

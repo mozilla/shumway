@@ -16,7 +16,7 @@
 // Class: Telemetry
 module Shumway.AVMX.AS.flash.profiler {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class Telemetry extends ASObject {
     
     // Called whenever the class is initialized.
@@ -43,19 +43,19 @@ module Shumway.AVMX.AS.flash.profiler {
       // return this._connected;
     }
     static sendMetric(metric: string, value: any): void {
-      metric = asCoerceString(metric);
+      metric = axCoerceString(metric);
       notImplemented("public flash.profiler.Telemetry::static sendMetric"); return;
     }
     static sendSpanMetric(metric: string, startSpanMarker: number, value: any = null): void {
-      metric = asCoerceString(metric); startSpanMarker = +startSpanMarker;
+      metric = axCoerceString(metric); startSpanMarker = +startSpanMarker;
       notImplemented("public flash.profiler.Telemetry::static sendSpanMetric"); return;
     }
     static registerCommandHandler(commandName: string, handler: ASFunction): boolean {
-      commandName = asCoerceString(commandName); handler = handler;
+      commandName = axCoerceString(commandName); handler = handler;
       notImplemented("public flash.profiler.Telemetry::static registerCommandHandler"); return;
     }
     static unregisterCommandHandler(commandName: string): boolean {
-      commandName = asCoerceString(commandName);
+      commandName = axCoerceString(commandName);
       notImplemented("public flash.profiler.Telemetry::static unregisterCommandHandler"); return;
     }
     

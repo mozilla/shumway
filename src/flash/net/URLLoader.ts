@@ -15,7 +15,7 @@
  */
 // Class: URLLoader
 module Shumway.AVMX.AS.flash.net {
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   import Event = flash.events.Event;
   import IOErrorEvent = flash.events.IOErrorEvent;

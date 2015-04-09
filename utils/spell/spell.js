@@ -27,12 +27,15 @@ if (arguments.length > 2) {
 
   var passPatterns = [];
   var failPatterns = [];
+  var failExceptionPatterns = [];
 
   fs.readFileSync("utils/spell/dictionary").toString().split("\n").forEach(function (k) {
     if (k[0] === "-") {
       failPatterns.push(k.substring(1));
     } else if (k[0] === "+") {
       passPatterns.push(k.substring(1));
+    } else if (k[0] === "~") {
+      failExceptionPatterns.push(k.substring(1));
     }
   });
 
@@ -48,6 +51,15 @@ if (arguments.length > 2) {
   function isFailWord(name) {
     for (var i = 0; i < failPatterns.length; i++) {
       if (name.match(failPatterns[i])) {
+        return !isFailExceptionWord(name);
+      }
+    }
+    return false;
+  }
+
+  function isFailExceptionWord(name) {
+    for (var i = 0; i < failExceptionPatterns.length; i++) {
+      if (name.match(failExceptionPatterns[i])) {
         return true;
       }
     }

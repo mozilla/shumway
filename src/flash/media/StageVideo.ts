@@ -16,7 +16,7 @@
 // Class: StageVideo
 module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class StageVideo extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.

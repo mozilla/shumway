@@ -16,7 +16,7 @@
 // Class: FileFilter
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   export class FileFilter extends ASObject {
     
@@ -45,19 +45,19 @@ module Shumway.AVMX.AS.flash.net {
       return this._description;
     }
     set description(value: string) {
-      this._description = asCoerceString(value);
+      this._description = axCoerceString(value);
     }
     get extension(): string {
       return this._extension;
     }
     set extension(value: string) {
-      this._extension = asCoerceString(value);
+      this._extension = axCoerceString(value);
     }
     get macType(): string {
       return this._macType;
     }
     set macType(value: string) {
-      this._macType = asCoerceString(value);
+      this._macType = axCoerceString(value);
     }
   }
 }

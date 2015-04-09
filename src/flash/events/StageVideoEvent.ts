@@ -28,8 +28,8 @@ module Shumway.AVMX.AS.flash.events {
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 status: string = null, colorSpace: string = null) {
       super(type, bubbles, cancelable);
-      this.status = asCoerceString(status);
-      this.colorSpace = asCoerceString(colorSpace);
+      this.status = axCoerceString(status);
+      this.colorSpace = axCoerceString(colorSpace);
     }
 
     // JS -> AS Bindings

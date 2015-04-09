@@ -20,7 +20,7 @@ module Shumway.AVMX.AS.flash.ui {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import assert = Shumway.Debug.assert;
 
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import InteractiveObject = flash.display.InteractiveObject;
 
   import events = flash.events;
@@ -233,7 +233,7 @@ module Shumway.AVMX.AS.flash.ui {
       return this._cursor;
     }
     static set cursor(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       if (MouseCursor.toNumber(value) < 0) {
         this.securityDomain.throwError("ArgumentError", Errors.InvalidParamError, "cursor");
       }
@@ -249,11 +249,11 @@ module Shumway.AVMX.AS.flash.ui {
       somewhatImplemented("public flash.ui.Mouse::static show"); return;
     }
     static registerCursor(name: string, cursor: flash.ui.MouseCursorData): void {
-      name = asCoerceString(name); cursor = cursor;
+      name = axCoerceString(name); cursor = cursor;
       notImplemented("public flash.ui.Mouse::static registerCursor"); return;
     }
     static unregisterCursor(name: string): void {
-      name = asCoerceString(name);
+      name = axCoerceString(name);
       notImplemented("public flash.ui.Mouse::static unregisterCursor"); return;
     }
 

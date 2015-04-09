@@ -16,7 +16,7 @@
 // Class: Capabilities
 module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import toKeyValueArray = Shumway.ObjectUtilities.toKeyValueArray;
 
@@ -226,7 +226,7 @@ module Shumway.AVMX.AS.flash.system {
       // return Capabilities.__internal;
     }
     static hasMultiChannelAudio(type: string): boolean {
-      type = asCoerceString(type);
+      type = axCoerceString(type);
       notImplemented("public flash.system.Capabilities::static hasMultiChannelAudio"); return;
     }
     

@@ -16,7 +16,7 @@
 // Class: GraphicsStroke
 module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class GraphicsStroke extends ASObject implements IGraphicsStroke, IGraphicsData {
     
     // Called whenever the class is initialized.
@@ -32,9 +32,9 @@ module Shumway.AVMX.AS.flash.display {
       super();
       this.thickness = +thickness;
       this.pixelHinting = !!pixelHinting;
-      this.scaleMode = asCoerceString(scaleMode);
-      this.caps = asCoerceString(caps);
-      this.joints = asCoerceString(joints);
+      this.scaleMode = axCoerceString(scaleMode);
+      this.caps = axCoerceString(caps);
+      this.joints = axCoerceString(joints);
       this.miterLimit = +miterLimit;
       this.fill = fill;
     }

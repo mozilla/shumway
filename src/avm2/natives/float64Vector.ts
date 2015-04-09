@@ -537,7 +537,7 @@ module Shumway.AVMX.AS {
         release || assert(mn.isRuntimeName());
         return mn.name >= 0 && mn.name < this._length;
       }
-      var name = asCoerceName(mn.name);
+      var name = axCoerceName(mn.name);
       if (mn.isRuntimeName() && isIndex(name)) {
         var index = <any>name >>> 0;
         return index >= 0 && index < this._length;
