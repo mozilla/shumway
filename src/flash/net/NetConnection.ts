@@ -16,7 +16,6 @@
 // Class: NetConnection
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import axCoerceString = Shumway.AVMX.axCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import Telemetry = Shumway.Telemetry;
 
@@ -25,22 +24,32 @@ module Shumway.AVMX.AS.flash.net {
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = ["close", "addHeader", "call"];
-    
     constructor () {
       super();
+      this._uri = null;
+      this._connected = false;
+      this._client = null;
+      this._proxyType = 'none';
+      this._objectEncoding = NetConnection.defaultObjectEncoding;
+      this._usingTLS = false;
+      this._protocol = null;
+
+      Telemetry.instance.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.NETCONNECTION_FEATURE});
     }
     
     // JS -> AS Bindings
-    
-    close: () => void;
-    addHeader: (operation: string, mustUnderstand?: boolean, param?: ASObject) => void;
-    call: (command: string, responder: flash.net.Responder) => void;
-    
+
+    close() {
+      this.invoke(1);
+    }
+    addHeader(operation:String, mustUnderstand:Boolean = false, param:Object = null):void {
+      this.invokeWithArgsArray(3, [axCoerceString(operation), !!mustUnderstand, param]);
+    }
+    call(command:String, responder:Responder /* more args can be provided */):void {
+      arguments[0] = axCoerceString(command);
+      this.invokeWithArgsArray(2, <any>arguments);
+    }
+
     // AS -> JS Bindings
     static _defaultObjectEncoding: number /*uint*/ = 3 /* AMF3 */;
     static get defaultObjectEncoding(): number /*uint*/ {
@@ -207,29 +216,19 @@ module Shumway.AVMX.AS.flash.net {
       notImplemented("public flash.net.NetConnection::get unconnectedPeerStreams"); return;
       // return this._unconnectedPeerStreams;
     }
-    ctor(): void {
-      this._uri = null;
-      this._connected = false;
-      this._client = null;
-      this._proxyType = 'none';
-      this._objectEncoding = NetConnection.defaultObjectEncoding;
-      this._usingTLS = false;
-      this._protocol = null;
-
-      Telemetry.instance.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.NETCONNECTION_FEATURE});
-    }
     invoke(index: number /*uint*/): any {
       index = index >>> 0;
       return this._invoke(index, Array.prototype.slice.call(arguments, 1));
     }
     invokeWithArgsArray(index: number /*uint*/, p_arguments: any []): any {
-      index = index >>> 0; p_arguments = p_arguments;
+      index = index >>> 0;
       return this._invoke.call(this, index, p_arguments);
     }
     private _invoke(index: number, args: any[]): any {
       var simulated = false;
       var result;
       switch (index) {
+        case 1: // close
         case 2: // call, e.g. with ('createStream', <Responder>)
           simulated = true;
           break;
