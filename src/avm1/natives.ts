@@ -32,6 +32,30 @@ module Shumway.AVM1.Natives {
         flags: AVM1PropertyFlags.NATIVE_MEMBER,
         value: new AVM1NativeFunction(context, this._toString)
       });
+      this.alSetOwnProperty('addProperty', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: new AVM1NativeFunction(context, function addProperty(name, getter, setter) {
+          if (typeof name !== 'string' || name === '') {
+            return false;
+          }
+          if (!alIsFunction(getter)) {
+            return false;
+          }
+          if (!alIsFunction(setter) && setter !== null) {
+            return false;
+          }
+          var desc = this.alGetOwnProperty(name);
+          if (desc && !!(desc.flags & AVM1PropertyFlags.DONT_DELETE)) {
+            return false; // protected property
+          }
+          this.alSetOwnProperty(name, {
+            flags: AVM1PropertyFlags.ACCESSOR,
+            get: getter,
+            set: setter || undefined
+          });
+          return true;
+        })
+      });
     }
 
     public _valueOf() {
@@ -62,35 +86,10 @@ module Shumway.AVM1.Natives {
         value: this
       });
 
-      var self = this;
       this.alSetOwnProperty('registerClass', {
         flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
         value: new AVM1NativeFunction(context, function registerClass(name, theClass) {
           context.registerClass(name, theClass);
-        })
-      });
-      this.alSetOwnProperty('addProperty', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(context, function addProperty(name, getter, setter) {
-          if (typeof name !== 'string' || name === '') {
-            return false;
-          }
-          if (!alIsFunction(getter)) {
-            return false;
-          }
-          if (!alIsFunction(setter) && setter !== null) {
-            return false;
-          }
-          var desc = self.alGetOwnProperty(name);
-          if (desc && !!(desc.flags & AVM1PropertyFlags.DONT_DELETE)) {
-            return false; // protected property
-          }
-          self.alSetOwnProperty(name, {
-            flags: AVM1PropertyFlags.ACCESSOR,
-            get: getter,
-            set: setter || undefined
-          });
-          return true;
         })
       });
     }
