@@ -52,7 +52,7 @@ module Shumway.AVMX.AS.flash.events {
     }
 
     public clone(): Event {
-      return new this.securityDomain.flash.events.ProgressEvent(this._type, this._bubbles,
+      return new this.sec.flash.events.ProgressEvent(this._type, this._bubbles,
                                                                 this._cancelable, this._bytesLoaded,
                                                                 this._bytesTotal);
     }

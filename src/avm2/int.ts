@@ -89,7 +89,7 @@ module Shumway.AVMX {
 
   function _interpret(self: Object, methodInfo: MethodInfo, savedScope: Scope, callArgs: any []) {
     var applicationDomain = methodInfo.abc.applicationDomain;
-    var securityDomain = applicationDomain.securityDomain;
+    var sec = applicationDomain.sec;
 
     var abc = methodInfo.abc;
     var body = methodInfo.getBody();
@@ -125,9 +125,9 @@ module Shumway.AVMX {
     }
 
     if (methodInfo.needsRest()) {
-      local.push(securityDomain.createArray(sliceArguments(callArgs, methodInfo.parameters.length)));
+      local.push(sec.createArray(sliceArguments(callArgs, methodInfo.parameters.length)));
     } else if (methodInfo.needsArguments()) {
-      local.push(securityDomain.createArray(sliceArguments(callArgs, 0)));
+      local.push(sec.createArray(sliceArguments(callArgs, 0)));
     }
 
     var args = [];
@@ -165,7 +165,7 @@ module Shumway.AVMX {
     }
 
     function box(v) {
-      return securityDomain.box(v);
+      return sec.box(v);
     }
 
     // Boxes the top of the stack.
@@ -270,13 +270,13 @@ module Shumway.AVMX {
             b = stack.pop();
             a = stack.pop();
             offset = s24();
-            pc = axEquals(a, b, securityDomain) ? pc + offset : pc;
+            pc = axEquals(a, b, sec) ? pc + offset : pc;
             continue;
           case Bytecode.IFNE:
             b = stack.pop();
             a = stack.pop();
             offset = s24();
-            pc = !axEquals(a, b, securityDomain) ? pc + offset : pc;
+            pc = !axEquals(a, b, sec) ? pc + offset : pc;
             continue;
           case Bytecode.IFSTRICTEQ:
             b = stack.pop();
@@ -378,7 +378,7 @@ module Shumway.AVMX {
             scope.push(box(stack.pop()), true);
             break;
           case Bytecode.NEWFUNCTION:
-            stack.push(securityDomain.createFunction(abc.getMethodInfo(u30()), scope.topScope(), true));
+            stack.push(sec.createFunction(abc.getMethodInfo(u30()), scope.topScope(), true));
             break;
           case Bytecode.CALL:
             popManyInto(stack, u30(), args);
@@ -438,12 +438,20 @@ module Shumway.AVMX {
               stack[stack.length - 1] = result;
             }
             break;
+          //case Bytecode.CALLSTATIC:
+          //  index = u30();
+          //  argCount = u30();
+          //  popManyInto(stack, argCount, args);
+          //  value = abc.getMetadataInfo(index);
+          //  var receiver = box(stack[stack.length - 1]);
+          //  stack.push(value.axApply(receiver, args));
+          //  break;
           case Bytecode.APPLYTYPE:
             popManyInto(stack, u30(), args);
-            stack[stack.length - 1] = securityDomain.applyType(stack[stack.length - 1], args);
+            stack[stack.length - 1] = sec.applyType(stack[stack.length - 1], args);
             break;
           case Bytecode.NEWOBJECT:
-            object = Object.create(securityDomain.AXObject.tPrototype);
+            object = Object.create(sec.AXObject.tPrototype);
             argCount = u30();
             // For LIFO-order iteration to be correct, we have to add items highest on the stack
             // first.
@@ -461,13 +469,13 @@ module Shumway.AVMX {
               object.push(stack[i]);
             }
             stack.length -= argCount;
-            stack.push(securityDomain.AXArray.axBox(object));
+            stack.push(sec.AXArray.axBox(object));
             break;
           case Bytecode.NEWACTIVATION:
-            stack.push(securityDomain.createActivation(methodInfo, scope.topScope()));
+            stack.push(sec.createActivation(methodInfo, scope.topScope()));
             break;
           case Bytecode.NEWCLASS:
-            stack[stack.length - 1] = securityDomain.createClass(
+            stack[stack.length - 1] = sec.createClass(
               abc.classes[u30()], stack[stack.length - 1], scope.topScope()
             );
             break;
@@ -476,12 +484,12 @@ module Shumway.AVMX {
             if (rn.name === undefined) {
               rn.name = '*';
             }
-            result = axGetDescendants(stack[stack.length - 1], rn, securityDomain);
+            result = axGetDescendants(stack[stack.length - 1], rn, sec);
             release || checkValue(result);
             stack[stack.length - 1] = result;
             break;
           case Bytecode.NEWCATCH:
-            stack.push(securityDomain.createCatch(body.exceptions[u30()], scope.topScope()));
+            stack.push(sec.createCatch(body.exceptions[u30()], scope.topScope()));
             break;
           case Bytecode.FINDPROPERTY:
           case Bytecode.FINDPROPSTRICT:
@@ -559,12 +567,12 @@ module Shumway.AVMX {
             value = stack.pop();
             savedScope.global.object.axSetSlot(u30(), value);
             break;
-          //case Bytecode.esc_xattr:
-          //  stack[stack.length - 1] = Runtime.escapeXMLAttribute(stack[stack.length - 1]);
-          //  break;
-          //case Bytecode.esc_xelem:
-          //  stack[stack.length - 1] = Runtime.escapeXMLElement(stack[stack.length - 1]);
-          //  break;
+          case Bytecode.ESC_XATTR:
+            stack[stack.length - 1] = AS.escapeAttributeValue(stack[stack.length - 1]);
+            break;
+          case Bytecode.ESC_XELEM:
+            stack[stack.length - 1] = AS.escapeElementValue(stack[stack.length - 1]);
+            break;
           case Bytecode.COERCE_I:
           case Bytecode.CONVERT_I:
             stack[stack.length - 1] |= 0;
@@ -588,7 +596,7 @@ module Shumway.AVMX {
             stack[stack.length - 1] = axConvertString(stack[stack.length - 1]);
             break;
           case Bytecode.CHECKFILTER:
-            stack[stack.length - 1] = axCheckFilter(stack[stack.length - 1], securityDomain);
+            stack[stack.length - 1] = axCheckFilter(stack[stack.length - 1], sec);
             break;
           case Bytecode.COERCE:
             popNameInto(stack, abc.getMultiname(u30()), rn);
@@ -626,7 +634,7 @@ module Shumway.AVMX {
             --(<number []>local)[u30()];
             break;
           case Bytecode.TYPEOF:
-            stack[stack.length - 1] = axTypeOf(stack[stack.length - 1], securityDomain);
+            stack[stack.length - 1] = axTypeOf(stack[stack.length - 1], sec);
             break;
           case Bytecode.NOT:
             stack[stack.length - 1] = !stack[stack.length - 1];
@@ -640,7 +648,7 @@ module Shumway.AVMX {
             if (typeof a === "number" && typeof b === "number") {
               stack[stack.length - 1] = a + b;
             } else {
-              stack[stack.length - 1] = axAdd(a, b, securityDomain);
+              stack[stack.length - 1] = axAdd(a, b, sec);
             }
             break;
           case Bytecode.SUBTRACT:
@@ -675,7 +683,7 @@ module Shumway.AVMX {
             break;
           case Bytecode.EQUALS:
             stack[stack.length - 2] = axEquals(stack[stack.length - 2], stack.pop(),
-                                               securityDomain);
+                                               sec);
             break;
           case Bytecode.STRICTEQUALS:
             stack[stack.length - 2] = stack[stack.length - 2] === stack.pop();
@@ -748,11 +756,11 @@ module Shumway.AVMX {
             local[bc - Bytecode.SETLOCAL0] = stack.pop();
             break;
           case Bytecode.DXNS:
-            securityDomain.AXNamespace.defaultNamespace = new Namespace(null, NamespaceType.Public,
+            sec.AXNamespace.defaultNamespace = new Namespace(null, NamespaceType.Public,
                                                                    abc.getString(u30()));
             break;
           case Bytecode.DXNSLATE:
-            securityDomain.AXNamespace.defaultNamespace = new Namespace(null, NamespaceType.Public,
+            sec.AXNamespace.defaultNamespace = new Namespace(null, NamespaceType.Public,
                                                                    stack.pop());
             break;
           case Bytecode.DEBUG:
@@ -775,7 +783,7 @@ module Shumway.AVMX {
           // We omit many checks in the interpreter loop above to keep the code small. These
           // checks can be done after the fact here by turning the VM-internal exception into a
           // proper error according to the current operation.
-          e = createValidException(securityDomain, e, bc, value, receiver, rn);
+          e = createValidException(sec, e, bc, value, receiver, rn);
         }
 
         var exceptions = body.exceptions;
@@ -798,7 +806,7 @@ module Shumway.AVMX {
     }
   }
 
-  function createValidException(securityDomain: SecurityDomain, internalError, bc: Bytecode,
+  function createValidException(sec: SecurityDomain, internalError, bc: Bytecode,
                                 value: any, receiver: any, mn: Multiname) {
     // Stack exhaustion errors are annoying to catch: Identifying them requires pattern-matching of
     // error messages, and throwing them must be done very carefully to not cause the next one.
@@ -808,7 +816,7 @@ module Shumway.AVMX {
           internalError.message.indexOf('recursion') > -1 ||
           internalError.name === 'RangeError' &&
           internalError.message.indexOf('call stack size exceeded') > -1) {
-        var obj = Object.create(securityDomain.AXError.tPrototype);
+        var obj = Object.create(sec.AXError.tPrototype);
         obj._errorID = 1023;
         obj.$Bgmessage = "Stack overflow occurred";
         return obj;
@@ -818,92 +826,92 @@ module Shumway.AVMX {
     switch (bc) {
       case Bytecode.CALL:
         if (!value || !value.axApply) {
-          return securityDomain.createError('TypeError', Errors.CallOfNonFunctionError, 'value');
+          return sec.createError('TypeError', Errors.CallOfNonFunctionError, 'value');
         }
         break;
       case Bytecode.CONSTRUCT:
         if (!receiver || !receiver.axConstruct) {
-          return securityDomain.createError('TypeError', Errors.ConstructOfNonFunctionError);
+          return sec.createError('TypeError', Errors.ConstructOfNonFunctionError);
         }
         break;
       case Bytecode.CALLPROPERTY:
       case Bytecode.CALLPROPVOID:
       case Bytecode.CALLPROPLEX:
         if (receiver === null) {
-          return securityDomain.createError('TypeError', Errors.ConvertNullToObjectError);
+          return sec.createError('TypeError', Errors.ConvertNullToObjectError);
         }
         if (receiver === undefined) {
-          return securityDomain.createError('TypeError', Errors.ConvertUndefinedToObjectError);
+          return sec.createError('TypeError', Errors.ConvertUndefinedToObjectError);
         }
         if (!(receiver.axResolveMultiname(mn) in receiver)) {
-          return securityDomain.createError('ReferenceError', Errors.ReadSealedError, mn.name,
+          return sec.createError('ReferenceError', Errors.ReadSealedError, mn.name,
                                             receiver.axClass.name.toFQNString(false));
         }
         break;
       case Bytecode.CALLSUPER:
       case Bytecode.CALLSUPERVOID:
         if (receiver === null) {
-          return securityDomain.createError('TypeError', Errors.ConvertNullToObjectError);
+          return sec.createError('TypeError', Errors.ConvertNullToObjectError);
         }
         if (receiver === undefined) {
-          return securityDomain.createError('TypeError', Errors.ConvertUndefinedToObjectError);
+          return sec.createError('TypeError', Errors.ConvertUndefinedToObjectError);
         }
         if (!(receiver.axResolveMultiname(mn) in receiver)) {
-          return securityDomain.createError('ReferenceError', Errors.ReadSealedError, mn.name,
+          return sec.createError('ReferenceError', Errors.ReadSealedError, mn.name,
                                             receiver.axClass.name.toFQNString(false));
         }
         break;
       case Bytecode.GETPROPERTY:
         if (receiver === null) {
-          return securityDomain.createError('TypeError', Errors.ConvertNullToObjectError);
+          return sec.createError('TypeError', Errors.ConvertNullToObjectError);
         }
         if (receiver === undefined) {
-          return securityDomain.createError('TypeError', Errors.ConvertUndefinedToObjectError);
+          return sec.createError('TypeError', Errors.ConvertUndefinedToObjectError);
         }
         break;
       case Bytecode.SETPROPERTY:
         if (receiver === null) {
-          return securityDomain.createError('TypeError', Errors.ConvertNullToObjectError);
+          return sec.createError('TypeError', Errors.ConvertNullToObjectError);
         }
         if (receiver === undefined) {
-          return securityDomain.createError('TypeError', Errors.ConvertUndefinedToObjectError);
+          return sec.createError('TypeError', Errors.ConvertUndefinedToObjectError);
         }
         break;
       case Bytecode.GETSUPER:
         if (receiver === null) {
-          return securityDomain.createError('TypeError', Errors.ConvertNullToObjectError);
+          return sec.createError('TypeError', Errors.ConvertNullToObjectError);
         }
         if (receiver === undefined) {
-          return securityDomain.createError('TypeError', Errors.ConvertUndefinedToObjectError);
+          return sec.createError('TypeError', Errors.ConvertUndefinedToObjectError);
         }
         if (!(receiver.axResolveMultiname(mn) in receiver)) {
-          return securityDomain.createError('ReferenceError', Errors.ReadSealedError, mn.name,
+          return sec.createError('ReferenceError', Errors.ReadSealedError, mn.name,
                                             receiver.axClass.superClass.name.toFQNString(false));
         }
         break;
       case Bytecode.INSTANCEOF:
         if (!receiver || !receiver.axIsInstanceOf) {
-          return securityDomain.createError('TypeError', Errors.CantUseInstanceofOnNonObjectError);
+          return sec.createError('TypeError', Errors.CantUseInstanceofOnNonObjectError);
         }
         break;
       case Bytecode.ISTYPE:
       case Bytecode.ISTYPELATE:
         if (receiver === null) {
-          return securityDomain.createError('TypeError', Errors.ConvertNullToObjectError);
+          return sec.createError('TypeError', Errors.ConvertNullToObjectError);
         }
         if (receiver === undefined) {
-          return securityDomain.createError('TypeError', Errors.ConvertUndefinedToObjectError);
+          return sec.createError('TypeError', Errors.ConvertUndefinedToObjectError);
         }
         if (!receiver.axIsType) {
-          return securityDomain.createError('TypeError', Errors.IsTypeMustBeClassError);
+          return sec.createError('TypeError', Errors.IsTypeMustBeClassError);
         }
         break;
       case Bytecode.IN:
         if (receiver === null) {
-          return securityDomain.createError('TypeError', Errors.ConvertNullToObjectError);
+          return sec.createError('TypeError', Errors.ConvertNullToObjectError);
         }
         if (receiver === undefined) {
-          return securityDomain.createError('TypeError', Errors.ConvertUndefinedToObjectError);
+          return sec.createError('TypeError', Errors.ConvertUndefinedToObjectError);
         }
         break;
       default:
@@ -922,7 +930,7 @@ module Shumway.AVMX {
             if (lastFunctionEntry.indexOf('AXBasePrototype_valueOf') === 0 ||
                 lastFunctionEntry.indexOf('AXBasePrototype_toString') === 0)
             {
-              return securityDomain.createError('TypeError', Errors.CallOfNonFunctionError,
+              return sec.createError('TypeError', Errors.CallOfNonFunctionError,
                                                 'value');
             }
         }
@@ -936,7 +944,7 @@ module Shumway.AVMX {
       message += '[Failed to stringify exception]';
     }
     // In the extension, we can just kill all the things.
-    var player = securityDomain['player'];
+    var player = sec['player'];
     console.error(message);
     if (player) {
       //player.executeFSCommand('quit', [message]);
@@ -944,7 +952,7 @@ module Shumway.AVMX {
       //  jsGlobal.quit();
     }
     // In other packagings, at least throw a valid value.
-    return securityDomain.createError('Error', Errors.InternalErrorIV);
+    return sec.createError('Error', Errors.InternalErrorIV);
   }
 
   function stringifyStackEntry(x: any) {

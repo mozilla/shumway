@@ -147,7 +147,7 @@ module Shumway.AVMX.AS.flash.events {
     }
 
     clone(): Event {
-      return new this.securityDomain.flash.events.TouchEvent(this.type, this.bubbles,
+      return new this.sec.flash.events.TouchEvent(this.type, this.bubbles,
                                                              this.cancelable, this.touchPointID,
                                                              this.isPrimaryTouchPoint, this.localX,
                                                              this.localY, this.sizeX, this.sizeY,
@@ -163,7 +163,7 @@ module Shumway.AVMX.AS.flash.events {
     }
 
     updateAfterEvent(): void {
-      this.securityDomain.player.requestRendering();
+      this.sec.player.requestRendering();
     }
   }
 }

@@ -210,8 +210,8 @@ module Shumway.ArrayUtilities {
 
     readUnsignedByte(): number /*uint*/ {
       if (this._position + 1 > this._length) {
-        release || assert((<any>this).securityDomain);
-        (<any>this).securityDomain.throwError('flash.errors.EOFError', Errors.EOFError);
+        release || assert((<any>this).sec);
+        (<any>this).sec.throwError('flash.errors.EOFError', Errors.EOFError);
       }
       return this._u8[this._position++];
     }
@@ -225,8 +225,8 @@ module Shumway.ArrayUtilities {
         length = this._length - position;
       }
       if (position + length > this._length) {
-        release || assert((<any>this).securityDomain);
-        (<any>this).securityDomain.throwError('flash.errors.EOFError', Errors.EOFError);
+        release || assert((<any>this).sec);
+        (<any>this).sec.throwError('flash.errors.EOFError', Errors.EOFError);
       }
       if (bytes.length < offset + length) {
         bytes._ensureCapacity(offset + length);
@@ -244,8 +244,8 @@ module Shumway.ArrayUtilities {
       var u8 = this._u8;
       var position = this._position;
       if (position + 2 > this._length) {
-        release || assert((<any>this).securityDomain);
-        (<any>this).securityDomain.throwError('flash.errors.EOFError', Errors.EOFError);
+        release || assert((<any>this).sec);
+        (<any>this).sec.throwError('flash.errors.EOFError', Errors.EOFError);
       }
       var a = u8[position + 0];
       var b = u8[position + 1];
@@ -257,8 +257,8 @@ module Shumway.ArrayUtilities {
       var u8 = this._u8;
       var position = this._position;
       if (position + 4 > this._length) {
-        release || assert((<any>this).securityDomain);
-        (<any>this).securityDomain.throwError('flash.errors.EOFError', Errors.EOFError);
+        release || assert((<any>this).sec);
+        (<any>this).sec.throwError('flash.errors.EOFError', Errors.EOFError);
       }
       var a = u8[position + 0];
       var b = u8[position + 1];
@@ -277,8 +277,8 @@ module Shumway.ArrayUtilities {
     readFloat(): number {
       var position = this._position;
       if (position + 4 > this._length) {
-        release || assert((<any>this).securityDomain);
-        (<any>this).securityDomain.throwError('flash.errors.EOFError', Errors.EOFError);
+        release || assert((<any>this).sec);
+        (<any>this).sec.throwError('flash.errors.EOFError', Errors.EOFError);
       }
       this._position = position + 4;
       this._requestViews(TypedArrayViewFlags.F32);
@@ -306,8 +306,8 @@ module Shumway.ArrayUtilities {
       var u8 = this._u8;
       var position = this._position;
       if (position + 8 > this._length) {
-        release || assert((<any>this).securityDomain);
-        (<any>this).securityDomain.throwError('flash.errors.EOFError', Errors.EOFError);
+        release || assert((<any>this).sec);
+        (<any>this).sec.throwError('flash.errors.EOFError', Errors.EOFError);
       }
       var t8 = IntegerUtilities.u8;
       if (this._littleEndian) {
@@ -367,8 +367,8 @@ module Shumway.ArrayUtilities {
 
     writeBytes(bytes: DataBuffer, offset?: number /*uint*/, length?: number /*uint*/): void {
       if (isNullOrUndefined(bytes)) {
-        release || assert((<any>this).securityDomain);
-        (<any>this).securityDomain.throwError('TypeError', Errors.NullPointerError, 'bytes');
+        release || assert((<any>this).sec);
+        (<any>this).sec.throwError('TypeError', Errors.NullPointerError, 'bytes');
       }
       offset = offset >>> 0;
       length = length >>> 0;
@@ -380,8 +380,8 @@ module Shumway.ArrayUtilities {
       }
       if (offset !== clamp(offset, 0, bytes.length) ||
           offset + length !== clamp(offset + length, 0, bytes.length)) {
-        release || assert((<any>this).securityDomain);
-        (<any>this).securityDomain.throwError('RangeError', Errors.ParamRangeError);
+        release || assert((<any>this).sec);
+        (<any>this).sec.throwError('RangeError', Errors.ParamRangeError);
       }
       if (length === 0) {
         length = bytes.length - offset;
@@ -602,8 +602,8 @@ module Shumway.ArrayUtilities {
       length = length >>> 0;
       var pos = this._position;
       if (pos + length > this._length) {
-        release || assert((<any>this).securityDomain);
-        (<any>this).securityDomain.throwError('flash.errors.EOFError', Errors.EOFError);
+        release || assert((<any>this).sec);
+        (<any>this).sec.throwError('flash.errors.EOFError', Errors.EOFError);
       }
       this._position += length;
       return utf8encode(new Int8Array(this._buffer, pos, length));
@@ -775,8 +775,8 @@ module Shumway.ArrayUtilities {
       var position = this._position;
       if (length) {
         if (position + length > this._length) {
-          release || assert((<any>this).securityDomain);
-          (<any>this).securityDomain.throwError('flash.errors.EOFError', Errors.EOFError);
+          release || assert((<any>this).sec);
+          (<any>this).sec.throwError('flash.errors.EOFError', Errors.EOFError);
         }
         this._position += length;
       } else {
@@ -860,8 +860,8 @@ module Shumway.ArrayUtilities {
       inflate.onError = (e) => error = e;
       inflate.push(this._u8.subarray(0, this._length));
       if (error) {
-        release || assert((<any>this).securityDomain);
-        (<any>this).securityDomain.throwError('IOError', Errors.CompressedDataError);
+        release || assert((<any>this).sec);
+        (<any>this).sec.throwError('IOError', Errors.CompressedDataError);
       }
       inflate.close();
 

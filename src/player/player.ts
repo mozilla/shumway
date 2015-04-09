@@ -60,10 +60,10 @@ module Shumway.Player {
   export class GFXServiceBase implements IGFXService {
     _observers: IGFXServiceObserver[] = [];
 
-    public securityDomain: ISecurityDomain;
+    public sec: ISecurityDomain;
 
-    constructor(securityDomain: ISecurityDomain) {
-      this.securityDomain = securityDomain;
+    constructor(sec: ISecurityDomain) {
+      this.sec = sec;
     }
 
     addObserver(observer: IGFXServiceObserver) {
@@ -107,7 +107,7 @@ module Shumway.Player {
 
     public processUpdates(updates: DataBuffer, assets: any []) {
       var deserializer = new Remoting.Player.PlayerChannelDeserializer(
-        this.securityDomain, updates, assets);
+        this.sec, updates, assets);
 
       var message = deserializer.read();
       switch (message.tag) {
@@ -187,8 +187,8 @@ module Shumway.Player {
           this._player._hasFocus = false;
           break;
         case FocusEventType.WindowFocus:
-          var eventDispatcherClass = this._player.securityDomain.flash.events.EventDispatcher.axClass;
-          var eventClass = this._player.securityDomain.flash.events.Event.axClass;
+          var eventDispatcherClass = this._player.sec.flash.events.EventDispatcher.axClass;
+          var eventClass = this._player.sec.flash.events.Event.axClass;
           eventDispatcherClass.broadcastEventDispatchQueue.dispatchEvent(eventClass.getBroadcastInstance(Event.ACTIVATE));
           this._player._hasFocus = true;
           break;
@@ -231,7 +231,7 @@ module Shumway.Player {
    */
   export class Player implements IBitmapDataSerializer, IFSCommandListener, IVideoElementService,
                                  IAssetResolver, IRootElementService, ICrossDomainSWFLoadingWhitelist {
-    public securityDomain: ISecurityDomain;
+    public sec: ISecurityDomain;
 
     _stage: flash.display.Stage;
 
@@ -312,11 +312,11 @@ module Shumway.Player {
      */
     private _loaderUrl: string = null;
 
-    constructor(securityDomain: ISecurityDomain, gfxService: IGFXService, env: string = 'dev') {
-      this.securityDomain = securityDomain;
-      securityDomain.player = this;
+    constructor(sec: ISecurityDomain, gfxService: IGFXService, env: string = 'dev') {
+      this.sec = sec;
+      sec.player = this;
       // Freeze in debug builds.
-      release || Object.defineProperty(this, 'securityDomain', {value: securityDomain});
+      release || Object.defineProperty(this, 'sec', {value: sec});
       release || Debug.assert(gfxService);
       this._writer = new IndentingWriter();
       this._gfxService = gfxService;
@@ -369,8 +369,8 @@ module Shumway.Player {
     public load(url: string, buffer?: ArrayBuffer) {
       release || assert (!this._loader, "Can't load twice.");
       this._swfUrl = this._loaderUrl = url;
-      this._stage = new this.securityDomain.flash.display.Stage();
-      var loader = this._loader = this.securityDomain.flash.display.Loader.axClass.getRootLoader();
+      this._stage = new this.sec.flash.display.Stage();
+      var loader = this._loader = this.sec.flash.display.Loader.axClass.getRootLoader();
       var loaderInfo = this._loaderInfo = loader.contentLoaderInfo;
       if (playAllSymbolsOption.value) {
         this._playAllSymbols();
@@ -386,14 +386,14 @@ module Shumway.Player {
         var byteArray = AVMX.AS.constructClassFromSymbol(symbol, symbol.symbolClass);
         this._loader.loadBytes(byteArray, context);
       } else {
-        this._loader.load(new this.securityDomain.flash.net.URLRequest(url), context);
+        this._loader.load(new this.sec.flash.net.URLRequest(url), context);
       }
     }
 
     private createLoaderContext() : flash.system.LoaderContext {
-      var loaderContext = new this.securityDomain.flash.system.LoaderContext();
+      var loaderContext = new this.sec.flash.system.LoaderContext();
       if (this.movieParams) {
-        var parameters: any = this.securityDomain.createObject();
+        var parameters: any = this.sec.createObject();
         for (var i in this.movieParams) {
           parameters.axSetPublicProperty(i, this.movieParams[i]);
         }
@@ -414,7 +414,7 @@ module Shumway.Player {
       serializer.output = updates;
       serializer.outputAssets = assets;
 
-      if (this.securityDomain.flash.display.Stage.axClass.axIsType(displayObject)) {
+      if (this.sec.flash.display.Stage.axClass.axIsType(displayObject)) {
         serializer.writeStage(<flash.display.Stage>displayObject, this._currentMouseTarget);
       }
 
@@ -455,7 +455,7 @@ module Shumway.Player {
 
       serializer.writeBitmapData(bitmapData);
 
-      if (this.securityDomain.flash.display.BitmapData.axClass.axIsType(source)) {
+      if (this.sec.flash.display.BitmapData.axClass.axIsType(source)) {
         serializer.writeBitmapData(<flash.display.BitmapData>source);
       } else {
         var displayObject = <flash.display.DisplayObject>source;
@@ -539,11 +539,11 @@ module Shumway.Player {
 
       if (this._env === 'test') {
         flash.external.ExternalInterface._initJS();
-        flash.external.ExternalInterface._addCallback('__tick__', this.securityDomain.AXFunction.axBox(function () {
+        flash.external.ExternalInterface._addCallback('__tick__', this.sec.AXFunction.axBox(function () {
           console.log('tick');
           self._eventLoopTick();
         }), false);
-        flash.external.ExternalInterface._addCallback('__takeScreenshot__', this.securityDomain.AXFunction.axBox(function () {
+        flash.external.ExternalInterface._addCallback('__takeScreenshot__', this.sec.AXFunction.axBox(function () {
           // TODO
         }), false);
         this._eventLoopTick();
@@ -568,7 +568,7 @@ module Shumway.Player {
 
     private _enterRootLoadingLoop(): void {
       var self = this;
-      var rootLoader = this.securityDomain.flash.display.Loader.axClass.getRootLoader();
+      var rootLoader = this.sec.flash.display.Loader.axClass.getRootLoader();
       rootLoader._setStage(this._stage);
       function rootLoadingLoop() {
         var loaderInfo = rootLoader.contentLoaderInfo;
@@ -621,12 +621,12 @@ module Shumway.Player {
         return;
       }
       // The stage is required for frame event cycle processing.
-      var displayObjectClass = this.securityDomain.flash.display.DisplayObject.axClass;
+      var displayObjectClass = this.sec.flash.display.DisplayObject.axClass;
       displayObjectClass._stage = this._stage;
       // Until the root SWF is initialized, only process Loader events.
       // Once the root loader's content is created, directly process all events again to avoid
       // further delay in initialization.
-      var loaderClass = this.securityDomain.flash.display.Loader.axClass;
+      var loaderClass = this.sec.flash.display.Loader.axClass;
       if (!loaderClass.getRootLoader().content) {
         loaderClass.processEvents();
         if (!loaderClass.getRootLoader().content) {
@@ -688,7 +688,7 @@ module Shumway.Player {
           var symbolInstance = symbol.symbolClass.initializeFrom(symbol);
           symbol.symbolClass.instanceConstructorNoInitialize.call(symbolInstance);
           if (symbol instanceof flash.display.BitmapSymbol) {
-            symbolInstance = new this.securityDomain.flash.display.Bitmap(symbolInstance);
+            symbolInstance = new this.sec.flash.display.Bitmap(symbolInstance);
           }
           while (stage.numChildren > 0) {
             stage.removeChildAt(0);

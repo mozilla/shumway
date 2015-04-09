@@ -72,7 +72,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     static FromData(data: Timeline.SymbolData, loaderInfo: flash.display.LoaderInfo): ShapeSymbol {
-      var symbol = new ShapeSymbol(data, loaderInfo.securityDomain.flash.display.Shape.axClass);
+      var symbol = new ShapeSymbol(data, loaderInfo.sec.flash.display.Shape.axClass);
       symbol._setBoundsFromData(data);
       symbol.graphics = flash.display.Graphics.FromData(data);
       symbol.processRequires((<any>data).require, loaderInfo);

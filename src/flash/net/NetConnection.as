@@ -19,22 +19,14 @@ import flash.events.EventDispatcher;
 
 [native(cls="NetConnectionClass")]
 public class NetConnection extends EventDispatcher {
-  public function NetConnection() {
-    ctor();
-  }
+  public native function NetConnection();
   public static native function get defaultObjectEncoding():uint;
   public static native function set defaultObjectEncoding(version:uint):void;
   public native function get connected():Boolean;
   public native function get uri():String;
-  public function close():void {
-    invoke(1);
-  }
-  public function addHeader(operation:String, mustUnderstand:Boolean = false, param:Object = null):void {
-    invokeWithArgsArray(3, [operation, mustUnderstand, param]);
-  }
-  public function call(command:String, responder:Responder /* more args can be provided */):void {
-    invokeWithArgsArray(2, arguments);
-  }
+  public native function close():void;
+  public native function addHeader(operation:String, mustUnderstand:Boolean = false, param:Object = null):void;
+  public native function call(command:String, responder:Responder /* more args can be provided */):void;
   public native function connect(command:String):void;
   public native function get client():Object;
   public native function set client(object:Object):void;
@@ -52,10 +44,5 @@ public class NetConnection extends EventDispatcher {
   public native function get nearNonce():String;
   public native function get farNonce():String;
   public native function get unconnectedPeerStreams():Array;
-
-  private native function ctor():void;
-  private native function invoke(index:uint, ... args):*;
-  private native function invokeWithArgsArray(index:uint, p_arguments:Array):*;
-
 }
 }

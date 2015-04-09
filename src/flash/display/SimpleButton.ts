@@ -76,7 +76,7 @@ module Shumway.AVMX.AS.flash.display {
                 downState?: flash.display.DisplayObject,
                 hitTestState?: flash.display.DisplayObject) {
       super();
-      this.securityDomain.flash.display.DisplayObject.axClass._advancableInstances.push(this);
+      this.sec.flash.display.DisplayObject.axClass._advancableInstances.push(this);
       if (!this._fieldsInitialized) {
         this._initializeFields();
       }
@@ -297,7 +297,7 @@ module Shumway.AVMX.AS.flash.display {
     loaderInfo: flash.display.LoaderInfo;
 
     constructor(data: Timeline.SymbolData, loaderInfo: flash.display.LoaderInfo) {
-      super(data, loaderInfo.securityDomain.flash.display.SimpleButton.axClass, true);
+      super(data, loaderInfo.sec.flash.display.SimpleButton.axClass, true);
       this.loaderInfo = loaderInfo;
     }
 

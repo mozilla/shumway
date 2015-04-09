@@ -140,9 +140,9 @@ module Shumway.AVMX.AS.flash.display {
 
     static runFrameScripts() {
       enterTimeline("MovieClip.executeFrame");
-      var movieClipClass = this.securityDomain.flash.display.MovieClip.axClass;
-      var displayObjectClass = this.securityDomain.flash.display.DisplayObject.axClass;
-      var eventClass = this.securityDomain.flash.events.Event.axClass;
+      var movieClipClass = this.sec.flash.display.MovieClip.axClass;
+      var displayObjectClass = this.sec.flash.display.DisplayObject.axClass;
+      var eventClass = this.sec.flash.events.Event.axClass;
       var queue: MovieClip[] = movieClipClass._callQueue;
       movieClipClass._callQueue = [];
       for (var i = 0; i < queue.length; i++) {
@@ -177,7 +177,7 @@ module Shumway.AVMX.AS.flash.display {
 
     applySymbol() {
       super.applySymbol();
-      this.securityDomain.flash.display.DisplayObject.axClass._advancableInstances.push(this);
+      this.sec.flash.display.DisplayObject.axClass._advancableInstances.push(this);
       var symbol = this._symbol;
       this._totalFrames = symbol.numFrames;
       this._currentFrame = 1;
@@ -289,11 +289,11 @@ module Shumway.AVMX.AS.flash.display {
 
     _enqueueFrameScripts() {
       if (this._hasFlags(DisplayObjectFlags.NeedsLoadEvent)) {
-        this.securityDomain.flash.display.MovieClip.axClass._callQueue.push(this);
+        this.sec.flash.display.MovieClip.axClass._callQueue.push(this);
       }
       if (this._hasFlags(DisplayObjectFlags.HasFrameScriptPending)) {
         this._removeFlags(DisplayObjectFlags.HasFrameScriptPending);
-        this.securityDomain.flash.display.MovieClip.axClass._callQueue.push(this);
+        this.sec.flash.display.MovieClip.axClass._callQueue.push(this);
       }
       super._enqueueFrameScripts();
     }
@@ -350,7 +350,7 @@ module Shumway.AVMX.AS.flash.display {
       var scenes = this._scenes ? this._scenes.map(function (x: flash.display.Scene) {
         return x.clone();
       }) : [];
-      return this.securityDomain.createArray(scenes);
+      return this.sec.createArray(scenes);
     }
 
     get currentScene(): Scene {
@@ -403,7 +403,7 @@ module Shumway.AVMX.AS.flash.display {
      * was not found.
      */
     _getAbsFrameNumber(frame: string, sceneName: string): number {
-      var navigationModel = this.securityDomain.flash.display.MovieClip.axClass.frameNavigationModel;
+      var navigationModel = this.sec.flash.display.MovieClip.axClass.frameNavigationModel;
       var legacyMode = navigationModel !== FrameNavigationModel.SWF10;
       var scene: Scene;
       if (sceneName !== null) {
@@ -420,7 +420,7 @@ module Shumway.AVMX.AS.flash.display {
           if (legacyMode) {
             return undefined; // noop for SWF9 and below
           }
-          this.securityDomain.throwError('ArgumentError', Errors.SceneNotFoundError, sceneName);
+          this.sec.throwError('ArgumentError', Errors.SceneNotFoundError, sceneName);
         }
       } else {
         scene = this._sceneForFrameIndex(this._currentFrame);
@@ -436,7 +436,7 @@ module Shumway.AVMX.AS.flash.display {
           if (legacyMode) {
             return undefined; // noop for SWF9 and below
           }
-          this.securityDomain.throwError('ArgumentError', Errors.FrameLabelNotFoundError, frame,
+          this.sec.throwError('ArgumentError', Errors.FrameLabelNotFoundError, frame,
                                          sceneName);
         }
         frameNum = label.frame;
@@ -474,7 +474,7 @@ module Shumway.AVMX.AS.flash.display {
 
       // Frame navigation only happens immediately if not triggered from under a frame script.
       if (this._allowFrameNavigation) {
-        if (this.securityDomain.flash.display.MovieClip.axClass.frameNavigationModel === FrameNavigationModel.SWF9) {
+        if (this.sec.flash.display.MovieClip.axClass.frameNavigationModel === FrameNavigationModel.SWF9) {
           // In FP 9, the only thing that happens on inter-frame navigation is advancing the frame
           // and constructing new timeline objects.
           this._advanceFrame();
@@ -483,7 +483,7 @@ module Shumway.AVMX.AS.flash.display {
           // Frame navigation in an individual timeline triggers an iteration of the whole
           // frame navigation cycle in FP 10+. This includes broadcasting frame events to *all*
           // display objects.
-          this.securityDomain.flash.display.DisplayObject.axClass.performFrameNavigation(false, true);
+          this.sec.flash.display.DisplayObject.axClass.performFrameNavigation(false, true);
         }
       }
     }
@@ -698,7 +698,7 @@ module Shumway.AVMX.AS.flash.display {
       // - the `sceneName` argument is coerced first
       // - the `frame` argument is coerced to string, but `undefined` results in `"null"`
       if (arguments.length === 0 || arguments.length > 2) {
-        this.securityDomain.throwError('ArgumentError', Errors.WrongArgumentCountError,
+        this.sec.throwError('ArgumentError', Errors.WrongArgumentCountError,
                                        'flash.display::MovieClip/gotoAndPlay()', 1,
                                        arguments.length);
       }
@@ -711,7 +711,7 @@ module Shumway.AVMX.AS.flash.display {
     gotoAndStop(frame: any, scene: string = null): void {
       // See comment in gotoAndPlay for an explanation of the arguments handling stuff.
       if (arguments.length === 0 || arguments.length > 2) {
-        this.securityDomain.throwError('ArgumentError', Errors.WrongArgumentCountError,
+        this.sec.throwError('ArgumentError', Errors.WrongArgumentCountError,
                                        'flash.display::MovieClip/gotoAndPlay()', 1,
                                        arguments.length);
       }
@@ -735,7 +735,7 @@ module Shumway.AVMX.AS.flash.display {
       // frameIndex is in range 0..totalFrames-1
       var numArgs = arguments.length;
       if (numArgs & 1) {
-        this.securityDomain.throwError('ArgumentError', Errors.TooFewArgumentsError, numArgs,
+        this.sec.throwError('ArgumentError', Errors.TooFewArgumentsError, numArgs,
                                        numArgs + 1);
       }
       var frameScripts = this._frameScripts;

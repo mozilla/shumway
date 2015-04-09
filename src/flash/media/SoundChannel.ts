@@ -287,7 +287,7 @@ module Shumway.AVMX.AS.flash.media {
 
         self._element = null;
         self._playing = false;
-        self.dispatchEvent(new this.securityDomain.flash.events.Event("soundComplete", false,
+        self.dispatchEvent(new this.sec.flash.events.Event("soundComplete", false,
                                                                       false));
       });
       this._element = element;
@@ -314,7 +314,7 @@ module Shumway.AVMX.AS.flash.media {
 
           self._audioChannel.stop();
           self._playing = false;
-          self.dispatchEvent(new this.securityDomain.flash.events.Event("soundComplete", false,
+          self.dispatchEvent(new this.sec.flash.events.Event("soundComplete", false,
                                                                         false));
           return;
         }

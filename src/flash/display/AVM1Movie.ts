@@ -52,7 +52,7 @@ module Shumway.AVMX.AS.flash.display {
       content._setParent(<any>this, 0);
       this._setDirtyFlags(DisplayObjectFlags.DirtyChildren);
       this._invalidateFillAndLineBounds(true, true);
-      this.securityDomain.flash.display.DisplayObject.axClass._advancableInstances.push(this);
+      this.sec.flash.display.DisplayObject.axClass._advancableInstances.push(this);
       this._constructed = false;
     }
 

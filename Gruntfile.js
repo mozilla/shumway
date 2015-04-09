@@ -277,12 +277,10 @@ module.exports = function(grunt) {
         ]
       },
       natives: {
-        options: {
-          grunt: true
-        },
         tasks: [
-          'exec:build_avm1_ts',
-          'exec:build_flash_ts'
+          { args: ['exec:build_playerglobal'].concat(parallelArgs), grunt: true },
+          { args: ['exec:build_flash_ts'].concat(parallelArgs), grunt: true },
+          { args: ['exec:build_avm1_ts'].concat(parallelArgs), grunt: true }
         ]
       },
       avm1: {

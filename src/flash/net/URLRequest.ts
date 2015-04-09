@@ -72,7 +72,7 @@ module Shumway.AVMX.AS.flash.net {
       value = axCoerceString(value);
       if (value !== 'get' && value !== 'GET' &&
           value !== 'post' && value !== 'POST') {
-        this.securityDomain.throwError('ArgumentError', Errors.InvalidArgumentError);
+        this.sec.throwError('ArgumentError', Errors.InvalidArgumentError);
       }
       this._method = value;
     }
@@ -88,7 +88,7 @@ module Shumway.AVMX.AS.flash.net {
     }
     set requestHeaders(value: any []) {
       if (!Array.isArray(value)) {
-        this.securityDomain.throwError('ArgumentError', Errors.InvalidArgumentError, "value");
+        this.sec.throwError('ArgumentError', Errors.InvalidArgumentError, "value");
       }
       this._requestHeaders = value;
     }
@@ -107,7 +107,7 @@ module Shumway.AVMX.AS.flash.net {
       obj.checkPolicyFile = this._checkPolicyFile;
       if (this._data) {
         obj.mimeType = this._contentType;
-        if (this.securityDomain.flash.utils.ByteArray.axClass.axIsType(this._data)) {
+        if (this.sec.flash.utils.ByteArray.axClass.axIsType(this._data)) {
           obj.data = <ASObject><any>
             new Uint8Array((<any> this._data)._buffer, 0, (<any> this._data).length);
         } else {

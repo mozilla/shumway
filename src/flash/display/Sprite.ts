@@ -370,7 +370,7 @@ module Shumway.AVMX.AS.flash.display {
     loaderInfo: flash.display.LoaderInfo;
 
     constructor(data: Timeline.SymbolData, loaderInfo: flash.display.LoaderInfo) {
-      super(data, loaderInfo.securityDomain.flash.display.MovieClip.axClass, true);
+      super(data, loaderInfo.sec.flash.display.MovieClip.axClass, true);
       this.loaderInfo = loaderInfo;
     }
 

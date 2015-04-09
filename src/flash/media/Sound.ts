@@ -101,7 +101,7 @@ module Shumway.AVMX.AS.flash.media {
       this._length = 0;
       this._bytesTotal = 0;
       this._bytesLoaded = 0;
-      this._id3 = new this.securityDomain.flash.media.ID3Info();
+      this._id3 = new this.sec.flash.media.ID3Info();
 
       this._isURLInaccessible = false;
       this._isBuffering = false;
@@ -152,10 +152,10 @@ module Shumway.AVMX.AS.flash.media {
     }
     play(startTime: number = 0, loops: number /*int*/ = 0, sndTransform: flash.media.SoundTransform = null): flash.media.SoundChannel {
       startTime = +startTime; loops = loops | 0;
-      var channel = new this.securityDomain.flash.media.SoundChannel();
+      var channel = new this.sec.flash.media.SoundChannel();
       channel._sound = this;
       channel._soundTransform = isNullOrUndefined(sndTransform) ?
-                                new this.securityDomain.flash.media.SoundTransform() :
+                                new this.sec.flash.media.SoundTransform() :
                                 sndTransform;
       this._playQueue.push({
         channel: channel,
@@ -201,8 +201,8 @@ module Shumway.AVMX.AS.flash.media {
       var bufferTime: number = context ? context.bufferTime : 1000;
 
       var _this = this;
-      var stream = this._stream = new this.securityDomain.flash.net.URLStream();
-      var data = new this.securityDomain.flash.utils.ByteArray();
+      var stream = this._stream = new this.sec.flash.net.URLStream();
+      var data = new this.sec.flash.utils.ByteArray();
       var dataPosition = 0;
       var playUsingWebAudio = webAudioOption.value;
       var mp3DecodingSession = null;
@@ -273,12 +273,12 @@ module Shumway.AVMX.AS.flash.media {
     pcm: Float32Array;
     packaged;
 
-    constructor(data: Timeline.SymbolData, securityDomain: ISecurityDomain) {
-      super(data, securityDomain.flash.media.Sound.axClass);
+    constructor(data: Timeline.SymbolData, sec: ISecurityDomain) {
+      super(data, sec.flash.media.Sound.axClass);
     }
 
     static FromData(data: any, loaderInfo: display.LoaderInfo): SoundSymbol {
-      var symbol = new SoundSymbol(data, loaderInfo.securityDomain);
+      var symbol = new SoundSymbol(data, loaderInfo.sec);
       symbol.channels = data.channels;
       symbol.sampleRate = data.sampleRate;
       symbol.pcm = data.pcm;

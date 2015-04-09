@@ -56,14 +56,14 @@ module Shumway.AVMX {
    *     |- axHasProperty           |            +-------------------+
    *     |- axSetProperty           |     +-----#|  objectPrototype  |
    *     |- axGetProperty           |     |      +-------------------+
-   *     |- axSetPublicProperty     |     |      | - securityDomain  |
+   *     |- axSetPublicProperty     |     |      | - sec             |
    *     |- axGetSlot               |<----+      +-------------------+
    *     |- axSetSlot               |     |
    *     |  …                       |     |
    *     |                          |     |      +-------------------+
    *     |                          |     +-----#|  objectPrototype  |
    *     |                          |            +-------------------+
-   *     +--------------------------+            | - securityDomain  |
+   *     +--------------------------+            | - sec             |
    *                                             +-------------------+
    *                                                       ^
    *                                                       |
@@ -112,9 +112,9 @@ module Shumway.AVMX {
    *
    */
 
-  export function checkNullParameter(argument: any, name: string, securityDomain: SecurityDomain) {
+  export function checkNullParameter(argument: any, name: string, sec: SecurityDomain) {
     if (!argument) {
-      securityDomain.throwError('TypeError', Errors.NullPointerError, name);
+      sec.throwError('TypeError', Errors.NullPointerError, name);
     }
   }
   export function checkParameterType(argument: any, name: string, type: AS.ASClass) {
@@ -122,7 +122,7 @@ module Shumway.AVMX {
       return;
     }
     if (!type.axIsType(argument)) {
-      type.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, argument,
+      type.sec.throwError('TypeError', Errors.CheckTypeFailedError, argument,
                                      type.classInfo.instanceInfo.getClassName());
     }
   }
@@ -274,22 +274,22 @@ module Shumway.AVMX {
     return typeof x === "string";
   }
 
-  function axIsXMLCollection(x, securityDomain: SecurityDomain): boolean {
-    return securityDomain.AXXML.dPrototype.isPrototypeOf(x) ||
-           securityDomain.AXXMLList.dPrototype.isPrototypeOf(x);
+  function axIsXMLCollection(x, sec: SecurityDomain): boolean {
+    return sec.AXXML.dPrototype.isPrototypeOf(x) ||
+           sec.AXXMLList.dPrototype.isPrototypeOf(x);
   }
 
-  export function axGetDescendants(object, mn: Multiname, securityDomain: SecurityDomain) {
-    if (!axIsXMLCollection(object, securityDomain)) {
-      securityDomain.throwError('TypeError', Errors.DescendentsError, object);
+  export function axGetDescendants(object, mn: Multiname, sec: SecurityDomain) {
+    if (!axIsXMLCollection(object, sec)) {
+      sec.throwError('TypeError', Errors.DescendentsError, object);
     }
     return object.descendants(mn);
   }
 
-  export function axCheckFilter(value, securityDomain: SecurityDomain) {
-    if (!value || !AS.isXMLCollection(value, securityDomain)) {
+  export function axCheckFilter(value, sec: SecurityDomain) {
+    if (!value || !AS.isXMLCollection(value, sec)) {
       var className = value && value.axClass ? value.axClass.name.toFQNString(false) : '[unknown]';
-      this.securityDomain.throwError('RangeError', Errors.FilterError, className);
+      this.sec.throwError('RangeError', Errors.FilterError, className);
     }
     return value;
   }
@@ -358,23 +358,23 @@ module Shumway.AVMX {
    *
    * AS3 also overloads the `+` operator to concatenate XMLs/XMLLists instead of stringifying them.
    */
-  export function axAdd(l: any, r: any, securityDomain: SecurityDomain): any {
+  export function axAdd(l: any, r: any, sec: SecurityDomain): any {
     release || assert(!(typeof l === "number" && typeof r === "number"), 'Inline number addition.');
     if (typeof l === "string" || typeof r === "string") {
       return String(l) + String(r);
     }
-    if (AS.isXMLCollection(l, securityDomain) && AS.isXMLCollection(r, securityDomain)) {
+    if (AS.isXMLCollection(l, sec) && AS.isXMLCollection(r, sec)) {
       return AS.ASXMLList.addXML(l, r);
     }
     return l + r;
   }
 
-  export function axEquals(left: any, right: any, securityDomain: SecurityDomain): boolean {
+  export function axEquals(left: any, right: any, sec: SecurityDomain): boolean {
     // See E4X spec, 11.5 Equality Operators for why this is required.
-    if (AS.isXMLType(left, securityDomain)) {
+    if (AS.isXMLType(left, sec)) {
       return left.equals(right);
     }
-    if (AS.isXMLType(right, securityDomain)) {
+    if (AS.isXMLType(right, sec)) {
       return right.equals(left);
     }
     return left == right;
@@ -409,7 +409,7 @@ module Shumway.AVMX {
     // we need to set a null-prototype that has the right inheritance chain. Since AS3 doesn't
     // have `__proto__` or `getPrototypeOf`, this is completely hidden from content.
     if (isNullOrUndefined(prototype)) {
-      prototype = this.securityDomain.AXFunctionUndefinedPrototype;
+      prototype = this.sec.AXFunctionUndefinedPrototype;
     }
     release || assert(typeof prototype === 'object');
     release || checkValue(prototype);
@@ -423,14 +423,14 @@ module Shumway.AVMX {
     return obj && obj.__ctorFunction === this;
   }
 
-  export function axTypeOf(x: any, securityDomain: SecurityDomain): string {
+  export function axTypeOf(x: any, sec: SecurityDomain): string {
     // ABC doesn't box primitives, so typeof returns the primitive type even when
     // the value is new'd
     if (x) {
       if (x.value) {
         return typeof x.value;
       }
-      if (axIsXMLCollection(x, securityDomain)) {
+      if (axIsXMLCollection(x, sec)) {
         return "xml";
       }
     }
@@ -442,7 +442,7 @@ module Shumway.AVMX {
       return null;
     }
     if (!this.axIsType(x)) {
-      this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, x,
+      this.sec.throwError('TypeError', Errors.CheckTypeFailedError, x,
                                      this.classInfo.instanceInfo.getClassName());
     }
     return x;
@@ -455,7 +455,7 @@ module Shumway.AVMX {
 
   function axIsTypeObject(x: any) {
     // FIXME
-    return this.dPrototype.isPrototypeOf(this.securityDomain.box(x));
+    return this.dPrototype.isPrototypeOf(this.sec.box(x));
   }
 
   function axIsTypeInterface(x: any) {
@@ -471,7 +471,7 @@ module Shumway.AVMX {
   }
 
   function axIsInstanceOfObject(x: any) {
-    return this.dPrototype.isPrototypeOf(this.securityDomain.box(x));
+    return this.dPrototype.isPrototypeOf(this.sec.box(x));
   }
 
   function axIsInstanceOfInterface(x: any) {
@@ -483,7 +483,7 @@ module Shumway.AVMX {
    */
   export interface ITraits {
     traits: RuntimeTraits;
-    securityDomain: SecurityDomain;
+    sec: SecurityDomain;
   }
 
   export class Scope {
@@ -552,7 +552,7 @@ module Shumway.AVMX {
 
       // Attributes can't be stored on globals or be directly defined in scripts.
       if (mn.isAttribute()) {
-        this.object.securityDomain.throwError("ReferenceError", Errors.UndefinedVarError, mn.name);
+        this.object.sec.throwError("ReferenceError", Errors.UndefinedVarError, mn.name);
       }
 
       // If we can't find the property look in the domain.
@@ -566,7 +566,7 @@ module Shumway.AVMX {
       // global anyways.
       if (strict) {
         if (!(mn.getPublicMangledName() in globalObject)) {
-          this.object.securityDomain.throwError("ReferenceError", Errors.UndefinedVarError, mn.name);
+          this.object.sec.throwError("ReferenceError", Errors.UndefinedVarError, mn.name);
         }
       }
 
@@ -583,11 +583,11 @@ module Shumway.AVMX {
       var t = T[i];
       var p: PropertyDescriptor = t;
       if (p.value instanceof Namespace) {
-        // We can't call |object.securityDomain.AXNamespace.FromNamespace(...)| because the
+        // We can't call |object.sec.AXNamespace.FromNamespace(...)| because the
         // AXNamespace class may not have been loaded yet. However, at this point we do have a
-        // valid reference to |object.securityDomain.AXNamespace| because |prepareNativeClass| has
+        // valid reference to |object.sec.AXNamespace| because |prepareNativeClass| has
         // been called.
-        p = { value: AS.ASNamespace.FromNamespace.call(object.securityDomain.AXNamespace, p.value) };
+        p = { value: AS.ASNamespace.FromNamespace.call(object.sec.AXNamespace, p.value) };
       }
       if (!release && (t.kind === TRAIT.Slot || t.kind === TRAIT.Const)) {
         checkValue(p.value);
@@ -675,7 +675,7 @@ module Shumway.AVMX {
   }
 
   export interface AXGlobal extends AXObject {
-    securityDomain: SecurityDomain;
+    sec: SecurityDomain;
     applicationDomain: ApplicationDomain;
     scriptInfo: ScriptInfo;
     scope: Scope;
@@ -763,7 +763,7 @@ module Shumway.AVMX {
    */
   export function safeGetPrototypeOf(object: AXObject): AXObject {
     var axClass = object.axClass;
-    if (!axClass || axClass === axClass.securityDomain.AXObject) {
+    if (!axClass || axClass === axClass.sec.AXObject) {
       return null;
     }
 
@@ -771,7 +771,7 @@ module Shumway.AVMX {
     if (prototype === object) {
       prototype = axClass.superClass.dPrototype;
     }
-    release || assert(prototype.securityDomain);
+    release || assert(prototype.sec);
     return prototype;
   }
 
@@ -863,7 +863,7 @@ module Shumway.AVMX {
    * Throwing initializer for interfaces.
    */
   function axInterfaceInitializer() {
-    this.securityDomain.throwError("VerifierError", Errors.NotImplementedError, this.name.name);
+    this.sec.throwError("VerifierError", Errors.NotImplementedError, this.name.name);
   }
 
   /**
@@ -1164,7 +1164,7 @@ module Shumway.AVMX {
         return false;
       }
       // The value might not come from this securityDomain, but still be a callable from another.
-      return value.securityDomain.AXFunction.dPrototype.isPrototypeOf(value);
+      return value.sec.AXFunction.dPrototype.isPrototypeOf(value);
     }
 
     createQName(namespace: any, localName: any): AS.ASQName {
@@ -1230,7 +1230,7 @@ module Shumway.AVMX {
 
     createAXGlobal(applicationDomain: ApplicationDomain, scriptInfo: ScriptInfo) {
       var global: AXGlobal = Object.create(this.AXGlobalPrototype);
-      global.securityDomain = this;
+      global.sec = this;
       global.applicationDomain = applicationDomain;
       global.scriptInfo = scriptInfo;
 
@@ -1376,7 +1376,7 @@ module Shumway.AVMX {
       
       // The basic dynamic prototype that all objects in this security domain have in common.
       var dynamicObjectPrototype = Object.create(AXBasePrototype);
-      dynamicObjectPrototype.securityDomain = this;
+      dynamicObjectPrototype.sec = this;
       // The basic traits prototype that all objects in this security domain have in common.
       this.objectPrototype = Object.create(dynamicObjectPrototype);
       this.initializeCoreNatives();
@@ -1429,7 +1429,7 @@ module Shumway.AVMX {
       D(AXFunction.dPrototype, "axApply", AS.ASFunction.prototype.axApply);
 
       P(AXFunction.dPrototype, "call", function (self, a, b, c) {
-        if (this.securityDomain.isPrimitive(self)) {
+        if (this.sec.isPrimitive(self)) {
           self = null;
         }
         switch (arguments.length) {
@@ -1443,7 +1443,7 @@ module Shumway.AVMX {
       });
 
       P(AXFunction.dPrototype, "apply", function (self, args) {
-        if (this.securityDomain.isPrimitive(self)) {
+        if (this.sec.isPrimitive(self)) {
           self = null;
         }
         return this.value.apply(self, args.value);
@@ -1509,12 +1509,12 @@ module Shumway.AVMX {
      */
     public parent: ApplicationDomain;
 
-    public securityDomain: SecurityDomain;
+    public sec: SecurityDomain;
 
     private _abcs: ABCFile [];
 
-    constructor(securityDomain: SecurityDomain, parent: ApplicationDomain) {
-      this.securityDomain = securityDomain;
+    constructor(sec: SecurityDomain, parent: ApplicationDomain) {
+      this.sec = sec;
       this.parent = parent;
       this.system = parent ? parent.system : this;
       this._abcs = [];
@@ -1553,7 +1553,7 @@ module Shumway.AVMX {
       assert (scriptInfo.state === ScriptInfoState.None);
 
       runtimeWriter && runtimeWriter.writeLn("Running Script: " + scriptInfo);
-      var global = this.securityDomain.createAXGlobal(this, scriptInfo);
+      var global = this.sec.createAXGlobal(this, scriptInfo);
       scriptInfo.global = global;
       scriptInfo.state = ScriptInfoState.Executing;
       interpret(<any>global, scriptInfo.getInitializer(), global.scope, []);
@@ -1604,7 +1604,7 @@ module Shumway.AVMX {
       }
 
       // Still no luck, so let's ask the security domain to load additional ABCs and try again.
-      var abc = this.system.securityDomain.findDefiningABC(mn);
+      var abc = this.system.sec.findDefiningABC(mn);
       if (abc) {
         this.loadABC(abc);
         script = this._findDefiningScriptInABC(abc, mn, execute);

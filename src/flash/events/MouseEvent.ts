@@ -202,7 +202,7 @@ module Shumway.AVMX.AS.flash.events {
     }
 
     updateAfterEvent(): void {
-      this.securityDomain.player.requestRendering();
+      this.sec.player.requestRendering();
     }
 
     private _getGlobalPoint(): flash.geom.Point {
@@ -221,7 +221,7 @@ module Shumway.AVMX.AS.flash.events {
     }
 
     clone(): Event {
-      return new this.securityDomain.flash.events.MouseEvent(this.type, this.bubbles,
+      return new this.sec.flash.events.MouseEvent(this.type, this.bubbles,
                                                              this.cancelable,
                                                              this.localX, this.localY,
                                                              this.relatedObject, this.ctrlKey,

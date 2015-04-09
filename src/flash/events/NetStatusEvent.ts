@@ -42,7 +42,7 @@ module Shumway.AVMX.AS.flash.events {
     public static NET_STATUS: string = "netStatus";
 
     clone(): Event {
-      return new this.securityDomain.flash.events.NetStatusEvent(this.type, this.bubbles,
+      return new this.sec.flash.events.NetStatusEvent(this.type, this.bubbles,
                                                                  this.cancelable, this.info);
     }
 

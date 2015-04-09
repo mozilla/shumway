@@ -28,7 +28,7 @@ module Shumway.AVM1.Lib {
                 italic?: boolean, underline?: boolean, url?: string, target?: string,
                 align?: string, leftMargin?: number, rightMargin?: number,
                 indent?: number, leading?: number) {
-      var as3Object = new this.context.securityDomain.flash.text.TextFormat(); // REDUX parameters
+      var as3Object = new this.context.sec.flash.text.TextFormat(); // REDUX parameters
       super.setTarget(as3Object);
     }
 

@@ -232,16 +232,16 @@ module Shumway.AVM2.AS {
 
   export function FlashNetScript_navigateToURL(request, window_) {
     if (request === null || request === undefined) {
-      this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'request');
+      this.sec.throwError('TypeError', Errors.NullPointerError, 'request');
     }
     var RequestClass = Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass("flash.net.URLRequest");
     if (!RequestClass.isInstanceOf(request)) {
-      this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, request,
+      this.sec.throwError('TypeError', Errors.CheckTypeFailedError, request,
         'flash.net.URLRequest');
     }
     var url = request.url;
     if (isNullOrUndefined(url)) {
-      this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'url');
+      this.sec.throwError('TypeError', Errors.NullPointerError, 'url');
     }
     if (/^fscommand:/i.test(url)) {
       var fscommand = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain.getProperty(
@@ -255,11 +255,11 @@ module Shumway.AVM2.AS {
 
   function FlashNetScript_sendToURL(request) {
     if (request === null || request === undefined) {
-      this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'request');
+      this.sec.throwError('TypeError', Errors.NullPointerError, 'request');
     }
     var RequestClass = Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass("flash.net.URLRequest");
     if (!RequestClass.isInstanceOf(request)) {
-      this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, request,
+      this.sec.throwError('TypeError', Errors.CheckTypeFailedError, request,
                                      'flash.net.URLRequest');
     }
     var session = FileLoadingService.instance.createSession();
@@ -271,10 +271,10 @@ module Shumway.AVM2.AS {
 
   function Toplevel_registerClassAlias(aliasName, classObject) {
     if (!aliasName) {
-      this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'aliasName');
+      this.sec.throwError('TypeError', Errors.NullPointerError, 'aliasName');
     }
     if (!classObject) {
-      this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'classObject');
+      this.sec.throwError('TypeError', Errors.NullPointerError, 'classObject');
     }
 
     aliasesCache.classes.set(classObject, aliasName);
@@ -283,12 +283,12 @@ module Shumway.AVM2.AS {
 
   function Toplevel_getClassByAlias(aliasName) {
     if (!aliasName) {
-      this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'aliasName');
+      this.sec.throwError('TypeError', Errors.NullPointerError, 'aliasName');
     }
 
     var classObject = aliasesCache.names[aliasName];
     if (!classObject) {
-      this.securityDomain.throwError('ReferenceError', Errors.ClassNotFoundError, aliasName);
+      this.sec.throwError('ReferenceError', Errors.ClassNotFoundError, aliasName);
     }
     return classObject;
   }

@@ -79,13 +79,13 @@ module Shumway.AVMX.AS {
       if (isNullOrUndefined(callback)) {
         return false;
       }
-      var securityDomain = this.securityDomain;
-      if (!securityDomain.isCallable(callback)) {
-        securityDomain.throwError("TypeError", Errors.CheckTypeFailedError, callback, 'Function');
+      var sec = this.sec;
+      if (!sec.isCallable(callback)) {
+        sec.throwError("TypeError", Errors.CheckTypeFailedError, callback, 'Function');
       }
-      if ((<any>callback).axClass === securityDomain.AXMethodClosure &&
+      if ((<any>callback).axClass === sec.AXMethodClosure &&
           !isNullOrUndefined(thisObject)) {
-        securityDomain.throwError("TypeError", Errors.ArrayFilterNonNullObjectError);
+        sec.throwError("TypeError", Errors.ArrayFilterNonNullObjectError);
       }
       return true;
     }
@@ -94,10 +94,10 @@ module Shumway.AVMX.AS {
   export class Vector extends ASObject {
     static axIsType(x: AXObject) {
       return this.dPrototype.isPrototypeOf(x) ||
-             this.securityDomain.Int32Vector.axClass.dPrototype.isPrototypeOf(x) ||
-             this.securityDomain.Uint32Vector.axClass.dPrototype.isPrototypeOf(x) ||
-             this.securityDomain.Float64Vector.axClass.dPrototype.isPrototypeOf(x) ||
-             this.securityDomain.ObjectVector.axClass.dPrototype.isPrototypeOf(x);
+             this.sec.Int32Vector.axClass.dPrototype.isPrototypeOf(x) ||
+             this.sec.Uint32Vector.axClass.dPrototype.isPrototypeOf(x) ||
+             this.sec.Float64Vector.axClass.dPrototype.isPrototypeOf(x) ||
+             this.sec.ObjectVector.axClass.dPrototype.isPrototypeOf(x);
     }
   }
 
@@ -257,7 +257,7 @@ module Shumway.AVMX.AS {
         this._buffer.sort();
         return this;
       }
-      if (this.securityDomain.AXFunction.axIsType(sortBehavior)) {
+      if (this.sec.AXFunction.axIsType(sortBehavior)) {
         this._buffer.sort(<(a: any, b: any) => number>sortBehavior.value);
         return this;
       }
@@ -487,7 +487,7 @@ module Shumway.AVMX.AS {
 
     _checkFixed() {
       if (this._fixed) {
-        this.securityDomain.throwError("RangeError", Errors.VectorFixedError);
+        this.sec.throwError("RangeError", Errors.VectorFixedError);
       }
     }
 
@@ -495,7 +495,7 @@ module Shumway.AVMX.AS {
       release || assert(isNumeric(nm));
       var idx = nm | 0;
       if (idx < 0 || idx >= this._buffer.length || idx != nm) {
-        this.securityDomain.throwError("RangeError", Errors.OutOfRangeError, nm,
+        this.sec.throwError("RangeError", Errors.OutOfRangeError, nm,
                                        this._buffer.length);
       }
       return this._buffer[idx];
@@ -505,7 +505,7 @@ module Shumway.AVMX.AS {
       var length = this._buffer.length;
       var idx = nm | 0;
       if (idx < 0 || idx > length || idx != nm || (idx === length && this._fixed)) {
-        this.securityDomain.throwError("RangeError", Errors.OutOfRangeError, nm, length);
+        this.sec.throwError("RangeError", Errors.OutOfRangeError, nm, length);
       }
       this._buffer[idx] = this._coerce(v);
     }

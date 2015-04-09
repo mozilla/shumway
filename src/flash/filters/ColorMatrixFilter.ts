@@ -30,7 +30,7 @@ module Shumway.AVMX.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     public static FromUntyped(obj: any) {
-      return new this.securityDomain.flash.filters.ColorMatrixFilter(obj.matrix);
+      return new this.sec.flash.filters.ColorMatrixFilter(obj.matrix);
     }
 
     constructor (matrix: any [] = null) {
@@ -78,12 +78,12 @@ module Shumway.AVMX.AS.flash.filters {
         }
         this._matrix = matrix;
       } else {
-        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "matrix");
+        this.sec.throwError("TypeError", Errors.NullPointerError, "matrix");
       }
     }
 
     clone(): BitmapFilter {
-      return new this.securityDomain.flash.filters.ColorMatrixFilter(this.matrix);
+      return new this.sec.flash.filters.ColorMatrixFilter(this.matrix);
     }
   }
 }

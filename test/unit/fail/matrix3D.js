@@ -38,7 +38,7 @@
    */
 
   function makeVector(array) {
-    return securityDomain.Float64Vector.axApply(null, [array]);
+    return sec.Float64Vector.axApply(null, [array]);
   }
   
   var e = 0.001;

@@ -30,11 +30,11 @@ module Shumway {
     release || assert (!!(libraries & AVM2LoadLibrariesFlags.Builtin));
     SWF.enterTimeline('Load builton.abc file');
     SystemResourcesLoadingService.instance.load(SystemResourceId.BuiltinAbc).then(function (buffer) {
-      var securityDomain = new Shumway.AVMX.SecurityDomain();
+      var sec = new Shumway.AVMX.SecurityDomain();
       var builtinABC = new Shumway.AVMX.ABCFile(new Uint8Array(buffer));
-      securityDomain.system.loadABC(builtinABC);
-      securityDomain.initialize();
-      securityDomain.system.executeABC(builtinABC);
+      sec.system.loadABC(builtinABC);
+      sec.initialize();
+      sec.system.executeABC(builtinABC);
       SWF.leaveTimeline();
 
 
@@ -42,12 +42,12 @@ module Shumway {
       // it's not worth doing it lazily given that it is so small.
       if (!!(libraries & AVM2LoadLibrariesFlags.Shell)) {
         var shellABC = new Shumway.AVMX.ABCFile(new Uint8Array(buffer));
-        securityDomain.system.loadAndExecuteABC(shellABC);
-        result.resolve(securityDomain);
+        sec.system.loadAndExecuteABC(shellABC);
+        result.resolve(sec);
         SystemResourcesLoadingService.instance.load(SystemResourceId.ShellAbc).then(function (buffer) {
           var shellABC = new Shumway.AVMX.ABCFile(new Uint8Array(buffer));
-          securityDomain.system.loadAndExecuteABC(shellABC);
-          result.resolve(securityDomain);
+          sec.system.loadAndExecuteABC(shellABC);
+          result.resolve(sec);
         }, result.reject);
         return;
       }
@@ -59,13 +59,13 @@ module Shumway {
           SystemResourcesLoadingService.instance.load(SystemResourceId.PlayerglobalManifest)]).
           then(function (results) {
             var catalog = new Shumway.AVMX.ABCCatalog(new Uint8Array(results[0]), results[1]);
-            securityDomain.addCatalog(catalog);
+            sec.addCatalog(catalog);
             SWF.leaveTimeline();
-            result.resolve(securityDomain);
+            result.resolve(sec);
           }, result.reject);
       }
 
-      result.resolve(securityDomain);
+      result.resolve(sec);
     }, result.reject);
     return result.promise;
   }

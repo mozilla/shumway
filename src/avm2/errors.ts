@@ -295,7 +295,7 @@ module Shumway.AVMX {
   //  SharedObjectConnectError                                  : { code: 2139, message: "SharedObject could not connect."},
   //  LocalSecurityLoadingError                                 : { code: 2140, message: "Security sandbox violation: %1 cannot load %2. Local-with-filesystem and local-with-networking SWF files cannot load each other."},
   //  MultiplePrintJobsError                                    : { code: 2141, message: "Only one PrintJob may be in use at a time."},
-  //  LocalImportSecurityError                                  : { code: 2142, message: "Security sandbox violation: local SWF files cannot use the LoaderContext.securityDomain property. %1 was attempting to load %2."},
+  //  LocalImportSecurityError                                  : { code: 2142, message: "Security sandbox violation: local SWF files cannot use the LoaderContext.sec property. %1 was attempting to load %2."},
   //  AccOverrideRole                                           : { code: 2143, message: "AccessibilityImplementation.get_accRole() must be overridden from its default."},
   //  AccOverrideState                                          : { code: 2144, message: "AccessibilityImplementation.get_accState() must be overridden from its default."},
   //  URLRequestHeaderInvalidLengthError                        : { code: 2145, message: "Cumulative length of requestHeaders must be less than 8192 characters."},

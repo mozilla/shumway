@@ -352,10 +352,10 @@ module Shumway.Shell {
       }
       executeFiles(files);
     } else if (disassembleOption.value) {
-      var securityDomain = createSecurityDomain(builtinABCPath, null, null);
+      var sec = createSecurityDomain(builtinABCPath, null, null);
       files.forEach(function (file) {
         if (file.endsWith(".abc")) {
-          disassembleABCFile(securityDomain, file);
+          disassembleABCFile(sec, file);
         }
       });
     }
@@ -368,13 +368,13 @@ module Shumway.Shell {
     }
   }
 
-  function disassembleABCFile(securityDomain: ISecurityDomain, file: string) {
+  function disassembleABCFile(sec: ISecurityDomain, file: string) {
     try {
       var buffer = read(file, "binary");
       var abc = new ABCFile(new Uint8Array(buffer), file);
-      // We need to load the ABCFile in a |securityDomain| because the parser may
+      // We need to load the ABCFile in a |sec| because the parser may
       // throw verifier errors.
-      securityDomain.application.loadABC(abc);
+      sec.application.loadABC(abc);
       abc.trace(writer);
     } catch (x) {
       writer.redLn('Exception encountered while running ' + file + ': ' + '(' + x + ')');
@@ -421,8 +421,8 @@ module Shumway.Shell {
       Shumway.Random.reset();
       Shumway.Shell.installTimeWarper();
 
-      var securityDomain = createSecurityDomain(builtinABCPath, null, null);
-      var player = new Shumway.Player.Player(securityDomain, new ShellGFXServer());
+      var sec = createSecurityDomain(builtinABCPath, null, null);
+      var player = new Shumway.Player.Player(sec, new ShellGFXServer());
       player.load(file);
       return player;
     }
@@ -475,7 +475,7 @@ module Shumway.Shell {
 
     json.forEach(function (run, i) {
       printErr("Running batch " + (i + 1) + " of " + json.length + " (" + run[1].length + " tests)");
-      var securityDomain = createSecurityDomain(builtinABCPath, null, null);
+      var sec = createSecurityDomain(builtinABCPath, null, null);
       // Run libraries.
       run[0].forEach(function (file) {
         var buffer = new Uint8Array(read(file, "binary"));
@@ -483,8 +483,8 @@ module Shumway.Shell {
         if (verbose) {
           writer.writeLn("executeABC: " + file);
         }
-        securityDomain.application.loadABC(abc);
-        securityDomain.application.executeABC(abc);
+        sec.application.loadABC(abc);
+        sec.application.executeABC(abc);
       });
       // Run files.
       run[1].forEach(function (file) {
@@ -498,9 +498,9 @@ module Shumway.Shell {
           });
           var buffer = new Uint8Array(read(file, "binary"));
           var abc = new ABCFile(buffer);
-          securityDomain.application.loadABC(abc);
+          sec.application.loadABC(abc);
           var t = Date.now();
-          securityDomain.application.executeABC(abc);
+          sec.application.executeABC(abc);
           var e = (Date.now() - t);
           if (e > 100) {
             printErr("Test: " + file + " is very slow (" + e.toFixed() + " ms), consider disabling it.");
@@ -526,14 +526,14 @@ module Shumway.Shell {
   }
 
   function executeABCFiles(files: string []) {
-    var securityDomain = freshSecurityDomainOption.value ? null : createSecurityDomain(builtinABCPath, null, null);
+    var sec = freshSecurityDomainOption.value ? null : createSecurityDomain(builtinABCPath, null, null);
     files.forEach(function (file) {
       if (file === "@createSecurityDomain") {
-        securityDomain = createSecurityDomain(builtinABCPath, null, null);
+        sec = createSecurityDomain(builtinABCPath, null, null);
         return;
       }
       if (freshSecurityDomainOption.value) {
-        securityDomain = createSecurityDomain(builtinABCPath, null, null);
+        sec = createSecurityDomain(builtinABCPath, null, null);
       }
       try {
         if (printABCFileNameOption.value) {
@@ -544,8 +544,8 @@ module Shumway.Shell {
         });
         var buffer = new Uint8Array(read(file, "binary"));
         var abc = new ABCFile(buffer);
-        securityDomain.application.loadABC(abc);
-        securityDomain.application.executeABC(abc);
+        sec.application.loadABC(abc);
+        sec.application.executeABC(abc);
         if (verbose) {
           writer.writeLn("executeABC PASS: " + file);
         }
@@ -565,12 +565,12 @@ module Shumway.Shell {
   }
 
   function executeUnitTestFile(file: string) {
-    var securityDomain = createSecurityDomain(builtinABCPath, null, null);
-    Shumway.AVMX.AS.installClassLoaders(securityDomain.application, jsGlobal);
+    var sec = createSecurityDomain(builtinABCPath, null, null);
+    Shumway.AVMX.AS.installClassLoaders(sec.application, jsGlobal);
 
-    // Make the securityDomain available on the global object for ease of use
+    // Make the sec available on the global object for ease of use
     // in unit tests.
-    jsGlobal.securityDomain = securityDomain;
+    jsGlobal.sec = sec;
 
     writer.writeLn("Running test file: " + file + " ...");
     var start = Date.now();
@@ -723,13 +723,13 @@ module Shumway.Shell {
 
   function createSecurityDomain(builtinABCPath: string, shellABCPath: string, libraryPathInfo): ISecurityDomain {
     var buffer = read(builtinABCPath, 'binary');
-    var securityDomain = <ISecurityDomain>new AVMX.SecurityDomain();
+    var sec = <ISecurityDomain>new AVMX.SecurityDomain();
     var builtinABC = new ABCFile(new Uint8Array(buffer));
-    securityDomain.system.loadABC(builtinABC);
-    securityDomain.addCatalog(loadPlayerGlobalCatalog());
-    securityDomain.initialize();
-    securityDomain.system.executeABC(builtinABC);
-    return securityDomain;
+    sec.system.loadABC(builtinABC);
+    sec.addCatalog(loadPlayerGlobalCatalog());
+    sec.initialize();
+    sec.system.executeABC(builtinABC);
+    return sec;
   }
 
   function loadPlayerGlobalCatalog(): AVMX.ABCCatalog {

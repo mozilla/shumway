@@ -53,7 +53,7 @@ module Shumway.AVMX.AS.flash.geom {
     public static FromBounds(bounds: Bounds): Rectangle {
       var xMin = bounds.xMin;
       var yMin = bounds.yMin;
-      return new this.securityDomain.flash.geom.Rectangle(xMin / 20, yMin / 20,
+      return new this.sec.flash.geom.Rectangle(xMin / 20, yMin / 20,
                                                           (bounds.xMax - xMin) / 20,
                                                           (bounds.yMax - yMin) / 20);
     }
@@ -129,7 +129,7 @@ module Shumway.AVMX.AS.flash.geom {
     }
 
     public get topLeft(): Point {
-      return new this.securityDomain.flash.geom.Point(this.left, this.top);
+      return new this.sec.flash.geom.Point(this.left, this.top);
     }
 
     public set topLeft(value: Point) {
@@ -138,7 +138,7 @@ module Shumway.AVMX.AS.flash.geom {
     }
 
     public get bottomRight(): Point {
-      return new this.securityDomain.flash.geom.Point(this.right, this.bottom);
+      return new this.sec.flash.geom.Point(this.right, this.bottom);
     }
 
     public set bottomRight(value: Point) {
@@ -147,7 +147,7 @@ module Shumway.AVMX.AS.flash.geom {
     }
 
     public get size(): Point {
-      return new this.securityDomain.flash.geom.Point(this.width, this.height);
+      return new this.sec.flash.geom.Point(this.width, this.height);
     }
 
     public set size(value: Point) {
@@ -160,7 +160,7 @@ module Shumway.AVMX.AS.flash.geom {
     }
 
     public clone(): Rectangle {
-      return new this.securityDomain.flash.geom.Rectangle(this.x, this.y, this.width, this.height);
+      return new this.sec.flash.geom.Rectangle(this.x, this.y, this.width, this.height);
     }
 
     public isEmpty(): boolean {

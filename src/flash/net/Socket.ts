@@ -183,7 +183,7 @@ module Shumway.AVMX.AS.flash.net {
     internalConnect(host, port) {
       host = axCoerceString(host); port |= 0;
       somewhatImplemented("flash.net.Socket::internalConnect");
-      this.securityDomain.throwError('SecurityError', Errors.SocketConnectError, host, port);
+      this.sec.throwError('SecurityError', Errors.SocketConnectError, host, port);
     }
     didFailureOccur(): boolean {
       somewhatImplemented("flash.net.Socket::didFailureOccur");

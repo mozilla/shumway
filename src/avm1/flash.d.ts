@@ -324,7 +324,7 @@ declare module Shumway.AVMX.AS.flash {
       static version: string;
     }
     class Security {}
-    var fscommand: { axCall: (thisArg, securityDomain: ISecurityDomain, command: string, args?: string) => any };
+    var fscommand: { axCall: (thisArg, sec: ISecurityDomain, command: string, args?: string) => any };
   }
   module text {
     class TextField extends flash.display.DisplayObject {

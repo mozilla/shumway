@@ -117,12 +117,12 @@ module Shumway.AVMX.AS {
 
     static axApply(self: Uint32Vector, args: any[]) {
       var object = args[0];
-      if (self.securityDomain.Uint32Vector.axIsType(object)) {
+      if (self.sec.Uint32Vector.axIsType(object)) {
         return object;
       }
       var length = object.axGetPublicProperty("length");
       if (length !== undefined) {
-        var v = new self.securityDomain.Uint32Vector(length, false);
+        var v = new self.sec.Uint32Vector(length, false);
         for (var i = 0; i < length; i++) {
           v.axSetNumericProperty(i, object.axGetPublicProperty(i));
         }
@@ -210,12 +210,12 @@ module Shumway.AVMX.AS {
         var vector: Uint32Vector = arguments[i];
         if (!(vector._buffer instanceof Uint32Array)) {
           assert(false); // TODO
-          // this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError,
+          // this.sec.throwError('TypeError', Errors.CheckTypeFailedError,
           // vector.constructor.name, '__AS3__.vec.Vector.<uint>');
         }
         length += vector._length;
       }
-      var result = new this.securityDomain.Uint32Vector(length);
+      var result = new this.sec.Uint32Vector(length);
       var buffer = result._buffer;
       buffer.set(this._buffer);
       var offset = this._length;
@@ -254,7 +254,7 @@ module Shumway.AVMX.AS {
      * |thisObject| as |this| for each of the elements in the vector.
      */
     filter(callback, thisObject) {
-      var v = new this.securityDomain.Uint32Vector();
+      var v = new this.sec.Uint32Vector();
       if (!this.checkVectorMethodArgs(callback, thisObject)) {
         return v;
       }
@@ -396,7 +396,7 @@ module Shumway.AVMX.AS {
         Array.prototype.sort.call(this._view());
         return this;
       }
-      if (this.securityDomain.AXFunction.axIsType(sortBehavior)) {
+      if (this.sec.AXFunction.axIsType(sortBehavior)) {
         Array.prototype.sort.call(this._view(), sortBehavior.value);
         return this;
       }
@@ -440,7 +440,7 @@ module Shumway.AVMX.AS {
       var length = this._length;
       var first = Math.min(Math.max(start, 0), length);
       var last = Math.min(Math.max(end, first), length);
-      var result = new this.securityDomain.Uint32Vector(last - first, this.fixed);
+      var result = new this.sec.Uint32Vector(last - first, this.fixed);
       result._buffer.set(buffer.subarray(this._offset + first, this._offset + last),
                          result._offset);
       return result;
@@ -456,7 +456,7 @@ module Shumway.AVMX.AS {
       var insertCount = arguments.length - 2;
       var deletedItems;
 
-      var result = new this.securityDomain.Uint32Vector(deleteCount, this.fixed);
+      var result = new this.sec.Uint32Vector(deleteCount, this.fixed);
       if (deleteCount > 0) {
         deletedItems = buffer.subarray(startOffset, startOffset + deleteCount);
         result._buffer.set(deletedItems, result._offset);
@@ -503,7 +503,7 @@ module Shumway.AVMX.AS {
 
     _checkFixed() {
       if (this._fixed) {
-        this.securityDomain.throwError("RangeError", Errors.VectorFixedError);
+        this.sec.throwError("RangeError", Errors.VectorFixedError);
       }
     }
 
@@ -512,7 +512,7 @@ module Shumway.AVMX.AS {
       var length = this._length;
       var idx = nm | 0;
       if (idx < 0 || idx >= length || idx != nm) {
-        this.securityDomain.throwError("RangeError", Errors.OutOfRangeError, nm, length);
+        this.sec.throwError("RangeError", Errors.OutOfRangeError, nm, length);
       }
       return this._buffer[this._offset + idx];
     }
@@ -522,7 +522,7 @@ module Shumway.AVMX.AS {
       var length = this._length;
       var idx = nm | 0;
       if (idx < 0 || idx > length || idx != nm || (idx === length && this._fixed)) {
-        this.securityDomain.throwError("RangeError", Errors.OutOfRangeError, nm, length);
+        this.sec.throwError("RangeError", Errors.OutOfRangeError, nm, length);
       }
       if (idx === this._length) {
         this._ensureCapacity(this._length + 1);

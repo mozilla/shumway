@@ -377,9 +377,9 @@ module Shumway.AVMX.AS.flash.display {
                                 callConstructor: boolean): DisplayObject {
       var symbolClass = symbol.symbolClass;
 
-      var bitmapDataClass = this.securityDomain.flash.display.BitmapData.axClass;
+      var bitmapDataClass = this.sec.flash.display.BitmapData.axClass;
       if (bitmapDataClass.dPrototype.isPrototypeOf(symbolClass.dPrototype)) {
-        symbolClass = this.securityDomain.flash.display.Bitmap.axClass;
+        symbolClass = this.sec.flash.display.Bitmap.axClass;
       }
       var instance: DisplayObject = constructClassFromSymbol(symbol, symbolClass);
       if (placeObjectTag.flags & PlaceObjectFlags.HasName) {
@@ -458,7 +458,7 @@ module Shumway.AVMX.AS.flash.display {
         // Of course, nothing guarantees that there isn't content that accidentally does, so it'd
         // be nice to eventually get this right.
         enterTimeline("DisplayObject.EnqueueFrameScripts");
-        var displayObjectContainerClass = this.securityDomain.flash.display.DisplayObjectContainer.axClass;
+        var displayObjectContainerClass = this.sec.flash.display.DisplayObjectContainer.axClass;
         this._advancableInstances.forEach(function (value) {
           var container: any = value;
           if (displayObjectContainerClass.axIsType(container) && !container.parent) {
@@ -468,7 +468,7 @@ module Shumway.AVMX.AS.flash.display {
         this._stage._enqueueFrameScripts();
         leaveTimeline();
         enterTimeline("DisplayObject.RunFrameScript");
-        this.securityDomain.flash.display.MovieClip.axClass.runFrameScripts();
+        this.sec.flash.display.MovieClip.axClass.runFrameScripts();
         leaveTimeline();
         // Step 6: Dispatch EXIT_FRAME.
         enterTimeline("DisplayObject.ExitFrame");
@@ -486,8 +486,8 @@ module Shumway.AVMX.AS.flash.display {
      * Dispatches a frame event on all instances of DisplayObjects.
      */
     static _broadcastFrameEvent(type: string): void {
-      var event = this.securityDomain.flash.events.Event.axClass.getBroadcastInstance(type);
-      this.securityDomain.flash.events.EventDispatcher.axClass.broadcastEventDispatchQueue.dispatchEvent(event);
+      var event = this.sec.flash.events.Event.axClass.getBroadcastInstance(type);
+      this.sec.flash.events.EventDispatcher.axClass.broadcastEventDispatchQueue.dispatchEvent(event);
     }
 
     constructor () {
@@ -503,7 +503,7 @@ module Shumway.AVMX.AS.flash.display {
 
     protected _initializeFields() {
       super._initializeFields(this);
-      this._id = this.securityDomain.flash.display.DisplayObject.axClass.getNextSyncID();
+      this._id = this.sec.flash.display.DisplayObject.axClass.getNextSyncID();
       this._displayObjectFlags = DisplayObjectFlags.Visible |
                                  DisplayObjectFlags.InvalidLineBounds |
                                  DisplayObjectFlags.InvalidFillBounds |
@@ -549,13 +549,13 @@ module Shumway.AVMX.AS.flash.display {
       this._lineBounds = new Bounds(0, 0, 0, 0);
       this._clipDepth = -1;
 
-      var matrixClass = this.securityDomain.flash.geom.Matrix;
+      var matrixClass = this.sec.flash.geom.Matrix;
       this._concatenatedMatrix = new matrixClass();
       this._invertedConcatenatedMatrix = new matrixClass();
       this._matrix = new matrixClass();
       this._invertedMatrix = new matrixClass();
       this._matrix3D = null;
-      var colorTransformClass = this.securityDomain.flash.geom.ColorTransform;
+      var colorTransformClass = this.sec.flash.geom.ColorTransform;
       this._colorTransform = new colorTransformClass();
       this._concatenatedColorTransform = new colorTransformClass();
 
@@ -578,7 +578,7 @@ module Shumway.AVMX.AS.flash.display {
      */
     _setInitialName() {
       this._name = 'instance' +
-                   (this.securityDomain.flash.display.DisplayObject.axClass._instanceID++);
+                   (this.sec.flash.display.DisplayObject.axClass._instanceID++);
     }
 
     _setParent(parent: DisplayObjectContainer, depth: number) {
@@ -949,13 +949,13 @@ module Shumway.AVMX.AS.flash.display {
         var ancestor = this._findNearestAncestor(DisplayObjectFlags.InvalidConcatenatedColorTransform, false);
         var path = DisplayObject._getAncestors(this, ancestor);
         var i = path.length - 1;
-        var stageClass = this.securityDomain.flash.display.Stage;
+        var stageClass = this.sec.flash.display.Stage;
         if (stageClass.axIsType(path[i])) {
           i--;
         }
         var m = ancestor && !stageClass.axIsType(ancestor) ?
                 ancestor._concatenatedColorTransform.clone() :
-                new this.securityDomain.flash.geom.ColorTransform();
+                new this.sec.flash.geom.ColorTransform();
         while (i >= 0) {
           ancestor = path[i--];
           release || assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform));
@@ -1044,7 +1044,7 @@ module Shumway.AVMX.AS.flash.display {
       }
       var m;
       if (targetCoordinateSpace) {
-        m = this.securityDomain.flash.geom.Matrix.axClass.TEMP_MATRIX;
+        m = this.sec.flash.geom.Matrix.axClass.TEMP_MATRIX;
         var invertedTargetMatrix = targetCoordinateSpace._getInvertedConcatenatedMatrix();
         invertedTargetMatrix.preMultiplyInto(this._getConcatenatedMatrix(), m);
       } else {
@@ -1092,7 +1092,7 @@ module Shumway.AVMX.AS.flash.display {
       var reset = !(placeObjectTag.flags & PlaceObjectFlags.Move) &&
                   placeObjectTag.flags & PlaceObjectFlags.HasCharacter;
 
-      var matrixClass = this.securityDomain.flash.geom.Matrix.axClass;
+      var matrixClass = this.sec.flash.geom.Matrix.axClass;
       if (placeObjectTag.flags & PlaceObjectFlags.HasMatrix) {
         matrixClass.TEMP_MATRIX.copyFromUntyped(placeObjectTag.matrix);
         this._setMatrix(matrixClass.TEMP_MATRIX, false);
@@ -1100,7 +1100,7 @@ module Shumway.AVMX.AS.flash.display {
         this._setMatrix(matrixClass.FROZEN_IDENTITY_MATRIX, false);
       }
 
-      var colorTransformClass = this.securityDomain.flash.geom.ColorTransform.axClass;
+      var colorTransformClass = this.sec.flash.geom.ColorTransform.axClass;
       if (placeObjectTag.flags & PlaceObjectFlags.HasColorTransform) {
         colorTransformClass.TEMP_COLOR_TRANSFORM.copyFromUntyped(placeObjectTag.cxform);
         this._setColorTransform(colorTransformClass.TEMP_COLOR_TRANSFORM);
@@ -1126,7 +1126,7 @@ module Shumway.AVMX.AS.flash.display {
       }
 
       if (placeObjectTag.flags & PlaceObjectFlags.HasFilterList) {
-        var filtersPackage = this.securityDomain.flash.filters;
+        var filtersPackage = this.sec.flash.filters;
         var filters: filters.BitmapFilter[] = [];
         var swfFilters = placeObjectTag.filters;
         for (var i = 0; i < swfFilters.length; i++) {
@@ -1463,7 +1463,7 @@ module Shumway.AVMX.AS.flash.display {
       return this._getTransform();
     }
     _getTransform() {
-      return new this.securityDomain.flash.geom.Transform(this);
+      return new this.sec.flash.geom.Transform(this);
     }
 
     set transform(value: flash.geom.Transform) {
@@ -1504,7 +1504,7 @@ module Shumway.AVMX.AS.flash.display {
       var node = this;
       do {
         if (node._stage === node) {
-          release || assert(this.securityDomain.flash.display.Stage.axIsType(node));
+          release || assert(this.sec.flash.display.Stage.axIsType(node));
           return <flash.display.Stage>node;
         }
         node = node._parent;
@@ -1517,7 +1517,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     set name(value: string) {
-      checkNullParameter(value, "name", this.securityDomain);
+      checkNullParameter(value, "name", this.sec);
       this._name = axCoerceString(value);
     }
 
@@ -1552,7 +1552,7 @@ module Shumway.AVMX.AS.flash.display {
         return;
       }
       if (BlendMode.toNumber(value) < 0) {
-        this.securityDomain.throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
+        this.sec.throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
       }
       this._blendMode = value;
       this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
@@ -1562,7 +1562,7 @@ module Shumway.AVMX.AS.flash.display {
       return this._getScale9Grid();
     }
     _getScale9Grid() {
-      var rectangleClass = this.securityDomain.flash.geom.Rectangle.axClass;
+      var rectangleClass = this.sec.flash.geom.Rectangle.axClass;
       return this._scale9Grid ? rectangleClass.FromBounds(this._scale9Grid) : null;
     }
 
@@ -1602,7 +1602,7 @@ module Shumway.AVMX.AS.flash.display {
       var filters = this._filters ? this._filters.map(function (x: flash.filters.BitmapFilter) {
         return x.clone();
       }) : [];
-      return this.securityDomain.createArray(filters);
+      return this.sec.createArray(filters);
     }
 
     set filters(value_: ASArray) {
@@ -1615,10 +1615,10 @@ module Shumway.AVMX.AS.flash.display {
         changed = this._filters.length > 0;
         this._filters.length = 0;
       } else {
-        var bitmapFilterClass = this.securityDomain.flash.filters.BitmapFilter.axClass;
+        var bitmapFilterClass = this.sec.flash.filters.BitmapFilter.axClass;
         this._filters = value.map(function (x: flash.filters.BitmapFilter) {
           if (!bitmapFilterClass.axIsType(x)) {
-            this.securityDomain.throwError('TypeError', Errors.ParamTypeError, '0', 'Filter');
+            this.sec.throwError('TypeError', Errors.ParamTypeError, '0', 'Filter');
           }
           return x.clone();
         });
@@ -1657,13 +1657,13 @@ module Shumway.AVMX.AS.flash.display {
 
     getBounds(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
       targetCoordinateSpace = targetCoordinateSpace || this;
-      var rectangleClass = this.securityDomain.flash.geom.Rectangle.axClass;
+      var rectangleClass = this.sec.flash.geom.Rectangle.axClass;
       return rectangleClass.FromBounds(this._getTransformedBounds(targetCoordinateSpace, true));
     }
 
     getRect(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
       targetCoordinateSpace = targetCoordinateSpace || this;
-      var rectangleClass = this.securityDomain.flash.geom.Rectangle.axClass;
+      var rectangleClass = this.sec.flash.geom.Rectangle.axClass;
       return rectangleClass.FromBounds(this._getTransformedBounds(targetCoordinateSpace, false));
     }
 
@@ -1780,7 +1780,7 @@ module Shumway.AVMX.AS.flash.display {
       if (this._graphics) {
         return this._graphics;
       }
-      this._graphics = new this.securityDomain.flash.display.Graphics();
+      this._graphics = new this.sec.flash.display.Graphics();
       this._graphics._setParent(this);
       this._invalidateFillAndLineBounds(true, true);
       this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
@@ -1798,7 +1798,7 @@ module Shumway.AVMX.AS.flash.display {
         release || assert(symbol instanceof flash.display.ShapeSymbol);
         this._graphics = (<flash.display.ShapeSymbol>symbol).graphics;
         this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
-      } else if (this.securityDomain.flash.text.StaticText.axIsType(this)) {
+      } else if (this.sec.flash.text.StaticText.axIsType(this)) {
         release || assert(symbol instanceof flash.text.TextSymbol);
         var textSymbol = <flash.text.TextSymbol>symbol;
         (<flash.text.StaticText>this)._textContent = textSymbol.textContent;
@@ -1816,7 +1816,7 @@ module Shumway.AVMX.AS.flash.display {
      * in the global coordinate space overlap.
      */
     hitTestObject(other: DisplayObject): boolean {
-      release || assert (other && this.securityDomain.flash.display.DisplayObject.axIsType(other));
+      release || assert (other && this.sec.flash.display.DisplayObject.axIsType(other));
       var a = this, b = other;
       var aBounds = a._getContentBounds(false).clone();
       var bBounds = b._getContentBounds(false).clone();
@@ -1875,7 +1875,7 @@ module Shumway.AVMX.AS.flash.display {
           // For Drop, replace previous hit with current one.
           objects[0] = this;
         } else if (testingType === HitTestingType.ObjectsUnderPoint ||
-                   this.securityDomain.flash.display.InteractiveObject.axIsType(this) &&
+                   this.sec.flash.display.InteractiveObject.axIsType(this) &&
                    (<InteractiveObject>this)._mouseEnabled) {
           // For getObjectsUnderPoint, push all direct hits, for mouse target finding
           // InteractiveObjects only.
@@ -2008,7 +2008,7 @@ module Shumway.AVMX.AS.flash.display {
      * Returns the current mouse position relative to this object.
      */
     _getLocalMousePosition(): flash.geom.Point {
-      var position = this.securityDomain.flash.ui.Mouse.axClass._currentPosition;
+      var position = this.sec.flash.ui.Mouse.axClass._currentPosition;
       if (this._parent) {
         position = this._parent.globalToLocal(position);
       }

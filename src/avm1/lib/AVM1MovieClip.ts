@@ -112,7 +112,7 @@ module Shumway.AVM1.Lib {
 //    }
 
     public _constructMovieClipSymbol(symbolId:string, name:string):flash.display.MovieClip {
-      var symbol = AVM1Context.instance.getAsset(symbolId);
+      var symbol = this.context.getAsset(symbolId);
       if (!symbol) {
         return undefined;
       }
@@ -122,9 +122,9 @@ module Shumway.AVM1.Lib {
       props.avm1SymbolClass = symbol.theClass;
 
       // REDUX
-      var mc:flash.display.MovieClip; // = this.context.securityDomain.flash.display.MovieClip.initializeFrom(props);
-      mc = Shumway.AVMX.AS.constructClassFromSymbol(props, this.context.securityDomain.flash.display.MovieClip.axClass);
-      //this.context.securityDomain.flash.display.MovieClip.instanceConstructorNoInitialize.call(mc);
+      var mc:flash.display.MovieClip; // = this.context.sec.flash.display.MovieClip.initializeFrom(props);
+      mc = Shumway.AVMX.AS.constructClassFromSymbol(props, this.context.sec.flash.display.MovieClip.axClass);
+      //this.context.sec.flash.display.MovieClip.instanceConstructorNoInitialize.call(mc);
 
       return mc;
     }
@@ -190,7 +190,7 @@ module Shumway.AVM1.Lib {
       var nativeAS3Object = this.as3Object;
       nativeAS3Object.addTimelineObjectAtDepth(mc, Math.min(nativeAS3Object.numChildren, depth));
       // Bitmaps aren't reflected in AVM1, so the rest here doesn't apply.
-      if (this.context.securityDomain.flash.display.Bitmap.axIsType(mc)) {
+      if (this.context.sec.flash.display.Bitmap.axIsType(mc)) {
         return null;
       }
       var as2mc = getAVM1Object(mc, this.context);
@@ -198,7 +198,7 @@ module Shumway.AVM1.Lib {
     }
 
     public createEmptyMovieClip(name, depth): AVM1MovieClip {
-      var mc: flash.display.MovieClip = new this.context.securityDomain.flash.display.MovieClip();
+      var mc: flash.display.MovieClip = new this.context.sec.flash.display.MovieClip();
       mc.name = name;
       return <AVM1MovieClip>this._insertChildAtDepth(mc, depth);
     }
@@ -312,7 +312,7 @@ module Shumway.AVM1.Lib {
         // child is null if it hasn't been constructed yet. This can happen in InitActionBlocks.
         if (child && child._depth === depth) {
           // Somewhat absurdly, this method returns the mc if a bitmap is at the given depth.
-          if (this.context.securityDomain.flash.display.Bitmap.axIsType(child)) {
+          if (this.context.sec.flash.display.Bitmap.axIsType(child)) {
             return this;
           }
           return getAVM1Object(child, this.context);
@@ -355,9 +355,9 @@ module Shumway.AVM1.Lib {
     }
 
     public globalToLocal(pt) {
-      var securityDomain = this.context.securityDomain;
+      var sec = this.context.sec;
       var tmp: flash.geom.Point = this.as3Object.globalToLocal(
-        new securityDomain.flash.geom.Point(pt.alGet('x'), pt.alGet('y')));
+        new sec.flash.geom.Point(pt.alGet('x'), pt.alGet('y')));
       pt.alPut('x', tmp.x);
       pt.alPut('y', tmp.y);
     }
@@ -440,9 +440,9 @@ module Shumway.AVM1.Lib {
     }
 
     public localToGlobal(pt) {
-      var securityDomain = this.context.securityDomain;
+      var sec = this.context.sec;
       var tmp: flash.geom.Point = this.as3Object.localToGlobal(
-        new securityDomain.flash.geom.Point(pt.alGet('x'), pt.alGet('y')));
+        new sec.flash.geom.Point(pt.alGet('x'), pt.alGet('y')));
       pt.alPut('x', tmp.x);
       pt.alPut('y', tmp.y);
     }
@@ -551,7 +551,7 @@ module Shumway.AVM1.Lib {
 
     public setMask(mc:Object) {
       var nativeObject = this.as3Object;
-      var mask = AVM1Utils.resolveMovieClip(mc);
+      var mask = AVM1Utils.resolveMovieClip(this.context, mc);
       if (mask) {
         nativeObject.mask = mask.as3Object;
       }
@@ -581,8 +581,8 @@ module Shumway.AVM1.Lib {
     public swapDepths(target:Object) {
       var child1 = this.as3Object;
       var child2 = typeof target === 'number' ?
-        AVM1Utils.resolveLevel(Number(target)).as3Object :
-        AVM1Utils.resolveTarget(target).as3Object;
+        AVM1Utils.resolveLevel(this.context, Number(target)).as3Object :
+        AVM1Utils.resolveTarget(this.context, target).as3Object;
       if (child1.parent !== child2.parent) {
         return; // must be the same parent
       }
@@ -747,11 +747,11 @@ module Shumway.AVM1.Lib {
 
     private _resolveLevelNProperty(name): AVM1MovieClip {
       if (name === '_root' || name === '_level0') {
-        return AVM1Context.instance.resolveLevel(0);
+        return this.context.resolveLevel(0);
       } else if (name.indexOf('_level') === 0) {
         var level = name.substring(6), levelNum = level | 0;
         if (levelNum > 0 && level == levelNum) {
-          return AVM1Context.instance.resolveLevel(levelNum)
+          return this.context.resolveLevel(levelNum)
         }
       }
       return null;
@@ -770,12 +770,13 @@ module Shumway.AVM1.Lib {
       return this._cachedPropertyResult;
     }
 
-    public alGetOwnProperty(name): AVM1PropertyDescriptor {
-      var desc = super.alGetOwnProperty(name);
+    public alGetOwnProperty(p): AVM1PropertyDescriptor {
+      var desc = super.alGetOwnProperty(p);
       if (desc) {
         return desc;
       }
-      if (typeof name === 'string' && name[0] === '_') {
+      var name = alToString(this.context, p);
+      if (name[0] === '_') {
         var level = this._resolveLevelNProperty(name);
         if (level) {
           return this._getCachedPropertyResult(level);
@@ -801,14 +802,21 @@ module Shumway.AVM1.Lib {
       }
 
       var as3MovieClip = this.as3Object;
+      if (as3MovieClip._children.length === 0) {
+        return keys; // no children
+      }
+
+      var processed = Object.create(null);
+      for (var i = 0; i < keys.length; i++) {
+        processed[keys[i]] = true;
+      }
       for (var i = 0, length = as3MovieClip._children.length; i < length; i++) {
         var child = as3MovieClip._children[i];
         var name = child.name;
-        if (!super.alHasProperty(name)) {
-          keys.push(name); // REDUX remove duplicates
-        }
+        var normalizedName = name; // TODO something like this._unescapeProperty(this._escapeProperty(name));
+        processed[normalizedName] = true;
       }
-      return keys;
+      return Object.getOwnPropertyNames(processed);
     }
 
     addFrameActionBlocks(frameIndex: number, frameData: any) {
@@ -839,7 +847,7 @@ module Shumway.AVM1.Lib {
         this.as3Object.addFrameScript(frameIndex, this._boundExecuteFrameScripts);
       }
       var actionsData = this.context.actionsDataFactory.createActionsData(
-        actionsBlock, 'f' + frameIndex + 'i' + scripts.length);
+        actionsBlock, 's' + this.as3Object._symbol.id + 'f' + frameIndex + 'i' + scripts.length);
       scripts.push(actionsData);
     }
 
@@ -864,7 +872,7 @@ module Shumway.AVM1.Lib {
         var avm1Context = self.context;
         for (var i = 0; i < actionsBlocks.length; i++) {
           var actionsData = avm1Context.actionsDataFactory.createActionsData(
-            actionsBlocks[i].actionsData, 'f' + frameIndex + 'i' + i);
+            actionsBlocks[i].actionsData, 's' + avm2MovieClip._symbol.id + 'f' + frameIndex + 'i' + i);
           avm1Context.executeActions(actionsData, self);
         }
       }

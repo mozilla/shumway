@@ -76,13 +76,13 @@ module Shumway.AVMX.AS.flash.geom {
     }
 
     public static FromUntyped(object: any): Matrix {
-      return new this.securityDomain.flash.geom.Matrix(object.a, object.b, object.c, object.d,
+      return new this.sec.flash.geom.Matrix(object.a, object.b, object.c, object.d,
                                                        object.tx, object.ty);
     }
 
     // Keep in sync with writeExternal below!
     public static FromDataBuffer(input: DataBuffer) {
-      return new this.securityDomain.flash.geom.Matrix(input.readFloat(), input.readFloat(),
+      return new this.sec.flash.geom.Matrix(input.readFloat(), input.readFloat(),
                                                        input.readFloat(), input.readFloat(),
                                                        input.readFloat(), input.readFloat());
     }
@@ -324,7 +324,7 @@ module Shumway.AVMX.AS.flash.geom {
     public deltaTransformPoint(point: Point): Point {
       var x = this._data[0] * point.x + this._data[2] * point.y;
       var y = this._data[1] * point.x + this._data[3] * point.y;
-      return new this.securityDomain.flash.geom.Point(x, y);
+      return new this.sec.flash.geom.Point(x, y);
     }
 
     public transformX(x: number, y: number): number {
@@ -339,7 +339,7 @@ module Shumway.AVMX.AS.flash.geom {
 
     public transformPoint(point: Point): Point {
       var m = this._data;
-      return new this.securityDomain.flash.geom.Point(m[0] * point.x + m[2] * point.y + m[4],
+      return new this.sec.flash.geom.Point(m[0] * point.x + m[2] * point.y + m[4],
                                                       m[1] * point.x + m[3] * point.y + m[5]);
     }
 
@@ -567,7 +567,7 @@ module Shumway.AVMX.AS.flash.geom {
 
     public clone(): Matrix {
       var m = this._data;
-      return new this.securityDomain.flash.geom.Matrix(m[0], m[1], m[2], m[3], m[4], m[5]);
+      return new this.sec.flash.geom.Matrix(m[0], m[1], m[2], m[3], m[4], m[5]);
     }
 
     public equals(other: Matrix): boolean {

@@ -1258,15 +1258,15 @@ module Shumway.AVMX.AS.flash.display {
                               skipWrite: boolean): void
     {
       if (isNullOrUndefined(bitmap)) {
-        this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'bitmap');
-      } else if (!(this.securityDomain.flash.display.BitmapData.axIsType(bitmap))) {
-        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'bitmap',
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'bitmap');
+      } else if (!(this.sec.flash.display.BitmapData.axIsType(bitmap))) {
+        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, 'bitmap',
                                        'flash.display.BitmapData');
       }
       if (isNullOrUndefined(matrix)) {
-        matrix = this.securityDomain.flash.geom.Matrix.axClass.FROZEN_IDENTITY_MATRIX;
-      } else if (!(this.securityDomain.flash.geom.Matrix.axIsType(matrix))) {
-        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'matrix',
+        matrix = this.sec.flash.geom.Matrix.axClass.FROZEN_IDENTITY_MATRIX;
+      } else if (!(this.sec.flash.geom.Matrix.axIsType(matrix))) {
+        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, 'matrix',
                                        'flash.geom.Matrix');
       }
       repeat = !!repeat;
@@ -1296,32 +1296,32 @@ module Shumway.AVMX.AS.flash.display {
                                 skipWrite: boolean): void
     {
       if (isNullOrUndefined(type)) {
-        this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'type');
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'type');
       }
       var gradientType = GradientType.toNumber(axCoerceString(type));
       if (gradientType < 0) {
-        this.securityDomain.throwError("ArgumentError", Errors.InvalidEnumError, "type");
+        this.sec.throwError("ArgumentError", Errors.InvalidEnumError, "type");
       }
 
       if (isNullOrUndefined(colors)) {
-        this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'colors');
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'colors');
       }
       if (!(colors instanceof Array)) {
-        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'colors', 'Array');
+        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, 'colors', 'Array');
       }
 
       if (!(alphas instanceof Array)) {
-        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'alphas', 'Array');
+        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, 'alphas', 'Array');
       }
       if (isNullOrUndefined(alphas)) {
-        this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'alphas');
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'alphas');
       }
 
       if (!(ratios instanceof Array)) {
-        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'ratios', 'Array');
+        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, 'ratios', 'Array');
       }
       if (isNullOrUndefined(ratios)) {
-        this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'ratios');
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'ratios');
       }
 
       var colorsRGBA: number[] = [];
@@ -1346,9 +1346,9 @@ module Shumway.AVMX.AS.flash.display {
       }
 
       if (isNullOrUndefined(matrix)) {
-        matrix = this.securityDomain.flash.geom.Matrix.axClass.FROZEN_IDENTITY_MATRIX;
-      } else if (!(this.securityDomain.flash.geom.Matrix.axIsType(matrix))) {
-        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'matrix',
+        matrix = this.sec.flash.geom.Matrix.axClass.FROZEN_IDENTITY_MATRIX;
+      } else if (!(this.sec.flash.geom.Matrix.axIsType(matrix))) {
+        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, 'matrix',
                                        'flash.geom.Matrix');
       }
 

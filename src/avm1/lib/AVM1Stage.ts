@@ -20,30 +20,34 @@ module Shumway.AVM1.Lib {
   export class AVM1Stage extends AVM1Object {
     public static createAVM1Class(context: AVM1Context): AVM1Object {
       var wrapped = new AVM1Stage(context);
-      wrapAVM1NativeMembers(context, wrapped, AVM1Stage,
+      wrapAVM1NativeMembers(context, wrapped, AVM1Stage.prototype,
         ['align', 'displayState', 'fullScreenSourceRect', 'height', 'scaleMode',
           'showMenu', 'width'],
         false);
       return wrapped;
     }
 
-    public static get align() { return AVM1Utils.currentStage.align; }
-    public static set align(value) { AVM1Utils.currentStage.align = value; }
+    private get _as3Stage(): Shumway.AVMX.AS.flash.display.Stage {
+      return (<IAVM1SymbolBase>this.context.root).as3Object.stage; // REDUX
+    }
 
-    public static get displayState() { return AVM1Utils.currentStage.displayState; }
-    public static set displayState(value) { AVM1Utils.currentStage.displayState = value; }
+    public get align() { return this._as3Stage.align; }
+    public set align(value) { this._as3Stage.align = value; }
 
-    public static get fullScreenSourceRect() { return AVM1Utils.currentStage.fullScreenSourceRect; }
-    public static set fullScreenSourceRect(value) { AVM1Utils.currentStage.fullScreenSourceRect = value; }
+    public get displayState() { return this._as3Stage.displayState; }
+    public set displayState(value) { this._as3Stage.displayState = value; }
 
-    public static get height() { return AVM1Utils.currentStage.stageHeight; }
+    public get fullScreenSourceRect() { return this._as3Stage.fullScreenSourceRect; }
+    public set fullScreenSourceRect(value) { this._as3Stage.fullScreenSourceRect = value; }
 
-    public static get scaleMode() { return AVM1Utils.currentStage.scaleMode; }
-    public static set scaleMode(value) { AVM1Utils.currentStage.scaleMode = value; }
+    public get height() { return this._as3Stage.stageHeight; }
 
-    public static get showMenu() { return AVM1Utils.currentStage.showDefaultContextMenu; }
-    public static set showMenu(value) { AVM1Utils.currentStage.showDefaultContextMenu = value; }
+    public get scaleMode() { return this._as3Stage.scaleMode; }
+    public set scaleMode(value) { this._as3Stage.scaleMode = value; }
 
-    public static get width() { return AVM1Utils.currentStage.stageWidth; }
+    public get showMenu() { return this._as3Stage.showDefaultContextMenu; }
+    public set showMenu(value) { this._as3Stage.showDefaultContextMenu = value; }
+
+    public get width() { return this._as3Stage.stageWidth; }
   }
 }

@@ -54,7 +54,7 @@ module Shumway.AVMX.AS.flash.filters {
       }
       // obj.angle is represented in radians, the api needs degrees
       var angle: number = obj.angle * 180 / Math.PI;
-      return new this.securityDomain.flash.filters.GradientGlowFilter(
+      return new this.sec.flash.filters.GradientGlowFilter(
         obj.distance,
         angle,
         colors,
@@ -142,7 +142,7 @@ module Shumway.AVMX.AS.flash.filters {
         this._alphas = GradientArrays.sanitizeAlphas(this._alphas, len, len);
         this._ratios = GradientArrays.sanitizeRatios(this._ratios, len, len);
       } else {
-        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "colors");
+        this.sec.throwError("TypeError", Errors.NullPointerError, "colors");
       }
     }
 
@@ -156,7 +156,7 @@ module Shumway.AVMX.AS.flash.filters {
         this._alphas = GradientArrays.alphas;
         this._ratios = GradientArrays.ratios;
       } else {
-        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "alphas");
+        this.sec.throwError("TypeError", Errors.NullPointerError, "alphas");
       }
     }
 
@@ -170,7 +170,7 @@ module Shumway.AVMX.AS.flash.filters {
         this._alphas = GradientArrays.alphas;
         this._ratios = GradientArrays.ratios;
       } else {
-        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "ratios");
+        this.sec.throwError("TypeError", Errors.NullPointerError, "ratios");
       }
     }
 
@@ -215,7 +215,7 @@ module Shumway.AVMX.AS.flash.filters {
     set type(value: string) {
       value = axCoerceString(value);
       if (value === null) {
-        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "type");
+        this.sec.throwError("TypeError", Errors.NullPointerError, "type");
       } else {
         if (value === BitmapFilterType.INNER || value === BitmapFilterType.OUTER) {
           this._type = value;
@@ -226,7 +226,7 @@ module Shumway.AVMX.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return new this.securityDomain.flash.filters.GradientGlowFilter(
+      return new this.sec.flash.filters.GradientGlowFilter(
         this._distance,
         this._angle,
         this._colors,

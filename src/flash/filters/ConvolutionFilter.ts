@@ -30,7 +30,7 @@ module Shumway.AVMX.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     public static FromUntyped(obj: any) {
-      return new this.securityDomain.flash.filters.ConvolutionFilter(
+      return new this.sec.flash.filters.ConvolutionFilter(
         obj.matrixX,
         obj.matrixY,
         obj.matrix,
@@ -99,7 +99,7 @@ module Shumway.AVMX.AS.flash.filters {
         this._expandArray(matrix, actualLen);
         this._matrix = matrix;
       } else {
-        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "matrix");
+        this.sec.throwError("TypeError", Errors.NullPointerError, "matrix");
       }
     }
 
@@ -167,7 +167,7 @@ module Shumway.AVMX.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return new this.securityDomain.flash.filters.ConvolutionFilter(
+      return new this.sec.flash.filters.ConvolutionFilter(
         this._matrixX,
         this._matrixY,
         this.matrix,

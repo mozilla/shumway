@@ -52,7 +52,7 @@ module Shumway.AVMX.AS.flash.utils {
     set delay(value: number) {
       value = +value;
       if (value < 0 || !isFinite(value)) {
-        this.securityDomain.throwError('RangeError', Errors.DelayRangeError);
+        this.sec.throwError('RangeError', Errors.DelayRangeError);
       }
       this._delay = value;
 
@@ -98,7 +98,7 @@ module Shumway.AVMX.AS.flash.utils {
       if (flash.utils.Timer.dispatchingEnabled) {
         enterTimeline("Timer.Timer");
         try {
-          this.dispatchEvent(new this.securityDomain.flash.events.TimerEvent("timer", true, false));
+          this.dispatchEvent(new this.sec.flash.events.TimerEvent("timer", true, false));
         } catch (e) {
           console.warn('caught error under Timer TIMER event: ', e);
         }
@@ -108,7 +108,7 @@ module Shumway.AVMX.AS.flash.utils {
         this.stop();
         enterTimeline("Timer.TimerComplete");
         try {
-          this.dispatchEvent(new this.securityDomain.flash.events.TimerEvent(events.TimerEvent.TIMER_COMPLETE,
+          this.dispatchEvent(new this.sec.flash.events.TimerEvent(events.TimerEvent.TIMER_COMPLETE,
                                                                              false, false));
         } catch (e) {
           console.warn('caught error under Timer COMPLETE event: ', e);

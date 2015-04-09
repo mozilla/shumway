@@ -45,39 +45,39 @@ module Shumway.AVMX.AS {
       }
 
       native_getProperty() {
-        this.securityDomain.throwError("IllegalOperationError", Errors.ProxyGetPropertyError);
+        this.sec.throwError("IllegalOperationError", Errors.ProxyGetPropertyError);
       }
 
       native_setProperty() {
-        this.securityDomain.throwError("IllegalOperationError", Errors.ProxySetPropertyError);
+        this.sec.throwError("IllegalOperationError", Errors.ProxySetPropertyError);
       }
 
       native_callProperty() {
-        this.securityDomain.throwError("IllegalOperationError", Errors.ProxyCallPropertyError);
+        this.sec.throwError("IllegalOperationError", Errors.ProxyCallPropertyError);
       }
 
       native_hasProperty() {
-        this.securityDomain.throwError("IllegalOperationError", Errors.ProxyHasPropertyError);
+        this.sec.throwError("IllegalOperationError", Errors.ProxyHasPropertyError);
       }
 
       native_deleteProperty() {
-        this.securityDomain.throwError("IllegalOperationError", Errors.ProxyDeletePropertyError);
+        this.sec.throwError("IllegalOperationError", Errors.ProxyDeletePropertyError);
       }
 
       native_getDescendants() {
-        this.securityDomain.throwError("IllegalOperationError", Errors.ProxyGetDescendantsError);
+        this.sec.throwError("IllegalOperationError", Errors.ProxyGetDescendantsError);
       }
 
       native_nextNameIndex() {
-        this.securityDomain.throwError("IllegalOperationError", Errors.ProxyNextNameIndexError);
+        this.sec.throwError("IllegalOperationError", Errors.ProxyNextNameIndexError);
       }
 
       native_nextName() {
-        this.securityDomain.throwError("IllegalOperationError", Errors.ProxyNextNameError);
+        this.sec.throwError("IllegalOperationError", Errors.ProxyNextNameError);
       }
 
       native_nextValue() {
-        this.securityDomain.throwError("IllegalOperationError", Errors.ProxyNextValueError);
+        this.sec.throwError("IllegalOperationError", Errors.ProxyNextValueError);
       }
 
       public axGetProperty(mn: Multiname) {
