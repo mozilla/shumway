@@ -423,7 +423,11 @@ module Shumway.AVM1.Natives {
 
     public alGetOwnPropertiesKeys(): string[] {
       var keys = super.alGetOwnPropertiesKeys();
-      return Object.getOwnPropertyNames(this.value).concat(keys);
+      var itemIndices = [];
+      for (var i in this.value) {
+        itemIndices.push(i);
+      }
+      return itemIndices.concat(keys);
     }
   }
 
@@ -431,10 +435,6 @@ module Shumway.AVM1.Natives {
     public constructor(context: AVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
-      this.alSetOwnProperty('toString', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this._toString)
-      });
       this.alSetOwnProperty('join', {
         flags: AVM1PropertyFlags.NATIVE_MEMBER,
         value: new AVM1NativeFunction(context, this.join)
@@ -443,7 +443,19 @@ module Shumway.AVM1.Natives {
         flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE,
         get: new AVM1NativeFunction(context, this.getLength),
         set: new AVM1NativeFunction(context, this.setLength)
-      })
+      });
+      this.alSetOwnProperty('slice', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.slice)
+      });
+      this.alSetOwnProperty('splice', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.splice)
+      });
+      this.alSetOwnProperty('toString', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this._toString)
+      });
     }
 
     public _toString() {
@@ -457,8 +469,11 @@ module Shumway.AVM1.Natives {
     }
 
     public setLength(length: number) {
-      // TODO check length
+      if (!isIndex(length)) {
+        return; // no action on invalid length
+      }
       length = alToInt32(this.context, length) >>> 0;
+
       var arr = alEnsureType<AVM1ArrayNative>(this, AVM1ArrayNative).value;
       arr.length = length;
     }
@@ -467,10 +482,10 @@ module Shumway.AVM1.Natives {
       separator = separator === undefined ? ',' : alCoerceString(this.context, separator);
       if (this instanceof AVM1ArrayNative) {
         // Faster case for native array implementation
-        if (this.getLength() === 0) {
+        var arr = alEnsureType<AVM1ArrayNative>(this, AVM1ArrayNative).value;
+        if (arr.length === 0) {
           return '';
         }
-        var arr = alEnsureType<AVM1ArrayNative>(this, AVM1ArrayNative).value;
         if (arr.every(function (i) { return !(i instanceof AVM1Object); })) {
           return arr.join(separator);
         }
@@ -486,6 +501,31 @@ module Shumway.AVM1.Natives {
         result[i] = item === null || item === undefined ? '' : alCoerceString(context, item);
       }
       return result.join(separator);
+    }
+
+    public slice(start: number, end?: number): AVM1Object {
+      start = alToInteger(this.context, start);
+      end = end !== undefined ? alToInteger(this.context, end) : undefined;
+      if (this instanceof AVM1ArrayNative) {
+        // Faster case for native array implementation
+        var arr = alEnsureType<AVM1ArrayNative>(this, AVM1ArrayNative).value;
+        return new AVM1ArrayNative(this.context, arr.slice(start, end));
+      }
+      // TODO implement generic method
+      Debug.notImplemented('AVM1ArrayNative.slice');
+    }
+
+    public splice(start: number, deleteCount: number, ...items: any[]): AVM1Object {
+      start = alToInteger(this.context, start);
+      deleteCount = alToInteger(this.context, deleteCount);
+      if (this instanceof AVM1ArrayNative) {
+        // Faster case for native array implementation
+        var arr = alEnsureType<AVM1ArrayNative>(this, AVM1ArrayNative).value;
+        return new AVM1ArrayNative(this.context,
+          Array.prototype.splice.apply(arr, [start, deleteCount].concat(items)));
+      }
+      // TODO implement generic method
+      Debug.notImplemented('AVM1ArrayNative.splice');
     }
   }
 

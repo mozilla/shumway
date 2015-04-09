@@ -402,105 +402,26 @@ module Shumway.AVM1 {
     return type;
   }
 
-  function as2ToPrimitive(context: AVM1Context, value) {
-    return as2GetType(value) !== 'object' ? value : value.valueOf();
-  }
-
   function as2ToAddPrimitive(context: AVM1Context, value) {
-    if (as2GetType(value) !== 'object') {
+    if (!(value instanceof AVM1Object)) {
       return value;
     }
 
     if (value instanceof Date && context.swfVersion >= 6) {
-      return value.toString();
+      return value.alDefaultValue(AVM1DefaultValueHint.STRING);
     } else {
-      return value.valueOf();
-    }
-  }
-
-  function as2ToBoolean(context: AVM1Context, value): boolean {
-    switch (as2GetType(value)) {
-      default:
-      case 'undefined':
-      case 'null':
-        return false;
-      case 'boolean':
-        return value;
-      case 'number':
-        return value !== 0 && !isNaN(value);
-      case 'string':
-        return value.length !== 0;
-      case 'movieclip':
-      case 'object':
-        return true;
-    }
-  }
-
-  function as2ToNumber(context: AVM1Context, value): number {
-    value = as2ToPrimitive(context, value);
-    switch (as2GetType(value)) {
-      case 'undefined':
-      case 'null':
-        return context.swfVersion >= 7 ? NaN : 0;
-      case 'boolean':
-        return value ? 1 : +0;
-      case 'number':
-        return value;
-      case 'string':
-        if (value === '' && context.swfVersion < 5) {
-          return 0;
-        }
-        return +value;
-      default:
-        return context.swfVersion >= 5 ? NaN : 0;
-    }
-  }
-
-  function as2ToInteger(context: AVM1Context, value): number {
-    var result = as2ToNumber(context, value);
-    if (isNaN(result)) {
-      return 0;
-    }
-    if (!isFinite(result) || result === 0) {
-      return result;
-    }
-    return (result < 0 ? -1 : 1) * Math.abs(result)|0;
-  }
-
-  function as2ToInt32(context: AVM1Context, value): number {
-    var result = as2ToNumber(context, value);
-    return (isNaN(result) || !isFinite(result) || result === 0) ? 0 :
-      (result | 0);
-  }
-
-// TODO: We should just override Function.prototype.toString and change this to
-// only have a special case for 'undefined'.
-  function as2ToString(context: AVM1Context, value): string {
-    switch (as2GetType(value)) {
-      case 'undefined':
-        return context.swfVersion >= 7 ? 'undefined' : '';
-      case 'null':
-        return 'null';
-      case 'boolean':
-        return value ? 'true' : 'false';
-      case 'number':
-        return value.toString();
-      case 'string':
-        return value;
-      case 'movieclip':
-        return (<Lib.AVM1MovieClip> value).__targetPath;
-      case 'object':
-        var result = alToString(context, value);
-        return result;
+      return value.alDefaultValue(AVM1DefaultValueHint.NUMBER);
     }
   }
 
   function as2Compare(context: AVM1Context, x, y): boolean {
-    var x2 = as2ToPrimitive(context, x);
-    var y2 = as2ToPrimitive(context, y);
+    var x2 = alToPrimitive(context, x);
+    var y2 = alToPrimitive(context, y);
     if (typeof x2 === 'string' && typeof y2 === 'string') {
+      var xs = alToString(context, x2), ys = alToString(context, y2);
+      return xs < ys;
     } else {
-      var xn = as2ToNumber(context, x2), yn = as2ToNumber(context, y2);
+      var xn = alToNumber(context, x2), yn = alToNumber(context, y2);
       return isNaN(xn) || isNaN(yn) ? undefined : xn < yn;
     }
   }
@@ -550,17 +471,6 @@ module Shumway.AVM1 {
     link: null,
     name: null
   };
-
-  function avm1EnumerateProperties(obj, fn: (link, name)=>void, thisArg?): void {
-    var processed = Object.create(null); // TODO remove/refactor
-    alForEachProperty(obj, function (name) {
-      if (processed[name]) {
-        return; // skipping already reported properties
-      }
-      fn.call(thisArg, obj, name);
-      processed[name] = true;
-    });
-  }
 
   function avm1ResolveProperty(context: AVM1Context, obj, name: string, normalize: boolean): ResolvePropertyResult {
     // AVM1 just ignores lookups on non-existant containers
@@ -632,7 +542,14 @@ module Shumway.AVM1 {
   }
 
   function as2Enumerate(obj, fn: (name) => void, thisArg): void {
-    avm1EnumerateProperties(obj, (link, name) => fn.call(thisArg, name));
+    var processed = Object.create(null); // TODO remove/refactor
+    alForEachProperty(obj, function (name) {
+      if (processed[name]) {
+        return; // skipping already reported properties
+      }
+      fn.call(thisArg, name);
+      processed[name] = true;
+    }, thisArg);
   }
 
   function avm1FindSuperPropertyOwner(context: AVM1Context, frame: AVM1CallFrame, propertyName: string): AVM1Object {
@@ -1260,30 +1177,30 @@ module Shumway.AVM1 {
     function avm1_0x0A_ActionAdd(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
-      var a = as2ToNumber(ectx.context, stack.pop());
-      var b = as2ToNumber(ectx.context, stack.pop());
+      var a = alToNumber(ectx.context, stack.pop());
+      var b = alToNumber(ectx.context, stack.pop());
       stack.push(a + b);
     }
     function avm1_0x0B_ActionSubtract(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
-      var a = as2ToNumber(ectx.context, stack.pop());
-      var b = as2ToNumber(ectx.context, stack.pop());
+      var a = alToNumber(ectx.context, stack.pop());
+      var b = alToNumber(ectx.context, stack.pop());
       stack.push(b - a);
     }
     function avm1_0x0C_ActionMultiply(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
-      var a = as2ToNumber(ectx.context, stack.pop());
-      var b = as2ToNumber(ectx.context, stack.pop());
+      var a = alToNumber(ectx.context, stack.pop());
+      var b = alToNumber(ectx.context, stack.pop());
       stack.push(a * b);
     }
     function avm1_0x0D_ActionDivide(ectx: ExecutionContext) {
       var stack = ectx.stack;
       var isSwfVersion5 = ectx.isSwfVersion5;
 
-      var a = as2ToNumber(ectx.context, stack.pop());
-      var b = as2ToNumber(ectx.context, stack.pop());
+      var a = alToNumber(ectx.context, stack.pop());
+      var b = alToNumber(ectx.context, stack.pop());
       var c = b / a;
       stack.push(isSwfVersion5 ? <any>c : isFinite(c) ? <any>c : '#ERROR#');
     }
@@ -1291,8 +1208,8 @@ module Shumway.AVM1 {
       var stack = ectx.stack;
       var isSwfVersion5 = ectx.isSwfVersion5;
 
-      var a = as2ToNumber(ectx.context, stack.pop());
-      var b = as2ToNumber(ectx.context, stack.pop());
+      var a = alToNumber(ectx.context, stack.pop());
+      var b = alToNumber(ectx.context, stack.pop());
       var f = a == b;
       stack.push(isSwfVersion5 ? <any>f : f ? 1 : 0);
     }
@@ -1300,8 +1217,8 @@ module Shumway.AVM1 {
       var stack = ectx.stack;
       var isSwfVersion5 = ectx.isSwfVersion5;
 
-      var a = as2ToNumber(ectx.context, stack.pop());
-      var b = as2ToNumber(ectx.context, stack.pop());
+      var a = alToNumber(ectx.context, stack.pop());
+      var b = alToNumber(ectx.context, stack.pop());
       var f = b < a;
       stack.push(isSwfVersion5 ? <any>f : f ? 1 : 0);
     }
@@ -1309,8 +1226,8 @@ module Shumway.AVM1 {
       var stack = ectx.stack;
       var isSwfVersion5 = ectx.isSwfVersion5;
 
-      var a = as2ToBoolean(ectx.context, stack.pop());
-      var b = as2ToBoolean(ectx.context, stack.pop());
+      var a = alToBoolean(ectx.context, stack.pop());
+      var b = alToBoolean(ectx.context, stack.pop());
       var f = a && b;
       stack.push(isSwfVersion5 ? <any>f : f ? 1 : 0);
     }
@@ -1318,8 +1235,8 @@ module Shumway.AVM1 {
       var stack = ectx.stack;
       var isSwfVersion5 = ectx.isSwfVersion5;
 
-      var a = as2ToBoolean(ectx.context, stack.pop());
-      var b = as2ToBoolean(ectx.context, stack.pop());
+      var a = alToBoolean(ectx.context, stack.pop());
+      var b = alToBoolean(ectx.context, stack.pop());
       var f = a || b;
       stack.push(isSwfVersion5 ? <any>f : f ? 1 : 0);
     }
@@ -1327,35 +1244,35 @@ module Shumway.AVM1 {
       var stack = ectx.stack;
       var isSwfVersion5 = ectx.isSwfVersion5;
 
-      var f = !as2ToBoolean(ectx.context, stack.pop());
+      var f = !alToBoolean(ectx.context, stack.pop());
       stack.push(isSwfVersion5 ? <any>f : f ? 1 : 0);
     }
     function avm1_0x13_ActionStringEquals(ectx: ExecutionContext) {
       var stack = ectx.stack;
       var isSwfVersion5 = ectx.isSwfVersion5;
 
-      var sa = as2ToString(ectx.context, stack.pop());
-      var sb = as2ToString(ectx.context, stack.pop());
+      var sa = alToString(ectx.context, stack.pop());
+      var sb = alToString(ectx.context, stack.pop());
       var f = sa == sb;
       stack.push(isSwfVersion5 ? <any>f : f ? 1 : 0);
     }
     function avm1_0x14_ActionStringLength(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
-      var sa = as2ToString(ectx.context, stack.pop());
+      var sa = alToString(ectx.context, stack.pop());
       stack.push(ectx.actions.length_(sa));
     }
     function avm1_0x31_ActionMBStringLength(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
-      var sa = as2ToString(ectx.context, stack.pop());
+      var sa = alToString(ectx.context, stack.pop());
       stack.push(ectx.actions.length_(sa));
     }
     function avm1_0x21_ActionStringAdd(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
-      var sa = as2ToString(ectx.context, stack.pop());
-      var sb = as2ToString(ectx.context, stack.pop());
+      var sa = alToString(ectx.context, stack.pop());
+      var sb = alToString(ectx.context, stack.pop());
       stack.push(sb + sa);
     }
     function avm1_0x15_ActionStringExtract(ectx: ExecutionContext) {
@@ -1363,7 +1280,7 @@ module Shumway.AVM1 {
 
       var count = stack.pop();
       var index = stack.pop();
-      var value = as2ToString(ectx.context, stack.pop());
+      var value = alToString(ectx.context, stack.pop());
       stack.push(ectx.actions.substring(value, index, count));
     }
     function avm1_0x35_ActionMBStringExtract(ectx: ExecutionContext) {
@@ -1371,15 +1288,15 @@ module Shumway.AVM1 {
 
       var count = stack.pop();
       var index = stack.pop();
-      var value = as2ToString(ectx.context, stack.pop());
+      var value = alToString(ectx.context, stack.pop());
       stack.push(ectx.actions.mbsubstring(value, index, count));
     }
     function avm1_0x29_ActionStringLess(ectx: ExecutionContext) {
       var stack = ectx.stack;
       var isSwfVersion5 = ectx.isSwfVersion5;
 
-      var sa = as2ToString(ectx.context, stack.pop());
-      var sb = as2ToString(ectx.context, stack.pop());
+      var sa = alToString(ectx.context, stack.pop());
+      var sb = alToString(ectx.context, stack.pop());
       var f = sb < sa;
       stack.push(isSwfVersion5 ? <any>f : f ? 1 : 0);
     }
@@ -1558,7 +1475,7 @@ module Shumway.AVM1 {
 
       var value = stack.pop();
       // undefined is always 'undefined' for trace (even for SWF6).
-      ectx.actions.trace(value === undefined ? 'undefined' : as2ToString(ectx.context, value));
+      ectx.actions.trace(value === undefined ? 'undefined' : alToString(ectx.context, value));
     }
     function avm1_0x34_ActionGetTime(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1864,7 +1781,7 @@ module Shumway.AVM1 {
       var stack = ectx.stack;
 
       var obj = stack.pop();
-      stack.push(as2GetType(obj) === 'movieclip' ? obj._target : void(0));
+      stack.push(isAVM1MovieClip(obj) ? obj._target : void(0));
     }
     function avm1_0x94_ActionWith(ectx: ExecutionContext, args: any[]) {
       var stack = ectx.stack;
@@ -1877,12 +1794,12 @@ module Shumway.AVM1 {
     function avm1_0x4A_ActionToNumber(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
-      stack.push(as2ToNumber(ectx.context, stack.pop()));
+      stack.push(alToNumber(ectx.context, stack.pop()));
     }
     function avm1_0x4B_ActionToString(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
-      stack.push(as2ToString(ectx.context, stack.pop()));
+      stack.push(alToString(ectx.context, stack.pop()));
     }
     function avm1_0x44_ActionTypeOf(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1897,9 +1814,9 @@ module Shumway.AVM1 {
       var a = as2ToAddPrimitive(ectx.context, stack.pop());
       var b = as2ToAddPrimitive(ectx.context, stack.pop());
       if (typeof a === 'string' || typeof b === 'string') {
-        stack.push(as2ToString(ectx.context, b) + as2ToString(ectx.context, a));
+        stack.push(alToString(ectx.context, b) + alToString(ectx.context, a));
       } else {
-        stack.push(as2ToNumber(ectx.context, b) + as2ToNumber(ectx.context, a));
+        stack.push(alToNumber(ectx.context, b) + alToNumber(ectx.context, a));
       }
     }
     function avm1_0x48_ActionLess2(ectx: ExecutionContext) {
@@ -1912,63 +1829,63 @@ module Shumway.AVM1 {
     function avm1_0x3F_ActionModulo(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
-      var a = as2ToNumber(ectx.context, stack.pop());
-      var b = as2ToNumber(ectx.context, stack.pop());
+      var a = alToNumber(ectx.context, stack.pop());
+      var b = alToNumber(ectx.context, stack.pop());
       stack.push(b % a);
     }
     function avm1_0x60_ActionBitAnd(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
-      var a = as2ToInt32(ectx.context, stack.pop());
-      var b = as2ToInt32(ectx.context, stack.pop());
+      var a = alToInt32(ectx.context, stack.pop());
+      var b = alToInt32(ectx.context, stack.pop());
       stack.push(b & a);
     }
     function avm1_0x63_ActionBitLShift(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
-      var a = as2ToInt32(ectx.context, stack.pop());
-      var b = as2ToInt32(ectx.context, stack.pop());
+      var a = alToInt32(ectx.context, stack.pop());
+      var b = alToInt32(ectx.context, stack.pop());
       stack.push(b << a);
     }
     function avm1_0x61_ActionBitOr(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
-      var a = as2ToInt32(ectx.context, stack.pop());
-      var b = as2ToInt32(ectx.context, stack.pop());
+      var a = alToInt32(ectx.context, stack.pop());
+      var b = alToInt32(ectx.context, stack.pop());
       stack.push(b | a);
     }
     function avm1_0x64_ActionBitRShift(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
-      var a = as2ToInt32(ectx.context, stack.pop());
-      var b = as2ToInt32(ectx.context, stack.pop());
+      var a = alToInt32(ectx.context, stack.pop());
+      var b = alToInt32(ectx.context, stack.pop());
       stack.push(b >> a);
     }
     function avm1_0x65_ActionBitURShift(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
-      var a = as2ToInt32(ectx.context, stack.pop());
-      var b = as2ToInt32(ectx.context, stack.pop());
+      var a = alToInt32(ectx.context, stack.pop());
+      var b = alToInt32(ectx.context, stack.pop());
       stack.push(b >>> a);
     }
     function avm1_0x62_ActionBitXor(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
-      var a = as2ToInt32(ectx.context, stack.pop());
-      var b = as2ToInt32(ectx.context, stack.pop());
+      var a = alToInt32(ectx.context, stack.pop());
+      var b = alToInt32(ectx.context, stack.pop());
       stack.push(b ^ a);
     }
     function avm1_0x51_ActionDecrement(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
-      var a = as2ToNumber(ectx.context, stack.pop());
+      var a = alToNumber(ectx.context, stack.pop());
       a--;
       stack.push(a);
     }
     function avm1_0x50_ActionIncrement(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
-      var a = as2ToNumber(ectx.context, stack.pop());
+      var a = alToNumber(ectx.context, stack.pop());
       a++;
       stack.push(a);
     }
@@ -2037,8 +1954,8 @@ module Shumway.AVM1 {
       var stack = ectx.stack;
       var isSwfVersion5 = ectx.isSwfVersion5;
 
-      var sa = as2ToString(ectx.context, stack.pop());
-      var sb = as2ToString(ectx.context, stack.pop());
+      var sa = alToString(ectx.context, stack.pop());
+      var sb = alToString(ectx.context, stack.pop());
       var f = sb > sa;
       stack.push(isSwfVersion5 ? <any>f : f ? 1 : 0);
     }

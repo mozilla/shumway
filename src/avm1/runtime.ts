@@ -432,17 +432,20 @@ module Shumway.AVM1 {
     }
     switch (typeof v) {
       case 'undefined':
-        return NaN;
+        return context.swfVersion >= 7 ? NaN : 0;
       case 'object':
         if (v === null) {
-          return 0;
+          return context.swfVersion >= 7 ? NaN : 0;
         }
-        return NaN;
+        return context.swfVersion >= 5 ? NaN : 0;
       case 'boolean':
         return v ? 1 : 0;
       case 'number':
         return v;
       case 'string':
+        if (v === '' && context.swfVersion < 5) {
+          return 0;
+        }
         return alStringToNumber(v);
       default:
         release || Debug.assert(false);
@@ -475,7 +478,7 @@ module Shumway.AVM1 {
     }
     switch (typeof v) {
       case 'undefined':
-        return 'undefined';
+        return context.swfVersion >= 7 ? 'undefined' : '';
       case 'object':
         if (v === null) {
           return 'null';
