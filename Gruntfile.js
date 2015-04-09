@@ -141,8 +141,8 @@ module.exports = function(grunt) {
       },
       test_swf_avm2: {
         maxBuffer: Infinity,
-        cmd: 'cat test/ats/test_swf_avm2.txt | parallel --no-notice -X -N20 utils/jsshell/js build/ts/shell.js -x -fc 10 {} | egrep "HASHCODE" | sort | tee test/ats/test_swf_avm2_results.tmp && ' +
-             'diff test/ats/test_swf_avm2_results.tmp test/ats/test_swf_avm2_results_baseline.txt'
+        cmd: 'cat test/ats/test_swf_avm2.txt | parallel -k --no-notice -X -N50 utils/jsshell/js build/ts/shell.js --noColor -x -fc 10 {} > test/ats/test_swf_avm2.run && ' +
+             'colordiff -y -W 300 test/ats/test_swf_avm2.run test/ats/test_swf_avm2.baseline'
       },
       spell: {
         // TODO: Add more files.
@@ -170,9 +170,9 @@ module.exports = function(grunt) {
       // Runs tamarin acceptance tests and tests against the current baseline. If you get more tests to pass, update the baseline.
       test_avm2_acceptance: {
         maxBuffer: Infinity,
-        cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance_pass.json | tee test/avm2/test_avm2_acceptance.tmp | egrep -o "(PASSED|FAILED|EXCEPTED|VM-internal|TIMEDOUT)" | sort | uniq -c | tee test/avm2/acceptance.run && ' +
+        cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance_pass.json | tee test/avm2/test_avm2_acceptance.run | egrep -o "(PASSED|FAILED|EXCEPTED|VM-internal|TIMEDOUT)" | sort | uniq -c | tee test/avm2/acceptance.run && ' +
              'diff test/avm2/acceptance.run test/avm2/acceptance.baseline && ' +
-             'cat test/avm2/tee test/avm2/test_avm2_acceptance.tmp | egrep "(FAILED|EXCEPTED)"'
+             'cat test/avm2/tee test/avm2/test_avm2_acceptance.run | egrep "(FAILED|EXCEPTED)"'
       },
       perf_avm2_acceptance: {
         maxBuffer: Infinity,
@@ -186,13 +186,13 @@ module.exports = function(grunt) {
       // Parses all ABCs in the acceptance suite. This is useful to run if you've made changes to the parser.
       test_avm2_acceptance_parse: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/avm2/acceptance -name "*.abc" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -d -v {}'
+        cmd: 'find -L test/avm2/acceptance -name "*.abc" | parallel -k --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -d -v {}'
       },
       // Runs SWFs and tests against the current baseline. If you get more tests to pass, update the baseline. This currently only runs 1 file at a time
       // because the shell doesn't yet isolate player instances correctly.
       test_swf_acceptance: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort | tee test/swf/acceptance.run && ' +
+        cmd: 'find -L test/swf -name "*.swf" | parallel -k --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort | tee test/swf/acceptance.run && ' +
              'diff test/swf/acceptance.run test/swf/acceptance.baseline'
       },
       test_avm2_baseline: {
