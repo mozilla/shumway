@@ -91,8 +91,22 @@ module Shumway.AVM1 {
       return this.alGet('prototype');
     }
 
-    public alPutPrototypeProperty(v: any): void {
-      this.alPut('prototype', v);
+    public alSetOwnPrototypeProperty(v: any): void {
+      this.alSetOwnProperty('prototype', {
+        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
+        value: v
+      });
+    }
+
+    public alGetConstructorProperty(): any {
+      return this.alGet('__constructor__');
+    }
+
+    public alSetOwnConstructorProperty(v: any): void {
+      this.alSetOwnProperty('__constructor__', {
+        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
+        value: v
+      });
     }
 
     _escapeProperty(p: any): string  {
@@ -317,6 +331,7 @@ module Shumway.AVM1 {
     public constructor(context: AVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
+      this.alSetOwnConstructorProperty(context.builtins.Function);
     }
 
     public toJSFunction(): Function {
@@ -360,7 +375,7 @@ module Shumway.AVM1 {
     public constructor(context: AVM1Context, fn: Function) {
       super(context);
       this._fn = fn;
-      this.alPutPrototypeProperty(alNewObject(context));
+      this.alSetOwnPrototypeProperty(alNewObject(context));
     }
     public alConstruct(args?: any[]): AVM1Object  {
       var obj = new AVM1Object(this.context);
@@ -369,6 +384,7 @@ module Shumway.AVM1 {
         objPrototype = this.context.builtins.Object.alGetPrototypeProperty();
       }
       obj.alPrototype = objPrototype;
+      obj.alSetOwnConstructorProperty(this);
       var result = this.alCall(obj, args);
       return result instanceof AVM1Object ? result : obj;
     }
@@ -503,6 +519,7 @@ module Shumway.AVM1 {
   export function alNewObject(context: AVM1Context): AVM1Object {
     var obj = new AVM1Object(context);
     obj.alPrototype = context.builtins.Object.alGetPrototypeProperty();
+    obj.alSetOwnConstructorProperty(context.builtins.Object);
     return obj;
   }
 

@@ -69,7 +69,7 @@ module Shumway.AVM1.Lib {
       var wrappedProto = new AVM1Proxy<T>(context);
       wrappedProto.alPrototype = context.builtins.Object.alGetPrototypeProperty();
       wrapAVM1NativeMembers(context, wrappedProto, cls.prototype, methods, false);
-      wrapped.alPutPrototypeProperty(wrappedProto);
+      wrapped.alSetOwnPrototypeProperty(wrappedProto);
       return wrapped;
     }
   }
