@@ -142,7 +142,8 @@ module.exports = function(grunt) {
       test_swf_avm2: {
         maxBuffer: Infinity,
         cmd: 'cat test/ats/test_swf_avm2.txt | parallel -k --no-notice -X -N50 utils/jsshell/js build/ts/shell.js --noColor -x -fc 10 {} > test/ats/test_swf_avm2.run && ' +
-             'colordiff -y -W 300 test/ats/test_swf_avm2.run test/ats/test_swf_avm2.baseline'
+             'diff test/ats/test_swf_avm2.run test/ats/test_swf_avm2.baseline;'
+             // 'cat test/ats/test_swf_avm2.run | grep "Not Implemented\|Uncaught VM-internal"'
       },
       spell: {
         // TODO: Add more files.
