@@ -559,12 +559,12 @@ module Shumway.AVMX {
             value = stack.pop();
             savedScope.global.object.axSetSlot(u30(), value);
             break;
-          //case Bytecode.esc_xattr:
-          //  stack[stack.length - 1] = Runtime.escapeXMLAttribute(stack[stack.length - 1]);
-          //  break;
-          //case Bytecode.esc_xelem:
-          //  stack[stack.length - 1] = Runtime.escapeXMLElement(stack[stack.length - 1]);
-          //  break;
+          case Bytecode.ESC_XATTR:
+            stack[stack.length - 1] = AS.escapeAttributeValue(stack[stack.length - 1]);
+            break;
+          case Bytecode.ESC_XELEM:
+            stack[stack.length - 1] = AS.escapeElementValue(stack[stack.length - 1]);
+            break;
           case Bytecode.COERCE_I:
           case Bytecode.CONVERT_I:
             stack[stack.length - 1] |= 0;

@@ -1769,7 +1769,7 @@ R
 19 - R
 --- DONE ---
 ::: test/avm2/pass/date-0.abc :::
-1969 11 31 3 16 0 0 1
+1970 0 1 4 1 0 0 1
 1901 2 1 5 0 0 0 0
 1901 2 3 0 0 0 0 0
 1901 2 3 0 4 0 0 0
@@ -1777,10 +1777,10 @@ R
 1901 2 3 0 4 5 6 0
 1901 2 3 0 4 5 6 7
 getUTCFullYear: 2015
-getUTCMonth(): 2
-getUTCDate(): 1
-getUTCDay(): 0
-getUTCHours(): 8
+getUTCMonth(): 1
+getUTCDate(): 28
+getUTCDay(): 6
+getUTCHours(): 23
 getUTCMinutes(): 0
 getUTCSeconds(): 0
 getUTCMilliseconds(): 0
@@ -1792,13 +1792,13 @@ getHours(): 0
 getMinutes(): 0
 getSeconds(): 0
 getMilliseconds(): 0
-getTimezoneOffset(): 480
-getTime(): 1425196800000
+getTimezoneOffset(): -60
+getTime(): 1425164400000
 getUTCFullYear: 2015
 getUTCMonth(): 2
-getUTCDate(): 3
-getUTCDay(): 2
-getUTCHours(): 8
+getUTCDate(): 2
+getUTCDay(): 1
+getUTCHours(): 23
 getUTCMinutes(): 0
 getUTCSeconds(): 0
 getUTCMilliseconds(): 0
@@ -1810,13 +1810,13 @@ getHours(): 0
 getMinutes(): 0
 getSeconds(): 0
 getMilliseconds(): 0
-getTimezoneOffset(): 480
-getTime(): 1425369600000
+getTimezoneOffset(): -60
+getTime(): 1425337200000
 getUTCFullYear: 2015
 getUTCMonth(): 2
 getUTCDate(): 3
 getUTCDay(): 2
-getUTCHours(): 12
+getUTCHours(): 3
 getUTCMinutes(): 0
 getUTCSeconds(): 0
 getUTCMilliseconds(): 0
@@ -1828,13 +1828,13 @@ getHours(): 4
 getMinutes(): 0
 getSeconds(): 0
 getMilliseconds(): 0
-getTimezoneOffset(): 480
-getTime(): 1425384000000
+getTimezoneOffset(): -60
+getTime(): 1425351600000
 getUTCFullYear: 2015
 getUTCMonth(): 2
 getUTCDate(): 3
 getUTCDay(): 2
-getUTCHours(): 12
+getUTCHours(): 3
 getUTCMinutes(): 5
 getUTCSeconds(): 0
 getUTCMilliseconds(): 0
@@ -1846,13 +1846,13 @@ getHours(): 4
 getMinutes(): 5
 getSeconds(): 0
 getMilliseconds(): 0
-getTimezoneOffset(): 480
-getTime(): 1425384300000
+getTimezoneOffset(): -60
+getTime(): 1425351900000
 getUTCFullYear: 2015
 getUTCMonth(): 2
 getUTCDate(): 3
 getUTCDay(): 2
-getUTCHours(): 12
+getUTCHours(): 3
 getUTCMinutes(): 5
 getUTCSeconds(): 6
 getUTCMilliseconds(): 0
@@ -1864,13 +1864,13 @@ getHours(): 4
 getMinutes(): 5
 getSeconds(): 6
 getMilliseconds(): 0
-getTimezoneOffset(): 480
-getTime(): 1425384306000
+getTimezoneOffset(): -60
+getTime(): 1425351906000
 getUTCFullYear: 2015
 getUTCMonth(): 2
 getUTCDate(): 3
 getUTCDay(): 2
-getUTCHours(): 12
+getUTCHours(): 3
 getUTCMinutes(): 5
 getUTCSeconds(): 6
 getUTCMilliseconds(): 7
@@ -1882,30 +1882,30 @@ getHours(): 4
 getMinutes(): 5
 getSeconds(): 6
 getMilliseconds(): 7
-getTimezoneOffset(): 480
-getTime(): 1425384306007
-1267617906007
-1265198706007
-1265025906007
-1272711906007
-1273057506007
-1273057506007
-1273046706007
-1273046526007
-1273046523007
-1273046523004
-1273046583004
-1273046645004
-1273046706007
-1273046732007
-1273046742021
-1273046742042
-957513942042
-949737942042
-960192342042
-962784342042
-962957142042
-962525142042
+getTimezoneOffset(): -60
+getTime(): 1425351906007
+1267585506007
+1265166306007
+1264993506007
+1272679506007
+1273025106007
+1273025106007
+1273014306007
+1273014126007
+1273014123007
+1273014123004
+1273014183004
+1273014245004
+1273014306007
+1273014332007
+1273014342021
+1273014342042
+957481542042
+949705542042
+960159942042
+962751942042
+963011142042
+962579142042
 962499942042
 962499762042
 962499723042
@@ -1931,8 +1931,8 @@ getTime(): 1425384306007
 6
 332
 1234
-480
-3
+-60
+4
 4
 ::: test/avm2/pass/for-3.abc :::
 -- Horse Bug --

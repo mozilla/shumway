@@ -101,7 +101,7 @@ module Shumway.AVMX.AS {
 
   // 10.2.1.1 EscapeElementValue ( s )
   export function escapeElementValue(s: string): string {
-    release || assert(typeof s === 'string');
+    s = String(s);
     var i = 0, ch;
     while (i < s.length && (ch = s[i]) !== '&' && ch !== '<' && ch !== '>') {
       i++;
@@ -132,6 +132,7 @@ module Shumway.AVMX.AS {
 
   // 10.2.1.2 EscapeAttributeValue ( s )
   export function escapeAttributeValue(s: string): string {
+    s = String(s);
     var i = 0, ch;
     while (i < s.length && (ch = s[i]) !== '&' && ch !== '<' &&
            ch !== '\"' && ch !== '\n' && ch !== '\r' && ch !== '\t') {
