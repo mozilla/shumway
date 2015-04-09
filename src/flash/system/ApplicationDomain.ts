@@ -19,13 +19,13 @@ module Shumway.AVMX.AS.flash.system {
   import axCoerceString = Shumway.AVMX.axCoerceString;
   import RuntimeApplicationDomain = Shumway.AVMX.ApplicationDomain;
 
-
   export class ApplicationDomain extends ASObject {
 
     private _runtimeDomain: RuntimeApplicationDomain;
 
     constructor (parentDomainOrRuntimeDomain: any = null) {
       super();
+      release || Debug.assert(!(this instanceof ApplicationDomain));
       if (parentDomainOrRuntimeDomain instanceof RuntimeApplicationDomain) {
         this._runtimeDomain = parentDomainOrRuntimeDomain;
         return;
@@ -42,9 +42,7 @@ module Shumway.AVMX.AS.flash.system {
     // This must return a new object each time.
     static get currentDomain(): flash.system.ApplicationDomain {
       // REDUX
-      notImplemented("public flash.system.ApplicationDomain::get currentDomain");
-      return null;
-      // return new ApplicationDomain(AVM2.currentDomain());
+      return new this.securityDomain.flash.system.ApplicationDomain(this.securityDomain.application);
     }
 
     static get MIN_DOMAIN_MEMORY_LENGTH(): number /*uint*/ {
@@ -54,7 +52,7 @@ module Shumway.AVMX.AS.flash.system {
 
     get parentDomain(): flash.system.ApplicationDomain {
       if (this._runtimeDomain.parent) {
-        return new ApplicationDomain(this._runtimeDomain.parent);
+        return new this.securityDomain.flash.system.ApplicationDomain(this._runtimeDomain.parent);
       }
       return null;
     }
@@ -82,14 +80,13 @@ module Shumway.AVMX.AS.flash.system {
     }
 
     hasDefinition(name: string): boolean {
-      // REDUX
-      notImplemented("public flash.system.ApplicationDomain::hasDefinition"); return;
-      //name = axCoerceString(name);
-      //if (name) {
-      //  var simpleName = name.replace("::", ".");
-      //  return !!this._runtimeDomain.findDomainProperty(Multiname.fromSimpleName(simpleName), false, false);
-      //}
-      //return false;
+      name = axCoerceString(name);
+      if (name) {
+        var simpleName = name.replace("::", ".");
+        var mn = Multiname.FromFQNString(simpleName, NamespaceType.Public);
+        return !!this._runtimeDomain.getProperty(mn, false, false);
+      }
+      return false;
     }
 
     getQualifiedDefinitionNames(): GenericVector {
