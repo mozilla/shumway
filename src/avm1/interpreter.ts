@@ -184,6 +184,7 @@ module Shumway.AVM1 {
       this.deferScriptExecution = true;
       this.pendingScripts = [];
       this.eventObservers = Object.create(null);
+      this.isPropertyCaseSensitive = loaderInfo.swfVersion <= 6;
 
       var context = this;
       this.utils = {

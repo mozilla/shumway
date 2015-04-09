@@ -73,6 +73,7 @@ module Shumway.AVM1 {
     public sec: ISecurityDomain;
     public globals: AVM1Globals;
     public builtins: IAVM1Builtins;
+    public isPropertyCaseSensitive: boolean;
     public actionsDataFactory: ActionsDataFactory;
     constructor() {
       this.root = null;

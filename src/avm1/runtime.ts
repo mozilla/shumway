@@ -45,14 +45,7 @@ module Shumway.AVM1 {
   }
 
   var ESCAPED_PROPERTY_PREFIX = '__avm1';
-
-  function escapeAVM1Property(name: string): string {
-    return name[0] === '_' && name[1] === '_' ? ESCAPED_PROPERTY_PREFIX + name : name;
-  }
-
-  function unescapeAVM1Property(name: string): string {
-    return name[0] === '_' && name.indexOf(ESCAPED_PROPERTY_PREFIX) === 0 ? name.substring(ESCAPED_PROPERTY_PREFIX.length) : name;
-  }
+  var DEBUG_PROPERTY_PREFIX = '$Bg';
 
   export class AVM1Object implements IAVM1Callable {
     private _ownProperties: any;
@@ -102,23 +95,60 @@ module Shumway.AVM1 {
       this.alPut('prototype', v);
     }
 
+    _escapeProperty(p: any): string  {
+      var context = this.context;
+      var name = alCoerceString(context, p);
+      if (!context.isPropertyCaseSensitive) {
+        name = name.toUpperCase();
+      }
+      if (name[0] === '_') {
+        name = ESCAPED_PROPERTY_PREFIX + name
+      }
+      return name;
+    }
+
+    _unescapeProperty(name: string): string {
+      if (name[0] === '_' && name.indexOf(ESCAPED_PROPERTY_PREFIX) === 0) {
+        name = name.substring(ESCAPED_PROPERTY_PREFIX.length);
+      }
+      return name;
+    }
+
+    _debugEscapeProperty(p: any): string {
+      var context = this.context;
+      var name = alCoerceString(context, p);
+      if (!context.isPropertyCaseSensitive) {
+        name = name.toUpperCase();
+      }
+      return DEBUG_PROPERTY_PREFIX + name;
+    }
+
     public alGetOwnProperty(p): AVM1PropertyDescriptor {
-      return this._ownProperties[escapeAVM1Property(p)];
+      var name = this._escapeProperty(p);
+      return this._ownProperties[name];
     }
 
     public alSetOwnProperty(p, desc: AVM1PropertyDescriptor): void {
-      this._ownProperties[escapeAVM1Property(p)] = desc;
+      var name = this._escapeProperty(p);
+      this._ownProperties[name] = desc;
       if (!release) {
         if ((desc.flags & AVM1PropertyFlags.DATA) && !(desc.flags & AVM1PropertyFlags.DONT_ENUM)) {
-          Object.defineProperty(this, '$Bg' + p, {value: desc.value, enumerable: true, configurable: true});
+          Object.defineProperty(this, this._debugEscapeProperty(p),
+            {value: desc.value, enumerable: true, configurable: true});
         }
       }
     }
 
+    public alHasOwnProperty(p): boolean  {
+      var name = this._escapeProperty(p);
+      return !!this._ownProperties[name];
+    }
+
     public alDeleteOwnProperty(p) {
-      delete this._ownProperties[escapeAVM1Property(p)];
+      var name = this._escapeProperty(p);
+      delete this._ownProperties[name];
       if (!release) {
-        delete this['$Bg' + p];
+        delete this[this._debugEscapeProperty(p)];
       }
     }
 
@@ -127,7 +157,7 @@ module Shumway.AVM1 {
       for (var i in this._ownProperties) {
         var desc = this._ownProperties[i];
         if (!(desc.flags & AVM1PropertyFlags.DONT_ENUM)) {
-          var name = unescapeAVM1Property(i);
+          var name = this._unescapeProperty(i);
           keys.push(name);
         }
       }
@@ -265,9 +295,21 @@ module Shumway.AVM1 {
         return ownKeys;
       }
 
-      // TODO avoid duplicated keys
       var otherKeys = proto.alGetKeys();
-      return ownKeys.concat(otherKeys);
+      if (ownKeys.length === 0) {
+        return otherKeys;
+      }
+
+      // Merging two keys sets
+      // TODO check if we shall worry about __proto__ usage here
+      var processed = Object.create(null);
+      for (var i = 0; i < ownKeys.length; i++) {
+        processed[ownKeys[i]] = true;
+      }
+      for (var i = 0; i < otherKeys.length; i++) {
+        processed[otherKeys[i]] = true;
+      }
+      return Object.getOwnPropertyNames(processed);
     }
   }
 
@@ -469,7 +511,7 @@ module Shumway.AVM1 {
     return 'Object';
   }
 
-  export function alCoerceString(context: AVM1Context, x) {
+  export function alCoerceString(context: AVM1Context, x): string {
     if (x instanceof AVM1Object) {
       return alToString(context, x);
     }

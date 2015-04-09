@@ -770,12 +770,13 @@ module Shumway.AVM1.Lib {
       return this._cachedPropertyResult;
     }
 
-    public alGetOwnProperty(name): AVM1PropertyDescriptor {
-      var desc = super.alGetOwnProperty(name);
+    public alGetOwnProperty(p): AVM1PropertyDescriptor {
+      var desc = super.alGetOwnProperty(p);
       if (desc) {
         return desc;
       }
-      if (typeof name === 'string' && name[0] === '_') {
+      var name = alToString(this.context, p);
+      if (name[0] === '_') {
         var level = this._resolveLevelNProperty(name);
         if (level) {
           return this._getCachedPropertyResult(level);
@@ -801,14 +802,21 @@ module Shumway.AVM1.Lib {
       }
 
       var as3MovieClip = this.as3Object;
+      if (as3MovieClip._children.length === 0) {
+        return keys; // no children
+      }
+
+      var processed = Object.create(null);
+      for (var i = 0; i < keys.length; i++) {
+        processed[keys[i]] = true;
+      }
       for (var i = 0, length = as3MovieClip._children.length; i < length; i++) {
         var child = as3MovieClip._children[i];
         var name = child.name;
-        if (!super.alHasProperty(name)) {
-          keys.push(name); // REDUX remove duplicates
-        }
+        var normalizedName = name; // TODO something like this._unescapeProperty(this._escapeProperty(name));
+        processed[normalizedName] = true;
       }
-      return keys;
+      return Object.getOwnPropertyNames(processed);
     }
 
     addFrameActionBlocks(frameIndex: number, frameData: any) {
