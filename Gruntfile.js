@@ -204,7 +204,7 @@ module.exports = function(grunt) {
         cmd: 'find -L test/swf -name "*.swf" | parallel -k --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort > test/swf/acceptance.run && ' +
              'diff test/swf/acceptance.run test/swf/acceptance.baseline'
       },
-      // Runs archive SWFs and tests against the current baseline. If you get more tests to pass, update the baseline. For now, we c
+      // Runs archive SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
       test_arch_acceptance: {
         maxBuffer: Infinity,
         cmd: 'find -L test/arch/swfs -name "*.swf" | parallel -k --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort > test/arch/acceptance.run;' +
