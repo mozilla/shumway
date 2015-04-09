@@ -216,10 +216,7 @@ module Shumway.AVM1.Lib {
     var avm1Object = Object.create(proto);
     (<any>proto).initAVM1SymbolInstance.call(avm1Object, context, nativeObject);
     avm1Object.alPrototype = ctor.alGetPrototypeProperty();
-    avm1Object.alSetOwnProperty('__constructor__', {
-      flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-      value: ctor
-    });
+    avm1Object.alSetOwnConstructorProperty(ctor);
     (<any>nativeObject)._as2Object = avm1Object;
     ctor.alCall(avm1Object);
     return avm1Object;
@@ -301,10 +298,7 @@ module Shumway.AVM1.Lib {
         // Creating simple AVM1 object
         var obj = new AVM1Object(context);
         obj.alPrototype = wrappedPrototype;
-        obj.alSetOwnProperty('__constructor__', {
-          flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-          value: wrappedFn
-        });
+        obj.alSetOwnConstructorProperty(wrappedFn);
         return obj;
       }) :
       new AVM1Object(context);

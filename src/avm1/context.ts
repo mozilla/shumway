@@ -75,10 +75,12 @@ module Shumway.AVM1 {
     public isPropertyCaseSensitive: boolean;
     public actionsDataFactory: ActionsDataFactory;
     public swfVersion: number;
-    constructor() {
+    constructor(swfVersion: number) {
+      this.swfVersion = swfVersion;
       this.root = null;
       this.globals = null;
       this.actionsDataFactory = new ActionsDataFactory();
+      this.isPropertyCaseSensitive = swfVersion > 6;
 
       this.builtins = <any>{};
       Shumway.AVM1.Natives.installBuiltins(this);

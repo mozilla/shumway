@@ -172,6 +172,7 @@ module Shumway.AVM1.Natives {
     public constructor(context: AVM1Context, value: boolean) {
       super(context);
       this.alPrototype = context.builtins.Boolean.alGetPrototypeProperty();
+      this.alSetOwnConstructorProperty(context.builtins.Boolean);
       this.value = value;
     }
 
@@ -238,6 +239,7 @@ module Shumway.AVM1.Natives {
     public constructor(context: AVM1Context, value: number) {
       super(context);
       this.alPrototype = context.builtins.Number.alGetPrototypeProperty();
+      this.alSetOwnConstructorProperty(context.builtins.Number);
       this.value = value;
     }
 
@@ -310,6 +312,7 @@ module Shumway.AVM1.Natives {
     public constructor(context: AVM1Context, value: string) {
       super(context);
       this.alPrototype = context.builtins.String.alGetPrototypeProperty();
+      this.alSetOwnConstructorProperty(context.builtins.String);
       this.value = value;
     }
 
@@ -381,6 +384,7 @@ module Shumway.AVM1.Natives {
     public constructor(context: AVM1Context, value: any[]) {
       super(context);
       this.alPrototype = context.builtins.Array.alGetPrototypeProperty();
+      this.alSetOwnConstructorProperty(context.builtins.Array);
       this.value = value;
     }
 
@@ -542,11 +546,11 @@ module Shumway.AVM1.Natives {
     // Resolving cyclic dependency between Object/Function functions and their prototypes.
     var objectProto = new AVM1ObjectPrototype(context);
     var dummyObject = new AVM1Object(context);
-    dummyObject.alPutPrototypeProperty(objectProto);
+    dummyObject.alSetOwnPrototypeProperty(objectProto);
     builtins.Object = dummyObject;
     var functionProto = new AVM1FunctionPrototype(context);
     var dummyFunction = new AVM1Object(context);
-    dummyFunction.alPutPrototypeProperty(functionProto);
+    dummyFunction.alSetOwnPrototypeProperty(functionProto);
     builtins.Function = dummyFunction;
     objectProto._initializePrototype();
     functionProto._initializePrototype();

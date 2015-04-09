@@ -117,19 +117,19 @@ module Shumway.AVM1 {
   class AVM1CallFrame {
     public inSequence: boolean;
 
-    public calleeThis: any;
-    public calleeSuper: any; // set if super call was used
-    public calleeFn: any;
-    public calleeArgs: any;
+    public calleeThis: AVM1Object;
+    public calleeSuper: AVM1Object; // set if super call was used
+    public calleeFn: AVM1Function;
+    public calleeArgs: any[];
 
-    constructor(public previousFrame: AVM1CallFrame, public currentThis: any, public fn: any, public args: any) {
+    constructor(public previousFrame: AVM1CallFrame, public currentThis: AVM1Object, public fn: AVM1Function, public args: any[]) {
       this.inSequence = !previousFrame ? false :
         (previousFrame.calleeThis === currentThis && previousFrame.calleeFn === fn);
 
       this.resetCallee();
     }
 
-    setCallee(thisArg: any, superArg: any, fn: any, args: any) {
+    setCallee(thisArg: AVM1Object, superArg: AVM1Object, fn: AVM1Function, args: any[]) {
       this.calleeThis = thisArg;
       this.calleeSuper = superArg;
       this.calleeFn = fn;
@@ -164,7 +164,9 @@ module Shumway.AVM1 {
     private eventObservers: MapObject<IAVM1EventPropertyObserver[]>;
 
     constructor(loaderInfo: Shumway.AVMX.AS.flash.display.LoaderInfo) {
-      super();
+      var swfVersion = loaderInfo.swfVersion;
+      super(swfVersion);
+
       this.loaderInfo = loaderInfo;
       this.sec = loaderInfo.sec; // REDUX:
       this.globals = Lib.AVM1Globals.createGlobalsObject(this);
@@ -184,9 +186,6 @@ module Shumway.AVM1 {
       this.deferScriptExecution = true;
       this.pendingScripts = [];
       this.eventObservers = Object.create(null);
-
-      this.swfVersion = loaderInfo.swfVersion;
-      this.isPropertyCaseSensitive = loaderInfo.swfVersion <= 6;
 
       var context = this;
       this.utils = {
@@ -306,7 +305,7 @@ module Shumway.AVM1 {
       }
       this.deferScriptExecution = false;
     }
-    pushCallFrame(thisArg: any, fn: any, args: any) : AVM1CallFrame {
+    pushCallFrame(thisArg: AVM1Object, fn: AVM1Function, args: any[]) : AVM1CallFrame {
       var nextFrame = new AVM1CallFrame(this.frame, thisArg, fn, args);
       this.frame = nextFrame;
       return nextFrame;
@@ -629,10 +628,6 @@ module Shumway.AVM1 {
       // AVM1 simply ignores attempts to invoke non-methods.
       return undefined;
     }
-    result.alSetOwnProperty('__constructor__', {
-      flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-      value: ctor
-    });
     return result;
   }
 
@@ -640,41 +635,26 @@ module Shumway.AVM1 {
     avm1EnumerateProperties(obj, (link, name) => fn.call(thisArg, name));
   }
 
-  function as2ResolveSuperProperty(context: AVM1Context, frame: AVM1CallFrame, propertyName: string) {
+  function avm1FindSuperPropertyOwner(context: AVM1Context, frame: AVM1CallFrame, propertyName: string): AVM1Object {
     if (context.swfVersion < 6) {
       return null;
     }
 
-    var resolved;
-    var proto = (frame.inSequence && frame.previousFrame.calleeSuper);
+    var proto: AVM1Object = (frame.inSequence && frame.previousFrame.calleeSuper);
     if (!proto) {
-      // REDUX
-      avm1Warn('super does not work yet');
-      return;
-
-      // Skip prototype chain until first specified member is found
-      resolved = avm1ResolveProperty(context, frame.currentThis, propertyName, false);
-      if (!resolved) {
+      // Finding first object in prototype chain link that has the property.
+      proto = frame.currentThis;
+      while (proto && !proto.alHasOwnProperty(propertyName)) {
+        proto = proto.alPrototype;
+      }
+      if (!proto) {
         return null;
       }
-      proto = resolved.link;
     }
 
     // Skipping one chain link
     proto = proto.alPrototype;
-    if (!proto) {
-      return null;
-    }
-
-    resolved = avm1ResolveProperty(context, proto, propertyName, false);
-    if (!resolved) {
-      return null;
-    }
-    return {
-      target: resolved.link,
-      name: resolved.name,
-      obj: resolved.link.alGet(resolved.name)
-    };
+    return proto;
   }
 
   //interface AVM1Function {
@@ -744,16 +724,17 @@ module Shumway.AVM1 {
     return obj;
   }
 
-  function createBuiltinType(context: AVM1Context, obj, args: any[]) {
+  function createBuiltinType(context: AVM1Context, cls, args: any[]): any {
     var builtins = context.builtins;
-    if (obj === builtins.Array || obj === builtins.Object) {
-      return obj.alConstruct(args);
+    var obj = undefined;
+    if (cls === builtins.Array || cls === builtins.Object) {
+       obj = cls.alConstruct(args);
     }
-    if (obj === builtins.Boolean || obj === builtins.Number ||
-        obj === builtins.String || obj === builtins.Function) {
-      return obj.alConstruct(args).value;
+    if (cls === builtins.Boolean || cls === builtins.Number ||
+        cls === builtins.String || cls === builtins.Function) {
+      obj = cls.alConstruct(args).value;
     }
-    if (obj === Date) {
+    if (cls === Date) {
       // REDUX
       //switch (args.length) {
       //  case 0:
@@ -768,6 +749,12 @@ module Shumway.AVM1 {
       //      args.length > 5 ? args[5] : 0,
       //      args.length > 6 ? args[6] : 0);
       //}
+    }
+    if (obj instanceof AVM1Object) {
+      (<AVM1Object>obj).alSetOwnProperty('__constructor__', {
+        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
+        value: cls
+      });
     }
     return undefined;
   }
@@ -899,7 +886,7 @@ module Shumway.AVM1 {
         var argumentsClone;
         var supperWrapper;
 
-        var frame = currentContext.pushCallFrame(thisArg, fn, arguments);
+        var frame = currentContext.pushCallFrame(thisArg, fnObj, <any>arguments);
 
         if (!(suppressArguments & ArgumentAssignmentType.Arguments)) {
           argumentsClone = Array.prototype.slice.call(arguments, 0);
@@ -1624,17 +1611,17 @@ module Shumway.AVM1 {
       }
 
       var frame: AVM1CallFrame = ectx.context.frame;
-      var superArg, fn;
+      var superArg: AVM1Object;
+      var fn: AVM1Function;
 
       // Per spec, a missing or blank method name causes the container to be treated as
       // a function to call.
       if (isNullOrUndefined(methodName) || methodName === '') {
         if (obj instanceof AVM1SuperWrapper) {
           var superFrame = (<AVM1SuperWrapper>obj).callFrame;
-          var resolvedSuper = as2ResolveSuperProperty(ectx.context, superFrame, '__constructor__');
-          if (resolvedSuper) {
-            superArg = resolvedSuper.target;
-            fn = resolvedSuper.obj;
+          superArg = avm1FindSuperPropertyOwner(ectx.context, superFrame, '__constructor__');
+          if (superArg) {
+            fn = superArg.alGet('__constructor__');
             target = superFrame.currentThis;
           }
         } else {
@@ -1657,10 +1644,9 @@ module Shumway.AVM1 {
 
       if (obj instanceof AVM1SuperWrapper) {
         var superFrame = (<AVM1SuperWrapper>obj).callFrame;
-        var resolvedSuper = as2ResolveSuperProperty(ectx.context, superFrame, methodName);
-        if (resolvedSuper) {
-          superArg = resolvedSuper.target;
-          fn = resolvedSuper.obj;
+        var superArg = avm1FindSuperPropertyOwner(ectx.context, superFrame, methodName);
+        if (superArg) {
+          fn = superArg.alGet(methodName);
           target = superFrame.currentThis;
         }
      } else {
@@ -1769,9 +1755,9 @@ module Shumway.AVM1 {
 
       if (obj instanceof AVM1SuperWrapper) {
         var superFrame = (<AVM1SuperWrapper>obj).callFrame;
-        var resolvedSuper = as2ResolveSuperProperty(ectx.context, superFrame, name);
-        if (resolvedSuper) {
-          stack[stack.length - 1] = resolvedSuper.obj;
+        var superArg = avm1FindSuperPropertyOwner(ectx.context, superFrame, name);
+        if (superArg) {
+          stack[stack.length - 1] = superArg.alGet(name);
         }
         return;
       }
@@ -1790,10 +1776,6 @@ module Shumway.AVM1 {
       var count = +stack.pop();
       count = fixArgsCount(count, stack.length >> 1);
       var obj: AVM1Object = alNewObject(ectx.context);
-      obj.alSetOwnProperty('__constructor__', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-        value: ectx.context.builtins.Object
-      });
       for (var i = 0; i < count; i++) {
         var value = stack.pop();
         var name = stack.pop();
@@ -2879,7 +2861,7 @@ module Shumway.AVM1 {
             for(var q = 0; q < stack.length; q++) {
               var item = stack[q];
               if (item && typeof item === 'object') {
-                var constr = item.alGet('__constructor__');
+                var constr = item.alGetConstructorProperty();
                 stackDump.push('[' + (constr ? constr.name : 'Object') + ']');
 
               } else {
