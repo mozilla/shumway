@@ -606,6 +606,10 @@ module Shumway.AVMX.AS.flash.net {
       return this._bufferTime;
     }
 
+    set bufferTime(value: number) {
+      this._bufferTime = +value;
+    }
+
     constructor(netStream: NetStream) {
       this._securityDomain = netStream.securityDomain;
       this._domReady = new PromiseWrapper<any>();
@@ -643,7 +647,7 @@ module Shumway.AVMX.AS.flash.net {
           url = 'resource://shumway/web/noflv.mp4';
         } else {
           setTimeout(() => {
-            this._netStream.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+            this._netStream.dispatchEvent(new this._securityDomain.flash.events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
               false, false, this._securityDomain.createObjectFromJS({code: "NetStream.Play.NoSupportedTrackFound", level: "error"})));
           });
           return;
