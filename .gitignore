@@ -20,6 +20,6 @@ src/flash/classes/
 node_modules/
 
 build/
-acceptance-results.txt
 *.tmp
 *.run
+test_swf_avm2.baseline
