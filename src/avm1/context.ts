@@ -67,7 +67,6 @@ module Shumway.AVM1 {
   }
 
   export class AVM1Context {
-    public static instance: AVM1Context = null;
     public root: AVM1MovieClip;
     public loaderInfo: Shumway.AVMX.AS.flash.display.LoaderInfo;
     public sec: ISecurityDomain;
@@ -75,6 +74,7 @@ module Shumway.AVM1 {
     public builtins: IAVM1Builtins;
     public isPropertyCaseSensitive: boolean;
     public actionsDataFactory: ActionsDataFactory;
+    public swfVersion: number;
     constructor() {
       this.root = null;
       this.globals = null;
@@ -94,12 +94,11 @@ module Shumway.AVM1 {
     public getAsset(className: string): AVM1ExportedSymbol { return undefined; }
     public resolveTarget(target): any {}
     public resolveLevel(level: number): any {}
-    public addToPendingScripts(fn) {}
+    public addToPendingScripts(fn, defaultTarget) {}
 
     public registerEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver) {}
     public unregisterEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver) {}
 
-    public enterContext(fn: Function, defaultTarget): void {}
     public executeActions(actionsData: AVM1ActionsData, scopeObj): void {}
 
     public setStage(stage: Shumway.AVMX.AS.flash.display.Stage): void {

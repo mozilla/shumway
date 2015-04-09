@@ -36,7 +36,7 @@ module Shumway.AVM1.Lib {
 
     public loadClip(url: string, target):Boolean {
       this._target = typeof target === 'number' ?
-        AVM1Utils.resolveLevel(target) : AVM1Utils.resolveTarget(target);
+        AVM1Utils.resolveLevel(this.context, target) : AVM1Utils.resolveTarget(this.context, target);
 
       (<flash.display.DisplayObjectContainer>this._target.as3Object).addChild(this._loader);
 
@@ -53,7 +53,7 @@ module Shumway.AVM1.Lib {
 
     public unloadClip(target):Boolean {
       var nativeTarget: IAVM1SymbolBase = typeof target === 'number' ?
-        AVM1Utils.resolveLevel(target) : AVM1Utils.resolveTarget(target);
+        AVM1Utils.resolveLevel(this.context, target) : AVM1Utils.resolveTarget(this.context, target);
 
       (<flash.display.DisplayObjectContainer>nativeTarget.as3Object).removeChild(this._loader);
       // TODO: find out under which conditions unloading a clip can fail

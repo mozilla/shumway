@@ -484,6 +484,9 @@ module Shumway.AVM1 {
         if (v === null) {
           throw new AVM1TypeError();
         }
+        if (Array.isArray(v)) {
+          return new Natives.AVM1ArrayNative(context, v);
+        }
         // TODO
         return v;
       case 'boolean':

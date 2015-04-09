@@ -272,7 +272,7 @@ module Shumway.AVM1.Lib {
     }
 
     public call(frame) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>();
+      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
       var as3Object = nativeTarget.as3Object;
       var frameNum = as3Object._getAbsFrameNumber(<any>frame, null);
       if (frameNum === undefined) {
@@ -286,7 +286,7 @@ module Shumway.AVM1.Lib {
     }
 
     public duplicateMovieClip(target, newname, depth) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(target);
+      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
       nativeTarget.duplicateMovieClip(newname, depth, null);
     }
 
@@ -295,7 +295,7 @@ module Shumway.AVM1.Lib {
     }
 
     public getAVM1Property(target, index) {
-      var nativeTarget = AVM1Utils.resolveTarget(target);
+      var nativeTarget = AVM1Utils.resolveTarget(this.context, target);
       return nativeTarget[PropertiesIndexMap[index]];
     }
 
@@ -304,7 +304,7 @@ module Shumway.AVM1.Lib {
     }
 
     public getURL(url, target?, method?) {
-      var sec = AVM1Context.instance.sec;
+      var sec = this.context.sec;
       var request = new sec.flash.net.URLRequest(String(url));
       if (method) {
         request.method = method;
@@ -318,21 +318,19 @@ module Shumway.AVM1.Lib {
 
     _addToPendingScripts(subject: any, fn: Function, args: any [] = null): any {
       release || assert(fn, 'invalid function in _addToPendingScripts');
-      var currentContext = AVM1Context.instance;
+      var currentContext = this.context;
       var defaultTarget = currentContext.resolveTarget(undefined);
       currentContext.addToPendingScripts(function () {
-        currentContext.enterContext(function () {
-          try {
-            (<Function><any> fn).apply(subject, args);
-          } catch (ex) {
-            console.error('AVM1 pending script error: ' + ex.message);
-          }
-        }, defaultTarget);
-      });
+        try {
+          fn.apply(subject, args);
+        } catch (ex) {
+          console.error('AVM1 pending script error: ' + ex.message);
+        }
+      }, defaultTarget);
     }
 
     public gotoAndPlay(scene, frame?) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>();
+      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
       if (arguments.length < 2) {
         this._addToPendingScripts(nativeTarget, nativeTarget.gotoAndPlay, [arguments[0]]);
       } else {
@@ -341,7 +339,7 @@ module Shumway.AVM1.Lib {
     }
 
     public gotoAndStop(scene, frame?) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>();
+      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
       if (arguments.length < 2) {
         this._addToPendingScripts(nativeTarget, nativeTarget.gotoAndStop, [arguments[0]]);
       } else {
@@ -351,7 +349,7 @@ module Shumway.AVM1.Lib {
 
     public ifFrameLoaded(scene, frame?) {
       // ignoring scene parameter ?
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>();
+      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
       var frameNum = arguments.length < 2 ? arguments[0] : arguments[1];
       var framesLoaded = nativeTarget._framesloaded;
       var totalFrames = nativeTarget._totalframes;
@@ -392,7 +390,7 @@ module Shumway.AVM1.Lib {
         }
         loader.load(request);
       } else {
-        var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(target);
+        var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
         nativeTarget.loadMovie(url, method);
       }
     }
@@ -419,12 +417,12 @@ module Shumway.AVM1.Lib {
     }
 
     public loadVariables(url: string, target: any, method: string = ''): void {
-      var nativeTarget = AVM1Utils.resolveTarget(target);
+      var nativeTarget = AVM1Utils.resolveTarget(this.context, target);
       this._loadVariables(nativeTarget, url, method);
     }
 
     public loadVariablesNum(url: string, level: number, method: string = ''): void {
-      var nativeTarget = AVM1Utils.resolveLevel(level);
+      var nativeTarget = AVM1Utils.resolveLevel(this.context, level);
       this._loadVariables(nativeTarget, url, method);
     }
 
@@ -433,7 +431,7 @@ module Shumway.AVM1.Lib {
       if (method) {
         request.method = method;
       }
-      var context = AVM1Context.instance;
+      var context = this.context;
       var loader = new flash.net.URLLoader(request);
       loader._ignoreDecodeErrors = true;
       loader.dataFormat = 'variables'; // flash.net.URLLoaderDataFormat.VARIABLES;
@@ -471,12 +469,12 @@ module Shumway.AVM1.Lib {
     }
 
     public nextFrame() {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>();
+      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
       this._addToPendingScripts(nativeTarget, nativeTarget.nextFrame);
     }
 
     public nextScene() {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>();
+      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
       this._addToPendingScripts(nativeTarget, nativeTarget.nextScene);
     }
 
@@ -485,17 +483,17 @@ module Shumway.AVM1.Lib {
     }
 
     public play() {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>();
+      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
       nativeTarget.play();
     }
 
     public prevFrame() {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>();
+      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
       this._addToPendingScripts(nativeTarget, nativeTarget.prevFrame);
     }
 
     public prevScene() {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>();
+      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
       this._addToPendingScripts(nativeTarget, nativeTarget.prevScene);
     }
 
@@ -521,36 +519,36 @@ module Shumway.AVM1.Lib {
     }
 
     public removeMovieClip(target) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(target);
+      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
       nativeTarget.removeMovieClip();
     }
 
     public setAVM1Property(target, index, value) {
-      var nativeTarget = AVM1Utils.resolveTarget(target);
+      var nativeTarget = AVM1Utils.resolveTarget(this.context, target);
       nativeTarget[PropertiesIndexMap[index]] = value;
     }
 
     public startDrag(target, lock, left, top, right, bottom) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(target);
+      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
       nativeTarget.startDrag(lock, arguments.length < 3 ? null :
         new flash.geom.Rectangle(left, top, right - left, bottom - top));
     }
     public stop() {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>();
+      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
       nativeTarget.stop();
     }
     public stopAllSounds() {
       flash.media.SoundMixer.stopAll();
     }
     public stopDrag(target?) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(target);
+      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
       nativeTarget.stopDrag();
     }
     public substring(value, index, count) {
       return this.mbsubstring(value, index, count); // ASCII Only?
     }
     public targetPath(target) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(target);
+      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
       return nativeTarget._target;
     }
     public toggleHighQuality() {
@@ -562,11 +560,11 @@ module Shumway.AVM1.Lib {
     }
 
     public unloadMovie(target) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(target);
+      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
       nativeTarget.unloadMovie();
     }
     public unloadMovieNum(level) {
-      var nativeTarget = AVM1Utils.resolveLevel(level);
+      var nativeTarget = AVM1Utils.resolveLevel(this.context, level);
       nativeTarget.unloadMovie();
     }
   }

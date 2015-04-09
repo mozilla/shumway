@@ -178,26 +178,18 @@ module Shumway.AVM1.Lib {
       });
     }
 
-    static resolveTarget<T extends IAVM1SymbolBase>(target_mc: any = undefined): any {
-      return AVM1Context.instance.resolveTarget(target_mc);
+    static resolveTarget<T extends IAVM1SymbolBase>(context: AVM1Context, target_mc: any = undefined): any {
+      return context.resolveTarget(target_mc);
     }
 
     // Temporary solution as suggested by Yury. Will be refactored soon.
-    static resolveMovieClip<T extends IAVM1SymbolBase>(target: any = undefined): any {
-      return target ? AVM1Context.instance.resolveTarget(target) : undefined;
+    static resolveMovieClip<T extends IAVM1SymbolBase>(context: AVM1Context, target: any = undefined): any {
+      return target ? context.resolveTarget(target) : undefined;
     }
 
-    static resolveLevel(level: number): AVM1MovieClip {
+    static resolveLevel(context: AVM1Context, level: number): AVM1MovieClip {
       level = +level;
-      return AVM1Context.instance.resolveLevel(level);
-    }
-
-    static get currentStage(): flash.display.Stage {
-      return (<IAVM1SymbolBase>AVM1Context.instance.root).as3Object.stage;
-    }
-
-    static get swfVersion(): number {
-      return AVM1Context.instance.loaderInfo.swfVersion;
+      return context.resolveLevel(level);
     }
 
     public static getTarget(mc: IAVM1SymbolBase) {

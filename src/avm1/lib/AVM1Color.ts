@@ -30,7 +30,7 @@ module Shumway.AVM1.Lib {
     private _target: IAVM1SymbolBase;
 
     public avm1Constructor(target_mc) {
-      this._target = AVM1Utils.resolveTarget(target_mc);
+      this._target = AVM1Utils.resolveTarget(this.context, target_mc);
     }
 
     public getRGB() {
