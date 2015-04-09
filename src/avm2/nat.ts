@@ -948,7 +948,7 @@ module Shumway.AVMX.AS {
       return delete this['$Bg' + name];
     }
 
-    axGetPublicProperty(nm: string): any {
+    axGetPublicProperty(nm: any): any {
       if (typeof nm === 'number' || isNumeric(nm = axCoerceName(nm))) {
         return this.value[nm];
       }

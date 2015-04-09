@@ -3,3 +3,4 @@ test/avm2/pass/you-0.abc
 test/avm2/pass/xml-qualids.abc
 test/avm2/pass/iss-1057.abc
 test/avm2/pass/describetype.abc
+test/avm2/pass/date-0.abc

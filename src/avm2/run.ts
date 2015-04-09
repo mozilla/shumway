@@ -127,7 +127,7 @@ module Shumway.AVMX {
     }
   }
 
-  export function forEachPublicProperty(object: AXObject, callbackfn: (property: any, value: any) => void, thisArg?: any) {
+  export function forEachPublicProperty(object: AS.ASObject, callbackfn: (property: any, value: any) => void, thisArg?: any) {
     // REDUX: Do we need to walk the proto chain here?
     var properties = object.axGetEnumerableKeys();
     for (var i = 0; i < properties.length; i++) {
