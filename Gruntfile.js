@@ -141,10 +141,15 @@ module.exports = function(grunt) {
       },
       test_swf_avm2: {
         maxBuffer: Infinity,
-        cmd: 'cat test/ats/test_swf_avm2.txt | parallel -k --no-notice -X -N50 utils/jsshell/js build/ts/shell.js --noColor -x -fc 10 {} > test/ats/test_swf_avm2.run; ' +
+        cmd: 'cat test/ats/test_swf_avm2.txt | parallel -k --no-notice -X -N50 utils/jsshell/js build/ts/shell.js -x -fc 10 {} > test/ats/test_swf_avm2.run; ' +
              'if [ ! -f "test/ats/test_swf_avm2.baseline" ]; then echo "Creating Baseline"; cp test/ats/test_swf_avm2.run test/ats/test_swf_avm2.baseline; fi;' +
              'diff test/ats/test_swf_avm2.run test/ats/test_swf_avm2.baseline;'
       },
+      test_swf_avm2_all: {
+        maxBuffer: Infinity,
+        cmd: 'mongo ats --eval \'db.swfs.find({"parse_result.uses_avm1": false}).forEach(function (x) { print("test/ats/swfs/" + x.file); })\' | parallel -k --no-notice -X -N10 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | tee test/ats/test_swf_avm2_all.run;'
+      },
+
       // Greps for errors in the |test_swf_avm2| output.
       warn_swf_avm2: {
         cmd: 'cat test/ats/test_swf_avm2.run | grep "Not Implemented\\|Uncaught VM-internal"; ' +
