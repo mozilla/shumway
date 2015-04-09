@@ -299,8 +299,8 @@ module Shumway.AVMX.AS.flash.display {
     clone(): flash.display.BitmapData {
       somewhatImplemented("public flash.display.BitmapData::clone");
       // This should be coping the buffer not the view.
-      var bd = new BitmapData(this._rect.width, this._rect.height, this._transparent,
-                              this._solidFillColorPBGRA);
+      var bd = new this.securityDomain.flash.display.BitmapData(this._rect.width, this._rect.height, this._transparent,
+                                                                this._solidFillColorPBGRA);
       bd._view.set(this._view);
       return bd;
     }
