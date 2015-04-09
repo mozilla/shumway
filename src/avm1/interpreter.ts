@@ -402,16 +402,8 @@ module Shumway.AVM1 {
     return type;
   }
 
-  function as2ToAddPrimitive(context: AVM1Context, value) {
-    if (!(value instanceof AVM1Object)) {
-      return value;
-    }
-
-    if (value instanceof Date && context.swfVersion >= 6) {
-      return value.alDefaultValue(AVM1DefaultValueHint.STRING);
-    } else {
-      return value.alDefaultValue(AVM1DefaultValueHint.NUMBER);
-    }
+  function as2ToAddPrimitive(context: AVM1Context, value: any): any {
+    return alToPrimitive(context, value);
   }
 
   function as2Compare(context: AVM1Context, x, y): boolean {
@@ -644,28 +636,13 @@ module Shumway.AVM1 {
   function createBuiltinType(context: AVM1Context, cls, args: any[]): any {
     var builtins = context.builtins;
     var obj = undefined;
-    if (cls === builtins.Array || cls === builtins.Object) {
+    if (cls === builtins.Array || cls === builtins.Object ||
+        cls === builtins.Date) {
        obj = cls.alConstruct(args);
     }
     if (cls === builtins.Boolean || cls === builtins.Number ||
         cls === builtins.String || cls === builtins.Function) {
       obj = cls.alConstruct(args).value;
-    }
-    if (cls === Date) {
-      // REDUX
-      //switch (args.length) {
-      //  case 0:
-      //    return new Date();
-      //  case 1:
-      //    return new Date(args[0]);
-      //  default:
-      //    return new Date(args[0], args[1],
-      //      args.length > 2 ? args[2] : 1,
-      //      args.length > 3 ? args[3] : 0,
-      //      args.length > 4 ? args[4] : 0,
-      //      args.length > 5 ? args[5] : 0,
-      //      args.length > 6 ? args[6] : 0);
-      //}
     }
     if (obj instanceof AVM1Object) {
       (<AVM1Object>obj).alSetOwnProperty('__constructor__', {

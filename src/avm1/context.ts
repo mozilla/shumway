@@ -63,6 +63,7 @@ module Shumway.AVM1 {
     Number: AVM1Object;
     String: AVM1Object;
     Array: AVM1Object;
+    Date: AVM1Object;
     Math: AVM1Object;
   }
 

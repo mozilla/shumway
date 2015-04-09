@@ -215,7 +215,7 @@ module Shumway.AVM1.Lib {
       this.Number = builtins.Number;
       this.Math = builtins.Math;
       this.Boolean = builtins.Boolean;
-      this.Date = undefined; // wrapAVM1Builtin(sec.AXDate);
+      this.Date = builtins.Date;
       this.String = builtins.String;
 
       this.MovieClip = AVM1MovieClip.createAVM1Class(context);

@@ -64,7 +64,6 @@ module Shumway.AVM1.Natives {
 
     public _toString() {
       if (alIsFunction(this)) {
-        debugger;
         // Really weird case of functions.
         return '[type ' + alGetObjectClass(this) + ']';
       }
@@ -444,6 +443,18 @@ module Shumway.AVM1.Natives {
         get: new AVM1NativeFunction(context, this.getLength),
         set: new AVM1NativeFunction(context, this.setLength)
       });
+      this.alSetOwnProperty('concat', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.concat)
+      });
+      this.alSetOwnProperty('pop', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.pop)
+      });
+      this.alSetOwnProperty('push', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.push)
+      });
       this.alSetOwnProperty('slice', {
         flags: AVM1PropertyFlags.NATIVE_MEMBER,
         value: new AVM1NativeFunction(context, this.slice)
@@ -478,6 +489,22 @@ module Shumway.AVM1.Natives {
       arr.length = length;
     }
 
+    public concat(...items: any[]): AVM1Object {
+      if (this instanceof AVM1ArrayNative) {
+        // Faster case for native array implementation
+        var arr = alEnsureType<AVM1ArrayNative>(this, AVM1ArrayNative).value;
+        for (var i = 0; i < arr.length; i++) {
+          if (items[i] instanceof AVM1ArrayNative) {
+            items[i] = alEnsureType<AVM1ArrayNative>(items[i], AVM1ArrayNative).value;
+          }
+        }
+        return new AVM1ArrayNative(this.context,
+          Array.prototype.concat.apply(arr, items));
+      }
+      // TODO implement generic method
+      Debug.notImplemented('AVM1ArrayNative.concat');
+    }
+
     public join(separator?: string): string {
       separator = separator === undefined ? ',' : alCoerceString(this.context, separator);
       if (this instanceof AVM1ArrayNative) {
@@ -501,6 +528,26 @@ module Shumway.AVM1.Natives {
         result[i] = item === null || item === undefined ? '' : alCoerceString(context, item);
       }
       return result.join(separator);
+    }
+
+    public pop(): any {
+      if (this instanceof AVM1ArrayNative) {
+        // Faster case for native array implementation
+        var arr = alEnsureType<AVM1ArrayNative>(this, AVM1ArrayNative).value;
+        return arr.pop();
+      }
+      // TODO implement generic method
+      Debug.notImplemented('AVM1ArrayNative.pop');
+    }
+
+    public push(...items: any[]): number {
+      if (this instanceof AVM1ArrayNative) {
+        // Faster case for native array implementation
+        var arr = alEnsureType<AVM1ArrayNative>(this, AVM1ArrayNative).value;
+        return Array.prototype.push.apply(arr, items);
+      }
+      // TODO implement generic method
+      Debug.notImplemented('AVM1ArrayNative.push');
     }
 
     public slice(start: number, end?: number): AVM1Object {
@@ -571,6 +618,128 @@ module Shumway.AVM1.Natives {
     }
   }
 
+  class AVM1DateNative extends AVM1Object {
+    public value: Date;
+
+    public constructor(context: AVM1Context, value: Date) {
+      super(context);
+      this.alPrototype = context.builtins.Date.alGetPrototypeProperty();
+      this.alSetOwnConstructorProperty(context.builtins.Date);
+      this.value = value;
+    }
+
+    public alDefaultValue(hint?: AVM1DefaultValueHint): any {
+      if (hint !== undefined) {
+        return super.alDefaultValue(hint);
+      }
+
+      if (this.context.swfVersion >= 6) {
+        return super.alDefaultValue(AVM1DefaultValueHint.STRING);
+      } else {
+        return super.alDefaultValue(AVM1DefaultValueHint.NUMBER);
+      }
+    }
+  }
+
+  class AVM1DatePrototype extends AVM1Object {
+    public constructor(context: AVM1Context) {
+      super(context);
+      this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
+      this.alSetOwnProperty('valueOf', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this._valueOf)
+      });
+      this.alSetOwnProperty('toString', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this._toString)
+      });
+      this.alSetOwnProperty('getTime', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.getTime)
+      });
+    }
+
+    public _valueOf() {
+      var native = alEnsureType<AVM1DateNative>(this, AVM1DateNative);
+      return native.value.valueOf();
+    }
+
+    public _toString() {
+      var native = alEnsureType<AVM1DateNative>(this, AVM1DateNative);
+      return native.value.toString();
+    }
+
+    public getTime(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.valueOf();
+    }
+  }
+
+  class AVM1DateFunction extends AVM1Function {
+    public constructor(context: AVM1Context) {
+      super(context);
+      this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
+      var proto = new AVM1DatePrototype(context);
+      this.alSetOwnProperty('prototype', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: proto
+      });
+      proto.alSetOwnProperty('constructor', {
+        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
+        value: this
+      });
+
+      this.alSetOwnProperty('UTC', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this._UTC)
+      });
+
+    }
+
+    public alConstruct(args?: any[]): AVM1Object {
+      var context = this.context;
+      var value: Date;
+      switch (args.length) {
+        case 0:
+          value = new Date();
+          break;
+        case 1:
+          value = new Date(alToPrimitive(context, args[0]));
+          break;
+        case 2:
+          var numbers = [];
+          for (var i = 0; i < args.length; i++) {
+            numbers.push(alToNumber(context, args[i]));
+          }
+          value = new Date(
+            alToNumber(context, args[0]),
+            alToNumber(context, args[1]),
+            args.length > 2 ? alToNumber(context, args[2]) : 1,
+            args.length > 3 ? alToNumber(context, args[3]) : 0,
+            args.length > 4 ? alToNumber(context, args[4]) : 0,
+            args.length > 5 ? alToNumber(context, args[5]) : 0,
+            args.length > 6 ? alToNumber(context, args[6]) : 0);
+          break;
+      }
+      return new AVM1DateNative(context, value);
+    }
+
+    public alCall(thisArg: any, args?: any[]): any {
+      return alCallProperty(this.alConstruct.apply(this, args), 'toString', []);
+    }
+
+    public _UTC(year: number, month: number, date?: number, hours?: number, seconds?: number, ms?: number): number {
+      var context = this.context;
+      return Date.UTC(
+        alToNumber(context, arguments[0]),
+        alToNumber(context, arguments[1]),
+        arguments.length > 2 ? alToNumber(context, arguments[2]) : 1,
+        arguments.length > 3 ? alToNumber(context, arguments[3]) : 0,
+        arguments.length > 4 ? alToNumber(context, arguments[4]) : 0,
+        arguments.length > 5 ? alToNumber(context, arguments[5]) : 0,
+        arguments.length > 6 ? alToNumber(context, arguments[6]) : 0);
+    }
+  }
+
   function alEnsureType<T extends AVM1Object>(obj: AVM1Object, cls: any /* typeof AVM1Object */): T {
     if (obj instanceof cls) {
       return <any>obj;
@@ -600,7 +769,7 @@ module Shumway.AVM1.Natives {
     builtins.Number = new AVM1NumberFunction(context);
     builtins.String = new AVM1StringFunction(context);
     builtins.Array = new AVM1ArrayFunction(context);
-
+    builtins.Date = new AVM1DateFunction(context);
     builtins.Math = new AVM1MathObject(context);
   }
 }

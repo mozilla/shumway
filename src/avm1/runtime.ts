@@ -183,7 +183,7 @@ module Shumway.AVM1 {
       if (desc) {
         return desc;
       }
-      if (this._prototype === null) {
+      if (!this._prototype) {
         return undefined;
       }
       return this._prototype.alGetProperty(p);
