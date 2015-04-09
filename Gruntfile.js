@@ -141,10 +141,15 @@ module.exports = function(grunt) {
       },
       test_swf_avm2: {
         maxBuffer: Infinity,
-        cmd: 'cat test/ats/test_swf_avm2.txt | parallel -k --no-notice -X -N50 utils/jsshell/js build/ts/shell.js --noColor -x -fc 10 {} > test/ats/test_swf_avm2.run; ' +
+        cmd: 'cat test/ats/test_swf_avm2.txt | parallel -k --no-notice -X -N50 utils/jsshell/js build/ts/shell.js -x -fc 10 {} > test/ats/test_swf_avm2.run; ' +
              'if [ ! -f "test/ats/test_swf_avm2.baseline" ]; then echo "Creating Baseline"; cp test/ats/test_swf_avm2.run test/ats/test_swf_avm2.baseline; fi;' +
              'diff test/ats/test_swf_avm2.run test/ats/test_swf_avm2.baseline;'
       },
+      test_swf_avm2_all: {
+        maxBuffer: Infinity,
+        cmd: 'mongo ats --eval \'db.swfs.find({"parse_result.uses_avm1": false}).forEach(function (x) { print("test/ats/swfs/" + x.file); })\' | parallel -k --no-notice -X -N10 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | tee test/ats/test_swf_avm2_all.run;'
+      },
+
       // Greps for errors in the |test_swf_avm2| output.
       warn_swf_avm2: {
         cmd: 'cat test/ats/test_swf_avm2.run | grep "Not Implemented\\|Uncaught VM-internal"; ' +
@@ -193,12 +198,18 @@ module.exports = function(grunt) {
         maxBuffer: Infinity,
         cmd: 'find -L test/avm2/acceptance -name "*.abc" | parallel -k --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -d -v {}'
       },
-      // Runs SWFs and tests against the current baseline. If you get more tests to pass, update the baseline. This currently only runs 1 file at a time
-      // because the shell doesn't yet isolate player instances correctly.
+      // Runs SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
       test_swf_acceptance: {
         maxBuffer: Infinity,
         cmd: 'find -L test/swf -name "*.swf" | parallel -k --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort > test/swf/acceptance.run && ' +
              'diff test/swf/acceptance.run test/swf/acceptance.baseline'
+      },
+      // Runs archive SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
+      test_arch_acceptance: {
+        maxBuffer: Infinity,
+        cmd: 'find -L test/arch/swfs -name "*.swf" | parallel -k --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort > test/arch/acceptance.run;' +
+             'echo "Output saved to test/arch/acceptance.run, at some point create a baseline and stick to it."'
+             // 'diff test/arch/acceptance.run test/arch/acceptance.baseline'
       },
       test_avm2_baseline: {
         cmd: 'node src/shell/numbers.js -c b -i ' + (grunt.option('include') || 'test/avm2/pass/') +
@@ -266,12 +277,10 @@ module.exports = function(grunt) {
         ]
       },
       natives: {
-        options: {
-          grunt: true
-        },
         tasks: [
-          'exec:build_avm1_ts',
-          'exec:build_flash_ts'
+          { args: ['exec:build_playerglobal'].concat(parallelArgs), grunt: true },
+          { args: ['exec:build_flash_ts'].concat(parallelArgs), grunt: true },
+          { args: ['exec:build_avm1_ts'].concat(parallelArgs), grunt: true }
         ]
       },
       avm1: {
