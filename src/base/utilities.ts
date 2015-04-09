@@ -31,8 +31,6 @@ declare var putstr;
 /** @const */ var release: boolean = false; // by default 'true' -- we are folding constants in closure compiler
 /** @const */ var profile: boolean = false;
 
-declare var dateNow: () => number;
-
 declare var dump: (message: string) => void;
 
 function dumpLine(line: string) {
@@ -46,7 +44,9 @@ if (!jsGlobal.performance) {
 }
 
 if (!jsGlobal.performance.now) {
-  jsGlobal.performance.now = typeof dateNow !== 'undefined' ? dateNow : Date.now;
+  jsGlobal.performance.now = function () {
+    return Date.now();
+  };
 }
 
 function lazyInitializer(obj: any, propertyName: string, fn: ()=>any) {

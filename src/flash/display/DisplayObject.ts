@@ -1972,7 +1972,7 @@ module Shumway.AVMX.AS.flash.display {
     private _getDistance(ancestor: DisplayObject): number {
       var d = 0;
       var node = this;
-      while (node !== ancestor) {
+      while (node && node !== ancestor) {
         d++;
         node = node._parent;
       }
@@ -2037,6 +2037,10 @@ module Shumway.AVMX.AS.flash.display {
       return name;
     }
 
+    public debugNameShort(): string {
+      return "[" + this._depth + "]: (" + this._referenceCount + ") {" + this._displayObjectFlags + "} " + this;
+    }
+
     public hashCode(): number {
       return this.getBounds(null).hashCode();
     }
@@ -2045,16 +2049,15 @@ module Shumway.AVMX.AS.flash.display {
       return 0;
     }
 
-    public debugTrace(maxDistance = 1024, name = "") {
+    public debugTrace(writer = new IndentingWriter(), maxDistance = 1024, name = "") {
       var self = this;
-      var writer = new IndentingWriter();
       this.visit(function (node) {
         var distance = node._getDistance(self);
         if (distance > maxDistance) {
           return VisitorFlags.Skip;
         }
         var prefix = name + Shumway.StringUtilities.multiple(" ", distance);
-        writer.writeObject(prefix + node.debugName() + ", bounds: " + node.getBounds(null).toString(), { "...": { value: node} });
+        writer.writeLn(prefix + node.debugNameShort() + ", bounds: " + node.getBounds(null).toString());
         return VisitorFlags.Continue;
       }, VisitorFlags.None);
     }

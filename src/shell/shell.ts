@@ -323,13 +323,13 @@ module Shumway.Shell {
 
     if (parseOption.value) {
       files.forEach(function (file) {
-        var start = dateNow();
+        var start = Date.now();
         writer.debugLn("Parsing: " + file);
         profile && SWF.timelineBuffer.reset();
         try {
           parsingCounter.clear();
           parseFile(file, symbolFilterOption.value.split(","));
-          var elapsed = dateNow() - start;
+          var elapsed = Date.now() - start;
           if (verbose) {
             writer.writeLn("Total Parse Time: " + (elapsed).toFixed(2) + " ms.");
             profile && SWF.timelineBuffer.createSnapshot().trace(writer);
@@ -417,8 +417,10 @@ module Shumway.Shell {
       // flash.display.Loader.reset();
       // flash.display.DisplayObject.reset();
       // flash.display.MovieClip.reset();
+      microTaskQueue.clear();
       Shumway.Random.reset();
       Shumway.Shell.installTimeWarper();
+
       var securityDomain = createSecurityDomain(builtinABCPath, null, null);
       var player = new Shumway.Player.Player(securityDomain, new ShellGFXServer());
       player.load(file);
@@ -437,11 +439,17 @@ module Shumway.Shell {
 
     try {
       var hash = 0;
+      var lastFramesPlayed = 0;
       microTaskQueue.run(runDuration, runCount, true, function () {
         if (!frameCount) {
           return true;
         }
-        hash = HashUtilities.mixHash(hash, player.stage.hashCode());
+        if (lastFramesPlayed < player.framesPlayed) {
+          hash = HashUtilities.mixHash(hash, player.stage.hashCode());
+          writer.writeLn("Frame: " + player.framesPlayed + " HASHCODE: " + file + ": " + IntegerUtilities.toHEX(hash));
+          player.stage.debugTrace(writer);
+          lastFramesPlayed = player.framesPlayed;
+        }
         // Exit if we've executed enough frames.
         return player.framesPlayed <= frameCount;
       });
@@ -490,9 +498,9 @@ module Shumway.Shell {
           var buffer = new Uint8Array(read(file, "binary"));
           var abc = new ABCFile(buffer);
           securityDomain.application.loadABC(abc);
-          var t = dateNow();
+          var t = Date.now();
           securityDomain.application.executeABC(abc);
-          var e = (dateNow() - t);
+          var e = (Date.now() - t);
           if (e > 100) {
             printErr("Test: " + file + " is very slow (" + e.toFixed() + " ms), consider disabling it.");
           }
@@ -564,7 +572,7 @@ module Shumway.Shell {
     jsGlobal.securityDomain = securityDomain;
 
     writer.writeLn("Running test file: " + file + " ...");
-    var start = dateNow();
+    var start = Date.now();
     load(file);
     var testCount = 0;
     while (unitTests.length) {
@@ -587,7 +595,7 @@ module Shumway.Shell {
         writer.redLns(x.stack);
       }
     }
-    writer.writeLn("Completed " + testCount + " test" + (testCount > 1 ? "s" : "") + " in " + (dateNow() - start).toFixed(2) + " ms.");
+    writer.writeLn("Completed " + testCount + " test" + (testCount > 1 ? "s" : "") + " in " + (Date.now()- start).toFixed(2) + " ms.");
     writer.outdent();
   }
 
@@ -658,7 +666,7 @@ module Shumway.Shell {
           writer.redLn("Cannot parse: " + file + " because it doesn't have a valid header. " + buffer[0] + " " + buffer[1] + " " + buffer[2]);
           return
         }
-        var startSWF = dateNow();
+        var startSWF = Date.now();
         var swfFile: Shumway.SWF.SWFFile;
         var loadListener: ILoadListener = {
           onLoadOpen: function(swfFile: Shumway.SWF.SWFFile) {

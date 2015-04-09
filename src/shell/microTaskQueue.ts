@@ -122,9 +122,9 @@ module Shumway.Shell {
     run(duration: number = 0, count: number = 0, clear: boolean = false, preCallback: Function = null) {
       this.stopped = false;
       var executedTasks = 0;
-      var stopAt = RealDate.now() + duration;
+      var stopAt = Date.now() + duration;
       while (!this.isEmpty && !this.stopped) {
-        if (duration > 0 && RealDate.now() >= stopAt) {
+        if (duration > 0 && Date.now() >= stopAt) {
           break;
         }
         if (count > 0 && executedTasks >= count) {

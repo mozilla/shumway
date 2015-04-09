@@ -12,7 +12,7 @@
   var scale = (function () {
     var c = 1024 * 1024 * 128;
     var s = 0;
-    var start = dateNow();
+    var start = Date.now();
     // Spin for a while, if you change |c| also change the constant below.
     for (var i = 0; i < c; i++) {
       if (s & 0x3 === 0) { // Try to prevent unrolling.
@@ -21,7 +21,7 @@
         s = s + 3 | i;
       }
     }
-    var elapsed = dateNow() - start;
+    var elapsed = Date.now() - start;
     var scale = elapsed / 156; // On my MacBook Pro 2.6 GHz, this runs for about 156ms.
     return scale;
   })();

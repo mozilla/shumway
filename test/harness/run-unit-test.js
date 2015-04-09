@@ -17,7 +17,7 @@ if (scriptArgs.length === 0) {
 if (typeof dateNow === 'undefined') {
 	dateNow = Date.now;
 }
-var initStart = dateNow();
+var initStart = Date.now();
 
 var CanvasRenderingContext2D;
 if (!CanvasRenderingContext2D) {
@@ -79,14 +79,14 @@ var console = {
 		print.apply(this, addLogPrefix('ERR : ', arguments));
 	},
 	time: function(id) {
-		this.timestamps[id] = dateNow();
+		this.timestamps[id] = Date.now();
     if (logLevel > 3) {
       print(id + ": timer started");
     }
 	},
 	timeEnd: function(id) {
 		if (this.timestamps[id] && logLevel > 3) {
-			print(id + ": " + (dateNow() - this.timestamps[id]) + 'ms');
+			print(id + ": " + (Date.now() - this.timestamps[id]) + 'ms');
 		}
 	},
 	timestamps: {}
@@ -113,7 +113,7 @@ loadEngine();
 load('examples/inspector/js/unit.js');
 
 var executeUnitTests = function(avm2) {
-  var testsStart = dateNow();
+  var testsStart = Date.now();
 	for (var i = 0; i < scriptArgs.length; i++) {
 		var testFile = scriptArgs[i];
 		if (testFile.substr(testFile.length - 3) !== '.js') {
@@ -121,7 +121,7 @@ var executeUnitTests = function(avm2) {
 		}
     executeTestFile(testFile);
 	}
-  print('All tests complete (' + Math.round((dateNow() - testsStart) * 100) / 100 + 'ms + ' +
+  print('All tests complete (' + Math.round((Date.now() - testsStart) * 100) / 100 + 'ms + ' +
         initDuration + 'ms startup)');
 }
 
@@ -131,7 +131,7 @@ var testFiles;
 function executeTestFile(testFile) {
   unitTests = [];
   testFiles = [];
-  var start = dateNow();
+  var start = Date.now();
   try {
     load(fixPath(testFile));
     if (testFiles.length) {
@@ -146,7 +146,7 @@ function executeTestFile(testFile) {
     print(e);
     print('stack:\n', e.stack);
   }
-  print(testFile + ': Complete (' + Math.round((dateNow() - start) * 100) / 100 + 'ms)');
+  print(testFile + ': Complete (' + Math.round((Date.now() - start) * 100) / 100 + 'ms)');
 }
 
 // Shumway.AVM2.Runtime.traceExecution.value = true;
@@ -200,7 +200,7 @@ function createAVM2(builtinPath, libraryPathInfo, sysMode, appMode) {
   console.timeEnd("Execute builtin.abc");
   loadPlayerglobal(libraryPathInfo.abcs, libraryPathInfo.catalog);
 }
-var initDuration = Math.round((dateNow() - initStart) * 100)/100;
+var initDuration = Math.round((Date.now() - initStart) * 100)/100;
 createAVM2(builtinPath, playerglobalInfo, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.INTERPRET);
 var flash = Shumway.AVM2.AS.flash;
 executeUnitTests(avm2);
