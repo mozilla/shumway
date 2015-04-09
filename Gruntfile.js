@@ -141,7 +141,8 @@ module.exports = function(grunt) {
       },
       test_swf_avm2: {
         maxBuffer: Infinity,
-        cmd: 'cat test/ats/test_swf_avm2.txt | parallel -k --no-notice -X -N50 utils/jsshell/js build/ts/shell.js --noColor -x -fc 10 {} > test/ats/test_swf_avm2.run && ' +
+        cmd: 'cat test/ats/test_swf_avm2.txt | parallel -k --no-notice -X -N50 utils/jsshell/js build/ts/shell.js --noColor -x -fc 10 {} > test/ats/test_swf_avm2.run; ' +
+             'if [ ! -f "test/ats/test_swf_avm2.baseline" ]; then echo "Creating Baseline"; cp test/ats/test_swf_avm2.run test/ats/test_swf_avm2.baseline; fi;' +
              'diff test/ats/test_swf_avm2.run test/ats/test_swf_avm2.baseline;'
       },
       // Greps for errors in the |test_swf_avm2| output.

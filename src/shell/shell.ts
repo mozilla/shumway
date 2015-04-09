@@ -447,7 +447,8 @@ module Shumway.Shell {
         if (lastFramesPlayed < player.framesPlayed) {
           hash = HashUtilities.mixHash(hash, player.stage.hashCode());
           writer.writeLn("Frame: " + player.framesPlayed + " HASHCODE: " + file + ": " + IntegerUtilities.toHEX(hash));
-          player.stage.debugTrace(writer);
+          // This dumps too much output and is not all that useful, unless you want to debug something.
+          // player.stage.debugTrace(writer);
           lastFramesPlayed = player.framesPlayed;
         }
         // Exit if we've executed enough frames.

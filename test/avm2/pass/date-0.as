@@ -32,7 +32,7 @@ function traceDateAll(d) {
 }
 
 (function () {
-  traceDate(new Date(), false);
+  // traceDate(new Date(), false); This is not deterministic.
   traceDate(new Date(1));
   traceDate(new Date(1, 2));
   traceDate(new Date(1, 2, 3));
