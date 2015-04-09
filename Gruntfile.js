@@ -639,7 +639,7 @@ module.exports = function(grunt) {
     'gate'
   ]);
   grunt.registerTask('gate', "Run this before checking in any code.", [
-    'tslint:all',
+    // 'tslint:all', // Annoyingly slow, and not very useful most of the time.
     // 'closure', REDUX: Temporarily commented out.
     'test',
     'warn'
