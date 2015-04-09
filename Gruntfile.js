@@ -151,14 +151,17 @@ module.exports = function(grunt) {
       lint_success: {
         cmd: 'echo "SUCCESS: no lint errors"'
       },
-      test_avm2_redux_pass: {
-        cmd: 'cat test/avm2/redux-pass.txt | xargs utils/jsshell/js build/ts/shell.js -x > test/avm2/shumway.tmp; ' +
-             // Run only one file at a time in Tamarin, so we skip over errors.
-             'cat test/avm2/redux-pass.txt | xargs -L 1 utils/tamarin-redux/bin/shell/avmshell > test/avm2/tamarin.tmp; ' +
-             'diff test/avm2/shumway.tmp test/avm2/tamarin.tmp'
+      test_avm2_pass: {
+        cmd: // Run all tests from pass.txt in one instance of Shumway and save the output in |test/avm2/pass.run|.
+             'cat test/avm2/pass.txt | xargs utils/jsshell/js build/ts/shell.js -x --printABCFileName > test/avm2/pass.run; ' +
+             // Run all tests from pass.txt each in many instances of Tamarin and save the output in |test/avm2/pass.baseline|.
+             // Between each run, emit the test name as "::: test :::" so it's easy to identify where things go wrong.
+             'rm test/avm2/pass.baseline; cat test/avm2/pass.txt | grep -v @ | xargs -L 1 -I \'{}\' sh -c \'echo "::: {} :::" >> test/avm2/pass.baseline; utils/tamarin-redux/bin/shell/avmshell {} >> test/avm2/pass.baseline;\'; ' +
+             // Diff results.
+             'diff test/avm2/pass.run test/avm2/pass.baseline'
       },
-      test_avm2_redux_fail: {
-        cmd: 'node src/shell/numbers.js -i test/avm2/redux-fail.txt -c i -j ' + (+grunt.option('threads') || 9)
+      test_avm2_fail: {
+        cmd: 'node src/shell/numbers.js -i test/avm2/fail.txt -c i -j ' + (+grunt.option('threads') || 9)
       },
       test_avm2: {
         cmd: 'node src/shell/numbers.js -c icb -i ' + (grunt.option('include') || 'test/avm2/pass/') +
@@ -167,8 +170,8 @@ module.exports = function(grunt) {
       // Runs tamarin acceptance tests and tests against the current baseline. If you get more tests to pass, update the baseline.
       test_avm2_acceptance: {
         maxBuffer: Infinity,
-        cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance_pass.json | tee test/avm2/test_avm2_acceptance.tmp | egrep -o "(PASSED|FAILED|EXCEPTED|VM-internal|TIMEDOUT)" | sort | uniq -c | tee test/avm2/acceptance_results.tmp && ' +
-             'diff test/avm2/acceptance_results.tmp test/avm2/acceptance_baseline.txt && ' +
+        cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance_pass.json | tee test/avm2/test_avm2_acceptance.tmp | egrep -o "(PASSED|FAILED|EXCEPTED|VM-internal|TIMEDOUT)" | sort | uniq -c | tee test/avm2/acceptance.run && ' +
+             'diff test/avm2/acceptance.run test/avm2/acceptance.baseline && ' +
              'cat test/avm2/tee test/avm2/test_avm2_acceptance.tmp | egrep "(FAILED|EXCEPTED)"'
       },
       perf_avm2_acceptance: {
@@ -189,8 +192,8 @@ module.exports = function(grunt) {
       // because the shell doesn't yet isolate player instances correctly.
       test_swf_acceptance: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort | tee test/swf/acceptance_results.tmp && ' +
-             'diff test/swf/acceptance_results.tmp test/swf/acceptance_baseline.txt'
+        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort | tee test/swf/acceptance.run && ' +
+             'diff test/swf/acceptance.run test/swf/acceptance.baseline'
       },
       test_avm2_baseline: {
         cmd: 'node src/shell/numbers.js -c b -i ' + (grunt.option('include') || 'test/avm2/pass/') +
@@ -648,7 +651,7 @@ module.exports = function(grunt) {
   ]);
   // Runs all tests.
   grunt.registerTask('test', [
-    'exec:test_avm2_redux_pass',
+    'exec:test_avm2_pass',
     'exec:test_avm2_acceptance',
     'exec:test_swf_acceptance',
     //'exec:test_swf_avm2',

@@ -22,3 +22,4 @@ node_modules/
 build/
 acceptance-results.txt
 *.tmp
+*.run

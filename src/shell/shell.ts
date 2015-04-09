@@ -193,6 +193,8 @@ module Shumway.Shell {
   var profileOption: Option;
   var releaseOption: Option;
   var executeOption: Option;
+  var freshSecurityDomainOption: Option;
+  var printABCFileNameOption: Option;
   var interpreterOption: Option;
   var symbolFilterOption: Option;
   var microTaskDurationOption: Option;
@@ -225,6 +227,8 @@ module Shumway.Shell {
       usePlayerBundleOption = shellOptions.register(new Option('', "bundle", "boolean", false, "Use bundled source file for the player."));
     }
     executeOption = shellOptions.register(new Option("x", "execute", "boolean", false, "Execute File(s)"));
+    freshSecurityDomainOption = shellOptions.register(new Option("fsd", "freshSecurityDomain", "boolean", false, "Creates a fresh security domain for each ABC file."));
+    printABCFileNameOption = shellOptions.register(new Option("", "printABCFileName", "boolean", false, "Print each ABC filename before running it."));
     interpreterOption = shellOptions.register(new Option("i", "interpreter", "boolean", false, "Interpreter Only"));
     symbolFilterOption = shellOptions.register(new Option("f", "filter", "string", "", "Symbol Filter"));
     microTaskDurationOption = shellOptions.register(new Option("md", "duration", "number", 0, "Micro task duration."));
@@ -258,7 +262,7 @@ module Shumway.Shell {
 
     try {
       argumentParser.parse(commandLineArguments).filter(function (value, index, array) {
-        if (value.endsWith(".abc") || value.endsWith(".swf") || value.endsWith(".js") || value.endsWith(".json")) {
+        if (value[0] === "@" || value.endsWith(".abc") || value.endsWith(".swf") || value.endsWith(".js") || value.endsWith(".json")) {
           files.push(value);
         } else {
           return true;
@@ -382,7 +386,7 @@ module Shumway.Shell {
   function executeFiles(files: string []): boolean {
     // If we're only dealign with .abc files, run them all in the same domain.
     if (files.every(function (file) {
-        return file.endsWith(".abc");
+        return file.endsWith(".abc") || file[0] === "@";
       })) {
       executeABCFiles(files);
       return;
@@ -513,11 +517,18 @@ module Shumway.Shell {
   }
 
   function executeABCFiles(files: string []) {
-    var securityDomain = createSecurityDomain(builtinABCPath, null, null);
+    var securityDomain = freshSecurityDomainOption.value ? null : createSecurityDomain(builtinABCPath, null, null);
     files.forEach(function (file) {
+      if (file === "@createSecurityDomain") {
+        securityDomain = createSecurityDomain(builtinABCPath, null, null);
+        return;
+      }
+      if (freshSecurityDomainOption.value) {
+        securityDomain = createSecurityDomain(builtinABCPath, null, null);
+      }
       try {
-        if (verbose) {
-          writer.writeLn("executeABC: " + file);
+        if (printABCFileNameOption.value) {
+          writer.writeLn("::: " + file + " :::");
         }
         timeout(5, function () {
           throw new Timeout();
