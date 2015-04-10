@@ -304,6 +304,7 @@ module Shumway.AVM1.Lib {
       new AVM1Object(context);
     wrapAVM1NativeMembers(context, wrappedFn, cls, staticMembers, true);
     var wrappedPrototype = new cls(context);
+    wrappedPrototype.alPrototype = context.builtins.Object.alGetPrototypeProperty();
     wrapAVM1NativeMembers(context, wrappedPrototype, cls.prototype, members, false);
     wrappedFn.alSetOwnProperty('prototype', {
       flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
