@@ -14,7 +14,14 @@
  * limitations under the License.
  */
 
+// Implementation of the built-in ActionScript classes. Here we will implement
+// functions and object prototypes that will be exposed to the AVM1 code.
+
 module Shumway.AVM1.Natives {
+
+  // Object natives
+  // TODO implement all the Object class and its prototype natives
+
   class AVM1ObjectPrototype extends AVM1Object {
     public constructor(context: AVM1Context) {
       super(context);
@@ -118,6 +125,9 @@ module Shumway.AVM1.Natives {
     }
   }
 
+  // Function natives
+  // TODO implement all the Function class and its prototype natives
+
   class AVM1FunctionPrototype extends AVM1Object {
     public constructor(context: AVM1Context) {
       super(context);
@@ -164,6 +174,8 @@ module Shumway.AVM1.Natives {
     // TODO asConstruct and asCall
   }
 
+  // Boolean natives
+
   export class AVM1BooleanNative extends AVM1Object {
     public value: boolean;
 
@@ -178,6 +190,8 @@ module Shumway.AVM1.Natives {
       return this.value;
     }
   }
+
+  // TODO implement all the Boolean class and its prototype natives
 
   export class AVM1BooleanPrototype extends AVM1Object {
     public constructor(context: AVM1Context) {
@@ -231,6 +245,8 @@ module Shumway.AVM1.Natives {
     }
   }
 
+  // Number natives
+
   export class AVM1NumberNative extends AVM1Object {
     public value: number;
 
@@ -245,6 +261,8 @@ module Shumway.AVM1.Natives {
       return this.value;
     }
   }
+
+  // TODO implement all the Number class and its prototype natives
 
   export class AVM1NumberPrototype extends AVM1Object {
     public constructor(context: AVM1Context) {
@@ -304,6 +322,8 @@ module Shumway.AVM1.Natives {
     }
   }
 
+  // String natives
+
   export class AVM1StringNative extends AVM1Object {
     public value: string;
 
@@ -318,6 +338,8 @@ module Shumway.AVM1.Natives {
       return this.value;
     }
   }
+
+  // TODO implement all the String class and its prototype natives
 
   export class AVM1StringPrototype extends AVM1Object {
     public constructor(context: AVM1Context) {
@@ -370,6 +392,8 @@ module Shumway.AVM1.Natives {
       return value;
     }
   }
+
+  // Array natives
 
   var cachedArrayPropertyDescriptor: AVM1PropertyDescriptor = {
     flags: AVM1PropertyFlags.DATA,
@@ -429,6 +453,8 @@ module Shumway.AVM1.Natives {
       return itemIndices.concat(keys);
     }
   }
+
+  // TODO implement all the Array class and its prototype natives
 
   export class AVM1ArrayPrototype extends AVM1Object {
     public constructor(context: AVM1Context) {
@@ -607,9 +633,12 @@ module Shumway.AVM1.Natives {
     }
   }
 
+  // Math natives
+
   class AVM1MathObject extends AVM1Object {
     public constructor(context: AVM1Context) {
       super(context);
+      // TODO remove dependency on wrapAVM1NativeMembers
       Lib.wrapAVM1NativeMembers(context, this, Math, [
         'E', 'LN10', 'LN2', 'LOG10E', 'LOG2E', 'PI', 'SQRT1_2', 'SQRT2',
         'abs', 'acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'exp', 'floor',
@@ -617,6 +646,8 @@ module Shumway.AVM1.Natives {
       ], false);
     }
   }
+
+  // Date natives
 
   class AVM1DateNative extends AVM1Object {
     public value: Date;
@@ -640,6 +671,8 @@ module Shumway.AVM1.Natives {
       }
     }
   }
+
+  // TODO implement all the Date class and its prototype natives
 
   class AVM1DatePrototype extends AVM1Object {
     public constructor(context: AVM1Context) {
@@ -740,6 +773,7 @@ module Shumway.AVM1.Natives {
     }
   }
 
+
   function alEnsureType<T extends AVM1Object>(obj: AVM1Object, cls: any /* typeof AVM1Object */): T {
     if (obj instanceof cls) {
       return <any>obj;
@@ -747,7 +781,11 @@ module Shumway.AVM1.Natives {
     throw new Error('Invalid type');
   }
 
-
+  /**
+   * Installs built-ins on the AVM1Context. It shall be a first call before
+   * any AVM1Object is instantiated.
+   * @param {AVM1Context} context
+   */
   export function installBuiltins(context: AVM1Context): void {
     var builtins = context.builtins;
 

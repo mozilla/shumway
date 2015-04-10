@@ -16,6 +16,18 @@
 
 module Shumway.AVM1 {
 
+  /**
+   * Base class for object instances we prefer to not inherit Object.prototype properties.
+   */
+  export class NullPrototypeObject { }
+  // Just assigning class prototype to null will not work, using next best thing.
+  NullPrototypeObject.prototype = Object.create(null);
+
+  // Implementing object structure and metaobject protocol very similar to
+  // the one documented in the ECMAScript language 3.0 specification.
+
+  // ActionScript properties flags.
+  // DONT_ENUM, DONT_DELETE, and READ_ONLY are mapped to the the ASSetPropFlags.
   export enum AVM1PropertyFlags {
     DONT_ENUM = 1,
     DONT_DELETE = 2,
@@ -47,7 +59,13 @@ module Shumway.AVM1 {
   var ESCAPED_PROPERTY_PREFIX = '__avm1';
   var DEBUG_PROPERTY_PREFIX = '$Bg';
 
-  export class AVM1Object implements IAVM1Callable {
+  // TODO define IAVM1Context interface here
+
+  /**
+   * Base class for the ActionScript AVM1 object.
+   */
+  export class AVM1Object extends NullPrototypeObject implements IAVM1Callable {
+    // Using our own bag of properties
     private _ownProperties: any;
     private _prototype: AVM1Object;
 
@@ -58,11 +76,15 @@ module Shumway.AVM1 {
     }
 
     public constructor(avm1Context: AVM1Context) {
+      false && super();
       this._avm1Context = avm1Context;
       this._ownProperties = Object.create(null);
       this._prototype = null;
 
       var self = this;
+      // Using IAVM1Callable here to avoid circular calls between AVM1Object and
+      // AVM1Function during constructions.
+      // TODO do we need to support __proto__ for all SWF versions?
       this.alSetOwnProperty('__proto__', {
         flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.DONT_ENUM,
         get: { alCall: function (thisArg: any, args?: any[]): any { return self.alPrototype; }},
@@ -91,6 +113,7 @@ module Shumway.AVM1 {
       return this.alGet('prototype');
     }
 
+    // TODO shall we add mode for readonly/native flags of the prototype property?
     public alSetOwnPrototypeProperty(v: any): void {
       this.alSetOwnProperty('prototype', {
         flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
@@ -145,8 +168,9 @@ module Shumway.AVM1 {
     public alSetOwnProperty(p, desc: AVM1PropertyDescriptor): void {
       var name = this._escapeProperty(p);
       this._ownProperties[name] = desc;
-      if (!release) {
-        if ((desc.flags & AVM1PropertyFlags.DATA) && !(desc.flags & AVM1PropertyFlags.DONT_ENUM)) {
+      if (!release) { // adding data property on the main object for convenience of debugging
+        if ((desc.flags & AVM1PropertyFlags.DATA) &&
+            !(desc.flags & AVM1PropertyFlags.DONT_ENUM)) {
           Object.defineProperty(this, this._debugEscapeProperty(p),
             {value: desc.value, enumerable: true, configurable: true});
         }
@@ -294,6 +318,7 @@ module Shumway.AVM1 {
       return this;
     }
 
+    // TODO shall we initially define alConstruct and alCall in the AVM1Function?
     public alConstruct(args?: any[]): AVM1Object {
       throw new Error('not implemented AVM1Object.alConstruct');
     }
@@ -327,6 +352,9 @@ module Shumway.AVM1 {
     }
   }
 
+  /**
+   * Base class for ActionsScript functions.
+   */
   export class AVM1Function extends AVM1Object {
     public constructor(context: AVM1Context) {
       super(context);
@@ -334,18 +362,30 @@ module Shumway.AVM1 {
       this.alSetOwnConstructorProperty(context.builtins.Function);
     }
 
+    /**
+     * Wraps the function to the callable JavaScript function.
+     * @returns {Function} a JavaScript function.
+     */
     public toJSFunction(): Function {
       var fn = this;
       return function () {
-        fn.alCall(null, Array.prototype.slice.call(arguments, 0));
+        return fn.alCall(null, Array.prototype.slice.call(arguments, 0));
       };
     }
   }
 
+  /**
+   * Base class for ActionScript functions with native JavaScript implementation.
+   */
   export class AVM1NativeFunction extends AVM1Function {
     private _fn: Function;
     private _ctor: Function;
 
+    /**
+     * @param {AVM1Context} context
+     * @param {Function} fn The native function for regular calling.
+     * @param {Function} ctor The native function for construction.
+     */
     public constructor(context: AVM1Context, fn: Function, ctor?: Function) {
       super(context);
       this._fn = fn;
@@ -369,8 +409,11 @@ module Shumway.AVM1 {
     }
   }
 
-  // REDUX inherit this class in interpreter (vs using fn)
+  /**
+   * Base class the is used for the interpreter.
+   */
   export class AVM1EvalFunction extends AVM1Function {
+    // TODO inherit this class in interpreter (vs using fn) to contain scope pointer
     private _fn: Function;
     public constructor(context: AVM1Context, fn: Function) {
       super(context);
@@ -393,6 +436,8 @@ module Shumway.AVM1 {
       return this._fn.apply(thisArg, args);
     }
   }
+
+  // TODO create classes for the ActionScript errors.
 
   function AVM1TypeError(msg?) {
   }
@@ -422,10 +467,6 @@ module Shumway.AVM1 {
     }
   }
 
-  function alStringToNumber(s: string): number  {
-    return +s;
-  }
-
   export function alToNumber(context: AVM1Context, v): number {
     if (typeof v === 'object' && v !== null) {
       v = alToPrimitive(context, v, AVM1DefaultValueHint.NUMBER);
@@ -446,7 +487,7 @@ module Shumway.AVM1 {
         if (v === '' && context.swfVersion < 5) {
           return 0;
         }
-        return alStringToNumber(v);
+        return +v;
       default:
         release || Debug.assert(false);
     }
@@ -468,10 +509,6 @@ module Shumway.AVM1 {
     return n | 0;
   }
 
-  export function alNumberToString(n: number): string {
-    return n + '';
-  }
-
   export function alToString(context: AVM1Context, v): string {
     if (typeof v === 'object' && v !== null) {
       v = alToPrimitive(context, v, AVM1DefaultValueHint.STRING);
@@ -487,7 +524,7 @@ module Shumway.AVM1 {
       case 'boolean':
         return v ? 'true' : 'false';
       case 'number':
-        return alNumberToString(v);
+        return v + '';
       case 'string':
         return v;
       default:
@@ -503,10 +540,10 @@ module Shumway.AVM1 {
         if (v === null) {
           throw new AVM1TypeError();
         }
+        // TODO verify if all objects here are inherited from AVM1Object
         if (Array.isArray(v)) {
           return new Natives.AVM1ArrayNative(context, v);
         }
-        // TODO
         return v;
       case 'boolean':
         return new Natives.AVM1BooleanNative(context, v);
@@ -561,4 +598,3 @@ module Shumway.AVM1 {
     callable.alCall(obj, args);
   }
 }
-
