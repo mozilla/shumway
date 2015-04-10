@@ -23,7 +23,7 @@ module Shumway.AVM1.Natives {
   // TODO implement all the Object class and its prototype natives
 
   class AVM1ObjectPrototype extends AVM1Object {
-    public constructor(context: AVM1Context) {
+    public constructor(context: IAVM1Context) {
       super(context);
       // Initialization must be perfromed later after the Function creation.
       // See the _initializePrototype and createBuiltins below.
@@ -79,7 +79,7 @@ module Shumway.AVM1.Natives {
   }
 
   export class AVM1ObjectFunction extends AVM1Function {
-    public constructor(context: AVM1Context) {
+    public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       var proto = context.builtins.Object.alGetPrototypeProperty();
@@ -129,7 +129,7 @@ module Shumway.AVM1.Natives {
   // TODO implement all the Function class and its prototype natives
 
   class AVM1FunctionPrototype extends AVM1Object {
-    public constructor(context: AVM1Context) {
+    public constructor(context: IAVM1Context) {
       super(context);
     }
 
@@ -156,7 +156,7 @@ module Shumway.AVM1.Natives {
   }
 
   export class AVM1FunctionFunction extends AVM1Function {
-    public constructor(context: AVM1Context) {
+    public constructor(context: IAVM1Context) {
       super(context);
 
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
@@ -179,7 +179,7 @@ module Shumway.AVM1.Natives {
   export class AVM1BooleanNative extends AVM1Object {
     public value: boolean;
 
-    public constructor(context: AVM1Context, value: boolean) {
+    public constructor(context: IAVM1Context, value: boolean) {
       super(context);
       this.alPrototype = context.builtins.Boolean.alGetPrototypeProperty();
       this.alSetOwnConstructorProperty(context.builtins.Boolean);
@@ -194,7 +194,7 @@ module Shumway.AVM1.Natives {
   // TODO implement all the Boolean class and its prototype natives
 
   export class AVM1BooleanPrototype extends AVM1Object {
-    public constructor(context: AVM1Context) {
+    public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
       this.alSetOwnProperty('valueOf', {
@@ -219,7 +219,7 @@ module Shumway.AVM1.Natives {
   }
 
   export class AVM1BooleanFunction extends AVM1Function {
-    public constructor(context: AVM1Context) {
+    public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       var proto = new AVM1BooleanPrototype(context);
@@ -250,7 +250,7 @@ module Shumway.AVM1.Natives {
   export class AVM1NumberNative extends AVM1Object {
     public value: number;
 
-    public constructor(context: AVM1Context, value: number) {
+    public constructor(context: IAVM1Context, value: number) {
       super(context);
       this.alPrototype = context.builtins.Number.alGetPrototypeProperty();
       this.alSetOwnConstructorProperty(context.builtins.Number);
@@ -265,7 +265,7 @@ module Shumway.AVM1.Natives {
   // TODO implement all the Number class and its prototype natives
 
   export class AVM1NumberPrototype extends AVM1Object {
-    public constructor(context: AVM1Context) {
+    public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
       this.alSetOwnProperty('valueOf', {
@@ -290,7 +290,7 @@ module Shumway.AVM1.Natives {
   }
 
   export class AVM1NumberFunction extends AVM1Function {
-    public constructor(context: AVM1Context) {
+    public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       var proto = new AVM1NumberPrototype(context);
@@ -327,7 +327,7 @@ module Shumway.AVM1.Natives {
   export class AVM1StringNative extends AVM1Object {
     public value: string;
 
-    public constructor(context: AVM1Context, value: string) {
+    public constructor(context: IAVM1Context, value: string) {
       super(context);
       this.alPrototype = context.builtins.String.alGetPrototypeProperty();
       this.alSetOwnConstructorProperty(context.builtins.String);
@@ -342,7 +342,7 @@ module Shumway.AVM1.Natives {
   // TODO implement all the String class and its prototype natives
 
   export class AVM1StringPrototype extends AVM1Object {
-    public constructor(context: AVM1Context) {
+    public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
       this.alSetOwnProperty('valueOf', {
@@ -367,7 +367,7 @@ module Shumway.AVM1.Natives {
   }
 
   export class AVM1StringFunction extends AVM1Function {
-    public constructor(context: AVM1Context) {
+    public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       var proto = new AVM1StringPrototype(context);
@@ -403,7 +403,7 @@ module Shumway.AVM1.Natives {
   export class AVM1ArrayNative extends AVM1Object {
     public value: any[];
 
-    public constructor(context: AVM1Context, value: any[]) {
+    public constructor(context: IAVM1Context, value: any[]) {
       super(context);
       this.alPrototype = context.builtins.Array.alGetPrototypeProperty();
       this.alSetOwnConstructorProperty(context.builtins.Array);
@@ -457,7 +457,7 @@ module Shumway.AVM1.Natives {
   // TODO implement all the Array class and its prototype natives
 
   export class AVM1ArrayPrototype extends AVM1Object {
-    public constructor(context: AVM1Context) {
+    public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
       this.alSetOwnProperty('join', {
@@ -603,7 +603,7 @@ module Shumway.AVM1.Natives {
   }
 
   export class AVM1ArrayFunction extends AVM1Function {
-    public constructor(context: AVM1Context) {
+    public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       var proto = new AVM1ArrayPrototype(context);
@@ -636,10 +636,10 @@ module Shumway.AVM1.Natives {
   // Math natives
 
   class AVM1MathObject extends AVM1Object {
-    public constructor(context: AVM1Context) {
+    public constructor(context: IAVM1Context) {
       super(context);
       // TODO remove dependency on wrapAVM1NativeMembers
-      Lib.wrapAVM1NativeMembers(context, this, Math, [
+      Lib.wrapAVM1NativeMembers(this.context, this, Math, [
         'E', 'LN10', 'LN2', 'LOG10E', 'LOG2E', 'PI', 'SQRT1_2', 'SQRT2',
         'abs', 'acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'exp', 'floor',
         'log', 'max', 'min', 'pow', 'random', 'round', 'sin', 'sqrt', 'tan'
@@ -652,7 +652,7 @@ module Shumway.AVM1.Natives {
   class AVM1DateNative extends AVM1Object {
     public value: Date;
 
-    public constructor(context: AVM1Context, value: Date) {
+    public constructor(context: IAVM1Context, value: Date) {
       super(context);
       this.alPrototype = context.builtins.Date.alGetPrototypeProperty();
       this.alSetOwnConstructorProperty(context.builtins.Date);
@@ -675,7 +675,7 @@ module Shumway.AVM1.Natives {
   // TODO implement all the Date class and its prototype natives
 
   class AVM1DatePrototype extends AVM1Object {
-    public constructor(context: AVM1Context) {
+    public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
       this.alSetOwnProperty('valueOf', {
@@ -708,7 +708,7 @@ module Shumway.AVM1.Natives {
   }
 
   class AVM1DateFunction extends AVM1Function {
-    public constructor(context: AVM1Context) {
+    public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       var proto = new AVM1DatePrototype(context);
@@ -784,9 +784,9 @@ module Shumway.AVM1.Natives {
   /**
    * Installs built-ins on the AVM1Context. It shall be a first call before
    * any AVM1Object is instantiated.
-   * @param {AVM1Context} context
+   * @param {IAVM1Context} context
    */
-  export function installBuiltins(context: AVM1Context): void {
+  export function installBuiltins(context: IAVM1Context): void {
     var builtins = context.builtins;
 
     // Resolving cyclic dependency between Object/Function functions and their prototypes.

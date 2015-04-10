@@ -59,7 +59,23 @@ module Shumway.AVM1 {
   var ESCAPED_PROPERTY_PREFIX = '__avm1';
   var DEBUG_PROPERTY_PREFIX = '$Bg';
 
-  // TODO define IAVM1Context interface here
+  export interface IAVM1Builtins {
+    Object: AVM1Object;
+    Function: AVM1Object;
+    Boolean: AVM1Object;
+    Number: AVM1Object;
+    String: AVM1Object;
+    Array: AVM1Object;
+    Date: AVM1Object;
+    Math: AVM1Object;
+  }
+
+  export interface IAVM1Context {
+    builtins: IAVM1Builtins;
+    swfVersion: number;
+    isPropertyCaseSensitive: boolean;
+    registerClass(name: string, cls: AVM1Object): void;
+  }
 
   /**
    * Base class for the ActionScript AVM1 object.
@@ -69,13 +85,13 @@ module Shumway.AVM1 {
     private _ownProperties: any;
     private _prototype: AVM1Object;
 
-    private _avm1Context: AVM1Context;
+    private _avm1Context: IAVM1Context;
 
-    public get context(): AVM1Context {
-      return this._avm1Context;
+    public get context(): AVM1Context { // too painful to have it as IAVM1Context
+      return <AVM1Context>this._avm1Context;
     }
 
-    public constructor(avm1Context: AVM1Context) {
+    public constructor(avm1Context: IAVM1Context) {
       false && super();
       this._avm1Context = avm1Context;
       this._ownProperties = Object.create(null);
@@ -356,7 +372,7 @@ module Shumway.AVM1 {
    * Base class for ActionsScript functions.
    */
   export class AVM1Function extends AVM1Object {
-    public constructor(context: AVM1Context) {
+    public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       this.alSetOwnConstructorProperty(context.builtins.Function);
@@ -382,11 +398,11 @@ module Shumway.AVM1 {
     private _ctor: Function;
 
     /**
-     * @param {AVM1Context} context
+     * @param {IAVM1Context} context
      * @param {Function} fn The native function for regular calling.
      * @param {Function} ctor The native function for construction.
      */
-    public constructor(context: AVM1Context, fn: Function, ctor?: Function) {
+    public constructor(context: IAVM1Context, fn: Function, ctor?: Function) {
       super(context);
       this._fn = fn;
       if (ctor) {
@@ -415,7 +431,7 @@ module Shumway.AVM1 {
   export class AVM1EvalFunction extends AVM1Function {
     // TODO inherit this class in interpreter (vs using fn) to contain scope pointer
     private _fn: Function;
-    public constructor(context: AVM1Context, fn: Function) {
+    public constructor(context: IAVM1Context, fn: Function) {
       super(context);
       this._fn = fn;
       this.alSetOwnPrototypeProperty(alNewObject(context));
@@ -443,7 +459,7 @@ module Shumway.AVM1 {
   }
   AVM1TypeError.prototype = Object.create(Error.prototype);
 
-  export function alToPrimitive(context: AVM1Context, v, preferredType?: AVM1DefaultValueHint) {
+  export function alToPrimitive(context: IAVM1Context, v, preferredType?: AVM1DefaultValueHint) {
     if (!(v instanceof AVM1Object)) {
       return v;
     }
@@ -451,7 +467,7 @@ module Shumway.AVM1 {
     return preferredType !== undefined ? obj.alDefaultValue(preferredType) : obj.alDefaultValue();
   }
 
-  export function alToBoolean(context: AVM1Context, v): boolean {
+  export function alToBoolean(context: IAVM1Context, v): boolean {
     switch (typeof v) {
       case 'undefined':
         return false;
@@ -467,7 +483,7 @@ module Shumway.AVM1 {
     }
   }
 
-  export function alToNumber(context: AVM1Context, v): number {
+  export function alToNumber(context: IAVM1Context, v): number {
     if (typeof v === 'object' && v !== null) {
       v = alToPrimitive(context, v, AVM1DefaultValueHint.NUMBER);
     }
@@ -493,7 +509,7 @@ module Shumway.AVM1 {
     }
   }
 
-  export function alToInteger(context: AVM1Context, v): number {
+  export function alToInteger(context: IAVM1Context, v): number {
     var n = alToNumber(context, v);
     if (isNaN(n)) {
       return 0;
@@ -504,12 +520,12 @@ module Shumway.AVM1 {
     return n < 0 ? Math.ceil(n) : Math.floor(n);
   }
 
-  export function alToInt32(context: AVM1Context, v): number  {
+  export function alToInt32(context: IAVM1Context, v): number  {
     var n = alToNumber(context, v);
     return n | 0;
   }
 
-  export function alToString(context: AVM1Context, v): string {
+  export function alToString(context: IAVM1Context, v): string {
     if (typeof v === 'object' && v !== null) {
       v = alToPrimitive(context, v, AVM1DefaultValueHint.STRING);
     }
@@ -532,7 +548,7 @@ module Shumway.AVM1 {
     }
   }
 
-  export function alToObject(context: AVM1Context, v): AVM1Object {
+  export function alToObject(context: IAVM1Context, v): AVM1Object {
     switch (typeof v) {
       case 'undefined':
         throw new AVM1TypeError();
@@ -556,7 +572,7 @@ module Shumway.AVM1 {
     }
   }
 
-  export function alNewObject(context: AVM1Context): AVM1Object {
+  export function alNewObject(context: IAVM1Context): AVM1Object {
     var obj = new AVM1Object(context);
     obj.alPrototype = context.builtins.Object.alGetPrototypeProperty();
     obj.alSetOwnConstructorProperty(context.builtins.Object);
@@ -571,14 +587,14 @@ module Shumway.AVM1 {
     return 'Object';
   }
 
-  export function alCoerceString(context: AVM1Context, x): string {
+  export function alCoerceString(context: IAVM1Context, x): string {
     if (x instanceof AVM1Object) {
       return alToString(context, x);
     }
     return Shumway.AVMX.axCoerceString(x);
   }
 
-  export function alIsIndex(context: AVM1Context, p) {
+  export function alIsIndex(context: IAVM1Context, p) {
     if (p instanceof AVM1Object) {
       return isIndex(alToString(context, p));
     }

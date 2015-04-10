@@ -282,13 +282,13 @@ module Shumway.AVM1 {
         // Parsing legacy format, e.g. /A/B
         path = targetPath.split('/');
         if (path[0] === '') { // starts from root
-          path[0] === '_root';
+          path[0] = '_root';
         }
         for (var i = 0; i < path.length; i++) {
           if (path[i] === '.' || path[i] === '') { // points to current child
             path.splice(i, 1);
           } else if (path[i] === '..') { // points to parent
-            path[i] === '_parent';
+            path[i] = '_parent';
           }
         }
       } else {

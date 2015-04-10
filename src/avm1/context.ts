@@ -56,18 +56,7 @@ module Shumway.AVM1 {
     }
   }
 
-  export interface IAVM1Builtins {
-    Object: AVM1Object;
-    Function: AVM1Object;
-    Boolean: AVM1Object;
-    Number: AVM1Object;
-    String: AVM1Object;
-    Array: AVM1Object;
-    Date: AVM1Object;
-    Math: AVM1Object;
-  }
-
-  export class AVM1Context {
+  export class AVM1Context implements IAVM1Context {
     public root: AVM1MovieClip;
     public loaderInfo: Shumway.AVMX.AS.flash.display.LoaderInfo;
     public sec: ISecurityDomain;
