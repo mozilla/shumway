@@ -353,6 +353,15 @@ module Shumway.AVM1.Natives {
         flags: AVM1PropertyFlags.NATIVE_MEMBER,
         value: new AVM1NativeFunction(context, this._toString)
       });
+
+      this.alSetOwnProperty('charAt', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.charAt)
+      });
+      this.alSetOwnProperty('charCodeAt', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.charCodeAt)
+      });
     }
 
     public _valueOf() {
@@ -363,6 +372,16 @@ module Shumway.AVM1.Natives {
     public _toString() {
       var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
       return native.value;
+    }
+
+    public charAt(index: number): string {
+      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
+      return native.value.charAt(alToInteger(this.context, index));
+    }
+
+    public charCodeAt(index: number): number {
+      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
+      return native.value.charCodeAt(alToInteger(this.context, index));
     }
   }
 

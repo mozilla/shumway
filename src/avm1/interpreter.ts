@@ -1481,7 +1481,7 @@ module Shumway.AVM1 {
         }
      } else {
         fn = as2GetProperty(ectx.context, obj, methodName);
-        target = obj;
+        target = alToObject(ectx.context, obj);
       }
 
       // AVM1 simply ignores attempts to invoke non-methods.
