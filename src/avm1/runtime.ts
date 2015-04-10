@@ -427,13 +427,11 @@ module Shumway.AVM1 {
 
   /**
    * Base class the is used for the interpreter.
+   * See {AVM1InterpretedFunction} implementation
    */
   export class AVM1EvalFunction extends AVM1Function {
-    // TODO inherit this class in interpreter (vs using fn) to contain scope pointer
-    private _fn: Function;
-    public constructor(context: IAVM1Context, fn: Function) {
+    public constructor(context: IAVM1Context) {
       super(context);
-      this._fn = fn;
       this.alSetOwnPrototypeProperty(alNewObject(context));
     }
     public alConstruct(args?: any[]): AVM1Object  {
@@ -446,10 +444,6 @@ module Shumway.AVM1 {
       obj.alSetOwnConstructorProperty(this);
       var result = this.alCall(obj, args);
       return result instanceof AVM1Object ? result : obj;
-    }
-
-    public alCall(thisArg: any, args?: any[]): any {
-      return this._fn.apply(thisArg, args);
     }
   }
 
@@ -609,7 +603,7 @@ module Shumway.AVM1 {
     return obj instanceof AVM1Function;
   }
 
-  export function alCallProperty(obj: AVM1Object, p, args: any[]): any {
+  export function alCallProperty(obj: AVM1Object, p, args?: any[]): any {
     var callable: IAVM1Callable = obj.alGet(p);
     callable.alCall(obj, args);
   }

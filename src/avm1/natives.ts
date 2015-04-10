@@ -757,7 +757,7 @@ module Shumway.AVM1.Natives {
     }
 
     public alCall(thisArg: any, args?: any[]): any {
-      return alCallProperty(this.alConstruct.apply(this, args), 'toString', []);
+      return alCallProperty(this.alConstruct.apply(this, args), 'toString');
     }
 
     public _UTC(year: number, month: number, date?: number, hours?: number, seconds?: number, ms?: number): number {

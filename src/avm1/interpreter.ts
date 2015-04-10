@@ -106,10 +106,10 @@ module Shumway.AVM1 {
   var as2IdentifiersCaseMap: MapObject<string> = null;
 
   class AVM1ScopeListItem {
-    constructor(public scope, public next: AVM1ScopeListItem) {
+    constructor(public scope: AVM1Object, public next: AVM1ScopeListItem) {
     }
 
-    create(scope) {
+    create(scope: AVM1Object) {
       return new AVM1ScopeListItem(scope, this);
     }
   }
@@ -668,13 +668,202 @@ module Shumway.AVM1 {
     scopeContainer: AVM1ScopeListItem;
     scope: any;
     actionTracer: ActionTracer;
-    constantPool: any;
+    constantPool: any[];
     registers: any[];
     stack: any[];
     frame: AVM1CallFrame;
     isSwfVersion5: boolean;
     recoveringFromError: boolean;
     isEndOfActions: boolean;
+  }
+
+  /**
+   * Interpreted function closure.
+   */
+  class AVM1InterpreterScope extends AVM1Object {
+    constructor(context: AVM1ContextImpl) {
+      super(context);
+      this.alPut('toString', new AVM1NativeFunction(context, this._toString));
+    }
+
+    _toString() {
+      // It shall return 'this'
+      return this;
+    }
+  }
+
+  // TODO Registers are shared across all AVM1Contents -- improve that.
+  var cachedRegisters = [];
+  var MAX_CACHED_REGISTERS = 10;
+  function createRegisters(registersLength: number) {
+    if (cachedRegisters.length > 0) {
+      return cachedRegisters.pop();
+    }
+    var registers = [];
+    registers.length = registersLength;
+    return registers;
+  }
+  function disposeRegisters(registers) {
+    if (cachedRegisters.length > MAX_CACHED_REGISTERS) {
+      return;
+    }
+    cachedRegisters.push(registers);
+  }
+
+  class AVM1InterpretedFunction extends AVM1EvalFunction {
+    functionName: string;
+    actionsData: AVM1ActionsData;
+    parametersNames: string[];
+    registersAllocation: ArgumentAssignment[];
+    suppressArguments: ArgumentAssignmentType;
+
+    scope: AVM1Object;
+    scopeContainer: AVM1ScopeListItem;
+    constantPool: any[];
+    skipArguments: boolean[];
+    registersLength: number;
+    actionTracer: ActionTracer;
+
+    constructor(context: AVM1ContextImpl,
+                ectx: ExecutionContext,
+                actionsData: AVM1ActionsData,
+                functionName: string,
+                parametersNames: string[],
+                registersCount: number,
+                registersAllocation: ArgumentAssignment[],
+                suppressArguments: ArgumentAssignmentType) {
+      super(context);
+
+      this.functionName = functionName;
+      this.actionsData = actionsData;
+      this.parametersNames = parametersNames;
+      this.registersAllocation = registersAllocation;
+      this.suppressArguments = suppressArguments;
+
+      this.scope = ectx.scope;
+      this.scopeContainer = ectx.scopeContainer;
+      this.constantPool = ectx.constantPool;
+      this.actionTracer = ectx.actionTracer;
+
+      var skipArguments: boolean[] = null;
+      var registersAllocationCount = !registersAllocation ? 0 : registersAllocation.length;
+      for (var i = 0; i < registersAllocationCount; i++) {
+        var registerAllocation = registersAllocation[i];
+        if (registerAllocation &&
+          registerAllocation.type === ArgumentAssignmentType.Argument) {
+          if (!skipArguments) {
+            skipArguments = [];
+          }
+          skipArguments[registersAllocation[i].index] = true;
+        }
+      }
+      this.skipArguments = skipArguments;
+
+      var registersLength = Math.min(registersCount, 255); // max allowed for DefineFunction2
+      registersLength = Math.max(registersLength, registersAllocationCount + 1);
+      this.registersLength = registersLength;
+    }
+
+    public alCall(thisArg: any, args?: any[]): any {
+      var currentContext = <AVM1ContextImpl>this.context;
+      if (currentContext.executionProhibited) {
+        return; // no more avm1 execution, ever
+      }
+
+      var newScopeContainer;
+      var newScope = new AVM1InterpreterScope(currentContext);
+
+      thisArg = thisArg || this.scope; // REDUX no isGlobalObject check?
+      args = args || [];
+
+      var supperWrapper;
+
+      var frame = currentContext.pushCallFrame(thisArg, this, args);
+
+      var suppressArguments = this.suppressArguments;
+      if (!(suppressArguments & ArgumentAssignmentType.Arguments)) {
+        newScope.alPut('arguments', args);
+      }
+      if (!(suppressArguments & ArgumentAssignmentType.This)) {
+        newScope.alPut('this', thisArg);
+      }
+      if (!(suppressArguments & ArgumentAssignmentType.Super)) {
+        supperWrapper = new AVM1SuperWrapper(currentContext, frame);
+        newScope.alPut('super', supperWrapper);
+      }
+      newScopeContainer = this.scopeContainer.create(newScope);
+
+      var i;
+      var registers = createRegisters(this.registersLength);
+      var registersAllocation = this.registersAllocation;
+      var registersAllocationCount = !registersAllocation ? 0 : registersAllocation.length;
+      for (i = 0; i < registersAllocationCount; i++) {
+        var registerAllocation = registersAllocation[i];
+        if (registerAllocation) {
+          switch (registerAllocation.type) {
+            case ArgumentAssignmentType.Argument:
+              registers[i] = args[registerAllocation.index];
+              break;
+            case ArgumentAssignmentType.This:
+              registers[i] = thisArg;
+              break;
+            case ArgumentAssignmentType.Arguments:
+              registers[i] = args;
+              break;
+            case ArgumentAssignmentType.Super:
+              supperWrapper = supperWrapper || new AVM1SuperWrapper(currentContext, frame);
+              registers[i] = supperWrapper;
+              break;
+            case ArgumentAssignmentType.Global:
+              registers[i] = currentContext.globals;
+              break;
+            case ArgumentAssignmentType.Parent:
+              registers[i] = this.scope.alGet('_parent');
+              break;
+            case ArgumentAssignmentType.Root:
+              registers[i] = currentContext.resolveLevel(0);
+              break;
+          }
+        }
+      }
+      var parametersNames = this.parametersNames;
+      var skipArguments = this.skipArguments;
+      for (i = 0; i < args.length || i < parametersNames.length; i++) {
+        if (skipArguments && skipArguments[i]) {
+          continue;
+        }
+        newScope.alPut(parametersNames[i], args[i]);
+      }
+
+      var result;
+      var caughtError;
+      var actionTracer = this.actionTracer;
+      var actionsData = this.actionsData;
+      var constantPool = this.constantPool;
+      actionTracer.indent();
+      if (++currentContext.stackDepth >= MAX_AVM1_STACK_LIMIT) {
+        throw new AVM1CriticalError('long running script -- AVM1 recursion limit is reached');
+      }
+
+      var savedCurrentTarget = currentContext.currentTarget;
+      currentContext.currentTarget = null;
+      try {
+        result = interpretActionsData(currentContext, actionsData, newScopeContainer, constantPool, registers);
+      } catch (e) {
+        caughtError = e;
+      }
+      currentContext.currentTarget = savedCurrentTarget;
+
+      currentContext.stackDepth--;
+      currentContext.popCallFrame();
+      actionTracer.unindent();
+      disposeRegisters(registers);
+      if (caughtError) {
+        // Note: this doesn't use `finally` because that's a no-go for performance.
+        throw caughtError;
+      }
+      return result;
+    }
   }
 
     function fixArgsCount(numArgs: number /* int */, maxAmount: number): number {
@@ -724,148 +913,8 @@ module Shumway.AVM1 {
                                 registersCount: number,
                                 registersAllocation: ArgumentAssignment[],
                                 suppressArguments: ArgumentAssignmentType): AVM1Function {
-      var currentContext = ectx.context;
-      var scopeContainer = ectx.scopeContainer;
-      var scope = ectx.scope;
-      var actionTracer = ectx.actionTracer;
-      var defaultTarget = currentContext.defaultTarget;
-      var constantPool = ectx.constantPool;
-
-      var skipArguments = null;
-      var registersAllocationCount = !registersAllocation ? 0 : registersAllocation.length;
-      for (var i = 0; i < registersAllocationCount; i++) {
-        var registerAllocation = registersAllocation[i];
-        if (registerAllocation &&
-            registerAllocation.type === ArgumentAssignmentType.Argument) {
-          if (!skipArguments) {
-            skipArguments = [];
-          }
-          skipArguments[registersAllocation[i].index] = true;
-        }
-      }
-
-      var registersLength = Math.min(registersCount, 255); // max allowed for DefineFunction2
-      registersLength = Math.max(registersLength, registersAllocationCount + 1);
-
-      var cachedRegisters = [];
-      var MAX_CACHED_REGISTERS = 10;
-      function createRegisters() {
-        if (cachedRegisters.length > 0) {
-          return cachedRegisters.pop();
-        }
-        var registers = [];
-        registers.length = registersLength;
-        return registers;
-      }
-      function disposeRegisters(registers) {
-        if (cachedRegisters.length > MAX_CACHED_REGISTERS) {
-          return;
-        }
-        cachedRegisters.push(registers);
-      }
-
-      var fn = (function() {
-        if (currentContext.executionProhibited) {
-          return; // no more avm1 execution, ever
-        }
-
-        var newScopeContainer;
-        // Builds function closure (it shall return 'this' in toString).
-        var newScope: any = new AVM1Object(currentContext);
-        newScope.alPut('toString', new AVM1NativeFunction(currentContext, function () {
-          return this;
-        }));
-
-        var thisArg = isGlobalObject(this) ? scope : this;
-        var argumentsClone;
-        var supperWrapper;
-
-        var frame = currentContext.pushCallFrame(thisArg, fnObj, <any>arguments);
-
-        if (!(suppressArguments & ArgumentAssignmentType.Arguments)) {
-          argumentsClone = Array.prototype.slice.call(arguments, 0);
-          newScope.alPut('arguments', argumentsClone);
-        }
-        if (!(suppressArguments & ArgumentAssignmentType.This)) {
-          newScope.alPut('this', thisArg);
-        }
-        if (!(suppressArguments & ArgumentAssignmentType.Super)) {
-          supperWrapper = new AVM1SuperWrapper(currentContext, frame);
-          newScope.alPut('super', supperWrapper);
-        }
-        newScopeContainer = scopeContainer.create(newScope);
-        var i;
-        var registers = createRegisters();
-        for (i = 0; i < registersAllocationCount; i++) {
-          var registerAllocation = registersAllocation[i];
-          if (registerAllocation) {
-            switch (registerAllocation.type) {
-              case ArgumentAssignmentType.Argument:
-                registers[i] = arguments[registerAllocation.index];
-                break;
-              case ArgumentAssignmentType.This:
-                registers[i] = thisArg;
-                break;
-              case ArgumentAssignmentType.Arguments:
-                argumentsClone = argumentsClone || Array.prototype.slice.call(arguments, 0);
-                registers[i] = argumentsClone;
-                break;
-              case ArgumentAssignmentType.Super:
-                supperWrapper = supperWrapper || new AVM1SuperWrapper(currentContext, frame);
-                registers[i] = supperWrapper;
-                break;
-              case ArgumentAssignmentType.Global:
-                registers[i] = currentContext.globals;
-                break;
-              case ArgumentAssignmentType.Parent:
-                registers[i] = scope.alGet('_parent');
-                break;
-              case ArgumentAssignmentType.Root:
-                registers[i] = currentContext.resolveLevel(0);
-                break;
-            }
-          }
-        }
-        for (i = 0; i < arguments.length || i < parametersNames.length; i++) {
-          if (skipArguments && skipArguments[i]) {
-            continue;
-          }
-          newScope.alPut(parametersNames[i], arguments[i]);
-        }
-
-        var result;
-        var caughtError;
-        actionTracer.indent();
-        if (++currentContext.stackDepth >= MAX_AVM1_STACK_LIMIT) {
-          throw new AVM1CriticalError('long running script -- AVM1 recursion limit is reached');
-        }
-
-        var savedCurrentTarget = currentContext.currentTarget;
-        currentContext.currentTarget = null;
-        try {
-          result = interpretActionsData(currentContext, actionsData, newScopeContainer, constantPool, registers);
-        } catch (e) {
-          caughtError = e;
-        }
-        currentContext.currentTarget = savedCurrentTarget;
-
-        currentContext.stackDepth--;
-        currentContext.popCallFrame();
-        actionTracer.unindent();
-        disposeRegisters(registers);
-        if (caughtError) {
-          // Note: this doesn't use `finally` because that's a no-go for performance.
-          throw caughtError;
-        }
-        return result;
-      });
-
-      var fnObj: AVM1Function = new AVM1EvalFunction(currentContext, fn);
-      (<any>fn).debugName = 'avm1 ' + (functionName || '<function>');
-      if (functionName) {
-        (<any>fn).name = functionName;
-      }
-      return fnObj;
+      return new AVM1InterpretedFunction(ectx.context, ectx, actionsData, functionName,
+        parametersNames, registersCount, registersAllocation, suppressArguments);
     }
 
     function avm1VariableNameHasPath(variableName: string): boolean {
