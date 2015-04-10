@@ -17,7 +17,7 @@
 module Shumway {
   import BinaryFileReader = Shumway.BinaryFileReader;
   import assert = Shumway.Debug.assert;
-  import SecurityDomain = Shumway.AVMX.SecurityDomain;
+  import AXSecurityDomain = Shumway.AVMX.AXSecurityDomain;
 
   export enum AVM2LoadLibrariesFlags {
     Builtin = 1,
@@ -25,12 +25,12 @@ module Shumway {
     Shell = 4
   }
 
-  export function createSecurityDomain(libraries: AVM2LoadLibrariesFlags): Promise<SecurityDomain> {
-    var result = new PromiseWrapper<SecurityDomain>();
+  export function createSecurityDomain(libraries: AVM2LoadLibrariesFlags): Promise<AXSecurityDomain> {
+    var result = new PromiseWrapper<AXSecurityDomain>();
     release || assert (!!(libraries & AVM2LoadLibrariesFlags.Builtin));
     SWF.enterTimeline('Load builton.abc file');
     SystemResourcesLoadingService.instance.load(SystemResourceId.BuiltinAbc).then(function (buffer) {
-      var sec = new Shumway.AVMX.SecurityDomain();
+      var sec = new Shumway.AVMX.AXSecurityDomain();
       var builtinABC = new Shumway.AVMX.ABCFile(new Uint8Array(buffer));
       sec.system.loadABC(builtinABC);
       sec.initialize();

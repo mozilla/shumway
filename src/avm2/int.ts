@@ -806,7 +806,7 @@ module Shumway.AVMX {
     }
   }
 
-  function createValidException(sec: SecurityDomain, internalError, bc: Bytecode,
+  function createValidException(sec: AXSecurityDomain, internalError, bc: Bytecode,
                                 value: any, receiver: any, mn: Multiname) {
     // Stack exhaustion errors are annoying to catch: Identifying them requires pattern-matching of
     // error messages, and throwing them must be done very carefully to not cause the next one.

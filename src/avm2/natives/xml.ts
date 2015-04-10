@@ -61,19 +61,19 @@ module Shumway.AVMX.AS {
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
   import defineReadOnlyProperty = Shumway.ObjectUtilities.defineReadOnlyProperty;
 
-  export function isXMLType(val: any, sec: SecurityDomain): boolean {
+  export function isXMLType(val: any, sec: AXSecurityDomain): boolean {
     return typeof val === 'object' && val &&
            (val.axClass === sec.AXXML || val.axClass === sec.AXXMLList ||
             val.axClass === sec.AXQName || val.axClass === sec.AXNamespace);
   }
 
-  export function isXMLCollection(val: any, sec: SecurityDomain): boolean {
+  export function isXMLCollection(val: any, sec: AXSecurityDomain): boolean {
     return typeof val === 'object' && val &&
            (val.axClass === sec.AXXML || val.axClass === sec.AXXMLList);
   }
 
   // 10.1 ToString
-  function toString(node, sec: SecurityDomain) {
+  function toString(node, sec: AXSecurityDomain) {
     if (!node || node.axClass !== sec.AXXML) {
       return String(node);
     }
@@ -219,7 +219,7 @@ module Shumway.AVMX.AS {
   }
 
   // 10.2 ToXMLString
-  function toXMLString(sec: SecurityDomain, node: any) {
+  function toXMLString(sec: AXSecurityDomain, node: any) {
     if (node === null || node === undefined) {
       throw new TypeError();
     }
@@ -232,7 +232,7 @@ module Shumway.AVMX.AS {
 
 
   // 10.3 ToXML
-  function toXML(v, sec: SecurityDomain) {
+  function toXML(v, sec: AXSecurityDomain) {
     if (v === null) {
       sec.throwError('TypeError', Errors.ConvertNullToObjectError);
     }
@@ -295,7 +295,7 @@ module Shumway.AVMX.AS {
   }
 
   // 10.6 ToXMLName
-  function toXMLName(mn, sec: SecurityDomain): Multiname {
+  function toXMLName(mn, sec: AXSecurityDomain): Multiname {
     if (mn === undefined) {
       return anyMultiname;
     }
@@ -340,7 +340,7 @@ module Shumway.AVMX.AS {
     return new Multiname(null, 0, CONSTANT.QName, [], name);
   }
 
-  function coerceE4XMultiname(mn: Multiname, sec: SecurityDomain) {
+  function coerceE4XMultiname(mn: Multiname, sec: AXSecurityDomain) {
     var out = mn.isAttribute() ? tmpAttributeMultiname : tmpMultiname;
 
     // Queries of the foo[new QName('bar')] sort create this situation.
@@ -396,7 +396,7 @@ module Shumway.AVMX.AS {
   }
 
   // 12.1 GetDefaultNamespace
-  function getDefaultNamespace(sec: SecurityDomain): Namespace {
+  function getDefaultNamespace(sec: AXSecurityDomain): Namespace {
     // The scope's default xml namespace is stored in sec.AXNamespace.defaultNamespace.
     // TODO: don't be like this. Store the default namespace on the scope. Please.
     return sec.AXNamespace.defaultNamespace;
@@ -427,7 +427,7 @@ module Shumway.AVMX.AS {
   }
 
   // 13.1.2.1 isXMLName ( value )
-  export function isXMLName(v, sec: SecurityDomain) {
+  export function isXMLName(v, sec: AXSecurityDomain) {
     try {
       var qn = sec.AXQName.Create(v);
     } catch (e) {
@@ -446,7 +446,7 @@ module Shumway.AVMX.AS {
   release || Object.seal(anyMultiname);
 
   export class XMLParser {
-    constructor(private sec: SecurityDomain) {
+    constructor(private sec: AXSecurityDomain) {
     }
     private parseXml(s) {
       var sec = this.sec;
@@ -2668,7 +2668,7 @@ module Shumway.AVMX.AS {
     }
   }
 
-  function createXML(sec: SecurityDomain, kind: ASXMLKind = ASXMLKind.Text,
+  function createXML(sec: AXSecurityDomain, kind: ASXMLKind = ASXMLKind.Text,
                      uri: string = '', name: string = '', prefix?: string): ASXML {
     var xml = sec.AXXML.Create();
     var ns = new Namespace(null, NamespaceType.Public, uri);

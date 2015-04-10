@@ -45,7 +45,7 @@ interface Function {
   axCall(thisArg: any): any;
 }
 
-var $: Shumway.AVMX.SecurityDomain = null;
+var $: Shumway.AVMX.AXSecurityDomain = null;
 
 module Shumway.AVMX {
   /*
@@ -112,7 +112,7 @@ module Shumway.AVMX {
    *
    */
 
-  export function checkNullParameter(argument: any, name: string, sec: SecurityDomain) {
+  export function checkNullParameter(argument: any, name: string, sec: AXSecurityDomain) {
     if (!argument) {
       sec.throwError('TypeError', Errors.NullPointerError, name);
     }
@@ -274,19 +274,19 @@ module Shumway.AVMX {
     return typeof x === "string";
   }
 
-  function axIsXMLCollection(x, sec: SecurityDomain): boolean {
+  function axIsXMLCollection(x, sec: AXSecurityDomain): boolean {
     return sec.AXXML.dPrototype.isPrototypeOf(x) ||
            sec.AXXMLList.dPrototype.isPrototypeOf(x);
   }
 
-  export function axGetDescendants(object, mn: Multiname, sec: SecurityDomain) {
+  export function axGetDescendants(object, mn: Multiname, sec: AXSecurityDomain) {
     if (!axIsXMLCollection(object, sec)) {
       sec.throwError('TypeError', Errors.DescendentsError, object);
     }
     return object.descendants(mn);
   }
 
-  export function axCheckFilter(value, sec: SecurityDomain) {
+  export function axCheckFilter(value, sec: AXSecurityDomain) {
     if (!value || !AS.isXMLCollection(value, sec)) {
       var className = value && value.axClass ? value.axClass.name.toFQNString(false) : '[unknown]';
       this.sec.throwError('RangeError', Errors.FilterError, className);
@@ -358,7 +358,7 @@ module Shumway.AVMX {
    *
    * AS3 also overloads the `+` operator to concatenate XMLs/XMLLists instead of stringifying them.
    */
-  export function axAdd(l: any, r: any, sec: SecurityDomain): any {
+  export function axAdd(l: any, r: any, sec: AXSecurityDomain): any {
     release || assert(!(typeof l === "number" && typeof r === "number"), 'Inline number addition.');
     if (typeof l === "string" || typeof r === "string") {
       return String(l) + String(r);
@@ -369,7 +369,7 @@ module Shumway.AVMX {
     return l + r;
   }
 
-  export function axEquals(left: any, right: any, sec: SecurityDomain): boolean {
+  export function axEquals(left: any, right: any, sec: AXSecurityDomain): boolean {
     // See E4X spec, 11.5 Equality Operators for why this is required.
     if (AS.isXMLType(left, sec)) {
       return left.equals(right);
@@ -423,7 +423,7 @@ module Shumway.AVMX {
     return obj && obj.__ctorFunction === this;
   }
 
-  export function axTypeOf(x: any, sec: SecurityDomain): string {
+  export function axTypeOf(x: any, sec: AXSecurityDomain): string {
     // ABC doesn't box primitives, so typeof returns the primitive type even when
     // the value is new'd
     if (x) {
@@ -483,7 +483,7 @@ module Shumway.AVMX {
    */
   export interface ITraits {
     traits: RuntimeTraits;
-    sec: SecurityDomain;
+    sec: AXSecurityDomain;
   }
 
   export class Scope {
@@ -675,7 +675,7 @@ module Shumway.AVMX {
   }
 
   export interface AXGlobal extends AXObject {
-    sec: SecurityDomain;
+    sec: AXSecurityDomain;
     applicationDomain: AXApplicationDomain;
     scriptInfo: ScriptInfo;
     scope: Scope;
@@ -876,7 +876,7 @@ module Shumway.AVMX {
   /**
    * Provides security isolation between application domains.
    */
-  export class SecurityDomain {
+  export class AXSecurityDomain {
     public system: AXApplicationDomain;
     public classAliases: AliasesCache;
     public application: AXApplicationDomain;
@@ -1509,11 +1509,11 @@ module Shumway.AVMX {
      */
     public parent: AXApplicationDomain;
 
-    public sec: SecurityDomain;
+    public sec: AXSecurityDomain;
 
     private _abcs: ABCFile [];
 
-    constructor(sec: SecurityDomain, parent: AXApplicationDomain) {
+    constructor(sec: AXSecurityDomain, parent: AXApplicationDomain) {
       this.sec = sec;
       this.parent = parent;
       this.system = parent ? parent.system : this;

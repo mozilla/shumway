@@ -723,7 +723,7 @@ module Shumway.Shell {
 
   function createSecurityDomain(builtinABCPath: string, shellABCPath: string, libraryPathInfo): ISecurityDomain {
     var buffer = read(builtinABCPath, 'binary');
-    var sec = <ISecurityDomain>new AVMX.SecurityDomain();
+    var sec = <ISecurityDomain>new AVMX.AXSecurityDomain();
     var builtinABC = new ABCFile(new Uint8Array(buffer));
     sec.system.loadABC(builtinABC);
     sec.addCatalog(loadPlayerGlobalCatalog());

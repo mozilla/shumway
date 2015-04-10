@@ -324,7 +324,7 @@ module Shumway.AVMX {
     return method;
   }
 
-  function createGlobalNative(native: Function, sec: SecurityDomain) {
+  function createGlobalNative(native: Function, sec: AXSecurityDomain) {
 
     return function() {
       switch (arguments.length) {

@@ -33,7 +33,7 @@ module Shumway.AVMX.AS {
     HIDE_OBJECT         = 0x0400
   }
 
-  export function describeTypeJSON(sec: SecurityDomain, o: any, flags: number): any {
+  export function describeTypeJSON(sec: AXSecurityDomain, o: any, flags: number): any {
     // Class traits aren't returned for numeric primitives, undefined, null, bound methods, or
     // non-class-constructor functions.
     var isInt = (o|0) === o;
@@ -80,7 +80,7 @@ module Shumway.AVMX.AS {
     return description;
   }
 
-  //export function describeType(sec: SecurityDomain, value: any, flags: number): ASXML
+  //export function describeType(sec: AXSecurityDomain, value: any, flags: number): ASXML
   // {
   //  var classDescription: any = describeTypeJSON(value, flags);
   //  // Make sure all XML classes are fully initialized.
@@ -183,7 +183,7 @@ module Shumway.AVMX.AS {
   // escapeAttributeValue(value[publicName('value')]) + '"/>'); m.appendChild(a); }
   // x.appendChild(m); } }
 
-  function describeMetadataList(sec: SecurityDomain, list: MetadataInfo[]) {
+  function describeMetadataList(sec: AXSecurityDomain, list: MetadataInfo[]) {
     if (!list) {
       return null;
     }
@@ -202,7 +202,7 @@ module Shumway.AVMX.AS {
     return result;
   }
 
-  function describeMetadata(sec: SecurityDomain, metadata: MetadataInfo) {
+  function describeMetadata(sec: AXSecurityDomain, metadata: MetadataInfo) {
     var result = sec.createObject();
     result.$Bgname = metadata.name;
     var values = [];
@@ -303,7 +303,7 @@ module Shumway.AVMX.AS {
 
     // Having a hot function closed over isn't all that great, but moving this out would involve
     // passing lots and lots of arguments. We might do that if performance becomes an issue.
-    function describeTraits(sec: SecurityDomain, traits: TraitInfo[]) {
+    function describeTraits(sec: AXSecurityDomain, traits: TraitInfo[]) {
       release || assert(traits, "No traits array found on class" + cls.name);
 
       // All types share some fields, but setting them in one place changes the order in which

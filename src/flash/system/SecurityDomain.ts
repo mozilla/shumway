@@ -21,8 +21,7 @@ module Shumway.AVMX.AS.flash.system {
     static _currentDomain: SecurityDomain;
     
     constructor () {
-      this.sec.throwError('ArgumentError', Errors.CantInstantiateError,
-                                     'SecurityDomain');
+      this.sec.throwError('ArgumentError', Errors.CantInstantiateError, 'SecurityDomain');
       super();
     }
 

@@ -26,7 +26,7 @@ module Shumway.AVM2.AS {
   }
 }
 
-interface ISecurityDomain extends Shumway.AVMX.SecurityDomain {
+interface ISecurityDomain extends Shumway.AVMX.AXSecurityDomain {
   ObjectVector: typeof Shumway.AVMX.AS.GenericVector;
   Int32Vector: typeof Shumway.AVMX.AS.Int32Vector;
   Uint32Vector: typeof Shumway.AVMX.AS.Uint32Vector;
@@ -69,7 +69,7 @@ module Shumway.AVMX.AS {
    */
   export module Natives {
 
-    export function print(sec: SecurityDomain, expression: any, arg1?: any, arg2?: any,
+    export function print(sec: AXSecurityDomain, expression: any, arg1?: any, arg2?: any,
                           arg3?: any, arg4?: any) {
       var args = Array.prototype.slice.call(arguments, 1);
       jsGlobal.print.apply(null, args);
@@ -81,7 +81,7 @@ module Shumway.AVMX.AS {
       /* tslint:enable */
     }
 
-    export function bugzilla(_: SecurityDomain, n) {
+    export function bugzilla(_: AXSecurityDomain, n) {
       switch (n) {
         case 574600: // AS3 Vector::map Bug
           return true;
@@ -89,7 +89,7 @@ module Shumway.AVMX.AS {
       return false;
     }
 
-    export function decodeURI(sec: SecurityDomain, encodedURI: string): string {
+    export function decodeURI(sec: AXSecurityDomain, encodedURI: string): string {
       try {
         return jsGlobal.decodeURI(encodedURI);
       } catch (e) {
@@ -97,7 +97,7 @@ module Shumway.AVMX.AS {
       }
     }
 
-    export function decodeURIComponent(sec: SecurityDomain, encodedURI: string): string {
+    export function decodeURIComponent(sec: AXSecurityDomain, encodedURI: string): string {
       try {
         return jsGlobal.decodeURIComponent(encodedURI);
       } catch (e) {
@@ -120,7 +120,7 @@ module Shumway.AVMX.AS {
     /**
      * Returns the fully qualified class name of an object.
      */
-    export function getQualifiedClassName(_: SecurityDomain, value: any):string {
+    export function getQualifiedClassName(_: AXSecurityDomain, value: any):string {
       release || checkValue(value);
       var valueType = typeof value;
       switch (valueType) {
@@ -145,12 +145,12 @@ module Shumway.AVMX.AS {
      * Returns the fully qualified class name of the base class of the object specified by the
      * |value| parameter.
      */
-    export function getQualifiedSuperclassName(sec: SecurityDomain, value: any) {
+    export function getQualifiedSuperclassName(sec: AXSecurityDomain, value: any) {
       if (isNullOrUndefined(value)) {
         return "null";
       }
       value = sec.box(value);
-      // The value might be from another domain, so don't use passed-in the current SecurityDomain.
+      // The value might be from another domain, so don't use passed-in the current AXSecurityDomain.
       var axClass = value.sec.AXClass.axIsType(value) ?
                     (<AXClass>value).superClass :
                     value.axClass.superClass;
@@ -159,17 +159,17 @@ module Shumway.AVMX.AS {
     /**
      * Returns the class with the specified name, or |null| if no such class exists.
      */
-    export function getDefinitionByName(sec: SecurityDomain, name: string): AXClass {
+    export function getDefinitionByName(sec: AXSecurityDomain, name: string): AXClass {
       name = axCoerceString(name).replace("::", ".");
       var mn = Multiname.FromFQNString(name, NamespaceType.Public);
       return sec.application.getClass(mn);
     }
 
-    export function describeType(sec: SecurityDomain, value: any, flags: number) {
+    export function describeType(sec: AXSecurityDomain, value: any, flags: number) {
       //return AS.describeType(value, flags);
     }
 
-    export function describeTypeJSON(sec: SecurityDomain, value: any, flags: number) {
+    export function describeTypeJSON(sec: AXSecurityDomain, value: any, flags: number) {
       return AS.describeTypeJSON(sec, value, flags);
     }
   }
@@ -1737,7 +1737,7 @@ module Shumway.AVMX.AS {
   /**
    * Transforms a JS value into an AS value.
    */
-  export function transformJSValueToAS(sec: SecurityDomain, value, deep: boolean) {
+  export function transformJSValueToAS(sec: AXSecurityDomain, value, deep: boolean) {
     release || assert(typeof value !== 'function');
     if (typeof value !== "object") {
       return value;
@@ -1760,7 +1760,7 @@ module Shumway.AVMX.AS {
   /**
    * Transforms an AS value into a JS value.
    */
-  export function transformASValueToJS(sec: SecurityDomain, value, deep: boolean) {
+  export function transformASValueToJS(sec: AXSecurityDomain, value, deep: boolean) {
     if (typeof value !== "object") {
       return value;
     }
@@ -1989,16 +1989,16 @@ module Shumway.AVMX.AS {
   registerNativeClass("__AS3__.vec.Vector$uint", Uint32Vector, 'Uint32Vector', NamespaceType.PackageInternal);
   registerNativeClass("__AS3__.vec.Vector$double", Float64Vector, 'Float64Vector', NamespaceType.PackageInternal);
 
-  function FlashUtilScript_getDefinitionByName(sec: SecurityDomain, name: string): ASClass {
+  function FlashUtilScript_getDefinitionByName(sec: AXSecurityDomain, name: string): ASClass {
     var simpleName = String(name).replace("::", ".");
     return <any>sec.application.getClass(Multiname.FromSimpleName(simpleName));
   }
 
-  export function FlashUtilScript_getTimer(sec: SecurityDomain) {
+  export function FlashUtilScript_getTimer(sec: AXSecurityDomain) {
     return Date.now() - (<any>sec).flash.display.Loader.axClass.runtimeStartTime;
   }
 
-  export function FlashNetScript_navigateToURL(sec: SecurityDomain, request, window_) {
+  export function FlashNetScript_navigateToURL(sec: AXSecurityDomain, request, window_) {
     if (request === null || request === undefined) {
       sec.throwError('TypeError', Errors.NullPointerError, 'request');
     }
@@ -2019,7 +2019,7 @@ module Shumway.AVMX.AS {
     FileLoadingService.instance.navigateTo(url, window_);
   }
 
-  function FlashNetScript_sendToURL(sec: SecurityDomain, request) {
+  function FlashNetScript_sendToURL(sec: AXSecurityDomain, request) {
     if (isNullOrUndefined(request)) {
       sec.throwError('TypeError', Errors.NullPointerError, 'request');
     }
@@ -2034,7 +2034,7 @@ module Shumway.AVMX.AS {
     session.open(request);
   }
 
-  function Toplevel_registerClassAlias(sec: SecurityDomain, aliasName, classObject) {
+  function Toplevel_registerClassAlias(sec: AXSecurityDomain, aliasName, classObject) {
     aliasName = axCoerceString(aliasName);
     if (!aliasName) {
       sec.throwError('TypeError', Errors.NullPointerError, 'aliasName');
@@ -2047,7 +2047,7 @@ module Shumway.AVMX.AS {
     sec.classAliases.names[aliasName] = classObject;
   }
 
-  function Toplevel_getClassByAlias(sec: SecurityDomain, aliasName: string) {
+  function Toplevel_getClassByAlias(sec: AXSecurityDomain, aliasName: string) {
     aliasName = axCoerceString(aliasName);
     if (!aliasName) {
       sec.throwError('TypeError', Errors.NullPointerError, 'aliasName');
@@ -2395,11 +2395,11 @@ module Shumway.AVMX.AS {
   }
 
   /**
-   * Installs all the previously registered native functions on the SecurityDomain.
+   * Installs all the previously registered native functions on the AXSecurityDomain.
    *
    * Note that this doesn't use memoizers and doesn't run the functions' AS3 script.
    */
-  export function installNativeFunctions(sec: SecurityDomain) {
+  export function installNativeFunctions(sec: AXSecurityDomain) {
     for (var i in nativeFunctions) {
       var pathTokens = i.split('.');
       var funName = pathTokens.pop();
