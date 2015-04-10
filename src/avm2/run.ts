@@ -878,7 +878,7 @@ module Shumway.AVMX {
    */
   export class AXSecurityDomain {
     public system: AXApplicationDomain;
-    public classAliases: AliasesCache;
+    public classAliases: ClassAliases;
     public application: AXApplicationDomain;
     public AXObject: AXClass;
     public AXArray: AXClass;
@@ -931,7 +931,7 @@ module Shumway.AVMX {
     constructor() {
       initializeAXBasePrototype();
       this.system = new AXApplicationDomain(this, null);
-      this.classAliases = new AliasesCache();
+      this.classAliases = new ClassAliases();
       this.application = new AXApplicationDomain(this, this.system);
       this.nativeClasses = Object.create(null);
       this.vectorClasses = new Map<AXClass, AXClass>();

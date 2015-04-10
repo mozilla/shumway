@@ -2034,7 +2034,7 @@ module Shumway.AVMX.AS {
     session.open(request);
   }
 
-  function Toplevel_registerClassAlias(sec: AXSecurityDomain, aliasName, classObject) {
+  function Toplevel_registerClassAlias(sec: AXSecurityDomain, aliasName: string, classObject: AXClass) {
     aliasName = axCoerceString(aliasName);
     if (!aliasName) {
       sec.throwError('TypeError', Errors.NullPointerError, 'aliasName');
@@ -2043,8 +2043,7 @@ module Shumway.AVMX.AS {
       sec.throwError('TypeError', Errors.NullPointerError, 'classObject');
     }
 
-    sec.classAliases.classes.set(classObject, aliasName);
-    sec.classAliases.names[aliasName] = classObject;
+    sec.classAliases.registerClassAlias(aliasName, classObject);
   }
 
   function Toplevel_getClassByAlias(sec: AXSecurityDomain, aliasName: string) {
@@ -2053,11 +2052,11 @@ module Shumway.AVMX.AS {
       sec.throwError('TypeError', Errors.NullPointerError, 'aliasName');
     }
 
-    var classObject = sec.classAliases.names[aliasName];
-    if (!classObject) {
+    var axClass = sec.classAliases.getClassByAlias(aliasName);
+    if (!axClass) {
       sec.throwError('ReferenceError', Errors.ClassNotFoundError, aliasName);
     }
-    return classObject;
+    return axClass;
   }
 
   registerNativeFunction('FlashUtilScript::getDefinitionByName',
