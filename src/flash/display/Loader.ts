@@ -380,10 +380,11 @@ module Shumway.AVMX.AS.flash.display {
     loadBytes(data: flash.utils.ByteArray, context?: LoaderContext) {
       this.close();
       // TODO: properly coerce object arguments to their types.
+      var loaderClass = this.sec.flash.display.Loader.axClass;
       // In case this is the initial root loader, we won't have a loaderInfo object. That should
       // only happen in the inspector when a file is loaded from a Blob, though.
       this._contentLoaderInfo._url = (this.loaderInfo ? this.loaderInfo._url : '') +
-                                     '/[[DYNAMIC]]/' + (++Loader._embeddedContentLoadCount);
+                                     '/[[DYNAMIC]]/' + (++loaderClass._embeddedContentLoadCount);
       this._applyLoaderContext(context);
       this._loadingType = LoadingType.Bytes;
       this._fileLoader = new FileLoader(this);
@@ -394,7 +395,6 @@ module Shumway.AVMX.AS.flash.display {
       // Just passing in the bytes won't do, because the buffer can contain slop at the end.
       this._fileLoader.loadBytes(new Uint8Array((<any>data).bytes, 0, data.length));
 
-      var loaderClass = this.sec.flash.display.Loader.axClass;
       release || assert(loaderClass._loadQueue.indexOf(this) === -1);
       loaderClass._loadQueue.push(this);
     }

@@ -413,17 +413,19 @@ module Shumway.Shell {
                      ", frameCount: " + frameCount);
     }
     function runSWF(file: any) {
-      // REDUX:
-      // flash.display.Loader.reset();
-      // flash.display.DisplayObject.reset();
-      // flash.display.MovieClip.reset();
       microTaskQueue.clear();
       Shumway.Random.reset();
       Shumway.Shell.installTimeWarper();
 
       var sec = createSecurityDomain(builtinABCPath, null, null);
       var player = new Shumway.Player.Player(sec, new ShellGFXServer());
-      player.load(file);
+      try {
+        var buffer = read(file, 'binary');
+      } catch (e) {
+        console.log("Error loading SWF: " + e.message);
+        quit(127);
+      }
+      player.load(file, buffer);
       return player;
     }
 

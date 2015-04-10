@@ -381,9 +381,7 @@ module Shumway.Player {
       this.addToSWFLoadingWhitelist(FileLoadingService.instance.resolveUrl(url), false);
       var context = this.createLoaderContext();
       if (buffer) {
-        var symbol = Shumway.Timeline.BinarySymbol.FromData({id: -1, data: buffer},
-                                                            this._loaderInfo);
-        var byteArray = AVMX.AS.constructClassFromSymbol(symbol, symbol.symbolClass);
+        var byteArray = new this.sec.flash.utils.ByteArray(buffer);
         this._loader.loadBytes(byteArray, context);
       } else {
         this._loader.load(new this.sec.flash.net.URLRequest(url), context);
