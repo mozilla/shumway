@@ -193,7 +193,7 @@ module Shumway {
 
         this.processSWFFileUpdate(file, eagerlyParsedSymbolsCount, previousFramesLoaded);
       }
-      if (file.bytesLoaded !== file.bytesTotal) {
+      if (!file || file.bytesLoaded !== file.bytesTotal) {
         Debug.warning("Not Implemented: processing loadClose when loading was aborted");
       } else {
         SWF.leaveTimeline();
