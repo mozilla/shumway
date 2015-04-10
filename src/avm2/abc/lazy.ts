@@ -1230,14 +1230,14 @@ module Shumway.AVMX {
     /**
      * Application domain in which this ABC is loaded.
      */
-    private _applicationDomain: ApplicationDomain = null;
+    private _applicationDomain: AXApplicationDomain = null;
 
     public get applicationDomain() {
       release || assert(this._applicationDomain);
       return this._applicationDomain;
     }
 
-    public setApplicationDomain(applicationDomain: ApplicationDomain) {
+    public setApplicationDomain(applicationDomain: AXApplicationDomain) {
       assert(this._applicationDomain === null && applicationDomain);
       this._applicationDomain = applicationDomain;
     }

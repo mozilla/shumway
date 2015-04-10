@@ -232,7 +232,7 @@ module Shumway.AVMX.AS.flash.display {
         this._contentID = displayObjectClass._instanceID++;
       } else {
         // The root loader itself doesn't get an ID.
-        //this.sec.flash.display.DisplayObject.axClass._instanceID--;
+        displayObjectClass._instanceID--;
       }
       var loaderInfoCtor = this.sec.flash.display.LoaderInfo;
       this._contentLoaderInfo = new loaderInfoCtor(loaderInfoCtor.axClass.CtorToken);
@@ -436,10 +436,11 @@ module Shumway.AVMX.AS.flash.display {
       var parameters = context && context.parameters ?
         transformASValueToJS(this.sec, context.parameters, false) : {};
       if (context && context.applicationDomain) {
-        var domain = null;
-        // REDUX:
-        // var domain = new system.ApplicationDomain(system.ApplicationDomain.currentDomain);
-        this._contentLoaderInfo._applicationDomain = domain;
+        this._contentLoaderInfo._applicationDomain = context.applicationDomain.axDomain;
+      } else {
+        this._contentLoaderInfo._applicationDomain = this._loaderInfo ?
+                                                     this._loaderInfo.applicationDomain.axDomain :
+                                                     this.sec.application;
       }
       this._contentLoaderInfo._parameters = parameters;
     }

@@ -87,7 +87,7 @@ module Shumway.AVMX.AS.flash.display {
     _file: any /* SWFFile|ImageFile*/;
     _bytesLoaded: number /*uint*/;
     _bytesTotal: number /*uint*/;
-    _applicationDomain: flash.system.ApplicationDomain;
+    _applicationDomain: AXApplicationDomain;
     _parameters: Object;
     _width: number /*int*/;
     _height: number /*int*/;

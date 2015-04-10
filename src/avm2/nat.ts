@@ -2337,7 +2337,7 @@ module Shumway.AVMX.AS {
    * Creates a self patching getter that lazily constructs the class and memoizes
    * to the class's instance constructor.
    */
-  function defineClassLoader(applicationDomain: ApplicationDomain, container: Object,
+  function defineClassLoader(applicationDomain: AXApplicationDomain, container: Object,
                              mn: Multiname, classAlias: string) {
     Object.defineProperty(container, classAlias, {
       get: function () {
@@ -2372,7 +2372,7 @@ module Shumway.AVMX.AS {
     return container;
   };
 
-  function makeClassLoader(applicationDomain: ApplicationDomain, container: Object,
+  function makeClassLoader(applicationDomain: AXApplicationDomain, container: Object,
                            classPath: string, aliasPath: string, nsType: NamespaceType) {
     runtimeWriter && runtimeWriter.writeLn("Defining Memoizer: " + classPath);
     var aliasPathTokens = aliasPath.split(".");
@@ -2385,7 +2385,7 @@ module Shumway.AVMX.AS {
   /**
    * Installs class loaders for all the previously registered native classes.
    */
-  export function installClassLoaders(applicationDomain: ApplicationDomain, container: Object) {
+  export function installClassLoaders(applicationDomain: AXApplicationDomain, container: Object) {
     for (var i = 0; i < nativeClassLoaderNames.length; i++) {
       var loaderName = nativeClassLoaderNames[i].name;
       var loaderAlias = nativeClassLoaderNames[i].alias;

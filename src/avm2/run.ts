@@ -676,7 +676,7 @@ module Shumway.AVMX {
 
   export interface AXGlobal extends AXObject {
     sec: SecurityDomain;
-    applicationDomain: ApplicationDomain;
+    applicationDomain: AXApplicationDomain;
     scriptInfo: ScriptInfo;
     scope: Scope;
   }
@@ -877,9 +877,9 @@ module Shumway.AVMX {
    * Provides security isolation between application domains.
    */
   export class SecurityDomain {
-    public system: ApplicationDomain;
+    public system: AXApplicationDomain;
     public classAliases: AliasesCache;
-    public application: ApplicationDomain;
+    public application: AXApplicationDomain;
     public AXObject: AXClass;
     public AXArray: AXClass;
     public AXClass: AXClass;
@@ -930,9 +930,9 @@ module Shumway.AVMX {
 
     constructor() {
       initializeAXBasePrototype();
-      this.system = new ApplicationDomain(this, null);
+      this.system = new AXApplicationDomain(this, null);
       this.classAliases = new AliasesCache();
-      this.application = new ApplicationDomain(this, this.system);
+      this.application = new AXApplicationDomain(this, this.system);
       this.nativeClasses = Object.create(null);
       this.vectorClasses = new Map<AXClass, AXClass>();
       this._catalogs = [];
@@ -1228,7 +1228,7 @@ module Shumway.AVMX {
       return isPrimitiveJSValue(v) || this.AXPrimitiveBox.dPrototype.isPrototypeOf(v);
     }
 
-    createAXGlobal(applicationDomain: ApplicationDomain, scriptInfo: ScriptInfo) {
+    createAXGlobal(applicationDomain: AXApplicationDomain, scriptInfo: ScriptInfo) {
       var global: AXGlobal = Object.create(this.AXGlobalPrototype);
       global.sec = this;
       global.applicationDomain = applicationDomain;
@@ -1498,22 +1498,22 @@ module Shumway.AVMX {
   /**
    * All code lives within an application domain.
    */
-  export class ApplicationDomain {
+  export class AXApplicationDomain {
     /**
      * All application domains have a reference to the root, or system application domain.
      */
-    public system: ApplicationDomain;
+    public system: AXApplicationDomain;
 
     /**
      * Parent application domain.
      */
-    public parent: ApplicationDomain;
+    public parent: AXApplicationDomain;
 
     public sec: SecurityDomain;
 
     private _abcs: ABCFile [];
 
-    constructor(sec: SecurityDomain, parent: ApplicationDomain) {
+    constructor(sec: SecurityDomain, parent: AXApplicationDomain) {
       this.sec = sec;
       this.parent = parent;
       this.system = parent ? parent.system : this;

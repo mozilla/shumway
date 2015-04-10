@@ -17,26 +17,26 @@
 module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
   import axCoerceString = Shumway.AVMX.axCoerceString;
-  import RuntimeApplicationDomain = Shumway.AVMX.ApplicationDomain;
+  import AXApplicationDomain = Shumway.AVMX.AXApplicationDomain;
 
   export class ApplicationDomain extends ASObject {
 
-    private _runtimeDomain: RuntimeApplicationDomain;
+    axDomain: AXApplicationDomain;
 
-    constructor (parentDomainOrRuntimeDomain: any = null) {
+    constructor (parentDomainOrAXDomain: any = null) {
       super();
       release || Debug.assert(!(this instanceof ApplicationDomain));
-      if (parentDomainOrRuntimeDomain instanceof RuntimeApplicationDomain) {
-        this._runtimeDomain = parentDomainOrRuntimeDomain;
+      if (parentDomainOrAXDomain instanceof AXApplicationDomain) {
+        this.axDomain = parentDomainOrAXDomain;
         return;
       }
-      var parentRuntimeDomain: RuntimeApplicationDomain = null;
-      if (this.sec.flash.system.ApplicationDomain.axIsType(parentDomainOrRuntimeDomain)) {
-        parentRuntimeDomain = (<ApplicationDomain>parentDomainOrRuntimeDomain)._runtimeDomain;
+      var parentRuntimeDomain: AXApplicationDomain = null;
+      if (this.sec.flash.system.ApplicationDomain.axIsType(parentDomainOrAXDomain)) {
+        parentRuntimeDomain = (<ApplicationDomain>parentDomainOrAXDomain).axDomain;
       } else {
         parentRuntimeDomain = this.sec.system;
       }
-      this._runtimeDomain = new RuntimeApplicationDomain(this.sec, parentRuntimeDomain);
+      this.axDomain = new AXApplicationDomain(this.sec, parentRuntimeDomain);
     }
 
     // This must return a new object each time.
@@ -51,8 +51,8 @@ module Shumway.AVMX.AS.flash.system {
     }
 
     get parentDomain(): flash.system.ApplicationDomain {
-      if (this._runtimeDomain.parent) {
-        return new this.sec.flash.system.ApplicationDomain(this._runtimeDomain.parent);
+      if (this.axDomain.parent) {
+        return new this.sec.flash.system.ApplicationDomain(this.axDomain.parent);
       }
       return null;
     }
@@ -69,24 +69,22 @@ module Shumway.AVMX.AS.flash.system {
     }
 
     getDefinition(name: string): Object {
-      // REDUX
-      notImplemented("public flash.system.ApplicationDomain::hasDefinition"); return;
-      //name = axCoerceString(name);
-      //if (name) {
-      //  var simpleName = name.replace("::", ".");
-      //  return this._runtimeDomain.getProperty(Multiname.fromSimpleName(simpleName), true, true);
-      //}
-      //return null;
+      name = axCoerceString(name);
+      if (!name) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'definitionName');
+        return null;
+      }
+      var simpleName = name.replace("::", ".");
+      var mn = Multiname.FromFQNString(simpleName, NamespaceType.Public);
+      var definition = this.axDomain.getProperty(mn, false, false);
+      if (!definition) {
+        this.sec.throwError('ReferenceError', Errors.UndefinedVarError, name);
+      }
+      return definition;
     }
 
     hasDefinition(name: string): boolean {
-      name = axCoerceString(name);
-      if (name) {
-        var simpleName = name.replace("::", ".");
-        var mn = Multiname.FromFQNString(simpleName, NamespaceType.Public);
-        return !!this._runtimeDomain.getProperty(mn, false, false);
-      }
-      return false;
+      return !!this.getDefinition(name);
     }
 
     getQualifiedDefinitionNames(): GenericVector {
