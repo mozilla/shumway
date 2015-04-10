@@ -14,15 +14,19 @@
  * limitations under the License.
  */
 
+/**
+ * This file implements the AMF0 and AMF3 serialization protocols secified in:
+ * http://wwwimages.adobe.com/www.adobe.com/content/dam/Adobe/en/devnet/amf/pdf/amf-file-format-spec.pdf
+ */
 module Shumway.AVMX {
   import ByteArray = Shumway.AVMX.AS.flash.utils.ByteArray;
   import assert = Shumway.Debug.assert;
 
-  class AMFCaches {
-    stringsCache: any [];
-    objectsCache: any [];
-    traitsCache: any [];
-    traitsInfos: any [];
+  class AMF3ReferenceTables {
+    strings: any [] = [];
+    objects: any [] = [];
+    traits: any [] = [];
+    traitsInfos: any [] = [];
   }
 
   export enum AMF0Marker {
@@ -190,7 +194,7 @@ module Shumway.AVMX {
           }
           return array;
         case AMF0Marker.AVMPLUS:
-          return readAmf3Data(ba, new AMFCaches());
+          return readAMF3Data(ba, new AMF3ReferenceTables());
         default:
           throw 'AMF0 Unknown marker ' + marker;
       }
@@ -255,14 +259,14 @@ module Shumway.AVMX {
     }
   }
 
-  function readUTF8vr(ba: ByteArray, caches: AMFCaches) {
+  function readUTF8(ba: ByteArray, references: AMF3ReferenceTables) {
     var u29s = readU29(ba);
     if (u29s === 0x01) {
       return '';
     }
-    var stringsCache = caches.stringsCache || (caches.stringsCache = []);
+    var strings = references.strings;
     if ((u29s & 1) === 0) {
-      return stringsCache[u29s >> 1];
+      return strings[u29s >> 1];
     }
 
     var byteLength = u29s >> 1;
@@ -271,23 +275,23 @@ module Shumway.AVMX {
       buffer[i] = ba.readByte();
     }
     var value = Shumway.StringUtilities.utf8encode(buffer);
-    stringsCache.push(value);
+    strings.push(value);
     return value;
   }
 
-  function writeUTF8vr(ba: ByteArray, s: string, caches: AMFCaches) {
+  function writeUTF8(ba: ByteArray, s: string, references: AMF3ReferenceTables) {
     if (s === '') {
       ba.writeByte(0x01); // empty string
       return;
     }
 
-    var stringsCache = caches.stringsCache || (caches.stringsCache = []);
-    var index = stringsCache.indexOf(s);
+    var strings = references.strings;
+    var index = strings.indexOf(s);
     if (index >= 0) {
       writeU29(ba, index << 1);
       return;
     }
-    stringsCache.push(s);
+    strings.push(s);
 
     var bytes = Shumway.StringUtilities.utf8decode(s);
     writeU29(ba, 1 | (bytes.length << 1));
@@ -296,7 +300,7 @@ module Shumway.AVMX {
     }
   }
 
-  function readAmf3Data(ba: ByteArray, caches: AMFCaches) {
+  function readAMF3Data(ba: ByteArray, references: AMF3ReferenceTables) {
     var marker = ba.readByte();
     switch (marker) {
       case AMF3Marker.NULL:
@@ -312,13 +316,13 @@ module Shumway.AVMX {
       case AMF3Marker.DOUBLE:
         return readDouble(ba);
       case AMF3Marker.STRING:
-        return readUTF8vr(ba, caches);
+        return readUTF8(ba, references);
       case AMF3Marker.DATE:
         return new Date(readDouble(ba));
       case AMF3Marker.OBJECT:
         var u29o = readU29(ba);
         if ((u29o & 1) === 0) {
-          return caches.objectsCache[u29o >> 1];
+          return references.objects[u29o >> 1];
         }
         if ((u29o & 4) !== 0) {
           throw 'AMF3 Traits-Ext is not supported';
@@ -326,11 +330,11 @@ module Shumway.AVMX {
         var traits;
         var objectClass: AXClass;
         if ((u29o & 2) === 0) {
-          traits = caches.traitsCache[u29o >> 2];
+          traits = references.traits[u29o >> 2];
           objectClass = traits.class;
         } else {
           traits = {};
-          var aliasName = readUTF8vr(ba, caches);
+          var aliasName = readUTF8(ba, references);
           traits.className = aliasName;
           objectClass = aliasName && ba.sec.classAliases.names[aliasName];
           traits.class = objectClass;
@@ -338,7 +342,7 @@ module Shumway.AVMX {
           traits.members = [];
           var slots = objectClass && objectClass.classInfo.instanceInfo.runtimeTraits.slots;
           for (var i = 0, j = u29o >> 4; i < j; i++) {
-            var traitName = readUTF8vr(ba, caches);
+            var traitName = readUTF8(ba, references);
             var slot = null;
             for (var j = 1; slots && j < slots.length; j++) {
               if ((<Multiname>slots[j].name).name === traitName) {
@@ -350,20 +354,20 @@ module Shumway.AVMX {
                                 slot.name.getMangledName() :
                                 Multiname.getPublicMangledName(traitName));
           }
-          (caches.traitsCache || (caches.traitsCache = [])).push(traits);
+          references.traits.push(traits);
         }
 
         var obj = objectClass ? objectClass.axConstruct([]) : ba.sec.createObject();
-        (caches.objectsCache || (caches.objectsCache = [])).push(obj);
+        references.objects.push(obj);
         for (var i = 0; i < traits.members.length; i++) {
-          var value = readAmf3Data(ba, caches);
+          var value = readAMF3Data(ba, references);
           obj[traits.members[i]] = value;
         }
         if (traits.isDynamic) {
           while (true) {
-            var key = readUTF8vr(ba, caches);
+            var key = readUTF8(ba, references);
             if (!key.length) break;
-            var value = readAmf3Data(ba, caches);
+            var value = readAMF3Data(ba, references);
             obj.axSetPublicProperty(key, value);
           }
         }
@@ -371,19 +375,19 @@ module Shumway.AVMX {
       case AMF3Marker.ARRAY:
         var u29o = readU29(ba);
         if ((u29o & 1) === 0) {
-          return caches.objectsCache[u29o >> 1];
+          return references.objects[u29o >> 1];
         }
         var array = ba.sec.createArray([]);
-        (caches.objectsCache || (caches.objectsCache = [])).push(array);
+        references.objects.push(array);
         var densePortionLength = u29o >> 1;
         while (true) {
-          var key = readUTF8vr(ba, caches);
+          var key = readUTF8(ba, references);
           if (!key.length) break;
-          var value = readAmf3Data(ba, caches);
+          var value = readAMF3Data(ba, references);
           array.axSetPublicProperty(key, value);
         }
         for (var i = 0; i < densePortionLength; i++) {
-          var value = readAmf3Data(ba, caches);
+          var value = readAMF3Data(ba, references);
           array.axSetPublicProperty(i, value);
         }
         return array;
@@ -392,18 +396,18 @@ module Shumway.AVMX {
     }
   }
 
-  function writeCachedReference(ba: ByteArray, object: AS.ASObject, caches: AMFCaches) {
-    var objectsCache = caches.objectsCache || (caches.objectsCache = []);
-    var index = objectsCache.indexOf(object);
+  function writeCachedReference(ba: ByteArray, object: AS.ASObject, references: AMF3ReferenceTables) {
+    var objects = references.objects;
+    var index = objects.indexOf(object);
     if (index < 0) {
-      objectsCache.push(object);
+      objects.push(object);
       return false;
     }
     writeU29(ba, index << 1);
     return true;
   }
 
-  function writeAmf3Data(ba: ByteArray, value: any, caches: AMFCaches) {
+  function writeAMF3Data(ba: ByteArray, value: any, references: AMF3ReferenceTables) {
     switch (typeof value) {
       case 'boolean':
         ba.writeByte(value ? AMF3Marker.TRUE : AMF3Marker.FALSE);
@@ -422,7 +426,7 @@ module Shumway.AVMX {
         break;
       case 'string':
         ba.writeByte(AMF3Marker.STRING);
-        writeUTF8vr(ba, value, caches);
+        writeUTF8(ba, value, references);
         break;
       case 'object':
         if (value === null) {
@@ -430,7 +434,7 @@ module Shumway.AVMX {
         } else if (ba.sec.AXArray.axIsType(value)) {
           var array = (<AS.ASArray>value);
           ba.writeByte(AMF3Marker.ARRAY);
-          if (writeCachedReference(ba, array, caches))
+          if (writeCachedReference(ba, array, references))
             break;
           var densePortionLength = 0;
           while (array.axHasPublicProperty(densePortionLength)) {
@@ -441,16 +445,16 @@ module Shumway.AVMX {
             if (isNumeric(i) && i >= 0 && i < densePortionLength) {
               return;
             }
-            writeUTF8vr(ba, i, caches);
-            writeAmf3Data(ba, value, caches);
+            writeUTF8(ba, i, references);
+            writeAMF3Data(ba, value, references);
           });
-          writeUTF8vr(ba, '', caches);
+          writeUTF8(ba, '', references);
           for (var j = 0; j < densePortionLength; j++) {
-            writeAmf3Data(ba, array.axGetPublicProperty(j), caches);
+            writeAMF3Data(ba, array.axGetPublicProperty(j), references);
           }
         } else if (ba.sec.AXDate.axIsType(value)) {
           ba.writeByte(AMF3Marker.DATE);
-          if (writeCachedReference(ba, value, caches))
+          if (writeCachedReference(ba, value, references))
             break;
           writeU29(ba, 1);
           writeDouble(ba, value.valueOf());
@@ -459,7 +463,7 @@ module Shumway.AVMX {
 
           // TODO Vector, Dictionary, ByteArray and XML support
           ba.writeByte(AMF3Marker.OBJECT);
-          if (writeCachedReference(ba, object, caches))
+          if (writeCachedReference(ba, object, references))
             break;
 
           var isDynamic = true;
@@ -472,9 +476,9 @@ module Shumway.AVMX {
             var aliasName = ba.sec.classAliases.classes.get(objectClass) || '';
 
             var traitsCount;
-            var traitsCache = caches.traitsCache || (caches.traitsCache = []);
-            var traitsInfos = caches.traitsInfos || (caches.traitsInfos = []);
-            var traitsRef = traitsCache.indexOf(objectClass);
+            var traits = references.traits;
+            var traitsInfos = references.traitsInfos;
+            var traitsRef = traits.indexOf(objectClass);
             if (traitsRef < 0) {
               var slots = classInfo.instanceInfo.runtimeTraits.slots;
               var traitsNames = [];
@@ -485,13 +489,13 @@ module Shumway.AVMX {
                 }
                 traitsNames.push((<Multiname>slot.name).name);
               }
-              traitsCache.push(objectClass);
+              traits.push(objectClass);
               traitsInfos.push(traitsNames);
               traitsCount = traitsNames.length;
               writeU29(ba, (isDynamic ? 0x0B : 0x03) + (traitsCount << 4));
-              writeUTF8vr(ba, aliasName, caches);
+              writeUTF8(ba, aliasName, references);
               for (var i = 0; i < traitsCount; i++) {
-                writeUTF8vr(ba, traitsNames[i], caches);
+                writeUTF8(ba, traitsNames[i], references);
               }
             } else {
               traitsNames = traitsInfos[traitsRef];
@@ -500,20 +504,20 @@ module Shumway.AVMX {
             }
 
             for (var i = 0; i < traitsCount; i++) {
-              writeAmf3Data(ba, object.axGetPublicProperty(traitsNames[i]), caches);
+              writeAMF3Data(ba, object.axGetPublicProperty(traitsNames[i]), references);
             }
           } else {
             // object with no class definition
             writeU29(ba, 0x0B);
-            writeUTF8vr(ba, '', caches); // empty alias name
+            writeUTF8(ba, '', references); // empty alias name
           }
 
           if (isDynamic) {
             forEachPublicProperty(object, function (i, value) {
-              writeUTF8vr(ba, i, caches);
-              writeAmf3Data(ba, value, caches);
+              writeUTF8(ba, i, references);
+              writeAMF3Data(ba, value, references);
             });
-            writeUTF8vr(ba, '', caches);
+            writeUTF8(ba, '', references);
           }
         }
         return;
@@ -528,10 +532,10 @@ module Shumway.AVMX {
 
   export class AMF3 {
     public static write(ba: ByteArray, object: AS.ASObject) {
-      writeAmf3Data(ba, object, new AMFCaches());
+      writeAMF3Data(ba, object, new AMF3ReferenceTables());
     }
     public static read(ba: ByteArray) {
-      return readAmf3Data(ba, new AMFCaches());
+      return readAMF3Data(ba, new AMF3ReferenceTables());
     }
   }
 }
