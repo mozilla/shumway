@@ -150,7 +150,7 @@ module Shumway.AVM1 {
 
     _escapeProperty(p: any): string  {
       var context = this.context;
-      var name = alCoerceString(context, p);
+      var name = alToString(context, p);
       if (!context.isPropertyCaseSensitive) {
         name = name.toUpperCase();
       }
@@ -169,7 +169,7 @@ module Shumway.AVM1 {
 
     _debugEscapeProperty(p: any): string {
       var context = this.context;
-      var name = alCoerceString(context, p);
+      var name = alToString(context, p);
       if (!context.isPropertyCaseSensitive) {
         name = name.toUpperCase();
       }
