@@ -59,58 +59,9 @@ module Shumway.AVM1 {
   var MAX_AVM1_ERRORS_LIMIT = 1000;
   var MAX_AVM1_STACK_LIMIT = 256;
 
-  var as2IdentifiersDictionary = [
-    "addCallback", "addListener", "addProperty", "addRequestHeader",
-    "AsBroadcaster", "attachAudio", "attachMovie", "attachSound", "attachVideo",
-    "beginFill", "beginGradientFill", "blendMode", "blockIndent",
-    "broadcastMessage", "cacheAsBitmap", "CASEINSENSITIVE", "charAt",
-    "charCodeAt", "checkPolicyFile", "clearInterval", "clearRequestHeaders",
-    "concat", "createEmptyMovieClip", "curveTo", "DESCENDING", "displayState",
-    "duplicateMovieClip", "E", "endFill", "exactSettings", "fromCharCode",
-    "fullScreenSourceRect", "getBounds", "getBytesLoaded", "getBytesTotal",
-    "getDate", "getDay", "getDepth", "getDepth", "getDuration", "getFullYear",
-    "getHours", "getLocal", "getMilliseconds", "getMinutes", "getMonth",
-    "getNewTextFormat", "getPan", "getPosition", "getRGB", "getSeconds",
-    "getSize", "getTextFormat", "getTime", "getTimezoneOffset", "getTransform",
-    "getUTCDate", "getUTCDay", "getUTCFullYear", "getUTCHours",
-    "getUTCMilliseconds", "getUTCMinutes", "getUTCMonth", "getUTCSeconds",
-    "getUTCYear", "getVolume", "getYear", "globalToLocal", "gotoAndPlay",
-    "gotoAndStop", "hasAccessibility", "hasAudio", "hasAudioEncoder",
-    "hasEmbeddedVideo", "hasIME", "hasMP3", "hasOwnProperty", "hasPrinting",
-    "hasScreenBroadcast", "hasScreenPlayback", "hasStreamingAudio",
-    "hasStreamingVideo", "hasVideoEncoder", "hitTest", "indexOf", "isActive",
-    "isDebugger", "isFinite", "isNaN", "isPropertyEnumerable", "isPrototypeOf",
-    "lastIndexOf", "leftMargin", "letterSpacing", "lineStyle", "lineTo", "LN10",
-    "LN10E", "LN2", "LN2E", "loadSound", "localFileReadDisable", "localToGlobal",
-    "MAX_VALUE", "MIN_VALUE", "moveTo", "NaN", "NEGATIVE_INFINITY", "nextFrame",
-    "NUMERIC", "onChanged", "onData", "onDragOut", "onDragOver", "onEnterFrame",
-    "onFullScreen", "onKeyDown", "onKeyUp", "onKillFocus", "onLoad",
-    "onMouseDown", "onMouseMove", "onMouseUp", "onPress", "onRelease",
-    "onReleaseOutside", "onResize", "onResize", "onRollOut", "onRollOver",
-    "onScroller", "onSetFocus", "onStatus", "onSync", "onUnload", "parseFloat",
-    "parseInt", "PI", "pixelAspectRatio", "playerType", "POSITIVE_INFINITY",
-    "prevFrame", "registerClass", "removeListener", "removeMovieClip",
-    "removeTextField", "replaceSel", "RETURNINDEXEDARRAY", "rightMargin",
-    "scale9Grid", "scaleMode", "screenColor", "screenDPI", "screenResolutionX",
-    "screenResolutionY", "serverString", "setClipboard", "setDate", "setDuration",
-    "setFps", "setFullYear", "setHours", "setInterval", "setMask",
-    "setMilliseconds", "setMinutes", "setMonth", "setNewTextFormat", "setPan",
-    "setPosition", "setRGB", "setSeconds", "setTextFormat", "setTime",
-    "setTimeout", "setTransform", "setTransform", "setUTCDate", "setUTCFullYear",
-    "setUTCHours", "setUTCMilliseconds", "setUTCMinutes", "setUTCMonth",
-    "setUTCSeconds", "setVolume", "setYear", "showMenu", "showRedrawRegions",
-    "sortOn", "SQRT1_2", "SQRT2", "startDrag", "stopDrag", "swapDepths",
-    "tabEnabled", "tabIndex", "tabIndex", "tabStops", "toLowerCase", "toString",
-    "toUpperCase", "trackAsMenu", "UNIQUESORT", "updateAfterEvent",
-    "updateProperties", "useCodepage", "useHandCursor", "UTC", "valueOf"];
-  var as2IdentifiersCaseMap: MapObject<string> = null;
-
   class AVM1ScopeListItem {
-    constructor(public scope: AVM1Object, public next: AVM1ScopeListItem) {
-    }
+    constructor (public scope: AVM1Object, public previousScopeItem: AVM1ScopeListItem) {
 
-    create(scope: AVM1Object) {
-      return new AVM1ScopeListItem(scope, this);
     }
   }
 
@@ -133,7 +84,9 @@ module Shumway.AVM1 {
       this.calleeThis = thisArg;
       this.calleeSuper = superArg;
       this.calleeFn = fn;
-      this.calleeArgs = args;
+      if (!release) {
+        this.calleeArgs = args;
+      }
     }
 
     resetCallee() {
@@ -502,17 +455,6 @@ module Shumway.AVM1 {
     return false;
   }
 
-  interface ResolvePropertyResult {
-    link: AVM1Object;
-    name;
-  }
-
-  // internal cachable results to avoid GC
-  var __resolvePropertyResult: ResolvePropertyResult = {
-    link: null,
-    name: null
-  };
-
   function as2HasProperty(context: AVM1Context, obj: any, name: any): boolean {
     var avm1Obj: AVM1Object = alToObject(context, obj);
     return avm1Obj.alHasProperty(name);
@@ -603,7 +545,7 @@ module Shumway.AVM1 {
     var registers = [];
     registers.length = 4; // by default only 4 registers allowed
 
-    var scopeContainer = context.initialScope.create(scope);
+    var scopeList = new AVM1ScopeListItem(scope, context.initialScope);
     var caughtError;
     context.pushCallFrame(scope, null, null);
     actionTracer.message('ActionScript Execution Starts');
@@ -615,7 +557,7 @@ module Shumway.AVM1 {
     context.defaultTarget = scope;
     context.currentTarget = null;
     try {
-      interpretActionsData(context, actionsData, scopeContainer, [], registers);
+      interpretActionsData(context, actionsData, scopeList, [], registers);
     } catch (e) {
       caughtError = as2CastError(e);
     }
@@ -665,8 +607,7 @@ module Shumway.AVM1 {
   interface ExecutionContext {
     context: AVM1ContextImpl;
     actions: Lib.AVM1NativeActions;
-    scopeContainer: AVM1ScopeListItem;
-    scope: any;
+    scopeList: AVM1ScopeListItem;
     actionTracer: ActionTracer;
     constantPool: any[];
     registers: any[];
@@ -717,8 +658,7 @@ module Shumway.AVM1 {
     registersAllocation: ArgumentAssignment[];
     suppressArguments: ArgumentAssignmentType;
 
-    scope: AVM1Object;
-    scopeContainer: AVM1ScopeListItem;
+    scopeList: AVM1ScopeListItem;
     constantPool: any[];
     skipArguments: boolean[];
     registersLength: number;
@@ -740,8 +680,7 @@ module Shumway.AVM1 {
       this.registersAllocation = registersAllocation;
       this.suppressArguments = suppressArguments;
 
-      this.scope = ectx.scope;
-      this.scopeContainer = ectx.scopeContainer;
+      this.scopeList = ectx.scopeList;
       this.constantPool = ectx.constantPool;
       this.actionTracer = ectx.actionTracer;
 
@@ -770,10 +709,11 @@ module Shumway.AVM1 {
         return; // no more avm1 execution, ever
       }
 
-      var newScopeContainer;
       var newScope = new AVM1InterpreterScope(currentContext);
+      var newScopeList = new AVM1ScopeListItem(newScope, this.scopeList);
+      var oldScope = this.scopeList.scope;
 
-      thisArg = thisArg || this.scope; // REDUX no isGlobalObject check?
+      thisArg = thisArg || oldScope; // REDUX no isGlobalObject check?
       args = args || [];
 
       var supperWrapper;
@@ -791,7 +731,6 @@ module Shumway.AVM1 {
         supperWrapper = new AVM1SuperWrapper(currentContext, frame);
         newScope.alPut('super', supperWrapper);
       }
-      newScopeContainer = this.scopeContainer.create(newScope);
 
       var i;
       var registers = createRegisters(this.registersLength);
@@ -818,7 +757,7 @@ module Shumway.AVM1 {
               registers[i] = currentContext.globals;
               break;
             case ArgumentAssignmentType.Parent:
-              registers[i] = this.scope.alGet('_parent');
+              registers[i] = oldScope.alGet('_parent');
               break;
             case ArgumentAssignmentType.Root:
               registers[i] = currentContext.resolveLevel(0);
@@ -848,7 +787,7 @@ module Shumway.AVM1 {
       var savedCurrentTarget = currentContext.currentTarget;
       currentContext.currentTarget = null;
       try {
-        result = interpretActionsData(currentContext, actionsData, newScopeContainer, constantPool, registers);
+        result = interpretActionsData(currentContext, actionsData, newScopeList, constantPool, registers);
       } catch (e) {
         caughtError = e;
       }
@@ -957,17 +896,16 @@ module Shumway.AVM1 {
         return avm1FindChildVariableScope(ectx, variableName);
       }
 
-      var scopeContainer = ectx.scopeContainer;
+      var scopeList = ectx.scopeList;
       var currentContext = ectx.context;
       var currentTarget = currentContext.currentTarget;
-      var scope = ectx.scope;
 
       if (currentTarget &&
           currentTarget.alHasProperty(variableName)) {
         return currentTarget;
       }
 
-      for (var p = scopeContainer; p; p = p.next) {
+      for (var p = scopeList; p; p = p.previousScopeItem) {
         if (p.scope.alHasProperty(variableName)) {
           return p.scope;
         }
@@ -975,6 +913,7 @@ module Shumway.AVM1 {
 
       // FIXME refactor that
       if (variableName === 'this') {
+        var scope = scopeList.scope;
         scope.alSetOwnProperty('this', {
           flags: AVM1PropertyFlags.NATIVE_MEMBER,
           value: currentContext.defaultTarget,
@@ -989,39 +928,38 @@ module Shumway.AVM1 {
         return avm1FindChildVariableScope(ectx, variableName);
       }
 
-      var scopeContainer = ectx.scopeContainer;
+      var scopeList = ectx.scopeList;
       var currentContext = ectx.context;
       var currentTarget = currentContext.currentTarget;
-      var scope = ectx.scope;
 
       if (currentTarget) {
         return currentTarget;
       }
 
-      for (var p = scopeContainer; p.next; p = p.next) { // excluding globals
+      for (var p = scopeList; p.previousScopeItem; p = p.previousScopeItem) { // excluding globals
         if (p.scope.alHasProperty(variableName)) {
           return p.scope;
         }
       }
 
-      return scope;
+      return scopeList.scope;
     }
 
     function avm1ProcessWith(ectx: ExecutionContext, obj, withBlock) {
-      var scopeContainer = ectx.scopeContainer;
+      var context = ectx.context;
+      var scopeList = ectx.scopeList;
       var constantPool = ectx.constantPool;
       var registers = ectx.registers;
 
-      var newScopeContainer = scopeContainer.create(Object(obj));
-      interpretActionsData(ectx.context, withBlock, newScopeContainer, constantPool, registers);
+      var newScopeList = new AVM1ScopeListItem(alToObject(ectx.context, obj), scopeList);
+      interpretActionsData(ectx.context, withBlock, newScopeList, constantPool, registers);
     }
     function avm1ProcessTry(ectx: ExecutionContext,
                             catchIsRegisterFlag, finallyBlockFlag,
                             catchBlockFlag, catchTarget,
                             tryBlock, catchBlock, finallyBlock) {
       var currentContext = ectx.context;
-      var scopeContainer = ectx.scopeContainer;
-      var scope = ectx.scope;
+      var scopeList = ectx.scopeList;
       var constantPool = ectx.constantPool;
       var registers = ectx.registers;
 
@@ -1029,23 +967,24 @@ module Shumway.AVM1 {
       var caughtError;
       try {
         currentContext.isTryCatchListening = true;
-        interpretActionsData(currentContext, tryBlock, scopeContainer, constantPool, registers);
+        interpretActionsData(currentContext, tryBlock, scopeList, constantPool, registers);
       } catch (e) {
         currentContext.isTryCatchListening = savedTryCatchState;
         if (!catchBlockFlag || !(e instanceof AVM1Error)) {
           caughtError = e;
         } else {
           if (typeof catchTarget === 'string') { // TODO catchIsRegisterFlag?
+            var scope = scopeList.scope;
             scope.alPut(catchTarget, e.error);
           } else {
             registers[catchTarget] = e.error;
           }
-          interpretActionsData(currentContext, catchBlock, scopeContainer, constantPool, registers);
+          interpretActionsData(currentContext, catchBlock, scopeList, constantPool, registers);
         }
       }
       currentContext.isTryCatchListening = savedTryCatchState;
       if (finallyBlockFlag) {
-        interpretActionsData(currentContext, finallyBlock, scopeContainer, constantPool, registers);
+        interpretActionsData(currentContext, finallyBlock, scopeList, constantPool, registers);
       }
       if (caughtError) {
         throw caughtError;
@@ -1559,7 +1498,6 @@ module Shumway.AVM1 {
     }
     function avm1_0x9B_ActionDefineFunction(ectx: ExecutionContext, args: any[]) {
       var stack = ectx.stack;
-      var scope = ectx.scope;
 
       var functionBody = args[0];
       var functionName: string = args[1];
@@ -1568,6 +1506,7 @@ module Shumway.AVM1 {
       var fn = avm1DefineFunction(ectx, functionBody, functionName,
         functionParams, 4, null, 0);
       if (functionName) {
+        var scope = ectx.scopeList.scope;
         scope.alPut(functionName, fn);
       } else {
         stack.push(fn);
@@ -1575,7 +1514,7 @@ module Shumway.AVM1 {
     }
     function avm1_0x3C_ActionDefineLocal(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var scope = ectx.scope;
+      var scope = ectx.scopeList.scope;
 
       var value = stack.pop();
       var name = stack.pop();
@@ -1583,7 +1522,7 @@ module Shumway.AVM1 {
     }
     function avm1_0x41_ActionDefineLocal2(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var scope = ectx.scope;
+      var scope = ectx.scopeList.scope;
 
       var name = stack.pop();
       scope.alPut(name, undefined);
@@ -1939,7 +1878,7 @@ module Shumway.AVM1 {
     // SWF 7
     function avm1_0x8E_ActionDefineFunction2(ectx: ExecutionContext, args: any[]) {
       var stack = ectx.stack;
-      var scope = ectx.scope;
+      var scope = ectx.scopeList.scope;
 
       var functionBody = args[0];
       var functionName: string = args[1];
@@ -2537,7 +2476,7 @@ module Shumway.AVM1 {
       return result;
     }
 
-    function interpretActionsData(currentContext: AVM1ContextImpl, actionsData: AVM1ActionsData, scopeContainer, constantPool, registers) {
+    function interpretActionsData(currentContext: AVM1ContextImpl, actionsData: AVM1ActionsData, scopeList: AVM1ScopeListItem, constantPool: any[], registers: any[]) {
       if (!actionsData.ir) {
         var parser = new ActionsDataParser(actionsData, currentContext.swfVersion);
         var analyzer = new ActionsDataAnalyzer();
@@ -2560,13 +2499,11 @@ module Shumway.AVM1 {
       var stack = [];
       var isSwfVersion5 = currentContext.swfVersion >= 5;
       var actionTracer = ActionTracerFactory.get();
-      var scope = scopeContainer.scope;
 
       var executionContext = {
         context: currentContext,
         actions: currentContext.actions,
-        scopeContainer: scopeContainer,
-        scope: scope,
+        scopeList: scopeList,
         actionTracer: actionTracer,
         constantPool: constantPool,
         registers: registers,
@@ -2577,8 +2514,9 @@ module Shumway.AVM1 {
         isEndOfActions: false
       };
 
-      if (scope._as3Object &&
-          scope._as3Object._deferScriptExecution) {
+      var scope = scopeList.scope;
+      var as3Object = (<any>scope)._as3Object; // FIXME refactor
+      if (as3Object && as3Object._deferScriptExecution) {
         currentContext.deferScriptExecution = true;
       }
 
