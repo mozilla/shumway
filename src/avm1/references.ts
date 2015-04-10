@@ -24,6 +24,7 @@
 ///<reference path='natives.ts' />
 ///<reference path='context.ts' />
 ///<reference path='interpreter.ts' />
+///<reference path='baseline.ts' />
 ///<reference path='lib/AVM1Utils.ts' />
 ///<reference path='lib/AVM1Globals.ts' />
 ///<reference path='lib/AVM1Broadcaster.ts' />

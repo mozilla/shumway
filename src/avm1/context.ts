@@ -87,6 +87,7 @@ module Shumway.AVM1 {
     public resolveTarget(target): any {}
     public resolveLevel(level: number): any {}
     public addToPendingScripts(fn, defaultTarget) {}
+    public checkTimeout() {}
 
     public registerEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver) {}
     public unregisterEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver) {}
