@@ -242,21 +242,19 @@ module Shumway.AVM1 {
         theClass: this.assetsClasses[symbolId]
       };
     }
-    resolveTarget(target) : any {
-      var currentTarget = this.currentTarget || this.defaultTarget;
-      if (!target) {
-        target = currentTarget;
-      } else if (typeof target === 'string') {
-        target = lookupAVM1Children(target, currentTarget,
-          this.resolveLevel(0));
+    resolveTarget(target: any) : any {
+      var result: AVM1Object;
+      if (target instanceof AVM1Object && target.isAVM1Instance) {
+        result = target;
+      } else if (!isNullOrUndefined(target)) {
+        result = this.lookupChild(alToString(this, target), true);
+        if (!(result instanceof AVM1Object) || !(<any>result).isAVM1Instance) {
+          throw new Error('Invalid AVM1 target object: ' + alToString(this, result));
+        }
+      } else {
+        result = this.currentTarget || this.defaultTarget;
       }
-      if (typeof target !== 'object' || target === null ||
-        !('_as3Object' in target)) {
-        throw new Error('Invalid AVM1 target object: ' +
-          Object.prototype.toString.call(target));
-      }
-
-      return target;
+      return result;
     }
     resolveLevel(level: number) : any {
       // TODO levels 1, 2, etc.
@@ -265,6 +263,57 @@ module Shumway.AVM1 {
         return this.root;
       }
       return undefined;
+    }
+    lookupChild(targetPath: string, fromCurrentTarget: boolean): AVM1Object {
+      var path: string[];
+      var obj: AVM1Object = this.defaultTarget;
+      if (fromCurrentTarget && this.currentTarget) {
+        obj = this.currentTarget;
+      }
+
+      // special cases
+      if (!targetPath || targetPath === '.') {
+        return obj;
+      } else if (targetPath === '..') {
+        return obj.alGet('_parent');
+      }
+
+      if (targetPath.indexOf('/') >= 0) {
+        // Parsing legacy format, e.g. /A/B
+        path = targetPath.split('/');
+        if (path[0] === '') { // starts from root
+          path[0] === '_root';
+        }
+        for (var i = 0; i < path.length; i++) {
+          if (path[i] === '.' || path[i] === '') { // points to current child
+            path.splice(i, 1);
+          } else if (path[i] === '..') { // points to parent
+            path[i] === '_parent';
+          }
+        }
+      } else {
+        // Parsing simple dot notation, e.g. A.B
+        path = targetPath.split('.');
+      }
+
+      if (path[0] === '_level0' || path[0] === '_root') {
+        // Optimizing first item access
+        obj = this.resolveLevel(0);
+        path.shift();
+      }
+
+      while (path.length > 0) {
+        var prevObj = obj;
+        obj = isAVM1MovieClip(obj) ? (<Lib.AVM1MovieClip>obj)._lookupChildByName(path[0]) : null;
+        if (!obj) {
+          avm1Warn(path[0] + ' (expr ' + targetPath + ') is not found in ' +
+            (<Lib.AVM1MovieClip>prevObj)._target);
+          // TODO refactor me
+          return new AVM1Object(this); // resolving to fake object
+        }
+        path.shift();
+      }
+      return obj;
     }
     addToPendingScripts(fn: Function, defaultTarget: any) {
       var runner = function () {
@@ -464,23 +513,6 @@ module Shumway.AVM1 {
     name: null
   };
 
-  function avm1ResolveProperty(context: AVM1Context, obj, name: string, normalize: boolean): ResolvePropertyResult {
-    // AVM1 just ignores lookups on non-existant containers
-    if (isNullOrUndefined(obj)) {
-      avm1Warn("AVM1 warning: cannot look up member '" + name + "' on undefined object");
-      return null;
-    }
-
-    var avm1Obj: AVM1Object = alToObject(context, obj);
-    // checking if avm2 public property is present
-    if (avm1Obj.alHasProperty(name)) {
-      __resolvePropertyResult.link = avm1Obj;
-      __resolvePropertyResult.name = name;
-      return __resolvePropertyResult;
-    }
-    return null;
-  }
-
   function as2HasProperty(context: AVM1Context, obj: any, name: any): boolean {
     var avm1Obj: AVM1Object = alToObject(context, obj);
     return avm1Obj.alHasProperty(name);
@@ -566,12 +598,6 @@ module Shumway.AVM1 {
     return proto;
   }
 
-  //interface AVM1Function {
-  //  instanceConstructor: Function;
-  //  debugName: string; // for AVM2 debugging
-  //  name: string; // Function's name
-  //}
-
   function executeActionsData(context: AVM1ContextImpl, actionsData: AVM1ActionsData, scope) {
     var actionTracer = ActionTracerFactory.get();
     var registers = [];
@@ -608,29 +634,6 @@ module Shumway.AVM1 {
       // Note: this doesn't use `finally` because that's a no-go for performance.
       throw caughtError; // TODO shall we just ignore it?
     }
-  }
-
-  function lookupAVM1Children(targetPath: string, defaultTarget, root) {
-    var path = targetPath.split(/[\/.]/g);
-    if (path[path.length - 1] === '') {
-      path.pop();
-    }
-    var obj = defaultTarget;
-    if (path[0] === '' || path[0] === '_level0' || path[0] === '_root') {
-      obj = root;
-      path.shift();
-    }
-    while (path.length > 0) {
-      var prevObj = obj;
-      obj = obj.__lookupChild(path[0]);
-      if (!obj) {
-        avm1Warn(path[0] + ' (expr ' + targetPath + ') is not found in ' + prevObj._target);
-        // TODO refactor me
-        return {}; // resolving to fake object
-      }
-      path.shift();
-    }
-    return obj;
   }
 
   function createBuiltinType(context: AVM1Context, cls, args: any[]): any {
@@ -704,10 +707,7 @@ module Shumway.AVM1 {
       }
 
       try {
-        var currentTarget = lookupAVM1Children(targetPath,
-          currentContext.currentTarget || currentContext.defaultTarget,
-          currentContext.resolveLevel(0));
-        currentContext.currentTarget = currentTarget;
+        currentContext.currentTarget = currentContext.lookupChild(targetPath, false);
       } catch (e) {
         currentContext.currentTarget = null;
         throw e;
@@ -867,40 +867,18 @@ module Shumway.AVM1 {
       }
       return fnObj;
     }
-    function avm1DeleteProperty(ectx, propertyName) {
-      var scopeContainer = ectx.scopeContainer;
-
-      for (var p = scopeContainer; p; p = p.next) {
-        p.scope.alDeleteProperty(propertyName);
-      }
-      return false;
-    }
-
-  interface ResolveVariableResult {
-    obj;
-    link;
-    name;
-  }
-
-  var __resolveVariableResult = {
-    obj: null,
-    link: null,
-    name: null
-  };
 
     function avm1VariableNameHasPath(variableName: string): boolean {
       return variableName && (variableName.indexOf('.') >= 0 || variableName.indexOf(':') >= 0);
     }
 
-    function avm1ResolveVariableName(ectx: ExecutionContext, variableName: string, normalize: boolean): ResolveVariableResult {
+    function avm1FindChildVariableScope(ectx: ExecutionContext, variableName: string): AVM1Object {
       var currentContext = ectx.context;
-      var obj, name, i, resolved;
+      var obj, name, i;
       if (variableName.indexOf(':') >= 0) {
         // "/A/B:FOO references the FOO variable in the movie clip with a target path of /A/B."
-        var currentTarget = currentContext.currentTarget || currentContext.defaultTarget;
         var parts = variableName.split(':');
-        obj = lookupAVM1Children(parts[0], currentTarget,
-          currentContext.resolveLevel(0));
+        obj = currentContext.lookupChild(parts[0], true);
         if (!obj) {
           avm1Warn(parts[0] + ' is undefined');
           return null;
@@ -922,109 +900,62 @@ module Shumway.AVM1 {
         release || Debug.assert(false, 'AVM1 variable has no path');
       }
 
-      if (obj.alHasProperty(name) || normalize) {
-        __resolveVariableResult.obj = obj;
-        __resolveVariableResult.link = obj;
-        __resolveVariableResult.name = resolved.name;
-        return __resolveVariableResult;
-      } else {
-        return null;
-      }
+      return obj;
     }
 
-    function avm1ResolveGetVariable(ectx: ExecutionContext, variableName: string): ResolveVariableResult {
+    function avm1FindGetVariableScope(ectx: ExecutionContext, variableName: string): AVM1Object {
       if (avm1VariableNameHasPath(variableName)) {
-        return avm1ResolveVariableName(ectx, variableName, false);
+        return avm1FindChildVariableScope(ectx, variableName);
       }
 
       var scopeContainer = ectx.scopeContainer;
       var currentContext = ectx.context;
-      var currentTarget = currentContext.currentTarget || currentContext.defaultTarget;
+      var currentTarget = currentContext.currentTarget;
       var scope = ectx.scope;
 
-      // fast check if variable in the current scope
-      var resolved: ResolvePropertyResult;
-      resolved = avm1ResolveProperty(currentContext, scope, variableName, false);
-      if (resolved) {
-        __resolveVariableResult.obj = scope;
-        __resolveVariableResult.link = resolved.link;
-        __resolveVariableResult.name = resolved.name;
-        return __resolveVariableResult;
+      if (currentTarget &&
+          currentTarget.alHasProperty(variableName)) {
+        return currentTarget;
       }
 
       for (var p = scopeContainer; p; p = p.next) {
-        resolved = avm1ResolveProperty(currentContext, p.scope, variableName, false);
-        if (resolved) {
-          __resolveVariableResult.obj = p.scope;
-          __resolveVariableResult.link = resolved.link;
-          __resolveVariableResult.name = resolved.name;
-          return __resolveVariableResult;
+        if (p.scope.alHasProperty(variableName)) {
+          return p.scope;
         }
       }
 
-      resolved = avm1ResolveProperty(currentContext, currentTarget, variableName, false);
-      if (resolved) {
-        __resolveVariableResult.obj = currentTarget;
-        __resolveVariableResult.link = resolved.link;
-        __resolveVariableResult.name = resolved.name;
-        return __resolveVariableResult;
-      }
-
-      // TODO refactor that
+      // FIXME refactor that
       if (variableName === 'this') {
         scope.alSetOwnProperty('this', {
           flags: AVM1PropertyFlags.NATIVE_MEMBER,
-          value: currentTarget,
+          value: currentContext.defaultTarget,
         });
-        __resolveVariableResult.obj = scope;
-        __resolveVariableResult.link = scope;
-        __resolveVariableResult.name = 'this';
-        return __resolveVariableResult;
+        return scope;
       }
 
       return null;
     }
-    function avm1ResolveSetVariable(ectx: ExecutionContext, variableName: string): ResolveVariableResult {
+    function avm1FindSetVariableScope(ectx: ExecutionContext, variableName: string): AVM1Object {
       if (avm1VariableNameHasPath(variableName)) {
-        return avm1ResolveVariableName(ectx, variableName, true);
+        return avm1FindChildVariableScope(ectx, variableName);
       }
 
       var scopeContainer = ectx.scopeContainer;
       var currentContext = ectx.context;
-      var currentTarget = currentContext.currentTarget || currentContext.defaultTarget;
+      var currentTarget = currentContext.currentTarget;
       var scope = ectx.scope;
 
-      if (currentContext.currentTarget) {
-        __resolveVariableResult.obj = currentTarget;
-        __resolveVariableResult.link = currentTarget;
-        __resolveVariableResult.name = variableName;
-        return __resolveVariableResult;
-      }
-
-      // fast check if variable in the current scope
-      var resolved: ResolvePropertyResult;
-      resolved = avm1ResolveProperty(currentContext, scope, variableName, false);
-      if (resolved) {
-        __resolveVariableResult.obj = scope;
-        __resolveVariableResult.link = resolved.link;
-        __resolveVariableResult.name = resolved.name;
-        return __resolveVariableResult;
+      if (currentTarget) {
+        return currentTarget;
       }
 
       for (var p = scopeContainer; p.next; p = p.next) { // excluding globals
-        resolved = avm1ResolveProperty(currentContext, p.scope, variableName, false);
-        if (resolved) {
-          __resolveVariableResult.obj = p.scope;
-          __resolveVariableResult.link = resolved.link;
-          __resolveVariableResult.name = resolved.name;
-          return __resolveVariableResult;
+        if (p.scope.alHasProperty(variableName)) {
+          return p.scope;
         }
       }
 
-      __resolveVariableResult.obj = currentTarget;
-      __resolveVariableResult.link = currentTarget;
-      __resolveVariableResult.name = variableName;
-      return __resolveVariableResult;
+      return scope;
     }
 
     function avm1ProcessWith(ectx: ExecutionContext, obj, withBlock) {
@@ -1333,18 +1264,26 @@ module Shumway.AVM1 {
       var sp = stack.length;
       stack.push(undefined);
 
-      var resolved = avm1ResolveGetVariable(ectx, variableName);
-      stack[sp] = resolved ? resolved.link.alGet(resolved.name) : undefined;
+      var resolved = avm1FindGetVariableScope(ectx, variableName);
+      if (isNullOrUndefined(resolved)) {
+        avm1Warn("AVM1 warning: cannot look up variable '" + variableName + "'");
+        return;
+      }
+      stack[sp] = resolved ? resolved.alGet(variableName) : undefined;
     }
     function avm1_0x1D_ActionSetVariable(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
       var value = stack.pop();
       var variableName = '' + stack.pop();
-      var resolved = avm1ResolveSetVariable(ectx, variableName);
+      var resolved = avm1FindSetVariableScope(ectx, variableName);
+      if (isNullOrUndefined(resolved)) {
+        avm1Warn("AVM1 warning: cannot look up variable '" + variableName + "'");
+        return;
+      }
       if (resolved) {
-        resolved.link.alPut(resolved.name, value);
-        as2SyncEvents(ectx.context, resolved.name);
+        resolved.alPut(variableName, value);
+        as2SyncEvents(ectx.context, variableName);
       }
     }
     function avm1_0x9A_ActionGetURL2(ectx: ExecutionContext, args: any[]) {
@@ -1475,8 +1414,12 @@ module Shumway.AVM1 {
       stack.push(undefined);
 
       // TODO fix this bind scope lookup, e.g. calling function in with() might require binding
-      var resolved = avm1ResolveGetVariable(ectx, functionName);
-      var fn = resolved ? resolved.link.alGet(resolved.name) : undefined;
+      var resolved = avm1FindGetVariableScope(ectx, functionName);
+      if (isNullOrUndefined(resolved)) {
+        avm1Warn("AVM1 warning: cannot look up function '" + functionName + "'");
+        return;
+      }
+      var fn = resolved ? resolved.alGet(functionName) : undefined;
       // AVM1 simply ignores attempts to invoke non-functions.
       if (!alIsFunction(fn)) {
         avm1Warn("AVM1 warning: function '" + functionName +
@@ -1485,7 +1428,7 @@ module Shumway.AVM1 {
       }
       release || assert(stack.length === sp + 1);
       // REDUX
-      stack[sp] = fn.alCall(resolved.obj || null, args);
+      stack[sp] = fn.alCall(resolved || null, args);
     }
     function avm1_0x52_ActionCallMethod(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1608,8 +1551,12 @@ module Shumway.AVM1 {
       var stack = ectx.stack;
 
       var name = stack.pop();
-      var result = avm1DeleteProperty(ectx, name);
-      stack.push(result);
+      var resolved = avm1FindGetVariableScope(ectx, name);
+      if (isNullOrUndefined(resolved)) {
+        avm1Warn("AVM1 warning: cannot look up variable '" + name + "'");
+        return;
+      }
+      stack.push(as2DeleteProperty(ectx.context, resolved, name));
       as2SyncEvents(ectx.context, name);
     }
     function avm1_0x46_ActionEnumerate(ectx: ExecutionContext) {
@@ -1617,12 +1564,12 @@ module Shumway.AVM1 {
 
       var objectName = stack.pop();
       stack.push(null);
-      var resolved = avm1ResolveGetVariable(ectx, objectName);
-      var obj = resolved ? resolved.link.alGet(resolved.name) : undefined;
-      // AVM1 just ignores lookups on non-existant containers. We warned in GetVariable already.
-      if (isNullOrUndefined(obj)) {
+      var resolved = avm1FindGetVariableScope(ectx, objectName);
+      if (isNullOrUndefined(resolved)) {
+        avm1Warn("AVM1 warning: cannot look up variable '" + objectName + "'");
         return;
       }
+      var obj = resolved ? resolved.alGet(objectName) : undefined;
       as2Enumerate(obj, function (name) {
         stack.push(name);
       }, null);
@@ -1719,8 +1666,12 @@ module Shumway.AVM1 {
       var sp = stack.length;
       stack.push(undefined);
 
-      var resolved = avm1ResolveGetVariable(ectx, objectName);
-      var obj = resolved ? resolved.link.alGet(resolved.name) : undefined;
+      var resolved = avm1FindGetVariableScope(ectx, objectName);
+      if (isNullOrUndefined(resolved)) {
+        avm1Warn("AVM1 warning: cannot look up object '" + objectName + "'");
+        return;
+      }
+      var obj = resolved ? resolved.alGet(objectName) : undefined;
 
       var result = createBuiltinType(ectx.context, obj, args);
       if (result === undefined) {

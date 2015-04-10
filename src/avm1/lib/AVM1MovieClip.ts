@@ -73,19 +73,10 @@ module Shumway.AVM1.Lib {
       this._initEventsHandlers();
     }
 
-    public __lookupChild(id: string) {
-      if (id == '.') {
-        return this;
-      } else if (id == '..') {
-        return getAVM1Object(this.as3Object.parent, this.context);
-      } else {
-        return getAVM1Object(this._lookupChildByName(id), this.context);
-      }
-    }
-
-    private _lookupChildByName(name: string): flash.display.DisplayObject {
+    _lookupChildByName(name: string): AVM1Object {
       name = alCoerceString(this.context, name);
-      return this.as3Object._lookupChildByName(name);
+      var as3Child = this.as3Object._lookupChildByName(name);
+      return getAVM1Object(as3Child, this.context);
     }
 
     public get __targetPath() {
@@ -193,7 +184,7 @@ module Shumway.AVM1.Lib {
       if (this.context.sec.flash.display.Bitmap.axIsType(mc)) {
         return null;
       }
-      var as2mc = getAVM1Object(mc, this.context);
+      var as2mc = <AVM1SymbolBase<T>>getAVM1Object(mc, this.context);
       return as2mc;
     }
 
@@ -232,7 +223,7 @@ module Shumway.AVM1.Lib {
 
     public duplicateMovieClip(name, depth, initObject): AVM1MovieClip {
       var mc = this._duplicate(name, +depth, initObject);
-      return getAVM1Object(mc, this.context);
+      return <AVM1MovieClip>getAVM1Object(mc, this.context);
     }
 
     public get enabled() {
@@ -315,7 +306,7 @@ module Shumway.AVM1.Lib {
           if (this.context.sec.flash.display.Bitmap.axIsType(child)) {
             return this;
           }
-          return getAVM1Object(child, this.context);
+          return <AVM1MovieClip>getAVM1Object(child, this.context);
         }
       }
       return null;
@@ -494,7 +485,7 @@ module Shumway.AVM1.Lib {
     public get _parent(): AVM1MovieClip {
       var parent = getAVM1Object(this.as3Object.parent, this.context);
       // In AVM1, the _parent property is `undefined`, not `null` if the element has no parent.
-      return parent || undefined;
+      return <AVM1MovieClip>parent || undefined;
     }
 
     public set _parent(value) {
@@ -786,7 +777,7 @@ module Shumway.AVM1.Lib {
         }
       }
       if (this.isAVM1Instance) {
-        var child = this.__lookupChild(name);
+        var child = this._lookupChildByName(name);
         if (child) {
           return this._getCachedPropertyResult(child);
         }

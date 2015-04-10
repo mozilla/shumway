@@ -222,7 +222,7 @@ module Shumway.AVM1.Lib {
     return avm1Object;
   }
 
-  export function getAVM1Object(as3Object, context: AVM1Context) {
+  export function getAVM1Object(as3Object, context: AVM1Context): AVM1Object {
     if (!as3Object) {
       return null;
     }
@@ -325,7 +325,7 @@ module Shumway.AVM1.Lib {
     release || Debug.assert(instanceAVM1);
 
     if (placeObjectTag.variableName) {
-      instanceAVM1.axSetPublicProperty('variable', placeObjectTag.variableName);
+      instanceAVM1.alPut('variable', placeObjectTag.variableName);
     }
 
     var events = placeObjectTag.events;
