@@ -607,4 +607,28 @@ module Shumway.AVM1 {
     var callable: IAVM1Callable = obj.alGet(p);
     callable.alCall(obj, args);
   }
+
+  export function alInstanceOf(context: IAVM1Context, obj, cls): boolean  {
+    if (!(obj instanceof AVM1Object)) {
+      return false;
+    }
+    if (!(cls instanceof AVM1Object)) {
+      return false;
+    }
+    var proto = cls.alGetPrototypeProperty();
+    for (var i = obj; i; i = i.alPrototype) {
+      if (i === proto) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  export function alIsArray(context: IAVM1Context, v): boolean  {
+    return alInstanceOf(context, v, context.builtins.Array);
+  }
+
+  export function alIsString(context: IAVM1Context, v): boolean {
+    return typeof v === 'string';
+  }
 }
