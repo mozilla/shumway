@@ -38,19 +38,19 @@ module Shumway {
       SWF.leaveTimeline();
 
 
-      // If library is shell.abc, then just go ahead and run it now since
-      // it's not worth doing it lazily given that it is so small.
-      if (!!(libraries & AVM2LoadLibrariesFlags.Shell)) {
-        var shellABC = new Shumway.AVMX.ABCFile(new Uint8Array(buffer));
-        sec.system.loadAndExecuteABC(shellABC);
-        result.resolve(sec);
-        SystemResourcesLoadingService.instance.load(SystemResourceId.ShellAbc).then(function (buffer) {
-          var shellABC = new Shumway.AVMX.ABCFile(new Uint8Array(buffer));
-          sec.system.loadAndExecuteABC(shellABC);
-          result.resolve(sec);
-        }, result.reject);
-        return;
-      }
+      //// If library is shell.abc, then just go ahead and run it now since
+      //// it's not worth doing it lazily given that it is so small.
+      //if (!!(libraries & AVM2LoadLibrariesFlags.Shell)) {
+      //  var shellABC = new Shumway.AVMX.ABCFile(new Uint8Array(buffer));
+      //  sec.system.loadAndExecuteABC(shellABC);
+      //  result.resolve(sec);
+      //  SystemResourcesLoadingService.instance.load(SystemResourceId.ShellAbc).then(function (buffer) {
+      //    var shellABC = new Shumway.AVMX.ABCFile(new Uint8Array(buffer));
+      //    sec.system.loadAndExecuteABC(shellABC);
+      //    result.resolve(sec);
+      //  }, result.reject);
+      //  return;
+      //}
 
       if (!!(libraries & AVM2LoadLibrariesFlags.Playerglobal)) {
         SWF.enterTimeline('Load playerglobal files');
