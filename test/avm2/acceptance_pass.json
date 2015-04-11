@@ -316,7 +316,17 @@
       "test/avm2/acceptance/ecma3/Math/e15_8_2_13.abc",
       "test/avm2/acceptance/ecma3/Math/e15_8_2_14.abc",
       "test/avm2/acceptance/ecma3/Math/e15_8_2_15.abc",
-      "test/avm2/acceptance/ecma3/Math/e15_8_2_16.abc",
+      "test/avm2/acceptance/ecma3/Math/e15_8_2_16.abc"
+    ]
+  ],
+
+  [
+    [
+      "test/avm2/acceptance/Assert.abc",
+      "test/avm2/acceptance/Utils.abc",
+      "test/avm2/acceptance/DateUtils.abc"
+    ],
+    [
       "test/avm2/acceptance/ecma3/Math/e15_8_2_17.abc",
       "test/avm2/acceptance/ecma3/Math/e15_8_2_17_1.abc",
       "test/avm2/acceptance/ecma3/Math/e15_8_2_18.abc",
@@ -1555,7 +1565,6 @@
       "test/avm2/acceptance/spidermonkey/js1_5/Regress/regress-464334.abc",
       "test/avm2/acceptance/spidermonkey/js1_5/Regress/regress-464862.abc",
       "test/avm2/acceptance/spidermonkey/js1_5/Regress/regress-465013.abc",
-      "test/avm2/acceptance/spidermonkey/js1_5/Regress/regress-465132.abc",
       "test/avm2/acceptance/spidermonkey/js1_5/Regress/regress-465133.abc",
       "test/avm2/acceptance/spidermonkey/js1_5/Regress/regress-465135.abc",
       "test/avm2/acceptance/spidermonkey/js1_5/Regress/regress-465136.abc",
@@ -1628,7 +1637,9 @@
       "test/avm2/acceptance/spidermonkey/js1_6/Regress/regress-353078.abc",
       "test/avm2/acceptance/spidermonkey/js1_6/Regress/regress-372565.abc",
       "test/avm2/acceptance/spidermonkey/js1_6/Regress/regress-378492.abc",
-      "test/avm2/acceptance/spidermonkey/js1_6/Regress/regress-475469.abc"
+      "test/avm2/acceptance/spidermonkey/js1_6/Regress/regress-475469.abc",
+
+      "test/avm2/acceptance/spidermonkey/js1_5/Regress/regress-465132.abc"
     ]
   ],
 
