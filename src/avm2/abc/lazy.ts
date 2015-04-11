@@ -170,7 +170,7 @@ module Shumway.AVMX {
       }
     }
 
-    trace(writer: IndentingWriter) {
+    trace(writer: IndentingWriter = new IndentingWriter()) {
       this.resolve();
       this.traits.forEach(x => writer.writeLn(x.toString()));
     }
@@ -474,6 +474,19 @@ module Shumway.AVMX {
       }
       var i = this.indexOf(namespaces, name);
       return i >= 0 ? this.traits[i] : null;
+    }
+
+    getSlotPublicTraitNames(): string [] {
+      var slots = this.slots;
+      var names = [];
+      for (var i = 1; i < slots.length; i++) {
+        var slot = slots[i];
+        if (!(<Multiname>slot.name).namespace.isPublic()) {
+          continue;
+        }
+        names.push((<Multiname>slot.name).name);
+      }
+      return names;
     }
 
     getSlot(i: number): RuntimeTraitInfo {
