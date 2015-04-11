@@ -341,7 +341,8 @@ module Shumway.AVMX.AS {
   }
 
   function coerceE4XMultiname(mn: Multiname, sec: AXSecurityDomain) {
-    var out = mn.isAttribute() ? tmpAttributeMultiname : tmpMultiname;
+    var out = tmpMultiname;
+    out.kind = mn.kind;
 
     // Queries of the foo[new QName('bar')] sort create this situation.
     if (mn.name && mn.name.axClass === sec.AXQName) {
@@ -437,12 +438,8 @@ module Shumway.AVMX.AS {
     return true;
   }
 
-  var tmpAttributeMultiname = new Multiname(null, 0, CONSTANT.QNameA, [], null);
-  release || defineReadOnlyProperty(tmpAttributeMultiname, 'kind', CONSTANT.QNameA);
   var tmpMultiname = new Multiname(null, 0, CONSTANT.QName, [], null);
-  release || defineReadOnlyProperty(tmpMultiname, 'kind', CONSTANT.QName);
-  var anyMultiname = new Multiname(null, 0, CONSTANT.QName,
-                                   [new Namespace(null, NamespaceType.Public, '')], null);
+  var anyMultiname = new Multiname(null, 0, CONSTANT.QName, [], null);
   release || Object.seal(anyMultiname);
 
   export class XMLParser {
@@ -1078,7 +1075,7 @@ module Shumway.AVMX.AS {
       if (name && name.axClass === this.sec.AXQName) {
         // a. If (Namespace is not specified), return a copy of Name
         if (arguments.length < 2) {
-          release || assert(name !== tmpMultiname && name !== tmpAttributeMultiname);
+          release || assert(name !== tmpMultiname);
           this.name = (<ASQName>name).name;
           return;
         }
@@ -1639,15 +1636,20 @@ module Shumway.AVMX.AS {
       if (!this || this.axClass !== this.sec.AXXML) {
         this.sec.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
+      if (isNullOrUndefined(arg) && arguments.length > 0) {
+        this.sec.throwError('TypeError', Errors.ConvertUndefinedToObjectError);
+      }
       if (arg && arg.axClass === this.sec.AXQName) {
         return this.getProperty((<ASQName>arg).name);
       }
       arg = axCoerceString(arg);
-      if (arg === '*') {
+      if (arg === '*' || arguments.length === 0) {
         arg = null;
       }
-      tmpAttributeMultiname.name = arg;
-      return this.getProperty(tmpAttributeMultiname);
+      tmpMultiname.name = arg;
+      tmpMultiname.namespaces = [Namespace.PUBLIC];
+      tmpMultiname.kind = CONSTANT.QNameA;
+      return this.getProperty(tmpMultiname);
     }
     attributes(): ASXMLList {
       if (!this || this.axClass !== this.sec.AXXML) {
@@ -1677,6 +1679,7 @@ module Shumway.AVMX.AS {
         mn = (<any>propertyName).name;
       } else {
         mn = tmpMultiname;
+        mn.kind = CONSTANT.QName;
         mn.name = toString(propertyName, this.sec);
       }
       return this.getProperty(mn);
@@ -2343,7 +2346,7 @@ module Shumway.AVMX.AS {
             uri = defaultNamespace.uri;
             prefix = defaultNamespace.prefix;
           }
-          var y = createXML(this.sec, ASXMLKind.Element, uri, name, prefix);
+          var y = createXML(this.sec, ASXMLKind.Element, uri, mn.name, prefix);
           y._parent = this;
           this.replace(String(i), y);
           var ns = y._name.namespace;
@@ -2892,20 +2895,31 @@ module Shumway.AVMX.AS {
       return isIndex(P) && (P|0) < this._children.length;
     }
     attribute(arg: any): ASXMLList {
-      if (arg === '*' || arg === undefined) {
+      if (isNullOrUndefined(arg) && arguments.length > 0) {
+        this.sec.throwError('TypeError', Errors.ConvertUndefinedToObjectError);
+      }
+      if (arg && arg.axClass === this.sec.AXQName) {
+        return this.getProperty((<ASQName>arg).name);
+      }
+      arg = axCoerceString(arg);
+      if (arg === '*' || arguments.length === 0) {
         arg = null;
       }
-      tmpAttributeMultiname.name = arg;
-      return this.getProperty(tmpAttributeMultiname);
+      tmpMultiname.name = arg;
+      tmpMultiname.namespaces = [Namespace.PUBLIC];
+      tmpMultiname.kind = CONSTANT.QNameA;
+      return this.getProperty(tmpMultiname);
     }
     attributes(): ASXMLList {
       // 13.5.4.3 XMLList.prototype.attributes ( )
-      return this.attribute(anyMultiname);
+      tmpMultiname.name = null;
+      tmpMultiname.namespaces.length = 0;
+      tmpMultiname.kind = CONSTANT.QNameA;
+      return this.getProperty(tmpMultiname);
     }
     child(propertyName: any): ASXMLList {
       if (isIndex(propertyName)) {
-        var list = this.sec.AXXMLList.CreateList(this._targetObject,
-                                                            this._targetProperty);
+        var list = this.sec.AXXMLList.CreateList(this._targetObject, this._targetProperty);
         if ((propertyName | 0) < this._children.length) {
           list._children[0] = this._children[propertyName | 0]._deepCopy();
         }
@@ -3299,6 +3313,8 @@ module Shumway.AVMX.AS {
         return this._children[nm | 0];
       }
       tmpMultiname.name = nm;
+      tmpMultiname.namespaces = [Namespace.PUBLIC];
+      tmpMultiname.kind = CONSTANT.QName;
       return this.getProperty(tmpMultiname);
     }
 

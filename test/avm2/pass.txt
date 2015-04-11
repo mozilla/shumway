@@ -159,3 +159,4 @@ test/avm2/pass/xml-10.abc
 test/avm2/pass/xml-8.abc
 test/avm2/pass/xml-basic.abc
 test/avm2/pass/xml-qname.abc
+test/avm2/pass/xml-qualids.abc

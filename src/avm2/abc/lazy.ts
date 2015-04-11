@@ -1053,7 +1053,12 @@ module Shumway.AVMX {
     }
 
     public isQName(): boolean {
-      return !!this.namespaces && this.namespaces.length === 1 && !this.isAnyName();
+      var kind = this.kind;
+      var result = kind === CONSTANT.TypeName ||
+                   kind === CONSTANT.QName || kind === CONSTANT.QNameA ||
+                   kind >= CONSTANT.RTQName && kind <= CONSTANT.RTQNameLA;
+      release || assert(!(result && this.namespaces.length !== 1));
+      return result;
     }
 
     public get namespace(): Namespace {
@@ -1083,20 +1088,21 @@ module Shumway.AVMX {
 
     public matches(mn: Multiname): boolean {
       release || assert(this.isQName());
-      if (this.name !== mn.name && !mn.isAnyName()) {
+      var anyName = mn.isAnyName();
+      if (anyName && !mn.isQName()) {
+        return true;
+      }
+      if (!anyName && this.name !== mn.name) {
         return false;
       }
-      for (var i = this.namespaces.length; i--;) {
-        var ns = this.namespaces[i];
-        for (var j = mn.namespaces.length; j--;) {
-          if (mn.namespaces[j].uri === ns.uri) {
-            return true;
-          }
+      var uri = this.namespaces[0].uri;
+      for (var i = mn.namespaces.length; i--;) {
+        if (mn.namespaces[i].uri === uri) {
+          return true;
         }
       }
       return false;
     }
-
     public isAttribute(): boolean {
       switch (this.kind) {
         case CONSTANT.QNameA:
