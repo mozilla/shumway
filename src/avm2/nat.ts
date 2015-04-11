@@ -1235,34 +1235,44 @@ module Shumway.AVMX.AS {
     // different.
 
     generic_indexOf(char: string, i?: number) {
-      return String.prototype.indexOf.call(this.value, char, i);
+      var receiver = this.value == undefined ? '' : this.value;
+      return String.prototype.indexOf.call(receiver, char, i);
     }
     generic_lastIndexOf(char: string, i?: number) {
-      return String.prototype.lastIndexOf.call(this.value, char, i);
+      var receiver = this.value == undefined ? '' : this.value;
+      return String.prototype.lastIndexOf.call(receiver, char, i);
     }
     generic_charAt(index: number) {
-      return String.prototype.charAt.call(this.value, index);
+      var receiver = this.value == undefined ? '' : this.value;
+      return String.prototype.charAt.call(receiver, index);
     }
     generic_charCodeAt(index: number) {
-      return String.prototype.charCodeAt.call(this.value, index);
+      var receiver = this.value == undefined ? '' : this.value;
+      return String.prototype.charCodeAt.call(receiver, index);
     }
     generic_concat() {
+      var receiver = this.value == undefined ? '' : this.value;
       return String.prototype.concat.apply(this.value, arguments);
     }
     generic_localeCompare() {
+      var receiver = this.value == undefined ? '' : this.value;
       return String.prototype.localeCompare.apply(this.value, arguments);
     }
     generic_match(pattern) {
-      return String.prototype.match.call(this.value, pattern);
+      var receiver = this.value == undefined ? '' : this.value;
+      return String.prototype.match.call(receiver, pattern);
     }
     generic_replace(pattern, repl) {
-      return String.prototype.replace.call(this.value, pattern, repl);
+      var receiver = this.value == undefined ? '' : this.value;
+      return String.prototype.replace.call(receiver, pattern, repl);
     }
     generic_search(pattern) {
-      return String.prototype.search.call(this.value, pattern);
+      var receiver = this.value == undefined ? '' : this.value;
+      return String.prototype.search.call(receiver, pattern);
     }
     generic_slice(start?: number, end?: number) {
-      return String.prototype.slice.call(this.value, start, end);
+      var receiver = this.value == undefined ? '' : this.value;
+      return String.prototype.slice.call(receiver, start, end);
     }
     generic_split(separator: string, limit?: number) {
       separator = axCoerceString(separator);
@@ -1277,16 +1287,19 @@ module Shumway.AVMX.AS {
       return (<AXClass><any>this).sec.createArray(list);
     }
     generic_substring(start: number, end?: number) {
-      return String.prototype.substring.call(this.value, start, end);
+      var receiver = this.value == undefined ? '' : this.value;
+      return String.prototype.substring.call(receiver, start, end);
     }
     generic_substr(from: number, length?: number) {
-      return String.prototype.substr.call(this.value, from, length);
+      var receiver = this.value == undefined ? '' : this.value;
+      return String.prototype.substr.call(receiver, from, length);
     }
     generic_toLowerCase() {
       return (this).toLowerCase();
     }
     generic_toUpperCase() {
-      return String.prototype.toUpperCase.call(this.value);
+      var receiver = this.value == undefined ? '' : this.value;
+      return String.prototype.toUpperCase.call(receiver);
     }
 
     toString() {
