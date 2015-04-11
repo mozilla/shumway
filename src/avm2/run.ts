@@ -1451,7 +1451,6 @@ module Shumway.AVMX {
 
       this.prepareNativeClass("AXMethodClosure", "MethodClosure", false);
       this.prepareNativeClass("AXError", "Error", false);
-      this.prepareNativeClass("AXRegExp", "RegExp", false);
 
       this.prepareNativeClass("AXMath", "Math", false);
       this.prepareNativeClass("AXDate", "Date", false);
@@ -1468,6 +1467,10 @@ module Shumway.AVMX {
       });
       // Array.prototype is an Array, and behaves like one.
       AXArray.dPrototype['value'] = [];
+
+      var AXRegExp = this.prepareNativeClass("AXRegExp", "RegExp", false);
+      // RegExp.prototype is an (empty string matching) RegExp, and behaves like one.
+      AXRegExp.tPrototype['value'] = /(?:)/;
 
       // Boolean, int, Number, String, and uint are primitives in AS3. We create a placeholder
       // base class to help us with instanceof tests.
