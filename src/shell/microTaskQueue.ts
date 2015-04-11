@@ -69,11 +69,12 @@ module Shumway.Shell {
 
     public scheduleInterval(fn: () => any, args: any[], interval: number, repeat: boolean) {
       var MIN_INTERVAL = 4;
-      interval = MIN_INTERVAL;
+      interval = Math.round((interval || 0)/10) * 10;
+      if (interval < MIN_INTERVAL) {
+        interval = MIN_INTERVAL;
+      }
       var taskId = this.nextId++;
-      var task = new MicroTask(taskId, fn, args,
-                               interval > MIN_INTERVAL ? (interval | 0) : MIN_INTERVAL,
-                               repeat);
+      var task = new MicroTask(taskId, fn, args, interval, repeat);
       this.enqueue(task);
       return task;
     }

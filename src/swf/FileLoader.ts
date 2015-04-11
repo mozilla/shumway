@@ -96,6 +96,7 @@ module Shumway {
   }
 
   export class FileLoader {
+    _url: string;
     _file: any; // {SWFFile|ImageFile}
 
     private _listener: ILoadListener;
@@ -117,6 +118,7 @@ module Shumway {
 
     // TODO: strongly type
     loadFile(request: any) {
+      this._url = request.url;
       SWF.enterTimeline('Load file', request.url);
       this._bytesLoaded = 0;
       var session = this._loadingServiceSession = FileLoadingService.instance.createSession();
@@ -191,7 +193,7 @@ module Shumway {
 
         this.processSWFFileUpdate(file, eagerlyParsedSymbolsCount, previousFramesLoaded);
       }
-      if (file.bytesLoaded !== file.bytesTotal) {
+      if (!file || file.bytesLoaded !== file.bytesTotal) {
         Debug.warning("Not Implemented: processing loadClose when loading was aborted");
       } else {
         SWF.leaveTimeline();

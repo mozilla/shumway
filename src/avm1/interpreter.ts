@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Mozilla Foundation
+ * Copyright 2015 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,63 +54,14 @@ module Shumway.AVM1 {
     console.warn.apply(console, arguments);
   }
 
-  var MAX_AVM1_HANG_TIMEOUT = 1000;
-  var CHECK_AVM1_HANG_EVERY = 1000;
+  export var MAX_AVM1_HANG_TIMEOUT = 1000;
+  export var CHECK_AVM1_HANG_EVERY = 1000;
   var MAX_AVM1_ERRORS_LIMIT = 1000;
   var MAX_AVM1_STACK_LIMIT = 256;
 
-  var as2IdentifiersDictionary = [
-    "addCallback", "addListener", "addProperty", "addRequestHeader",
-    "AsBroadcaster", "attachAudio", "attachMovie", "attachSound", "attachVideo",
-    "beginFill", "beginGradientFill", "blendMode", "blockIndent",
-    "broadcastMessage", "cacheAsBitmap", "CASEINSENSITIVE", "charAt",
-    "charCodeAt", "checkPolicyFile", "clearInterval", "clearRequestHeaders",
-    "concat", "createEmptyMovieClip", "curveTo", "DESCENDING", "displayState",
-    "duplicateMovieClip", "E", "endFill", "exactSettings", "fromCharCode",
-    "fullScreenSourceRect", "getBounds", "getBytesLoaded", "getBytesTotal",
-    "getDate", "getDay", "getDepth", "getDepth", "getDuration", "getFullYear",
-    "getHours", "getLocal", "getMilliseconds", "getMinutes", "getMonth",
-    "getNewTextFormat", "getPan", "getPosition", "getRGB", "getSeconds",
-    "getSize", "getTextFormat", "getTime", "getTimezoneOffset", "getTransform",
-    "getUTCDate", "getUTCDay", "getUTCFullYear", "getUTCHours",
-    "getUTCMilliseconds", "getUTCMinutes", "getUTCMonth", "getUTCSeconds",
-    "getUTCYear", "getVolume", "getYear", "globalToLocal", "gotoAndPlay",
-    "gotoAndStop", "hasAccessibility", "hasAudio", "hasAudioEncoder",
-    "hasEmbeddedVideo", "hasIME", "hasMP3", "hasOwnProperty", "hasPrinting",
-    "hasScreenBroadcast", "hasScreenPlayback", "hasStreamingAudio",
-    "hasStreamingVideo", "hasVideoEncoder", "hitTest", "indexOf", "isActive",
-    "isDebugger", "isFinite", "isNaN", "isPropertyEnumerable", "isPrototypeOf",
-    "lastIndexOf", "leftMargin", "letterSpacing", "lineStyle", "lineTo", "LN10",
-    "LN10E", "LN2", "LN2E", "loadSound", "localFileReadDisable", "localToGlobal",
-    "MAX_VALUE", "MIN_VALUE", "moveTo", "NaN", "NEGATIVE_INFINITY", "nextFrame",
-    "NUMERIC", "onChanged", "onData", "onDragOut", "onDragOver", "onEnterFrame",
-    "onFullScreen", "onKeyDown", "onKeyUp", "onKillFocus", "onLoad",
-    "onMouseDown", "onMouseMove", "onMouseUp", "onPress", "onRelease",
-    "onReleaseOutside", "onResize", "onResize", "onRollOut", "onRollOver",
-    "onScroller", "onSetFocus", "onStatus", "onSync", "onUnload", "parseFloat",
-    "parseInt", "PI", "pixelAspectRatio", "playerType", "POSITIVE_INFINITY",
-    "prevFrame", "registerClass", "removeListener", "removeMovieClip",
-    "removeTextField", "replaceSel", "RETURNINDEXEDARRAY", "rightMargin",
-    "scale9Grid", "scaleMode", "screenColor", "screenDPI", "screenResolutionX",
-    "screenResolutionY", "serverString", "setClipboard", "setDate", "setDuration",
-    "setFps", "setFullYear", "setHours", "setInterval", "setMask",
-    "setMilliseconds", "setMinutes", "setMonth", "setNewTextFormat", "setPan",
-    "setPosition", "setRGB", "setSeconds", "setTextFormat", "setTime",
-    "setTimeout", "setTransform", "setTransform", "setUTCDate", "setUTCFullYear",
-    "setUTCHours", "setUTCMilliseconds", "setUTCMinutes", "setUTCMonth",
-    "setUTCSeconds", "setVolume", "setYear", "showMenu", "showRedrawRegions",
-    "sortOn", "SQRT1_2", "SQRT2", "startDrag", "stopDrag", "swapDepths",
-    "tabEnabled", "tabIndex", "tabIndex", "tabStops", "toLowerCase", "toString",
-    "toUpperCase", "trackAsMenu", "UNIQUESORT", "updateAfterEvent",
-    "updateProperties", "useCodepage", "useHandCursor", "UTC", "valueOf"];
-  var as2IdentifiersCaseMap: MapObject<string> = null;
-
   class AVM1ScopeListItem {
-    constructor(public scope, public next: AVM1ScopeListItem) {
-    }
+    constructor (public scope: AVM1Object, public previousScopeItem: AVM1ScopeListItem) {
 
-    create(scope) {
-      return new AVM1ScopeListItem(scope, this);
     }
   }
 
@@ -133,7 +84,9 @@ module Shumway.AVM1 {
       this.calleeThis = thisArg;
       this.calleeSuper = superArg;
       this.calleeFn = fn;
-      this.calleeArgs = args;
+      if (!release) {
+        this.calleeArgs = args;
+      }
     }
 
     resetCallee() {
@@ -263,6 +216,11 @@ module Shumway.AVM1 {
         return this.root;
       }
       return undefined;
+    }
+    checkTimeout() {
+      if (Date.now() >= this.abortExecutionAt) {
+        throw new AVM1CriticalError('long running script -- AVM1 instruction hang timeout');
+      }
     }
     lookupChild(targetPath: string, fromCurrentTarget: boolean): AVM1Object {
       var path: string[];
@@ -502,17 +460,6 @@ module Shumway.AVM1 {
     return false;
   }
 
-  interface ResolvePropertyResult {
-    link: AVM1Object;
-    name;
-  }
-
-  // internal cachable results to avoid GC
-  var __resolvePropertyResult: ResolvePropertyResult = {
-    link: null,
-    name: null
-  };
-
   function as2HasProperty(context: AVM1Context, obj: any, name: any): boolean {
     var avm1Obj: AVM1Object = alToObject(context, obj);
     return avm1Obj.alHasProperty(name);
@@ -603,7 +550,7 @@ module Shumway.AVM1 {
     var registers = [];
     registers.length = 4; // by default only 4 registers allowed
 
-    var scopeContainer = context.initialScope.create(scope);
+    var scopeList = new AVM1ScopeListItem(scope, context.initialScope);
     var caughtError;
     context.pushCallFrame(scope, null, null);
     actionTracer.message('ActionScript Execution Starts');
@@ -615,7 +562,7 @@ module Shumway.AVM1 {
     context.defaultTarget = scope;
     context.currentTarget = null;
     try {
-      interpretActionsData(context, actionsData, scopeContainer, [], registers);
+      interpretActionsData(context, actionsData, scopeList, [], registers);
     } catch (e) {
       caughtError = as2CastError(e);
     }
@@ -665,16 +612,202 @@ module Shumway.AVM1 {
   interface ExecutionContext {
     context: AVM1ContextImpl;
     actions: Lib.AVM1NativeActions;
-    scopeContainer: AVM1ScopeListItem;
-    scope: any;
+    scopeList: AVM1ScopeListItem;
     actionTracer: ActionTracer;
-    constantPool: any;
+    constantPool: any[];
     registers: any[];
     stack: any[];
     frame: AVM1CallFrame;
     isSwfVersion5: boolean;
     recoveringFromError: boolean;
     isEndOfActions: boolean;
+  }
+
+  /**
+   * Interpreted function closure.
+   */
+  class AVM1InterpreterScope extends AVM1Object {
+    constructor(context: AVM1ContextImpl) {
+      super(context);
+      this.alPut('toString', new AVM1NativeFunction(context, this._toString));
+    }
+
+    _toString() {
+      // It shall return 'this'
+      return this;
+    }
+  }
+
+  // TODO Registers are shared across all AVM1Contents -- improve that.
+  var cachedRegisters = [];
+  var MAX_CACHED_REGISTERS = 10;
+  function createRegisters(registersLength: number) {
+    if (cachedRegisters.length > 0) {
+      return cachedRegisters.pop();
+    }
+    var registers = [];
+    registers.length = registersLength;
+    return registers;
+  }
+  function disposeRegisters(registers) {
+    if (cachedRegisters.length > MAX_CACHED_REGISTERS) {
+      return;
+    }
+    cachedRegisters.push(registers);
+  }
+
+  class AVM1InterpretedFunction extends AVM1EvalFunction {
+    functionName: string;
+    actionsData: AVM1ActionsData;
+    parametersNames: string[];
+    registersAllocation: ArgumentAssignment[];
+    suppressArguments: ArgumentAssignmentType;
+
+    scopeList: AVM1ScopeListItem;
+    constantPool: any[];
+    skipArguments: boolean[];
+    registersLength: number;
+    actionTracer: ActionTracer;
+
+    constructor(context: AVM1ContextImpl,
+                ectx: ExecutionContext,
+                actionsData: AVM1ActionsData,
+                functionName: string,
+                parametersNames: string[],
+                registersCount: number,
+                registersAllocation: ArgumentAssignment[],
+                suppressArguments: ArgumentAssignmentType) {
+      super(context);
+
+      this.functionName = functionName;
+      this.actionsData = actionsData;
+      this.parametersNames = parametersNames;
+      this.registersAllocation = registersAllocation;
+      this.suppressArguments = suppressArguments;
+
+      this.scopeList = ectx.scopeList;
+      this.constantPool = ectx.constantPool;
+      this.actionTracer = ectx.actionTracer;
+
+      var skipArguments: boolean[] = null;
+      var registersAllocationCount = !registersAllocation ? 0 : registersAllocation.length;
+      for (var i = 0; i < registersAllocationCount; i++) {
+        var registerAllocation = registersAllocation[i];
+        if (registerAllocation &&
+          registerAllocation.type === ArgumentAssignmentType.Argument) {
+          if (!skipArguments) {
+            skipArguments = [];
+          }
+          skipArguments[registersAllocation[i].index] = true;
+        }
+      }
+      this.skipArguments = skipArguments;
+
+      var registersLength = Math.min(registersCount, 255); // max allowed for DefineFunction2
+      registersLength = Math.max(registersLength, registersAllocationCount + 1);
+      this.registersLength = registersLength;
+    }
+
+    public alCall(thisArg: any, args?: any[]): any {
+      var currentContext = <AVM1ContextImpl>this.context;
+      if (currentContext.executionProhibited) {
+        return; // no more avm1 execution, ever
+      }
+
+      var newScope = new AVM1InterpreterScope(currentContext);
+      var newScopeList = new AVM1ScopeListItem(newScope, this.scopeList);
+      var oldScope = this.scopeList.scope;
+
+      thisArg = thisArg || oldScope; // REDUX no isGlobalObject check?
+      args = args || [];
+
+      var supperWrapper;
+
+      var frame = currentContext.pushCallFrame(thisArg, this, args);
+
+      var suppressArguments = this.suppressArguments;
+      if (!(suppressArguments & ArgumentAssignmentType.Arguments)) {
+        newScope.alPut('arguments', args);
+      }
+      if (!(suppressArguments & ArgumentAssignmentType.This)) {
+        newScope.alPut('this', thisArg);
+      }
+      if (!(suppressArguments & ArgumentAssignmentType.Super)) {
+        supperWrapper = new AVM1SuperWrapper(currentContext, frame);
+        newScope.alPut('super', supperWrapper);
+      }
+
+      var i;
+      var registers = createRegisters(this.registersLength);
+      var registersAllocation = this.registersAllocation;
+      var registersAllocationCount = !registersAllocation ? 0 : registersAllocation.length;
+      for (i = 0; i < registersAllocationCount; i++) {
+        var registerAllocation = registersAllocation[i];
+        if (registerAllocation) {
+          switch (registerAllocation.type) {
+            case ArgumentAssignmentType.Argument:
+              registers[i] = args[registerAllocation.index];
+              break;
+            case ArgumentAssignmentType.This:
+              registers[i] = thisArg;
+              break;
+            case ArgumentAssignmentType.Arguments:
+              registers[i] = args;
+              break;
+            case ArgumentAssignmentType.Super:
+              supperWrapper = supperWrapper || new AVM1SuperWrapper(currentContext, frame);
+              registers[i] = supperWrapper;
+              break;
+            case ArgumentAssignmentType.Global:
+              registers[i] = currentContext.globals;
+              break;
+            case ArgumentAssignmentType.Parent:
+              registers[i] = oldScope.alGet('_parent');
+              break;
+            case ArgumentAssignmentType.Root:
+              registers[i] = currentContext.resolveLevel(0);
+              break;
+          }
+        }
+      }
+      var parametersNames = this.parametersNames;
+      var skipArguments = this.skipArguments;
+      for (i = 0; i < args.length || i < parametersNames.length; i++) {
+        if (skipArguments && skipArguments[i]) {
+          continue;
+        }
+        newScope.alPut(parametersNames[i], args[i]);
+      }
+
+      var result;
+      var caughtError;
+      var actionTracer = this.actionTracer;
+      var actionsData = this.actionsData;
+      var constantPool = this.constantPool;
+      actionTracer.indent();
+      if (++currentContext.stackDepth >= MAX_AVM1_STACK_LIMIT) {
+        throw new AVM1CriticalError('long running script -- AVM1 recursion limit is reached');
+      }
+
+      var savedCurrentTarget = currentContext.currentTarget;
+      currentContext.currentTarget = null;
+      try {
+        result = interpretActionsData(currentContext, actionsData, newScopeList, constantPool, registers);
+      } catch (e) {
+        caughtError = e;
+      }
+      currentContext.currentTarget = savedCurrentTarget;
+
+      currentContext.stackDepth--;
+      currentContext.popCallFrame();
+      actionTracer.unindent();
+      disposeRegisters(registers);
+      if (caughtError) {
+        // Note: this doesn't use `finally` because that's a no-go for performance.
+        throw caughtError;
+      }
+      return result;
+    }
   }
 
     function fixArgsCount(numArgs: number /* int */, maxAmount: number): number {
@@ -724,148 +857,8 @@ module Shumway.AVM1 {
                                 registersCount: number,
                                 registersAllocation: ArgumentAssignment[],
                                 suppressArguments: ArgumentAssignmentType): AVM1Function {
-      var currentContext = ectx.context;
-      var scopeContainer = ectx.scopeContainer;
-      var scope = ectx.scope;
-      var actionTracer = ectx.actionTracer;
-      var defaultTarget = currentContext.defaultTarget;
-      var constantPool = ectx.constantPool;
-
-      var skipArguments = null;
-      var registersAllocationCount = !registersAllocation ? 0 : registersAllocation.length;
-      for (var i = 0; i < registersAllocationCount; i++) {
-        var registerAllocation = registersAllocation[i];
-        if (registerAllocation &&
-            registerAllocation.type === ArgumentAssignmentType.Argument) {
-          if (!skipArguments) {
-            skipArguments = [];
-          }
-          skipArguments[registersAllocation[i].index] = true;
-        }
-      }
-
-      var registersLength = Math.min(registersCount, 255); // max allowed for DefineFunction2
-      registersLength = Math.max(registersLength, registersAllocationCount + 1);
-
-      var cachedRegisters = [];
-      var MAX_CACHED_REGISTERS = 10;
-      function createRegisters() {
-        if (cachedRegisters.length > 0) {
-          return cachedRegisters.pop();
-        }
-        var registers = [];
-        registers.length = registersLength;
-        return registers;
-      }
-      function disposeRegisters(registers) {
-        if (cachedRegisters.length > MAX_CACHED_REGISTERS) {
-          return;
-        }
-        cachedRegisters.push(registers);
-      }
-
-      var fn = (function() {
-        if (currentContext.executionProhibited) {
-          return; // no more avm1 execution, ever
-        }
-
-        var newScopeContainer;
-        // Builds function closure (it shall return 'this' in toString).
-        var newScope: any = new AVM1Object(currentContext);
-        newScope.alPut('toString', new AVM1NativeFunction(currentContext, function () {
-          return this;
-        }));
-
-        var thisArg = isGlobalObject(this) ? scope : this;
-        var argumentsClone;
-        var supperWrapper;
-
-        var frame = currentContext.pushCallFrame(thisArg, fnObj, <any>arguments);
-
-        if (!(suppressArguments & ArgumentAssignmentType.Arguments)) {
-          argumentsClone = Array.prototype.slice.call(arguments, 0);
-          newScope.alPut('arguments', argumentsClone);
-        }
-        if (!(suppressArguments & ArgumentAssignmentType.This)) {
-          newScope.alPut('this', thisArg);
-        }
-        if (!(suppressArguments & ArgumentAssignmentType.Super)) {
-          supperWrapper = new AVM1SuperWrapper(currentContext, frame);
-          newScope.alPut('super', supperWrapper);
-        }
-        newScopeContainer = scopeContainer.create(newScope);
-        var i;
-        var registers = createRegisters();
-        for (i = 0; i < registersAllocationCount; i++) {
-          var registerAllocation = registersAllocation[i];
-          if (registerAllocation) {
-            switch (registerAllocation.type) {
-              case ArgumentAssignmentType.Argument:
-                registers[i] = arguments[registerAllocation.index];
-                break;
-              case ArgumentAssignmentType.This:
-                registers[i] = thisArg;
-                break;
-              case ArgumentAssignmentType.Arguments:
-                argumentsClone = argumentsClone || Array.prototype.slice.call(arguments, 0);
-                registers[i] = argumentsClone;
-                break;
-              case ArgumentAssignmentType.Super:
-                supperWrapper = supperWrapper || new AVM1SuperWrapper(currentContext, frame);
-                registers[i] = supperWrapper;
-                break;
-              case ArgumentAssignmentType.Global:
-                registers[i] = currentContext.globals;
-                break;
-              case ArgumentAssignmentType.Parent:
-                registers[i] = scope.alGet('_parent');
-                break;
-              case ArgumentAssignmentType.Root:
-                registers[i] = currentContext.resolveLevel(0);
-                break;
-            }
-          }
-        }
-        for (i = 0; i < arguments.length || i < parametersNames.length; i++) {
-          if (skipArguments && skipArguments[i]) {
-            continue;
-          }
-          newScope.alPut(parametersNames[i], arguments[i]);
-        }
-
-        var result;
-        var caughtError;
-        actionTracer.indent();
-        if (++currentContext.stackDepth >= MAX_AVM1_STACK_LIMIT) {
-          throw new AVM1CriticalError('long running script -- AVM1 recursion limit is reached');
-        }
-
-        var savedCurrentTarget = currentContext.currentTarget;
-        currentContext.currentTarget = null;
-        try {
-          result = interpretActionsData(currentContext, actionsData, newScopeContainer, constantPool, registers);
-        } catch (e) {
-          caughtError = e;
-        }
-        currentContext.currentTarget = savedCurrentTarget;
-
-        currentContext.stackDepth--;
-        currentContext.popCallFrame();
-        actionTracer.unindent();
-        disposeRegisters(registers);
-        if (caughtError) {
-          // Note: this doesn't use `finally` because that's a no-go for performance.
-          throw caughtError;
-        }
-        return result;
-      });
-
-      var fnObj: AVM1Function = new AVM1EvalFunction(currentContext, fn);
-      (<any>fn).debugName = 'avm1 ' + (functionName || '<function>');
-      if (functionName) {
-        (<any>fn).name = functionName;
-      }
-      return fnObj;
+      return new AVM1InterpretedFunction(ectx.context, ectx, actionsData, functionName,
+        parametersNames, registersCount, registersAllocation, suppressArguments);
     }
 
     function avm1VariableNameHasPath(variableName: string): boolean {
@@ -908,17 +901,16 @@ module Shumway.AVM1 {
         return avm1FindChildVariableScope(ectx, variableName);
       }
 
-      var scopeContainer = ectx.scopeContainer;
+      var scopeList = ectx.scopeList;
       var currentContext = ectx.context;
       var currentTarget = currentContext.currentTarget;
-      var scope = ectx.scope;
 
       if (currentTarget &&
           currentTarget.alHasProperty(variableName)) {
         return currentTarget;
       }
 
-      for (var p = scopeContainer; p; p = p.next) {
+      for (var p = scopeList; p; p = p.previousScopeItem) {
         if (p.scope.alHasProperty(variableName)) {
           return p.scope;
         }
@@ -926,6 +918,7 @@ module Shumway.AVM1 {
 
       // FIXME refactor that
       if (variableName === 'this') {
+        var scope = scopeList.scope;
         scope.alSetOwnProperty('this', {
           flags: AVM1PropertyFlags.NATIVE_MEMBER,
           value: currentContext.defaultTarget,
@@ -940,39 +933,38 @@ module Shumway.AVM1 {
         return avm1FindChildVariableScope(ectx, variableName);
       }
 
-      var scopeContainer = ectx.scopeContainer;
+      var scopeList = ectx.scopeList;
       var currentContext = ectx.context;
       var currentTarget = currentContext.currentTarget;
-      var scope = ectx.scope;
 
       if (currentTarget) {
         return currentTarget;
       }
 
-      for (var p = scopeContainer; p.next; p = p.next) { // excluding globals
+      for (var p = scopeList; p.previousScopeItem; p = p.previousScopeItem) { // excluding globals
         if (p.scope.alHasProperty(variableName)) {
           return p.scope;
         }
       }
 
-      return scope;
+      return scopeList.scope;
     }
 
     function avm1ProcessWith(ectx: ExecutionContext, obj, withBlock) {
-      var scopeContainer = ectx.scopeContainer;
+      var context = ectx.context;
+      var scopeList = ectx.scopeList;
       var constantPool = ectx.constantPool;
       var registers = ectx.registers;
 
-      var newScopeContainer = scopeContainer.create(Object(obj));
-      interpretActionsData(ectx.context, withBlock, newScopeContainer, constantPool, registers);
+      var newScopeList = new AVM1ScopeListItem(alToObject(ectx.context, obj), scopeList);
+      interpretActionsData(ectx.context, withBlock, newScopeList, constantPool, registers);
     }
     function avm1ProcessTry(ectx: ExecutionContext,
                             catchIsRegisterFlag, finallyBlockFlag,
                             catchBlockFlag, catchTarget,
                             tryBlock, catchBlock, finallyBlock) {
       var currentContext = ectx.context;
-      var scopeContainer = ectx.scopeContainer;
-      var scope = ectx.scope;
+      var scopeList = ectx.scopeList;
       var constantPool = ectx.constantPool;
       var registers = ectx.registers;
 
@@ -980,23 +972,24 @@ module Shumway.AVM1 {
       var caughtError;
       try {
         currentContext.isTryCatchListening = true;
-        interpretActionsData(currentContext, tryBlock, scopeContainer, constantPool, registers);
+        interpretActionsData(currentContext, tryBlock, scopeList, constantPool, registers);
       } catch (e) {
         currentContext.isTryCatchListening = savedTryCatchState;
         if (!catchBlockFlag || !(e instanceof AVM1Error)) {
           caughtError = e;
         } else {
           if (typeof catchTarget === 'string') { // TODO catchIsRegisterFlag?
+            var scope = scopeList.scope;
             scope.alPut(catchTarget, e.error);
           } else {
             registers[catchTarget] = e.error;
           }
-          interpretActionsData(currentContext, catchBlock, scopeContainer, constantPool, registers);
+          interpretActionsData(currentContext, catchBlock, scopeList, constantPool, registers);
         }
       }
       currentContext.isTryCatchListening = savedTryCatchState;
       if (finallyBlockFlag) {
-        interpretActionsData(currentContext, finallyBlock, scopeContainer, constantPool, registers);
+        interpretActionsData(currentContext, finallyBlock, scopeList, constantPool, registers);
       }
       if (caughtError) {
         throw caughtError;
@@ -1488,7 +1481,7 @@ module Shumway.AVM1 {
         }
      } else {
         fn = as2GetProperty(ectx.context, obj, methodName);
-        target = obj;
+        target = alToObject(ectx.context, obj);
       }
 
       // AVM1 simply ignores attempts to invoke non-methods.
@@ -1510,7 +1503,6 @@ module Shumway.AVM1 {
     }
     function avm1_0x9B_ActionDefineFunction(ectx: ExecutionContext, args: any[]) {
       var stack = ectx.stack;
-      var scope = ectx.scope;
 
       var functionBody = args[0];
       var functionName: string = args[1];
@@ -1519,6 +1511,7 @@ module Shumway.AVM1 {
       var fn = avm1DefineFunction(ectx, functionBody, functionName,
         functionParams, 4, null, 0);
       if (functionName) {
+        var scope = ectx.scopeList.scope;
         scope.alPut(functionName, fn);
       } else {
         stack.push(fn);
@@ -1526,7 +1519,7 @@ module Shumway.AVM1 {
     }
     function avm1_0x3C_ActionDefineLocal(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var scope = ectx.scope;
+      var scope = ectx.scopeList.scope;
 
       var value = stack.pop();
       var name = stack.pop();
@@ -1534,7 +1527,7 @@ module Shumway.AVM1 {
     }
     function avm1_0x41_ActionDefineLocal2(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var scope = ectx.scope;
+      var scope = ectx.scopeList.scope;
 
       var name = stack.pop();
       scope.alPut(name, undefined);
@@ -1890,7 +1883,7 @@ module Shumway.AVM1 {
     // SWF 7
     function avm1_0x8E_ActionDefineFunction2(ectx: ExecutionContext, args: any[]) {
       var stack = ectx.stack;
-      var scope = ectx.scope;
+      var scope = ectx.scopeList.scope;
 
       var functionBody = args[0];
       var functionName: string = args[1];
@@ -2010,7 +2003,7 @@ module Shumway.AVM1 {
       };
     }
 
-    function generateActionCalls() {
+    export function generateActionCalls() {
       var wrap: Function;
       if (!avm1ErrorsEnabled.value) {
         wrap = wrapAvm1Error;
@@ -2488,7 +2481,7 @@ module Shumway.AVM1 {
       return result;
     }
 
-    function interpretActionsData(currentContext: AVM1ContextImpl, actionsData: AVM1ActionsData, scopeContainer, constantPool, registers) {
+    function interpretActionsData(currentContext: AVM1ContextImpl, actionsData: AVM1ActionsData, scopeList: AVM1ScopeListItem, constantPool: any[], registers: any[]) {
       if (!actionsData.ir) {
         var parser = new ActionsDataParser(actionsData, currentContext.swfVersion);
         var analyzer = new ActionsDataAnalyzer();
@@ -2511,13 +2504,11 @@ module Shumway.AVM1 {
       var stack = [];
       var isSwfVersion5 = currentContext.swfVersion >= 5;
       var actionTracer = ActionTracerFactory.get();
-      var scope = scopeContainer.scope;
 
       var executionContext = {
         context: currentContext,
         actions: currentContext.actions,
-        scopeContainer: scopeContainer,
-        scope: scope,
+        scopeList: scopeList,
         actionTracer: actionTracer,
         constantPool: constantPool,
         registers: registers,
@@ -2528,8 +2519,9 @@ module Shumway.AVM1 {
         isEndOfActions: false
       };
 
-      if (scope._as3Object &&
-          scope._as3Object._deferScriptExecution) {
+      var scope = scopeList.scope;
+      var as3Object = (<any>scope)._as3Object; // FIXME refactor
+      if (as3Object && as3Object._deferScriptExecution) {
         currentContext.deferScriptExecution = true;
       }
 
@@ -2564,127 +2556,6 @@ module Shumway.AVM1 {
       }
       return stack.pop();
     }
-
-  // Bare-minimum JavaScript code generator to make debugging better.
-  class ActionsDataCompiler {
-    static cachedCalls;
-    constructor() {
-      if (!ActionsDataCompiler.cachedCalls) {
-        ActionsDataCompiler.cachedCalls = generateActionCalls();
-      }
-    }
-    private convertArgs(args: any[], id: number, res, ir: AnalyzerResults): string {
-      var parts: string[] = [];
-      for (var i: number = 0; i < args.length; i++) {
-        var arg = args[i];
-        if (typeof arg === 'object' && arg !== null && !Array.isArray(arg)) {
-          if (arg instanceof ParsedPushConstantAction) {
-            if (ir.singleConstantPool) {
-              var constant = ir.singleConstantPool[(<ParsedPushConstantAction> arg).constantIndex];
-              parts.push(constant === undefined ? 'undefined' : JSON.stringify(constant));
-            } else {
-              var hint = '';
-              var currentConstantPool = res.constantPool;
-              if (currentConstantPool) {
-                var constant = currentConstantPool[(<ParsedPushConstantAction> arg).constantIndex];
-                hint = constant === undefined ? 'undefined' : JSON.stringify(constant);
-                // preventing code breakage due to bad constant
-                hint = hint.indexOf('*/') >= 0 ? '' : ' /* ' + hint + ' */';
-              }
-              parts.push('constantPool[' + (<ParsedPushConstantAction> arg).constantIndex + ']' + hint);
-            }
-          } else if (arg instanceof ParsedPushRegisterAction) {
-            var registerNumber = (<ParsedPushRegisterAction> arg).registerNumber;
-            if (registerNumber < 0 || registerNumber >= ir.registersLimit) {
-              parts.push('undefined'); // register is out of bounds -- undefined
-            } else {
-              parts.push('registers[' + registerNumber + ']');
-            }
-          } else if (arg instanceof AVM1ActionsData) {
-            var resName = 'code_' + id + '_' + i;
-            res[resName] = arg;
-            parts.push('res.' + resName);
-          } else {
-            notImplemented('Unknown AVM1 action argument type');
-          }
-        } else if (arg === undefined) {
-          parts.push('undefined'); // special case
-        } else {
-          parts.push(JSON.stringify(arg));
-        }
-      }
-      return parts.join(',');
-    }
-    private convertAction(item: ActionCodeBlockItem, id: number, res, indexInBlock: number, ir: AnalyzerResults): string {
-      switch (item.action.actionCode) {
-        case ActionCode.ActionJump:
-        case ActionCode.ActionReturn:
-          return '';
-        case ActionCode.ActionConstantPool:
-          res.constantPool = item.action.args[0];
-          return '  constantPool = [' + this.convertArgs(item.action.args[0], id, res, ir) + '];\n' +
-                 '  ectx.constantPool = constantPool;\n';
-        case ActionCode.ActionPush:
-          return '  stack.push(' + this.convertArgs(item.action.args, id, res, ir) + ');\n';
-        case ActionCode.ActionStoreRegister:
-          var registerNumber = item.action.args[0];
-          if (registerNumber < 0 || registerNumber >= ir.registersLimit) {
-            return ''; // register is out of bounds -- noop
-          }
-          return '  registers[' + registerNumber + '] = stack[stack.length - 1];\n';
-        case ActionCode.ActionWaitForFrame:
-        case ActionCode.ActionWaitForFrame2:
-          return '  if (calls.' + item.action.actionName + '(ectx,[' +
-            this.convertArgs(item.action.args, id, res, ir) + '])) { position = ' + item.conditionalJumpTo + '; ' +
-            'checkTimeAfter -= ' + (indexInBlock + 1) + '; break; }\n';
-        case ActionCode.ActionIf:
-          return '  if (!!stack.pop()) { position = ' + item.conditionalJumpTo + '; ' +
-            'checkTimeAfter -= ' + (indexInBlock + 1) + '; break; }\n';
-        default:
-          var result = '  calls.' + item.action.actionName + '(ectx' +
-            (item.action.args ? ',[' + this.convertArgs(item.action.args, id, res, ir) + ']' : '') +
-            ');\n';
-          return result;
-      }
-    }
-    private checkAvm1Timeout(ectx: ExecutionContext) {
-      if (Date.now() >= ectx.context.abortExecutionAt) {
-        throw new AVM1CriticalError('long running script -- AVM1 instruction hang timeout');
-      }
-    }
-    generate(ir: AnalyzerResults): Function {
-      var blocks = ir.blocks;
-      var res = {};
-      var uniqueId = 0;
-      var debugName = ir.dataId;
-      var fn = 'return function avm1gen_' + debugName + '(ectx) {\n' +
-        'var position = 0;\n' +
-        'var checkTimeAfter = 0;\n' +
-        'var constantPool = ectx.constantPool, registers = ectx.registers, stack = ectx.stack;\n';
-      if (avm1DebuggerEnabled.value) {
-        fn += '/* Running ' + debugName + ' */ ' +
-          'if (Shumway.AVM1.Debugger.pause || Shumway.AVM1.Debugger.breakpoints.' +
-          debugName + ') { debugger; }\n'
-      }
-      fn += 'while (!ectx.isEndOfActions) {\n' +
-        'if (checkTimeAfter <= 0) { checkTimeAfter = ' + CHECK_AVM1_HANG_EVERY + '; checkTimeout(ectx); }\n' +
-        'switch(position) {\n';
-        blocks.forEach((b: ActionCodeBlock) => {
-          fn += ' case ' + b.label + ':\n';
-          b.items.forEach((item: ActionCodeBlockItem, index: number) => {
-            fn += this.convertAction(item, uniqueId++, res, index, ir);
-          });
-          fn += '  position = ' + b.jump + ';\n' +
-                '  checkTimeAfter -= ' + b.items.length + ';\n' +
-                '  break;\n'
-        });
-      fn += ' default: ectx.isEndOfActions = true; break;\n}\n}\n' +
-        'return stack.pop();};';
-      fn += '//# sourceURL=avm1gen-' + debugName;
-      return (new Function('calls', 'res', 'checkTimeout', fn))(
-        ActionsDataCompiler.cachedCalls, res, this.checkAvm1Timeout);
-    }
-  }
 
   interface ActionTracer {
     print: (parsedAction: ParsedAction, stack: any[]) => void;

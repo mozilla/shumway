@@ -231,8 +231,8 @@ module Shumway.Shell {
     printABCFileNameOption = shellOptions.register(new Option("", "printABCFileName", "boolean", false, "Print each ABC filename before running it."));
     interpreterOption = shellOptions.register(new Option("i", "interpreter", "boolean", false, "Interpreter Only"));
     symbolFilterOption = shellOptions.register(new Option("f", "filter", "string", "", "Symbol Filter"));
-    microTaskDurationOption = shellOptions.register(new Option("md", "duration", "number", 0, "Micro task duration."));
-    microTaskCountOption = shellOptions.register(new Option("mc", "count", "number", 0, "Micro task count."));
+    microTaskDurationOption = shellOptions.register(new Option("md", "duration", "number", 0, "Maximum micro task duration."));
+    microTaskCountOption = shellOptions.register(new Option("mc", "count", "number", 64 * 1024, "Maximum micro task count."));
     maxFrameCountOption = shellOptions.register(new Option("fc", "frameCount", "number", 0, "Frame count."));
     repeatOption = shellOptions.register(new Option("rp", "rp", "number", 1, "Repeat count."));
     loadPlayerGlobalCatalogOption = shellOptions.register(new Option("g", "playerGlobal", "boolean", false, "Load Player Global"));
@@ -413,17 +413,19 @@ module Shumway.Shell {
                      ", frameCount: " + frameCount);
     }
     function runSWF(file: any) {
-      // REDUX:
-      // flash.display.Loader.reset();
-      // flash.display.DisplayObject.reset();
-      // flash.display.MovieClip.reset();
       microTaskQueue.clear();
       Shumway.Random.reset();
       Shumway.Shell.installTimeWarper();
 
       var sec = createSecurityDomain(builtinABCPath, null, null);
       var player = new Shumway.Player.Player(sec, new ShellGFXServer());
-      player.load(file);
+      try {
+        var buffer = read(file, 'binary');
+      } catch (e) {
+        console.log("Error loading SWF: " + e.message);
+        quit(127);
+      }
+      player.load(file, buffer);
       return player;
     }
 
