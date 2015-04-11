@@ -153,7 +153,7 @@ module Shumway.AVMX {
 
   export function setWriters(flags: WriterFlags) {
     runtimeWriter = (flags & WriterFlags.Runtime) ? writer : null;
-    interpreterWriter = (flags & WriterFlags.Runtime) ? writer : null;
+    interpreterWriter = (flags & WriterFlags.Interpreter) ? writer : null;
   }
 
   export enum ScriptInfoState {
