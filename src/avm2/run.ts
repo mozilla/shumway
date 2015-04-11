@@ -112,11 +112,36 @@ module Shumway.AVMX {
    *
    */
 
+  export function validateCall(sec: AXSecurityDomain, fun: AXCallable, argc: number) {
+    if (!fun || !fun.axApply) {
+      sec.throwError('TypeError', Errors.CallOfNonFunctionError,
+                     fun && fun.methodInfo ? fun.methodInfo.getName() : 'value');
+    }
+    if (fun.methodInfo && argc < fun.methodInfo.minArgs) {
+      sec.throwError('ArgumentError', Errors.WrongArgumentCountError, fun.methodInfo.getName(),
+                     fun.methodInfo.minArgs, argc);
+    }
+  }
+  export function validateConstruct(sec: AXSecurityDomain, axClass: AXClass, argc: number) {
+    if (!axClass || !axClass.axConstruct) {
+      var name = axClass && axClass.classInfo ?
+                         axClass.classInfo.instanceInfo.getName().name :
+                         'value';
+      sec.throwError('TypeError', Errors.ConstructOfNonFunctionError, name);
+    }
+    var methodInfo = axClass.classInfo.getInitializer();
+    if (argc < methodInfo.minArgs) {
+      sec.throwError('ArgumentError', Errors.WrongArgumentCountError,
+                     axClass.classInfo.instanceInfo.getName().name,
+                     methodInfo.minArgs, argc);
+    }
+  }
   export function checkNullParameter(argument: any, name: string, sec: AXSecurityDomain) {
     if (!argument) {
       sec.throwError('TypeError', Errors.NullPointerError, name);
     }
   }
+  // REDUX: check if we need this now that we do arg checking at callsites.
   export function checkParameterType(argument: any, name: string, type: AS.ASClass) {
     if (argument == null) {
       return;
@@ -143,7 +168,7 @@ module Shumway.AVMX {
     Interpreter = 2
   }
 
-  var writer = new IndentingWriter();
+  var writer = new IndentingWriter(false, function (x) { dumpLine(x); } );
   export var runtimeWriter = null;
   export var interpreterWriter = null;
 
@@ -753,7 +778,13 @@ module Shumway.AVMX {
    */
   export interface AXCallable {
     axApply(thisArg: any, argArray?: any[]): any;
-    axCall(thisArg: any): any;
+    axCall(thisArg: any, arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any,
+           arg6?: any, arg7?: any, arg8?: any, arg9?: any): any;
+    apply(thisArg: any, argArray?: any[]): any;
+    call(thisArg: any, arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any,
+         arg6?: any, arg7?: any, arg8?: any, arg9?: any): any;
+    methodInfo?: MethodInfo;
+    length: number;
   }
 
   // Add the |axApply| and |axCall| methods on the function prototype so that we can treat
@@ -1159,39 +1190,46 @@ module Shumway.AVMX {
         var self = this === jsGlobal ? scope.global.object : this;
         return interpret(self, methodInfo, scope, <any>arguments);
       });
+      //fun.methodInfo = methodInfo;
       fun.receiver = {scope: scope};
+      if (!release) {
+        try {
+          Object.defineProperty(fun, 'name', {value: methodInfo.getName()});
+        } catch (e) {
+          // Ignore errors in browsers that don't allow overriding Function#length;
+        }
+      }
       return fun;
     }
 
-    createMethodClosure(receiver: AXObject, method: Function): AXFunction {
-      return this.AXMethodClosure.Create(receiver, method);
-    }
-
     isCallable(value): boolean {
-      if (typeof value === 'function') {
-        return true;
-      }
-      if (typeof value !== 'object' || !AXBasePrototype.isPrototypeOf(value)) {
-        return false;
-      }
-      // The value might not come from this securityDomain, but still be a callable from another.
-      return value.sec.AXFunction.dPrototype.isPrototypeOf(value);
+      return (value && typeof value.axApply === 'function');
     }
 
-    createQName(namespace: any, localName: any): AS.ASQName {
-      return this.AXQName.Create(namespace, localName);
-    }
-
-    createInitializerFunction(classInfo: ClassInfo, scope: Scope): Function {
-      var nativeInitializer = AS.getNativeInitializer(classInfo);
-      if (nativeInitializer) {
-        return nativeInitializer;
-      }
+    createInitializerFunction(classInfo: ClassInfo, scope: Scope): AXCallable {
       var methodInfo = classInfo.instanceInfo.getInitializer();
-      release || assert(!methodInfo.isNative(), "Must provide a native initializer for " + classInfo.instanceInfo.getClassName());
-      return function () {
-        return interpret(this, methodInfo, scope, <any>arguments);
-      };
+      var fun = AS.getNativeInitializer(classInfo);
+      if (!fun) {
+        release || assert(!methodInfo.isNative(), "Must provide a native initializer for " +
+                                                  classInfo.instanceInfo.getClassName());
+        fun = function () {
+          return interpret(this, methodInfo, scope, <any>arguments);
+        };
+      }
+      // REDUX: enable arg count checking on native ctors. Currently impossible because natives
+      // are frozen.
+      if (!methodInfo.isNative()) {
+        fun.methodInfo = methodInfo;
+      }
+      if (!release) {
+        try {
+          var className = classInfo.instanceInfo.getName().toFQNString(false);
+          Object.defineProperty(fun, 'name', {value: className});
+        } catch (e) {
+          // Ignore errors in browsers that don't allow overriding Function#length;
+        }
+      }
+      return fun;
     }
 
     createActivation(methodInfo: MethodInfo, scope: Scope): AXActivation {

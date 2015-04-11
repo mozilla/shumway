@@ -321,6 +321,15 @@ module Shumway.AVMX {
       }
     }
     methodTraitInfo.method = method;
+    method.methodInfo = methodInfo;
+    if (!release) {
+      try {
+        Object.defineProperty(method, 'name', {value: methodInfo.getName()});
+      } catch (e) {
+        // Ignore errors in browsers that don't allow overriding Function#length;
+      }
+    }
+    method.methodInfo = methodInfo;
     return method;
   }
 
@@ -881,6 +890,7 @@ module Shumway.AVMX {
 
   export class MethodInfo {
     public trait: MethodTraitInfo = null;
+    public minArgs: number;
     private _body: MethodBodyInfo;
     private _returnType: AXClass;
     constructor(
@@ -893,6 +903,7 @@ module Shumway.AVMX {
       public flags: number
     ) {
       this._body = null;
+      this.minArgs = parameters.length - optionalCount;
     }
 
     getNativeMetadata(): MetadataInfo {
@@ -926,6 +937,16 @@ module Shumway.AVMX {
         this._returnType = this.abc.applicationDomain.getClass(mn);
       }
       return this._returnType;
+    }
+
+    getName(): string {
+      if (this.name) {
+        return this.abc.getString(this.name);
+      }
+      if (this.trait) {
+        return this.trait.getName().name;
+      }
+      return 'anonymous';
     }
 
     toString() {
@@ -1689,8 +1710,9 @@ module Shumway.AVMX {
       }
       var name = s.readU30();
       var flags = s.readU8();
+      var optionalCount = 0;
       if (flags & METHOD.HasOptional) {
-        var optionalCount = s.readU30();
+        optionalCount = s.readU30();
         release || assert(parameterCount >= optionalCount);
         for (var i = parameterCount - optionalCount; i < parameterCount; i++) {
           parameters[i].optionalValueIndex = s.readU30();

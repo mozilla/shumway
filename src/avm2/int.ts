@@ -384,11 +384,13 @@ module Shumway.AVMX {
             popManyInto(stack, u30(), args);
             object = stack.pop();
             value = stack[stack.length - 1];
+            validateCall(sec, value, args.length);
             stack[stack.length - 1] = value.axApply(object, args);
             break;
           case Bytecode.CONSTRUCT:
             popManyInto(stack, u30(), args);
             receiver = peekBox();
+            validateConstruct(sec, receiver, args.length);
             stack[stack.length - 1] = receiver.axConstruct(args);
             break;
           case Bytecode.RETURNVOID:
@@ -397,6 +399,7 @@ module Shumway.AVMX {
             if (methodInfo.returnTypeNameIndex) {
               return methodInfo.getType().axCoerce(stack.pop());
             }
+            // TODO: ensure proper unwinding of the scope stack.
             return stack.pop();
           case Bytecode.CONSTRUCTSUPER:
             popManyInto(stack, u30(), args);
@@ -823,6 +826,7 @@ module Shumway.AVMX {
       }
     }
     var message: string;
+    var isSuper = false;
     switch (bc) {
       case Bytecode.CALL:
         if (!value || !value.axApply) {
@@ -834,22 +838,15 @@ module Shumway.AVMX {
           return sec.createError('TypeError', Errors.ConstructOfNonFunctionError);
         }
         break;
+      case Bytecode.CALLSUPERVOID:
+      case Bytecode.CONSTRUCTSUPER:
+        isSuper = true;
+        // Fallthrough.
       case Bytecode.CALLPROPERTY:
       case Bytecode.CALLPROPVOID:
       case Bytecode.CALLPROPLEX:
-        if (receiver === null) {
-          return sec.createError('TypeError', Errors.ConvertNullToObjectError);
-        }
-        if (receiver === undefined) {
-          return sec.createError('TypeError', Errors.ConvertUndefinedToObjectError);
-        }
-        if (!(receiver.axResolveMultiname(mn) in receiver)) {
-          return sec.createError('ReferenceError', Errors.ReadSealedError, mn.name,
-                                            receiver.axClass.name.toFQNString(false));
-        }
-        break;
+      case Bytecode.CONSTRUCTPROP:
       case Bytecode.CALLSUPER:
-      case Bytecode.CALLSUPERVOID:
         if (receiver === null) {
           return sec.createError('TypeError', Errors.ConvertNullToObjectError);
         }
@@ -857,10 +854,19 @@ module Shumway.AVMX {
           return sec.createError('TypeError', Errors.ConvertUndefinedToObjectError);
         }
         if (!(receiver.axResolveMultiname(mn) in receiver)) {
-          return sec.createError('ReferenceError', Errors.ReadSealedError, mn.name,
-                                            receiver.axClass.name.toFQNString(false));
+          var axClass = isSuper ? receiver.axClass.superClass : receiver.axClass;
+          if (axClass.classInfo.instanceInfo.isSealed()) {
+            return sec.createError('ReferenceError', Errors.ReadSealedError, mn.name,
+                                   axClass.name.toFQNString(false));
+          }
+          return sec.createError('TypeError', isSuper ?
+                                              Errors.ConstructOfNonFunctionError :
+                                              Errors.CallOfNonFunctionError, mn.name);
         }
         break;
+      case Bytecode.GETSUPER:
+        isSuper = true;
+        // Fallthrough.
       case Bytecode.GETPROPERTY:
         if (receiver === null) {
           return sec.createError('TypeError', Errors.ConvertNullToObjectError);
@@ -875,18 +881,6 @@ module Shumway.AVMX {
         }
         if (receiver === undefined) {
           return sec.createError('TypeError', Errors.ConvertUndefinedToObjectError);
-        }
-        break;
-      case Bytecode.GETSUPER:
-        if (receiver === null) {
-          return sec.createError('TypeError', Errors.ConvertNullToObjectError);
-        }
-        if (receiver === undefined) {
-          return sec.createError('TypeError', Errors.ConvertUndefinedToObjectError);
-        }
-        if (!(receiver.axResolveMultiname(mn) in receiver)) {
-          return sec.createError('ReferenceError', Errors.ReadSealedError, mn.name,
-                                            receiver.axClass.superClass.name.toFQNString(false));
         }
         break;
       case Bytecode.INSTANCEOF:
@@ -938,14 +932,16 @@ module Shumway.AVMX {
     // To be sure we don't let VM exceptions flow into the player, box them manually here,
     // even in release builds.
     message = 'Uncaught VM-internal exception during op ' + Bytecode[bc] + ': ';
+    var stack;
     try {
       message += internalError.toString();
+      stack = internalError.stack;
     } catch (e) {
       message += '[Failed to stringify exception]';
     }
     // In the extension, we can just kill all the things.
     var player = sec['player'];
-    console.error(message);
+    console.error(message, '\n', stack);
     if (player) {
       //player.executeFSCommand('quit', [message]);
       //} else if (typeof jsGlobal.quit === 'function') {

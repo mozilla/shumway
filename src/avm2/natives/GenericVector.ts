@@ -295,12 +295,12 @@ module Shumway.AVMX.AS {
      * well as passing the |thisObject| as |this| for each of the elements in the vector. If any of
      * the callbacks return |false| the function terminates, otherwise it returns |true|.
      */
-    every(callback: Function, thisObject: Object) {
+    every(callback: AXCallable, thisObject: Object) {
       if (!this.checkVectorMethodArgs(callback, thisObject)) {
         return true;
       }
       for (var i = 0; i < this._buffer.length; i++) {
-        if (!callback.call(thisObject, this.axGetNumericProperty(i), i, this)) {
+        if (!callback.axCall(thisObject, this.axGetNumericProperty(i), i, this)) {
           return false;
         }
       }

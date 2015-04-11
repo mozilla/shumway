@@ -469,27 +469,20 @@ module Shumway.AVMX.AS {
     axCallProperty(mn: Multiname, args: any [], isLex: boolean): any {
       var name = this.axResolveMultiname(mn);
       var fun = this[name];
-      if (!fun || !fun.axApply) {
-        this.sec.throwError('ReferenceError', Errors.CallOfNonFunctionError, mn.name);
-      }
+      validateCall(this.sec, fun, args.length);
       return fun.axApply(isLex ? null : this, args);
     }
 
     axCallSuper(mn: Multiname, scope: Scope, args: any []): any {
       var name = this.axResolveMultiname(mn);
       var fun = (<AXClass>scope.parent.object).tPrototype[name];
-      if (!fun || !fun.axApply) {
-        this.sec.throwError('ReferenceError', Errors.CallOfNonFunctionError, mn.name);
-      }
+      validateCall(this.sec, fun, args.length);
       return fun.axApply(this, args);
     }
     axConstructProperty(mn: Multiname, args: any []): any {
       var name = this.axResolveMultiname(mn);
       var ctor = this[name];
-      if (!ctor || !ctor.axConstruct) {
-        this.sec.throwError('ReferenceError', Errors.ConstructOfNonFunctionError,
-                                       mn.name);
-      }
+      validateConstruct(this.sec, ctor, args.length);
       return ctor.axConstruct(args);
     }
 
@@ -980,8 +973,9 @@ module Shumway.AVMX.AS {
 
     private _prototype: AXObject;
     private _prototypeInitialzed: boolean = false;
-    protected value: Function;
+    protected value: AXCallable;
     protected receiver: {scope: Scope};
+    protected methodInfo: MethodInfo;
 
     get prototype(): AXObject {
       if (!this._prototypeInitialzed) {
@@ -1039,10 +1033,11 @@ module Shumway.AVMX.AS {
       defineNonEnumerableProperty(proto, '$Bgcall', asProto.call);
       defineNonEnumerableProperty(proto, '$Bgapply', asProto.apply);
     }
-    static Create(receiver: AXObject, method: Function) {
+    static Create(receiver: AXObject, method: AXCallable) {
       var closure: ASMethodClosure = Object.create(this.sec.AXMethodClosure.tPrototype);
       closure.receiver = <any>receiver;
       closure.value = method;
+      closure.methodInfo = method.methodInfo;
       return closure;
     }
 
@@ -1813,7 +1808,7 @@ module Shumway.AVMX.AS {
 
     static classInitializer(asClass?: any) {
       defineNonEnumerableProperty(this, '$Bglength', 1);
-      defineNonEnumerableProperty(this.dPrototype, '$Bgname', asClass.name.substr(2));
+      defineNonEnumerableProperty(this.dPrototype, '$Bgname', asClass.name);
       if (asClass === ASError) {
         defineNonEnumerableProperty(this.dPrototype, '$Bgmessage', 'Error');
         defineNonEnumerableProperty(this.dPrototype, '$BgtoString', ASError.prototype.toString);
@@ -2248,7 +2243,7 @@ module Shumway.AVMX.AS {
     return natives;
   }
 
-  export function getNativeInitializer(classInfo: ClassInfo): Function {
+  export function getNativeInitializer(classInfo: ClassInfo): AXCallable {
     var methodInfo = classInfo.instanceInfo.getInitializer();
     var className = classInfo.instanceInfo.getClassName();
     var asClass = builtinNativeClasses[className] || nativeClasses[className];

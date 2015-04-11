@@ -2521,6 +2521,7 @@ module Shumway.AVMX.AS {
       }
       // Check if the method exists before calling it.
       if (method) {
+        validateCall(this.sec, method, args.length);
         return method.axApply(this, args);
       }
 
@@ -3557,6 +3558,7 @@ module Shumway.AVMX.AS {
       var method = this[this.axResolveMultiname(mn)];
       // Check if the method exists before calling it.
       if (method) {
+        validateCall(this.sec, method, args.length);
         return method.axApply(this, args);
       }
 
