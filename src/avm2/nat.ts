@@ -1903,6 +1903,11 @@ module Shumway.AVMX.AS {
 
     private static stringifySpecializedToString(value: Object, replacerArray: any [], replacerFunction: (key: string, value: any) => any, gap: string): string {
       try {
+        // In AS3 |JSON.stringify(undefined)| returns "null", while JS returns |undefined|.
+        // TODO: Is there anything to be done in case of a |replacerFunction| function?
+        if (value === undefined) {
+          return "null";
+        }
         return JSON.stringify(transformASValueToJS(this.sec, value, true), replacerFunction, gap);
       } catch (e) {
         this.sec.throwError('SyntaxError', Errors.JSONCyclicStructure);
