@@ -33,12 +33,12 @@ interface ISecurityDomain extends Shumway.AVMX.AXSecurityDomain {
   Float64Vector: typeof Shumway.AVMX.AS.Float64Vector;
 }
 
-module Shumway.AVMX.AS {
+/**
+ * Make Shumway bug-for-bug compatible with Tamarin.
+ */
+var as3Compatibility = true;
 
-  /**
-   * Make Shumway bug-for-bug compatible with Tamarin.
-   */
-  export var as3Compatibility = true;
+module Shumway.AVMX.AS {
 
   import assert = Shumway.Debug.assert;
   import hasOwnProperty = Shumway.ObjectUtilities.hasOwnProperty;
@@ -1423,6 +1423,15 @@ module Shumway.AVMX.AS {
 
     static _minValue(): number {
       return Number.MIN_VALUE;
+    }
+
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=564839
+    static convertStringToDouble(s: string): number {
+      var i = s.indexOf(String.fromCharCode(0));
+      if (i >= 0) {
+        return +s.substring(0, i);
+      }
+      return +s;
     }
   }
 

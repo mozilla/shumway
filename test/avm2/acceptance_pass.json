@@ -3488,7 +3488,7 @@
       "test/avm2/acceptance/recursion/pcre_is_startline.abc",
       "test/avm2/acceptance/recursion/xml_functions.abc",
       "test/avm2/acceptance/regress/bug_415080.abc",
-      "test/avm2/acceptance/regress/bug_420755.abc",
+
       "test/avm2/acceptance/regress/bug_424341.abc",
       "test/avm2/acceptance/regress/bug_458419.abc",
       "test/avm2/acceptance/regress/bug_460872.abc",
@@ -3552,6 +3552,16 @@
       "test/avm2/acceptance/versioning/bugcompat_support/bugcompat_test.abc"
 //      "test/avm2/acceptance/versioning/classes.abc",
 //      "test/avm2/acceptance/versioning/globals.abc"
+    ]
+  ],
+  [
+    [
+      "test/avm2/acceptance/Assert.abc",
+      "test/avm2/acceptance/Utils.abc",
+      "test/avm2/acceptance/DateUtils.abc"
+    ],
+    [
+      "test/avm2/acceptance/regress/bug_420755.abc"
     ]
   ]
 ]
