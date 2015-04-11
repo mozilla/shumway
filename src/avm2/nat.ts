@@ -1140,6 +1140,12 @@ module Shumway.AVMX.AS {
       if (!result) {
         return null;
       }
+      // In AS3, non-matched capturing groups return an empty string, not null or undefined.
+      for (var i = 0; i < result.length; i++) {
+        if (!result[i]) {
+          result[i] = '';
+        }
+      }
       return this.sec.createArray(result);
     }
     replace(pattern, repl) {
@@ -1450,6 +1456,8 @@ module Shumway.AVMX.AS {
   }
 
   export class ASRegExp extends ASObject {
+    private static UNMATCHABLE_PATTERN = '^(?!)$';
+
     static classInitializer: any = function() {
       var proto: any = this.dPrototype;
       var asProto: any = ASRegExp.prototype;
@@ -1508,26 +1516,28 @@ module Shumway.AVMX.AS {
         }
         pattern = this._parse(source);
       }
-      try {
-        this.value = new RegExp(pattern, flags);
-      } catch (e) {
-        this.value = new RegExp('^not matching anything, hopefully±$', flags);
-      }
+      this.value = new RegExp(pattern, flags);
       this._source = source;
     }
 
+    // Parses and sanitizes a AS3 RegExp pattern to be used in JavaScript. Silently fails and
+    // returns an unmatchable pattern of the source turns out to be invalid.
     private _parse(pattern: string): string {
       var result = '';
       var captureNames = this._captureNames;
+      var parens = [];
+      var atoms = 0;
       for (var i = 0; i < pattern.length; i++) {
         var char = pattern[i];
         switch (char) {
           case '(':
             result += char;
+            parens.push(atoms > 1 ? atoms - 1 : atoms);
+            atoms = 0;
             if (pattern[i + 1] === '?') {
               switch (pattern[i + 2]) {
                 case ':':
-                case '+':
+                case '=':
                 case '!':
                   result += '?' + pattern[i + 2];
                   i += 2;
@@ -1543,31 +1553,55 @@ module Shumway.AVMX.AS {
                     }
                     i += RegExp.lastMatch.length - 1;
                   } else {
-                    result += '?';
-                    i++;
+                    return ASRegExp.UNMATCHABLE_PATTERN;
                   }
               }
             } else {
               captureNames.push(null);
             }
+            // 406 seems to be the maximum number of capturing groups allowed in a pattern.
+            // Examined by testing.
+            if (captureNames.length > 406) {
+              return ASRegExp.UNMATCHABLE_PATTERN;
+            }
+            break;
+          case ')':
+            if (!parens.length) {
+              return ASRegExp.UNMATCHABLE_PATTERN;
+            }
+            result += char;
+            atoms = parens.pop() + 1;
+            break;
+          case '|':
+            result += char;
             break;
           case '\\':
             result += char;
-            if (/c[A-Z]|x[0-9,a-z,A-Z]{2}|u[0-9,a-z,A-Z]{4}|./.exec(pattern.substr(i + 1))) {
+            if (/\\|c[A-Z]|x[0-9,a-z,A-Z]{2}|u[0-9,a-z,A-Z]{4}|./.exec(pattern.substr(i + 1))) {
               result += RegExp.lastMatch;
               i += RegExp.lastMatch.length;
+            }
+            if (atoms <= 1) {
+              atoms++;
             }
             break;
           case '[':
             if (/\[[^\]]*\]/.exec(pattern.substr(i))) {
               result += RegExp.lastMatch;
               i += RegExp.lastMatch.length - 1;
+              if (atoms <= 1) {
+                atoms++;
+              }
+            } else {
+              return ASRegExp.UNMATCHABLE_PATTERN;
             }
             break;
           case '{':
-            if (/\{[^\{]*?,[^\{]*?\}/.exec(pattern.substr(i))) {
+            if (/\{[^\{]*?(?:,[^\{]*?)?\}/.exec(pattern.substr(i))) {
               result += RegExp.lastMatch;
               i += RegExp.lastMatch.length - 1;
+            } else {
+              return ASRegExp.UNMATCHABLE_PATTERN;
             }
             break;
           case '.':
@@ -1576,15 +1610,35 @@ module Shumway.AVMX.AS {
             } else {
               result += char;
             }
-            break;
-          case ' ':
-            if (!this._extended) {
-              result += char;
+            if (atoms <= 1) {
+              atoms++;
             }
             break;
+          case '?':
+          case '*':
+          case '+':
+            if (!atoms) {
+              return ASRegExp.UNMATCHABLE_PATTERN;
+            }
+            result += char;
+            if (pattern[i + 1] === '?') {
+              i++;
+              result += '?';
+            }
+            break;
+          case ' ':
+            if (this._extended) {
+              break;
+            }
           default:
             result += char;
+            if (atoms <= 1) {
+              atoms++;
+            }
         }
+      }
+      if (parens.length) {
+        return ASRegExp.UNMATCHABLE_PATTERN;
       }
       return result;
     }
@@ -1597,6 +1651,14 @@ module Shumway.AVMX.AS {
       if (this._dotall)          out += "s";
       if (this._extended)        out += "x";
       return out;
+    }
+
+    axCall(ignoredThisArg: any): any {
+      return this.value.exec.apply(this.value, sliceArguments(arguments, 1));
+    }
+
+    axApply(ignoredThisArg: any, argArray?: any[]): any {
+      return this.value.exec.apply(this.value, argArray);
     }
 
     get source(): string {
@@ -1640,15 +1702,18 @@ module Shumway.AVMX.AS {
       axResult.axSetPublicProperty('index', result.index);
       axResult.axSetPublicProperty('input', result.input);
       var captureNames = this._captureNames;
-      for (var i = 0; i < captureNames.length; i++) {
-        var name = captureNames[i];
-        if (name !== null) {
-          var value = result[i + 1] || '';
-          result[name] = value;
-          axResult.axSetPublicProperty(name, value);
+      if (captureNames) {
+        for (var i = 0; i < captureNames.length; i++) {
+          var name = captureNames[i];
+          if (name !== null) {
+            // In AS3, non-matched capturing groups return an empty string, not null or undefined.
+            var value = result[i + 1] || '';
+            result[name] = value;
+            axResult.axSetPublicProperty(name, value);
+          }
         }
+        return axResult;
       }
-      return axResult;
     }
 
     test(str: string = ''): boolean {

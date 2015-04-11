@@ -353,6 +353,15 @@ module Shumway.AVM1.Natives {
         flags: AVM1PropertyFlags.NATIVE_MEMBER,
         value: new AVM1NativeFunction(context, this._toString)
       });
+
+      this.alSetOwnProperty('charAt', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.charAt)
+      });
+      this.alSetOwnProperty('charCodeAt', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.charCodeAt)
+      });
     }
 
     public _valueOf() {
@@ -363,6 +372,16 @@ module Shumway.AVM1.Natives {
     public _toString() {
       var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
       return native.value;
+    }
+
+    public charAt(index: number): string {
+      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
+      return native.value.charAt(alToInteger(this.context, index));
+    }
+
+    public charCodeAt(index: number): number {
+      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
+      return native.value.charCodeAt(alToInteger(this.context, index));
     }
   }
 
@@ -454,6 +473,14 @@ module Shumway.AVM1.Natives {
     }
   }
 
+  enum AVM1ArraySortOnOptions {
+    CASEINSENSITIVE = 1,
+    DESCENDING = 2,
+    UNIQUESORT = 4,
+    RETURNINDEXEDARRAY = 8,
+    NUMERIC = 16
+  }
+
   // TODO implement all the Array class and its prototype natives
 
   export class AVM1ArrayPrototype extends AVM1Object {
@@ -488,6 +515,10 @@ module Shumway.AVM1.Natives {
       this.alSetOwnProperty('splice', {
         flags: AVM1PropertyFlags.NATIVE_MEMBER,
         value: new AVM1NativeFunction(context, this.splice)
+      });
+      this.alSetOwnProperty('sortOn', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.sortOn)
       });
       this.alSetOwnProperty('toString', {
         flags: AVM1PropertyFlags.NATIVE_MEMBER,
@@ -599,6 +630,77 @@ module Shumway.AVM1.Natives {
       }
       // TODO implement generic method
       Debug.notImplemented('AVM1ArrayNative.splice');
+    }
+
+    public sortOn(fieldNames: AVM1Object, options: any): AVM1Object {
+      var context = this.context;
+      // The field names and options we'll end up using.
+      var fieldNamesList: string[] = [];
+      var optionsList: number[] = [];
+      if (alIsString(context, fieldNames)) {
+        fieldNamesList = [alToString(context, fieldNames)];
+        optionsList = [alToInt32(context, options)];
+      } else if (alIsArray(context, fieldNames)) {
+        fieldNamesList = [];
+        optionsList = [];
+        var optionsArray: AVM1Object = alIsArray(context, options) ? options : null;
+        var length = alToInteger(context, fieldNames.alGet('length'));
+        if (optionsArray) {
+          // checking in length of fieldNames == options
+          var optionsLength = alToInteger(context, optionsArray.alGet('length'));
+          if (length !== optionsLength) {
+            optionsArray = null;
+          }
+        }
+        for (var i = 0; i < length; i++) {
+          fieldNamesList.push(alToString(context, fieldNames.alGet(i)));
+          optionsList.push(optionsArray ? alToInt32(context, optionsArray.alGet(i)) : 0);
+        }
+      } else {
+        // Field parameters are incorrect.
+        return undefined;
+      }
+
+      // TODO revisit this code
+      var optionsVal: number = optionsList[0];
+      release || Shumway.Debug.assertNotImplemented(!(optionsVal & AVM1ArraySortOnOptions.UNIQUESORT), "UNIQUESORT");
+      release || Shumway.Debug.assertNotImplemented(!(optionsVal & AVM1ArraySortOnOptions.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
+
+      var comparer = (a, b) => {
+        var aObj = alToObject(context, a);
+        var bObj = alToObject(context, b);
+        if (!a || !b) {
+          return !a ? !b ? 0 : -1 : +1;
+        }
+        for (var i = 0; i < fieldNamesList.length; i++) {
+          var aField = aObj.alGet(fieldNamesList[i]);
+          var bField = bObj.alGet(fieldNamesList[i]);
+          var result;
+          if (optionsList[i] & AVM1ArraySortOnOptions.NUMERIC) {
+            var aNum = alToNumber(context, aField);
+            var bNum = alToNumber(context, bField);
+            result = aNum < bNum ? -1 : aNum > bNum ? +1 : 0;
+          } else {
+            var aStr = alToString(context, aField);
+            var bStr = alToString(context, bField);
+            if (optionsList[i] & AVM1ArraySortOnOptions.CASEINSENSITIVE) {
+              aStr = aStr.toLowerCase();
+              bStr = bStr.toLowerCase();
+            }
+            result = aStr < bStr ? -1 : aStr > bStr ? +1 : 0;
+          }
+          if (result !== 0) {
+            return !(optionsList[i] & AVM1ArraySortOnOptions.DESCENDING) ? result : -result;
+          }
+        }
+        return 0;
+      };
+
+      var arr = alEnsureType<AVM1ArrayNative>(this, AVM1ArrayNative).value;
+      arr.sort(comparer);
+
+      // Strange, the documentation said to do not return anything.
+      return this;
     }
   }
 
@@ -757,7 +859,7 @@ module Shumway.AVM1.Natives {
     }
 
     public alCall(thisArg: any, args?: any[]): any {
-      return alCallProperty(this.alConstruct.apply(this, args), 'toString', []);
+      return alCallProperty(this.alConstruct.apply(this, args), 'toString');
     }
 
     public _UTC(year: number, month: number, date?: number, hours?: number, seconds?: number, ms?: number): number {
