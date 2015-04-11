@@ -152,6 +152,7 @@ module.exports = function(grunt) {
 
       // Greps for avm2 errors.
       warn_avm2: {
+        maxBuffer: Infinity,
         cmd: 'cat test/ats/test_swf_avm2.run | grep "Not Implemented\\|Uncaught VM-internal"; ' +
              'cat test/avm2/test_avm2_acceptance.run | grep "Not Implemented\\|Uncaught VM-internal\\|FAILED\\|EXCEPTED"'
       },
