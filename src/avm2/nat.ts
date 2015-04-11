@@ -1126,11 +1126,11 @@ module Shumway.AVMX.AS {
       return String.fromCharCode.apply(null, charcodes);
     }
 
-    indexOf(char: string) {
-      return this.value.indexOf(char);
+    indexOf(char: string, i?: number) {
+      return this.value.indexOf(char, i);
     }
-    lastIndexOf(char: string) {
-      return this.value.lastIndexOf(char);
+    lastIndexOf(char: string, i?: number) {
+      return this.value.lastIndexOf(char, i);
     }
     charAt(index: number) {
       return this.value.charAt(index);
@@ -1239,11 +1239,11 @@ module Shumway.AVMX.AS {
     // The String.prototype versions of these methods are generic, so the implementation is
     // different.
 
-    generic_indexOf(char: string) {
-      return String.prototype.indexOf.call(this.value, char);
+    generic_indexOf(char: string, i?: number) {
+      return String.prototype.indexOf.call(this.value, char, i);
     }
-    generic_lastIndexOf(char: string) {
-      return String.prototype.lastIndexOf.call(this.value, char);
+    generic_lastIndexOf(char: string, i?: number) {
+      return String.prototype.lastIndexOf.call(this.value, char, i);
     }
     generic_charAt(index: number) {
       return String.prototype.charAt.call(this.value, index);
