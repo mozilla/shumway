@@ -337,7 +337,9 @@ module Shumway.AVMX {
       case AMF3Marker.STRING:
         return readUTF8(ba, references);
       case AMF3Marker.DATE:
-        return new Date(readDouble(ba));
+        var u29o = readU29(ba);
+        release || assert((u29o & 1) === 1);
+        return ba.sec.AXDate.axConstruct([readDouble(ba)]);
       case AMF3Marker.OBJECT:
         var u29o = readU29(ba);
         if ((u29o & 1) === 0) {
@@ -365,28 +367,6 @@ module Shumway.AVMX {
           }
           references.traits.push(traits);
           references.traitNames.push(traitNames);
-          //traits.className = alias;
-          //if (alias) {
-          //  axClass = ba.sec.classAliases.getClassByAlias(alias);
-          //}
-          //traits.class = axClass;
-          //traits.isDynamic = (u29o & 8) !== 0;
-          //traits.members = [];
-          //var slots = axClass && axClass.classInfo.instanceInfo.runtimeTraits.slots;
-          //for (var i = 0, j = u29o >> 4; i < j; i++) {
-          //  var traitName = readUTF8(ba, references);
-          //  var slot = null;
-          //  for (var j = 1; slots && j < slots.length; j++) {
-          //    if ((<Multiname>slots[j].name).name === traitName) {
-          //      slot = slots[j];
-          //      break;
-          //    }
-          //  }
-          //  traits.members.push(slot ?
-          //                      slot.name.getMangledName() :
-          //                      Multiname.getPublicMangledName(traitName));
-          //}
-          //references.traits.push(traits);
         }
 
         var object = axClass ? axClass.axConstruct([]) : ba.sec.createObject();
@@ -444,13 +424,22 @@ module Shumway.AVMX {
     return true;
   }
 
+  var MAX_INT =  268435456 - 1; // 2^28 - 1
+  var MIN_INT = -268435456; // -2^28
+
   function writeAMF3Value(ba: ByteArray, value: any, references: AMF3ReferenceTables) {
     switch (typeof value) {
       case "boolean":
         ba.writeByte(value ? AMF3Marker.TRUE : AMF3Marker.FALSE);
         break;
       case "number":
-        if (value === (value | 0)) {
+        var useInteger = value === (value | 0);
+        if (useInteger) {
+          if (value > MAX_INT || value < MIN_INT) {
+            useInteger = false;
+          }
+        }
+        if (useInteger) {
           ba.writeByte(AMF3Marker.INTEGER);
           writeU29(ba, value);
         } else {
