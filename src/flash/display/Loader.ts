@@ -63,9 +63,6 @@ module Shumway.AVMX.AS.flash.display {
         return this._rootLoader;
       }
       var loader = new this.sec.flash.display.Loader();
-      // The root loader gets a default name, but it's not visible and hence the instance id must
-      // not be used up.
-      this.sec.flash.display.DisplayObject.axClass._instanceID--;
       // The root loaderInfo's `loader` property is always null.
       loader._contentLoaderInfo._loader = null;
       this._rootLoader = loader;
@@ -226,12 +223,13 @@ module Shumway.AVMX.AS.flash.display {
       var displayObjectClass = this.sec.flash.display.DisplayObject.axClass;
       displayObjectClass._advancableInstances.push(this);
       this._content = null;
-      if (this.sec.flash.display.Loader.axClass._rootLoader) {
+      if (this.axClass._rootLoader) {
         // Loader reserves the next instance ID to use for the loaded content.
         // This isn't needed for the first, root, loader, because that uses "root1" as the name.
         this._contentID = displayObjectClass._instanceID++;
       } else {
-        // The root loader itself doesn't get an ID.
+        // The root loader gets a default name, but it's not visible and hence
+        // the instance id must not be used up.
         displayObjectClass._instanceID--;
       }
       var loaderInfoCtor = this.sec.flash.display.LoaderInfo;
@@ -633,8 +631,9 @@ module Shumway.AVMX.AS.flash.display {
       }
       var root = constructClassFromSymbol(symbol, symbol.symbolClass);
       // The initial SWF's root object gets a default of 'root1', which doesn't use up a
-      // DisplayObject instance ID. For the others, we have reserved on in `_contentID`.
+      // DisplayObject instance ID. For the others, we have reserved one in `_contentID`.
       this.sec.flash.display.DisplayObject.axClass._instanceID--;
+
       var loaderClass = this.sec.flash.display.Loader.axClass;
       if (this === loaderClass._rootLoader) {
         root._name = 'root1';
