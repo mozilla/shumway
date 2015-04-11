@@ -1335,6 +1335,7 @@ module Shumway.AVMX.AS {
       var proto: any = this.dPrototype;
       var asProto: any = ASNumber.prototype;
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
+      addPrototypeFunctionAlias(proto, '$BgtoLocaleString', asProto.toString);
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
       addPrototypeFunctionAlias(proto, '$BgtoFixed', asProto.toFixed);
       addPrototypeFunctionAlias(proto, '$BgtoExponential', asProto.toExponential);
@@ -1433,6 +1434,7 @@ module Shumway.AVMX.AS {
       var proto: any = this.dPrototype;
       var asProto: any = ASInt.prototype;
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
+      addPrototypeFunctionAlias(proto, '$BgtoLocaleString', asProto.toString);
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
 
       defineNonEnumerableProperty(this, '$BgMAX_VALUE',  0x7fffffff);
@@ -1473,6 +1475,7 @@ module Shumway.AVMX.AS {
       var proto: any = this.dPrototype;
       var asProto: any = ASUint.prototype;
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
+      addPrototypeFunctionAlias(proto, '$BgtoLocaleString', asProto.toString);
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
 
       defineNonEnumerableProperty(this, '$BgMAX_VALUE', 0xffffffff);
