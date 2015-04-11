@@ -383,6 +383,7 @@ module Shumway.Player {
       if (buffer) {
         var byteArray = new this.sec.flash.utils.ByteArray(buffer);
         this._loader.loadBytes(byteArray, context);
+        this._loader.contentLoaderInfo._url = url;
       } else {
         this._loader.load(new this.sec.flash.net.URLRequest(url), context);
       }
