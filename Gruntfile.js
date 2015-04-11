@@ -150,10 +150,10 @@ module.exports = function(grunt) {
         cmd: 'mongo ats --eval \'db.swfs.find({"parse_result.uses_avm1": false}).forEach(function (x) { print("test/ats/swfs/" + x.file); })\' | parallel -k --no-notice -X -N10 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | tee test/ats/test_swf_avm2_all.run;'
       },
 
-      // Greps for errors in the |test_swf_avm2| output.
-      warn_swf_avm2: {
+      // Greps for avm2 errors.
+      warn_avm2: {
         cmd: 'cat test/ats/test_swf_avm2.run | grep "Not Implemented\\|Uncaught VM-internal"; ' +
-             'cat test/avm2/test_avm2_acceptance.run | grep "Not Implemented\\|Uncaught VM-internal"'
+             'cat test/avm2/test_avm2_acceptance.run | grep "Not Implemented\\|Uncaught VM-internal\\|FAILED\\|EXCEPTED"'
       },
       warn_spell: {
         // TODO: Add more files.
@@ -658,7 +658,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('warn', "Run this before checking in any code to report warnings.", [
     'exec:warn_spell',
-    'exec:warn_swf_avm2'
+    'exec:warn_avm2'
   ]);
 
   grunt.registerTask('perf-gate', "Run this before checking in any code to make sure you don't regress performance.", [

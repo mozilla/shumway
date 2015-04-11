@@ -34,6 +34,12 @@ interface ISecurityDomain extends Shumway.AVMX.AXSecurityDomain {
 }
 
 module Shumway.AVMX.AS {
+
+  /**
+   * Make Shumway bug-for-bug compatible with Tamarin.
+   */
+  export var as3Compatibility = true;
+
   import assert = Shumway.Debug.assert;
   import hasOwnProperty = Shumway.ObjectUtilities.hasOwnProperty;
   import hasOwnGetter = Shumway.ObjectUtilities.hasOwnGetter;
@@ -1110,9 +1116,15 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.public_toString);
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.public_valueOf);
+
+      addPrototypeFunctionAlias(<any>this, '$BgfromCharCode', ASString.fromCharCode);
     }
 
     value: string;
+
+    static fromCharCode(...charcodes: any []) {
+      return String.fromCharCode.apply(null, charcodes);
+    }
 
     indexOf(char: string) {
       return this.value.indexOf(char);
@@ -1183,7 +1195,38 @@ module Shumway.AVMX.AS {
     toLocaleLowerCase() {
       return this.value.toLowerCase();
     }
+
+    /**
+     * AS3 has a bug when converting a certain character range to lower case.
+     */
+    as3ToLowerCase() {
+      var value = this.value;
+      var chars: string [] = null;
+      for (var i = 0; i < value.length; i++) {
+        var charCode = value.charCodeAt(i);
+        if (charCode >= 0x10A0 && charCode <= 0x10C5) {
+          if (!chars) {
+            chars = new Array(value.length);
+          }
+          chars[i] = String.fromCharCode(charCode + 48);
+        }
+      }
+      if (chars) {
+        // Fill in remaining chars if the bug needs to be emulated.
+        for (var i = 0; i < chars.length; i++) {
+          var char = chars[i];
+          if (!char) {
+            chars[i] = value.charAt(i).toLocaleString();
+          }
+        }
+        return chars.join("");
+      }
+      return value.toLowerCase();
+    }
     toLowerCase() {
+      if (as3Compatibility) {
+        return this.as3ToLowerCase();
+      }
       return this.value.toLowerCase();
     }
     toLocaleUpperCase() {
