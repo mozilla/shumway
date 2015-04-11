@@ -184,6 +184,12 @@ module.exports = function(grunt) {
         cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance_pass.json | tee test/avm2/test_avm2_acceptance.run | egrep -o "(PASSED|FAILED|EXCEPTED|VM-internal|TIMEDOUT)" | sort | uniq -c | tee test/avm2/acceptance.run && ' +
              'diff test/avm2/acceptance.run test/avm2/acceptance.baseline'
       },
+      // Runs the pypy tests and tests against the current baseline. If you get more tests to pass, update the baseline.
+      test_avm2_pypy: {
+        maxBuffer: Infinity,
+        cmd: 'find -L test/avm2/pypy -name "*.abc" | xargs -I {} utils/jsshell/js build/ts/shell.js -x -v {} | tee test/avm2/pypy/acceptance.run &&' +
+        'diff test/avm2/pypy/acceptance.run test/avm2/pypy/acceptance.baseline'
+      },
       bench_avm2: {
         maxBuffer: Infinity,
         cmd: 'find -L test/avm2/jsbench -name "*.abc" | xargs utils/jsshell/js build/ts/shell.js -x --printABCFileName'

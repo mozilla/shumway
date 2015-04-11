@@ -1,0 +1,209 @@
+0
+NaN
+"\x0"
+0
+NaN
+NaN
+NaN
+NaN
+"\x30\x78\x4e\x61\x4e"
+150
+NaN
+0
+0
+"\x30\x4e\x61\x4e"
+0
+1
+"\x4e\x61\x4e"
+"\x4e\x61\x4e"
+NaN
+true
+"\x4e\x6f\x6e\x65"
+true
+"\x6e\x75\x6c\x6c\x2e"
+TypeError: Error #1009: Cannot access a property or method of a null object reference.
+	at global/fn()
+	at PyPyTest::TestAVM2String.test_char_isxxx()
+	at global$init()
+1
+""
+""
+RangeError: Error #1125: The index NaN is out of range 2.
+	at global/ll_getitem_foldable_nonneg__Array_String__Signed()
+	at global/ll_getitem_foldable__Array_String__Signed()
+	at global/fn()
+	at PyPyTest::TestAVM2String.test_compare()
+	at global$init()
+ReferenceError: Error #1069: Property NaN not found on __AS3__.vec.Vector.<String> and there is no default value.
+	at global/fn()
+	at PyPyTest::TestAVM2String.test_concat()
+	at global$init()
+false
+ReferenceError: Error #1069: Property NaN not found on __AS3__.vec.Vector.<String> and there is no default value.
+	at global/fn()
+	at PyPyTest::TestAVM2String.test_contains_str()
+	at global$init()
+12
+3
+0
+1
+"\x61"
+"\x61"
+ReferenceError: Error #1069: Property NaN not found on __AS3__.vec.Vector.<String> and there is no default value.
+	at global/fn()
+	at PyPyTest::TestAVM2String.test_endswith()
+	at global$init()
+ReferenceError: Error #1069: Property NaN not found on __AS3__.vec.Vector.<String> and there is no default value.
+	at global/fn()
+	at PyPyTest::TestAVM2String.test_endswith_char()
+	at global$init()
+ReferenceError: Error #1069: Property NaN not found on __AS3__.vec.Vector.<String> and there is no default value.
+	at global/fn()
+	at PyPyTest::TestAVM2String.test_find()
+	at global$init()
+-101
+ExceptionWrapper('AssertionError')
+	at pypy.runtime::Constants$cinit()
+	at global$init()
+ExceptionWrapper('AssertionError')
+	at pypy.runtime::Constants$cinit()
+	at global$init()
+ExceptionWrapper('AssertionError')
+	at pypy.runtime::Constants$cinit()
+	at global$init()
+ReferenceError: Error #1069: Property NaN not found on __AS3__.vec.Vector.<String> and there is no default value.
+739453715
+true
+ReferenceError: Error #1069: Property NaN not found on __AS3__.vec.Vector.<String> and there is no default value.
+	at global/fn()
+	at PyPyTest::TestAVM2String.test_int()
+	at global$init()
+"\x74\x68\x65\x20\x61\x6e\x73\x77\x65\x72\x20\x69\x73\x20\x4e\x61\x4e"
+ReferenceError: Error #1069: Property NaN not found on __AS3__.vec.Vector.<String> and there is no default value.
+	at global/fn()
+	at PyPyTest::TestAVM2String.test_int_valueerror()
+	at global$init()
+ReferenceError: Error #1069: Property NaN not found on __AS3__.vec.Vector.<String> and there is no default value.
+	at global/fn()
+	at PyPyTest::TestAVM2String.test_is_none()
+	at global$init()
+ReferenceError: Error #1069: Property NaN not found on __AS3__.vec.Vector.<String> and there is no default value.
+	at global/fn()
+	at PyPyTest::TestAVM2String.test_iter()
+	at global$init()
+10097
+10065
+VerifyError: Error #1107: The ABC data is corrupt, attempt to read out of bounds.
+	at global/_lambda_()
+	at PyPyTest::TestAVM2String.test_join()
+	at global$init()
+""
+ReferenceError: Error #1069: Property NaN not found on __AS3__.vec.Vector.<String> and there is no default value.
+	at global/fn()
+	at PyPyTest::TestAVM2String.test_nonzero()
+	at global$init()
+"\x77\x68\x61\x74\x20\x61\x20\x6e\x69\x63\x65\x20\x3c\x44\x20\x6f\x62\x6a\x65\x63\x74\x3e\x2c\x20\x6d\x75\x63\x68\x20\x6e\x69\x63\x65\x72\x20\x74\x68\x61\x6e\x20\x3c\x43\x20\x6f\x62\x6a\x65\x63\x74\x3e"
+VerifyError: Error #1107: The ABC data is corrupt, attempt to read out of bounds.
+	at pypy.runtime::Constants$cinit()
+	at global$init()
+"\x3c\x3c\x3c\x28\x35\x2c\x20\x36\x2c\x20\x37\x29\x3e\x3e\x3e"
+"\x68\x65\x6c\x6c\x6f"
+0
+-8781089
+ExceptionWrapper('AssertionError')
+	at pypy.runtime::Constants$cinit()
+	at global$init()
+"\x68"
+ReferenceError: Error #1069: Property NaN not found on __AS3__.vec.Vector.<String> and there is no default value.
+	at global/fn()
+	at PyPyTest::TestAVM2String.test_split()
+	at global$init()
+ReferenceError: Error #1069: Property NaN not found on __AS3__.vec.Vector.<String> and there is no default value.
+	at global/fn()
+	at PyPyTest::TestAVM2String.test_split_limit()
+	at global$init()
+ReferenceError: Error #1069: Property NaN not found on __AS3__.vec.Vector.<String> and there is no default value.
+	at global/f()
+	at PyPyTest::TestAVM2String.test_splitlines()
+	at global$init()
+ReferenceError: Error #1069: Property NaN not found on __AS3__.vec.Vector.<String> and there is no default value.
+	at global/fn()
+	at PyPyTest::TestAVM2String.test_startswith()
+	at global$init()
+ReferenceError: Error #1069: Property NaN not found on __AS3__.vec.Vector.<String> and there is no default value.
+	at global/fn()
+	at PyPyTest::TestAVM2String.test_startswith_char()
+	at global$init()
+ReferenceError: Error #1069: Property NaN not found on __AS3__.vec.Vector.<String> and there is no default value.
+	at global/fn()
+	at PyPyTest::TestAVM2String.test_str_compare()
+	at global$init()
+ReferenceError: Error #1069: Property NaN not found on __AS3__.vec.Vector.<String> and there is no default value.
+	at global/fn()
+	at PyPyTest::TestAVM2String.test_str_mul()
+	at global$init()
+"\x78\x78\x78"
+true
+ReferenceError: Error #1069: Property NaN not found on __AS3__.vec.Vector.<String> and there is no default value.
+	at global/fn()
+	at PyPyTest::TestAVM2String.test_str_slice_minusone()
+	at global$init()
+"\x61"
+"\x73\x74\x72\x69\x6e\x67\x3a\x20\x6e\x75\x6c\x6c\x20\x64\x65\x63\x69\x6d\x61\x6c\x3a\x20\x4e\x61\x4e\x20\x68\x65\x78\x3a\x20\x4e\x61\x4e\x20\x6f\x63\x74\x3a\x20\x4e\x61\x4e"
+"\x3c\x44\x20\x6f\x62\x6a\x65\x63\x74\x3e"
+"\x62\x65\x66\x6f\x72\x65\x20\x6e\x75\x6c\x6c\x20\x61\x66\x74\x65\x72"
+"\x61"
+NaN
+false
+false
+999518474
+((5, 42), (5, 42), (5, 42))
+false
+TypeError: Error #1009: Cannot access a property or method of a null object reference.
+	at global/ll_strlen__String()
+	at global/pypy.helpers::string_repr()
+	at Record__item0__Signed__item1__Signed__item2__String/toString()
+	at avmplus::System$/trace()
+	at global/print()
+	at PyPyTest::TestAVM2Tuple.test_conv()
+	at global$init()
+VerifyError: Error #1107: The ABC data is corrupt, attempt to read out of bounds.
+	at global/f()
+	at PyPyTest::TestAVM2Tuple.test_empty_tuple()
+	at global$init()
+VerifyError: Error #1014: Class pypy.rpython.test.test_rtuple::A could not be found.
+
+VerifyError: Error #1014: Class pypy.rpython.test.test_rtuple::A could not be found.
+
+2
+(false, false)
+30
+ExceptionWrapper('AssertionError')
+	at pypy.runtime::Constants$cinit()
+	at global$init()
+false
+103
+103
+false
+false
+218750520
+false
+0
+true
+undefined
+NaN,NaN
+6
+NaN
+false
+null
+ExceptionWrapper('ValueError')
+ExceptionWrapper('IndexError')
+NaN
+InstanceWrapper('A')
+NaN
+1,2,3
+a,b,c
+null
+"\x66\x6f\x6f"
+2
+(1, 2)
