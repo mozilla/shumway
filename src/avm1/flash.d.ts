@@ -146,7 +146,7 @@ declare module Shumway.AVMX.AS.flash {
       addTimelineObjectAtDepth(child, depth: number);
       swapChildren: Function;
       _lookupChildByIndex(index: number): DisplayObject;
-      _lookupChildByName(name: string): DisplayObject;
+      _lookupChildByName(name: string, options: LookupChildOptions): DisplayObject;
     }
     class MovieClip extends DisplayObjectContainer {
       static axClass: typeof MovieClip;
@@ -223,6 +223,12 @@ declare module Shumway.AVMX.AS.flash {
     class SpriteSymbol extends DisplaySymbol {
       avm1Name: string;
       avm1SymbolClass;
+    }
+
+    enum LookupChildOptions {
+      DEFAULT = 0,
+      IGNORE_CASE = 1,
+      INCLUDE_NOT_INITIALIZED = 2
     }
   }
   module events {
