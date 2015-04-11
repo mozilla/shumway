@@ -3085,6 +3085,46 @@
       "test/avm2/acceptance/as3/Definitions/Classes/ClassDef/Bug118272Package/BugTest.abc",
       "test/avm2/acceptance/as3/Definitions/Classes/ClassDef/Bug118272Package.abc",
       "test/avm2/acceptance/as3/Definitions/Classes/ClassDef/Bug162570.abc",
+
+      "test/avm2/acceptance/as3/sampling/bug_520539.abc",
+      "test/avm2/acceptance/as3/sampling/FunctionActivation.abc",
+      "test/avm2/acceptance/as3/sampling/InvocationSampling.abc",
+      "test/avm2/acceptance/as3/sampling/PauseSampling.abc",
+      "test/avm2/acceptance/as3/sampling/SimpleSampling.abc",
+      "test/avm2/acceptance/as3/sampling/StartSamplingErrors.abc",
+      "test/avm2/acceptance/as3/sampling/StringMaster.abc",
+      "test/avm2/acceptance/as3/ShellClasses/Dictionary.abc",
+      "test/avm2/acceptance/as3/ShellClasses/DictionarySubclass.abc",
+      "test/avm2/acceptance/as3/ShellClasses/Domain.abc",
+      "test/avm2/acceptance/as3/ShellClasses/File.abc",
+      "test/avm2/acceptance/as3/ShellClasses/toplevel.abc",
+      "test/avm2/acceptance/as3/Statements/e12_6_3_12.abc",
+      "test/avm2/acceptance/as3/Statements/for-each-in/eforeachin_001.abc",
+      "test/avm2/acceptance/as3/Statements/for-each-in/eforeachin_001_500476.abc",
+      "test/avm2/acceptance/as3/Statements/for-each-in/eforeachin_002.abc",
+      "test/avm2/acceptance/as3/Statements/switch/switch_000.abc",
+      "test/avm2/acceptance/as3/Statements/switch/switch_001.abc",
+      "test/avm2/acceptance/as3/Statements/switch/switch_002.abc",
+      "test/avm2/acceptance/as3/Statements/switch/switch_003.abc",
+      "test/avm2/acceptance/as3/String/localeCompare_585791.abc",
+      "test/avm2/acceptance/as3/Workers/ByteArrayAPI.abc",
+      "test/avm2/acceptance/as3/Workers/ByteArrayWorkersLzma.abc",
+      "test/avm2/acceptance/as3/Workers/ConditionAndMutexAPI.abc",
+      "test/avm2/acceptance/as3/Workers/regress/bug774294.abc",
+      "test/avm2/acceptance/as3/Workers/regress/bug774302.abc",
+      "test/avm2/acceptance/as3/Workers/Worker.abc",
+      "test/avm2/acceptance/as3/Workers/WorkerDomain.abc",
+      "test/avm2/acceptance/as3/Workers/WorkerErrors.abc"
+    ]
+  ],
+
+  [
+    [
+      "test/avm2/acceptance/Assert.abc",
+      "test/avm2/acceptance/Utils.abc",
+      "test/avm2/acceptance/DateUtils.abc"
+    ],
+    [
       "test/avm2/acceptance/as3/RuntimeErrors/Error1002PrecisionArgOutOfRange.abc",
       "test/avm2/acceptance/as3/RuntimeErrors/Error1003RadixArgOutOfRange.abc",
       "test/avm2/acceptance/as3/RuntimeErrors/Error1004MethodInvokedOnIncompatibleObj.abc",
@@ -3134,20 +3174,17 @@
       "test/avm2/acceptance/as3/RuntimeErrors/Error1117InvalidXmlName.abc",
       "test/avm2/acceptance/as3/RuntimeErrors/Error1118IllegalCyclicalLoop.abc",
       "test/avm2/acceptance/as3/RuntimeErrors/Error1119DeleteDoesNotSupportXMLListOperand.abc",
-      "test/avm2/acceptance/as3/RuntimeErrors/Error1120CannotDeleteProperty.abc",
-      "test/avm2/acceptance/as3/sampling/bug_520539.abc",
-      "test/avm2/acceptance/as3/sampling/FunctionActivation.abc",
-      "test/avm2/acceptance/as3/sampling/InvocationSampling.abc",
-      "test/avm2/acceptance/as3/sampling/PauseSampling.abc",
-      "test/avm2/acceptance/as3/sampling/SimpleSampling.abc",
-      "test/avm2/acceptance/as3/sampling/StartSamplingErrors.abc",
-      "test/avm2/acceptance/as3/sampling/StringMaster.abc",
-      "test/avm2/acceptance/as3/ShellClasses/Dictionary.abc",
-      "test/avm2/acceptance/as3/ShellClasses/DictionarySubclass.abc",
-      "test/avm2/acceptance/as3/ShellClasses/Domain.abc",
-      "test/avm2/acceptance/as3/ShellClasses/File.abc",
-      "test/avm2/acceptance/as3/ShellClasses/toplevel.abc",
-      "test/avm2/acceptance/as3/Statements/e12_6_3_12.abc",
+      "test/avm2/acceptance/as3/RuntimeErrors/Error1120CannotDeleteProperty.abc"
+    ]
+  ],
+  [
+    [
+      "test/avm2/acceptance/Assert.abc",
+      "test/avm2/acceptance/Utils.abc",
+      "test/avm2/acceptance/DateUtils.abc"
+    ],
+    [
+
       "test/avm2/acceptance/as3/Statements/Exceptions/MultipleCatchBlocks2/MyErrors2.abc",
       "test/avm2/acceptance/as3/Statements/Exceptions/MultipleCatchBlocks2.abc",
       "test/avm2/acceptance/as3/Statements/Exceptions/MultipleCatchBlocksArgument/ArgumentErrors.abc",
@@ -3224,26 +3261,10 @@
       "test/avm2/acceptance/as3/Statements/Exceptions/UserDefinedErrorsPackage3/TryAndCatchBlockWithUserDefinedErrors3.abc",
       "test/avm2/acceptance/as3/Statements/Exceptions/UserDefinedErrorsPackage3.abc",
       "test/avm2/acceptance/as3/Statements/Exceptions/UserDefinedErrorsPackageWithoutMatchingCatch/TryAndCatchBlockWithUserDefinedErrorsWithoutMatchingcatch.abc",
-      "test/avm2/acceptance/as3/Statements/Exceptions/UserDefinedErrorsPackageWithoutMatchingCatch.abc",
-      "test/avm2/acceptance/as3/Statements/for-each-in/eforeachin_001.abc",
-      "test/avm2/acceptance/as3/Statements/for-each-in/eforeachin_001_500476.abc",
-      "test/avm2/acceptance/as3/Statements/for-each-in/eforeachin_002.abc",
-      "test/avm2/acceptance/as3/Statements/switch/switch_000.abc",
-      "test/avm2/acceptance/as3/Statements/switch/switch_001.abc",
-      "test/avm2/acceptance/as3/Statements/switch/switch_002.abc",
-      "test/avm2/acceptance/as3/Statements/switch/switch_003.abc",
-      "test/avm2/acceptance/as3/String/localeCompare_585791.abc",
-      "test/avm2/acceptance/as3/Workers/ByteArrayAPI.abc",
-      "test/avm2/acceptance/as3/Workers/ByteArrayWorkersLzma.abc",
-      "test/avm2/acceptance/as3/Workers/ConditionAndMutexAPI.abc",
-      "test/avm2/acceptance/as3/Workers/regress/bug774294.abc",
-      "test/avm2/acceptance/as3/Workers/regress/bug774302.abc",
-      "test/avm2/acceptance/as3/Workers/Worker.abc",
-      "test/avm2/acceptance/as3/Workers/WorkerDomain.abc",
-      "test/avm2/acceptance/as3/Workers/WorkerErrors.abc"
+      "test/avm2/acceptance/as3/Statements/Exceptions/UserDefinedErrorsPackageWithoutMatchingCatch.abc"
+
     ]
   ],
-
   // E4X
 
   [
