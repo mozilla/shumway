@@ -1339,6 +1339,21 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, '$BgtoFixed', asProto.toFixed);
       addPrototypeFunctionAlias(proto, '$BgtoExponential', asProto.toExponential);
       addPrototypeFunctionAlias(proto, '$BgtoPrecision', asProto.toPrecision);
+
+      defineNonEnumerableProperty(this, '$BgNaN', Number.NaN);
+      defineNonEnumerableProperty(this, '$BgNEGATIVE_INFINITY', -1/0);
+      defineNonEnumerableProperty(this, '$BgPOSITIVE_INFINITY', 1/0);
+      defineNonEnumerableProperty(this, '$BgMAX_VALUE', Number.MAX_VALUE);
+      defineNonEnumerableProperty(this, '$BgMIN_VALUE', Number.MIN_VALUE);
+
+      defineNonEnumerableProperty(this, '$BgE', Math.E);
+      defineNonEnumerableProperty(this, '$BgLN10', Math.LN10);
+      defineNonEnumerableProperty(this, '$BgLN2', Math.LN2);
+      defineNonEnumerableProperty(this, '$BgLOG10E', Math.LOG10E);
+      defineNonEnumerableProperty(this, '$BgLOG2E', Math.LOG2E);
+      defineNonEnumerableProperty(this, '$BgPI', Math.PI);
+      defineNonEnumerableProperty(this, '$BgSQRT1_2', Math.SQRT2);
+      defineNonEnumerableProperty(this, '$BgSQRT2', Math.SQRT2);
     }
 
     value: number;
@@ -1419,6 +1434,9 @@ module Shumway.AVMX.AS {
       var asProto: any = ASInt.prototype;
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
+
+      defineNonEnumerableProperty(this, '$BgMAX_VALUE',  0x7fffffff);
+      defineNonEnumerableProperty(this, '$BgMIN_VALUE', -0x80000000);
     }
 
     toString(radix: number) {
@@ -1456,6 +1474,9 @@ module Shumway.AVMX.AS {
       var asProto: any = ASUint.prototype;
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
+
+      defineNonEnumerableProperty(this, '$BgMAX_VALUE', 0xffffffff);
+      defineNonEnumerableProperty(this, '$BgMIN_VALUE', 0);
     }
 
     toString(radix: number) {
