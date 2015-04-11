@@ -4222,3 +4222,54 @@ value3 value3
 --- DONE ---
 ::: test/avm2/pass/xml-qname.abc :::
 PASS
+::: test/avm2/pass/xml-qualids.abc :::
+xml
+1 true
+2 true
+3 true
+4 true
+5 true
+body.ns2::GetLastTradePrice.symbol = "MACR" true
+ms1.ns1::Body == msg1[QName(ns1, "Body")] true
+msg1 == msg2 true
+msg1.@ns1::encodingStyle true
+msg3.ns1::Body.ns2::GetLastTradePrice.@ns2 true
+msg4.bakery.ns3::g.@* true
+x1.ns::* true
+x1.ns::a true
+x1.ns::a true
+x1.@ns::['v'] true
+y1.@ns::*.length() true
+::: test/avm2/pass/xml.abc :::
+XML statics
+0: true,true
+Testing Basic XML
+0: true,foo
+1: true,bar
+2: true,aaa
+3: true,T
+4: true,e=mc^2
+Testing Any Name
+0: true,<bar b="bbb"/>
+<cat c="ccc"/>
+1: true,aaa
+2: true,bbbccc
+Testing attribute() and attributes() methods
+0: aaa,aaa
+1: aaa,aaa
+2: bbbccc,bbbccc
+3: bbbccc,bbbccc
+Testing enumeration
+0: aaa,bbb,ccc
+Testing XMLList.prototype.setProperty() (aka [[PUT]])
+0: <bar b="bbb"/>
+<bar/>
+Testing YouTube use of E4X
+K: Class
+K: Object
+K: String
+K: String
+K: String
+K: avmplus::A
+Testing XML.prototype.child as used by Candy Crush
+0: 21

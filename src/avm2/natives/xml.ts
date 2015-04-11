@@ -2913,7 +2913,7 @@ module Shumway.AVMX.AS {
     attributes(): ASXMLList {
       // 13.5.4.3 XMLList.prototype.attributes ( )
       tmpMultiname.name = null;
-      tmpMultiname.namespaces.length = 0;
+      tmpMultiname.namespaces = [];
       tmpMultiname.kind = CONSTANT.QNameA;
       return this.getProperty(tmpMultiname);
     }
