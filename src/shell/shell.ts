@@ -24,7 +24,6 @@ declare var load;
 declare var quit;
 declare var read;
 declare var help;
-declare var timeout;
 declare var printErr;
 
 // Number of errors thrown, used for shell scripting to return non-zero exit codes.
@@ -210,7 +209,6 @@ module Shumway.Shell {
   var fuzzMillOption: Option;
   var writersOption: Option;
 
-  function Timeout() {}
   export function main(commandLineArguments: string []) {
     var systemOptions: Shumway.Options.OptionSet = Shumway.Settings.shumwayOptions;
     var shellOptions = systemOptions.register(new Shumway.Options.OptionSet("Shell Options"));
@@ -494,10 +492,6 @@ module Shumway.Shell {
           if (verbose) {
             writer.writeLn("executeABC: " + file);
           }
-          timeout(10, function () {
-            writer.writeLn("TIMEDOUT!");
-            throw new Timeout();
-          });
           var buffer = new Uint8Array(read(file, "binary"));
           var abc = new ABCFile(buffer);
           sec.application.loadABC(abc);
@@ -541,9 +535,6 @@ module Shumway.Shell {
         if (printABCFileNameOption.value) {
           writer.writeLn("::: " + file + " :::");
         }
-        timeout(5, function () {
-          throw new Timeout();
-        });
         var buffer = new Uint8Array(read(file, "binary"));
         var abc = new ABCFile(buffer);
         sec.application.loadABC(abc);

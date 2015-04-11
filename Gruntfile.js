@@ -149,7 +149,6 @@ module.exports = function(grunt) {
         maxBuffer: Infinity,
         cmd: 'mongo ats --eval \'db.swfs.find({"parse_result.uses_avm1": false}).forEach(function (x) { print("test/ats/swfs/" + x.file); })\' | parallel -k --no-notice -X -N10 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | tee test/ats/test_swf_avm2_all.run;'
       },
-
       // Greps for avm2 errors.
       warn_avm2: {
         maxBuffer: Infinity,
@@ -184,6 +183,10 @@ module.exports = function(grunt) {
         maxBuffer: Infinity,
         cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance_pass.json | tee test/avm2/test_avm2_acceptance.run | egrep -o "(PASSED|FAILED|EXCEPTED|VM-internal|TIMEDOUT)" | sort | uniq -c | tee test/avm2/acceptance.run && ' +
              'diff test/avm2/acceptance.run test/avm2/acceptance.baseline'
+      },
+      bench_avm2: {
+        maxBuffer: Infinity,
+        cmd: 'find -L test/avm2/jsbench -name "*.abc" | xargs utils/jsshell/js build/ts/shell.js -x --printABCFileName'
       },
       perf_avm2_acceptance: {
         maxBuffer: Infinity,
