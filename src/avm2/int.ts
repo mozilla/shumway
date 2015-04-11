@@ -396,11 +396,15 @@ module Shumway.AVMX {
           case Bytecode.RETURNVOID:
             return;
           case Bytecode.RETURNVALUE:
-            if (methodInfo.returnTypeNameIndex) {
-              return methodInfo.getType().axCoerce(stack.pop());
-            }
+            value = stack.pop();
             // TODO: ensure proper unwinding of the scope stack.
-            return stack.pop();
+            if (methodInfo.returnTypeNameIndex) {
+              receiver = methodInfo.getType();
+              if (receiver) {
+                value = receiver.axCoerce(value);
+              }
+            }
+            return value;
           case Bytecode.CONSTRUCTSUPER:
             popManyInto(stack, u30(), args);
             (<any>savedScope.object).superClass.tPrototype.axInitializer.apply(stack.pop(), args);
