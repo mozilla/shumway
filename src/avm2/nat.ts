@@ -449,6 +449,10 @@ module Shumway.AVMX.AS {
       var name = axCoerceName(mn.name);
       var namespaces = mn.namespaces;
       var trait = (<AXClass>scope.parent.object).tPrototype.traits.getTrait(namespaces, name);
+      var type = trait.getType();
+      if (type) {
+        value = type.axCoerce(value);
+      }
       if (trait.kind === TRAIT.Setter || trait.kind === TRAIT.GetterSetter) {
         trait.set.call(this, value);
       } else {
