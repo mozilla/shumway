@@ -172,7 +172,7 @@ module Shumway.AVMX.AS {
     }
 
     export function describeType(sec: AXSecurityDomain, value: any, flags: number) {
-      //return AS.describeType(value, flags);
+      return AS.describeType(sec, value, flags);
     }
 
     export function describeTypeJSON(sec: AXSecurityDomain, value: any, flags: number) {

@@ -1249,7 +1249,7 @@ module Shumway.AVMX {
     public get reflectedURI() {
       // For public names without a URI, Tamarin uses `null`, we use `""`.
       // Hence: special-casing for reflection.
-      return this.uri || this.type === NamespaceType.Public ? null : this.uri;
+      return this.uri || (this.type === NamespaceType.Public ? null : this.uri);
     }
 
     public static PUBLIC = new Namespace(null, NamespaceType.Public, "");

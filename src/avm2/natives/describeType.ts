@@ -75,113 +75,153 @@ module Shumway.AVMX.AS {
     //TODO: verify that `isStatic` is false for all instances, true for classes
     description.$BgisStatic = describeClass;
     if (flags & DescribeTypeFlags.INCLUDE_TRAITS) {
-      var traits = description.$Bgtraits = addTraits(cls, info, describeClass, flags);
+      description.$Bgtraits = addTraits(cls, info, describeClass, flags);
     }
     return description;
   }
 
-  //export function describeType(sec: AXSecurityDomain, value: any, flags: number): ASXML
-  // {
-  //  var classDescription: any = describeTypeJSON(value, flags);
-  //  // Make sure all XML classes are fully initialized.
-  //  var systemDomain = sec.application;
-  //  systemDomain.getClass('XML');
-  //  systemDomain.getClass('XMLList');
-  //  systemDomain.getClass('QName');
-  //  systemDomain.getClass('Namespace');
-  //  var x: ASXML = new AS.ASXML('<type/>');
-  //  x.setProperty("name", true, classDescription[publicName('name')]);
-  //  var bases = classDescription[publicName('traits')][publicName('bases')];
-  //  if (bases.length) {
-  //    x.setProperty("base", true, bases[0]);
-  //  }
-  //  x.setProperty("isDynamic", true, classDescription[publicName('isDynamic')].toString());
-  //  x.setProperty("isFinal", true, classDescription[publicName('isFinal')].toString());
-  //  x.setProperty("isStatic", true, classDescription[publicName('isStatic')].toString());
-  //  describeTraits(x, classDescription[publicName('traits')]);
-  //
-  //  var instanceDescription: any = describeTypeJSON(value, flags |
-  // DescribeTypeFlags.USE_ITRAITS);
-  //  if (instanceDescription) {
-  //    var e: ASXML = new AS.ASXML('<factory/>');
-  //    e.setProperty('type', true, instanceDescription[publicName('name')]);
-  //    if (describeTraits(e, instanceDescription[publicName('traits')])) {
-  //      x.appendChild(e);
-  //    }
-  //  }
-  //  return x;
-  //}
-  //function describeTraits(x: ASXML, traits: any): boolean {
-  //  var traitsCount = 0;
-  //  var bases = traits[publicName('bases')];
-  //  for (var i = 0; bases && i < bases.length; i++) {
-  //    var base: string = bases[i];
-  //    var e: ASXML = new AS.ASXML('<extendsClass type="' + escapeAttributeValue(base) + '"/>');
-  //    x.appendChild(e);
-  //    traitsCount++;
-  //  }
-  //  var interfaces = traits[publicName('interfaces')];
-  //  for (var i = 0; interfaces && i < interfaces.length; i++) {
-  //    var e: ASXML = new AS.ASXML('<implementsInterface type="' +
-  //                                escapeAttributeValue(interfaces[i]) + '"/>');
-  //    x.appendChild(e);
-  //    traitsCount++;
-  //  }
-  //  if (traits[publicName('constructor')] !== null) {
-  //    var e: ASXML = new AS.ASXML('<constructor/>');
-  //    describeParams(e, traits[publicName('constructor')]);
-  //    x.appendChild(e);
-  //    traitsCount++;
-  //  }
-  //  var variables = traits[publicName('variables')];
-  //  for (var i = 0; variables && i < variables.length; i++) {
-  //    var variable: any = variables[i];
-  //    var nodeName = variable[publicName('access')] === 'readonly' ? 'constant' : 'variable';
-  //    var e: ASXML = new AS.ASXML('<' + nodeName +
-  //                                ' name="' + escapeAttributeValue(variable[publicName('name')])
-  // +
-  //                                '" type="' + variable[publicName('type')] + '"/>');
-  //    if (variable[publicName('uri')] !== null) {
-  //      e.setProperty('uri', true, variable[publicName('uri')]);
-  //    }
-  //    if (variable[publicName('metadata')] !== null) {
-  //      describeMetadataXML(e, variable[publicName('metadata')]);
-  //    }
-  //    x.appendChild(e);
-  //    traitsCount++;
-  //  }
-  //  var accessors = traits[publicName('accessors')];
-  //  for (var i = 0; accessors && i < accessors.length; i++) {
-  //    var accessor: any = accessors[i];
-  //    var e: ASXML = new AS.ASXML('<accessor ' +
-  //                                'name="' + escapeAttributeValue(accessor[publicName('name')]) +
-  //                                '" access="' + accessor[publicName('access')] +
-  //                                '" type="' + escapeAttributeValue(accessor[publicName('type')])
-  // + '" declaredBy="' + escapeAttributeValue(accessor[publicName('declaredBy')]) + '"/>'); if
-  // (accessor[publicName('uri')] !== null) { e.setProperty('uri', true,
-  // accessor[publicName('uri')]); } if (accessor[publicName('metadata')] !== null) {
-  // describeMetadataXML(e, accessor[publicName('metadata')]); } x.appendChild(e); traitsCount++; }
-  // var methods = traits[publicName('methods')]; for (var i = 0; methods && i < methods.length;
-  // i++) { var method: any = methods[i]; var e: ASXML = new AS.ASXML('<method ' + 'name="' +
-  // escapeAttributeValue(method[publicName('name')]) + '" declaredBy="' +
-  // escapeAttributeValue(method[publicName('declaredBy')]) + '" returnType="' +
-  // escapeAttributeValue(method[publicName('returnType')]) + '"/>'); describeParams(e,
-  // method[publicName('parameters')]); if (method[publicName('uri')] !== null) {
-  // e.setProperty('uri', true, method[publicName('uri')]); } if (method[publicName('metadata')]
-  // !== null) { describeMetadataXML(e, method[publicName('metadata')]); } x.appendChild(e);
-  // traitsCount++; } describeMetadataXML(x, traits[publicName('metadata')]); return traitsCount >
-  // 0; }  function describeParams(x: ASXML, parameters: any[]): void { if (!parameters) { return;
-  // } for (var i = 0; i < parameters.length; i++) { var p = parameters[i]; var f: ASXML = new
-  // AS.ASXML('<parameter index="' + (i + 1) + '" type="' +
-  // escapeAttributeValue(p[publicName('type')]) + '" optional="' + p[publicName('optional')] +
-  // '"/>'); x.appendChild(f); } }  function describeMetadataXML(x: ASXML, metadata: any[]): void {
-  // if (!metadata) { return; } for (var i = 0; i < metadata.length; i++) { var md = metadata[i];
-  // var m: ASXML = new AS.ASXML('<metadata name="' + escapeAttributeValue(md[publicName('name')])
-  // + '"/>'); var values = md[publicName('value')]; for (var j = 0; j < values.length; j++) { var
-  // value = values[j]; var a: ASXML = new AS.ASXML('<arg key="' +
-  // escapeAttributeValue(value[publicName('key')]) + '" value="' +
-  // escapeAttributeValue(value[publicName('value')]) + '"/>'); m.appendChild(a); }
-  // x.appendChild(m); } }
+  var tmpName = new Multiname(null, 0, CONSTANT.QName, [Namespace.PUBLIC], null);
+  var tmpAttr = new Multiname(null, 0, CONSTANT.QNameA, [Namespace.PUBLIC], null);
+
+  export function describeType(sec: AXSecurityDomain, value: any, flags: number): ASXML {
+    // Ensure that the XML classes have been initialized:
+    tmpName.name = 'XML';
+    var xmlClass = <AXXMLClass>sec.application.getClass(tmpName);
+    var classDescription: any = describeTypeJSON(sec, value, flags);
+    var x: ASXML = xmlClass.Create('<type/>');
+    tmpAttr.name = 'name';
+    x.setProperty(tmpAttr, classDescription.$Bgname);
+    var bases = classDescription.$Bgtraits.$Bgbases.value;
+    if (bases.length) {
+      tmpAttr.name = 'base';
+      x.setProperty(tmpAttr, bases[0]);
+    }
+    tmpAttr.name = 'isDynamic';
+    x.setProperty(tmpAttr, classDescription.$BgisDynamic.toString());
+    tmpAttr.name = 'isFinal';
+    x.setProperty(tmpAttr, classDescription.$BgisFinal.toString());
+    tmpAttr.name = 'isStatic';
+    x.setProperty(tmpAttr, classDescription.$BgisStatic.toString());
+    describeTraits(x, classDescription.$Bgtraits);
+
+    var instanceDescription: any = describeTypeJSON(sec, value,
+                                                    flags | DescribeTypeFlags.USE_ITRAITS);
+    if (instanceDescription) {
+      var e: ASXML = xmlClass.Create('<factory/>');
+      tmpAttr.name = 'type';
+      e.setProperty(tmpAttr, instanceDescription.$Bgname);
+      if (describeTraits(e, instanceDescription.$Bgtraits)) {
+        x.appendChild(e);
+      }
+    }
+    return x;
+  }
+
+  function describeTraits(x: ASXML, traits: any): boolean {
+    var traitsCount = 0;
+    var bases = traits.$Bgbases && traits.$Bgbases.value;
+    for (var i = 0; bases && i < bases.length; i++) {
+      var base: string = bases[i];
+      var e: ASXML = x.sec.AXXML.Create('<extendsClass type="' + escapeAttributeValue(base) + '"/>');
+      x.appendChild(e);
+      traitsCount++;
+    }
+    var interfaces = traits.$Bginterfaces && traits.$Bginterfaces.value;
+    for (var i = 0; interfaces && i < interfaces.length; i++) {
+      var e: ASXML = x.sec.AXXML.Create('<implementsInterface type="' +
+                                        escapeAttributeValue(interfaces[i]) + '"/>');
+      x.appendChild(e);
+      traitsCount++;
+    }
+    if (traits.$Bgconstructor !== null) {
+      var e: ASXML = x.sec.AXXML.Create('<constructor/>');
+      describeParams(e, traits.$Bgconstructor);
+      x.appendChild(e);
+      traitsCount++;
+    }
+    var variables = traits.$Bgvariables && traits.$Bgvariables.value;
+    for (var i = 0; variables && i < variables.length; i++) {
+      var variable: any = variables[i];
+      var nodeName = variable.$Bgaccess === 'readonly' ? 'constant' : 'variable';
+      var e: ASXML = x.sec.AXXML.Create('<' + nodeName +
+                                        ' name="' + escapeAttributeValue(variable.$Bgname) +
+                                        '" type="' + variable.$Bgtype + '"/>');
+      finishTraitDescription(variable, e, x);
+      traitsCount++;
+    }
+    var accessors = traits.$Bgaccessors && traits.$Bgaccessors.value;
+    for (var i = 0; accessors && i < accessors.length; i++) {
+      var accessor: any = accessors[i];
+      var e: ASXML = x.sec.AXXML.Create('<accessor ' +
+                                        'name="' + escapeAttributeValue(accessor.$Bgname) +
+                                        '" access="' + accessor.$Bgaccess +
+                                        '" type="' + escapeAttributeValue(accessor.$Bgtype) +
+                                        '" declaredBy="' +
+                                        escapeAttributeValue(accessor.$BgdeclaredBy) + '"/>');
+      finishTraitDescription(accessor, e, x);
+      traitsCount++;
+    }
+    var methods = traits.$Bgmethods && traits.$Bgmethods.value;
+    for (var i = 0; methods && i < methods.length; i++) {
+      var method: any = methods[i];
+      var e: ASXML = x.sec.AXXML.Create('<method ' + 'name="' +
+                                        escapeAttributeValue(method.$Bgname) +
+                                        '" declaredBy="' +
+                                        escapeAttributeValue(method.$BgdeclaredBy) +
+                                        '" returnType="' +
+                                        escapeAttributeValue(method.$BgreturnType) + '"/>');
+      describeParams(e, method.$Bgparameters.value);
+      finishTraitDescription(method, e, x);
+      traitsCount++;
+    }
+    describeMetadataXML(x, traits.$Bgmetadata);
+    return traitsCount > 0;
+  }
+
+  function finishTraitDescription(trait, traitXML, traitsListXML) {
+    if (trait.$Bguri !== null) {
+      tmpAttr.name = 'uri';
+      traitXML.setProperty(tmpAttr, trait.$Bguri);
+    }
+    if (trait.$Bgmetadata !== null) {
+      describeMetadataXML(traitXML, trait.$Bgmetadata);
+    }
+    traitsListXML.appendChild(traitXML);
+  }
+
+  function describeParams(x: ASXML, parameters: any[]): void {
+    if (!parameters) {
+      return;
+    }
+    for (var i = 0; i < parameters.length; i++) {
+      var p = parameters[i];
+      var f: ASXML = x.sec.AXXML.Create('<parameter index="' + (i + 1) + '" type="' +
+                                        escapeAttributeValue(p.$Bgtype) + '" optional="' +
+                                        p.$Bgoptional + '"/>');
+      x.appendChild(f);
+    }
+  }
+
+  function describeMetadataXML(x: ASXML, metadata_: ASArray): void {
+    if (!metadata_) {
+      return;
+    }
+    var metadata: any[] = metadata_.value;
+    for (var i = 0; i < metadata.length; i++) {
+      var md = metadata[i];
+      var m: ASXML = x.sec.AXXML.Create('<metadata name="' + escapeAttributeValue(md.$Bgname)
+                                        + '"/>');
+      var values = md.$Bgvalue;
+      for (var j = 0; j < values.length; j++) {
+        var value = values[j];
+        var a: ASXML = x.sec.AXXML.Create('<arg key="' +
+                                          escapeAttributeValue(value.$Bgkey) + '" value="' +
+                                          escapeAttributeValue(value.$Bgvalue) + '"/>');
+        m.appendChild(a);
+      }
+      x.appendChild(m);
+    }
+  }
 
   function describeMetadataList(sec: AXSecurityDomain, list: MetadataInfo[]) {
     if (!list) {
@@ -263,6 +303,7 @@ module Shumway.AVMX.AS {
     var encounteredSetters: any = Object.create(null);
 
     var addBase = false;
+    var isInterface = info.instanceInfo.isInterface();
     while (cls) {
       var className = cls.classInfo.instanceInfo.getName().toFQNString(true);
       if (includeBases && addBase && !describingClass) {
@@ -274,13 +315,13 @@ module Shumway.AVMX.AS {
         break;
       }
       if (!describingClass) {
-        describeTraits(sec, cls.classInfo.instanceInfo.traits.traits);
+        describeTraits(sec, cls.classInfo.instanceInfo.traits.traits, isInterface);
       } else {
-        describeTraits(sec, cls.classInfo.traits.traits);
+        describeTraits(sec, cls.classInfo.traits.traits, isInterface);
       }
       cls = cls.superClass;
     }
-    release || assert(cls === sec.AXObject);
+    release || assert(cls === sec.AXObject || isInterface);
     // When describing Class objects, the bases to add are always Class and Object.
     if (describingClass) {
       // When describing Class objects, accessors are ignored. *Except* the `prototype` accessor.
@@ -303,7 +344,7 @@ module Shumway.AVMX.AS {
 
     // Having a hot function closed over isn't all that great, but moving this out would involve
     // passing lots and lots of arguments. We might do that if performance becomes an issue.
-    function describeTraits(sec: AXSecurityDomain, traits: TraitInfo[]) {
+    function describeTraits(sec: AXSecurityDomain, traits: TraitInfo[], isInterface: boolean) {
       release || assert(traits, "No traits array found on class" + cls.name);
 
       // All types share some fields, but setting them in one place changes the order in which
@@ -315,10 +356,14 @@ module Shumway.AVMX.AS {
         var ns = mn.namespace;
         // Hide all non-public members whose namespace doesn't have a URI specified.
         // Or, if HIDE_NSURI_METHODS is set, hide those, too, because bugs in Flash.
-        if (!ns.isPublic() && !ns.uri || (flags & DescribeTypeFlags.HIDE_NSURI_METHODS && ns.uri)) {
+        // For interfaces, include all traits. We should've made sure to only have
+        // public methods in them during bytecode parsing/verification.
+        if (!isInterface && (!ns.isPublic() && !ns.uri ||
+                             (flags & DescribeTypeFlags.HIDE_NSURI_METHODS && ns.uri))) {
           continue;
         }
-        var name = mn.toFQNString(true);
+        // Strip the namespace off of interface methods. They're always treated as public.
+        var name = isInterface ? mn.name : mn.toFQNString(true);
         if (encounteredGetters[name] !== encounteredSetters[name]) {
           var val = encounteredKeys[name];
           val.$Bgaccess = 'readwrite';

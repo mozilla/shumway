@@ -2332,7 +2332,7 @@ module Shumway.AVMX.AS {
         }
       }
       if (i === undefined) {
-        i = this.length();
+        i = this._children.length;
         if (primitiveAssign) {
           var ns = mn.namespaces[0];
           var uri: string = null;
