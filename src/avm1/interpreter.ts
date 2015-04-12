@@ -947,7 +947,7 @@ module Shumway.AVM1 {
         }
       }
 
-      return scopeList.scope;
+      return currentContext.defaultTarget;
     }
 
     function avm1ProcessWith(ectx: ExecutionContext, obj, withBlock) {
