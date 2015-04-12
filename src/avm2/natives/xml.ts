@@ -244,7 +244,7 @@ module Shumway.AVMX.AS {
     }
     if (v.axClass === sec.AXXMLList) {
       if (v._children.length !== 1) {
-        this.sec.throwError('TypeError', Errors.XMLMarkupMustBeWellFormed);
+        sec.throwError('TypeError', Errors.XMLMarkupMustBeWellFormed);
       }
       return v._children[0];
     }
@@ -259,7 +259,7 @@ module Shumway.AVMX.AS {
       x._children[0]._parent = null;
       return x._children[0];
     }
-    this.sec.throwError('TypeError', Errors.XMLMarkupMustBeWellFormed);
+    sec.throwError('TypeError', Errors.XMLMarkupMustBeWellFormed);
   }
 
   // 10.4 ToXMLList
