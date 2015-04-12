@@ -496,7 +496,7 @@ module Shumway.AVMX {
             stack[stack.length - 1] = result;
             break;
           case Bytecode.NEWCATCH:
-            stack.push(sec.createCatch(body.exceptions[u30()], scope.topScope()));
+            stack.push(sec.createCatch(body.catchBlocks[u30()], scope.topScope()));
             break;
           case Bytecode.FINDPROPERTY:
           case Bytecode.FINDPROPSTRICT:
@@ -793,9 +793,9 @@ module Shumway.AVMX {
           e = createValidException(sec, e, bc, value, receiver, rn);
         }
 
-        var exceptions = body.exceptions;
-        for (var i = 0; i < exceptions.length; i++) {
-          var handler = exceptions[i];
+        var catchBlocks = body.catchBlocks;
+        for (var i = 0; i < catchBlocks.length; i++) {
+          var handler = catchBlocks[i];
           if (pc >= handler.start && pc <= handler.end) {
             var typeName = handler.getType();
             if (!typeName || applicationDomain.getClass(typeName).axIsType(e)) {
