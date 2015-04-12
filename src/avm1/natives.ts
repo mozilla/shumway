@@ -516,6 +516,10 @@ module Shumway.AVM1.Natives {
         flags: AVM1PropertyFlags.NATIVE_MEMBER,
         value: new AVM1NativeFunction(context, this.splice)
       });
+      this.alSetOwnProperty('sort', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.sort)
+      });
       this.alSetOwnProperty('sortOn', {
         flags: AVM1PropertyFlags.NATIVE_MEMBER,
         value: new AVM1NativeFunction(context, this.sortOn)
@@ -630,6 +634,16 @@ module Shumway.AVM1.Natives {
       }
       // TODO implement generic method
       Debug.notImplemented('AVM1ArrayNative.splice');
+    }
+
+    public sort(comparefn?: AVM1Function): AVM1Object {
+      var arr = alEnsureType<AVM1ArrayNative>(this, AVM1ArrayNative).value;
+      if (!alIsFunction(comparefn)) {
+        arr.sort();
+      } else {
+        arr.sort(<any>comparefn.toJSFunction());
+      }
+      return this;
     }
 
     public sortOn(fieldNames: AVM1Object, options: any): AVM1Object {
