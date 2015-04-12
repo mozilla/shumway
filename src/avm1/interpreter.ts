@@ -727,7 +727,7 @@ module Shumway.AVM1 {
 
       var suppressArguments = this.suppressArguments;
       if (!(suppressArguments & ArgumentAssignmentType.Arguments)) {
-        newScope.alPut('arguments', args);
+        newScope.alPut('arguments', new Natives.AVM1ArrayNative(currentContext, args));
       }
       if (!(suppressArguments & ArgumentAssignmentType.This)) {
         newScope.alPut('this', thisArg);
@@ -752,7 +752,7 @@ module Shumway.AVM1 {
               registers[i] = thisArg;
               break;
             case ArgumentAssignmentType.Arguments:
-              registers[i] = args;
+              registers[i] = new Natives.AVM1ArrayNative(currentContext, args);
               break;
             case ArgumentAssignmentType.Super:
               supperWrapper = supperWrapper || new AVM1SuperWrapper(currentContext, frame);
