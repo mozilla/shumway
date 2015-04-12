@@ -530,7 +530,7 @@ module Shumway.AVM1 {
         if (v === null) {
           return 'null';
         }
-        return '[type ' + alGetObjectClass(v) + ']';
+        return '[object ' + alGetObjectClass(v) + ']';
       case 'boolean':
         return v ? 'true' : 'false';
       case 'number':
