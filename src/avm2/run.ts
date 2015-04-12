@@ -1246,7 +1246,8 @@ module Shumway.AVMX {
       if (!exceptionInfo.catchPrototype) {
         var traits = exceptionInfo.getTraits();
         exceptionInfo.catchPrototype = Object.create(this.AXCatchPrototype);
-        defineReadOnlyProperty(exceptionInfo.catchPrototype, "traits", traits.resolveRuntimeTraits(null, null, scope));
+        defineReadOnlyProperty(exceptionInfo.catchPrototype, "traits",
+                               traits.resolveRuntimeTraits(null, null, scope));
       }
       return Object.create(exceptionInfo.catchPrototype);
     }

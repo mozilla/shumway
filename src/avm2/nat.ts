@@ -1834,7 +1834,10 @@ module Shumway.AVMX.AS {
 
     constructor(message: any, id: any) {
       super();
-      this.$Bgmessage = axCoerceString(message);
+      if (arguments.length < 1) {
+        message = '';
+      }
+      this.$Bgmessage = String(message);
       this._errorID = id | 0;
     }
 
