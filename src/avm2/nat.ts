@@ -1256,11 +1256,11 @@ module Shumway.AVMX.AS {
     }
     generic_concat() {
       var receiver = this.value == undefined ? '' : this.value;
-      return String.prototype.concat.apply(this.value, arguments);
+      return String.prototype.concat.apply(receiver, arguments);
     }
     generic_localeCompare() {
       var receiver = this.value == undefined ? '' : this.value;
-      return String.prototype.localeCompare.apply(this.value, arguments);
+      return String.prototype.localeCompare.apply(receiver, arguments);
     }
     generic_match(pattern) {
       var receiver = this.value == undefined ? '' : this.value;
