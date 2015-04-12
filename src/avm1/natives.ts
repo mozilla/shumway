@@ -147,11 +147,11 @@ module Shumway.AVM1.Natives {
     }
 
     public call(thisArg: any, ...args: any[]): any {
-      this.alCall(thisArg, args);
+      return this.alCall(thisArg, args);
     }
 
     public apply(thisArg: any, args?: any[]): any {
-      this.alCall(thisArg, args);
+      return this.alCall(thisArg, args);
     }
   }
 
