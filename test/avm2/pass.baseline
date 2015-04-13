@@ -1938,6 +1938,7 @@ true
 
 
 4
+--- keys ---
 0 -4
 1 -
 2 undefined
@@ -3641,146 +3642,6 @@ true
 false
 --- Number ---
 0
-::: test/avm2/pass/describeTypeJSON.abc :::
-describing class:
-        "access": "readonly"
-        "access": "readwrite"
-        "access": "readwrite"
-        "declaredBy": "Class"
-        "metadata": null
-        "metadata": null
-        "metadata": null
-        "name": "prototype"
-        "name": "s0"
-        "name": "s1"
-        "type": "*"
-        "type": "*"
-        "type": "int"
-        "uri": null
-        "uri": null
-        "uri": null
-      "Class"
-      "Object"
-      {
-      {
-      {
-      }
-      }
-      }
-    "accessors": [
-    "bases": [
-    "constructor": null
-    "interfaces": []
-    "metadata": []
-    "methods": null
-    "variables": [
-    ]
-    ]
-    ]
-  "isDynamic": true
-  "isFinal": true
-  "isStatic": true
-  "name": "avmplus::B"
-  "traits": {
-  }
-{
-}
-describing instance:
-            "key": "name"
-            "key": "secondField"
-            "value": "class-metadata"
-            "value": "true"
-          {
-          {
-          }
-          }
-        "access": "readwrite"
-        "access": "readwrite"
-        "access": "writeonly"
-        "declaredBy": "avmplus::A"
-        "metadata": null
-        "metadata": null
-        "metadata": null
-        "name": "i0"
-        "name": "i1"
-        "name": "metaData"
-        "name": "setter"
-        "type": "*"
-        "type": "Number"
-        "type": "int"
-        "uri": null
-        "uri": null
-        "uri": null
-        "value": [
-        ]
-      "Object"
-      {
-      {
-      {
-      {
-      }
-      }
-      }
-      }
-    "accessors": [
-    "bases": [
-    "constructor": null
-    "interfaces": []
-    "metadata": [
-    "methods": null
-    "variables": [
-    ]
-    ]
-    ]
-    ]
-  "isDynamic": false
-  "isFinal": false
-  "isStatic": false
-  "name": "avmplus::A"
-  "traits": {
-  }
-{
-}
-describing `0`: null
-describing `null`: null
-describing anonymous function: null
-describing bound function itraits: null
-describing bound function ctraits: 
-        "access": "readonly"
-        "access": "readwrite"
-        "declaredBy": "Function"
-        "declaredBy": "builtin.as$0::MethodClosure"
-        "metadata": null
-        "metadata": null
-        "name": "length"
-        "name": "prototype"
-        "type": "*"
-        "type": "int"
-        "uri": null
-        "uri": null
-      "Function"
-      "Object"
-      {
-      {
-      }
-      }
-    "accessors": [
-    "bases": [
-    "constructor": null
-    "interfaces": []
-    "metadata": []
-    "methods": null
-    "variables": null
-    ]
-    ]
-  "isDynamic": false
-  "isFinal": true
-  "isStatic": false
-  "name": "builtin.as$0::MethodClosure"
-  "traits": {
-  }
-{
-}
 ::: test/avm2/pass/str-0.abc :::
 --- Test ---
 116
@@ -4277,6 +4138,70 @@ Testing XML.prototype.child as used by Candy Crush
 18
 123123123123123
 number
+::: test/avm2/pass/byte-arrays-2.abc :::
+1 2 3
+1 2 3
+1,2,3
+1,2,3
+[object Point]
+32 12
+[object Object]
+32 12
+[object DynamicPoint]
+54 33 Hello
+[object Object]
+54 33 Hello
+[object DynamicPointWithPrivates]
+54 33 Hello
+[object Object]
+54 33 Hello
+registerClassAlias("Point", Point)
+[object Point]
+32 12
+[object Point]
+32 12
+,,,,,,,,,,,,,,,,123
+,,,,,,,,,,,,,,,,123
+,1,,,3,,,4,,,5,,,6,,,7
+,1,,,3,,,4,,,5,,,6,,,7
+,,,,,2,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,2
+
+
+{"x":1}
+{"x":1}
+{"x":1}
+{"x":1}
+undefined
+null
+null
+1
+true
+undefined
+undefined
+null
+string
+{"a":null}
+::: test/avm2/pass/byte-arrays-3.abc :::
+-- Enumerating non-numeric properties on arrays.
+1
+data
+## AMF3 3
+Set objectEncoding to: 3
+03040205400b3333333333330609746573740905010603610a0b010109010331054008cccccccccccd0964617461060b7465737430010a0b010b74657374320101
+
+true
+2
+3.4
+test
+object
+. a
+. object
+object
+. 3.1
+. test0
+object
+. null
 ::: test/avm2/pass/you-0.abc :::
 [class Fields]
 A

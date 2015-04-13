@@ -772,7 +772,7 @@ module Shumway.AVMX.AS {
           value.push(a);
         }
       }
-      return this.sec.createArray(value);
+      return this.sec.createArrayUnsafe(value);
     }
     slice(startIndex: number, endIndex: number) {
       return this.sec.createArray(this.value.slice(startIndex, endIndex));
@@ -802,7 +802,10 @@ module Shumway.AVMX.AS {
       return this.value.some(callbackfn.value, thisArg);
     }
     forEach(callbackfn: {value}, thisArg?) {
-      return this.value.forEach(callbackfn.value, thisArg);
+      var self = this;
+      return this.value.forEach(function (currentValue, index) {
+        callbackfn.value.call(thisArg, currentValue, index, self);
+      });
     }
     map(callbackfn: {value}, thisArg?) {
       return this.sec.createArray(this.value.map(callbackfn.value, thisArg));
@@ -935,7 +938,10 @@ module Shumway.AVMX.AS {
     }
 
     axGetEnumerableKeys(): any [] {
-      return Object.keys(this.value);
+      // Get the numeric Array keys first ...
+      var keys = Object.keys(this.value);
+      // ... then the keys that live on the array object.
+      return keys.concat(super.axGetEnumerableKeys());
     }
 
     axHasPropertyInternal(mn: Multiname): boolean {
