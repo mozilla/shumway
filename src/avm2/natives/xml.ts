@@ -2364,7 +2364,7 @@ module Shumway.AVMX.AS {
       }
     }
 
-    axSetProperty(mn: Multiname, value: any) {
+    axSetProperty(mn: Multiname, value: any, bc: Bytecode) {
       if (this === this.axClass.dPrototype) {
         release || checkValue(value);
         this[this.axResolveMultiname(mn)] = value;
@@ -3526,7 +3526,7 @@ module Shumway.AVMX.AS {
       this.sec.throwError('TypeError', Errors.XMLAssigmentOneItemLists);
     }
 
-    axSetProperty(mn: Multiname, value: any) {
+    axSetProperty(mn: Multiname, value: any, bc: Bytecode) {
       if (this === this.axClass.dPrototype) {
         release || checkValue(value);
         this[this.axResolveMultiname(mn)] = value;

@@ -12,7 +12,7 @@ interface IMetaobjectProtocol {
   axHasPropertyInternal(mn: Shumway.AVMX.Multiname): boolean;
   axHasOwnProperty(mn: Shumway.AVMX.Multiname): boolean;
 
-  axSetProperty(mn: Shumway.AVMX.Multiname, value: any);
+  axSetProperty(mn: Shumway.AVMX.Multiname, value: any, bc: Shumway.AVMX.Bytecode);
   axGetProperty(mn: Shumway.AVMX.Multiname): any;
   axGetSuper(mn: Shumway.AVMX.Multiname, scope: Shumway.AVMX.Scope): any;
   axSetSuper(mn: Shumway.AVMX.Multiname, scope: Shumway.AVMX.Scope, value: any);
@@ -1006,7 +1006,7 @@ module Shumway.AVMX {
                replacement2?: any, replacement3?: any, replacement4?: any) {
       var message = formatErrorMessage.apply(null, sliceArguments(arguments, 1));
       var mn = Multiname.FromFQNString(className, NamespaceType.Public);
-      var axClass: AXClass = <any>this.application.getProperty(mn, true, true);
+      var axClass: AXClass = <any>this.system.getProperty(mn, true, true);
       return axClass.axConstruct([message, error.code]);
     }
 

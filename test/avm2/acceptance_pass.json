@@ -2898,7 +2898,18 @@
       "test/avm2/acceptance/as3/Definitions/Variable/ConstVariables.abc",
       "test/avm2/acceptance/as3/Definitions/Variable/ModifyClassConstGlobally_rt.abc",
       "test/avm2/acceptance/as3/Definitions/Variable/ModifyClassVariableInObjectInstance_rt.abc",
-      "test/avm2/acceptance/as3/Definitions/Variable/ModifyPackageConstGlobally_rt.abc",
+      "test/avm2/acceptance/as3/Definitions/Variable/ModifyPackageConstGlobally_rt.abc"
+    ]
+  ],
+
+  // More AS3 stuff.
+  [
+    [
+      "test/avm2/acceptance/Assert.abc",
+      "test/avm2/acceptance/Utils.abc",
+      "test/avm2/acceptance/DateUtils.abc"
+    ],
+    [
       "test/avm2/acceptance/as3/Definitions/Variable/ModifyVariables/ModifyVariablesClass.abc",
       "test/avm2/acceptance/as3/Definitions/Variable/ModifyVariables.abc",
       "test/avm2/acceptance/as3/Definitions/Variable/ProtectedVariables/ProtectedVariablesClass.abc",

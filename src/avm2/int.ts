@@ -515,7 +515,7 @@ module Shumway.AVMX {
             value = stack.pop();
             popNameInto(stack, abc.getMultiname(u30()), rn);
             receiver = box(stack.pop());
-            receiver.axSetProperty(rn, value);
+            receiver.axSetProperty(rn, value, Bytecode.INITPROPERTY, methodInfo);
             break;
           case Bytecode.GETPROPERTY:
             popNameInto(stack, abc.getMultiname(u30()), rn);
@@ -879,12 +879,18 @@ module Shumway.AVMX {
           return sec.createError('TypeError', Errors.ConvertUndefinedToObjectError);
         }
         break;
+      case Bytecode.INITPROPERTY:
       case Bytecode.SETPROPERTY:
         if (receiver === null) {
           return sec.createError('TypeError', Errors.ConvertNullToObjectError);
         }
         if (receiver === undefined) {
           return sec.createError('TypeError', Errors.ConvertUndefinedToObjectError);
+        }
+        var nm = receiver.axResolveMultiname(mn);
+        if (nm in receiver && Object.getOwnPropertyDescriptor(receiver, nm).writable === false) {
+          return sec.createError('ReferenceError', Errors.ConstWriteError, nm,
+                                 receiver.axClass.name.name);
         }
         break;
       case Bytecode.INSTANCEOF:
