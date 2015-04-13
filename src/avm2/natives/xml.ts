@@ -251,7 +251,7 @@ module Shumway.AVMX.AS {
     // The E4X spec says we must throw a TypeError for non-Boolean, Number, or String objects.
     // Flash thinks otherwise.
     var x = sec.xmlParser.parseFromString(axCoerceString(v));
-    var length = x.length();
+    var length = x._children.length;
     if (length === 0) {
       return createXML(sec, ASXMLKind.Text);
     }
@@ -737,7 +737,7 @@ module Shumway.AVMX.AS {
       for (var i = 0; i < namespaces.length; ++i) {
         this.currentElement._inScopeNamespaces.push(namespaces[i]);
       }
-      parent.insert(parent.length(), this.currentElement);
+      parent.insert(parent._children.length, this.currentElement);
       if (isEmpty) {
         this.currentElement = this.elementsStack.pop();
       }
@@ -757,13 +757,13 @@ module Shumway.AVMX.AS {
       }
       var node = createXML(this.sec);
       node._value = text;
-      this.currentElement.insert(this.currentElement.length(), node);
+      this.currentElement.insert(this.currentElement._children.length, node);
     }
 
     cdata(text) {
       var node = createXML(this.sec);
       node._value = text;
-      this.currentElement.insert(this.currentElement.length(), node);
+      this.currentElement.insert(this.currentElement._children.length, node);
     }
 
     comment(text) {
@@ -772,7 +772,7 @@ module Shumway.AVMX.AS {
       }
       var node = createXML(this.sec, ASXMLKind.Comment, "", "");
       node._value = text;
-      this.currentElement.insert(this.currentElement.length(), node);
+      this.currentElement.insert(this.currentElement._children.length, node);
     }
 
     pi(name, value) {
@@ -781,7 +781,7 @@ module Shumway.AVMX.AS {
       }
       var node = createXML(this.sec, ASXMLKind.ProcessingInstruction, "", name);
       node._value = value;
-      this.currentElement.insert(this.currentElement.length(), node);
+      this.currentElement.insert(this.currentElement._children.length, node);
     }
 
     doctype(text) { }
@@ -2194,7 +2194,7 @@ module Shumway.AVMX.AS {
       });
 
       // 17. If x.[[Length]] == 0
-      if (node.length() === 0) {
+      if (node._children.length === 0) {
         //   a. Let s be the result of concatenating s and "/>"
         s += '/>';
         //   b. Return s
@@ -2324,7 +2324,7 @@ module Shumway.AVMX.AS {
       var isAny = mn.isAnyName();
       var primitiveAssign = !isXMLType(c, this.sec) && !isAny && mn.name !== '*';
       var isAnyNamespace = mn.isAnyNamespace();
-      for (var k = this.length() - 1; k >= 0; k--) {
+      for (var k = this._children.length - 1; k >= 0; k--) {
         if ((isAny || this._children[k]._kind === ASXMLKind.Element &&
           this._children[k]._name.name === mn.name) &&
           (isAnyNamespace ||
@@ -2407,6 +2407,7 @@ module Shumway.AVMX.AS {
           if ((anyName || v._name.name === nm) &&
               (anyNamespace || v._name.matches(mn))) {
             list._children[length++] = v;
+            assert(list._children[0]);
           }
         }
         return list;
@@ -2417,6 +2418,7 @@ module Shumway.AVMX.AS {
         if ((anyName || v._kind === ASXMLKind.Element && v._name.name === nm) &&
             ((anyNamespace || v._name.matches(mn)))) {
           list._children[length++] = v;
+          assert(list._children[0]);
         }
       }
       // Step 6.
@@ -2585,18 +2587,19 @@ module Shumway.AVMX.AS {
       }
       var n: number;
       if (this && this.axClass === this.sec.AXXMLList) {
-        n = this.length();
+        n = this._children.length;
         if (n === 0) {
           return;
         }
       } else {
         n = 1;
       }
-      for (var j = this.length() - 1; j >= i; j--) {
+      for (var j = this._children.length - 1; j >= i; j--) {
         this._children[j + n] = this._children[j];
+        assert(this._children[0]);
       }
       if (this && this.axClass === this.sec.AXXMLList) {
-        n = v.length();
+        n = v._children.length;
         for (var j = 0; j < n; j++) {
           v._children[j]._parent = this;
           this[i + j] = v[j];
@@ -2608,6 +2611,7 @@ module Shumway.AVMX.AS {
           this._children = [];
         }
         this._children[i] = v;
+        assert(this._children[0]);
       }
     }
 
@@ -2659,6 +2663,7 @@ module Shumway.AVMX.AS {
         this._attributes.forEach(function (v, i) {
           if (isAny || v._name.matches(name)) {
             xl._children[length++] = v;
+            assert(xl._children[0]);
           }
         });
       } else {
@@ -2666,6 +2671,7 @@ module Shumway.AVMX.AS {
         this._children.forEach(function (v, i) {
           if (isAny || v._name.matches(name)) {
             xl._children[length++] = v;
+            assert(xl._children[0]);
           }
         });
       }
@@ -2798,6 +2804,7 @@ module Shumway.AVMX.AS {
         for (var i = 0; i < children.length; i++) {
           var child = children[i];
           this._children[i] = child;
+          assert(this._children[0]);
         }
       } else {
         toXMLList(value, this);
@@ -2857,18 +2864,20 @@ module Shumway.AVMX.AS {
     // 9.2.1.7 [[DeepCopy]] ( )
     _deepCopy() {
       var xl = this.sec.AXXMLList.CreateList(this._targetObject, this._targetProperty);
-      var length = this.length();
+      var length = this._children.length;
       for (var i = 0; i < length; i++) {
         xl._children[i] = this._children[i]._deepCopy();
+        assert(xl._children[0]);
       }
       return xl;
     }
 
     _shallowCopy() {
       var xl = this.sec.AXXMLList.CreateList(this._targetObject, this._targetProperty);
-      var length = this.length();
+      var length = this._children.length;
       for (var i = 0; i < length; i++) {
         xl._children[i] = this._children[i];
+        assert(xl._children[0]);
       }
       return xl;
     }
@@ -2927,6 +2936,7 @@ module Shumway.AVMX.AS {
         var list = this.sec.AXXMLList.CreateList(this._targetObject, this._targetProperty);
         if ((propertyName | 0) < this._children.length) {
           list._children[0] = this._children[propertyName | 0]._deepCopy();
+          assert(list._children[0]);
         }
         return list;
       }
@@ -2989,7 +2999,7 @@ module Shumway.AVMX.AS {
     }
     hasComplexContent(): boolean {
       // 13.5.4.13 XMLList.prototype.hasComplexContent( )
-      switch (this.length()) {
+      switch (this._children.length) {
         case 0:
           return false;
         case 1:
@@ -3002,7 +3012,7 @@ module Shumway.AVMX.AS {
     }
     hasSimpleContent(): boolean {
       // 13.5.4.14 XMLList.prototype.hasSimpleContent( )
-      switch (this.length()) {
+      switch (this._children.length) {
         case 0:
           return true;
         case 1:
@@ -3096,7 +3106,7 @@ module Shumway.AVMX.AS {
       this._children.forEach(function (v:any, i) {
         if (v._kind === ASXMLKind.Element) {
           var gq = v.text();
-          if (gq.length() > 0) {
+          if (gq._children.length > 0) {
             xl._children.push(gq);
           }
         }
@@ -3359,12 +3369,12 @@ module Shumway.AVMX.AS {
           }
         }
         // Step 2.c.
-        var length = this.children.length;
+        var length = this._children.length;
         if (i >= length) {
           // Step 2.c.i.
           if (r && r.axClass === this.sec.AXXMLList) {
             // Step 2.c.i.1.
-            if (r.children.length !== 1) {
+            if (r._children.length !== 1) {
               return;
             }
             // Step 2.c.i.2.
@@ -3407,16 +3417,18 @@ module Shumway.AVMX.AS {
                 var lastChild = this._children[i - 1];
                 for (j = 0; j < r.length - 1; j++) {
                   if (r._children[j] === lastChild) {
+                    assert(r._children[0]);
                     break;
                   }
                 }
               }
               // Step 2.c.viii.1.b.
               else {
-                j = r.length() - 1;
+                j = r._children.length - 1;
               }
               // Step 2.c.viii.1.c.
               r._children[j + 1] = y;
+              assert(r._children[0]);
               y._parent = r;
             }
             // Step 2.c.viii.2.
@@ -3444,13 +3456,14 @@ module Shumway.AVMX.AS {
           var indexInParent = parent._children.indexOf(currentChild);
           parent.setProperty(currentChild._name, false);
           this._children[i] = parent._children[indexInParent];
+          assert(this._children[0]);
           return;
         }
         // Step 2.f.
         if (value && value.axClass === this.sec.AXXMLList) {
           // Step 2.f.i.
           var c = value._shallowCopy();
-          var cLength = c.length();
+          var cLength = c._children.length;
           // Step 2.f.ii. (implemented above.)
           // Step 2.f.iii.
           if (parent !== null) {
@@ -3467,6 +3480,7 @@ module Shumway.AVMX.AS {
           if (cLength === 0) {
             for (var j = i + 1; j < length; j++) {
               this._children[j - 1] = this._children[j];
+              assert(this._children[0]);
             }
             // Step 2.f.vii. (only required if we're shrinking the XMLList).
             this._children.length--;
@@ -3475,11 +3489,13 @@ module Shumway.AVMX.AS {
         else {
             for (var j = length - 1; j > i; j--) {
               this._children[j + cLength - 1] = this._children[j];
+              assert(this._children[0]);
             }
           }
           // Step 2.f.vi.
           for (var j = 0; j < cLength; j++) {
             this._children[i + j] = c._children[j];
+            assert(this._children[0]);
           }
           return;
         }
@@ -3499,10 +3515,13 @@ module Shumway.AVMX.AS {
           if (typeof value === 'string') {
             var t = this.sec.AXXML.Create(value);
             this._children[i] = t;
+            assert(this._children[0]);
           }
           // Step 2.g.iv.
           else {
+            release || assert(this.sec.AXXML.axIsType(value));
             this._children[i] = value;
+            assert(this._children[0]);
           }
           return;
         }
@@ -3586,7 +3605,7 @@ module Shumway.AVMX.AS {
       // Otherwise, 11.2.2.1 CallMethod ( r , args )
       // If f == undefined and Type(base) is XMLList and base.[[Length]] == 1
       //   ii. Return the result of calling CallMethod(r0, args) recursively
-      if (this.length() === 1) {
+      if (this._children.length === 1) {
         return this._children[0].axCallProperty(mn, args);
       }
       this.sec.throwError('TypeError', Errors.CallOfNonFunctionError, 'value');

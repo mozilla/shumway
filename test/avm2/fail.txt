@@ -1,2 +1,0 @@
-test/avm2/pass/you-0.abc
-test/avm2/pass/describetype.abc

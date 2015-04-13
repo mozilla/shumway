@@ -162,3 +162,6 @@ test/avm2/pass/xml-qname.abc
 test/avm2/pass/xml-qualids.abc
 test/avm2/pass/xml.abc
 test/avm2/pass/iss-1057.abc
+test/avm2/pass/you-0.abc
+test/avm2/pass/describetype.abc
+
