@@ -1187,50 +1187,50 @@ module Shumway.AVMX.AS {
     localeCompare() {
       return this.value.localeCompare.apply(this.value, arguments);
     }
-    match(pattern) {
+    match(pattern: string | ASRegExp) {
       if (this.sec.AXRegExp.axIsType(pattern)) {
-        pattern = pattern.value;
+        pattern = (<any>pattern).value;
       } else {
         pattern = axCoerceString(pattern);
       }
-      var result = this.value.match(pattern);
+      var result = this.value.match(<any>pattern);
       if (!result) {
         return null;
       }
       return transformJStoASRegExpMatchArray(this.sec, result);
     }
-    replace(pattern, repl) {
+    replace(pattern: string | ASRegExp, repl: string | ASFunction) {
       if (this.sec.AXRegExp.axIsType(pattern)) {
-        pattern = pattern.value;
+        pattern = (<any>pattern).value;
       } else {
         pattern = axCoerceString(pattern);
       }
       if (this.sec.AXFunction.axIsType(repl)) {
-        repl = repl.value;
+        repl = (<any>repl).value;
       }
-      return this.value.replace(pattern, repl);
+      return this.value.replace(<any>pattern, <any>repl);
     }
-    search(pattern) {
+    search(pattern: string | ASRegExp) {
       if (this.sec.AXRegExp.axIsType(pattern)) {
-        pattern = pattern.value;
+        pattern = (<any>pattern).value;
       } else {
         pattern = axCoerceString(pattern);
       }
-      return this.value.search(pattern);
+      return this.value.search(<any>pattern);
     }
     slice(start?: number, end?: number) {
       start = arguments.length < 1 ? 0 : start | 0;
       end = arguments.length < 2 ? 0xffffffff : end | 0;
       return this.value.slice(start, end);
     }
-    split(separator, limit?: number) {
+    split(separator: string | ASRegExp, limit?: number) {
       if (this.sec.AXRegExp.axIsType(separator)) {
-        separator = separator.value;
+        separator = (<any>separator).value;
       } else {
         separator = axCoerceString(separator);
       }
       limit = limit === undefined ? -1 : limit | 0;
-      return this.sec.createArray(this.value.split(separator, limit));
+      return this.sec.createArray(this.value.split(<any>separator, limit));
     }
     substring(start: number, end?: number) {
       return this.value.substring(start, end);
