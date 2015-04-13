@@ -373,7 +373,7 @@ module Shumway.AVMX.AS {
     axHasPublicProperty(nm: any): boolean {
       rn.name = nm;
       var result = this.axHasProperty(rn);
-      release || assert(rn.name === nm);
+      release || assert(rn.name === nm || isNaN(rn.name) && isNaN(nm));
       return result;
     }
 

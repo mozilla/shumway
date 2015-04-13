@@ -4202,3 +4202,18 @@ object
 . test0
 object
 . null
+::: test/avm2/pass/you-0.abc :::
+[class Fields]
+A
+Q
+::: test/avm2/pass/describetype.abc :::
+describeType
+0: type
+1: type
+describeType used by YouTube
+0: a
+1: b
+2: c
+3: abc
+4: def
+5: ghi

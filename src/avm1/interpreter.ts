@@ -59,9 +59,33 @@ module Shumway.AVM1 {
   var MAX_AVM1_ERRORS_LIMIT = 1000;
   var MAX_AVM1_STACK_LIMIT = 256;
 
-  class AVM1ScopeListItem {
-    constructor (public scope: AVM1Object, public previousScopeItem: AVM1ScopeListItem) {
+  enum AVM1ScopeListItemFlags {
+    DEFAULT = 0,
+    TARGET = 1,
+    REPLACE_TARGET = 2
+  }
 
+  class AVM1ScopeListItem {
+    flags: AVM1ScopeListItemFlags;
+    replaceTargetBy: AVM1Object; // Very optional, set when REPLACE_TARGET used
+
+    constructor (public scope: AVM1Object, public previousScopeItem: AVM1ScopeListItem) {
+      this.flags = AVM1ScopeListItemFlags.DEFAULT;
+    }
+  }
+
+  // Similar to function scope, mostly for 'this'.
+  class GlobalPropertiesScope extends AVM1Object {
+    constructor(context: AVM1Context, thisArg: AVM1Object) {
+      super(context);
+      this.alSetOwnProperty('this', {
+        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.READ_ONLY,
+        value: thisArg
+      });
+      this.alSetOwnProperty('_global', {
+        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.READ_ONLY,
+        value: context.globals
+      })
     }
   }
 
@@ -73,7 +97,11 @@ module Shumway.AVM1 {
     public calleeFn: AVM1Function;
     public calleeArgs: any[];
 
-    constructor(public previousFrame: AVM1CallFrame, public currentThis: AVM1Object, public fn: AVM1Function, public args: any[]) {
+    constructor(public previousFrame: AVM1CallFrame,
+                public currentThis: AVM1Object,
+                public fn: AVM1Function,
+                public args: any[],
+                public scopeList: AVM1ScopeListItem) {
       this.inSequence = !previousFrame ? false :
         (previousFrame.calleeThis === currentThis && previousFrame.calleeFn === fn);
 
@@ -107,8 +135,6 @@ module Shumway.AVM1 {
     errorsIgnored: number;
     deferScriptExecution: boolean;
     pendingScripts;
-    defaultTarget;
-    currentTarget;
     actions: Lib.AVM1NativeActions;
 
     private assets: MapObject<number>;
@@ -199,13 +225,16 @@ module Shumway.AVM1 {
       var result: AVM1Object;
       if (target instanceof AVM1Object && target.isAVM1Instance) {
         result = target;
-      } else if (!isNullOrUndefined(target)) {
-        result = this.lookupChild(alToString(this, target), true);
-        if (!(result instanceof AVM1Object) || !(<any>result).isAVM1Instance) {
-          throw new Error('Invalid AVM1 target object: ' + alToString(this, result));
-        }
       } else {
-        result = this.currentTarget || this.defaultTarget;
+        target = isNullOrUndefined(target) ? '' : alToString(this, target);
+        if (target) {
+          result = this.lookupChild(alToString(this, target), true);
+          if (!(result instanceof AVM1Object) || !(<any>result).isAVM1Instance) {
+            throw new Error('Invalid AVM1 target object: ' + alToString(this, result));
+          }
+        } else {
+          result = avm1GetTarget(this, true);
+        }
       }
       return result;
     }
@@ -223,11 +252,11 @@ module Shumway.AVM1 {
       }
     }
     lookupChild(targetPath: string, fromCurrentTarget: boolean): AVM1Object {
+      release || Debug.assert(typeof targetPath === 'string');
+
       var path: string[];
-      var obj: AVM1Object = this.defaultTarget;
-      if (fromCurrentTarget && this.currentTarget) {
-        obj = this.currentTarget;
-      }
+      var defaultTarget: AVM1Object = avm1GetTarget(this, fromCurrentTarget);
+      var obj: AVM1Object = defaultTarget;
 
       // special cases
       if (!targetPath || targetPath === '.') {
@@ -266,14 +295,13 @@ module Shumway.AVM1 {
         if (!obj) {
           avm1Warn(path[0] + ' (expr ' + targetPath + ') is not found in ' +
             (<Lib.AVM1MovieClip>prevObj)._target);
-          // TODO refactor me
-          return new AVM1Object(this); // resolving to fake object
+          return defaultTarget;
         }
         path.shift();
       }
       return obj;
     }
-    addToPendingScripts(fn: Function, defaultTarget: any) {
+    addToPendingScripts(fn: Function) {
       var runner = function () {
         var savedIsActive = this.isActive;
         if (!savedIsActive) {
@@ -282,18 +310,12 @@ module Shumway.AVM1 {
             Number.MAX_VALUE : Date.now() + MAX_AVM1_HANG_TIMEOUT;
           this.errorsIgnored = 0;
         }
-        var savedDefaultTarget = this.defaultTarget;
-        var savedCurrentTarget = this.currentTarget;
-        this.defaultTarget = defaultTarget;
-        this.currentTarget = null;
         var caughtError;
         try {
           fn();
         } catch (e) {
           caughtError = e;
         }
-        this.defaultTarget = savedDefaultTarget;
-        this.currentTarget = savedCurrentTarget;
         if (caughtError) {
           // Note: this doesn't use `finally` because that's a no-go for performance.
           throw caughtError;
@@ -312,8 +334,8 @@ module Shumway.AVM1 {
       }
       this.deferScriptExecution = false;
     }
-    pushCallFrame(thisArg: AVM1Object, fn: AVM1Function, args: any[]) : AVM1CallFrame {
-      var nextFrame = new AVM1CallFrame(this.frame, thisArg, fn, args);
+    pushCallFrame(thisArg: AVM1Object, fn: AVM1Function, args: any[], scopeList: AVM1ScopeListItem) : AVM1CallFrame {
+      var nextFrame = new AVM1CallFrame(this.frame, thisArg, fn, args, scopeList);
       this.frame = nextFrame;
       return nextFrame;
     }
@@ -550,24 +572,20 @@ module Shumway.AVM1 {
     var registers = [];
     registers.length = 4; // by default only 4 registers allowed
 
-    var scopeList = new AVM1ScopeListItem(scope, context.initialScope);
+    var globalPropertiesScopeList = new AVM1ScopeListItem(
+      new GlobalPropertiesScope(context, scope), context.initialScope);
+    var scopeList = new AVM1ScopeListItem(scope, globalPropertiesScopeList);
+    scopeList.flags |= AVM1ScopeListItemFlags.TARGET;
     var caughtError;
-    context.pushCallFrame(scope, null, null);
+    context.pushCallFrame(scope, null, null, scopeList);
     actionTracer.message('ActionScript Execution Starts');
     actionTracer.indent();
 
-    var savedDefaultTarget = context.defaultTarget;
-    var savedCurrentTarget = context.currentTarget;
-
-    context.defaultTarget = scope;
-    context.currentTarget = null;
     try {
       interpretActionsData(context, actionsData, scopeList, [], registers);
     } catch (e) {
       caughtError = as2CastError(e);
     }
-    context.defaultTarget = savedDefaultTarget;
-    context.currentTarget = savedCurrentTarget;
 
 
     if (caughtError instanceof AVM1CriticalError) {
@@ -723,7 +741,7 @@ module Shumway.AVM1 {
 
       var supperWrapper;
 
-      var frame = currentContext.pushCallFrame(thisArg, this, args);
+      var frame = currentContext.pushCallFrame(thisArg, this, args, newScopeList);
 
       var suppressArguments = this.suppressArguments;
       if (!(suppressArguments & ArgumentAssignmentType.Arguments)) {
@@ -789,14 +807,11 @@ module Shumway.AVM1 {
         throw new AVM1CriticalError('long running script -- AVM1 recursion limit is reached');
       }
 
-      var savedCurrentTarget = currentContext.currentTarget;
-      currentContext.currentTarget = null;
       try {
         result = interpretActionsData(currentContext, actionsData, newScopeList, constantPool, registers);
       } catch (e) {
         caughtError = e;
       }
-      currentContext.currentTarget = savedCurrentTarget;
 
       currentContext.stackDepth--;
       currentContext.popCallFrame();
@@ -832,18 +847,23 @@ module Shumway.AVM1 {
       return args;
     }
     function avm1SetTarget(ectx: ExecutionContext, targetPath: string) {
+      var newTarget = null;
       var currentContext = ectx.context;
 
-      if (!targetPath) {
-        currentContext.currentTarget = null;
-        return;
+      if (targetPath) {
+        try {
+          newTarget = currentContext.lookupChild(targetPath, false);
+        } catch (e) {
+          avm1Warn('Unable to set target: ' + e);
+        }
       }
 
-      try {
-        currentContext.currentTarget = currentContext.lookupChild(targetPath, false);
-      } catch (e) {
-        currentContext.currentTarget = null;
-        throw e;
+      if (newTarget) {
+        ectx.scopeList.flags |= AVM1ScopeListItemFlags.REPLACE_TARGET;
+        ectx.scopeList.replaceTargetBy = newTarget;
+      } else {
+        ectx.scopeList.flags &= ~AVM1ScopeListItemFlags.REPLACE_TARGET;
+        ectx.scopeList.replaceTargetBy = null;
       }
     }
     function isGlobalObject(obj) {
@@ -902,52 +922,68 @@ module Shumway.AVM1 {
       }
 
       var scopeList = ectx.scopeList;
-      var currentContext = ectx.context;
-      var currentTarget = currentContext.currentTarget;
-
-      if (currentTarget &&
-          currentTarget.alHasProperty(variableName)) {
-        return currentTarget;
-      }
-
+      var currentTarget;
+                        debugger;
       for (var p = scopeList; p; p = p.previousScopeItem) {
+        if ((p.flags & AVM1ScopeListItemFlags.REPLACE_TARGET) &&
+            !currentTarget) {
+          currentTarget = p.replaceTargetBy;
+        }
+        if ((p.flags & AVM1ScopeListItemFlags.TARGET) && currentTarget) {
+          if (currentTarget.alHasProperty(variableName)) {
+            return currentTarget;
+          }
+          continue;
+        }
         if (p.scope.alHasProperty(variableName)) {
           return p.scope;
         }
       }
 
-      // FIXME refactor that
-      if (variableName === 'this') {
-        var scope = scopeList.scope;
-        scope.alSetOwnProperty('this', {
-          flags: AVM1PropertyFlags.NATIVE_MEMBER,
-          value: currentContext.defaultTarget,
-        });
-        return scope;
-      }
-
       return null;
     }
+
     function avm1FindSetVariableScope(ectx: ExecutionContext, variableName: string): AVM1Object {
       if (avm1VariableNameHasPath(variableName)) {
         return avm1FindChildVariableScope(ectx, variableName);
       }
 
       var scopeList = ectx.scopeList;
-      var currentContext = ectx.context;
-      var currentTarget = currentContext.currentTarget;
+      var currentTarget;
 
-      if (currentTarget) {
-        return currentTarget;
-      }
+      for (var p = scopeList; p.previousScopeItem; p = p.previousScopeItem) {
+        if ((p.flags & AVM1ScopeListItemFlags.REPLACE_TARGET) &&
+            !currentTarget) {
+          currentTarget = p.replaceTargetBy;
+        }
+        if ((p.flags & AVM1ScopeListItemFlags.TARGET)) {
+          // last scope/target we can modify (exclude globals)
+          return currentTarget || p.scope;
+        }
 
-      for (var p = scopeList; p.previousScopeItem; p = p.previousScopeItem) { // excluding globals
         if (p.scope.alHasProperty(variableName)) {
           return p.scope;
         }
       }
 
-      return currentContext.defaultTarget;
+      release || Debug.assert(false, 'Shall not reach this statement');
+      return undefined;
+    }
+
+    function avm1GetTarget(context: AVM1ContextImpl, allowOverride: boolean): AVM1Object  {
+      var scopeList = context.frame.scopeList;
+      for (var p = scopeList; p.previousScopeItem; p = p.previousScopeItem) {
+        if ((p.flags & AVM1ScopeListItemFlags.REPLACE_TARGET) &&
+            allowOverride) {
+          return p.replaceTargetBy;
+        }
+        if ((p.flags & AVM1ScopeListItemFlags.TARGET)) {
+          return p.scope;
+        }
+      }
+
+      release || Debug.assert(false, 'Shall not reach this statement');
+      return undefined;
     }
 
     function avm1ProcessWith(ectx: ExecutionContext, obj, withBlock) {
@@ -1315,7 +1351,7 @@ module Shumway.AVM1 {
     function avm1_0x20_ActionSetTarget2(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
-      var target = stack.pop();
+      var target = alToString(ectx.context, stack.pop());
       avm1SetTarget(ectx, target);
     }
     function avm1_0x22_ActionGetProperty(ectx: ExecutionContext) {

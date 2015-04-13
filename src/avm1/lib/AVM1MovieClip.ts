@@ -739,12 +739,16 @@ module Shumway.AVM1.Lib {
 
     // Special and children names properties resolutions
 
-    private _resolveLevelNProperty(name): AVM1MovieClip {
+    private _resolveLevelNProperty(name: string): AVM1MovieClip {
+      if (!this.context.isPropertyCaseSensitive) {
+        name = name.toLowerCase();
+      }
       if (name === '_root' || name === '_level0') {
         return this.context.resolveLevel(0);
       } else if (name.indexOf('_level') === 0) {
-        var level = name.substring(6), levelNum = level | 0;
-        if (levelNum > 0 && level == levelNum) {
+        var level = name.substring(6);
+        var levelNum = <any>level | 0;
+        if (levelNum > 0 && <any>level == levelNum) {
           return this.context.resolveLevel(levelNum)
         }
       }
@@ -774,9 +778,6 @@ module Shumway.AVM1.Lib {
         var level = this._resolveLevelNProperty(name);
         if (level) {
           return this._getCachedPropertyResult(level);
-        }
-        if (name === '_global') {
-          return this._getCachedPropertyResult(this.context.globals);
         }
       }
       if (this.isAVM1Instance) {
