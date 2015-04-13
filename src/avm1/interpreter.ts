@@ -924,7 +924,7 @@ module Shumway.AVM1 {
 
       var scopeList = ectx.scopeList;
       var currentTarget;
-                        debugger;
+
       for (var p = scopeList; p; p = p.previousScopeItem) {
         if ((p.flags & AVM1ScopeListItemFlags.REPLACE_TARGET) &&
             !currentTarget) {
@@ -2031,9 +2031,10 @@ module Shumway.AVM1 {
             console.log(Object.getPrototypeOf(e));
             console.log(Object.getPrototypeOf(Object.getPrototypeOf(e)));
             console.error('AVM1 error: ' + e);
-            var avm2 = null; // REDUX: Shumway.AVM2.Runtime.AVM2;
-            avm2.instance.exceptions.push({source: 'avm1', message: e.message,
-              stack: e.stack});
+// REDUX
+//            var avm2 = Shumway.AVM2.Runtime.AVM2;
+//            avm2.instance.exceptions.push({source: 'avm1', message: e.message,
+//              stack: e.stack});
             executionContext.recoveringFromError = true;
           }
         }
