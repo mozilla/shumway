@@ -341,6 +341,8 @@ module Shumway.AVM1.Natives {
 
   // TODO implement all the String class and its prototype natives
 
+
+  // Most of the methods of String prototype are generic and accept any object.
   export class AVM1StringPrototype extends AVM1Object {
     public constructor(context: IAVM1Context) {
       super(context);
@@ -421,13 +423,13 @@ module Shumway.AVM1.Natives {
     }
 
     public charAt(index: number): string {
-      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
-      return native.value.charAt(alToInteger(this.context, index));
+      var value = alToString(this.context, this);
+      return value.charAt(alToInteger(this.context, index));
     }
 
     public charCodeAt(index: number): number {
-      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
-      return native.value.charCodeAt(alToInteger(this.context, index));
+      var value = alToString(this.context, this);
+      return value.charCodeAt(alToInteger(this.context, index));
     }
 
     public concat(...items: AVM1Object[]): string {
@@ -439,56 +441,56 @@ module Shumway.AVM1.Natives {
     }
 
     public indexOf(searchString: string, position?: number): number {
-      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
+      var value = alToString(this.context, this);
       searchString = alToString(this.context, searchString);
       position = alToInteger(this.context, position);
-      return native.value.indexOf(searchString, position);
+      return value.indexOf(searchString, position);
     }
 
     public lastIndexOf(searchString: string, position?: number): number {
-      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
+      var value = alToString(this.context, this);
       searchString = alToString(this.context, searchString);
-      position = alToNumber(this.context, position);
-      return native.value.lastIndexOf(searchString, isNaN(position) ? undefined : position);
+      position = arguments.length < 2 ? NaN : alToNumber(this.context, position); // SWF6 alToNumber(undefined) === 0
+      return value.lastIndexOf(searchString, isNaN(position) ? undefined : position);
     }
 
     public slice(start: number, end?: number): string {
-      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
+      var value = alToString(this.context, this);
       start = alToInteger(this.context, start);
       end = end === undefined ? undefined : alToInteger(this.context, end);
-      return native.value.slice(start, end);
+      return value.slice(start, end);
     }
 
     public split(separator: any, limit?: number): AVM1ArrayNative {
-      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
+      var value = alToString(this.context, this);
       // TODO separator as regular expression?
       separator = alToString(this.context, separator);
       limit = (limit === undefined ? ~0 : alToInt32(this.context, limit)) >>> 0;
-      return new AVM1ArrayNative(this.context, native.value.split(separator, limit));
+      return new AVM1ArrayNative(this.context, value.split(separator, limit));
     }
 
     public substr(start: number, length?: number): string {
-      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
+      var value = alToString(this.context, this);
       start = alToInteger(this.context, start);
       length = length === undefined ? undefined : alToInteger(this.context, length);
-      return native.value.substr(start, length);
+      return value.substr(start, length);
     }
 
     public substring(start: number, end?: number): string {
-      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
+      var value = alToString(this.context, this);
       start = alToInteger(this.context, start);
       end = end === undefined ? undefined : alToInteger(this.context, end);
-      return native.value.substring(start, end);
+      return value.substring(start, end);
     }
 
     public toLowerCase(): string {
-      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
-      return native.value.toLowerCase();
+      var value = alToString(this.context, this);
+      return value.toLowerCase();
     }
 
     public toUpperCase(): string {
-      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
-      return native.value.toUpperCase();
+      var value = alToString(this.context, this);
+      return value.toUpperCase();
     }
   }
 
