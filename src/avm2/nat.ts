@@ -38,6 +38,34 @@ interface ISecurityDomain extends Shumway.AVMX.AXSecurityDomain {
  */
 var as3Compatibility = true;
 
+
+/**
+ * AS3 has a bug when converting a certain character range to lower case.
+ */
+function as3ToLowerCase(value: string) {
+  var chars: string [] = null;
+  for (var i = 0; i < value.length; i++) {
+    var charCode = value.charCodeAt(i);
+    if (charCode >= 0x10A0 && charCode <= 0x10C5) {
+      if (!chars) {
+        chars = new Array(value.length);
+      }
+      chars[i] = String.fromCharCode(charCode + 48);
+    }
+  }
+  if (chars) {
+    // Fill in remaining chars if the bug needs to be emulated.
+    for (var i = 0; i < chars.length; i++) {
+      var char = chars[i];
+      if (!char) {
+        chars[i] = value.charAt(i).toLocaleString();
+      }
+    }
+    return chars.join("");
+  }
+  return value.toLowerCase();
+}
+
 module Shumway.AVMX.AS {
 
   import assert = Shumway.Debug.assert;
@@ -1210,37 +1238,9 @@ module Shumway.AVMX.AS {
     toLocaleLowerCase() {
       return this.value.toLowerCase();
     }
-
-    /**
-     * AS3 has a bug when converting a certain character range to lower case.
-     */
-    as3ToLowerCase() {
-      var value = this.value;
-      var chars: string [] = null;
-      for (var i = 0; i < value.length; i++) {
-        var charCode = value.charCodeAt(i);
-        if (charCode >= 0x10A0 && charCode <= 0x10C5) {
-          if (!chars) {
-            chars = new Array(value.length);
-          }
-          chars[i] = String.fromCharCode(charCode + 48);
-        }
-      }
-      if (chars) {
-        // Fill in remaining chars if the bug needs to be emulated.
-        for (var i = 0; i < chars.length; i++) {
-          var char = chars[i];
-          if (!char) {
-            chars[i] = value.charAt(i).toLocaleString();
-          }
-        }
-        return chars.join("");
-      }
-      return value.toLowerCase();
-    }
     toLowerCase() {
       if (as3Compatibility) {
-        return this.as3ToLowerCase();
+        return as3ToLowerCase(this.value);
       }
       return this.value.toLowerCase();
     }
@@ -1255,43 +1255,43 @@ module Shumway.AVMX.AS {
     // different.
 
     generic_indexOf(char: string, i?: number) {
-      var receiver = this.value == undefined ? '' : this.value;
+      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
       return String.prototype.indexOf.call(receiver, char, i);
     }
     generic_lastIndexOf(char: string, i?: number) {
-      var receiver = this.value == undefined ? '' : this.value;
+      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
       return String.prototype.lastIndexOf.call(receiver, char, i);
     }
     generic_charAt(index: number) {
-      var receiver = this.value == undefined ? '' : this.value;
+      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
       return String.prototype.charAt.call(receiver, index);
     }
     generic_charCodeAt(index: number) {
-      var receiver = this.value == undefined ? '' : this.value;
+      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
       return String.prototype.charCodeAt.call(receiver, index);
     }
     generic_concat() {
-      var receiver = this.value == undefined ? '' : this.value;
+      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
       return String.prototype.concat.apply(receiver, arguments);
     }
     generic_localeCompare() {
-      var receiver = this.value == undefined ? '' : this.value;
+      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
       return String.prototype.localeCompare.apply(receiver, arguments);
     }
     generic_match(pattern) {
-      var receiver = this.value == undefined ? '' : this.value;
+      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
       return String.prototype.match.call(receiver, pattern);
     }
     generic_replace(pattern, repl) {
-      var receiver = this.value == undefined ? '' : this.value;
+      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
       return String.prototype.replace.call(receiver, pattern, repl);
     }
     generic_search(pattern) {
-      var receiver = this.value == undefined ? '' : this.value;
+      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
       return String.prototype.search.call(receiver, pattern);
     }
     generic_slice(start?: number, end?: number) {
-      var receiver = this.value == undefined ? '' : this.value;
+      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
       return String.prototype.slice.call(receiver, start, end);
     }
     generic_split(separator: string, limit?: number) {
@@ -1307,18 +1307,22 @@ module Shumway.AVMX.AS {
       return (<AXClass><any>this).sec.createArray(list);
     }
     generic_substring(start: number, end?: number) {
-      var receiver = this.value == undefined ? '' : this.value;
+      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
       return String.prototype.substring.call(receiver, start, end);
     }
     generic_substr(from: number, length?: number) {
-      var receiver = this.value == undefined ? '' : this.value;
+      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
       return String.prototype.substr.call(receiver, from, length);
     }
     generic_toLowerCase() {
-      return (this).toLowerCase();
+      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
+      if (as3Compatibility) {
+        return as3ToLowerCase(receiver);
+      }
+      String.prototype.toLowerCase.call(receiver);
     }
     generic_toUpperCase() {
-      var receiver = this.value == undefined ? '' : this.value;
+      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
       return String.prototype.toUpperCase.call(receiver);
     }
 
