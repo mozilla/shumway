@@ -97,7 +97,7 @@ module Shumway.AVMX {
 
     var local = [self];
     var stack = [];
-    var scope = new ScopeStack(savedScope);
+    var scopes = new ScopeStack(savedScope);
     var rn: Multiname = null;
 
     var argCount = callArgs.length;
@@ -113,7 +113,7 @@ module Shumway.AVMX {
       }
       rn = p.getType();
       if (rn && !rn.isAnyName()) {
-        type = scope.topScope().getScopeProperty(rn, true, false);
+        type = savedScope.getScopeProperty(rn, true, false);
         interpreterWriter && interpreterWriter.writeLn("Coercing argument to type " +
                                                        (type.axClass ?
                                                         type.axClass.name.toFQNString(false) :
@@ -131,9 +131,9 @@ module Shumway.AVMX {
     }
 
     var args = [];
-
     var pc = 0;
-    function s32(): number {
+
+    function u30(): number {
       var result = code[pc++];
       if (result & 0x80) {
         result = result & 0x7f | code[pc++] << 7;
@@ -148,15 +148,7 @@ module Shumway.AVMX {
           }
         }
       }
-      return result;
-    }
-
-    function u30(): number {
-      return s32() >>> 0;
-    }
-
-    function u32(): number {
-      return s32() >>> 0;
+      return result >>> 0;
     }
 
     function s24(): number {
@@ -170,7 +162,7 @@ module Shumway.AVMX {
 
     // Boxes the top of the stack.
     function peekBox() {
-      return box(stack[stack.length - 1]);
+      return sec.box(stack[stack.length - 1]);
     }
 
     var hasNext2Infos: HasNext2Info [];
@@ -190,6 +182,9 @@ module Shumway.AVMX {
     var code = body.code;
     var bc: Bytecode;
     var value, object, type, a, b, offset, index, result;
+
+    var scopeStacksHeight = scopeStacks.length;
+    scopeStacks.push(scopes);
 
     interpretLabel:
     while (true) {
@@ -306,7 +301,7 @@ module Shumway.AVMX {
           //  scope.push(box(stack.pop()), true);
           //  break;
           case Bytecode.POPSCOPE:
-            scope.pop();
+            scopes.pop();
             break;
           case Bytecode.NEXTNAME:
             index = stack.pop();
@@ -372,13 +367,13 @@ module Shumway.AVMX {
             stack[stack.length - 2] = value;
             break;
           case Bytecode.PUSHSCOPE:
-            scope.push(box(stack.pop()), false);
+            scopes.push(box(stack.pop()), false);
             break;
           case Bytecode.PUSHWITH:
-            scope.push(box(stack.pop()), true);
+            scopes.push(box(stack.pop()), true);
             break;
           case Bytecode.NEWFUNCTION:
-            stack.push(sec.createFunction(abc.getMethodInfo(u30()), scope.topScope(), true));
+            stack.push(sec.createFunction(abc.getMethodInfo(u30()), scopes.topScope(), true));
             break;
           case Bytecode.CALL:
             popManyInto(stack, u30(), args);
@@ -394,6 +389,8 @@ module Shumway.AVMX {
             stack[stack.length - 1] = receiver.axConstruct(args);
             break;
           case Bytecode.RETURNVOID:
+            release || assert(scopeStacks.length === scopeStacksHeight + 1);
+            scopeStacks.length--;
             return;
           case Bytecode.RETURNVALUE:
             value = stack.pop();
@@ -404,6 +401,8 @@ module Shumway.AVMX {
                 value = receiver.axCoerce(value);
               }
             }
+            release || assert(scopeStacks.length === scopeStacksHeight + 1);
+            scopeStacks.length--;
             return value;
           case Bytecode.CONSTRUCTSUPER:
             popManyInto(stack, u30(), args);
@@ -479,11 +478,11 @@ module Shumway.AVMX {
             stack.push(sec.AXArray.axBox(object));
             break;
           case Bytecode.NEWACTIVATION:
-            stack.push(sec.createActivation(methodInfo, scope.topScope()));
+            stack.push(sec.createActivation(methodInfo, scopes.topScope()));
             break;
           case Bytecode.NEWCLASS:
             stack[stack.length - 1] = sec.createClass(
-              abc.classes[u30()], stack[stack.length - 1], scope.topScope()
+              abc.classes[u30()], stack[stack.length - 1], scopes.topScope()
             );
             break;
           case Bytecode.GETDESCENDANTS:
@@ -496,16 +495,16 @@ module Shumway.AVMX {
             stack[stack.length - 1] = result;
             break;
           case Bytecode.NEWCATCH:
-            stack.push(sec.createCatch(body.catchBlocks[u30()], scope.topScope()));
+            stack.push(sec.createCatch(body.catchBlocks[u30()], scopes.topScope()));
             break;
           case Bytecode.FINDPROPERTY:
           case Bytecode.FINDPROPSTRICT:
             popNameInto(stack, abc.getMultiname(u30()), rn);
-            stack.push(scope.topScope().findScopeProperty(rn, bc === Bytecode.FINDPROPSTRICT, false));
+            stack.push(scopes.topScope().findScopeProperty(rn, bc === Bytecode.FINDPROPSTRICT, false));
             break;
           case Bytecode.GETLEX:
             popNameInto(stack, abc.getMultiname(u30()), rn);
-            object = scope.topScope().findScopeProperty(rn, true, false);
+            object = scopes.topScope().findScopeProperty(rn, true, false);
             result = object.axGetProperty(rn);
             release || checkValue(result);
             stack.push(result);
@@ -552,7 +551,7 @@ module Shumway.AVMX {
             stack.push(savedScope.global.object);
             break;
           case Bytecode.GETSCOPEOBJECT:
-            stack.push(scope.get(code[pc++]));
+            stack.push(scopes.get(code[pc++]));
             break;
           case Bytecode.GETSLOT:
             receiver = peekBox();
@@ -607,14 +606,14 @@ module Shumway.AVMX {
             break;
           case Bytecode.COERCE:
             popNameInto(stack, abc.getMultiname(u30()), rn);
-            type = scope.topScope().getScopeProperty(rn, true, false);
+            type = scopes.topScope().getScopeProperty(rn, true, false);
             stack[stack.length - 1] = type.axCoerce(stack[stack.length - 1]);
             break;
           case Bytecode.COERCE_A: /* NOP */
             break;
           case Bytecode.ASTYPE:
             popNameInto(stack, abc.getMultiname(u30()), rn);
-            receiver = scope.topScope().getScopeProperty(rn, true, false);
+            receiver = scopes.topScope().getScopeProperty(rn, true, false);
             stack[stack.length - 2] = receiver.axAsType(stack[stack.length - 1]);
             break;
           case Bytecode.ASTYPELATE:
@@ -713,7 +712,7 @@ module Shumway.AVMX {
             break;
           case Bytecode.ISTYPE:
             popNameInto(stack, abc.getMultiname(u30()), rn);
-            receiver = scope.topScope().findScopeProperty(rn, true, false);
+            receiver = scopes.topScope().findScopeProperty(rn, true, false);
             stack[stack.length - 1] = receiver.axIsType(stack[stack.length - 1]);
             break;
           case Bytecode.ISTYPELATE:
@@ -790,7 +789,7 @@ module Shumway.AVMX {
           // We omit many checks in the interpreter loop above to keep the code small. These
           // checks can be done after the fact here by turning the VM-internal exception into a
           // proper error according to the current operation.
-          e = createValidException(sec, e, bc, value, receiver, rn);
+          e = createValidException(sec, e, bc, value, receiver, rn, scopeStacksHeight + 1);
         }
 
         var catchBlocks = body.catchBlocks;
@@ -801,20 +800,23 @@ module Shumway.AVMX {
             if (!typeName || applicationDomain.getClass(typeName).axIsType(e)) {
               stack.length = 0;
               stack.push(e);
-              scope.clear();
+              scopes.clear();
               pc = handler.target;
               continue interpretLabel;
             }
           }
         }
 
+        release || assert(scopeStacks.length === scopeStacksHeight + 1);
+        scopeStacks.length--;
         throw e;
       }
     }
   }
 
   function createValidException(sec: AXSecurityDomain, internalError, bc: Bytecode,
-                                value: any, receiver: any, mn: Multiname) {
+                                value: any, receiver: any, mn: Multiname,
+                                expectedScopeStacksHeight: number) {
     // Stack exhaustion errors are annoying to catch: Identifying them requires pattern-matching of
     // error messages, and throwing them must be done very carefully to not cause the next one.
     if (internalError &&
@@ -826,6 +828,7 @@ module Shumway.AVMX {
         var obj = Object.create(sec.AXError.tPrototype);
         obj._errorID = 1023;
         obj.$Bgmessage = "Stack overflow occurred";
+        scopeStacks.length = expectedScopeStacksHeight;
         return obj;
       }
     }

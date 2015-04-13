@@ -915,13 +915,15 @@ module Shumway.AVMX {
     return this.axCoerce(args ? args[0] : undefined);
   }
 
+  export var scopeStacks: ScopeStack[] = [];
+
   /**
    * Provides security isolation between application domains.
    */
   export class AXSecurityDomain {
     public system: AXApplicationDomain;
-    public classAliases: ClassAliases;
     public application: AXApplicationDomain;
+    public classAliases: ClassAliases;
     public AXObject: AXClass;
     public AXArray: AXClass;
     public AXClass: AXClass;
@@ -973,8 +975,8 @@ module Shumway.AVMX {
     constructor() {
       initializeAXBasePrototype();
       this.system = new AXApplicationDomain(this, null);
-      this.classAliases = new ClassAliases();
       this.application = new AXApplicationDomain(this, this.system);
+      this.classAliases = new ClassAliases();
       this.nativeClasses = Object.create(null);
       this.vectorClasses = new Map<AXClass, AXClass>();
       this._catalogs = [];
@@ -1428,7 +1430,8 @@ module Shumway.AVMX {
       var dynamicObjectPrototype = Object.create(AXBasePrototype);
       dynamicObjectPrototype.sec = this;
       // The basic traits prototype that all objects in this security domain have in common.
-      this.objectPrototype = Object.create(dynamicObjectPrototype);
+      Object.defineProperty(this, 'objectPrototype',
+                            {value: Object.create(dynamicObjectPrototype)});
       this.initializeCoreNatives();
 
       // Debugging Helper
