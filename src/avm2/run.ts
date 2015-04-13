@@ -1090,10 +1090,28 @@ module Shumway.AVMX {
 
     /**
      * Constructs an AXArray in this security domain and sets its value to the given array.
+     * Warning: This doesn't handle non-indexed keys.
      */
-    createArray(value: any[]) {
+    createArrayUnsafe(value: any[]) {
       var array = Object.create(this.AXArray.tPrototype);
       array.value = value;
+      if (!release) { // Array values must only hold index keys.
+        for (var k in value) {
+          assert(isIndex(k));
+        }
+      }
+      return array;
+    }
+
+    /**
+     * Constructs an AXArray in this security domain and sets its value to the given array.
+     */
+    createArray(value: any[]) {
+      var array = this.createArrayUnsafe([]);
+      for (var k in value) {
+        array.axSetPublicProperty(k, value[k]);
+      }
+      array.length = value.length;
       return array;
     }
 

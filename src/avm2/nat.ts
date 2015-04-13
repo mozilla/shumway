@@ -744,7 +744,7 @@ module Shumway.AVMX.AS {
           value.push(a);
         }
       }
-      return this.sec.createArray(value);
+      return this.sec.createArrayUnsafe(value);
     }
     slice(startIndex: number, endIndex: number) {
       return this.sec.createArray(this.value.slice(startIndex, endIndex));
