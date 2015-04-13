@@ -2952,7 +2952,18 @@
       "test/avm2/acceptance/as3/Directives/usenamespace/NsClassesfunc.abc",
       "test/avm2/acceptance/as3/Directives/usenamespace/NsExpressionRef.abc",
       "test/avm2/acceptance/as3/Directives/usenamespace/NSInsideTryCatch.abc",
-      "test/avm2/acceptance/as3/Directives/usenamespace/NSInterfacefunc.abc",
+      "test/avm2/acceptance/as3/Directives/usenamespace/NSInterfacefunc.abc"
+    ]
+  ],
+
+  // More AS3 stuff.
+  [
+    [
+      "test/avm2/acceptance/Assert.abc",
+      "test/avm2/acceptance/Utils.abc",
+      "test/avm2/acceptance/DateUtils.abc"
+    ],
+    [
       "test/avm2/acceptance/as3/Directives/usenamespace/NSReturnedByFunc.abc",
       "test/avm2/acceptance/as3/Directives/usenamespace/NSValueAssig.abc",
       "test/avm2/acceptance/as3/Directives/usenamespace/OverrideBaseNsMethod.abc",

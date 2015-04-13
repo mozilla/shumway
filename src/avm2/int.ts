@@ -66,7 +66,13 @@ module Shumway.AVMX {
       rn.name = mn.name;
     }
     if (mn.isRuntimeNamespace()) {
-      rn.namespaces = [stack.pop()];
+      var ns = stack.pop();
+      // Unwrap content script-created AXNamespace instances.
+      if (ns._ns) {
+        release || assert(ns.sec && ns.axClass === ns.sec.AXNamespace);
+        ns = ns._ns;
+      }
+      rn.namespaces = [ns];
       rn.id = -1;
     } else {
       rn.namespaces = mn.namespaces;
@@ -371,6 +377,9 @@ module Shumway.AVMX {
             break;
           case Bytecode.PUSHWITH:
             scopes.push(box(stack.pop()), true);
+            break;
+          case Bytecode.PUSHNAMESPACE:
+            stack.push(sec.AXNamespace.FromNamespace(abc.getNamespace(u30())));
             break;
           case Bytecode.NEWFUNCTION:
             stack.push(sec.createFunction(abc.getMethodInfo(u30()), scopes.topScope(), true));
