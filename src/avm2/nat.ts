@@ -907,7 +907,10 @@ module Shumway.AVMX.AS {
     }
 
     axGetEnumerableKeys(): any [] {
-      return Object.keys(this.value);
+      // Get the numeric Array keys first ...
+      var keys = Object.keys(this.value);
+      // ... then the keys that live on the array object.
+      return keys.concat(super.axGetEnumerableKeys());
     }
 
     axHasPropertyInternal(mn: Multiname): boolean {
