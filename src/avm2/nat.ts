@@ -934,7 +934,6 @@ module Shumway.AVMX.AS {
     axGetProperty(mn: Multiname): any {
       var name = mn.name;
       if (typeof name === 'number' || isNumeric(name = axCoerceName(name))) {
-        release || assert(mn.isRuntimeName());
         return this.value[name];
       }
       return super.axGetProperty(mn);
@@ -944,7 +943,6 @@ module Shumway.AVMX.AS {
       release || checkValue(value);
       var name = mn.name;
       if (typeof name === 'number' || isNumeric(name = axCoerceName(name))) {
-        release || assert(mn.isRuntimeName());
         this.value[name] = value;
         return;
       }
@@ -954,7 +952,6 @@ module Shumway.AVMX.AS {
     axDeleteProperty(mn: Multiname): any {
       var name = mn.name;
       if (typeof name === 'number' || isNumeric(name = axCoerceName(name))) {
-        release || assert(mn.isRuntimeName());
         return delete this.value[name];
       }
       // Cannot delete array traits.
