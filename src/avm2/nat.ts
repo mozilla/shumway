@@ -1149,7 +1149,7 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, '$Bgreplace', asProto.replace);
       addPrototypeFunctionAlias(proto, '$Bgsearch', asProto.search);
       addPrototypeFunctionAlias(proto, '$Bgslice', asProto.generic_slice);
-      addPrototypeFunctionAlias(proto, '$Bgsplit', asProto.generic_split);
+      addPrototypeFunctionAlias(proto, '$Bgsplit', asProto.split);
       addPrototypeFunctionAlias(proto, '$Bgsubstring', asProto.generic_substring);
       addPrototypeFunctionAlias(proto, '$Bgsubstr', asProto.generic_substr);
       addPrototypeFunctionAlias(proto, '$BgtoLowerCase', asProto.generic_toLowerCase);
@@ -1190,22 +1190,20 @@ module Shumway.AVMX.AS {
     match(pattern) {
       if (this.sec.AXRegExp.axIsType(pattern)) {
         pattern = pattern.value;
+      } else {
+        pattern = axCoerceString(pattern);
       }
       var result = this.value.match(pattern);
       if (!result) {
         return null;
       }
-      // In AS3, non-matched capturing groups return an empty string, not null or undefined.
-      for (var i = 0; i < result.length; i++) {
-        if (!result[i]) {
-          result[i] = '';
-        }
-      }
-      return this.sec.createArray(result);
+      return transformJStoASRegExpMatchArray(this.sec, result);
     }
     replace(pattern, repl) {
       if (this.sec.AXRegExp.axIsType(pattern)) {
         pattern = pattern.value;
+      } else {
+        pattern = axCoerceString(pattern);
       }
       if (this.sec.AXFunction.axIsType(repl)) {
         repl = repl.value;
@@ -1215,6 +1213,8 @@ module Shumway.AVMX.AS {
     search(pattern) {
       if (this.sec.AXRegExp.axIsType(pattern)) {
         pattern = pattern.value;
+      } else {
+        pattern = axCoerceString(pattern);
       }
       return this.value.search(pattern);
     }
@@ -1223,10 +1223,13 @@ module Shumway.AVMX.AS {
       end = arguments.length < 2 ? 0xffffffff : end | 0;
       return this.value.slice(start, end);
     }
-    split(separator: string, limit?: number) {
-      separator = axCoerceString(separator);
-      limit = arguments.length < 2 ? 0xffffffff : limit | 0;
-      release || assert(typeof this.value === 'string');
+    split(separator, limit?: number) {
+      if (this.sec.AXRegExp.axIsType(separator)) {
+        separator = separator.value;
+      } else {
+        separator = axCoerceString(separator);
+      }
+      limit = limit === undefined ? -1 : limit | 0;
       return this.sec.createArray(this.value.split(separator, limit));
     }
     substring(start: number, end?: number) {
@@ -1744,6 +1747,11 @@ module Shumway.AVMX.AS {
               atoms++;
             }
         }
+        // 32767 seams to be the maximum allowed length for RegExps in SpiderMonkey.
+        // Examined by testing.
+        if (result.length > 0x7fff) {
+          return ASRegExp.UNMATCHABLE_PATTERN;
+        }
       }
       if (parens.length) {
         return ASRegExp.UNMATCHABLE_PATTERN;
@@ -1806,15 +1814,13 @@ module Shumway.AVMX.AS {
       if (!result) {
         return null;
       }
-      var axResult = this.sec.createArray(<string []>result);
-      axResult.axSetPublicProperty('index', result.index);
-      axResult.axSetPublicProperty('input', result.input);
+      var axResult = transformJStoASRegExpMatchArray(this.sec, result);
       var captureNames = this._captureNames;
       if (captureNames) {
         for (var i = 0; i < captureNames.length; i++) {
           var name = captureNames[i];
           if (name !== null) {
-            // In AS3, non-matched capturing groups return an empty string, not null or undefined.
+            // In AS3, non-matched named capturing groups return an empty string.
             var value = result[i + 1] || '';
             result[name] = value;
             axResult.axSetPublicProperty(name, value);
@@ -1969,6 +1975,13 @@ module Shumway.AVMX.AS {
       resultObject[jsKey] = v;
     }
     return resultObject;
+  }
+
+  function transformJStoASRegExpMatchArray(sec: AXSecurityDomain, value: RegExpMatchArray): ASArray {
+    var result = sec.createArray(value);
+    result.axSetPublicProperty('index', value.index);
+    result.axSetPublicProperty('input', value.input);
+    return result;
   }
 
   function walk(holder: any, name: string, reviver: Function) {
