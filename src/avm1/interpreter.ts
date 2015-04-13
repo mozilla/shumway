@@ -624,6 +624,7 @@ module Shumway.AVM1 {
   class AVM1SuperWrapper extends AVM1Object {
     public constructor(context: AVM1Context, public callFrame: AVM1CallFrame) {
       super(context);
+      this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
     }
   }
 
