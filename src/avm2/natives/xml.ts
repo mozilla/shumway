@@ -244,7 +244,7 @@ module Shumway.AVMX.AS {
     }
     if (v.axClass === sec.AXXMLList) {
       if (v._children.length !== 1) {
-        this.sec.throwError('TypeError', Errors.XMLMarkupMustBeWellFormed);
+        sec.throwError('TypeError', Errors.XMLMarkupMustBeWellFormed);
       }
       return v._children[0];
     }
@@ -259,7 +259,7 @@ module Shumway.AVMX.AS {
       x._children[0]._parent = null;
       return x._children[0];
     }
-    this.sec.throwError('TypeError', Errors.XMLMarkupMustBeWellFormed);
+    sec.throwError('TypeError', Errors.XMLMarkupMustBeWellFormed);
   }
 
   // 10.4 ToXMLList
@@ -556,7 +556,9 @@ module Shumway.AVMX.AS {
             ++pos;
           }
           skipWs();
-          if (s[pos] !== "=") throw "'=' expected";
+          if (s[pos] !== "=") {
+            sec.throwError('TypeError', Errors.XMLMalformedElement);
+          }
           ++pos;
           skipWs();
           var attrEndChar = s[pos];
@@ -791,7 +793,10 @@ module Shumway.AVMX.AS {
       this.elementsStack = [];
       this.parseXml(s);
       this.currentElement = null;
-      release || assert(this.elementsStack.length === 0);
+      if (this.elementsStack.length > 0) {
+        var nm = this.elementsStack.pop()._name.name;
+        this.sec.throwError('TypeError', Errors.XMLUnterminatedElementTag, nm, nm);
+      }
       this.elementsStack = null;
       return currentElement;
     }
@@ -2332,7 +2337,7 @@ module Shumway.AVMX.AS {
         }
       }
       if (i === undefined) {
-        i = this.length();
+        i = this._children.length;
         if (primitiveAssign) {
           var ns = mn.namespaces[0];
           var uri: string = null;
@@ -2364,7 +2369,7 @@ module Shumway.AVMX.AS {
       }
     }
 
-    axSetProperty(mn: Multiname, value: any) {
+    axSetProperty(mn: Multiname, value: any, bc: Bytecode) {
       if (this === this.axClass.dPrototype) {
         release || checkValue(value);
         this[this.axResolveMultiname(mn)] = value;
@@ -3526,7 +3531,7 @@ module Shumway.AVMX.AS {
       this.sec.throwError('TypeError', Errors.XMLAssigmentOneItemLists);
     }
 
-    axSetProperty(mn: Multiname, value: any) {
+    axSetProperty(mn: Multiname, value: any, bc: Bytecode) {
       if (this === this.axClass.dPrototype) {
         release || checkValue(value);
         this[this.axResolveMultiname(mn)] = value;

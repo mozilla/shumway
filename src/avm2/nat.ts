@@ -172,7 +172,7 @@ module Shumway.AVMX.AS {
     }
 
     export function describeType(sec: AXSecurityDomain, value: any, flags: number) {
-      //return AS.describeType(value, flags);
+      return AS.describeType(sec, value, flags);
     }
 
     export function describeTypeJSON(sec: AXSecurityDomain, value: any, flags: number) {
@@ -257,7 +257,8 @@ module Shumway.AVMX.AS {
     static axConstructProperty: (mn: Multiname, args: any []) => any;
     static axHasPropertyInternal: (mn: Multiname) => boolean;
     static axHasOwnProperty: (mn: Multiname) => boolean;
-    static axSetProperty: (mn: Multiname, value: any) => void;
+    static axSetProperty: (mn: Multiname, value: any, bc: Bytecode) => void;
+    static axInitProperty: (mn: Multiname, value: any) => void;
     static axGetProperty: (mn: Multiname) => any;
     static axGetMethod: (name: string) => AXFunction;
     static axGetSuper: (mn: Multiname, scope: Scope) => any;
@@ -376,7 +377,7 @@ module Shumway.AVMX.AS {
       return result;
     }
 
-    axSetProperty(mn: Multiname, value: any) {
+    axSetProperty(mn: Multiname, value: any, bc: Bytecode) {
       release || checkValue(value);
       var name = mn.name;
       if (typeof name === 'number' || isNumeric(name = axCoerceName(name))) {
@@ -384,27 +385,44 @@ module Shumway.AVMX.AS {
         this[+name] = value;
         return;
       }
+      var freeze = false;
       var t = this.traits.getTrait(mn.namespaces, name);
       if (t) {
         var mangledName = t.name.getMangledName();
         switch (t.kind) {
           case TRAIT.Method:
             this.sec.throwError('ReferenceError', Errors.CannotAssignToMethodError, name,
-                                           this.axClass.name.name);
-          // TODO: enable throwing after initialization has finished.
-          //case TRAIT.Const:
-          // Fallthrough.
+                                this.axClass.name.name);
+            // Unreachable because of throwError.
           case TRAIT.Getter:
             this.sec.throwError('ReferenceError', Errors.ConstWriteError, name,
-                                           this.axClass.name.name);
+                                this.axClass.name.name);
+            // Unreachable because of throwError.
+          case TRAIT.Class:
+          case TRAIT.Const:
+            // Technically, we need to check if the currently running function is the
+            // initializer of whatever class/package the property is initialized on.
+            // In practice, we freeze the property after first assignment, causing
+            // an internal error to be thrown if it's being initialized a second time.
+            // Invalid bytecode could leave out the assignent during first initialization,
+            // but it's hard to see how that could convert into real-world problems.
+            if (bc !== Bytecode.INITPROPERTY) {
+              this.sec.throwError('ReferenceError', Errors.ConstWriteError, name,
+                                  this.axClass.name.name);
+            }
+            freeze = true;
+            break;
         }
         var type = t.getType();
         if (type) {
           value = type.axCoerce(value);
         }
-        this[mangledName] = value;
       } else {
-        this['$Bg' + name] = value;
+        mangledName = '$Bg' + name;
+      }
+      this[mangledName] = value;
+      if (freeze) {
+        Object.defineProperty(this, mangledName, {__proto__: null, writable: false});
       }
     }
 
@@ -922,7 +940,7 @@ module Shumway.AVMX.AS {
       return super.axGetProperty(mn);
     }
 
-    axSetProperty(mn: Multiname, value: any) {
+    axSetProperty(mn: Multiname, value: any, bc: Bytecode) {
       release || checkValue(value);
       var name = mn.name;
       if (typeof name === 'number' || isNumeric(name = axCoerceName(name))) {
@@ -930,12 +948,7 @@ module Shumway.AVMX.AS {
         this.value[name] = value;
         return;
       }
-      var t = this.traits.getTrait(mn.namespaces, name);
-      if (t) {
-        this[t.name.getMangledName()] = value;
-        return;
-      }
-      this['$Bg' + name] = value;
+      super.axSetProperty(mn, value, bc);
     }
 
     axDeleteProperty(mn: Multiname): any {
@@ -1256,11 +1269,11 @@ module Shumway.AVMX.AS {
     }
     generic_concat() {
       var receiver = this.value == undefined ? '' : this.value;
-      return String.prototype.concat.apply(this.value, arguments);
+      return String.prototype.concat.apply(receiver, arguments);
     }
     generic_localeCompare() {
       var receiver = this.value == undefined ? '' : this.value;
-      return String.prototype.localeCompare.apply(this.value, arguments);
+      return String.prototype.localeCompare.apply(receiver, arguments);
     }
     generic_match(pattern) {
       var receiver = this.value == undefined ? '' : this.value;
@@ -1834,7 +1847,10 @@ module Shumway.AVMX.AS {
 
     constructor(message: any, id: any) {
       super();
-      this.$Bgmessage = axCoerceString(message);
+      if (arguments.length < 1) {
+        message = '';
+      }
+      this.$Bgmessage = String(message);
       this._errorID = id | 0;
     }
 

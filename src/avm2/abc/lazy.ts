@@ -855,9 +855,11 @@ module Shumway.AVMX {
 
     getTraits(): Traits {
       if (!this._traits) {
-        this._traits = new Traits([
-          new SlotTraitInfo(this.abc, TRAIT.Slot, this.varName, 1, this.type, 0, 0)
-        ]);
+        var traits = [];
+        if (this.varName) {
+          traits.push(new SlotTraitInfo(this.abc, TRAIT.Slot, this.varName, 1, this.type, 0, 0));
+        }
+        this._traits = new Traits(traits);
         this._traits.resolve();
       }
       return this._traits;
@@ -872,7 +874,7 @@ module Shumway.AVMX {
       public initScopeDepth: number,
       public maxScopeDepth: number,
       public code: Uint8Array,
-      public exceptions: ExceptionInfo [],
+      public catchBlocks: ExceptionInfo [],
       public traits: Traits
     ) {
       super();
@@ -1249,7 +1251,7 @@ module Shumway.AVMX {
     public get reflectedURI() {
       // For public names without a URI, Tamarin uses `null`, we use `""`.
       // Hence: special-casing for reflection.
-      return this.uri || this.type === NamespaceType.Public ? null : this.uri;
+      return this.uri || (this.type === NamespaceType.Public ? null : this.uri);
     }
 
     public static PUBLIC = new Namespace(null, NamespaceType.Public, "");

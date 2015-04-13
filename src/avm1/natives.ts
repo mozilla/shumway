@@ -147,11 +147,11 @@ module Shumway.AVM1.Natives {
     }
 
     public call(thisArg: any, ...args: any[]): any {
-      this.alCall(thisArg, args);
+      return this.alCall(thisArg, args);
     }
 
     public apply(thisArg: any, args?: any[]): any {
-      this.alCall(thisArg, args);
+      return this.alCall(thisArg, args);
     }
   }
 
@@ -354,6 +354,11 @@ module Shumway.AVM1.Natives {
         value: new AVM1NativeFunction(context, this._toString)
       });
 
+      this.alSetOwnProperty('length', {
+        flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE,
+        get: new AVM1NativeFunction(context, this.getLength)
+      });
+
       this.alSetOwnProperty('charAt', {
         flags: AVM1PropertyFlags.NATIVE_MEMBER,
         value: new AVM1NativeFunction(context, this.charAt)
@@ -361,6 +366,42 @@ module Shumway.AVM1.Natives {
       this.alSetOwnProperty('charCodeAt', {
         flags: AVM1PropertyFlags.NATIVE_MEMBER,
         value: new AVM1NativeFunction(context, this.charCodeAt)
+      });
+      this.alSetOwnProperty('concat', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.concat)
+      });
+      this.alSetOwnProperty('indexOf', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.indexOf)
+      });
+      this.alSetOwnProperty('lastIndexOf', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.lastIndexOf)
+      });
+      this.alSetOwnProperty('slice', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.slice)
+      });
+      this.alSetOwnProperty('split', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.split)
+      });
+      this.alSetOwnProperty('substr', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.substr)
+      });
+      this.alSetOwnProperty('substring', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.substring)
+      });
+      this.alSetOwnProperty('toLowerCase', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.toLowerCase)
+      });
+      this.alSetOwnProperty('toUpperCase', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.toUpperCase)
       });
     }
 
@@ -374,6 +415,11 @@ module Shumway.AVM1.Natives {
       return native.value;
     }
 
+    public getLength(): number {
+      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
+      return native.value.length;
+    }
+
     public charAt(index: number): string {
       var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
       return native.value.charAt(alToInteger(this.context, index));
@@ -382,6 +428,67 @@ module Shumway.AVM1.Natives {
     public charCodeAt(index: number): number {
       var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
       return native.value.charCodeAt(alToInteger(this.context, index));
+    }
+
+    public concat(...items: AVM1Object[]): string {
+      var stringItems: string[] = [alToString(this.context, this)];
+      for (var i = 0; i < items.length; ++i) {
+        stringItems.push(alToString(this.context, items[i]));
+      }
+      return stringItems.join('');
+    }
+
+    public indexOf(searchString: string, position?: number): number {
+      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
+      searchString = alToString(this.context, searchString);
+      position = alToInteger(this.context, position);
+      return native.value.indexOf(searchString, position);
+    }
+
+    public lastIndexOf(searchString: string, position?: number): number {
+      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
+      searchString = alToString(this.context, searchString);
+      position = alToNumber(this.context, position);
+      return native.value.lastIndexOf(searchString, isNaN(position) ? undefined : position);
+    }
+
+    public slice(start: number, end?: number): string {
+      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
+      start = alToInteger(this.context, start);
+      end = end === undefined ? undefined : alToInteger(this.context, end);
+      return native.value.slice(start, end);
+    }
+
+    public split(separator: any, limit?: number): AVM1ArrayNative {
+      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
+      // TODO separator as regular expression?
+      separator = alToString(this.context, separator);
+      limit = (limit === undefined ? ~0 : alToInt32(this.context, limit)) >>> 0;
+      return new AVM1ArrayNative(this.context, native.value.split(separator, limit));
+    }
+
+    public substr(start: number, length?: number): string {
+      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
+      start = alToInteger(this.context, start);
+      length = length === undefined ? undefined : alToInteger(this.context, length);
+      return native.value.substr(start, length);
+    }
+
+    public substring(start: number, end?: number): string {
+      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
+      start = alToInteger(this.context, start);
+      end = end === undefined ? undefined : alToInteger(this.context, end);
+      return native.value.substring(start, end);
+    }
+
+    public toLowerCase(): string {
+      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
+      return native.value.toLowerCase();
+    }
+
+    public toUpperCase(): string {
+      var native = alEnsureType<AVM1StringNative>(this, AVM1StringNative);
+      return native.value.toUpperCase();
     }
   }
 
@@ -516,6 +623,10 @@ module Shumway.AVM1.Natives {
         flags: AVM1PropertyFlags.NATIVE_MEMBER,
         value: new AVM1NativeFunction(context, this.splice)
       });
+      this.alSetOwnProperty('sort', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        value: new AVM1NativeFunction(context, this.sort)
+      });
       this.alSetOwnProperty('sortOn', {
         flags: AVM1PropertyFlags.NATIVE_MEMBER,
         value: new AVM1NativeFunction(context, this.sortOn)
@@ -630,6 +741,16 @@ module Shumway.AVM1.Natives {
       }
       // TODO implement generic method
       Debug.notImplemented('AVM1ArrayNative.splice');
+    }
+
+    public sort(comparefn?: AVM1Function): AVM1Object {
+      var arr = alEnsureType<AVM1ArrayNative>(this, AVM1ArrayNative).value;
+      if (!alIsFunction(comparefn)) {
+        arr.sort();
+      } else {
+        arr.sort(<any>comparefn.toJSFunction());
+      }
+      return this;
     }
 
     public sortOn(fieldNames: AVM1Object, options: any): AVM1Object {

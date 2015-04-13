@@ -275,8 +275,8 @@ module Shumway.AVM1.Lib {
       if (desc.get || desc.set) {
         wrap.alSetOwnProperty(memberName, {
           flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE,
-          get: new AVM1NativeFunction(context, desc.get),
-          set: new AVM1NativeFunction(context, desc.set)
+          get: desc.get ? new AVM1NativeFunction(context, desc.get) : undefined,
+          set: desc.set ? new AVM1NativeFunction(context, desc.set) : undefined
         })
       } else {
         var value = desc.value;

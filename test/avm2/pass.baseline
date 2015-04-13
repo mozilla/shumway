@@ -4273,3 +4273,7 @@ K: String
 K: avmplus::A
 Testing XML.prototype.child as used by Candy Crush
 0: 21
+::: test/avm2/pass/iss-1057.abc :::
+18
+123123123123123
+number

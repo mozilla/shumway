@@ -32,7 +32,7 @@ module Shumway.AVMX.AS {
       return super.axGetProperty(mn);
     }
 
-    axSetProperty(mn: Multiname, value: any) {
+    axSetProperty(mn: Multiname, value: any, bc: Bytecode) {
       release || checkValue(value);
       var nm = mn.name;
       nm = typeof nm === 'number' ? nm : axCoerceName(nm);
@@ -41,12 +41,7 @@ module Shumway.AVMX.AS {
         this.axSetNumericProperty(typeof nm === 'number' ? nm : nm | 0, value);
         return;
       }
-      var t = this.traits.getTrait(mn.namespaces, nm);
-      if (t) {
-        this[t.name.getMangledName()] = value;
-        return;
-      }
-      this['$Bg' + nm] = value;
+      super.axSetProperty(mn, value, bc);
     }
 
     axGetPublicProperty(nm: any): any {

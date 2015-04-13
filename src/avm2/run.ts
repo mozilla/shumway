@@ -12,7 +12,7 @@ interface IMetaobjectProtocol {
   axHasPropertyInternal(mn: Shumway.AVMX.Multiname): boolean;
   axHasOwnProperty(mn: Shumway.AVMX.Multiname): boolean;
 
-  axSetProperty(mn: Shumway.AVMX.Multiname, value: any);
+  axSetProperty(mn: Shumway.AVMX.Multiname, value: any, bc: Shumway.AVMX.Bytecode);
   axGetProperty(mn: Shumway.AVMX.Multiname): any;
   axGetSuper(mn: Shumway.AVMX.Multiname, scope: Shumway.AVMX.Scope): any;
   axSetSuper(mn: Shumway.AVMX.Multiname, scope: Shumway.AVMX.Scope, value: any);
@@ -915,13 +915,15 @@ module Shumway.AVMX {
     return this.axCoerce(args ? args[0] : undefined);
   }
 
+  export var scopeStacks: ScopeStack[] = [];
+
   /**
    * Provides security isolation between application domains.
    */
   export class AXSecurityDomain {
     public system: AXApplicationDomain;
-    public classAliases: ClassAliases;
     public application: AXApplicationDomain;
+    public classAliases: ClassAliases;
     public AXObject: AXClass;
     public AXArray: AXClass;
     public AXClass: AXClass;
@@ -973,8 +975,8 @@ module Shumway.AVMX {
     constructor() {
       initializeAXBasePrototype();
       this.system = new AXApplicationDomain(this, null);
-      this.classAliases = new ClassAliases();
       this.application = new AXApplicationDomain(this, this.system);
+      this.classAliases = new ClassAliases();
       this.nativeClasses = Object.create(null);
       this.vectorClasses = new Map<AXClass, AXClass>();
       this._catalogs = [];
@@ -1006,7 +1008,7 @@ module Shumway.AVMX {
                replacement2?: any, replacement3?: any, replacement4?: any) {
       var message = formatErrorMessage.apply(null, sliceArguments(arguments, 1));
       var mn = Multiname.FromFQNString(className, NamespaceType.Public);
-      var axClass: AXClass = <any>this.application.getProperty(mn, true, true);
+      var axClass: AXClass = <any>this.system.getProperty(mn, true, true);
       return axClass.axConstruct([message, error.code]);
     }
 
@@ -1246,7 +1248,8 @@ module Shumway.AVMX {
       if (!exceptionInfo.catchPrototype) {
         var traits = exceptionInfo.getTraits();
         exceptionInfo.catchPrototype = Object.create(this.AXCatchPrototype);
-        defineReadOnlyProperty(exceptionInfo.catchPrototype, "traits", traits.resolveRuntimeTraits(null, null, scope));
+        defineReadOnlyProperty(exceptionInfo.catchPrototype, "traits",
+                               traits.resolveRuntimeTraits(null, null, scope));
       }
       return Object.create(exceptionInfo.catchPrototype);
     }
@@ -1427,7 +1430,8 @@ module Shumway.AVMX {
       var dynamicObjectPrototype = Object.create(AXBasePrototype);
       dynamicObjectPrototype.sec = this;
       // The basic traits prototype that all objects in this security domain have in common.
-      this.objectPrototype = Object.create(dynamicObjectPrototype);
+      Object.defineProperty(this, 'objectPrototype',
+                            {value: Object.create(dynamicObjectPrototype)});
       this.initializeCoreNatives();
 
       // Debugging Helper

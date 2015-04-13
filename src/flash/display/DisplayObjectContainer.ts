@@ -27,6 +27,12 @@ module Shumway.AVMX.AS.flash.display {
   import events = flash.events;
   import VisitorFlags = flash.display.VisitorFlags;
 
+  export enum LookupChildOptions {
+    DEFAULT = 0,
+    IGNORE_CASE = 1,
+    INCLUDE_NOT_INITIALIZED = 2
+  }
+
   export class DisplayObjectContainer extends flash.display.InteractiveObject {
     static bindings: string [] = null;
     static classSymbols: string [] = null;
@@ -437,7 +443,7 @@ module Shumway.AVMX.AS.flash.display {
     getChildByName(name: string): DisplayObject {
       name = axCoerceString(name);
 
-      var child = this._lookupChildByName(name);
+      var child = this._lookupChildByName(name, LookupChildOptions.DEFAULT);
       if (child) {
         child._addReference();
         return child;
@@ -462,11 +468,16 @@ module Shumway.AVMX.AS.flash.display {
      * Returns the child display object that exists with given name without creating a reference
      * nor taking ownership.
      */
-    _lookupChildByName(name: string): DisplayObject {
+    _lookupChildByName(name: string, options: LookupChildOptions): DisplayObject {
       var children = this._children;
+      if (children.length === 0) {
+        return null;
+      }
+
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
-        if (!child._hasFlags(DisplayObjectFlags.Constructed)) {
+        if (!child._hasFlags(DisplayObjectFlags.Constructed) &&
+            !(options & LookupChildOptions.INCLUDE_NOT_INITIALIZED)) {
           continue;
         }
         if (child.name === name) {
@@ -474,6 +485,22 @@ module Shumway.AVMX.AS.flash.display {
         }
       }
 
+      if (!(options & LookupChildOptions.IGNORE_CASE)) {
+        return null;
+      }
+
+      // Trying again in non-case sensitive mode (mostly for AVM1).
+      name = name.toLowerCase();
+      for (var i = 0; i < children.length; i++) {
+        var child = children[i];
+        if (!child._hasFlags(DisplayObjectFlags.Constructed) &&
+          !(options & LookupChildOptions.INCLUDE_NOT_INITIALIZED)) {
+          continue;
+        }
+        if (child.name.toLowerCase() === name) {
+          return child;
+        }
+      }
       return null;
     }
 

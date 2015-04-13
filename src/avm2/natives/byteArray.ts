@@ -260,7 +260,7 @@ module Shumway.AVMX.AS {
         return super.axGetProperty(mn);
       }
 
-      axSetProperty(mn: Multiname, value: any): void {
+      axSetProperty(mn: Multiname, value: any, bc: Bytecode): void {
         release || checkValue(value);
         var name = mn.name;
         if (typeof name === 'number' || isNumeric(name = axCoerceName(name))) {
@@ -268,10 +268,7 @@ module Shumway.AVMX.AS {
           (<any>this).setValue(+name, value);
           return;
         }
-        var t = this.traits.getTrait(mn.namespaces, name);
-        if (t) {
-          this[t.name.getMangledName()] = value;
-        }
+        super.axSetProperty(mn, value, bc);
       }
     }
   }

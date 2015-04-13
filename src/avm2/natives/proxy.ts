@@ -103,10 +103,10 @@ module Shumway.AVMX.AS {
         this[proxyPrefix + 'setProperty']((+name) + '', value);
       }
 
-      public axSetProperty(mn: Multiname, value: any) {
+      public axSetProperty(mn: Multiname, value: any, bc: Bytecode) {
         var trait = typeof mn.name === 'string' ? this.traits.getTrait(mn.namespaces, mn.name) : null;
         if (trait) {
-          super.axSetProperty(mn, value);
+          super.axSetProperty(mn, value, bc);
           return;
         }
         this[proxyPrefix + 'setProperty'](axCoerceString(mn.name), value);

@@ -152,7 +152,7 @@ module Shumway.AVM1 {
       var context = this.context;
       var name = alToString(context, p);
       if (!context.isPropertyCaseSensitive) {
-        name = name.toUpperCase();
+        name = name.toLowerCase();
       }
       if (name[0] === '_') {
         name = ESCAPED_PROPERTY_PREFIX + name
@@ -171,7 +171,7 @@ module Shumway.AVM1 {
       var context = this.context;
       var name = alToString(context, p);
       if (!context.isPropertyCaseSensitive) {
-        name = name.toUpperCase();
+        name = name.toLowerCase();
       }
       return DEBUG_PROPERTY_PREFIX + name;
     }

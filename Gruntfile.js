@@ -27,7 +27,7 @@ module.exports = function(grunt) {
       grunt.option("color", false);
   }
 
-  var tscCommand = 'node_modules/typescript/bin/tsc';
+  var tscCommand = 'node ./node_modules/typescript/bin/tsc.js';
   var commonArguments = tscCommand + ' --target ES5 --sourcemap -d --out build/ts/';
 
   var defaultBrowserManifestFile = './resources/browser_manifests/browser_manifest.json';

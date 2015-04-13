@@ -75,7 +75,11 @@ module Shumway.AVM1.Lib {
 
     _lookupChildByName(name: string): AVM1Object {
       name = alCoerceString(this.context, name);
-      var as3Child = this.as3Object._lookupChildByName(name);
+      var lookupOptions = flash.display.LookupChildOptions.INCLUDE_NOT_INITIALIZED;
+      if (!this.context.isPropertyCaseSensitive) {
+        lookupOptions |= flash.display.LookupChildOptions.IGNORE_CASE;
+      }
+      var as3Child = this.as3Object._lookupChildByName(name, lookupOptions);
       return getAVM1Object(as3Child, this.context);
     }
 
@@ -112,10 +116,8 @@ module Shumway.AVM1.Lib {
       props.avm1Name = name;
       props.avm1SymbolClass = symbol.theClass;
 
-      // REDUX
-      var mc:flash.display.MovieClip; // = this.context.sec.flash.display.MovieClip.initializeFrom(props);
+      var mc:flash.display.MovieClip;
       mc = Shumway.AVMX.AS.constructClassFromSymbol(props, this.context.sec.flash.display.MovieClip.axClass);
-      //this.context.sec.flash.display.MovieClip.instanceConstructorNoInitialize.call(mc);
 
       return mc;
     }
@@ -127,9 +129,10 @@ module Shumway.AVM1.Lib {
       }
 
       var as2mc = this._insertChildAtDepth(mc, depth);
-
-      for (var i in initObject) {
-        as2mc[i] = initObject[i];
+      if (initObject instanceof AVM1Object) {
+        alForEachProperty(initObject, (name: string) => {
+          as2mc.alPut(name, initObject.alGet(name));
+        }, null);
       }
 
       return as2mc;

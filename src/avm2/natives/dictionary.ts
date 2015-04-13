@@ -68,9 +68,9 @@ module Shumway.AVMX.AS {
         return this.map.get(Object(mn.name));
       }
 
-      public axSetProperty(mn: Multiname, value: any) {
+      public axSetProperty(mn: Multiname, value: any, bc: Bytecode) {
         if (<any>this === this.axClass.dPrototype) {
-          super.axSetProperty(mn, value);
+          super.axSetProperty(mn, value, bc);
           return;
         }
         var key = Dictionary.makePrimitiveKey(mn.name);
