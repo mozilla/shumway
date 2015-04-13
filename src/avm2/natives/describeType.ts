@@ -33,12 +33,36 @@ module Shumway.AVMX.AS {
     HIDE_OBJECT         = 0x0400
   }
 
+  function createNullOrUndefinedDescription(sec: AXSecurityDomain, o: any): any {
+    return {
+      __proto__: sec.objectPrototype,
+      $Bgname: o === undefined ? "void" : "null",
+      $BgisDynamic: false,
+      $BgisFinal: true,
+      $BgisStatic: false,
+      $Bgtraits: {
+        __proto__: sec.objectPrototype,
+        $Bgvariables: null,
+        $Bgaccessors: null,
+        $Bgmetadata: sec.createArray([]),
+        $Bgconstructor: null,
+        $Bginterfaces: sec.createArray([]),
+        $Bgmethods: null,
+        $Bgbases: sec.createArray([])
+      }
+    }
+  }
+
   export function describeTypeJSON(sec: AXSecurityDomain, o: any, flags: number): any {
     // Class traits aren't returned for numeric primitives, undefined, null, bound methods, or
     // non-class-constructor functions.
     var isInt = (o|0) === o;
-    if (flags & DescribeTypeFlags.USE_ITRAITS && (isNullOrUndefined(o) || isInt)) {
+    var nullOrUndefined = isNullOrUndefined(o);
+    if (flags & DescribeTypeFlags.USE_ITRAITS && (nullOrUndefined || isInt)) {
       return null;
+    }
+    if (nullOrUndefined) {
+      return createNullOrUndefinedDescription(sec, o);
     }
     // Use the object's own sec if we're not dealing with a primitive to make sure
     // type checks are correct.
@@ -211,7 +235,7 @@ module Shumway.AVMX.AS {
       var md = metadata[i];
       var m: ASXML = x.sec.AXXML.Create('<metadata name="' + escapeAttributeValue(md.$Bgname)
                                         + '"/>');
-      var values = md.$Bgvalue;
+      var values = md.$Bgvalue.value;
       for (var j = 0; j < values.length; j++) {
         var value = values[j];
         var a: ASXML = x.sec.AXXML.Create('<arg key="' +
