@@ -15,9 +15,11 @@
  */
 
 module Shumway.AVMX.AS {
+
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+  import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
 
   export module flash.system {
     export class IME extends ASObject /* flash.events.EventDispatcher */ {
@@ -60,6 +62,10 @@ module Shumway.AVMX.AS {
 
     export class System extends ASObject {
       private static _useCodePage: boolean = false;
+
+      static classInitializer() {
+        defineNonEnumerableProperty(this, '$Bgargv', this.sec.createArray([]));
+      }
 
       static get ime(): flash.system.IME {
         notImplemented("public flash.system.System::get ime"); return;
