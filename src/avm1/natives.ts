@@ -863,12 +863,186 @@ module Shumway.AVM1.Natives {
   class AVM1MathObject extends AVM1Object {
     public constructor(context: IAVM1Context) {
       super(context);
-      // TODO remove dependency on wrapAVM1NativeMembers
-      Lib.wrapAVM1NativeMembers(this.context, this, Math, [
-        'E', 'LN10', 'LN2', 'LOG10E', 'LOG2E', 'PI', 'SQRT1_2', 'SQRT2',
-        'abs', 'acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'exp', 'floor',
-        'log', 'max', 'min', 'pow', 'random', 'round', 'sin', 'sqrt', 'tan'
-      ], false);
+      this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
+      this.alSetOwnProperty('E', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: Math.E
+      });
+      this.alSetOwnProperty('LN10', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: Math.LN10
+      });
+      this.alSetOwnProperty('LN2', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: Math.LN2
+      });
+      this.alSetOwnProperty('LOG10E', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: Math.LOG10E
+      });
+      this.alSetOwnProperty('LOG2E', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: Math.LOG2E
+      });
+      this.alSetOwnProperty('PI', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: Math.PI
+      });
+      this.alSetOwnProperty('SQRT1_2', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: Math.SQRT1_2
+      });
+      this.alSetOwnProperty('SQRT2', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: Math.SQRT2
+      });
+
+      this.alSetOwnProperty('abs', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: new AVM1NativeFunction(this.context, this.abs)
+      });
+      this.alSetOwnProperty('acos', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: new AVM1NativeFunction(this.context, this.acos)
+      });
+      this.alSetOwnProperty('asin', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: new AVM1NativeFunction(this.context, this.asin)
+      });
+      this.alSetOwnProperty('atan', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: new AVM1NativeFunction(this.context, this.atan)
+      });
+      this.alSetOwnProperty('atan2', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: new AVM1NativeFunction(this.context, this.atan2)
+      });
+      this.alSetOwnProperty('ceil', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: new AVM1NativeFunction(this.context, this.ceil)
+      });
+      this.alSetOwnProperty('cos', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: new AVM1NativeFunction(this.context, this.cos)
+      });
+      this.alSetOwnProperty('exp', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: new AVM1NativeFunction(this.context, this.exp)
+      });
+      this.alSetOwnProperty('floor', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: new AVM1NativeFunction(this.context, this.floor)
+      });
+      this.alSetOwnProperty('log', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: new AVM1NativeFunction(this.context, this.log)
+      });
+      this.alSetOwnProperty('max', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: new AVM1NativeFunction(this.context, this.max)
+      });
+      this.alSetOwnProperty('min', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: new AVM1NativeFunction(this.context, this.min)
+      });
+      this.alSetOwnProperty('pow', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: new AVM1NativeFunction(this.context, this.pow)
+      });
+      this.alSetOwnProperty('random', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: new AVM1NativeFunction(this.context, this.random)
+      });
+      this.alSetOwnProperty('round', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: new AVM1NativeFunction(this.context, this.round)
+      });
+      this.alSetOwnProperty('sin', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: new AVM1NativeFunction(this.context, this.sin)
+      });
+      this.alSetOwnProperty('sqrt', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: new AVM1NativeFunction(this.context, this.sqrt)
+      });
+      this.alSetOwnProperty('tan', {
+        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
+        value: new AVM1NativeFunction(this.context, this.tan)
+      });
+    }
+
+    public abs(x: number): number {
+      return Math.abs(alToNumber(this.context, x));
+    }
+
+    public acos(x: number): number {
+      return Math.acos(alToNumber(this.context, x));
+    }
+
+    public asin(x: number): number {
+      return Math.asin(alToNumber(this.context, x));
+    }
+
+    public atan(x: number): number {
+      return Math.atan(alToNumber(this.context, x));
+    }
+
+    public atan2(y: number, x: number): number {
+      return Math.atan2(alToNumber(this.context, y), alToNumber(this.context, x));
+    }
+
+    public ceil(x: number): number {
+      return Math.ceil(alToNumber(this.context, x));
+    }
+
+    public cos(x: number): number {
+      return Math.cos(alToNumber(this.context, x));
+    }
+
+    public exp(x: number): number {
+      return Math.exp(alToNumber(this.context, x));
+    }
+
+    public floor(x: number): number {
+      return Math.abs(alToNumber(this.context, x));
+    }
+
+    public log(x: number): number {
+      return Math.log(alToNumber(this.context, x));
+    }
+
+    public max(...values: number[]): number {
+      values = values.map((x) => alToNumber(this.context, x));
+      return Math.max.apply(null, values);
+    }
+
+    public min(...values: number[]): number {
+      values = values.map((x) => alToNumber(this.context, x));
+      return Math.min.apply(null, values);
+    }
+
+    public pow(x: number, y: number): number {
+      return Math.pow(alToNumber(this.context, x), alToNumber(this.context, y));
+    }
+
+    public random(): number {
+      return Math.random();
+    }
+
+    public round(x: number): number {
+      return Math.round(alToNumber(this.context, x));
+    }
+
+    public sin(x: number): number {
+      return Math.sin(alToNumber(this.context, x));
+    }
+
+    public sqrt(x: number): number {
+      return Math.sqrt(alToNumber(this.context, x));
+    }
+
+    public tan(x: number): number {
+      return Math.tan(alToNumber(this.context, x));
     }
   }
 
