@@ -174,10 +174,18 @@ module Shumway.AVM1.Lib {
     // built-ins
     public NaN: number = Number.NaN;
     public Infinity: number = Number.POSITIVE_INFINITY;
-    public isFinite: (n: number)=> boolean = isFinite;
-    public isNaN: (n: number) => boolean = isNaN;
-    public parseFloat: (str: string) => number = parseFloat;
-    public parseInt: (s: string, radix?: number) => number = parseInt;
+    public isFinite(n: number): boolean {
+      return isFinite(alToNumber(this.context, n));
+    }
+    public isNaN(n: number): boolean {
+      return isNaN(alToNumber(this.context, n));
+    }
+    public parseFloat(s: string): number {
+      return parseFloat(alToString(this.context, s));
+    }
+    public parseInt(s: string, radix?: number): number {
+      return parseInt(alToString(this.context, s), alToInt32(this.context, radix));
+    }
     public undefined: any = undefined;
 
     public Object: AVM1Object;
