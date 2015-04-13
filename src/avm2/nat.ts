@@ -774,7 +774,10 @@ module Shumway.AVMX.AS {
       return this.value.some(callbackfn.value, thisArg);
     }
     forEach(callbackfn: {value}, thisArg?) {
-      return this.value.forEach(callbackfn.value, thisArg);
+      var self = this;
+      return this.value.forEach(function (currentValue, index) {
+        callbackfn.value.call(thisArg, currentValue, index, self);
+      });
     }
     map(callbackfn: {value}, thisArg?) {
       return this.sec.createArray(this.value.map(callbackfn.value, thisArg));
