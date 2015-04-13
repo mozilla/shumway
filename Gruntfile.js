@@ -266,6 +266,19 @@ module.exports = function(grunt) {
       }
     },
     parallel: {
+      test: {
+        options: {
+          grunt: true
+        },
+        tasks: [
+          'exec:test_avm2_pass',
+          'exec:test_avm2_acceptance',
+          'exec:test_swf_acceptance',
+          'exec:test_swf_avm2',
+          'exec:unit_test',
+          'exec:tracetest'
+        ]
+      },
       base: {
         tasks: [
           { args: ['generate-version'], grunt: true },
@@ -662,7 +675,7 @@ module.exports = function(grunt) {
   grunt.registerTask('gate', "Run this before checking in any code.", [
     // 'tslint:all', // Annoyingly slow, and not very useful most of the time.
     // 'closure', REDUX: Temporarily commented out.
-    'test',
+    'parallel:test',
     'warn'
   ]);
 
@@ -687,9 +700,8 @@ module.exports = function(grunt) {
     'exec:test_avm2_acceptance',
     'exec:test_swf_acceptance',
     'exec:test_swf_avm2',
-    'exec:unit_test'
-    // 'exec:tracetest'
-    // 'exec:tracetest_swfdec'
+    'exec:unit_test',
+    'exec:tracetest'
   ]);
   grunt.registerTask('mozcentralshu', [
     'mozcentralbaseline',
