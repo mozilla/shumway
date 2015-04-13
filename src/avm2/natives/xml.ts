@@ -556,7 +556,9 @@ module Shumway.AVMX.AS {
             ++pos;
           }
           skipWs();
-          if (s[pos] !== "=") throw "'=' expected";
+          if (s[pos] !== "=") {
+            sec.throwError('TypeError', Errors.XMLMalformedElement);
+          }
           ++pos;
           skipWs();
           var attrEndChar = s[pos];
@@ -791,7 +793,10 @@ module Shumway.AVMX.AS {
       this.elementsStack = [];
       this.parseXml(s);
       this.currentElement = null;
-      release || assert(this.elementsStack.length === 0);
+      if (this.elementsStack.length > 0) {
+        var nm = this.elementsStack.pop()._name.name;
+        this.sec.throwError('TypeError', Errors.XMLUnterminatedElementTag, nm, nm);
+      }
       this.elementsStack = null;
       return currentElement;
     }
