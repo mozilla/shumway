@@ -198,7 +198,7 @@ module Shumway.AVM1.Lib {
     }
 
     public createTextField(name, depth, x, y, width, height): AVM1TextField {
-      var text: flash.text.TextField = new flash.text.TextField();
+      var text: flash.text.TextField = new this.context.sec.flash.text.TextField();
       text.name = name;
       text.x = x;
       text.y = y;
@@ -341,7 +341,7 @@ module Shumway.AVM1.Lib {
     }
 
     public getURL(url, window, method) {
-      var request = new flash.net.URLRequest(url);
+      var request = new this.context.sec.flash.net.URLRequest(url);
       if (method) {
         request.method = method;
       }
@@ -411,8 +411,8 @@ module Shumway.AVM1.Lib {
     }
 
     public loadMovie(url: string, method: string) {
-      var loader: flash.display.Loader = new flash.display.Loader();
-      var request: flash.net.URLRequest = new flash.net.URLRequest(url);
+      var loader: flash.display.Loader = new this.context.sec.flash.display.Loader();
+      var request: flash.net.URLRequest = new this.context.sec.flash.net.URLRequest(url);
       if (method) {
         request.method = method;
       }
@@ -560,8 +560,11 @@ module Shumway.AVM1.Lib {
     }
 
     public startDrag(lock, left, top?, right?, bottom?) {
-      this.as3Object.startDrag(lock, arguments.length < 3 ? null :
-        new flash.geom.Rectangle(left, top, right - left, bottom - top));
+      this.as3Object.startDrag(lock, arguments.length < 3 ?
+                                     null :
+                                     new this.context.sec.flash.geom.Rectangle(left, top,
+                                                                               right - left,
+                                                                               bottom - top));
     }
 
     public stop() {

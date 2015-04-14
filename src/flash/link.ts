@@ -94,6 +94,7 @@ interface ISecurityDomain {
       URLStream: typeof flashPackage.net.URLStream;
       NetStreamInfo: typeof flashPackage.net.NetStreamInfo;
       URLVariables: typeof flashPackage.net.URLVariables;
+      URLLoader: typeof flashPackage.net.URLLoader;
       SharedObject: typeof flashPackage.net.SharedObject;
     }
     utils: {

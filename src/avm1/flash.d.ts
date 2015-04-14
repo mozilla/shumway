@@ -54,6 +54,7 @@ interface ISecurityDomain {
     }
     net: {
       URLRequest: typeof flashPackage.net.URLRequest;
+      URLLoader: typeof flashPackage.net.URLLoader;
       SharedObject: typeof flashPackage.net.SharedObject;
     }
     system: {
