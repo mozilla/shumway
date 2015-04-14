@@ -811,7 +811,7 @@ module Shumway.AVMX.AS {
       defineNonEnumerableProperty(proto, '$BgtoString', asProto.toString);
     }
 
-    private _ns: Namespace;
+    _ns: Namespace;
 
     /**
      * 13.2.1 The Namespace Constructor Called as a Function
@@ -2091,8 +2091,25 @@ module Shumway.AVMX.AS {
       node.addInScopeNamespace(name.namespaces[0]);
     }
     setNamespace(ns: any): void {
-
-      notImplemented("public.XML::setNamespace"); return;
+      // Step 1.
+      if (this._kind === ASXMLKind.Text || this._kind === ASXMLKind.Comment ||
+          this._kind === ASXMLKind.ProcessingInstruction)
+      {
+        return;
+      }
+      // Step 2.
+      var ns2 = this.sec.AXNamespace.Create(ns)._ns;
+      // Step 3.
+      this._name.namespaces = [ns2];
+      // Step 4.
+      if (this._kind === ASXMLKind.Attribute) {
+        if (this._parent) {
+          this._parent.addInScopeNamespace(ns2);
+        }
+      // Step 5.
+      } else if (this._kind === ASXMLKind.Element) {
+        this.addInScopeNamespace(ns2);
+      }
     }
     text() {
       // 13.4.4.37 XML.prototype.text ( );
