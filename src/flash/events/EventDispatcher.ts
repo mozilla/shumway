@@ -500,7 +500,7 @@ module Shumway.AVMX.AS.flash.events {
         event._eventPhase = eventPhase;
         typeof entry.listener === 'function' ?
                                               entry.listener(event) :
-                                              entry.listener.call(entry, event);
+                                              entry.listener.call(entry.listener, event);
         if (event._stopImmediatePropagation) {
           break;
         }
