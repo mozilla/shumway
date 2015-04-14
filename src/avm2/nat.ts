@@ -721,6 +721,11 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, '$BgtoLocaleString', asProto.toString);
     }
 
+    constructor() {
+      super();
+      this.value = Array.apply(Array, arguments);
+    }
+
     native_hasOwnProperty(nm: string): boolean {
       return this.axHasOwnProperty(makeMultiname(nm));
     }
