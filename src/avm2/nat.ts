@@ -1151,11 +1151,11 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, '$BgcharCodeAt', asProto.generic_charCodeAt);
       addPrototypeFunctionAlias(proto, '$Bgconcat', asProto.generic_concat);
       addPrototypeFunctionAlias(proto, '$BglocaleCompare', asProto.generic_localeCompare);
-      addPrototypeFunctionAlias(proto, '$Bgmatch', asProto.match);
-      addPrototypeFunctionAlias(proto, '$Bgreplace', asProto.replace);
-      addPrototypeFunctionAlias(proto, '$Bgsearch', asProto.search);
+      addPrototypeFunctionAlias(proto, '$Bgmatch', asProto.generic_match);
+      addPrototypeFunctionAlias(proto, '$Bgreplace', asProto.generic_replace);
+      addPrototypeFunctionAlias(proto, '$Bgsearch', asProto.generic_search);
       addPrototypeFunctionAlias(proto, '$Bgslice', asProto.generic_slice);
-      addPrototypeFunctionAlias(proto, '$Bgsplit', asProto.split);
+      addPrototypeFunctionAlias(proto, '$Bgsplit', asProto.generic_split);
       addPrototypeFunctionAlias(proto, '$Bgsubstring', asProto.generic_substring);
       addPrototypeFunctionAlias(proto, '$Bgsubstr', asProto.generic_substr);
       addPrototypeFunctionAlias(proto, '$BgtoLowerCase', asProto.generic_toLowerCase);
@@ -1288,32 +1288,21 @@ module Shumway.AVMX.AS {
       return String.prototype.localeCompare.apply(receiver, arguments);
     }
     generic_match(pattern) {
-      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
-      return String.prototype.match.call(receiver, pattern);
+      return this.sec.AXString.axBox(this.toString()).match(pattern);
     }
     generic_replace(pattern, repl) {
-      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
-      return String.prototype.replace.call(receiver, pattern, repl);
+      return this.sec.AXString.axBox(this.toString()).replace(pattern, repl);
     }
     generic_search(pattern) {
-      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
-      return String.prototype.search.call(receiver, pattern);
+      return this.sec.AXString.axBox(this.toString()).search(pattern);
     }
     generic_slice(start?: number, end?: number) {
       var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
       return String.prototype.slice.call(receiver, start, end);
     }
     generic_split(separator: string, limit?: number) {
-      separator = axCoerceString(separator);
       limit = arguments.length < 2 ? 0xffffffff : limit | 0;
-      var str;
-      if (this && typeof this.value === 'string') {
-        str = this.value;
-      } else {
-        str = axCoerceString(this);
-      }
-      var list = str.split(separator, limit);
-      return (<AXClass><any>this).sec.createArray(list);
+      return this.sec.AXString.axBox(this.toString()).split(separator, limit);
     }
     generic_substring(start: number, end?: number) {
       var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
