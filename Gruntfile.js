@@ -252,7 +252,7 @@ module.exports = function(grunt) {
         cmd: "make -C utils/ install-avmshell"
       },
       versions_travis: {
-        cmd: "parallel --version; utils/jsshell/js --version; utils/tamarin-redux/bin/shell/avmshell -Dversion;"
+        cmd: "parallel --gnu --version; utils/jsshell/js --version; utils/tamarin-redux/bin/shell/avmshell -Dversion;"
       },
       start_ats_db: {
         cmd: "test -e /tmp/ats.pid || mongod --dbpath test/ats/db --fork --logpath test/ats/db/log --pidfilepath /tmp/ats.pid || rm /tmp/ats.pid"
