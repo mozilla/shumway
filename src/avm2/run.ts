@@ -207,6 +207,15 @@ module Shumway.AVMX {
     return boxed;
   }
 
+  export function ensureBoxedReceiver(sec: AXSecurityDomain, receiver: any) {
+    if (receiver && typeof receiver === 'object') {
+      release || checkValue(receiver);
+      return receiver;
+    }
+    // Boxing still leaves `null` and `undefined` unboxed, so return the current global instead.
+    return sec.box(receiver) || scopeStacks[scopeStacks.length - 1].topScope().global.object;
+  }
+
   function axCoerceObject(x) {
     if (x == null) {
       return null;
@@ -322,10 +331,10 @@ module Shumway.AVMX {
     return object.descendants(mn);
   }
 
-  export function axCheckFilter(value, sec: AXSecurityDomain) {
+  export function axCheckFilter(sec: AXSecurityDomain, value) {
     if (!value || !AS.isXMLCollection(value, sec)) {
       var className = value && value.axClass ? value.axClass.name.toFQNString(false) : '[unknown]';
-      this.sec.throwError('RangeError', Errors.FilterError, className);
+      sec.throwError('TypeError', Errors.FilterError, className);
     }
     return value;
   }

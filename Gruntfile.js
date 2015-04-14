@@ -251,6 +251,9 @@ module.exports = function(grunt) {
       install_avmshell_travis: {
         cmd: "make -C utils/ install-avmshell"
       },
+      versions_travis: {
+        cmd: "parallel --gnu --version; utils/jsshell/js --version; utils/tamarin-redux/bin/shell/avmshell -Dversion;"
+      },
       start_ats_db: {
         cmd: "test -e /tmp/ats.pid || mongod --dbpath test/ats/db --fork --logpath test/ats/db/log --pidfilepath /tmp/ats.pid || rm /tmp/ats.pid"
       },
@@ -669,6 +672,7 @@ module.exports = function(grunt) {
   grunt.registerTask('travis', "Makes sure your local build will succeed on travis.", [
     'exec:install_js_travis',
     'exec:install_avmshell_travis',
+    'exec:versions_travis',
     'build',
     'gate'
   ]);

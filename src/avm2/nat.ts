@@ -721,6 +721,11 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, '$BgtoLocaleString', asProto.toString);
     }
 
+    constructor() {
+      super();
+      this.value = Array.apply(Array, arguments);
+    }
+
     native_hasOwnProperty(nm: string): boolean {
       return this.axHasOwnProperty(makeMultiname(nm));
     }
@@ -790,6 +795,7 @@ module Shumway.AVMX.AS {
       return this.value.lastIndexOf(value, arguments.length > 1 ? fromIndex : 0x7fffffff);
     }
     every(callbackfn: {value: Function}, thisArg?) {
+      thisArg = ensureBoxedReceiver(this.sec, thisArg);
       if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
         return true;
       }
@@ -802,6 +808,7 @@ module Shumway.AVMX.AS {
       return true;
     }
     some(callbackfn: {value}, thisArg?) {
+      thisArg = ensureBoxedReceiver(this.sec, thisArg);
       if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
         return false;
       }
@@ -811,6 +818,7 @@ module Shumway.AVMX.AS {
       });
     }
     forEach(callbackfn: {value}, thisArg?) {
+      thisArg = ensureBoxedReceiver(this.sec, thisArg);
       if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
         return;
       }
@@ -820,6 +828,7 @@ module Shumway.AVMX.AS {
       });
     }
     map(callbackfn: {value}, thisArg?) {
+      thisArg = ensureBoxedReceiver(this.sec, thisArg);
       if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
         return this.sec.createArrayUnsafe([]);
       }
@@ -829,6 +838,7 @@ module Shumway.AVMX.AS {
       }));
     }
     filter(callbackfn: {value: Function}, thisArg?) {
+      thisArg = ensureBoxedReceiver(this.sec, thisArg);
       if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
         return this.sec.createArrayUnsafe([]);
       }
@@ -1100,22 +1110,11 @@ module Shumway.AVMX.AS {
     }
 
     call(thisArg: any) {
-      if (!(thisArg && typeof thisArg === 'object')) {
-        // Boxing still leaves `null` and `undefined` unboxed, so return the
-        // current global instead.
-        thisArg = this.sec.box(thisArg) ||
-                  scopeStacks[scopeStacks.length - 1].topScope().global.object;
-      }
-      return this.value.apply(thisArg, sliceArguments(arguments, 1));
+      return this.value.apply(ensureBoxedReceiver(this.sec, thisArg), sliceArguments(arguments, 1));
     }
 
     apply(thisArg: any, argArray?: ASArray): any {
-      if (!(thisArg && typeof thisArg === 'object')) {
-        // Boxing still leaves `null` and `undefined` unboxed, so return the
-        // current global instead.
-        thisArg = this.sec.box(thisArg) ||
-                  scopeStacks[scopeStacks.length - 1].topScope().global.object;
-      }
+      thisArg = ensureBoxedReceiver(this.sec, thisArg);
       return this.value.apply(thisArg, argArray ? argArray.value : undefined);
     }
 
@@ -1336,13 +1335,13 @@ module Shumway.AVMX.AS {
       return String.prototype.localeCompare.apply(receiver, arguments);
     }
     generic_match(pattern) {
-      return this.sec.AXString.axBox(this.toString()).match(pattern);
+      return this.sec.AXString.axBox(String(this)).match(pattern);
     }
     generic_replace(pattern, repl) {
-      return this.sec.AXString.axBox(this.toString()).replace(pattern, repl);
+      return this.sec.AXString.axBox(String(this)).replace(pattern, repl);
     }
     generic_search(pattern) {
-      return this.sec.AXString.axBox(this.toString()).search(pattern);
+      return this.sec.AXString.axBox(String(this)).search(pattern);
     }
     generic_slice(start?: number, end?: number) {
       var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
@@ -1350,7 +1349,7 @@ module Shumway.AVMX.AS {
     }
     generic_split(separator: string, limit?: number) {
       limit = arguments.length < 2 ? 0xffffffff : limit | 0;
-      return this.sec.AXString.axBox(this.toString()).split(separator, limit);
+      return this.sec.AXString.axBox(String(this)).split(separator, limit);
     }
     generic_substring(start: number, end?: number) {
       var receiver = (this == undefined || this.value == undefined) ? '' : this.value;

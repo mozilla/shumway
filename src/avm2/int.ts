@@ -611,7 +611,7 @@ module Shumway.AVMX {
             stack[stack.length - 1] = axConvertString(stack[stack.length - 1]);
             break;
           case Bytecode.CHECKFILTER:
-            stack[stack.length - 1] = axCheckFilter(stack[stack.length - 1], sec);
+            stack[stack.length - 1] = axCheckFilter(sec, stack[stack.length - 1]);
             break;
           case Bytecode.COERCE:
             popNameInto(stack, abc.getMultiname(u30()), rn);

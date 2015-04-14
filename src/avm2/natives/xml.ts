@@ -811,7 +811,7 @@ module Shumway.AVMX.AS {
       defineNonEnumerableProperty(proto, '$BgtoString', asProto.toString);
     }
 
-    private _ns: Namespace;
+    _ns: Namespace;
 
     /**
      * 13.2.1 The Namespace Constructor Called as a Function
@@ -2045,9 +2045,22 @@ module Shumway.AVMX.AS {
       this.setProperty(anyMultiname, value);
       return this;
     }
-    setLocalName(name: any): void {
-
-      notImplemented("public.XML::setLocalName"); return;
+    // 13.4.4.34 XML.prototype.setLocalName( name )
+    setLocalName(name_: any): void {
+      // Step 1.
+      if (this._kind === ASXMLKind.Text || this._kind === ASXMLKind.Comment) {
+        return;
+      }
+      var name;
+      // Step 2.
+      if (name_ && name_.axClass === this.sec.AXQName) {
+        name = name_.localName;
+      } else {
+        // Step 3.
+        name = axCoerceString(name_);
+      }
+      // Step 4.
+      this._name.name = name;
     }
     // 13.4.4.35 XML.prototype.setName( name )
     setName(name_: any): void {
@@ -2078,8 +2091,25 @@ module Shumway.AVMX.AS {
       node.addInScopeNamespace(name.namespaces[0]);
     }
     setNamespace(ns: any): void {
-
-      notImplemented("public.XML::setNamespace"); return;
+      // Step 1.
+      if (this._kind === ASXMLKind.Text || this._kind === ASXMLKind.Comment ||
+          this._kind === ASXMLKind.ProcessingInstruction)
+      {
+        return;
+      }
+      // Step 2.
+      var ns2 = this.sec.AXNamespace.Create(ns)._ns;
+      // Step 3.
+      this._name.namespaces = [ns2];
+      // Step 4.
+      if (this._kind === ASXMLKind.Attribute) {
+        if (this._parent) {
+          this._parent.addInScopeNamespace(ns2);
+        }
+      // Step 5.
+      } else if (this._kind === ASXMLKind.Element) {
+        this.addInScopeNamespace(ns2);
+      }
     }
     text() {
       // 13.4.4.37 XML.prototype.text ( );
