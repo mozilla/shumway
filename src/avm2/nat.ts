@@ -1052,15 +1052,21 @@ module Shumway.AVMX.AS {
     }
 
     call(thisArg: any) {
-      if (!thisArg || typeof thisArg !== 'object') {
-        thisArg = this.receiver.scope.global.object;
+      if (!(thisArg && typeof thisArg === 'object')) {
+        // Boxing still leaves `null` and `undefined` unboxed, so return the
+        // current global instead.
+        thisArg = this.sec.box(thisArg) ||
+                  scopeStacks[scopeStacks.length - 1].topScope().global.object;
       }
       return this.value.apply(thisArg, sliceArguments(arguments, 1));
     }
 
     apply(thisArg: any, argArray?: ASArray): any {
-      if (!thisArg || typeof thisArg !== 'object') {
-        thisArg = this.receiver.scope.global.object;
+      if (!(thisArg && typeof thisArg === 'object')) {
+        // Boxing still leaves `null` and `undefined` unboxed, so return the
+        // current global instead.
+        thisArg = this.sec.box(thisArg) ||
+                  scopeStacks[scopeStacks.length - 1].topScope().global.object;
       }
       return this.value.apply(thisArg, argArray ? argArray.value : undefined);
     }
