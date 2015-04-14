@@ -1126,7 +1126,7 @@ module Shumway.AVMX {
       if (isNumeric(this.name)) {
         return this.name;
       }
-      return "$Bg" + this.name.toString();
+      return "$Bg" + axCoerceString(this.name);
     }
 
     public static isPublicQualifiedName(value: any): boolean {
