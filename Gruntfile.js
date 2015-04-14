@@ -1083,6 +1083,19 @@ module.exports = function(grunt) {
     });
   });
 
+  grunt.registerTask('clean', function () {
+    var filesToRemove = [
+      'build', // Deletes entire 'build' folder!
+      'test/tmp/',
+      'test/*.log',
+    ];
+    filesToRemove.forEach(function (files) {
+      grunt.file.expand(files).forEach(function (file) {
+        grunt.file.delete(file);
+      });
+    });
+  });
+
   grunt.registerTask('firefox', ['build', 'closure-bundles', 'exec:build_extension']);
   grunt.registerTask('mozcentral', ['build', 'closure-bundles', 'exec:build_mozcentral']);
   grunt.registerTask('web', ['build', 'closure-bundles', 'exec:build_extension', 'shell-package', 'shuobject-package', 'exec:build_web']);
