@@ -1187,7 +1187,7 @@ module Shumway.AVMX.AS {
     localeCompare() {
       return this.value.localeCompare.apply(this.value, arguments);
     }
-    match(pattern: string | ASRegExp) {
+    match(pattern /* : string | ASRegExp */) {
       if (this.sec.AXRegExp.axIsType(pattern)) {
         pattern = (<any>pattern).value;
       } else {
@@ -1199,7 +1199,7 @@ module Shumway.AVMX.AS {
       }
       return transformJStoASRegExpMatchArray(this.sec, result);
     }
-    replace(pattern: string | ASRegExp, repl: string | ASFunction) {
+    replace(pattern /* : string | ASRegExp */, repl /* : string | ASFunction */) {
       if (this.sec.AXRegExp.axIsType(pattern)) {
         pattern = (<any>pattern).value;
       } else {
@@ -1210,7 +1210,7 @@ module Shumway.AVMX.AS {
       }
       return this.value.replace(<any>pattern, <any>repl);
     }
-    search(pattern: string | ASRegExp) {
+    search(pattern /* : string | ASRegExp */) {
       if (this.sec.AXRegExp.axIsType(pattern)) {
         pattern = (<any>pattern).value;
       } else {
@@ -1223,7 +1223,7 @@ module Shumway.AVMX.AS {
       end = arguments.length < 2 ? 0xffffffff : end | 0;
       return this.value.slice(start, end);
     }
-    split(separator: string | ASRegExp, limit?: number) {
+    split(separator /* : string | ASRegExp */, limit?: number) {
       if (this.sec.AXRegExp.axIsType(separator)) {
         separator = (<any>separator).value;
       } else {
