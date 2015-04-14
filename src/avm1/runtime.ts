@@ -34,8 +34,6 @@ module Shumway.AVM1 {
     READ_ONLY = 4,
     DATA = 64,
     ACCESSOR = 128,
-    NATIVE_MEMBER = DATA | DONT_DELETE | DONT_ENUM,
-    NATIVE_ACCESSOR = ACCESSOR | DONT_DELETE | DONT_ENUM,
     ASSETPROP_MASK = DONT_DELETE | DONT_ENUM | READ_ONLY
   }
 
@@ -630,5 +628,51 @@ module Shumway.AVM1 {
 
   export function alIsString(context: IAVM1Context, v): boolean {
     return typeof v === 'string';
+  }
+
+  export function alDefineObjectProperties(obj: AVM1Object, descriptors: any): void {
+    var context = obj.context;
+    Object.getOwnPropertyNames(descriptors).forEach(function (name) {
+      var desc = descriptors[name];
+      var value, getter, setter;
+      var flags: AVM1PropertyFlags = 0;
+      if (typeof desc === 'object') {
+        if (desc.get || desc.set) {
+          getter = desc.get ? new AVM1NativeFunction(context, desc.get) : undefined;
+          setter = desc.set ? new AVM1NativeFunction(context, desc.set) : undefined;
+          flags |= AVM1PropertyFlags.ACCESSOR;
+        } else {
+          value = desc.value;
+          if (typeof value === 'function') {
+            value = new AVM1NativeFunction(context, value);
+          }
+          flags |= AVM1PropertyFlags.DATA;
+          if (!desc.writable) {
+            flags |= AVM1PropertyFlags.READ_ONLY;
+          }
+        }
+        if (!desc.enumerable) {
+          flags |= AVM1PropertyFlags.DONT_ENUM;
+        }
+        if (!desc.configurable) {
+          flags |= AVM1PropertyFlags.DONT_DELETE;
+        }
+      } else {
+        value = desc;
+        if (typeof value === 'function') {
+          value = new AVM1NativeFunction(context, value);
+        }
+        flags |= AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_DELETE |
+                 AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.READ_ONLY;
+      }
+      obj.alSetOwnProperty(name, getter || setter ? {
+        flags: flags,
+        get: getter,
+        set: setter
+      } : {
+        flags: flags,
+        value: value
+      })
+    });
   }
 }

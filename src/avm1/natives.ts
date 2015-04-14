@@ -18,7 +18,6 @@
 // functions and object prototypes that will be exposed to the AVM1 code.
 
 module Shumway.AVM1.Natives {
-
   // Object natives
   // TODO implement all the Object class and its prototype natives
 
@@ -31,37 +30,18 @@ module Shumway.AVM1.Natives {
 
     _initializePrototype() {
       var context = this.context;
-      this.alSetOwnProperty('valueOf', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this._valueOf)
-      });
-      this.alSetOwnProperty('toString', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this._toString)
-      });
-      this.alSetOwnProperty('addProperty', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(context, function addProperty(name, getter, setter) {
-          if (typeof name !== 'string' || name === '') {
-            return false;
-          }
-          if (!alIsFunction(getter)) {
-            return false;
-          }
-          if (!alIsFunction(setter) && setter !== null) {
-            return false;
-          }
-          var desc = this.alGetOwnProperty(name);
-          if (desc && !!(desc.flags & AVM1PropertyFlags.DONT_DELETE)) {
-            return false; // protected property
-          }
-          this.alSetOwnProperty(name, {
-            flags: AVM1PropertyFlags.ACCESSOR,
-            get: getter,
-            set: setter || undefined
-          });
-          return true;
-        })
+      alDefineObjectProperties(this, {
+        valueOf: {
+          value: this._valueOf,
+          writable: true
+        },
+        toString: {
+          value: this._toString,
+          writable: true
+        },
+        addProperty: {
+          value: this.addProperty
+        }
       });
     }
 
@@ -76,6 +56,28 @@ module Shumway.AVM1.Natives {
       }
       return '[object ' + alGetObjectClass(this) + ']';
     }
+
+    public addProperty(name, getter, setter) {
+      if (typeof name !== 'string' || name === '') {
+        return false;
+      }
+      if (!alIsFunction(getter)) {
+        return false;
+      }
+      if (!alIsFunction(setter) && setter !== null) {
+        return false;
+      }
+      var desc = this.alGetOwnProperty(name);
+      if (desc && !!(desc.flags & AVM1PropertyFlags.DONT_DELETE)) {
+        return false; // protected property
+      }
+      this.alSetOwnProperty(name, {
+        flags: AVM1PropertyFlags.ACCESSOR,
+        get: getter,
+        set: setter || undefined
+      });
+      return true;
+    }
   }
 
   export class AVM1ObjectFunction extends AVM1Function {
@@ -83,21 +85,23 @@ module Shumway.AVM1.Natives {
       super(context);
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       var proto = context.builtins.Object.alGetPrototypeProperty();
-      this.alSetOwnProperty('prototype', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: proto
+      alDefineObjectProperties(this, {
+        prototype: {
+          value: proto
+        },
+        constructor: {
+          value: this,
+          writable: true,
+          configurable: true
+        },
+        registerClass: {
+          value: this.registerClass
+        }
       });
-      proto.alSetOwnProperty('constructor', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-        value: this
-      });
+    }
 
-      this.alSetOwnProperty('registerClass', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(context, function registerClass(name, theClass) {
-          context.registerClass(name, theClass);
-        })
-      });
+    public registerClass(name, theClass) {
+      this.context.registerClass(name, theClass);
     }
 
     public alConstruct(args?: any[]): AVM1Object {
@@ -136,13 +140,9 @@ module Shumway.AVM1.Natives {
     _initializePrototype() {
       var context = this.context;
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
-      this.alSetOwnProperty('call', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(context, this.call)
-      });
-      this.alSetOwnProperty('apply', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(context, this.apply)
+      alDefineObjectProperties(this, {
+        call: this.call,
+        apply: this.apply
       });
     }
 
@@ -161,13 +161,15 @@ module Shumway.AVM1.Natives {
 
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       var proto = context.builtins.Function.alGetPrototypeProperty();
-      this.alSetOwnProperty('prototype', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: proto
-      });
-      proto.alSetOwnProperty('constructor', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-        value: this
+      alDefineObjectProperties(this, {
+        prototype: {
+          value: proto
+        },
+        constructor: {
+          value: this,
+          writable: true,
+          configurable: true
+        }
       });
     }
 
@@ -197,13 +199,15 @@ module Shumway.AVM1.Natives {
     public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
-      this.alSetOwnProperty('valueOf', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this._valueOf)
-      });
-      this.alSetOwnProperty('toString', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this._toString)
+      alDefineObjectProperties(this, {
+        valueOf: {
+          value: this._valueOf,
+          writable: true
+        },
+        toString: {
+          value: this._toString,
+          writable: true
+        }
       });
     }
 
@@ -223,13 +227,15 @@ module Shumway.AVM1.Natives {
       super(context);
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       var proto = new AVM1BooleanPrototype(context);
-      this.alSetOwnProperty('prototype', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: proto
-      });
-      proto.alSetOwnProperty('constructor', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-        value: this
+      alDefineObjectProperties(this, {
+        prototype: {
+          value: proto
+        },
+        constructor: {
+          value: this,
+          writable: true,
+          configurable: true
+        }
       });
     }
 
@@ -268,13 +274,15 @@ module Shumway.AVM1.Natives {
     public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
-      this.alSetOwnProperty('valueOf', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this._valueOf)
-      });
-      this.alSetOwnProperty('toString', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this._toString)
+      alDefineObjectProperties(this, {
+        valueOf: {
+          value: this._valueOf,
+          writable: true
+        },
+        toString: {
+          value: this._toString,
+          writable: true
+        }
       });
     }
 
@@ -294,20 +302,19 @@ module Shumway.AVM1.Natives {
       super(context);
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       var proto = new AVM1NumberPrototype(context);
-      this.alSetOwnProperty('prototype', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: proto
-      });
-      proto.alSetOwnProperty('constructor', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-        value: this
+      alDefineObjectProperties(this, {
+        prototype: {
+          value: proto
+        },
+        constructor: {
+          value: this,
+          writable: true,
+          configurable: true
+        },
+        NaN: NaN
+        // TODO more constants
       });
 
-      this.alSetOwnProperty('NaN', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: NaN
-      });
-      // TODO more constants
     }
 
     public alConstruct(args?: any[]): AVM1Object {
@@ -347,63 +354,62 @@ module Shumway.AVM1.Natives {
     public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
-      this.alSetOwnProperty('valueOf', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this._valueOf)
-      });
-      this.alSetOwnProperty('toString', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this._toString)
-      });
-
-      this.alSetOwnProperty('length', {
-        flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE,
-        get: new AVM1NativeFunction(context, this.getLength)
-      });
-
-      this.alSetOwnProperty('charAt', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.charAt)
-      });
-      this.alSetOwnProperty('charCodeAt', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.charCodeAt)
-      });
-      this.alSetOwnProperty('concat', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.concat)
-      });
-      this.alSetOwnProperty('indexOf', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.indexOf)
-      });
-      this.alSetOwnProperty('lastIndexOf', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.lastIndexOf)
-      });
-      this.alSetOwnProperty('slice', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.slice)
-      });
-      this.alSetOwnProperty('split', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.split)
-      });
-      this.alSetOwnProperty('substr', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.substr)
-      });
-      this.alSetOwnProperty('substring', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.substring)
-      });
-      this.alSetOwnProperty('toLowerCase', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.toLowerCase)
-      });
-      this.alSetOwnProperty('toUpperCase', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.toUpperCase)
+      alDefineObjectProperties(this, {
+        valueOf: {
+          value: this._valueOf,
+          writable: true
+        },
+        toString: {
+          value: this._toString,
+          writable: true
+        },
+        length: {
+          get: this.getLength
+        },
+        charAt: {
+          value: this.charAt,
+          writable: true
+        },
+        charCodeAt: {
+          value: this.charCodeAt,
+          writable: true
+        },
+        concat: {
+          value: this.concat,
+          writable: true
+        },
+        indexOf: {
+          value: this.indexOf,
+          writable: true
+        },
+        lastIndexOf: {
+          value: this.lastIndexOf,
+          writable: true
+        },
+        slice: {
+          value: this.slice,
+          writable: true
+        },
+        split: {
+          value: this.split,
+          writable: true
+        },
+        substr: {
+          value: this.substr,
+          writable: true
+        },
+        substring: {
+          value: this.substring,
+          writable: true
+        },
+        toLowerCase: {
+          value: this.toLowerCase,
+          writable: true
+        },
+        toUpperCase: {
+          value: this.toUpperCase,
+          writable: true
+        }
       });
     }
 
@@ -499,13 +505,15 @@ module Shumway.AVM1.Natives {
       super(context);
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       var proto = new AVM1StringPrototype(context);
-      this.alSetOwnProperty('prototype', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: proto
-      });
-      proto.alSetOwnProperty('constructor', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-        value: this
+      alDefineObjectProperties(this, {
+        prototype: {
+          value: proto
+        },
+        constructor: {
+          value: this,
+          writable: true,
+          configurable: true
+        }
       });
     }
 
@@ -596,46 +604,47 @@ module Shumway.AVM1.Natives {
     public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
-      this.alSetOwnProperty('join', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.join)
-      });
-      this.alSetOwnProperty('length', {
-        flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE,
-        get: new AVM1NativeFunction(context, this.getLength),
-        set: new AVM1NativeFunction(context, this.setLength)
-      });
-      this.alSetOwnProperty('concat', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.concat)
-      });
-      this.alSetOwnProperty('pop', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.pop)
-      });
-      this.alSetOwnProperty('push', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.push)
-      });
-      this.alSetOwnProperty('slice', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.slice)
-      });
-      this.alSetOwnProperty('splice', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.splice)
-      });
-      this.alSetOwnProperty('sort', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.sort)
-      });
-      this.alSetOwnProperty('sortOn', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.sortOn)
-      });
-      this.alSetOwnProperty('toString', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this._toString)
+      alDefineObjectProperties(this, {
+        join: {
+          value: this.join,
+          writable: true
+        },
+        length: {
+          get: this.getLength,
+          set: this.setLength
+        },
+        concat: {
+          value: this.concat,
+          writable: true
+        },
+        pop: {
+          value: this.pop,
+          writable: true
+        },
+        push: {
+          value: this.push,
+          writable: true
+        },
+        slice: {
+          value: this.slice,
+          writable: true
+        },
+        splice: {
+          value: this.splice,
+          writable: true
+        },
+        sort: {
+          value: this.sort,
+          writable: true
+        },
+        sortOn: {
+          value: this.sortOn,
+          writable: true
+        },
+        toString: {
+          value: this._toString,
+          writable: true
+        }
       });
     }
 
@@ -832,13 +841,15 @@ module Shumway.AVM1.Natives {
       super(context);
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       var proto = new AVM1ArrayPrototype(context);
-      this.alSetOwnProperty('prototype', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: proto
-      });
-      proto.alSetOwnProperty('constructor', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-        value: this
+      alDefineObjectProperties(this, {
+        prototype: {
+          value: proto
+        },
+        constructor: {
+          value: this,
+          writable: true,
+          configurable: true
+        }
       });
     }
 
@@ -864,110 +875,33 @@ module Shumway.AVM1.Natives {
     public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
-      this.alSetOwnProperty('E', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: Math.E
-      });
-      this.alSetOwnProperty('LN10', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: Math.LN10
-      });
-      this.alSetOwnProperty('LN2', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: Math.LN2
-      });
-      this.alSetOwnProperty('LOG10E', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: Math.LOG10E
-      });
-      this.alSetOwnProperty('LOG2E', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: Math.LOG2E
-      });
-      this.alSetOwnProperty('PI', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: Math.PI
-      });
-      this.alSetOwnProperty('SQRT1_2', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: Math.SQRT1_2
-      });
-      this.alSetOwnProperty('SQRT2', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: Math.SQRT2
-      });
-
-      this.alSetOwnProperty('abs', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(this.context, this.abs)
-      });
-      this.alSetOwnProperty('acos', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(this.context, this.acos)
-      });
-      this.alSetOwnProperty('asin', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(this.context, this.asin)
-      });
-      this.alSetOwnProperty('atan', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(this.context, this.atan)
-      });
-      this.alSetOwnProperty('atan2', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(this.context, this.atan2)
-      });
-      this.alSetOwnProperty('ceil', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(this.context, this.ceil)
-      });
-      this.alSetOwnProperty('cos', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(this.context, this.cos)
-      });
-      this.alSetOwnProperty('exp', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(this.context, this.exp)
-      });
-      this.alSetOwnProperty('floor', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(this.context, this.floor)
-      });
-      this.alSetOwnProperty('log', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(this.context, this.log)
-      });
-      this.alSetOwnProperty('max', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(this.context, this.max)
-      });
-      this.alSetOwnProperty('min', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(this.context, this.min)
-      });
-      this.alSetOwnProperty('pow', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(this.context, this.pow)
-      });
-      this.alSetOwnProperty('random', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(this.context, this.random)
-      });
-      this.alSetOwnProperty('round', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(this.context, this.round)
-      });
-      this.alSetOwnProperty('sin', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(this.context, this.sin)
-      });
-      this.alSetOwnProperty('sqrt', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(this.context, this.sqrt)
-      });
-      this.alSetOwnProperty('tan', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: new AVM1NativeFunction(this.context, this.tan)
+      alDefineObjectProperties(this, {
+        E: Math.E,
+        LN10: Math.LN10,
+        LN2: Math.LN2,
+        LOG10E: Math.LOG10E,
+        LOG2E: Math.LOG2E,
+        PI: Math.PI,
+        SQRT1_2: Math.SQRT1_2,
+        SQRT2: Math.SQRT2,
+        abs: this.abs,
+        acos: this.acos,
+        asin: this.asin,
+        atan: this.atan,
+        atan2: this.atan2,
+        ceil: this.ceil,
+        cos: this.cos,
+        exp: this.exp,
+        floor: this.floor,
+        log: this.log,
+        max: this.max,
+        min: this.min,
+        pow: this.pow,
+        random: this.random,
+        round: this.round,
+        sin: this.sin,
+        sqrt: this.sqrt,
+        tan: this.tan
       });
     }
 
@@ -1077,17 +1011,19 @@ module Shumway.AVM1.Natives {
     public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
-      this.alSetOwnProperty('valueOf', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this._valueOf)
-      });
-      this.alSetOwnProperty('toString', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this._toString)
-      });
-      this.alSetOwnProperty('getTime', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this.getTime)
+      alDefineObjectProperties(this, {
+        valueOf: {
+          value: this._valueOf,
+          writable: true
+        },
+        toString: {
+          value: this._toString,
+          writable: true
+        },
+        getTime: {
+          value: this.getTime,
+          writable: true
+        }
       });
     }
 
@@ -1111,20 +1047,20 @@ module Shumway.AVM1.Natives {
       super(context);
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
       var proto = new AVM1DatePrototype(context);
-      this.alSetOwnProperty('prototype', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-        value: proto
+      alDefineObjectProperties(this, {
+        prototype: {
+          value: proto
+        },
+        constructor: {
+          value: this,
+          writable: true,
+          configurable: true
+        },
+        UTC: {
+          value: this._UTC,
+          writable: true
+        }
       });
-      proto.alSetOwnProperty('constructor', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-        value: this
-      });
-
-      this.alSetOwnProperty('UTC', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
-        value: new AVM1NativeFunction(context, this._UTC)
-      });
-
     }
 
     public alConstruct(args?: any[]): AVM1Object {

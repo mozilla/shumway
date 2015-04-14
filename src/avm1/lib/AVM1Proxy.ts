@@ -70,7 +70,7 @@ module Shumway.AVM1.Lib {
       wrappedProto.alPrototype = context.builtins.Object.alGetPrototypeProperty();
       wrapAVM1NativeMembers(context, wrappedProto, cls.prototype, methods, false);
       wrapped.alSetOwnProperty('prototype', {
-        flags: AVM1PropertyFlags.NATIVE_MEMBER,
+        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.DONT_ENUM,
         value: wrappedProto
       });
       return wrapped;
