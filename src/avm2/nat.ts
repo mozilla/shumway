@@ -790,6 +790,9 @@ module Shumway.AVMX.AS {
       return this.value.lastIndexOf(value, arguments.length > 1 ? fromIndex : 0x7fffffff);
     }
     every(callbackfn: {value: Function}, thisArg?) {
+      if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
+        return true;
+      }
       var o = this.value;
       for (var i = 0; i < o.length; i++) {
         if (callbackfn.value.call(thisArg, o[i], i, o) !== true) {
@@ -799,24 +802,36 @@ module Shumway.AVMX.AS {
       return true;
     }
     some(callbackfn: {value}, thisArg?) {
+      if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
+        return false;
+      }
       var self = this;
       return this.value.some(function (currentValue, index, array) {
         return callbackfn.value.call(thisArg, currentValue, index, self);
       });
     }
     forEach(callbackfn: {value}, thisArg?) {
+      if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
+        return;
+      }
       var self = this;
       this.value.forEach(function (currentValue, index) {
         callbackfn.value.call(thisArg, currentValue, index, self);
       });
     }
     map(callbackfn: {value}, thisArg?) {
+      if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
+        return this.sec.createArrayUnsafe([]);
+      }
       var self = this;
       return this.sec.createArrayUnsafe(this.value.map(function (currentValue, index) {
         return callbackfn.value.call(thisArg, currentValue, index, self);
       }));
     }
     filter(callbackfn: {value: Function}, thisArg?) {
+      if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
+        return this.sec.createArrayUnsafe([]);
+      }
       var result = [];
       var o = this.value;
       for (var i = 0; i < o.length; i++) {
@@ -824,7 +839,7 @@ module Shumway.AVMX.AS {
           result.push(o[i]);
         }
       }
-      return this.sec.createArray(result);
+      return this.sec.createArrayUnsafe(result);
     }
 
     toLocaleString(): string {
