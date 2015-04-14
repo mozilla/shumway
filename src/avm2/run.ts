@@ -439,26 +439,6 @@ module Shumway.AVMX {
     }
   }
 
-  function axFunctionConstruct(argArray?: any []) {
-    var prototype = this.prototype;
-    // AS3 allows setting null/undefined prototypes. In order to make our value checking work,
-    // we need to set a null-prototype that has the right inheritance chain. Since AS3 doesn't
-    // have `__proto__` or `getPrototypeOf`, this is completely hidden from content.
-    if (isNullOrUndefined(prototype)) {
-      prototype = this.sec.AXFunctionUndefinedPrototype;
-    }
-    release || assert(typeof prototype === 'object');
-    release || checkValue(prototype);
-    var object = Object.create(prototype);
-    object.__ctorFunction = this;
-    this.value.apply(object, argArray);
-    return object;
-  }
-
-  function axFunctionIsInstanceOf(obj: any) {
-    return obj && obj.__ctorFunction === this;
-  }
-
   export function axTypeOf(x: any, sec: AXSecurityDomain): string {
     // ABC doesn't box primitives, so typeof returns the primitive type even when
     // the value is new'd
@@ -1487,38 +1467,6 @@ module Shumway.AVMX {
       D(AXObject, "axConstruct", axConstructObject);
       D(AXObject.tPrototype, "axInitializer", axDefaultInitializer);
       D(AXObject, "axCoerce", axCoerceObject);
-      D(AXFunction, "axConstruct", function() {
-        return Object.create(this.tPrototype);
-      });
-      D(AXFunction.dPrototype, "axConstruct", axFunctionConstruct);
-      D(AXFunction.dPrototype, "axIsInstanceOf", axFunctionIsInstanceOf);
-      D(AXFunction.dPrototype, "value", function(){
-        //..
-      });
-
-      D(AXFunction.dPrototype, "axCall", AS.ASFunction.prototype.axCall);
-      D(AXFunction.dPrototype, "axApply", AS.ASFunction.prototype.axApply);
-
-      P(AXFunction.dPrototype, "call", function (self, a, b, c) {
-        if (this.sec.isPrimitive(self)) {
-          self = null;
-        }
-        switch (arguments.length) {
-          case 0: return this.value.call();
-          case 1: return this.value.call(self);
-          case 2: return this.value.call(self, a);
-          case 3: return this.value.call(self, a, b);
-          case 4: return this.value.call(self, a, b, c);
-        }
-        return this.value.apply(self, sliceArguments(arguments, 1));
-      });
-
-      P(AXFunction.dPrototype, "apply", function (self, args) {
-        if (this.sec.isPrimitive(self)) {
-          self = null;
-        }
-        return this.value.apply(self, args.value);
-      });
 
       this.prepareNativeClass("AXMethodClosure", "MethodClosure", false);
       this.prepareNativeClass("AXError", "Error", false);
