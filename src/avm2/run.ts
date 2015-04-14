@@ -331,10 +331,10 @@ module Shumway.AVMX {
     return object.descendants(mn);
   }
 
-  export function axCheckFilter(value, sec: AXSecurityDomain) {
+  export function axCheckFilter(sec: AXSecurityDomain, value) {
     if (!value || !AS.isXMLCollection(value, sec)) {
       var className = value && value.axClass ? value.axClass.name.toFQNString(false) : '[unknown]';
-      this.sec.throwError('RangeError', Errors.FilterError, className);
+      sec.throwError('TypeError', Errors.FilterError, className);
     }
     return value;
   }
