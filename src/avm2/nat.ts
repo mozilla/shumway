@@ -799,16 +799,22 @@ module Shumway.AVMX.AS {
       return true;
     }
     some(callbackfn: {value}, thisArg?) {
-      return this.value.some(callbackfn.value, thisArg);
+      var self = this;
+      return this.value.some(function (currentValue, index, array) {
+        return callbackfn.value.call(thisArg, currentValue, index, self);
+      });
     }
     forEach(callbackfn: {value}, thisArg?) {
       var self = this;
-      return this.value.forEach(function (currentValue, index) {
+      this.value.forEach(function (currentValue, index) {
         callbackfn.value.call(thisArg, currentValue, index, self);
       });
     }
     map(callbackfn: {value}, thisArg?) {
-      return this.sec.createArray(this.value.map(callbackfn.value, thisArg));
+      var self = this;
+      return this.sec.createArrayUnsafe(this.value.map(function (currentValue, index) {
+        return callbackfn.value.call(thisArg, currentValue, index, self);
+      }));
     }
     filter(callbackfn: {value: Function}, thisArg?) {
       var result = [];
