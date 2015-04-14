@@ -285,7 +285,7 @@ module Shumway.AVM1.Lib {
             prefixFunctions ? wrapFunctionWithPrefix(value) : value);
         }
         wrap.alSetOwnProperty(memberName, {
-          flags: AVM1PropertyFlags.NATIVE_MEMBER,
+          flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.DONT_ENUM,
           value: value
         })
       }
@@ -306,13 +306,17 @@ module Shumway.AVM1.Lib {
     var wrappedPrototype = new cls(context);
     wrappedPrototype.alPrototype = context.builtins.Object.alGetPrototypeProperty();
     wrapAVM1NativeMembers(context, wrappedPrototype, cls.prototype, members, false);
-    wrappedFn.alSetOwnProperty('prototype', {
-      flags: AVM1PropertyFlags.NATIVE_MEMBER | AVM1PropertyFlags.READ_ONLY,
-      value: wrappedPrototype
+    alDefineObjectProperties(wrappedFn, {
+      prototype: {
+        value: wrappedPrototype
+      }
     });
-    wrappedPrototype.alSetOwnProperty('constructor', {
-      flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-      value: wrappedFn
+    alDefineObjectProperties(wrappedPrototype, {
+      constructor: {
+        value: wrappedFn,
+        writable: true,
+        configurable: true
+      }
     });
     return wrappedFn;
   }
