@@ -652,7 +652,7 @@ module Shumway.AVMX.AS.flash.display {
         for (var j = 0; j < labels.length; j++) {
           var currentLabel = labels[j];
           if (currentLabel.frame > frame - scene.offset) {
-            return label.clone();
+            return label;
           }
           label = currentLabel;
         }
