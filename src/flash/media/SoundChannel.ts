@@ -166,22 +166,6 @@ module Shumway.AVMX.AS.flash.media {
 
     _symbol: SoundChannel;
     
-    applySymbol() {
-      release || assert(this._symbol);
-      this._element = null;
-      this._position = 0;
-      this._leftPeak = 0;
-      this._rightPeak = 0;
-      this._pcmData = null;
-      this._soundTransform = new flash.media.SoundTransform();
-      this._playing = false;
-
-      //this._element = symbol._element || null;
-      //if (this._element) {
-      //  this._registerWithSoundMixer();
-      //}
-    }
-    
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -190,7 +174,22 @@ module Shumway.AVMX.AS.flash.media {
     
     constructor () {
       super();
-      release || assert(!this._symbol);
+
+      this._element = null;
+      this._position = 0;
+      this._leftPeak = 0;
+      this._rightPeak = 0;
+      this._pcmData = null;
+      this._soundTransform = new flash.media.SoundTransform();
+      this._playing = false;
+      this._element = null;
+    }
+
+    static initializeFromAudioElement(sec: ISecurityDomain, element: HTMLAudioElement): SoundChannel {
+      var channel = new sec.flash.media.SoundChannel();
+      channel._element = element;
+      SoundMixer._registerSoundSource(channel);
+      return channel;
     }
 
     _element;
@@ -288,7 +287,7 @@ module Shumway.AVMX.AS.flash.media {
 
         self._element = null;
         self._playing = false;
-        self.dispatchEvent(new this.sec.flash.events.Event("soundComplete", false,
+        self.dispatchEvent(new self.sec.flash.events.Event("soundComplete", false,
                                                                       false));
       });
       this._element = element;
@@ -315,7 +314,7 @@ module Shumway.AVMX.AS.flash.media {
 
           self._audioChannel.stop();
           self._playing = false;
-          self.dispatchEvent(new this.sec.flash.events.Event("soundComplete", false,
+          self.dispatchEvent(new self.sec.flash.events.Event("soundComplete", false,
                                                                         false));
           return;
         }

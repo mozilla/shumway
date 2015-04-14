@@ -62,29 +62,45 @@ module Shumway.AVMX.AS.flash.media {
     _symbol: SoundSymbol;
     applySymbol() {
       release || assert(this._symbol);
+      this._playQueue = [];
+      this._url = null;
+      this._length = 0;
+      this._bytesTotal = 0;
+      this._bytesLoaded = 0;
+      this._id3 = new this.sec.flash.media.ID3Info();
 
-      // REDUX:
-      //if (symbol) {
-      //  var soundData = new SoundData();
-      //  soundData.sampleRate = symbol.sampleRate;
-      //  soundData.channels = symbol.channels;
-      //  soundData.completed = true;
-      //  if (symbol.pcm) {
-      //    soundData.pcm = symbol.pcm;
-      //    soundData.end = symbol.pcm.length;
-      //  }
-      //  if (symbol.packaged) {
-      //    soundData.data = symbol.packaged.data.buffer;
-      //    soundData.mimeType = symbol.packaged.mimeType;
-      //  }
-      //  var self = this;
-      //  getAudioDescription(soundData, function (description) {
-      //    self._length = description.duration;
-      //  });
-      //  this._soundData = soundData;
-      //}
+      this._isURLInaccessible = false;
+      this._isBuffering = false;
+
+      var symbol = this._symbol;
+      if (symbol) {
+        var soundData = new SoundData();
+        soundData.sampleRate = symbol.sampleRate;
+        soundData.channels = symbol.channels;
+        soundData.completed = true;
+        if (symbol.pcm) {
+          soundData.pcm = symbol.pcm;
+          soundData.end = symbol.pcm.length;
+        }
+        if (symbol.packaged) {
+          soundData.data = symbol.packaged.data.buffer;
+          soundData.mimeType = symbol.packaged.mimeType;
+        }
+        var self = this;
+        getAudioDescription(soundData, function (description) {
+          self._length = description.duration;
+        });
+        this._soundData = soundData;
+      }
     }
-    
+
+    static initializeFromPCMData(sec: ISecurityDomain, data: any): Sound {
+      var sound = new sec.flash.media.Sound();
+      sound._symbol = data;
+      sound.applySymbol();
+      return sound;
+    }
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     

@@ -31,6 +31,7 @@ module Shumway.AVMX.AS.flash.display {
   }
 
   class HTMLAudioElementAdapter implements ISoundStreamAdapter {
+    private _sec: ISecurityDomain;
     private _element: HTMLAudioElement;
     private _channel: media.SoundChannel;
 
@@ -76,13 +77,13 @@ module Shumway.AVMX.AS.flash.display {
       }
     }
 
-    constructor(element: HTMLAudioElement) {
+    constructor(sec: ISecurityDomain, element: HTMLAudioElement) {
+      this._sec = sec;
       this._element = element;
     }
 
     createChannel() {
-      // REDUX:
-      //this._channel = <flash.media.SoundChannel>flash.media.SoundChannel.initializeFrom({element: this._element});
+      this._channel = flash.media.SoundChannel.initializeFromAudioElement(this._sec, this._element);
     }
 
     queueData(frame: DecodedSound) {
@@ -102,8 +103,8 @@ module Shumway.AVMX.AS.flash.display {
     private _rawFrames: any[];
     private _isReady: boolean;
 
-    constructor(element: HTMLAudioElement) {
-      super(element);
+    constructor(sec: ISecurityDomain, element: HTMLAudioElement) {
+      super(sec, element);
       this._mediaSource = new MediaSource();
       this._sourceBuffer = null;
       this._updating = false;
@@ -160,8 +161,8 @@ module Shumway.AVMX.AS.flash.display {
   class BlobStreamAdapter extends HTMLAudioElementAdapter {
     private  _rawFrames: any[];
 
-    constructor(element: HTMLAudioElement) {
-      super(element);
+    constructor(sec: ISecurityDomain, element: HTMLAudioElement) {
+      super(sec, element);
       this._rawFrames = [];
     }
 
@@ -202,6 +203,7 @@ module Shumway.AVMX.AS.flash.display {
   }
 
   class WebAudioAdapter implements ISoundStreamAdapter {
+    private _sec: ISecurityDomain;
     private _channel: media.SoundChannel;
     private _sound: media.Sound;
     private _data;
@@ -227,7 +229,8 @@ module Shumway.AVMX.AS.flash.display {
       return !!this._channel;
     }
 
-    constructor(data: any) {
+    constructor(sec: ISecurityDomain, data: any) {
+      this._sec = sec;
       this._channel = null;
       this._sound = null;
       this._data = data;
@@ -241,11 +244,10 @@ module Shumway.AVMX.AS.flash.display {
 
     finish() {
       // TODO Start from some seek offset, stopping
-      // REDUX:
-      //var sound = <flash.media.Sound>flash.media.Sound.initializeFrom(this._data);
-      //var channel = sound.play();
-      //this._sound = sound;
-      //this._channel = channel;
+      var sound = flash.media.Sound.initializeFromPCMData(this._sec, this._data);
+      var channel = sound.play();
+      this._sound = sound;
+      this._channel = channel;
     }
   }
 
@@ -253,8 +255,8 @@ module Shumway.AVMX.AS.flash.display {
     private _decoderPosition: number;
     private _decoderSession: MP3DecoderSession;
 
-    constructor(data: any) {
-      super(data);
+    constructor(sec: ISecurityDomain, data: any) {
+      super(sec, data);
 
       this._decoderPosition = 0;
       this._decoderSession = new MP3DecoderSession();
@@ -307,6 +309,7 @@ module Shumway.AVMX.AS.flash.display {
       this.expectedFrame = 0;
       this.waitFor = 0;
 
+      var sec = movieClip.sec;
       var isMP3 = streamInfo.format === 'mp3';
       if (isMP3 && !webAudioMP3Option.value) {
         var element = document.createElement('audio');
@@ -316,14 +319,14 @@ module Shumway.AVMX.AS.flash.display {
         if (element.canPlayType(MP3_MIME_TYPE)) {
           this.element = element;
           if (!mediaSourceMP3Option.value) {
-            this.soundStreamAdapter = new BlobStreamAdapter(element);
+            this.soundStreamAdapter = new BlobStreamAdapter(sec, element);
           } else if (typeof MediaSource !== 'undefined' &&
                      (<any>MediaSource).isTypeSupported(MP3_MIME_TYPE)) {
-            this.soundStreamAdapter = new MediaSourceStreamAdapter(element);
+            this.soundStreamAdapter = new MediaSourceStreamAdapter(sec, element);
           } else {
             // Falls back to blob playback.
             console.warn('MediaSource is not supported');
-            this.soundStreamAdapter = new BlobStreamAdapter(element);
+            this.soundStreamAdapter = new BlobStreamAdapter(sec, element);
           }
           return;
         }
@@ -333,8 +336,8 @@ module Shumway.AVMX.AS.flash.display {
       // TODO fix streamInfo.samplesCount name -- its actually average value
       var totalSamples = (streamInfo.samplesCount + 1) * this.movieClip.totalFrames * streamInfo.channels;
       this.data.pcm = new Float32Array(totalSamples);
-      this.soundStreamAdapter = !isMP3 ? new WebAudioAdapter(this.data) :
-                                         new WebAudioMP3Adapter(this.data);
+      this.soundStreamAdapter = !isMP3 ? new WebAudioAdapter(sec, this.data) :
+                                         new WebAudioMP3Adapter(sec, this.data);
     }
 
     public appendBlock(frameNum: number, streamBlock: Uint8Array) {
