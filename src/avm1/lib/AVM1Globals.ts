@@ -162,7 +162,6 @@ module Shumway.AVM1.Lib {
     }
 
     public trace(expression: any): any {
-      // REDUX
       (<any>this.context).actions.trace(expression);
     }
 

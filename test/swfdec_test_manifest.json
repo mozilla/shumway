@@ -357,9 +357,7 @@
       "/utils/swfdec/test/trace/moviecliploader-constructor-5.swf",
       "/utils/swfdec/test/trace/moviecliploader-constructor-6.swf",
       "/utils/swfdec/test/trace/moviecliploader-constructor-7.swf",
-      "/utils/swfdec/test/trace/moviecliploader-constructor-8.swf",
-      "/utils/swfdec/test/trace/moviecliploader-level-5.swf",
-      "/utils/swfdec/test/trace/moviecliploader-level-6.swf"
+      "/utils/swfdec/test/trace/moviecliploader-constructor-8.swf"
     ],
     "defaultRate": 20,
     "type": "stas"

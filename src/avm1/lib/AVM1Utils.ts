@@ -314,11 +314,11 @@ module Shumway.AVM1.Lib {
     });
   }
 
-  export function wrapAVM1NativeClass(context: AVM1Context, wrapAsFunction: boolean, cls: any, staticMembers: string[], members: string[], call?: Function, cstr?: Function): AVM1Object  {
+  export function wrapAVM1NativeClass(context: AVM1Context, wrapAsFunction: boolean, cls: typeof AVM1Object, staticMembers: string[], members: string[], call?: Function, cstr?: Function): AVM1Object  {
     var wrappedFn = wrapAsFunction ?
       new AVM1NativeFunction(context, call || function () { }, function () {
         // Creating simple AVM1 object
-        var obj = new AVM1Object(context);
+        var obj = new cls(context);
         obj.alPrototype = wrappedPrototype;
         obj.alSetOwnConstructorProperty(wrappedFn);
         if (cstr) {
