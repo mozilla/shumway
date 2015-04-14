@@ -1364,7 +1364,11 @@ module Shumway.AVM1 {
       var sp = stack.length;
       stack.push(undefined);
 
-      stack[sp] = ectx.actions.getAVM1Property(target, index);
+      var resolved = ectx.context.resolveTarget(target);
+      var propertyName = PropertiesIndexMap[index];
+      if (resolved && propertyName) {
+        stack[sp] = resolved.alGet(propertyName);
+      }
     }
     function avm1_0x23_ActionSetProperty(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1372,7 +1376,12 @@ module Shumway.AVM1 {
       var value = stack.pop();
       var index = stack.pop();
       var target = stack.pop();
-      ectx.actions.setAVM1Property(target, index, value);
+
+      var resolved = ectx.context.resolveTarget(target);
+      var propertyName = PropertiesIndexMap[index];
+      if (resolved && propertyName) {
+        resolved.alPut(propertyName, value);
+      }
     }
     function avm1_0x24_ActionCloneSprite(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -2656,4 +2665,10 @@ module Shumway.AVM1 {
     }
   }
 
+  export var PropertiesIndexMap: string[] = [
+    '_x', '_y', '_xscale', '_yscale', '_currentframe', '_totalframes', '_alpha',
+    '_visible', '_width', '_height', '_rotation', '_target', '_framesloaded',
+    '_name', '_droptarget', '_url', '_highquality', '_focusrect',
+    '_soundbuftime', '_quality', '_xmouse', '_ymouse'
+  ];
 }

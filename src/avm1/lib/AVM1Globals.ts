@@ -302,11 +302,6 @@ module Shumway.AVM1.Lib {
       return this.context.sec.flash.system.fscommand.axCall(null, this.context.sec, command, args);
     }
 
-    public getAVM1Property(target, index) {
-      var nativeTarget = AVM1Utils.resolveTarget(this.context, target);
-      return nativeTarget.alGet(PropertiesIndexMap[index]);
-    }
-
     public getTimer(): number {
       return Shumway.AVMX.AS.FlashUtilScript_getTimer(this.context.sec);
     }
@@ -531,11 +526,6 @@ module Shumway.AVM1.Lib {
       nativeTarget.removeMovieClip();
     }
 
-    public setAVM1Property(target, index, value) {
-      var nativeTarget = AVM1Utils.resolveTarget(this.context, target);
-      nativeTarget.alPut(PropertiesIndexMap[index], value);
-    }
-
     public startDrag(target, lock, left, top, right, bottom) {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
       nativeTarget.startDrag(lock, arguments.length < 3 ? null :
@@ -576,11 +566,4 @@ module Shumway.AVM1.Lib {
       nativeTarget.unloadMovie();
     }
   }
-
-  var PropertiesIndexMap: string[] = [
-    '_x', '_y', '_xscale', '_yscale', '_currentframe', '_totalframes', '_alpha',
-    '_visible', '_width', '_height', '_rotation', '_target', '_framesloaded',
-    '_name', '_droptarget', '_url', '_highquality', '_focusrect',
-    '_soundbuftime', '_quality', '_xmouse', '_ymouse'
-  ];
 }
