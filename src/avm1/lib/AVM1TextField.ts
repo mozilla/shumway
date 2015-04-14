@@ -136,11 +136,14 @@ module Shumway.AVM1.Lib {
     }
 
     public getNewTextFormat() {
-      return this._as3Object.defaultTextFormat;
+      return AVM1TextFormat.createFromNative(this.context, this._as3Object.defaultTextFormat);
     }
 
-    public getTextFormat() {
-      return this._as3Object.getTextFormat;
+    public getTextFormat(beginIndex: number = -1, endIndex: number = -1) {
+      beginIndex = alToInteger(this.context, beginIndex);
+      endIndex = alToInteger(this.context, endIndex);
+      var as3TextFormat = this._as3Object.getTextFormat(beginIndex, endIndex);
+      return AVM1TextFormat.createFromNative(this.context, as3TextFormat);
     }
 
     public get _height() {
@@ -269,11 +272,36 @@ module Shumway.AVM1.Lib {
     }
 
     public setNewTextFormat(value) {
-      this._as3Object.defaultTextFormat = value;
+      var as3TextFormat;
+      if (value instanceof AVM1TextFormat) {
+        as3TextFormat = (<AVM1TextFormat>value)._as3Object;
+      }
+      this._as3Object.defaultTextFormat = as3TextFormat;
     }
 
     public setTextFormat() {
-      this._as3Object.setTextFormat.apply(this._as3Object, arguments);
+      var beginIndex: number = -1, endIndex: number = -1, tf;
+      switch (arguments.length) {
+        case 0:
+          return; // invalid amount of arguments
+        case 1:
+          tf = arguments[0];
+          break;
+        case 2:
+          beginIndex = alToNumber(this.context, arguments[0]);
+          tf = arguments[1];
+          break;
+        default:
+          beginIndex = alToNumber(this.context, arguments[0]);
+          endIndex = alToNumber(this.context, arguments[1]);
+          tf = arguments[2];
+          break;
+      }
+      var as3TextFormat;
+      if (tf instanceof AVM1TextFormat) {
+        as3TextFormat = (<AVM1TextFormat>tf)._as3Object;
+      }
+      this._as3Object.setTextFormat(as3TextFormat, beginIndex, endIndex);
     }
 
     public get _soundbuftime() {

@@ -257,22 +257,44 @@ module Shumway.AVM1.Lib {
         return fn.apply(this, args);
       };
     }
+    function getMemberDescriptor(memberName): PropertyDescriptor {
+      var desc;
+      for (var p = obj; p; p = Object.getPrototypeOf(p)) {
+        desc = Object.getOwnPropertyDescriptor(p, memberName);
+        if (desc) {
+          return desc;
+        }
+      }
+      return null;
+    }
 
     if (!members) {
       return;
     }
     members.forEach(function (memberName) {
-      var desc;
-      for (var p = obj; p; p = Object.getPrototypeOf(p)) {
-        desc = Object.getOwnPropertyDescriptor(p, memberName);
-        if (desc) {
-          break;
-        }
+      if (memberName[memberName.length - 1] === '#') {
+        // Property mapping
+        var getterName = 'get' + memberName[0].toUpperCase() + memberName.slice(1, -1);
+        var getter = obj[getterName];
+        var setterName = 'set' + memberName[0].toUpperCase() + memberName.slice(1, -1);
+        var setter = obj[setterName];
+        release || Debug.assert(getter || setter, 'define getter or setter')
+        wrap.alSetOwnProperty(memberName.slice(0, -1), {
+          flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE,
+          get: getter ? new AVM1NativeFunction(context, getter) : undefined,
+          set: setter ? new AVM1NativeFunction(context, setter) : undefined
+        })
+        return;
       }
+
+      var desc = getMemberDescriptor(memberName);
       if (!desc) {
         return;
       }
       if (desc.get || desc.set) {
+        // TODO refactor to remove accessor property support, reason is that
+        // for static properties we need to pass context or static class state
+        // console.warn('Redefine ' + memberName + ' property getter/setter as functions');
         wrap.alSetOwnProperty(memberName, {
           flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE,
           get: desc.get ? new AVM1NativeFunction(context, desc.get) : undefined,
@@ -292,13 +314,16 @@ module Shumway.AVM1.Lib {
     });
   }
 
-  export function wrapAVM1NativeClass(context: AVM1Context, wrapAsFunction: boolean, cls: any, staticMembers: string[], members: string[], cstr?: Function): AVM1Object  {
+  export function wrapAVM1NativeClass(context: AVM1Context, wrapAsFunction: boolean, cls: any, staticMembers: string[], members: string[], call?: Function, cstr?: Function): AVM1Object  {
     var wrappedFn = wrapAsFunction ?
-      new AVM1NativeFunction(context, cstr || function () { }, function () {
+      new AVM1NativeFunction(context, call || function () { }, function () {
         // Creating simple AVM1 object
         var obj = new AVM1Object(context);
         obj.alPrototype = wrappedPrototype;
         obj.alSetOwnConstructorProperty(wrappedFn);
+        if (cstr) {
+          cstr.apply(obj, arguments);
+        }
         return obj;
       }) :
       new AVM1Object(context);

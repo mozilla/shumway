@@ -193,6 +193,13 @@ declare module Shumway.AVMX.AS.flash {
     class AVM1Movie extends DisplayObject {}
     class BitmapData extends ASObject {
       static axClass: typeof BitmapData;
+
+      width: number;
+      height: number;
+      transparent: boolean;
+      constructor(width: number, height: number, trasparent: boolean, fillColor: number);
+      clone();
+      compare(otherBitmapData: BitmapData): boolean;
     }
     class Bitmap extends DisplayObject {
       constructor();
@@ -350,8 +357,8 @@ declare module Shumway.AVMX.AS.flash {
       bottomScrollV;
       condenseWhite: boolean;
       embedFonts: boolean;
-      getTextFormat: Function;
-      setTextFormat: Function;
+      getTextFormat: (beginIndex: number, endIndex: number) => TextFormat;
+      setTextFormat: (tf: TextFormat, beginIndex: number, endIndex: number) => void;
       scrollH: number;
       scrollV: number;
       htmlText: string;
