@@ -2045,9 +2045,22 @@ module Shumway.AVMX.AS {
       this.setProperty(anyMultiname, value);
       return this;
     }
-    setLocalName(name: any): void {
-
-      notImplemented("public.XML::setLocalName"); return;
+    // 13.4.4.34 XML.prototype.setLocalName( name )
+    setLocalName(name_: any): void {
+      // Step 1.
+      if (this._kind === ASXMLKind.Text || this._kind === ASXMLKind.Comment) {
+        return;
+      }
+      var name;
+      // Step 2.
+      if (name_ && name_.axClass === this.sec.AXQName) {
+        name = name_.localName;
+      } else {
+        // Step 3.
+        name = axCoerceString(name_);
+      }
+      // Step 4.
+      this._name.name = name;
     }
     // 13.4.4.35 XML.prototype.setName( name )
     setName(name_: any): void {
