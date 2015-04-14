@@ -354,8 +354,8 @@ module Shumway.AVM1.Lib {
       // ignoring scene parameter ?
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
       var frameNum = arguments.length < 2 ? arguments[0] : arguments[1];
-      var framesLoaded = nativeTarget._framesloaded;
-      var totalFrames = nativeTarget._totalframes;
+      var framesLoaded = nativeTarget.alGet('_framesloaded');
+      var totalFrames = nativeTarget.alGet('_totalframes');
       // The (0-based) requested frame index is clamped to (the 1-based) totalFrames value.
       // I.e., asking if frame 20 is loaded in a timline with only 10 frames returns true if all
       // frames have been loaded.

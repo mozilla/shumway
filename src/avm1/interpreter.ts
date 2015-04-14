@@ -904,11 +904,12 @@ module Shumway.AVM1 {
         name = objPath.pop();
         obj = currentContext.globals;
         for (i = 0; i < objPath.length; i++) {
-          if (obj.alHasProperty(objPath[i])) {
+          var nextObj = obj.alGet(objPath[i]);
+          if (isNullOrUndefined(nextObj)) {
             avm1Warn(objPath.slice(0, i + 1) + ' is undefined');
             return null;
           }
-          obj = alToObject(currentContext, obj.alGet(objPath[i]));
+          obj = alToObject(currentContext, nextObj);
         }
       } else {
         release || Debug.assert(false, 'AVM1 variable has no path');
@@ -2040,11 +2041,11 @@ module Shumway.AVM1 {
             console.log(Object.getPrototypeOf(e));
             console.log(Object.getPrototypeOf(Object.getPrototypeOf(e)));
             console.error('AVM1 error: ' + e);
-// REDUX
-//            var avm2 = Shumway.AVM2.Runtime.AVM2;
-//            avm2.instance.exceptions.push({source: 'avm1', message: e.message,
-//              stack: e.stack});
-            executionContext.recoveringFromError = true;
+            // REDUX
+            //var avm2 = Shumway.AVM2.Runtime.AVM2;
+            //avm2.instance.exceptions.push({source: 'avm1', message: e.message,
+            //  stack: e.stack});
+            //executionContext.recoveringFromError = true;
           }
         }
       };
@@ -2519,9 +2520,10 @@ module Shumway.AVM1 {
             throw new AVM1CriticalError('long running script -- AVM1 errors limit is reached');
           }
           console.error('AVM1 error: ' + e);
-          var avm2 = null; // REDUX: Shumway.AVM2.Runtime.AVM2;
-          avm2.instance.exceptions.push({source: 'avm1', message: e.message,
-            stack: e.stack});
+          // REDUX
+          //var avm2 = Shumway.AVM2.Runtime.AVM2;
+          //avm2.instance.exceptions.push({source: 'avm1', message: e.message,
+          //  stack: e.stack});
           executionContext.recoveringFromError = true;
         }
       }
