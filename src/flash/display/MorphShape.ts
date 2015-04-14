@@ -67,7 +67,7 @@ module Shumway.AVMX.AS.flash.display {
     static FromData(data: any, loaderInfo: flash.display.LoaderInfo): MorphShapeSymbol {
       var symbol = new MorphShapeSymbol(data, loaderInfo.sec);
       symbol._setBoundsFromData(data);
-      symbol.graphics = flash.display.Graphics.FromData(data);
+      symbol.graphics = flash.display.Graphics.FromData(data, loaderInfo);
       symbol.processRequires(data.require, loaderInfo);
       symbol.morphFillBounds = data.morphFillBounds;
       symbol.morphLineBounds = data.morphLineBounds;

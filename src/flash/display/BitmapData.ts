@@ -60,9 +60,6 @@ module Shumway.AVMX.AS.flash.display {
       this._bitmapReferrers = [];
     }
 
-    static classSymbols: string [] = null; // [];
-    static instanceSymbols: string [] = null; // ["rect"];
-
     static MAXIMUM_WIDTH: number = 8191;
     static MAXIMUM_HEIGHT: number = 8191;
     static MAXIMUM_DIMENSION: number = 16777215;
@@ -74,7 +71,10 @@ module Shumway.AVMX.AS.flash.display {
       transparent = !!transparent;
       fillColorARGB = fillColorARGB | 0;
       super();
-      release || assert(!this._symbol);
+      if (this._symbol) {
+        this.applySymbol();
+        return;
+      }
       if (width > BitmapData.MAXIMUM_WIDTH || width <= 0 ||
           height > BitmapData.MAXIMUM_HEIGHT || height <= 0 ||
           width * height > BitmapData.MAXIMUM_DIMENSION) {
@@ -684,7 +684,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     getPixels(rect: flash.geom.Rectangle): flash.utils.ByteArray {
-      var outputByteArray = new flash.utils.ByteArray();
+      var outputByteArray = new this.sec.flash.utils.ByteArray();
       this.copyPixelsToByteArray(rect, outputByteArray);
       return outputByteArray;
     }
@@ -698,7 +698,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     getVector(rect: flash.geom.Rectangle): Uint32Vector {
-      var outputVector = new Uint32Vector(pixelData.length);
+      var outputVector = new this.sec.Uint32Vector(pixelData.length);
       var pixelData = this._getPixelData(rect);
       if (!pixelData) {
         return outputVector;

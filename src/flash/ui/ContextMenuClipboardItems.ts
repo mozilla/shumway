@@ -80,7 +80,7 @@ module Shumway.AVMX.AS.flash.ui {
       this._selectAll = !!val;
     }
     clone(): ContextMenuClipboardItems {
-      var items = new ui.ContextMenuClipboardItems();
+      var items = new this.sec.flash.ui.ContextMenuClipboardItems();
       items._cut = this._cut;
       items._copy = this._copy;
       items._paste = this._paste;

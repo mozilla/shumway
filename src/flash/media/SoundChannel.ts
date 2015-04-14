@@ -217,7 +217,8 @@ module Shumway.AVMX.AS.flash.media {
     set soundTransform(sndTransform: flash.media.SoundTransform) {
       somewhatImplemented("public flash.media.SoundChannel::set soundTransform");
       this._soundTransform = isNullOrUndefined(sndTransform) ?
-        new flash.media.SoundTransform() : sndTransform;
+                             new this.sec.flash.media.SoundTransform() :
+                             sndTransform;
       SoundMixer._updateSoundSource(this);
     }
     get leftPeak(): number {

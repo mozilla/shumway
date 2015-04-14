@@ -483,8 +483,7 @@ module Shumway.AVMX.AS.flash.display {
       };
       var symbol = BitmapSymbol.FromData(data, this._contentLoaderInfo);
       this._imageSymbol = symbol;
-      var resolver: Timeline.IAssetResolver = this.sec.player;
-      resolver.registerImage(symbol, data);
+      this.sec.player.registerImage(symbol, data);
       release || assert(symbol.resolveAssetPromise);
     }
 
@@ -539,7 +538,7 @@ module Shumway.AVMX.AS.flash.display {
             var symbolMapping = file.symbolClassesList[i];
             var symbolClass = system.getClass(Multiname.FromFQNString(symbolMapping.className,
                                                                       NamespaceType.Public));
-            Object.defineProperty(symbolClass, "defaultInitializerArgument",
+            Object.defineProperty(symbolClass.tPrototype, "_symbol",
                                   {get: loaderInfo.getSymbolResolver(symbolClass, symbolMapping.id),
                                    configurable: true});
           }

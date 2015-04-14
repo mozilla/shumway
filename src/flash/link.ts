@@ -35,6 +35,8 @@ interface ISecurityDomain {
       Bitmap: typeof flashPackage.display.Bitmap;
       BitmapData: typeof flashPackage.display.BitmapData;
       SimpleButton: typeof flashPackage.display.SimpleButton;
+      Scene: typeof flashPackage.display.Scene;
+      FrameLabel: typeof flashPackage.display.FrameLabel;
     };
     events: {
       EventDispatcher: typeof flashPackage.events.EventDispatcher;
@@ -73,6 +75,9 @@ interface ISecurityDomain {
     };
     ui: {
       Mouse: typeof flashPackage.ui.Mouse;
+      ContextMenu: typeof flashPackage.ui.ContextMenu;
+      ContextMenuBuiltInItems: typeof flashPackage.ui.ContextMenuBuiltInItems;
+      ContextMenuClipboardItems: typeof flashPackage.ui.ContextMenuClipboardItems;
     }
     geom: {
       Point: typeof flashPackage.geom.Point;
@@ -89,6 +94,7 @@ interface ISecurityDomain {
       URLStream: typeof flashPackage.net.URLStream;
       NetStreamInfo: typeof flashPackage.net.NetStreamInfo;
       URLVariables: typeof flashPackage.net.URLVariables;
+      SharedObject: typeof flashPackage.net.SharedObject;
     }
     utils: {
       ByteArray: typeof flashPackage.utils.ByteArray;
@@ -243,7 +249,11 @@ module Shumway.AVMX.AS {
 
   export function constructClassFromSymbol(symbol: Timeline.Symbol, axClass: ASClass) {
     var instance = Object.create(axClass.tPrototype);
-    instance._symbol = symbol;
+    if (instance._symbol) {
+      release || Debug.assert(instance._symbol === symbol);
+    } else {
+      instance._symbol = symbol;
+    }
     instance.applySymbol();
     return instance;
   }

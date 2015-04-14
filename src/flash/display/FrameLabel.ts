@@ -22,22 +22,11 @@ module Shumway.AVMX.AS.flash.display {
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
     constructor (name: string, frame: number /*int*/) {
       super();
       this._name = axCoerceString(name);
       this._frame = frame | 0;
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
     
     private _name: string;
     private _frame: number /*int*/;
@@ -50,7 +39,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     clone() {
-      return new FrameLabel(this._name, this._frame);
+      return new this.sec.flash.display.FrameLabel(this._name, this._frame);
     }
   }
 }

@@ -357,8 +357,8 @@ module Shumway.AVMX.AS.flash.display {
       this._isDirty = true;
     }
 
-    static FromData(data: any): Graphics {
-      var graphics: Graphics = new flash.display.Graphics();
+    static FromData(data: any, loaderInfo: LoaderInfo): Graphics {
+      var graphics: Graphics = new loaderInfo.sec.flash.display.Graphics();
       graphics._graphicsData = ShapeData.FromPlainObject(data.shape);
       if (data.lineBounds) {
         graphics._lineBounds.copyFrom(data.lineBounds);

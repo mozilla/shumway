@@ -80,7 +80,7 @@ module Shumway.AVMX.AS.flash.net {
       notImplemented("public flash.net.SharedObject::static getDiskUsage"); return;
     }
     static _create(path: string, data: any): SharedObject {
-      var obj = new SharedObject();
+      var obj = new this.sec.flash.net.SharedObject();
       obj._path = path;
       obj._data = data;
       obj._objectEncoding = SharedObject._defaultObjectEncoding;

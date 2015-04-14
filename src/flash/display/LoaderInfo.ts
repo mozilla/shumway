@@ -261,7 +261,7 @@ module Shumway.AVMX.AS.flash.display {
 
     get bytes(): flash.utils.ByteArray {
       if (!this._file) {
-        return new flash.utils.ByteArray();
+        return new this.sec.flash.utils.ByteArray();
       }
       notImplemented("public flash.display.LoaderInfo::get bytes");
       return null;
@@ -421,7 +421,7 @@ module Shumway.AVMX.AS.flash.display {
         Debug.warning("Attempt to resolve symbol for AVM2 class failed: Symbol " +
                       symbolId + " not found.");
       } else {
-        Object.defineProperty(classDefinition, "defaultInitializerArgument", {value: symbol});
+        Object.defineProperty(classDefinition.tPrototype, "_symbol", {value: symbol});
         return symbol;
       }
     }

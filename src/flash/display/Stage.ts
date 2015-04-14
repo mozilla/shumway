@@ -52,7 +52,7 @@ module Shumway.AVMX.AS.flash.display {
       this._fullScreenWidth = 0;
       this._fullScreenHeight = 0;
       this._wmodeGPU = false;
-      this._softKeyboardRect = new flash.geom.Rectangle();
+      this._softKeyboardRect = new this.sec.flash.geom.Rectangle();
       this._allowsFullScreen = false;
       this._allowsFullScreenInteractive = false;
       this._contentsScaleFactor = 1;

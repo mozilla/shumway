@@ -393,7 +393,7 @@ module Shumway.AVMX.AS.flash.display {
           }
         }
         if (frame.labelName) {
-          symbol.labels.push(new flash.display.FrameLabel(frame.labelName, i + 1));
+          symbol.labels.push(new loaderInfo.sec.flash.display.FrameLabel(frame.labelName, i + 1));
         }
         symbol.frames.push(frame);
       }

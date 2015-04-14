@@ -378,7 +378,8 @@ module Shumway.AVMX.AS.flash.display {
       var symbolClass = symbol.symbolClass;
 
       var bitmapDataClass = this.sec.flash.display.BitmapData.axClass;
-      if (bitmapDataClass.dPrototype.isPrototypeOf(symbolClass.dPrototype)) {
+      if (symbolClass === bitmapDataClass ||
+          bitmapDataClass.dPrototype.isPrototypeOf(symbolClass.dPrototype)) {
         symbolClass = this.sec.flash.display.Bitmap.axClass;
       }
       var instance: DisplayObject = constructClassFromSymbol(symbol, symbolClass);

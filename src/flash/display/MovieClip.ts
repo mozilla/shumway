@@ -343,14 +343,10 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     get scenes(): ASArray /* flash.display [] */ {
-      return this._getScenes();
-    }
-
-    private _getScenes(): ASArray /* flash.display [] */ {
       var scenes = this._scenes ? this._scenes.map(function (x: flash.display.Scene) {
         return x.clone();
       }) : [];
-      return this.sec.createArray(scenes);
+      return this.sec.createArrayUnsafe(scenes);
     }
 
     get currentScene(): Scene {
@@ -363,7 +359,7 @@ module Shumway.AVMX.AS.flash.display {
       return label ? label.name : null;
     }
 
-    get currentLabels(): FrameLabel[] {
+    get currentLabels(): {value: FrameLabel[]} {
       return this._sceneForFrameIndex(this._currentFrame).labels;
     }
 
@@ -652,11 +648,11 @@ module Shumway.AVMX.AS.flash.display {
         if (scene.offset > frame) {
           return label;
         }
-        var labels = scene.labels;
+        var labels = scene.labels.value;
         for (var j = 0; j < labels.length; j++) {
           var currentLabel = labels[j];
           if (currentLabel.frame > frame - scene.offset) {
-            return label;
+            return label.clone();
           }
           label = currentLabel;
         }
@@ -786,14 +782,15 @@ module Shumway.AVMX.AS.flash.display {
       }
     }
 
-    addScene(name: string, labels: any [], offset: number, numFrames: number): void {
-      this._scenes.push(new Scene(name, labels, offset, numFrames));
+    addScene(name: string, labels_: FrameLabel[], offset: number, numFrames: number): void {
+      var labels = this.sec.createArrayUnsafe(labels_);
+      this._scenes.push(new this.sec.flash.display.Scene(name, labels, offset, numFrames));
     }
 
     addFrameLabel(name: string, frame: number): void {
       var scene = this._sceneForFrameIndex(frame);
       if (!scene.getLabelByName(name, false)) {
-        scene.labels.push(new flash.display.FrameLabel(name, frame - scene.offset));
+        scene.labels.value.push(new this.sec.flash.display.FrameLabel(name, frame - scene.offset));
       }
     }
 

@@ -208,7 +208,7 @@ module Shumway.AVMX.AS.flash.events {
     private _getGlobalPoint(): flash.geom.Point {
       var point = this._position;
       if (!point) {
-        point = this._position = new flash.geom.Point();
+        point = this._position = new this.sec.flash.geom.Point();
       }
       if (this.target) {
         point.setTo(this._localX, this._localY);

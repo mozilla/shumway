@@ -25,7 +25,7 @@ module Shumway.AVMX.AS.flash.ui {
     
     constructor () {
       super();
-      this.builtInItems = new ui.ContextMenuBuiltInItems();
+      this.builtInItems = new this.sec.flash.ui.ContextMenuBuiltInItems();
       this.customItems = [];
     }
     
@@ -106,7 +106,7 @@ module Shumway.AVMX.AS.flash.ui {
     }
 
     clone(): ContextMenu {
-      var result = new ui.ContextMenu();
+      var result = new this.sec.flash.ui.ContextMenu();
       result.builtInItems = this.builtInItems.clone();
 
       this.cloneLinkAndClipboardProperties(result);

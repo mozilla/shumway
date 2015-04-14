@@ -60,13 +60,15 @@ module Shumway.AVMX.AS.flash.media {
     static get soundTransform(): flash.media.SoundTransform {
       somewhatImplemented("public flash.media.SoundMixer::get soundTransform");
       return isNullOrUndefined(SoundMixer._soundTransform) ?
-        new flash.media.SoundTransform() :
-        new flash.media.SoundTransform(SoundMixer._soundTransform.volume, SoundMixer._soundTransform.pan);
+             new this.sec.flash.media.SoundTransform() :
+             new this.sec.flash.media.SoundTransform(SoundMixer._soundTransform.volume,
+                                                     SoundMixer._soundTransform.pan);
     }
     static set soundTransform(sndTransform: flash.media.SoundTransform) {
       somewhatImplemented("public flash.media.SoundMixer::set soundTransform");
       SoundMixer._soundTransform = isNullOrUndefined(sndTransform) ?
-        new flash.media.SoundTransform() : sndTransform;
+                                   new this.sec.flash.media.SoundTransform() :
+                                   sndTransform;
       SoundMixer._updateAllSoundSources();
     }
     static get audioPlaybackMode(): string {
