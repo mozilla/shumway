@@ -384,10 +384,10 @@ module Shumway.AVM1.Lib {
         levelNumber = parseInt(levelStr, 10);
         loadLevel = levelNumber.toString() === levelStr;
       }
-      var loader: flash.display.Loader = new flash.display.Loader();
+      var loader: flash.display.Loader = new this.context.sec.flash.display.Loader();
       if (loadLevel) {
         this._setLevel(levelNumber, loader);
-        var request: flash.net.URLRequest = new flash.net.URLRequest(url);
+        var request: flash.net.URLRequest = new this.context.sec.flash.net.URLRequest(url);
         if (method) {
           request.method = method;
         }
@@ -410,9 +410,9 @@ module Shumway.AVM1.Lib {
         return this.fscommand(url.substring('fscommand:'.length));
       }
 
-      var loader: flash.display.Loader = new flash.display.Loader();
+      var loader: flash.display.Loader = new this.context.sec.flash.display.Loader();
       this._setLevel(level, loader);
-      var request = new flash.net.URLRequest(url);
+      var request = new this.context.sec.flash.net.URLRequest(url);
       if (method) {
         request.method = method;
       }
@@ -430,12 +430,12 @@ module Shumway.AVM1.Lib {
     }
 
     _loadVariables(nativeTarget: IAVM1SymbolBase, url: string, method: string): void {
-      var request = new flash.net.URLRequest(url);
+      var context = this.context;
+      var request = new context.sec.flash.net.URLRequest(url);
       if (method) {
         request.method = method;
       }
-      var context = this.context;
-      var loader = new flash.net.URLLoader(request);
+      var loader = new context.sec.flash.net.URLLoader(request);
       loader._ignoreDecodeErrors = true;
       loader.dataFormat = 'variables'; // flash.net.URLLoaderDataFormat.VARIABLES;
       function completeHandler(event: flash.events.Event): void {
@@ -528,8 +528,11 @@ module Shumway.AVM1.Lib {
 
     public startDrag(target, lock, left, top, right, bottom) {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
-      nativeTarget.startDrag(lock, arguments.length < 3 ? null :
-        new flash.geom.Rectangle(left, top, right - left, bottom - top));
+      nativeTarget.startDrag(lock, arguments.length < 3 ?
+                                   null :
+                                   new this.context.sec.flash.geom.Rectangle(left, top,
+                                                                             right - left,
+                                                                             bottom - top));
     }
     public stop() {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);

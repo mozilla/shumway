@@ -31,7 +31,7 @@ module Shumway.AVM1.Lib {
     private _target: IAVM1SymbolBase;
 
     public avm1Constructor() {
-      this._loader = new flash.display.Loader();
+      this._loader = new this.context.sec.flash.display.Loader();
     }
 
     public loadClip(url: string, target):Boolean {
@@ -46,7 +46,7 @@ module Shumway.AVM1.Lib {
       this._loader.contentLoaderInfo.addEventListener(flash.events.Event.COMPLETE, this.completeHandler.bind(this));
       this._loader.contentLoaderInfo.addEventListener(flash.events.Event.INIT, this.initHandler.bind(this));
 
-      this._loader.load(new flash.net.URLRequest(url));
+      this._loader.load(new this.context.sec.flash.net.URLRequest(url));
       // TODO: find out under which conditions we should return false here
       return true;
     }

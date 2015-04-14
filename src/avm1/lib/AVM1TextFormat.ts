@@ -206,7 +206,7 @@ module Shumway.AVM1.Lib {
 
       var measureTextField = AVM1TextFormat._measureTextField;
       if (!measureTextField) {
-        measureTextField = new flash.text.TextField();
+        measureTextField = new this.context.sec.flash.text.TextField();
         measureTextField.multiline = true;
         AVM1TextFormat._measureTextField = measureTextField;
       }
