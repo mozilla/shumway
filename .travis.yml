@@ -5,7 +5,7 @@ node_js:
 before_script:
   - npm update -g npm
   - npm install grunt-cli
-  - sudo apt-get install ia32-libs parallel
+  - sudo apt-get install parallel
 
 notifications:
   irc: "irc.mozilla.org#shumway"
