@@ -131,23 +131,23 @@ module.exports = function(grunt) {
       },
       smoke_play: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -x -md 1000 -v -tp 60 -v {}'
+        cmd: 'find -L test/swf -name "*.swf" | parallel --gnu --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -x -md 1000 -v -tp 60 -v {}'
       },
       // Run this to make sure the SWF parser still works.
       test_swf_avm2_parse: {
         maxBuffer: Infinity,
-        cmd: 'awk \'{print "test/ats/swfs/" $0}\' test/ats/avm2_swfs.txt | parallel --no-notice -X -N50 utils/jsshell/js build/ts/shell.js -p -v' +
+        cmd: 'awk \'{print "test/ats/swfs/" $0}\' test/ats/avm2_swfs.txt | parallel --gnu --no-notice -X -N50 utils/jsshell/js build/ts/shell.js -p -v' +
                    (grunt.option('verbose') ? '-v ' : '') + ' {}'
       },
       test_swf_avm2: {
         maxBuffer: Infinity,
-        cmd: 'cat test/ats/test_swf_avm2.txt | parallel -k --no-notice -X -N50 utils/jsshell/js build/ts/shell.js -x -fc 10 {} > test/ats/test_swf_avm2.run; ' +
+        cmd: 'cat test/ats/test_swf_avm2.txt | parallel -k --gnu --no-notice -X -N50 utils/jsshell/js build/ts/shell.js -x -fc 10 {} > test/ats/test_swf_avm2.run; ' +
              'if [ ! -f "test/ats/test_swf_avm2.baseline" ]; then echo "Creating Baseline"; cp test/ats/test_swf_avm2.run test/ats/test_swf_avm2.baseline; fi;' +
              'diff test/ats/test_swf_avm2.run test/ats/test_swf_avm2.baseline;'
       },
       test_swf_avm2_all: {
         maxBuffer: Infinity,
-        cmd: 'mongo ats --eval \'db.swfs.find({"parse_result.uses_avm1": false}).forEach(function (x) { print("test/ats/swfs/" + x.file); })\' | parallel -k --no-notice -X -N10 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | tee test/ats/test_swf_avm2_all.run;'
+        cmd: 'mongo ats --eval \'db.swfs.find({"parse_result.uses_avm1": false}).forEach(function (x) { print("test/ats/swfs/" + x.file); })\' | parallel -k --gnu --no-notice -X -N10 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | tee test/ats/test_swf_avm2_all.run;'
       },
       // Greps for avm2 errors.
       warn_avm2: {
@@ -206,12 +206,12 @@ module.exports = function(grunt) {
       // Parses all ABCs in the acceptance suite. This is useful to run if you've made changes to the parser.
       test_avm2_acceptance_parse: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/avm2/acceptance -name "*.abc" | parallel -k --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -d -v {}'
+        cmd: 'find -L test/avm2/acceptance -name "*.abc" | parallel -k --gnu --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -d -v {}'
       },
       // Runs SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
       test_swf_acceptance: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel -k --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort > test/swf/acceptance.run && ' +
+        cmd: 'find -L test/swf -name "*.swf" | parallel -k --gnu --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort > test/swf/acceptance.run && ' +
              'diff test/swf/acceptance.run test/swf/acceptance.baseline'
       },
       // Runs archive SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
@@ -219,7 +219,7 @@ module.exports = function(grunt) {
       // to make this part of grunt gate.
       test_arch_acceptance: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/arch/swfs -name "*.swf" | parallel --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | tee test/arch/acceptance.run;' +
+        cmd: 'find -L test/arch/swfs -name "*.swf" | parallel --gnu --no-notice -X -N1 --timeout 200% utils/jsshell/js build/ts/shell.js -x -fc 10 {} | tee test/arch/acceptance.run;' +
              'echo "Output saved to test/arch/acceptance.run, at some point create a baseline and stick to it."'
              // 'diff test/arch/acceptance.run test/arch/acceptance.baseline'
       },
