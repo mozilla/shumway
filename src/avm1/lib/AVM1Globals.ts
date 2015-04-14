@@ -304,7 +304,7 @@ module Shumway.AVM1.Lib {
 
     public getAVM1Property(target, index) {
       var nativeTarget = AVM1Utils.resolveTarget(this.context, target);
-      return nativeTarget[PropertiesIndexMap[index]];
+      return nativeTarget.alGet(PropertiesIndexMap[index]);
     }
 
     public getTimer(): number {
@@ -533,7 +533,7 @@ module Shumway.AVM1.Lib {
 
     public setAVM1Property(target, index, value) {
       var nativeTarget = AVM1Utils.resolveTarget(this.context, target);
-      nativeTarget[PropertiesIndexMap[index]] = value;
+      nativeTarget.alPut(PropertiesIndexMap[index], value);
     }
 
     public startDrag(target, lock, left, top, right, bottom) {

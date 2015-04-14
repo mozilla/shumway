@@ -294,7 +294,7 @@ module Shumway.AVM1 {
         obj = isAVM1MovieClip(obj) ? (<Lib.AVM1MovieClip>obj)._lookupChildByName(path[0]) : null;
         if (!obj) {
           avm1Warn(path[0] + ' (expr ' + targetPath + ') is not found in ' +
-            (<Lib.AVM1MovieClip>prevObj)._target);
+            (<Lib.AVM1MovieClip>prevObj).get_target());
           return defaultTarget;
         }
         path.shift();

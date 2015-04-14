@@ -47,11 +47,11 @@ module Shumway.AVM1.Lib {
     static createAVM1Class(context: AVM1Context) : AVM1Object {
       return wrapAVM1NativeClass(context, true, AVM1Button,
         [],
-        [ '_alpha', 'blendMode', 'cacheAsBitmap', 'enabled', 'filters', '_focusrect',
-          'getDepth', '_height', '_highquality', 'menu', '_name', '_parent', '_quality',
-          '_rotation', 'scale9Grid', '_soundbuftime', 'tabEnabled', 'tabIndex', '_target',
-          'trackAsMenu', '_url', 'useHandCursor', '_visible', '_width',
-          '_x', '_xmouse', '_xscale', '_y', '_ymouse', '_yscale']);
+        [ '_alpha#', 'blendMode#', 'cacheAsBitmap#', 'enabled#', 'filters#', '_focusrect#',
+          'getDepth', '_height#', '_highquality#', 'menu#', '_name#', '_parent#', '_quality#',
+          '_rotation#', 'scale9Grid#', '_soundbuftime#', 'tabEnabled#', 'tabIndex#', '_target#',
+          'trackAsMenu#', '_url#', 'useHandCursor#', '_visible#', '_width#',
+          '_x#', '_xmouse#', '_xscale#', '_y#', '_ymouse#', '_yscale#']);
     }
 
     public initAVM1SymbolInstance(context: AVM1Context, as3Object: flash.display.SimpleButton) {
@@ -111,51 +111,51 @@ module Shumway.AVM1.Lib {
       this._initEventsHandlers();
     }
 
-    public get _alpha() {
+    public get_alpha() {
       return this._as3Object.alpha;
     }
 
-    public set _alpha(value) {
+    public set_alpha(value) {
       this._as3Object.alpha = value;
     }
 
-    public get blendMode() {
+    public getBlendMode() {
       return this._as3Object.blendMode;
     }
 
-    public set blendMode(value) {
+    public setBlendMode(value) {
       this._as3Object.blendMode = value;
     }
 
-    public get cacheAsBitmap() {
+    public getCacheAsBitmap() {
       return this._as3Object.cacheAsBitmap;
     }
 
-    public set cacheAsBitmap(value) {
+    public setCacheAsBitmap(value) {
       this._as3Object.cacheAsBitmap = value;
     }
 
-    public get enabled() {
+    public getEnabled() {
       return this._as3Object.enabled;
     }
 
-    public set enabled(value) {
+    public setEnabled(value) {
       this._as3Object.enabled = value;
     }
 
-    public get filters() {
+    public getFilters() {
       throw 'Not implemented: get$filters';
     }
 
-    public set filters(value) {
+    public setFilters(value) {
       throw 'Not implemented: set$filters';
     }
 
-    public get _focusrect() {
+    public get_focusrect() {
       throw 'Not implemented: get$_focusrect';
     }
 
-    public set _focusrect(value) {
+    public set_focusrect(value) {
       throw 'Not implemented: set$_focusrect';
     }
 
@@ -163,185 +163,185 @@ module Shumway.AVM1.Lib {
       return (<any>this._as3Object)._clipDepth;
     }
 
-    public get _height() {
+    public get_height() {
       return this._as3Object.height;
     }
 
-    public set _height(value) {
+    public set_height(value) {
       if (isNaN(value)) {
         return;
       }
       this._as3Object.height = value;
     }
 
-    public get _highquality() {
+    public get_highquality() {
       return 1;
     }
 
-    public set _highquality(value) {
+    public set_highquality(value) {
       // TODO
     }
 
-    public get menu() {
+    public getMenu() {
       return this._as3Object.contextMenu;
     }
 
-    public set menu(value) {
+    public setMenu(value) {
       this._as3Object.contextMenu = value;
     }
 
-    public get _name() {
+    public get_name() {
       return this._as3Object.contextMenu;
     }
 
-    public set _name(value) {
+    public set_name(value) {
       this._as3Object.contextMenu = value;
     }
 
-    public get _parent() {
+    public get_parent() {
       return getAVM1Object(this._as3Object.parent, this.context);
     }
 
-    public set _parent(value) {
+    public set_parent(value) {
       throw 'Not implemented: set$_parent';
     }
 
-    public get _quality() {
+    public get_quality() {
       return 'HIGH';
     }
 
-    public set _quality(value) {
+    public set_quality(value) {
     }
 
-    public get _rotation() {
+    public get_rotation() {
       return this._as3Object.rotation;
     }
 
-    public set _rotation(value) {
+    public set_rotation(value) {
       this._as3Object.rotation = value;
     }
 
-    public get scale9Grid() {
+    public getScale9Grid() {
       throw 'Not implemented: get$scale9Grid';
     }
 
-    public set scale9Grid(value) {
+    public setScale9Grid(value) {
       throw 'Not implemented: set$scale9Grid';
     }
 
-    public get _soundbuftime() {
+    public get_soundbuftime() {
       throw 'Not implemented: get$_soundbuftime';
     }
 
-    public set _soundbuftime(value) {
+    public set_soundbuftime(value) {
       throw 'Not implemented: set$_soundbuftime';
     }
 
-    public get tabEnabled() {
+    public getTabEnabled() {
       return this._as3Object.tabEnabled;
     }
 
-    public set tabEnabled(value) {
+    public setTabEnabled(value) {
       this._as3Object.tabEnabled = value;
     }
 
-    public get tabIndex() {
+    public getTabIndex() {
       return this._as3Object.tabIndex;
     }
 
-    public set tabIndex(value) {
+    public setTabIndex(value) {
       this._as3Object.tabIndex = value;
     }
 
-    public get _target() {
+    public get_target() {
       return AVM1Utils.getTarget(this);
     }
 
-    public get trackAsMenu() {
+    public getTrackAsMenu() {
       throw 'Not implemented: get$trackAsMenu';
     }
 
-    public set trackAsMenu(value) {
+    public setTrackAsMenu(value) {
       throw 'Not implemented: set$trackAsMenu';
     }
 
-    public get _url() {
+    public get_url() {
       return this._as3Object.loaderInfo.url;
     }
 
-    public get useHandCursor() {
+    public getUseHandCursor() {
       return this._as3Object.useHandCursor;
     }
 
-    public set useHandCursor(value) {
+    public setUseHandCursor(value) {
       this._as3Object.useHandCursor = value;
     }
 
-    public get _visible() {
+    public get_visible() {
       return this._as3Object.visible;
     }
 
-    public set _visible(value) {
+    public set_visible(value) {
       this._as3Object.visible = +value !== 0;
     }
 
-    public get _width() {
+    public get_width() {
       return this._as3Object.width;
     }
 
-    public set _width(value) {
+    public set_width(value) {
       if (isNaN(value)) {
         return;
       }
       this._as3Object.width = value;
     }
 
-    public get _x() {
+    public get_x() {
       return this._as3Object.x;
     }
 
-    public set _x(value) {
+    public set_x(value) {
       if (isNaN(value)) {
         return;
       }
       this._as3Object.x = value;
     }
 
-    public get _xmouse() {
+    public get_xmouse() {
       return this._as3Object.mouseX;
     }
 
-    public get _xscale() {
+    public get_xscale() {
       return this._as3Object.scaleX;
     }
 
-    public set _xscale(value) {
+    public set_xscale(value) {
       if (isNaN(value)) {
         return;
       }
       this._as3Object.scaleX = value;
     }
 
-    public get _y() {
+    public get_y() {
       return this._as3Object.y;
     }
 
-    public set _y(value) {
+    public set_y(value) {
       if (isNaN(value)) {
         return;
       }
       this._as3Object.y = value;
     }
 
-    public get _ymouse() {
+    public get_ymouse() {
       return this._as3Object.mouseY;
     }
 
-    public get _yscale() {
+    public get_yscale() {
       return this._as3Object.scaleY;
     }
 
-    public set _yscale(value) {
+    public set_yscale(value) {
       if (isNaN(value)) {
         return;
       }

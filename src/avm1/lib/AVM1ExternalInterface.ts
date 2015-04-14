@@ -21,19 +21,18 @@ module Shumway.AVM1.Lib {
 
   export class AVM1ExternalInterface extends AVM1Object {
     static createAVM1Class(context: AVM1Context): AVM1Object {
-      return wrapAVM1NativeClass(context, false, AVM1ExternalInterface,
-        ['available', 'addCallback', 'call'],
+      return wrapAVM1NativeClass(context, true, AVM1ExternalInterface,
+        ['available#', 'addCallback', 'call'],
         []);
     }
 
-    public static get available(): boolean {
-      return false; // REDUX this.sec.flash.external.ExternalInterface.available;
+    public static getAvailable(context: AVM1Context): boolean {
+      return context.sec.flash.external.ExternalInterface.available;
     }
 
-    public static addCallback(methodName: string, instance: any, method: Function): boolean {
+    public static addCallback(context: AVM1Context, methodName: string, instance: any, method: Function): boolean {
       try {
-        var sec; // REDUX
-        sec.flash.external.ExternalInterface.addCallback(methodName, function () {
+        context.sec.flash.external.ExternalInterface.addCallback(methodName, function () {
           return method.apply(instance, arguments);
         });
         return true;
@@ -42,10 +41,9 @@ module Shumway.AVM1.Lib {
       return false;
     }
 
-    public static call(methodName: string): any {
+    public static call(context: AVM1Context, methodName: string): any {
       var args = Array.prototype.slice.call(arguments, 0);
-      var sec; // REDUX
-      return sec.flash.external.ExternalInterface.call(args);
+      return context.sec.flash.external.ExternalInterface.call(args);
     }
   }
 }

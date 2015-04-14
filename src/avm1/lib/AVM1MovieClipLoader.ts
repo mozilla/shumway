@@ -24,7 +24,7 @@ module Shumway.AVM1.Lib {
       return wrapAVM1NativeClass(context, true, AVM1MovieClipLoader,
         [],
         ['loadClip', 'unloadClip', 'getProgress'],
-        AVM1MovieClipLoader.prototype.avm1Constructor);
+        null, AVM1MovieClipLoader.prototype.avm1Constructor);
     }
 
     private _loader: flash.display.Loader;

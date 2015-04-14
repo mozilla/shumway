@@ -21,8 +21,8 @@ module Shumway.AVM1.Lib {
     public static createAVM1Class(context: AVM1Context): AVM1Object {
       var wrapped = new AVM1Stage(context);
       wrapAVM1NativeMembers(context, wrapped, AVM1Stage.prototype,
-        ['align', 'displayState', 'fullScreenSourceRect', 'height', 'scaleMode',
-          'showMenu', 'width'],
+        ['align#', 'displayState#', 'fullScreenSourceRect#', 'height#',
+          'scaleMode#', 'showMenu#', 'width#'],
         false);
       return wrapped;
     }
@@ -31,23 +31,23 @@ module Shumway.AVM1.Lib {
       return (<IAVM1SymbolBase>this.context.root).as3Object.stage; // REDUX
     }
 
-    public get align() { return this._as3Stage.align; }
-    public set align(value) { this._as3Stage.align = value; }
+    public getAlign() { return this._as3Stage.align; }
+    public setAlign(value) { this._as3Stage.align = value; }
 
-    public get displayState() { return this._as3Stage.displayState; }
-    public set displayState(value) { this._as3Stage.displayState = value; }
+    public getDisplayState() { return this._as3Stage.displayState; }
+    public setDisplayState(value) { this._as3Stage.displayState = value; }
 
-    public get fullScreenSourceRect() { return this._as3Stage.fullScreenSourceRect; }
-    public set fullScreenSourceRect(value) { this._as3Stage.fullScreenSourceRect = value; }
+    public getFullScreenSourceRect() { return this._as3Stage.fullScreenSourceRect; }
+    public setFullScreenSourceRect(value) { this._as3Stage.fullScreenSourceRect = value; }
 
-    public get height() { return this._as3Stage.stageHeight; }
+    public getHeight() { return this._as3Stage.stageHeight; }
 
-    public get scaleMode() { return this._as3Stage.scaleMode; }
-    public set scaleMode(value) { this._as3Stage.scaleMode = value; }
+    public getScaleMode() { return this._as3Stage.scaleMode; }
+    public setScaleMode(value) { this._as3Stage.scaleMode = value; }
 
-    public get showMenu() { return this._as3Stage.showDefaultContextMenu; }
-    public set showMenu(value) { this._as3Stage.showDefaultContextMenu = value; }
+    public getShowMenu() { return this._as3Stage.showDefaultContextMenu; }
+    public setShowMenu(value) { this._as3Stage.showDefaultContextMenu = value; }
 
-    public get width() { return this._as3Stage.stageWidth; }
+    public getWidth() { return this._as3Stage.stageWidth; }
   }
 }

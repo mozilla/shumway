@@ -24,10 +24,10 @@ module Shumway.AVM1.Lib {
     static createAVM1Class(context: AVM1Context): AVM1Object {
       return wrapAVM1NativeClass(context, true, AVM1Sound,
         [],
-        ['attachSound', 'duration', 'getBytesLoaded', 'getBytesTotal',
+        ['attachSound', 'duration#', 'getBytesLoaded', 'getBytesTotal',
          'getPan', 'setPan', 'getTransform', 'setTransform', 'getVolume', 'setVolume',
          'start', 'stop'],
-        AVM1Sound.prototype.avm1Constructor);
+        null, AVM1Sound.prototype.avm1Constructor);
     }
 
     private _target: IAVM1SymbolBase;
@@ -58,6 +58,8 @@ module Shumway.AVM1.Lib {
     public loadSound(url: string, isStreaming: boolean): void {}
     public getBytesLoaded(): number { return 0; }
     public getBytesTotal(): number { return 0; }
+
+    public getDuration(): number { return 0; }
 
     public getPan(): number {
       var transform: ASObject = this._channel && this._channel.soundTransform;

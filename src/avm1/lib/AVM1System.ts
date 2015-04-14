@@ -22,15 +22,15 @@ module Shumway.AVM1.Lib {
   export class AVM1System extends AVM1Object {
     static createAVM1Class(context: AVM1Context): AVM1Object {
       return wrapAVM1NativeClass(context, false, AVM1System,
-        ['capabilities', 'security'],
+        ['capabilities#', 'security#'],
         []);
     }
 
-    public static get capabilities() {
+    public static getCapabilities(context: AVM1Context) {
       return undefined; // REDUX flash.system.Capabilities;
     }
 
-    public static get security() {
+    public static getSecurity(context: AVM1Context) {
       return undefined; // REDUX flash.system.Security;
     }
   }

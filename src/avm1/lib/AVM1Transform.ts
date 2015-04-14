@@ -23,7 +23,7 @@ module Shumway.AVM1.Lib {
     static createAVM1Class(context: AVM1Context): AVM1Object {
       return wrapAVM1NativeClass(context, true, AVM1Transform,
         [],
-        ['matrix', 'concatenatedMatrix', 'colorTransform', 'pixelBounds'],
+        ['matrix#', 'concatenatedMatrix#', 'colorTransform#', 'pixelBounds#'],
         AVM1Transform.prototype.avm1Constructor);
     }
 
@@ -33,20 +33,20 @@ module Shumway.AVM1.Lib {
       this._target = AVM1Utils.resolveTarget(this.context, target_mc);
     }
 
-    public get matrix():any {
-      return this._target.as3Object.transform.matrix;
+    public getMatrix(): AVM1Object {
+      return undefined; // REDUX this._target.as3Object.transform.matrix;
     }
 
-    public set matrix(value) {
+    public setMatrix(value: AVM1Object) {
       if (value instanceof flash.geom.Matrix) {
-        this._target.as3Object.transform.matrix = value;
+        // REDUX this._target.as3Object.transform.matrix = value;
         return;
       }
-      if (value == null) {
+      if (isNullOrUndefined(value)) {
         return;
       }
       // It accepts random objects with a,b,c,d,tx,ty properties
-      var m = this.matrix;
+      var m: any = this.getMatrix();  // REDUX
       if (value.alHasProperty('a')) {
         m.a = value.alGet('a');
       }
@@ -68,19 +68,19 @@ module Shumway.AVM1.Lib {
       this._target.as3Object.transform.matrix = m;
     }
 
-    public get concatenatedMatrix(): flash.geom.Matrix {
+    public getConcatenatedMatrix(): flash.geom.Matrix {
       return this._target.as3Object.transform.concatenatedMatrix;
     }
 
-    public get colorTransform(): flash.geom.ColorTransform {
+    public getColorTransform(): flash.geom.ColorTransform {
       return this._target.as3Object.transform.colorTransform;
     }
 
-    public set colorTransform(value: flash.geom.ColorTransform) {
+    public setColorTransform(value: flash.geom.ColorTransform) {
       this._target.as3Object.transform.colorTransform = value;
     }
 
-    public get pixelBounds(): flash.geom.Rectangle {
+    public getPixelBounds(): flash.geom.Rectangle {
       return this._target.as3Object.pixelBounds;
     }
   }

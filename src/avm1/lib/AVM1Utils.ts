@@ -250,12 +250,19 @@ module Shumway.AVM1.Lib {
   }
 
   export function wrapAVM1NativeMembers(context: AVM1Context, wrap: AVM1Object, obj: any, members: string[], prefixFunctions: boolean = false): void  {
-    function wrapFunctionWithPrefix(fn) {
-      return function () {
+    function wrapFunction(fn) {
+      if (isNullOrUndefined(fn)) {
+        return undefined;
+      }
+      release || Debug.assert(typeof fn === 'function');
+      if (!prefixFunctions) {
+        return new AVM1NativeFunction(context, fn);
+      }
+      return new AVM1NativeFunction(context, function () {
         var args = Array.prototype.slice.call(arguments, 0);
         args.unshift(context);
         return fn.apply(this, args);
-      };
+      });
     }
     function getMemberDescriptor(memberName): PropertyDescriptor {
       var desc;
@@ -280,9 +287,9 @@ module Shumway.AVM1.Lib {
         var setter = obj[setterName];
         release || Debug.assert(getter || setter, 'define getter or setter')
         wrap.alSetOwnProperty(memberName.slice(0, -1), {
-          flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE,
-          get: getter ? new AVM1NativeFunction(context, getter) : undefined,
-          set: setter ? new AVM1NativeFunction(context, setter) : undefined
+          flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.DONT_ENUM,
+          get: wrapFunction(getter),
+          set: wrapFunction(setter)
         })
         return;
       }
@@ -292,25 +299,18 @@ module Shumway.AVM1.Lib {
         return;
       }
       if (desc.get || desc.set) {
-        // TODO refactor to remove accessor property support, reason is that
-        // for static properties we need to pass context or static class state
-        // console.warn('Redefine ' + memberName + ' property getter/setter as functions');
-        wrap.alSetOwnProperty(memberName, {
-          flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE,
-          get: desc.get ? new AVM1NativeFunction(context, desc.get) : undefined,
-          set: desc.set ? new AVM1NativeFunction(context, desc.set) : undefined
-        })
-      } else {
-        var value = desc.value;
-        if (typeof value === 'function') {
-          value = new AVM1NativeFunction(context,
-            prefixFunctions ? wrapFunctionWithPrefix(value) : value);
-        }
-        wrap.alSetOwnProperty(memberName, {
-          flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.DONT_ENUM,
-          value: value
-        })
+        release || Debug.assert(false, 'Redefine ' + memberName + ' property getter/setter as functions');
+        return;
       }
+
+      var value = desc.value;
+      if (typeof value === 'function') {
+        value = wrapFunction(value);
+      }
+      wrap.alSetOwnProperty(memberName, {
+        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.DONT_ENUM,
+        value: value
+      })
     });
   }
 
