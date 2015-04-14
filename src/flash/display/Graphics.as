@@ -33,7 +33,7 @@ public final class Graphics {
                                            matrix:Matrix = null, spreadMethod:String = "pad",
                                            interpolationMethod:String = "rgb",
                                            focalPointRatio:Number = 0):void;
-  public native function lineStyle(thickness:Number = undefined, color:uint = 0, alpha:Number = 1,
+  public native function lineStyle(thickness:Number = void 0, color:uint = 0, alpha:Number = 1,
                                    pixelHinting:Boolean = false, scaleMode:String = "normal",
                                    caps:String = null, joints:String = null,
                                    miterLimit:Number = 3):void;
