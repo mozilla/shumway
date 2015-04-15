@@ -1328,27 +1328,27 @@ module Shumway.AVMX.AS {
     // different.
 
     generic_indexOf(char: string, i?: number) {
-      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
+      var receiver = this == undefined ? '' : this;
       return String.prototype.indexOf.call(receiver, char, i);
     }
     generic_lastIndexOf(char: string, i?: number) {
-      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
+      var receiver = this == undefined ? '' : this;
       return String.prototype.lastIndexOf.call(receiver, char, i);
     }
     generic_charAt(index: number) {
-      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
+      var receiver = this == undefined ? '' : this;
       return String.prototype.charAt.call(receiver, index);
     }
     generic_charCodeAt(index: number) {
-      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
+      var receiver = this == undefined ? '' : this;
       return String.prototype.charCodeAt.call(receiver, index);
     }
     generic_concat() {
-      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
+      var receiver = this == undefined ? '' : this;
       return String.prototype.concat.apply(receiver, arguments);
     }
     generic_localeCompare() {
-      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
+      var receiver = this == undefined ? '' : this;
       return String.prototype.localeCompare.apply(receiver, arguments);
     }
     generic_match(pattern) {
@@ -1361,7 +1361,7 @@ module Shumway.AVMX.AS {
       return this.sec.AXString.axBox(String(this)).search(pattern);
     }
     generic_slice(start?: number, end?: number) {
-      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
+      var receiver = this == undefined ? '' : this;
       return String.prototype.slice.call(receiver, start, end);
     }
     generic_split(separator: string, limit?: number) {
@@ -1369,22 +1369,22 @@ module Shumway.AVMX.AS {
       return this.sec.AXString.axBox(String(this)).split(separator, limit);
     }
     generic_substring(start: number, end?: number) {
-      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
+      var receiver = this == undefined ? '' : this;
       return String.prototype.substring.call(receiver, start, end);
     }
     generic_substr(from: number, length?: number) {
-      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
+      var receiver = this == undefined ? '' : this;
       return String.prototype.substr.call(receiver, from, length);
     }
     generic_toLowerCase() {
-      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
+      var receiver = this == undefined ? '' : this;
       if (as3Compatibility) {
-        return as3ToLowerCase(receiver);
+        return as3ToLowerCase(String(receiver));
       }
       String.prototype.toLowerCase.call(receiver);
     }
     generic_toUpperCase() {
-      var receiver = (this == undefined || this.value == undefined) ? '' : this.value;
+      var receiver = this == undefined ? '' : this;
       return String.prototype.toUpperCase.call(receiver);
     }
 
