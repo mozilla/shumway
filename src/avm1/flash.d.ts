@@ -286,7 +286,17 @@ declare module Shumway.AVMX.AS.flash {
 
       public x: number;
       public y: number;
+      public length: number;
       constructor(x: number, y: number);
+
+      static interpolate(p1: Point, p2: Point, f: number): Point;
+      static distance(p1: Point, p2: Point): number;
+      static polar(length: number, angle: number): Point;
+      offset(dx: number, dy: number): void;
+      equals(toCompare: Point): boolean;
+      subtract(v: Point): Point;
+      add(v: Point): Point;
+      normalize(thickness: number): void;
     }
     class Rectangle extends ASObject {
       static axClass: typeof Rectangle;

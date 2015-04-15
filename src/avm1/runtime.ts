@@ -590,6 +590,13 @@ module Shumway.AVM1 {
     return Shumway.AVMX.axCoerceString(x);
   }
 
+  export function alCoerceNumber(context: IAVM1Context, x): number {
+    if (isNullOrUndefined(x)) {
+      return undefined;
+    }
+    return alToNumber(context, x);
+  }
+
   export function alIsIndex(context: IAVM1Context, p) {
     if (p instanceof AVM1Object) {
       return isIndex(alToString(context, p));
