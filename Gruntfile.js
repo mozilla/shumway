@@ -172,9 +172,6 @@ module.exports = function(grunt) {
              // Diff results.
              'diff build/test/avm2/shumway.run test/avm2/shumway.baseline'
       },
-      test_avm2_fail: {
-        cmd: 'node src/shell/numbers.js -i test/avm2/fail.txt -c i -j ' + (+grunt.option('threads') || 9)
-      },
       test_avm2: {
         cmd: 'node src/shell/numbers.js -c icb -i ' + (grunt.option('include') || 'test/avm2/pass/') +
                                       ' -j ' + (+grunt.option('threads') || 9)
