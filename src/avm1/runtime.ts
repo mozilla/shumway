@@ -78,7 +78,7 @@ module Shumway.AVM1 {
   /**
    * Base class for the ActionScript AVM1 object.
    */
-  export class AVM1Object extends NullPrototypeObject implements IAVM1Callable {
+  export class AVM1Object extends NullPrototypeObject {
     // Using our own bag of properties
     private _ownProperties: any;
     private _prototype: AVM1Object;
@@ -176,6 +176,7 @@ module Shumway.AVM1 {
 
     public alGetOwnProperty(p): AVM1PropertyDescriptor {
       var name = this._escapeProperty(p);
+      // TODO __resolve
       return this._ownProperties[name];
     }
 
@@ -332,15 +333,6 @@ module Shumway.AVM1 {
       return this;
     }
 
-    // TODO shall we initially define alConstruct and alCall in the AVM1Function?
-    public alConstruct(args?: any[]): AVM1Object {
-      throw new Error('not implemented AVM1Object.alConstruct');
-    }
-
-    public alCall(thisArg: any, args?: any[]): any {
-      throw new Error('not implemented AVM1Object.alCall');
-    }
-
     public alGetKeys(): string[] {
       var ownKeys = this.alGetOwnPropertiesKeys();
       var proto = this._prototype;
@@ -369,10 +361,18 @@ module Shumway.AVM1 {
   /**
    * Base class for ActionsScript functions.
    */
-  export class AVM1Function extends AVM1Object {
+  export class AVM1Function extends AVM1Object implements IAVM1Callable {
     public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
+    }
+
+    public alConstruct(args?: any[]): AVM1Object {
+      throw new Error('not implemented AVM1Function.alConstruct');
+    }
+
+    public alCall(thisArg: any, args?: any[]): any {
+      throw new Error('not implemented AVM1Function.alCall');
     }
 
     /**

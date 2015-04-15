@@ -19,7 +19,6 @@
 
 module Shumway.AVM1.Natives {
   // Object natives
-  // TODO implement all the Object class and its prototype natives
 
   class AVM1ObjectPrototype extends AVM1Object {
     public constructor(context: IAVM1Context) {
@@ -45,6 +44,21 @@ module Shumway.AVM1.Natives {
         },
         addProperty: {
           value: this.addProperty
+        },
+        hasOwnProperty: {
+          value: this.hasOwnProperty
+        },
+        isPropertyEnumerable: {
+          value: this.isPropertyEnumerable
+        },
+        isPrototypeOf: {
+          value: this.isPrototypeOf
+        },
+        unwatch: {
+          value: this.unwatch
+        },
+        watch: {
+          value: this.watch
         }
       });
     }
@@ -81,6 +95,29 @@ module Shumway.AVM1.Natives {
         set: setter || undefined
       });
       return true;
+    }
+
+    public hasOwnProperty(name): boolean {
+      return this.alHasOwnProperty(name);
+    }
+
+    public isPropertyEnumerable(name): boolean {
+      var desc = this.alGetProperty(name);
+      return !(desc.flags & AVM1PropertyFlags.DONT_ENUM);
+    }
+
+    public isPrototypeOf(theClass: AVM1Function): boolean {
+      return alInstanceOf(this.context, this, theClass);
+    }
+
+    public unwatch(name: string): boolean {
+      Debug.notImplemented('AVM1Object.prototype.unwatch');
+      return false;
+    }
+
+    public watch(name: string, callback: AVM1Function, userData?: any): boolean {
+      Debug.notImplemented('AVM1Object.prototype.watch');
+      return false;
     }
   }
 
@@ -129,7 +166,6 @@ module Shumway.AVM1.Natives {
   }
 
   // Function natives
-  // TODO implement all the Function class and its prototype natives
 
   class AVM1FunctionPrototype extends AVM1Object {
     public constructor(context: IAVM1Context) {
@@ -150,11 +186,15 @@ module Shumway.AVM1.Natives {
     }
 
     public call(thisArg: any, ...args: any[]): any {
-      return this.alCall(thisArg, args);
+      var fn = alEnsureType<AVM1Function>(this, AVM1Function);
+      return fn.alCall(thisArg, args);
     }
 
-    public apply(thisArg: any, args?: any[]): any {
-      return this.alCall(thisArg, args);
+    public apply(thisArg: any, args?: AVM1ArrayNative): any {
+      var fn = alEnsureType<AVM1Function>(this, AVM1Function);
+      var nativeArgs = !args ? undefined :
+        alEnsureType<AVM1ArrayNative>(args, AVM1ArrayNative).value;
+      return fn.alCall(thisArg, nativeArgs);
     }
   }
 
@@ -171,7 +211,15 @@ module Shumway.AVM1.Natives {
       });
     }
 
-    // TODO asConstruct and asCall
+    public alConstruct(args?: any[]): AVM1Object {
+      // ActionScript just returns the first argument.
+      return args ? args[0] : undefined;
+    }
+
+    public alCall(thisArg: any, args?: any[]): any {
+      // ActionScript just returns the first argument.
+      return args ? args[0] : undefined;
+    }
   }
 
   // Boolean natives
@@ -190,8 +238,6 @@ module Shumway.AVM1.Natives {
       return this.value;
     }
   }
-
-  // TODO implement all the Boolean class and its prototype natives
 
   export class AVM1BooleanPrototype extends AVM1Object {
     public constructor(context: IAVM1Context) {
@@ -265,8 +311,6 @@ module Shumway.AVM1.Natives {
     }
   }
 
-  // TODO implement all the Number class and its prototype natives
-
   export class AVM1NumberPrototype extends AVM1Object {
     public constructor(context: IAVM1Context) {
       super(context);
@@ -307,8 +351,11 @@ module Shumway.AVM1.Natives {
         prototype: {
           value: proto
         },
-        NaN: NaN
-        // TODO more constants
+        MAX_VALUE: Number.MAX_VALUE,
+        MIN_VALUE: Number.MIN_VALUE,
+        NaN: Number.NaN,
+        NEGATIVE_INFINITY: Number.NEGATIVE_INFINITY,
+        POSITIVE_INFINITY: Number.POSITIVE_INFINITY
       });
 
     }
@@ -341,9 +388,6 @@ module Shumway.AVM1.Natives {
       return this.value;
     }
   }
-
-  // TODO implement all the String class and its prototype natives
-
 
   // Most of the methods of String prototype are generic and accept any object.
   export class AVM1StringPrototype extends AVM1Object {
@@ -508,6 +552,9 @@ module Shumway.AVM1.Natives {
       alDefineObjectProperties(this, {
         prototype: {
           value: proto
+        },
+        fromCharCode: {
+          value: this.fromCharCode
         }
       });
     }
@@ -521,6 +568,11 @@ module Shumway.AVM1.Natives {
       // TODO returns number value?
       var value = args ? alToString(this.context, args[0]) : '';
       return value;
+    }
+
+    public fromCharCode(...codes: number[]): string {
+      codes = codes.map((code) => alToInt32(this.context, code) & 0xFFFF);
+      return String.fromCharCode.apply(String, codes);
     }
   }
 

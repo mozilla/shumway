@@ -378,8 +378,11 @@
     "id": "trace-o",
     "stas": "/utils/swfdec/test/trace/default.stas",
     "filenames": [
-      "/utils/swfdec/test/trace/object-ispropertyenumerable-5.swf",
-      "/utils/swfdec/test/trace/object-isprototypeof-propflags-5.swf",
+      "/utils/swfdec/test/trace/object-hasownproperty-5.swf",
+      "/utils/swfdec/test/trace/object-hasownproperty-6.swf",
+      "/utils/swfdec/test/trace/object-hasownproperty-7.swf",
+      "/utils/swfdec/test/trace/object-hasownproperty-8.swf",
+      "/utils/swfdec/test/trace/object-hasownproperty-9.swf",
       "/utils/swfdec/test/trace/object-math-6.swf",
       "/utils/swfdec/test/trace/object-math-7.swf",
       "/utils/swfdec/test/trace/object-valueof-6.swf",
@@ -560,9 +563,6 @@
     "id": "trace-t",
     "stas": "/utils/swfdec/test/trace/default.stas",
     "filenames": [
-      "/utils/swfdec/test/trace/text-field-init-5.swf",
-      "/utils/swfdec/test/trace/text-field-init-native-5.swf",
-      "/utils/swfdec/test/trace/textformat-init-5.swf",
       "/utils/swfdec/test/trace/this-localfunction-5.swf",
       "/utils/swfdec/test/trace/this-localfunction-6.swf",
       "/utils/swfdec/test/trace/this-localfunction-7.swf",
