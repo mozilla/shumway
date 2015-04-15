@@ -114,11 +114,6 @@ module.exports = function(grunt) {
       debug_server: {
         cmd: 'node examples/inspector/debug/server.js'
       },
-      unit_test: {
-        cmd: '"utils/jsshell/js" build/ts/shell.js -x -g ' +
-                (grunt.option('verbose') ? '-v ' : '') +
-                (grunt.option('tests') || expandFilePattern('test/unit/pass/*.js'))
-      },
       perf: {
         cmd: '"utils/jsshell/js" build/ts/shell.js -x -g ' +
                (grunt.option('verbose') ? '-v ' : '') +
@@ -129,31 +124,11 @@ module.exports = function(grunt) {
                (grunt.option('verbose') ? '-v ' : '') +
           (grunt.option('tests') || expandFilePattern('test/gfx/pass/*.js'))
       },
-      smoke_play: {
-        maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel --gnu -X -N50 utils/jsshell/js build/ts/shell.js -x -md 1000 -v -tp 60 -v {}'
-      },
-      // Run this to make sure the SWF parser still works.
-      test_swf_avm2_parse: {
-        maxBuffer: Infinity,
-        cmd: 'awk \'{print "test/ats/swfs/" $0}\' test/ats/avm2_swfs.txt | parallel --gnu -X -N50 utils/jsshell/js build/ts/shell.js -p -v' +
-                   (grunt.option('verbose') ? '-v ' : '') + ' {}'
-      },
-      test_swf_avm2: {
-        maxBuffer: Infinity,
-        cmd: 'cat test/ats/test_swf_avm2.txt | parallel -k --gnu -X -N50 utils/jsshell/js build/ts/shell.js -x -fc 10 {} > test/ats/test_swf_avm2.run; ' +
-             'if [ ! -f "test/ats/test_swf_avm2.baseline" ]; then echo "Creating Baseline"; cp test/ats/test_swf_avm2.run test/ats/test_swf_avm2.baseline; fi;' +
-             'diff test/ats/test_swf_avm2.run test/ats/test_swf_avm2.baseline;'
-      },
-      test_swf_avm2_all: {
-        maxBuffer: Infinity,
-        cmd: 'mongo ats --eval \'db.swfs.find({"parse_result.uses_avm1": false}).forEach(function (x) { print("test/ats/swfs/" + x.file); })\' | parallel -k --gnu -X -N10 utils/jsshell/js build/ts/shell.js -x -fc 10 {} | tee test/ats/test_swf_avm2_all.run;'
-      },
       // Greps for avm2 errors.
       warn_avm2: {
         maxBuffer: Infinity,
         cmd: 'cat test/ats/test_swf_avm2.run | grep "Not Implemented\\|Uncaught VM-internal"; ' +
-             'cat test/avm2/test_avm2_acceptance.run | grep "Not Implemented\\|Uncaught VM-internal\\|FAILED\\|EXCEPTED"'
+             'cat build/test/avm2/acceptance_output.run | grep "Not Implemented\\|Uncaught VM-internal\\|FAILED\\|EXCEPTED"'
       },
       warn_spell: {
         // TODO: Add more files.
@@ -162,31 +137,80 @@ module.exports = function(grunt) {
       lint_success: {
         cmd: 'echo "SUCCESS: no lint errors"'
       },
+      // Run all tests from shumway.txt in one instance of Shumway and save the output in |test/avm2/shumway.run|.
       test_avm2_shumway: {
-        cmd: // Run all tests from shumway.txt in one instance of Shumway and save the output in |test/avm2/shumway.run|.
-             'mkdir -p build/test/avm2; ' +
-             'cat test/avm2/shumway.txt | xargs utils/jsshell/js build/ts/shell.js -x --printABCFileName > build/test/avm2/shumway.run; ' +
+        maxBuffer: Infinity,
+        cmd: 'mkdir -p build/test/avm2; ' +
+             'cat test/avm2/shumway.txt | xargs utils/jsshell/js build/ts/shell.js -x --printABCFileName > build/test/test_avm2_shumway.run; ' +
              // Run all tests from shumway.txt each in many instances of Tamarin and save the output in |test/avm2/shumway.baseline|.
              // Between each run, emit the test name as "::: test :::" so it's easy to identify where things go wrong.
-             'rm test/avm2/shumway.baseline; cat test/avm2/shumway.txt | grep -v @ | xargs -L 1 -I \'{}\' sh -c \'echo "::: {} :::" >> test/avm2/shumway.baseline; utils/tamarin-redux/bin/shell/avmshell {} >> test/avm2/shumway.baseline;\'; ' +
+             'rm test/test_avm2_shumway.baseline; cat test/avm2/shumway.txt | grep -v @ | xargs -L 1 -I \'{}\' sh -c \'echo "::: {} :::" >> test/test_avm2_shumway.baseline; utils/tamarin-redux/bin/shell/avmshell {} >> test/test_avm2_shumway.baseline;\'; ' +
              // Diff results.
-             'diff build/test/avm2/shumway.run test/avm2/shumway.baseline'
-      },
-      test_avm2: {
-        cmd: 'node src/shell/numbers.js -c icb -i ' + (grunt.option('include') || 'test/avm2/pass/') +
-                                      ' -j ' + (+grunt.option('threads') || 9)
+             'diff build/test/test_avm2_shumway.run test/test_avm2_shumway.baseline'
       },
       // Runs tamarin acceptance tests and tests against the current baseline. If you get more tests to pass, update the baseline.
       test_avm2_acceptance: {
         maxBuffer: Infinity,
-        cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance_pass.json | tee test/avm2/test_avm2_acceptance.run | node test/avm2/count_totals.js | tee test/avm2/acceptance.run && ' +
-             'diff test/avm2/acceptance.run test/avm2/acceptance.baseline'
+        cmd: 'mkdir -p build/test; ' +
+             'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance.json | tee build/test/test_avm2_acceptance_stdout.run | node test/avm2/count_totals.js | tee build/test/test_avm2_acceptance.run && ' +
+             'diff build/test/test_avm2_acceptance.run test/test_avm2_acceptance.baseline'
       },
       // Runs the pypy tests and tests against the current baseline. If you get more tests to pass, update the baseline.
       test_avm2_pypy: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/avm2/pypy -name "*.abc" | xargs -I {} utils/jsshell/js build/ts/shell.js -x -v {} | tee test/avm2/pypy/acceptance.run &&' +
-        'diff test/avm2/pypy/acceptance.run test/avm2/pypy/acceptance.baseline'
+        cmd: 'mkdir -p build/test; ' +
+             'find -L test/avm2/pypy -name "*.abc" | xargs -I {} utils/jsshell/js build/ts/shell.js -x -v {} | tee build/test/test_avm2_pypy.run &&' +
+             'diff build/test/test_avm2_pypy.run test/test_avm2_pypy.baseline'
+      },
+      // Runs archive SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
+      // TODO: We need to pass the -k flag to parallel to keep the output in the right order, do what once we're ready
+      // to make this part of grunt gate.
+      test_arch: {
+        maxBuffer: Infinity,
+        cmd: 'mkdir -p build/test/; ' +
+             'find -L test/arch/swfs -name "*.swf" | parallel --gnu -X -N1 utils/jsshell/js build/ts/shell.js -x -fc 10 {} | tee build/test/arch.run;' +
+             'echo "Output saved to build/test/arch.run, at some point create a baseline and stick to it."'
+          // 'diff build/test/arch/arch.run test/arch/arch.baseline'
+      },
+      // Runs SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
+      test_swf: {
+        maxBuffer: Infinity,
+        cmd: 'find -L test/swf -name "*.swf" | parallel -k --gnu -X -N1 utils/jsshell/js build/ts/shell.js -x -fc 10 {} | LC_ALL=C sort > build/test/swf.run && ' +
+             'diff build/test/swf.run test/swf.baseline'
+      },
+      // Runs SWF trace tests.
+      test_trace: {
+        maxBuffer: Infinity,
+        cmd: 'node test/trace_test_run.js -j ' + (+grunt.option('threads') || 6)
+      },
+      // Runs SWF (AVM1) swfdec trace tests.
+      test_trace_swfdec: {
+        maxBuffer: Infinity,
+        cmd: 'node test/trace_test_run.js -j ' + (+grunt.option('threads') || 6) +
+             ' -m test/swfdec_test_manifest.json'
+      },
+      test_avm2_ats: {
+        maxBuffer: Infinity,
+        cmd: 'mkdir -p build/test; ' +
+             'cat test/ats/test_swf_avm2.txt | parallel -k --gnu -X -N50 utils/jsshell/js build/ts/shell.js -x -fc 10 {} > build/test/test_avm2_ats.run; ' +
+             'if [ ! -f "test/ats/test_avm2_ats.baseline" ]; then echo "Creating Baseline"; cp build/test/test_avm2_ats.run test/test_avm2_ats.baseline; fi;' +
+             'diff build/test/test_avm2_ats.run test/test_avm2_ats.baseline;'
+      },
+      // Run this to make sure the SWF parser still works.
+      test_avm2_ats_parse: {
+        maxBuffer: Infinity,
+        cmd: 'cat test/ats/test_swf_avm2.txt | parallel --gnu -X -N50 utils/jsshell/js build/ts/shell.js -p -v' +
+                   (grunt.option('verbose') ? '-v ' : '') + ' {}'
+      },
+      // ------
+      test_swf_avm2_all: {
+        maxBuffer: Infinity,
+        cmd: 'mongo ats --eval \'db.swfs.find({"parse_result.uses_avm1": false}).forEach(function (x) { print("test/ats/swfs/" + x.file); })\' | parallel -k --gnu -X -N10 utils/jsshell/js build/ts/shell.js -x -fc 10 {} | tee test/ats/test_swf_avm2_all.run;'
+      },
+      test_unit: {
+        cmd: '"utils/jsshell/js" build/ts/shell.js -x -g ' +
+             (grunt.option('verbose') ? '-v ' : '') +
+             (grunt.option('tests') || expandFilePattern('test/unit/pass/*.js'))
       },
       bench_avm2: {
         maxBuffer: Infinity,
@@ -194,43 +218,12 @@ module.exports = function(grunt) {
       },
       perf_avm2_acceptance: {
         maxBuffer: Infinity,
-        cmd: 'utils/jsshell/js build/ts/shell.js -x -r --porcelain test/avm2/acceptance_pass.json > /dev/null 2>&1'
-      },
-      // Same as above, but it doesn't do any post processing of stdout.
-      test_avm2_acceptance_trace: {
-        maxBuffer: Infinity,
-        cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance_pass.json'
+        cmd: 'utils/jsshell/js build/ts/shell.js -x -r --porcelain test/avm2/acceptance.json > /dev/null 2>&1'
       },
       // Parses all ABCs in the acceptance suite. This is useful to run if you've made changes to the parser.
-      test_avm2_acceptance_parse: {
+      trace_avm2_acceptance_parse: {
         maxBuffer: Infinity,
         cmd: 'find -L test/avm2/acceptance -name "*.abc" | parallel -k --gnu -X -N50 utils/jsshell/js build/ts/shell.js -d -v {}'
-      },
-      // Runs SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
-      test_swf_acceptance: {
-        maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel -k --gnu -X -N1 utils/jsshell/js build/ts/shell.js -x -fc 10 {} | LC_ALL=C sort > test/swf/acceptance.run && ' +
-             'diff test/swf/acceptance.run test/swf/acceptance.baseline'
-      },
-      // Runs archive SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
-      // TODO: We need to pass the -k flag to parallel to keep the output in the right order, do what once we're ready
-      // to make this part of grunt gate.
-      test_arch_acceptance: {
-        maxBuffer: Infinity,
-        cmd: 'find -L test/arch/swfs -name "*.swf" | parallel --gnu -X -N1 utils/jsshell/js build/ts/shell.js -x -fc 10 {} | tee test/arch/acceptance.run;' +
-             'echo "Output saved to test/arch/acceptance.run, at some point create a baseline and stick to it."'
-             // 'diff test/arch/acceptance.run test/arch/acceptance.baseline'
-      },
-      test_avm2_baseline: {
-        cmd: 'node src/shell/numbers.js -c b -i ' + (grunt.option('include') || 'test/avm2/pass/') +
-                                      ' -j ' + (+grunt.option('threads') || 9)
-      },
-      tracetest: {
-        cmd: 'node test/trace_test_run.js -j ' + (+grunt.option('threads') || 6)
-      },
-      tracetest_swfdec: {
-        cmd: 'node test/trace_test_run.js -j ' + (+grunt.option('threads') || 6) +
-                                        ' -m test/swfdec_test_manifest.json'
       },
       tracetest_fuzz: {
         cmd: 'node test/trace_test_run.js -j ' + (+grunt.option('threads') || 6) +
@@ -278,9 +271,9 @@ module.exports = function(grunt) {
           'exec:test_avm2_shumway',
           'exec:test_avm2_acceptance',
           'exec:test_swf_acceptance',
-          'exec:test_swf_avm2',
-          'exec:unit_test',
-          'exec:tracetest'
+          'exec:test_avm2_ats',
+          'exec:test_unit',
+          'exec:test_trace'
         ]
       },
       base: {
@@ -625,8 +618,8 @@ module.exports = function(grunt) {
     }
   });
 
-  grunt.registerTask('tracetest', ['exec:tracetest']);
-  grunt.registerTask('tracetest-swfdec', ['exec:tracetest_swfdec']);
+  grunt.registerTask('tracetest', ['exec:test_trace']);
+  grunt.registerTask('tracetest-swfdec', ['exec:test_trace_swfdec']);
 
   grunt.registerTask('watch-playerglobal', ['exec:build_playerglobal', 'watch:playerglobal']);
   grunt.registerTask('watch-base', ['exec:build_base_ts', 'watch:base']);
@@ -642,15 +635,15 @@ module.exports = function(grunt) {
   grunt.registerTask('playerglobal', ['exec:build_playerglobal']);
   grunt.registerTask('playerglobal-single', ['exec:build_playerglobal_single']);
 
-  grunt.registerTask('base', ['exec:build_base_ts', 'quick-test']);
-  grunt.registerTask('swf', ['exec:build_swf_ts', 'quick-test']);
-  grunt.registerTask('flash', ['parallel:flash', 'quick-test']);
-  grunt.registerTask('avm1', ['parallel:avm1', 'quick-test']);
-  grunt.registerTask('player', ['exec:build_player_ts', 'quick-test']);
-  grunt.registerTask('shell', ['exec:build_shell_ts', 'quick-test']);
-  grunt.registerTask('tools', ['exec:build_tools_ts', 'quick-test']);
-  grunt.registerTask('avm2', ['exec:build_avm2_ts', 'copy_relooper', 'quick-test']);
-  grunt.registerTask('gfx', ['exec:build_gfx_base_ts', 'exec:build_gfx_ts', 'quick-test']);
+  grunt.registerTask('base', ['exec:build_base_ts', 'test-quick']);
+  grunt.registerTask('swf', ['exec:build_swf_ts', 'test-quick']);
+  grunt.registerTask('flash', ['parallel:flash', 'test-quick']);
+  grunt.registerTask('avm1', ['parallel:avm1', 'test-quick']);
+  grunt.registerTask('player', ['exec:build_player_ts', 'test-quick']);
+  grunt.registerTask('shell', ['exec:build_shell_ts', 'test-quick']);
+  grunt.registerTask('tools', ['exec:build_tools_ts', 'test-quick']);
+  grunt.registerTask('avm2', ['exec:build_avm2_ts', 'copy_relooper', 'test-quick']);
+  grunt.registerTask('gfx', ['exec:build_gfx_base_ts', 'exec:build_gfx_ts', 'test-quick']);
   grunt.registerTask('gfx-base', ['exec:build_gfx_base_ts']);
   grunt.registerTask('perf', ['exec:perf']);
   grunt.registerTask('gfx-test', ['exec:gfx-test']);
@@ -679,11 +672,10 @@ module.exports = function(grunt) {
     //'gate'
     'exec:test_avm2_shumway',
     'exec:test_swf_acceptance',
-    'exec:unit_test',
-    'exec:tracetest',
-
+    'exec:test_unit',
+    'exec:test_trace',
     'exec:install_swfdec_travis',
-    'exec:tracetest_swfdec',
+    'exec:test_trace_swfdec',
   ]);
   grunt.registerTask('gate', "Run this before checking in any code.", [
     // 'tslint:all', // Annoyingly slow, and not very useful most of the time.
@@ -700,12 +692,9 @@ module.exports = function(grunt) {
   grunt.registerTask('perf-gate', "Run this before checking in any code to make sure you don't regress performance.", [
     'exec:perf_avm2_acceptance'
   ]);
-  grunt.registerTask('smoke', [
-    'exec:smoke_parse'
-  ]);
   // Quick sanity test that runs after a module is compiled.
-  grunt.registerTask('quick-test', [
-    'exec:unit_test'
+  grunt.registerTask('test-quick', [
+    'exec:test_unit'
   ]);
   // Runs all tests.
   grunt.registerTask('test', [
@@ -713,8 +702,8 @@ module.exports = function(grunt) {
     'exec:test_avm2_acceptance',
     'exec:test_swf_acceptance',
     'exec:test_swf_avm2',
-    'exec:unit_test',
-    'exec:tracetest'
+    'exec:test_unit',
+    'exec:test_trace'
   ]);
   grunt.registerTask('mozcentralshu', [
     'mozcentralbaseline',
