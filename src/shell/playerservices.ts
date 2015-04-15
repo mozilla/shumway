@@ -34,7 +34,7 @@ module Shumway.Shell
         try {
           complete(read(this.url, 'binary'));
         } catch (e) {
-          complete(null, e.message);
+          complete(null, 'Can\'t read ' + this.url);
         }
       }.bind(this));
     }
