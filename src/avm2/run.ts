@@ -483,8 +483,7 @@ module Shumway.AVMX {
   }
 
   function axIsTypeObject(x: any) {
-    // FIXME
-    return this.dPrototype.isPrototypeOf(this.sec.box(x));
+    return this.dPrototype.isPrototypeOf(this.sec.box(x)) || x === this.dPrototype;
   }
 
   function axIsTypeInterface(x: any) {
@@ -1498,7 +1497,7 @@ module Shumway.AVMX {
 
       var AXRegExp = this.prepareNativeClass("AXRegExp", "RegExp", false);
       // RegExp.prototype is an (empty string matching) RegExp, and behaves like one.
-      AXRegExp.tPrototype['value'] = /(?:)/;
+      AXRegExp.dPrototype['value'] = /(?:)/;
 
       // Boolean, int, Number, String, and uint are primitives in AS3. We create a placeholder
       // base class to help us with instanceof tests.
