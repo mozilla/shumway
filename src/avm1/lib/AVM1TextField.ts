@@ -445,6 +445,10 @@ module Shumway.AVM1.Lib {
       } else {
         clip = getAVM1Object(instance._parent, this.context);
       }
+      if (!clip) { // REDUX
+        console.warn('Clip ' + name + ' was not found');
+        return;
+      }
       // Sets default values as defined in SWF if this property was not found.
       if (!avm1ContextUtils.hasProperty(clip, name)) {
         avm1ContextUtils.setProperty(clip, name, instance.text);
