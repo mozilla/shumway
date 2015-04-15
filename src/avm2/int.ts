@@ -187,7 +187,7 @@ module Shumway.AVMX {
 
     var code = body.code;
     var bc: Bytecode;
-    var value, object, type, a, b, offset, index, result;
+    var value, object, receiver, type, a, b, offset, index, result;
 
     var scopeStacksHeight = scopeStacks.length;
     scopeStacks.push(scopes);
@@ -431,7 +431,7 @@ module Shumway.AVMX {
             argCount = u30();
             popManyInto(stack, argCount, args);
             popNameInto(stack, abc.getMultiname(index), rn);
-            var receiver = box(stack[stack.length - 1]);
+            receiver = box(stack[stack.length - 1]);
             result = receiver.axCallProperty(rn, args, bc === Bytecode.CALLPROPLEX);
             if (bc === Bytecode.CALLPROPVOID) {
               stack.length--;
@@ -445,7 +445,7 @@ module Shumway.AVMX {
             argCount = u30();
             popManyInto(stack, argCount, args);
             popNameInto(stack, abc.getMultiname(index), rn);
-            var receiver = box(stack[stack.length - 1]);
+            receiver = box(stack[stack.length - 1]);
             result = receiver.axCallSuper(rn, savedScope, args);
             if (bc === Bytecode.CALLSUPERVOID) {
               stack.length--;
@@ -697,8 +697,9 @@ module Shumway.AVMX {
             stack[stack.length - 2] ^= stack.pop();
             break;
           case Bytecode.EQUALS:
-            stack[stack.length - 2] = axEquals(stack[stack.length - 2], stack.pop(),
-                                               sec);
+            a = stack[stack.length - 2];
+            b = stack.pop();
+            stack[stack.length - 1] = axEquals(a, b, sec);
             break;
           case Bytecode.STRICTEQUALS:
             stack[stack.length - 2] = stack[stack.length - 2] === stack.pop();
@@ -798,7 +799,7 @@ module Shumway.AVMX {
           // We omit many checks in the interpreter loop above to keep the code small. These
           // checks can be done after the fact here by turning the VM-internal exception into a
           // proper error according to the current operation.
-          e = createValidException(sec, e, bc, value, receiver, rn, scopeStacksHeight + 1);
+          e = createValidException(sec, e, bc, value, receiver, a, b, rn, scopeStacksHeight + 1);
         }
 
         var catchBlocks = body.catchBlocks;
@@ -824,7 +825,7 @@ module Shumway.AVMX {
   }
 
   function createValidException(sec: AXSecurityDomain, internalError, bc: Bytecode,
-                                value: any, receiver: any, mn: Multiname,
+                                value: any, receiver: any, a: any, b: any, mn: Multiname,
                                 expectedScopeStacksHeight: number) {
     // Stack exhaustion errors are annoying to catch: Identifying them requires pattern-matching of
     // error messages, and throwing them must be done very carefully to not cause the next one.
@@ -928,6 +929,16 @@ module Shumway.AVMX {
         }
         if (receiver === undefined) {
           return sec.createError('TypeError', Errors.ConvertUndefinedToObjectError);
+        }
+        break;
+      case Bytecode.IFEQ:
+      case Bytecode.IFNE:
+      case Bytecode.EQUALS:
+        if (typeof a !== typeof b) {
+          if (typeof a === 'object' && a && typeof b !== 'object' ||
+              typeof b === 'object' && b && typeof a !== 'object') {
+            return sec.createError('TypeError', Errors.ConvertToPrimitiveError, 'Object');
+          }
         }
         break;
       default:

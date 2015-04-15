@@ -74,7 +74,7 @@ module Shumway.AVMX {
   //  MethodInfoOrderError                 : {code: 1046, message: "MethodInfo-%1 referenced before definition."},
   //  MissingEntryPointError               : {code: 1047, message: "No entry point was found."},
     PrototypeTypeError                   : {code: 1049, message: "Prototype objects must be vanilla Objects."},
-  //  ConvertToPrimitiveError              : {code: 1050, message: "Cannot convert %1 to primitive."},
+    ConvertToPrimitiveError              : {code: 1050, message: "Cannot convert %1 to primitive."},
   //  IllegalEarlyBindingError             : {code: 1051, message: "Illegal early binding access to %1."},
     InvalidURIError                      : {code: 1052, message: "Invalid URI passed to %1 function."},
   //  IllegalOverrideError                 : {code: 1053, message: "Illegal override of %1 in %2."},
