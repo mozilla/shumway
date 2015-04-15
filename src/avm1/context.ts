@@ -34,9 +34,10 @@ module Shumway.AVM1 {
   }
 
   export interface IAVM1RuntimeUtils {
-    hasProperty(obj, name);
-    getProperty(obj, name);
-    setProperty(obj, name, value);
+    hasProperty(obj, name): boolean;
+    getProperty(obj, name): any;
+    setProperty(obj, name, value): void;
+    warn(msg: string): void;
   }
 
   export interface IAVM1EventPropertyObserver {
@@ -65,6 +66,11 @@ module Shumway.AVM1 {
     public isPropertyCaseSensitive: boolean;
     public actionsDataFactory: ActionsDataFactory;
     public swfVersion: number;
+
+    private assets: MapObject<number>;
+    private assetsSymbols: Array<any>;
+    private assetsClasses: Array<any>;
+
     constructor(swfVersion: number) {
       this.swfVersion = swfVersion;
       this.root = null;
@@ -74,6 +80,10 @@ module Shumway.AVM1 {
 
       this.builtins = <any>{};
       Shumway.AVM1.Natives.installBuiltins(this);
+
+      this.assets = {};
+      this.assetsSymbols = [];
+      this.assetsClasses = [];
     }
 
     public utils: IAVM1RuntimeUtils;
@@ -81,9 +91,6 @@ module Shumway.AVM1 {
     public static create: (loaderInfo: Shumway.AVMX.AS.flash.display.LoaderInfo) => AVM1Context;
 
     public flushPendingScripts() {}
-    public addAsset(className: string, symbolId: number, symbolProps) {}
-    public registerClass(className: string, theClass) {}
-    public getAsset(className: string): AVM1ExportedSymbol { return undefined; }
     public resolveTarget(target): any {}
     public resolveLevel(level: number): any {}
     public addToPendingScripts(fn, defaultTarget) {}
@@ -93,6 +100,49 @@ module Shumway.AVM1 {
     public unregisterEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver) {}
 
     public executeActions(actionsData: AVM1ActionsData, scopeObj): void {}
+
+    public addAsset(className: string, symbolId: number, symbolProps): void {
+      release || Debug.assert(typeof className === 'string' && !isNaN(symbolId));
+      this.assets[className.toLowerCase()] = symbolId;
+      this.assetsSymbols[symbolId] = symbolProps;
+    }
+    public registerClass(className: string, theClass: AVM1Object): void {
+      className = alCoerceString(this, className);
+      if (className === null) {
+        this.utils.warn('Cannot register class for symbol: className is missing');
+        return null;
+      }
+      var symbolId = this.assets[className.toLowerCase()];
+      if (symbolId === undefined) {
+        this.utils.warn('Cannot register ' + className + ' class for symbol');
+        return;
+      }
+      this.assetsClasses[symbolId] = theClass;
+    }
+    public getAsset(className: string) : AVM1ExportedSymbol {
+      className = alCoerceString(this, className);
+      if (className === null) {
+        return undefined;
+      }
+      var symbolId = this.assets[className.toLowerCase()];
+      if (symbolId === undefined) {
+        return undefined;
+      }
+      var symbol = this.assetsSymbols[symbolId];
+      if (!symbol) {
+        symbol = this.loaderInfo.getSymbolById(symbolId);
+        if (!symbol) {
+          Debug.warning("Symbol " + symbolId + " is not defined.");
+          return undefined;
+        }
+        this.assetsSymbols[symbolId] = symbol;
+      }
+      return {
+        symbolId: symbolId,
+        symbolProps: symbol,
+        theClass: this.assetsClasses[symbolId]
+      };
+    }
 
     public setStage(stage: Shumway.AVMX.AS.flash.display.Stage): void {
       (<any>this.globals.Key)._bind(stage, this);

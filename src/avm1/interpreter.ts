@@ -124,6 +124,30 @@ module Shumway.AVM1 {
     }
   }
 
+  class AVM1RuntimeUtilsImpl implements IAVM1RuntimeUtils {
+    private  _context: AVM1Context;
+
+    constructor(context: AVM1Context) {
+      this._context = context;
+    }
+
+    public hasProperty(obj, name): boolean {
+      return as2HasProperty(this._context, obj, name);
+    }
+
+    public getProperty(obj, name): any {
+      return as2GetProperty(this._context, obj, name);
+    }
+
+    public setProperty(obj, name, value: any): void {
+      return as2SetProperty(this._context, obj, name, value);
+    }
+
+    public warn(msg: string): void {
+      avm1Warn.apply(null, arguments);
+    }
+  }
+
   class AVM1ContextImpl extends AVM1Context {
     initialScope: AVM1ScopeListItem;
     isActive: boolean;
@@ -137,9 +161,6 @@ module Shumway.AVM1 {
     pendingScripts;
     actions: Lib.AVM1NativeActions;
 
-    private assets: MapObject<number>;
-    private assetsSymbols: Array<any>;
-    private assetsClasses: Array<any>;
     private eventObservers: MapObject<IAVM1EventPropertyObserver[]>;
 
     constructor(loaderInfo: Shumway.AVMX.AS.flash.display.LoaderInfo) {
@@ -151,10 +172,7 @@ module Shumway.AVM1 {
       this.globals = Lib.AVM1Globals.createGlobalsObject(this);
       this.actions = new Lib.AVM1NativeActions(this);
       this.initialScope = new AVM1ScopeListItem(this.globals, null);
-      this.assets = {};
-      // TODO: remove this list and always retrieve symbols from LoaderInfo.
-      this.assetsSymbols = [];
-      this.assetsClasses = [];
+      this.utils = new AVM1RuntimeUtilsImpl(this);
       this.isActive = false;
       this.executionProhibited = false;
       this.abortExecutionAt = 0;
@@ -165,61 +183,6 @@ module Shumway.AVM1 {
       this.deferScriptExecution = true;
       this.pendingScripts = [];
       this.eventObservers = Object.create(null);
-
-      var context = this;
-      this.utils = {
-        hasProperty(obj, name) {
-          return as2HasProperty(context, obj, name);
-        },
-        getProperty(obj, name) {
-          return as2GetProperty(context, obj, name);
-        },
-        setProperty(obj, name, value) {
-          return as2SetProperty(context, obj, name, value);
-        }
-      };
-    }
-    addAsset(className: string, symbolId: number, symbolProps) {
-      release || Debug.assert(typeof className === 'string' && !isNaN(symbolId));
-      this.assets[className.toLowerCase()] = symbolId;
-      this.assetsSymbols[symbolId] = symbolProps;
-    }
-    registerClass(className: string, theClass) {
-      className = alCoerceString(this, className);
-      if (className === null) {
-        avm1Warn('Cannot register class for symbol: className is missing');
-        return null;
-      }
-      var symbolId = this.assets[className.toLowerCase()];
-      if (symbolId === undefined) {
-        avm1Warn('Cannot register ' + className + ' class for symbol');
-        return;
-      }
-      this.assetsClasses[symbolId] = theClass;
-    }
-    getAsset(className: string) : AVM1ExportedSymbol {
-      className = alCoerceString(this, className);
-      if (className === null) {
-        return undefined;
-      }
-      var symbolId = this.assets[className.toLowerCase()];
-      if (symbolId === undefined) {
-        return undefined;
-      }
-      var symbol = this.assetsSymbols[symbolId];
-      if (!symbol) {
-        symbol = this.loaderInfo.getSymbolById(symbolId);
-        if (!symbol) {
-          Debug.warning("Symbol " + symbolId + " is not defined.");
-          return undefined;
-        }
-        this.assetsSymbols[symbolId] = symbol;
-      }
-      return {
-        symbolId: symbolId,
-        symbolProps: symbol,
-        theClass: this.assetsClasses[symbolId]
-      };
     }
     resolveTarget(target: any) : any {
       var result: AVM1Object;
