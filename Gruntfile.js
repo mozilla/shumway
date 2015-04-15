@@ -669,11 +669,15 @@ module.exports = function(grunt) {
 
     //'gate'
     'exec:test_avm2_shumway',
+    'exec:test_avm2_acceptance',
+    // 'exec:test_avm2_pypy',
+    // 'exec:test_arch',
     'exec:test_swf',
-    'exec:test_unit',
     'exec:test_trace',
-    'exec:install_swfdec_travis',
     'exec:test_trace_swfdec',
+    'exec:test_avm2_ats',
+    'exec:test_avm2_ats_parse',
+    'exec:test_unit'
   ]);
   grunt.registerTask('gate', "Run this before checking in any code.", [
     // 'tslint:all', // Annoyingly slow, and not very useful most of the time.
@@ -702,7 +706,7 @@ module.exports = function(grunt) {
     // 'exec:test_arch',
     'exec:test_swf',
     'exec:test_trace',
-    // 'exec:test_trace_swfdec',
+    // 'exec:test_trace_swfdec', // Takes too long.
     'exec:test_avm2_ats',
     'exec:test_avm2_ats_parse',
     'exec:test_unit'
