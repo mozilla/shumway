@@ -60,7 +60,18 @@ module Shumway.AVMX {
     rn.id = mn.id;
     rn.kind = mn.kind;
     if (mn.isRuntimeName()) {
-      rn.name = stack.pop();
+      var name = stack.pop();
+      // Unwrap content script-created AXQName instances.
+      if (name && name.axClass && name.axClass === name.sec.AXQName) {
+        name = name.name;
+        release || assert(name instanceof Multiname);
+        rn.kind = mn.isAttribute() ? CONSTANT.RTQNameLA : CONSTANT.RTQNameL;
+        rn.id = name.id;
+        rn.name = name.name;
+        rn.namespaces = name.namespaces;
+        return;
+      }
+      rn.name = name;
       rn.id = -1;
     } else {
       rn.name = mn.name;
@@ -731,7 +742,12 @@ module Shumway.AVMX {
             break;
           case Bytecode.IN:
             receiver = box(stack.pop());
-            stack[stack.length - 1] = receiver.axHasPublicProperty(stack[stack.length - 1]);
+            var name = stack[stack.length - 1];
+            if (name && name.axClass === sec.AXQName) {
+              stack[stack.length - 1] = receiver.axHasProperty(name.name);
+            } else {
+              stack[stack.length - 1] = receiver.axHasPublicProperty(name);
+            }
             break;
           case Bytecode.INCREMENT_I:
             stack[stack.length - 1] = (stack[stack.length - 1] | 0) + 1;

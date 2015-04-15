@@ -1148,23 +1148,17 @@ module Shumway.AVMX.AS {
     }
 
     get uri(): string {
-      return this.name.namespaces[0] ? this.name.namespaces[0].uri : null;
+      var namespaces = this.name.namespaces;
+      return namespaces.length > 1 ? '' : namespaces[0] ? namespaces[0].uri : null;
     }
 
-    setUri(uri: string) {
-      if (!this.name.namespaces[0]) {
-        this.name.namespaces.push(new Namespace(null, NamespaceType.Public, uri));
-      }
-      this.name.namespaces[0].uri = uri;
-    }
-
-    ecmaToString (): string {
+    ecmaToString(): string {
       if (this && <any>this === this.sec.AXQName.dPrototype) {
         return "";
       }
       if (!(this && this.axClass === this.sec.AXQName)) {
         this.sec.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
-                                       "QName.prototype.toString");
+                            "QName.prototype.toString");
       }
       return this.toString();
     }

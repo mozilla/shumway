@@ -25,7 +25,8 @@ module Shumway.AVMX.AS {
     var proxyPrefix = '$' + proxyNamespace.getMangledName();
 
     /**
-     * The Proxy class lets you override the default behavior of ActionScript operations (such as retrieving and modifying properties) on an object.
+     * The Proxy class lets you override the default behavior of ActionScript operations
+     * (such as retrieving and modifying properties) on an object.
      */
     export class ASProxy extends ASObject {
 
@@ -90,7 +91,7 @@ module Shumway.AVMX.AS {
             return this.axGetMethod(name);
           }
         } else {
-          value = this[proxyPrefix + 'getProperty'](axCoerceString(mn.name));
+          value = this[proxyPrefix + 'getProperty'](this.sec.AXQName.FromMultiname(mn));
         }
         return value;
       }
@@ -109,7 +110,7 @@ module Shumway.AVMX.AS {
           super.axSetProperty(mn, value, bc);
           return;
         }
-        this[proxyPrefix + 'setProperty'](axCoerceString(mn.name), value);
+        this[proxyPrefix + 'setProperty'](this.sec.AXQName.FromMultiname(mn), value);
       }
 
       public axCallProperty(mn: Multiname, args: any[], isLex: boolean): any {
@@ -117,7 +118,7 @@ module Shumway.AVMX.AS {
         if (trait) {
           return super.axCallProperty(mn, args, isLex);
         }
-        var callArgs = [axCoerceString(mn.name)].concat(args);
+        var callArgs = [this.sec.AXQName.FromMultiname(mn)].concat(args);
         return this[proxyPrefix + 'callProperty'].apply(this, callArgs);
       }
 
@@ -125,12 +126,20 @@ module Shumway.AVMX.AS {
         return this.axHasOwnProperty(mn);
       }
 
+      public axHasPublicProperty(nm: string): any {
+        rn.name = nm;
+        if (this.axHasPropertyInternal(rn)) {
+          return true;
+        }
+        return this[proxyPrefix + 'hasProperty'](nm);
+      }
+
       public axHasOwnProperty(mn: Multiname): any {
         var trait = typeof mn.name === 'string' ? this.traits.getTrait(mn.namespaces, mn.name) : null;
         if (trait) {
           return true;
         }
-        return this[proxyPrefix + 'hasProperty'](axCoerceString(mn.name));
+        return this[proxyPrefix + 'hasProperty'](this.sec.AXQName.FromMultiname(mn));
       }
 
       public axDeleteProperty(mn: Multiname): any {
@@ -138,7 +147,7 @@ module Shumway.AVMX.AS {
         if (trait) {
           return delete this[trait.name.getMangledName()];
         }
-        return this[proxyPrefix + 'deleteProperty'](axCoerceString(mn.name));
+        return this[proxyPrefix + 'deleteProperty'](this.sec.AXQName.FromMultiname(mn));
       }
 
       public axNextName(index: number): any {
@@ -154,4 +163,6 @@ module Shumway.AVMX.AS {
       }
     }
   }
+
+  var rn = new Multiname(null, 0, CONSTANT.RTQNameL, [], null);
 }
