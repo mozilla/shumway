@@ -1099,6 +1099,10 @@ module.exports = function(grunt) {
       'build', // Deletes entire 'build' folder!
       'test/tmp/',
       'test/*.log',
+      'test/ats/test_swf_avm2.run',
+      'test/avm2/acceptance-results.*',
+      'test/avm2/*.run',
+      'test/avm2/*.tmp'
     ];
     filesToRemove.forEach(function (files) {
       grunt.file.expand(files).forEach(function (file) {
