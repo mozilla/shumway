@@ -1119,7 +1119,7 @@ module Shumway.AVMX {
 
     createClass(classInfo: ClassInfo, superClass: AXClass, scope: Scope): AXClass {
       var instanceInfo = classInfo.instanceInfo;
-      var className = instanceInfo.getName().name;
+      var className = instanceInfo.getName().toFQNString(false);
       var axClass: AXClass = this.nativeClasses[className] ||
                              Object.create(this.AXClass.tPrototype);
       var classScope = new Scope(scope, axClass);
@@ -1395,7 +1395,7 @@ module Shumway.AVMX {
       } else {
         var instancePrototype = isPrimitiveClass ?
                                 this.AXPrimitiveBox.dPrototype :
-                                name === 'MethodClosure' ?
+                                exportName === 'AXMethodClosure' ?
                                   this.AXFunction.dPrototype :
                                   this.objectPrototype;
         axClass.dPrototype = Object.create(instancePrototype);
@@ -1477,7 +1477,7 @@ module Shumway.AVMX {
       D(AXObject.tPrototype, "axInitializer", axDefaultInitializer);
       D(AXObject, "axCoerce", axCoerceObject);
 
-      this.prepareNativeClass("AXMethodClosure", "MethodClosure", false);
+      this.prepareNativeClass("AXMethodClosure", "builtin.as$0.MethodClosure", false);
       this.prepareNativeClass("AXError", "Error", false);
 
       this.prepareNativeClass("AXMath", "Math", false);
