@@ -124,11 +124,10 @@ module.exports = function(grunt) {
                (grunt.option('verbose') ? '-v ' : '') +
           (grunt.option('tests') || expandFilePattern('test/gfx/pass/*.js'))
       },
-      // Greps for avm2 errors.
-      warn_avm2: {
+      // Greps for errors.
+      warn: {
         maxBuffer: Infinity,
-        cmd: 'cat test/ats/test_swf_avm2.run | grep "Not Implemented\\|Uncaught VM-internal"; ' +
-             'cat build/test/avm2/acceptance_output.run | grep "Not Implemented\\|Uncaught VM-internal\\|FAILED\\|EXCEPTED"'
+        cmd: 'find -L build/test -name "*.run" | xargs cat | grep "Not Implemented\\|Uncaught VM-internal\\|FAILED\\|EXCEPTED";'
       },
       warn_spell: {
         // TODO: Add more files.
@@ -168,15 +167,15 @@ module.exports = function(grunt) {
       test_arch: {
         maxBuffer: Infinity,
         cmd: 'mkdir -p build/test/; ' +
-             'find -L test/arch/swfs -name "*.swf" | parallel --gnu -X -N1 utils/jsshell/js build/ts/shell.js -x -fc 10 {} | tee build/test/arch.run;' +
-             'echo "Output saved to build/test/arch.run, at some point create a baseline and stick to it."'
+             'find -L test/arch/swfs -name "*.swf" | parallel --gnu -X -N1 utils/jsshell/js build/ts/shell.js -x -fc 10 {} | tee build/test_arch.run;' +
+             'echo "Output saved to build/test_arch.run, at some point create a baseline and stick to it."'
           // 'diff build/test/arch/arch.run test/arch/arch.baseline'
       },
       // Runs SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
       test_swf: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel -k --gnu -X -N1 utils/jsshell/js build/ts/shell.js -x -fc 10 {} | LC_ALL=C sort > build/test/swf.run && ' +
-             'diff build/test/swf.run test/swf.baseline'
+        cmd: 'find -L test/swf -name "*.swf" | parallel -k --gnu -X -N1 utils/jsshell/js build/ts/shell.js -x -fc 10 {} | LC_ALL=C sort > build/test/test_swf.run && ' +
+             'diff build/test/test_swf.run test/test_swf.baseline'
       },
       // Runs SWF trace tests.
       test_trace: {
@@ -200,17 +199,16 @@ module.exports = function(grunt) {
       test_avm2_ats_parse: {
         maxBuffer: Infinity,
         cmd: 'cat test/ats/test_swf_avm2.txt | parallel --gnu -X -N50 utils/jsshell/js build/ts/shell.js -p -v' +
-                   (grunt.option('verbose') ? '-v ' : '') + ' {}'
-      },
-      // ------
-      test_swf_avm2_all: {
-        maxBuffer: Infinity,
-        cmd: 'mongo ats --eval \'db.swfs.find({"parse_result.uses_avm1": false}).forEach(function (x) { print("test/ats/swfs/" + x.file); })\' | parallel -k --gnu -X -N10 utils/jsshell/js build/ts/shell.js -x -fc 10 {} | tee test/ats/test_swf_avm2_all.run;'
+             (grunt.option('verbose') ? '-v ' : '') + ' {}'
       },
       test_unit: {
         cmd: '"utils/jsshell/js" build/ts/shell.js -x -g ' +
              (grunt.option('verbose') ? '-v ' : '') +
              (grunt.option('tests') || expandFilePattern('test/unit/pass/*.js'))
+      },
+      test_swf_avm2_all: {
+        maxBuffer: Infinity,
+        cmd: 'mongo ats --eval \'db.swfs.find({"parse_result.uses_avm1": false}).forEach(function (x) { print("test/ats/swfs/" + x.file); })\' | parallel -k --gnu -X -N10 utils/jsshell/js build/ts/shell.js -x -fc 10 {} | tee test/ats/test_swf_avm2_all.run;'
       },
       bench_avm2: {
         maxBuffer: Infinity,
@@ -270,7 +268,7 @@ module.exports = function(grunt) {
         tasks: [
           'exec:test_avm2_shumway',
           'exec:test_avm2_acceptance',
-          'exec:test_swf_acceptance',
+          'exec:test_swf',
           'exec:test_avm2_ats',
           'exec:test_unit',
           'exec:test_trace'
@@ -671,7 +669,7 @@ module.exports = function(grunt) {
 
     //'gate'
     'exec:test_avm2_shumway',
-    'exec:test_swf_acceptance',
+    'exec:test_swf',
     'exec:test_unit',
     'exec:test_trace',
     'exec:install_swfdec_travis',
@@ -686,7 +684,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('warn', "Run this before checking in any code to report warnings.", [
     'exec:warn_spell',
-    'exec:warn_avm2'
+    'exec:warn'
   ]);
 
   grunt.registerTask('perf-gate', "Run this before checking in any code to make sure you don't regress performance.", [
@@ -700,10 +698,14 @@ module.exports = function(grunt) {
   grunt.registerTask('test', [
     'exec:test_avm2_shumway',
     'exec:test_avm2_acceptance',
-    'exec:test_swf_acceptance',
-    'exec:test_swf_avm2',
-    'exec:test_unit',
-    'exec:test_trace'
+    // 'exec:test_avm2_pypy',
+    // 'exec:test_arch',
+    'exec:test_swf',
+    'exec:test_trace',
+    // 'exec:test_trace_swfdec',
+    'exec:test_avm2_ats',
+    'exec:test_avm2_ats_parse',
+    'exec:test_unit'
   ]);
   grunt.registerTask('mozcentralshu', [
     'mozcentralbaseline',
@@ -1086,9 +1088,6 @@ module.exports = function(grunt) {
       'build', // Deletes entire 'build' folder!
       'test/tmp/',
       'test/*.log',
-      'test/ats/test_swf_avm2.run',
-      'test/avm2/acceptance-results.*',
-      'test/avm2/*.run',
       'test/avm2/*.tmp'
     ];
     filesToRemove.forEach(function (files) {
