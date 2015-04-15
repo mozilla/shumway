@@ -251,6 +251,9 @@ module.exports = function(grunt) {
       install_avmshell_travis: {
         cmd: "make -C utils/ install-avmshell"
       },
+      install_swfdec_travis: {
+        cmd: "make -C utils/ install-swfdec || echo 'Ignoring the error'"
+      },
       versions_travis: {
         cmd: "parallel --gnu --version; utils/jsshell/js --version; utils/tamarin-redux/bin/shell/avmshell -Dversion;"
       },
@@ -674,11 +677,15 @@ module.exports = function(grunt) {
     'exec:install_avmshell_travis',
     // 'exec:versions_travis', AVMShell exits with 1 for some reason.
     'build',
+
     //'gate'
     'exec:test_avm2_pass',
     'exec:test_swf_acceptance',
     'exec:unit_test',
-    'exec:tracetest'
+    'exec:tracetest',
+
+    'exec:install_swfdec_travis',
+    'exec:tracetest_swfdec',
   ]);
   grunt.registerTask('gate', "Run this before checking in any code.", [
     // 'tslint:all', // Annoyingly slow, and not very useful most of the time.
