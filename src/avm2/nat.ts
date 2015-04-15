@@ -1251,7 +1251,11 @@ module Shumway.AVMX.AS {
       if (!result) {
         return null;
       }
-      return transformJStoASRegExpMatchArray(this.sec, result);
+      try {
+        return transformJStoASRegExpMatchArray(this.sec, result);
+      } catch (e) {
+        return null;
+      }
     }
     replace(pattern /* : string | ASRegExp */, repl /* : string | ASFunction */) {
       if (this.sec.AXRegExp.axIsType(pattern)) {
@@ -1262,7 +1266,11 @@ module Shumway.AVMX.AS {
       if (this.sec.AXFunction.axIsType(repl)) {
         repl = (<any>repl).value;
       }
-      return this.value.replace(<any>pattern, <any>repl);
+      try {
+        return this.value.replace(<any>pattern, <any>repl);
+      } catch (e) {
+        return this.value;
+      }
     }
     search(pattern /* : string | ASRegExp */) {
       if (this.sec.AXRegExp.axIsType(pattern)) {
@@ -1270,7 +1278,11 @@ module Shumway.AVMX.AS {
       } else {
         pattern = axCoerceString(pattern);
       }
-      return this.value.search(<any>pattern);
+      try {
+        return this.value.search(<any>pattern);
+      } catch (e) {
+        return -1;
+      }
     }
     slice(start?: number, end?: number) {
       start = arguments.length < 1 ? 0 : start | 0;
@@ -1284,7 +1296,11 @@ module Shumway.AVMX.AS {
         separator = axCoerceString(separator);
       }
       limit = limit === undefined ? -1 : limit | 0;
-      return this.sec.createArray(this.value.split(<any>separator, limit));
+      try {
+        return this.sec.createArray(this.value.split(<any>separator, limit));
+      } catch (e) {
+        return this.sec.createArrayUnsafe([this.value]);
+      }
     }
     substring(start: number, end?: number) {
       return this.value.substring(start, end);
