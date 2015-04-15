@@ -669,7 +669,7 @@ module.exports = function(grunt) {
 
     //'gate'
     'exec:test_avm2_shumway',
-    // 'exec:test_avm2_acceptance', // There are some failing tests that only happen on Travis.
+    'exec:test_avm2_acceptance',
     // 'exec:test_avm2_pypy',
     // 'exec:test_arch',
     'exec:test_swf',
@@ -677,7 +677,7 @@ module.exports = function(grunt) {
     'exec:install_swfdec_travis',
     'exec:test_trace_swfdec',
     'exec:test_avm2_ats',
-    'exec:test_avm2_ats_parse',
+    //'exec:test_avm2_ats_parse',
     'exec:test_unit'
   ]);
   grunt.registerTask('gate', "Run this before checking in any code.", [

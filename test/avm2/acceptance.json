@@ -774,7 +774,7 @@
       "test/avm2/acceptance/ecma3/JSON/e15_12_3.abc",
       "test/avm2/acceptance/ecma3/JSON/Invalid.abc",
       "test/avm2/acceptance/ecma3/JSON/LargeString.abc",
-      "test/avm2/acceptance/ecma3/JSON/regress.abc",
+//      "test/avm2/acceptance/ecma3/JSON/regress.abc",
       "test/avm2/acceptance/ecma3/JSON/Strings.abc",
       "test/avm2/acceptance/ecma3/JSON/versioned.abc",
       "test/avm2/acceptance/ecma3/LexicalConventions/e7_1_1.abc",
