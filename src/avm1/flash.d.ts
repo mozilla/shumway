@@ -58,6 +58,8 @@ interface ISecurityDomain {
       SharedObject: typeof flashPackage.net.SharedObject;
     }
     system: {
+      Capabilities: typeof flashPackage.system.Capabilities;
+      Security: typeof flashPackage.system.Security;
       fscommand: typeof flashPackage.system.fscommand;
     }
     ui: {
@@ -344,10 +346,19 @@ declare module Shumway.AVMX.AS.flash {
     }
   }
   module system {
-    class Capabilities {
+    class Capabilities extends ASObject {
+      static axClass: typeof Capabilities;
+
       static version: string;
     }
-    class Security {}
+    class Security extends ASObject {
+      static axClass: typeof Security;
+
+      static sandboxType: string;
+      static allowDomain(domain: string): void;
+      static allowInsecureDomain(domain: string): void;
+      static loadPolicyFile(url: string): void;
+    }
     var fscommand: { axCall: (thisArg, sec: ISecurityDomain, command: string, args?: string) => any };
   }
   module text {
