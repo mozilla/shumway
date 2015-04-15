@@ -847,15 +847,21 @@ module Shumway.AVMX {
     // error messages, and throwing them must be done very carefully to not cause the next one.
     if (internalError &&
         typeof internalError.name === 'string' && typeof internalError.message === 'string') {
-      if (internalError.name === 'InternalError' &&
-          internalError.message.indexOf('recursion') > -1 ||
-          internalError.name === 'RangeError' &&
-          internalError.message.indexOf('call stack size exceeded') > -1) {
+      if (internalError.name === 'InternalError') {
         var obj = Object.create(sec.AXError.tPrototype);
         obj._errorID = 1023;
-        obj.$Bgmessage = "Stack overflow occurred";
-        scopeStacks.length = expectedScopeStacksHeight;
-        return obj;
+        if (internalError.message === 'allocation size overflow') {
+          obj.$Bgmessage = "allocation size overflow";
+          return obj;
+        }
+        if (internalError.message.indexOf('recursion') > -1 ||
+            internalError.name === 'RangeError' &&
+            internalError.message.indexOf('call stack size exceeded') > -1)
+        {
+          obj.$Bgmessage = "Stack overflow occurred";
+          scopeStacks.length = expectedScopeStacksHeight;
+          return obj;
+        }
       }
     }
     var message: string;
