@@ -181,7 +181,7 @@ module.exports = function(grunt) {
       // Runs tamarin acceptance tests and tests against the current baseline. If you get more tests to pass, update the baseline.
       test_avm2_acceptance: {
         maxBuffer: Infinity,
-        cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance_pass.json | tee test/avm2/test_avm2_acceptance.run | egrep -o "(PASSED|FAILED|EXCEPTED|VM-internal|TIMEDOUT)" | sort | uniq -c | tee test/avm2/acceptance.run && ' +
+        cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance_pass.json | tee test/avm2/test_avm2_acceptance.run | egrep -o "(PASSED|FAILED|EXCEPTED|VM-internal|TIMEDOUT)" | LC_ALL=C sort | uniq -c | tee test/avm2/acceptance.run && ' +
              'diff test/avm2/acceptance.run test/avm2/acceptance.baseline'
       },
       // Runs the pypy tests and tests against the current baseline. If you get more tests to pass, update the baseline.
@@ -211,7 +211,7 @@ module.exports = function(grunt) {
       // Runs SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
       test_swf_acceptance: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel -k --gnu -X -N1 utils/jsshell/js build/ts/shell.js -x -fc 10 {} | sort > test/swf/acceptance.run && ' +
+        cmd: 'find -L test/swf -name "*.swf" | parallel -k --gnu -X -N1 utils/jsshell/js build/ts/shell.js -x -fc 10 {} | LC_ALL=C sort > test/swf/acceptance.run && ' +
              'diff test/swf/acceptance.run test/swf/acceptance.baseline'
       },
       // Runs archive SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
