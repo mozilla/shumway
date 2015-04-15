@@ -96,11 +96,47 @@ module Shumway.AVMX.AS {
       }
     }
 
-    toString()              { return !(this.value instanceof Date) ? 'Invalid Date' : this.value.toString(); }
+    toString() {
+      if (!(this.value instanceof Date)) {
+        return 'Invalid Date';
+      }
+      // JS formats dates differently, so a little surgery is required here:
+      // We need to move the year to the end, get rid of the timezone name, and remove leading 0
+      // from the day.
+      var dateStr = this.value.toString();
+      var parts = dateStr.split(' ');
+      // Detect invalid dates. Not 100% sure all JS engines always print 'Invalid Date' here,
+      // so we just check how many parts the resulting string has, with some margin for error.
+      if (parts.length < 4) {
+        return 'Invalid Date';
+      }
+      parts.length = 6; // Get rid of the timezone, which might contain spaces.
+      parts.push(parts.splice(3, 1)[0]); // Move Year to the end.
+      if (parts[2][0] === '0') {
+        parts[2] = parts[2][1];
+      }
+      return parts.join(' ');
+    }
+    toDateString()
+    {
+      if (!(this.value instanceof Date)) {
+        return 'Invalid Date';
+      }
+      var dateStr = this.value.toDateString();
+      var parts = dateStr.split(' ');
+      // Detect invalid dates. Not 100% sure all JS engines always print 'Invalid Date' here,
+      // so we just check how many parts the resulting string has, with some margin for error.
+      if (parts.length < 4) {
+        return 'Invalid Date';
+      }
+      if (parts[2][0] === '0') {
+        parts[2] = parts[2][1];
+      }
+      return parts.join(' ');
+    }
     toJSON()                { return !(this.value instanceof Date) ? 'Invalid Date' : this.value.toString(); }
     valueOf()               { return !(this.value instanceof Date) ? NaN : this.value.valueOf(); }
     setTime(value = 0)      { return !(this.value instanceof Date) ? NaN : this.value.setTime(value); }
-    toDateString()          { return !(this.value instanceof Date) ? 'Invalid Date' : this.value.toDateString(); }
     toTimeString()          { return !(this.value instanceof Date) ? 'Invalid Date' : this.value.toTimeString(); }
     toLocaleString()        { return !(this.value instanceof Date) ? 'Invalid Date' : this.value.toLocaleString(); }
     toLocaleDateString()    { return !(this.value instanceof Date) ? 'Invalid Date' : this.value.toLocaleDateString(); }
