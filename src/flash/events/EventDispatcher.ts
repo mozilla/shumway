@@ -272,7 +272,7 @@ module Shumway.AVMX.AS.flash.events {
                                        arguments.length);
       }
       // The type of `listener` is checked before that of `type`.
-      if (!this.sec.isCallable(listener)) {
+      if (!axIsCallable(listener)) {
         // TODO: The Player unevals the `listener`. To some extend, we could, too.
         this.sec.throwError("TypeError", Errors.CheckTypeFailedError, listener,
                                        "Function");
@@ -303,7 +303,7 @@ module Shumway.AVMX.AS.flash.events {
                                        arguments.length);
       }
       // The type of `listener` is checked before that of `type`.
-      if (!this.sec.isCallable(listener)) {
+      if (!axIsCallable(listener)) {
         // TODO: The Player unevals the `listener`. To some extend, we could, too.
         this.sec.throwError("TypeError", Errors.CheckTypeFailedError, listener,
                                        "Function");

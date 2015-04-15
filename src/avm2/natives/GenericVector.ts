@@ -75,7 +75,7 @@ module Shumway.AVMX.AS {
         return false;
       }
       var sec = this.sec;
-      if (!sec.isCallable(callback)) {
+      if (!axIsCallable(callback)) {
         sec.throwError("TypeError", Errors.CheckTypeFailedError, callback, 'Function');
       }
       if ((<any>callback).axClass === sec.AXMethodClosure &&

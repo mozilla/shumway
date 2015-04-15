@@ -462,6 +462,10 @@ module Shumway.AVMX {
     return typeof x;
   }
 
+  export function axIsCallable(value): boolean {
+    return (value && typeof value.axApply === 'function');
+  }
+
   function axCoerce(x: any) {
     if (isNullOrUndefined(x)) {
       return null;
@@ -1209,10 +1213,6 @@ module Shumway.AVMX {
         }
       }
       return fun;
-    }
-
-    isCallable(value): boolean {
-      return (value && typeof value.axApply === 'function');
     }
 
     createInitializerFunction(classInfo: ClassInfo, scope: Scope): AXCallable {
