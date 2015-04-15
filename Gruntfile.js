@@ -162,14 +162,15 @@ module.exports = function(grunt) {
       lint_success: {
         cmd: 'echo "SUCCESS: no lint errors"'
       },
-      test_avm2_pass: {
-        cmd: // Run all tests from pass.txt in one instance of Shumway and save the output in |test/avm2/pass.run|.
-             'cat test/avm2/pass.txt | xargs utils/jsshell/js build/ts/shell.js -x --printABCFileName > test/avm2/pass.run; ' +
-             // Run all tests from pass.txt each in many instances of Tamarin and save the output in |test/avm2/pass.baseline|.
+      test_avm2_shumway: {
+        cmd: // Run all tests from shumway.txt in one instance of Shumway and save the output in |test/avm2/shumway.run|.
+             'mkdir -p build/test/avm2; ' +
+             'cat test/avm2/shumway.txt | xargs utils/jsshell/js build/ts/shell.js -x --printABCFileName > build/test/avm2/shumway.run; ' +
+             // Run all tests from shumway.txt each in many instances of Tamarin and save the output in |test/avm2/shumway.baseline|.
              // Between each run, emit the test name as "::: test :::" so it's easy to identify where things go wrong.
-             'rm test/avm2/pass.baseline; cat test/avm2/pass.txt | grep -v @ | xargs -L 1 -I \'{}\' sh -c \'echo "::: {} :::" >> test/avm2/pass.baseline; utils/tamarin-redux/bin/shell/avmshell {} >> test/avm2/pass.baseline;\'; ' +
+             'rm test/avm2/shumway.baseline; cat test/avm2/shumway.txt | grep -v @ | xargs -L 1 -I \'{}\' sh -c \'echo "::: {} :::" >> test/avm2/shumway.baseline; utils/tamarin-redux/bin/shell/avmshell {} >> test/avm2/shumway.baseline;\'; ' +
              // Diff results.
-             'diff test/avm2/pass.run test/avm2/pass.baseline'
+             'diff build/test/avm2/shumway.run test/avm2/shumway.baseline'
       },
       test_avm2_fail: {
         cmd: 'node src/shell/numbers.js -i test/avm2/fail.txt -c i -j ' + (+grunt.option('threads') || 9)
@@ -277,7 +278,7 @@ module.exports = function(grunt) {
           grunt: true
         },
         tasks: [
-          'exec:test_avm2_pass',
+          'exec:test_avm2_shumway',
           'exec:test_avm2_acceptance',
           'exec:test_swf_acceptance',
           'exec:test_swf_avm2',
@@ -679,7 +680,7 @@ module.exports = function(grunt) {
     'build',
 
     //'gate'
-    'exec:test_avm2_pass',
+    'exec:test_avm2_shumway',
     'exec:test_swf_acceptance',
     'exec:unit_test',
     'exec:tracetest',
@@ -711,7 +712,7 @@ module.exports = function(grunt) {
   ]);
   // Runs all tests.
   grunt.registerTask('test', [
-    'exec:test_avm2_pass',
+    'exec:test_avm2_shumway',
     'exec:test_avm2_acceptance',
     'exec:test_swf_acceptance',
     'exec:test_swf_avm2',

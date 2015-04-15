@@ -1,4 +1,4 @@
-::: test/avm2/pass/xml-9.abc :::
+::: test/avm2/shumway/xml-9.abc :::
 default prettyPrinting true
 prettyPrinting=false
 <a><b>test</b></a>
@@ -66,17 +66,17 @@ ignoreWhitespace=true
   <d/>
   <e>test</e>
 </a>
-::: test/avm2/pass/xml-3.abc :::
+::: test/avm2/shumway/xml-3.abc :::
 abc
-::: test/avm2/pass/xml-11.abc :::
+::: test/avm2/shumway/xml-11.abc :::
 Testing Basic XML
 foo
 foo
-::: test/avm2/pass/xml-7.abc :::
+::: test/avm2/shumway/xml-7.abc :::
 test1
 xml
 -- DONE --
-::: test/avm2/pass/vectors-3.abc :::
+::: test/avm2/shumway/vectors-3.abc :::
 Vector.<int>
 12 number
 0 number
@@ -87,16 +87,16 @@ Vector.<uint>
 4294967295 number
 Vector.<String>
 DONE
-::: test/avm2/pass/vectors-2.abc :::
+::: test/avm2/shumway/vectors-2.abc :::
 0
 0
 3
 0
 1
 -
-::: test/avm2/pass/type-1.abc :::
+::: test/avm2/shumway/type-1.abc :::
 0 number
-::: test/avm2/pass/type-3.abc :::
+::: test/avm2/shumway/type-3.abc :::
 "ABC" is String - true
 A is Class - true
 123 is Class - false
@@ -107,7 +107,7 @@ new A() is A - true
 new B() is A - true
 new C() is A - false
 -- DONE --
-::: test/avm2/pass/valueOf.abc :::
+::: test/avm2/shumway/valueOf.abc :::
 --- Test 1 ---
 true
 --- Test 2 ---
@@ -126,7 +126,7 @@ boolean
 4
 3
 2
-::: test/avm2/pass/type-6.abc :::
+::: test/avm2/shumway/type-6.abc :::
 --- isType ---
 V: 1
 In foo: 1
@@ -142,18 +142,18 @@ In bar: 0
 Is Object: false
 --- isType 2 ---
 catch
-::: test/avm2/pass/switch2.abc :::
+::: test/avm2/shumway/switch2.abc :::
 1
-::: test/avm2/pass/switch1.abc :::
+::: test/avm2/shumway/switch1.abc :::
 PASS
 OK
-::: test/avm2/pass/swap.abc :::
+::: test/avm2/shumway/swap.abc :::
 0
 1
 2
 3
 DONE
-::: test/avm2/pass/sort-1.abc :::
+::: test/avm2/shumway/sort-1.abc :::
 --- Test sortOn('a') ---
 1 : 9 : AB : 21
 2 : 4 : B : 2.1
@@ -271,14 +271,14 @@ DONE
 31
 4
 5
-::: test/avm2/pass/simple.abc :::
+::: test/avm2/shumway/simple.abc :::
 actual: true
 expect: true
 0 == 0, expected: true, actual: true, true
 actual: false
 expect: false
 1 == 0, expected: false, actual: false, true
-::: test/avm2/pass/reg-alloc.abc :::
+::: test/avm2/shumway/reg-alloc.abc :::
 --- Test 0 ---
 --- Test 0 ---
 --- Test 0 ---
@@ -294,12 +294,12 @@ get x
 8
 45
 10
-::: test/avm2/pass/prot-3.abc :::
+::: test/avm2/shumway/prot-3.abc :::
 B::foo
 --
-::: test/avm2/pass/prot-4.abc :::
+::: test/avm2/shumway/prot-4.abc :::
 --
-::: test/avm2/pass/prot-2.abc :::
+::: test/avm2/shumway/prot-2.abc :::
 3
 setA A
 setB B
@@ -309,11 +309,11 @@ staticSetA A
 staticSetB B
 staticSetC C
 --
-::: test/avm2/pass/prot-1.abc :::
+::: test/avm2/shumway/prot-1.abc :::
 15
-::: test/avm2/pass/register-0.abc :::
+::: test/avm2/shumway/register-0.abc :::
 Done: 119880000
-::: test/avm2/pass/prot-0.abc :::
+::: test/avm2/shumway/prot-0.abc :::
 A::foo()
 override B::foo()
 override C::foo()
@@ -323,15 +323,15 @@ override B::bar()
 override C::bar()
 override E::bar()
 --
-::: test/avm2/pass/props-6.abc :::
+::: test/avm2/shumway/props-6.abc :::
 --- array ---
 PI
-::: test/avm2/pass/props-8.abc :::
+::: test/avm2/shumway/props-8.abc :::
 New instances of "E" have own property "a": true
-::: test/avm2/pass/props-7.abc :::
+::: test/avm2/shumway/props-7.abc :::
 --- XML ---
 HELLO
-::: test/avm2/pass/props.abc :::
+::: test/avm2/shumway/props.abc :::
 --- Test 1 ---
 5
 get y
@@ -398,7 +398,7 @@ true
 1
 2
 undefined
-::: test/avm2/pass/props-4.abc :::
+::: test/avm2/shumway/props-4.abc :::
 --- hasOwnProperty ---
 true
 true
@@ -414,7 +414,7 @@ true
 false
 true
 false
-::: test/avm2/pass/props-3.abc :::
+::: test/avm2/shumway/props-3.abc :::
 --- Test 0 - Delete Array Element While Enumerating ---
 0
 1
@@ -432,7 +432,7 @@ false
 false
 true
 false
-::: test/avm2/pass/props-2.abc :::
+::: test/avm2/shumway/props-2.abc :::
 --- Test 0 ---
 D
 undefined
@@ -442,7 +442,7 @@ undefined
 2
 4
 undefined
-::: test/avm2/pass/play.abc :::
+::: test/avm2/shumway/play.abc :::
 Created Animal Class
 Created Monkey Class
 Creating Human Class
@@ -450,11 +450,11 @@ Human::count100
 Created Human Class
 Animal::count = 100
 Human::count = undefined
-::: test/avm2/pass/obj.abc :::
+::: test/avm2/shumway/obj.abc :::
 2450
-::: test/avm2/pass/phi-0.abc :::
+::: test/avm2/shumway/phi-0.abc :::
 1
-::: test/avm2/pass/order.abc :::
+::: test/avm2/shumway/order.abc :::
 --- Test 1 ---
 1
 2
@@ -475,7 +475,7 @@ Human::count = undefined
 49
 64
 81
-::: test/avm2/pass/names.abc :::
+::: test/avm2/shumway/names.abc :::
 Created C0
 Created C1, y: 2
 Created C2
@@ -487,12 +487,12 @@ N0::['y'] - 2
 N1::['y'] - 3
 N2::['y'] - 4
 Created C2
-::: test/avm2/pass/method-closures-2.abc :::
+::: test/avm2/shumway/method-closures-2.abc :::
 true
 true
 true
 -- DONE --
-::: test/avm2/pass/method-closures-3.abc :::
+::: test/avm2/shumway/method-closures-3.abc :::
 true
 true
 true
@@ -514,7 +514,7 @@ true
 true
 true
 -- DONE --
-::: test/avm2/pass/method-closures-0.abc :::
+::: test/avm2/shumway/method-closures-0.abc :::
 1
 1
 1
@@ -535,19 +535,19 @@ true
 1
 1
 1
-::: test/avm2/pass/literals-0.abc :::
+::: test/avm2/shumway/literals-0.abc :::
 42
 NaN
 Infinity
 -Infinity
-::: test/avm2/pass/method-closures-1.abc :::
+::: test/avm2/shumway/method-closures-1.abc :::
 HELLO
-::: test/avm2/pass/many-0.abc :::
+::: test/avm2/shumway/many-0.abc :::
 22
-::: test/avm2/pass/iss-923.abc :::
+::: test/avm2/shumway/iss-923.abc :::
 test()
 DONE
-::: test/avm2/pass/interface-3.abc :::
+::: test/avm2/shumway/interface-3.abc :::
 Class1
 Class2 then Class1
 Class2 then Class1
@@ -555,18 +555,18 @@ Class1
 Class2 then Class1
 Class2 then Class1
 -- DONE --
-::: test/avm2/pass/iss-857.abc :::
+::: test/avm2/shumway/iss-857.abc :::
 PASS
 -- DONE --
-::: test/avm2/pass/interface-1.abc :::
+::: test/avm2/shumway/interface-1.abc :::
 -- DONE --
-::: test/avm2/pass/interface-0.abc :::
+::: test/avm2/shumway/interface-0.abc :::
 bar
 -- DONE --
-::: test/avm2/pass/inline-3.abc :::
+::: test/avm2/shumway/inline-3.abc :::
 1
-::: test/avm2/pass/inline-1.abc :::
-::: test/avm2/pass/inline-4.abc :::
+::: test/avm2/shumway/inline-1.abc :::
+::: test/avm2/shumway/inline-4.abc :::
 foo
 foo
 foo
@@ -578,9 +578,9 @@ foo
 foo
 foo
 10
-::: test/avm2/pass/inline-0.abc :::
+::: test/avm2/shumway/inline-0.abc :::
 241
-::: test/avm2/pass/in-0.abc :::
+::: test/avm2/shumway/in-0.abc :::
 --- Test 1 ---
 true
 true
@@ -609,19 +609,19 @@ false
 true
 true
 -- DONE --
-::: test/avm2/pass/hello.abc :::
+::: test/avm2/shumway/hello.abc :::
 Hello World
-::: test/avm2/pass/functions-0.abc :::
+::: test/avm2/shumway/functions-0.abc :::
 16
 2
-::: test/avm2/pass/functions-2.abc :::
+::: test/avm2/shumway/functions-2.abc :::
 NaN
 NaN
 --
-::: test/avm2/pass/functions-1.abc :::
+::: test/avm2/shumway/functions-1.abc :::
 --- 0 ---
 30
-::: test/avm2/pass/hoist.abc :::
+::: test/avm2/shumway/hoist.abc :::
 --- Test 0 - Don't Hoist Array Literals ---
 30
 --- Test 0 - Don't Hoist Object Literals ---
@@ -635,13 +635,13 @@ undefined
 undefined
 undefined
 undefined
-::: test/avm2/pass/for-2.abc :::
+::: test/avm2/shumway/for-2.abc :::
 -- Enumerate only Dynamic Properties  --
 0,d0,d1,d2
 -- DONE --
-::: test/avm2/pass/flow-large.abc :::
+::: test/avm2/shumway/flow-large.abc :::
 100
-::: test/avm2/pass/for-1.abc :::
+::: test/avm2/shumway/for-1.abc :::
 -- 0 --
 -- 1 --
 -- 2 --
@@ -656,7 +656,7 @@ undefined
 -- 8 --
 -- 9 --
 -- DONE --
-::: test/avm2/pass/dic-3.abc :::
+::: test/avm2/shumway/dic-3.abc :::
 -- String key
 test 4
 -- Numeric key
@@ -669,11 +669,11 @@ true
 true
 After Delete: false
 false
-::: test/avm2/pass/dictionary1.abc :::
+::: test/avm2/shumway/dictionary1.abc :::
 1
 2
 undefined
-::: test/avm2/pass/dic-4.abc :::
+::: test/avm2/shumway/dic-4.abc :::
 -- String key
 true
 false
@@ -683,9 +683,9 @@ false
 -- Object key
 true
 false
-::: test/avm2/pass/flow.abc :::
+::: test/avm2/shumway/flow.abc :::
 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100
-::: test/avm2/pass/dic-2.abc :::
+::: test/avm2/shumway/dic-2.abc :::
 --- Function Keys ---
 1
 2
@@ -696,7 +696,7 @@ undefined
 undefined
 3
 --- DONE ---
-::: test/avm2/pass/dic-0.abc :::
+::: test/avm2/shumway/dic-0.abc :::
 --- Test 0 - Primitive Keys ---
 aa
 1
@@ -705,7 +705,7 @@ aa
 foo
 bar
 --- DONE ---
-::: test/avm2/pass/dic-1.abc :::
+::: test/avm2/shumway/dic-1.abc :::
 --- Test 0 - Primitive Keys ---
 0
 1
@@ -729,7 +729,7 @@ undefined
 undefined
 3
 --- DONE ---
-::: test/avm2/pass/deflate.abc :::
+::: test/avm2/shumway/deflate.abc :::
 150
 76
 111
@@ -744,7 +744,7 @@ undefined
 true
 150
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc hendrerit, risus vel dapibus hendrerit, augue ipsum adipiscing lorem, quis orci aliquam.
-::: test/avm2/pass/delete-0.abc :::
+::: test/avm2/shumway/delete-0.abc :::
 --- Delete stuff that we're not allowed to. ---
 delete [class Object].prototype false
 delete [class Function].prototype false
@@ -761,7 +761,7 @@ delete [class SyntaxError].prototype false
 delete [class TypeError].prototype false
 delete [class URIError].prototype false
 -- DONE --
-::: test/avm2/pass/default.abc :::
+::: test/avm2/shumway/default.abc :::
 3
 6
 10
@@ -773,7 +773,7 @@ delete [class URIError].prototype false
 4
 5
 3
-::: test/avm2/pass/coerce-3.abc :::
+::: test/avm2/shumway/coerce-3.abc :::
 Coercing to Object
 -- via Object() --
 number
@@ -814,13 +814,13 @@ string
 object
 object
 function
-::: test/avm2/pass/closure0.abc :::
+::: test/avm2/shumway/closure0.abc :::
 PASS
 0
 PASS
 1
 PASS
-::: test/avm2/pass/classes.abc :::
+::: test/avm2/shumway/classes.abc :::
 Class A
 Class B
 1
@@ -835,7 +835,7 @@ undefined
 undefined
 undefined
 1
-::: test/avm2/pass/classes-box.abc :::
+::: test/avm2/shumway/classes-box.abc :::
 -- Boxing --
 [class int](0) === 0: true
 [class uint](0) === 0: true
@@ -882,8 +882,8 @@ undefined
 [class Number](23) === 23: false
 [class String](23) === 23: true
 -- Done --
-::: test/avm2/pass/closures.abc :::
-::: test/avm2/pass/classes-5.abc :::
+::: test/avm2/shumway/closures.abc :::
+::: test/avm2/shumway/classes-5.abc :::
 A
 A::a
 A
@@ -947,9 +947,9 @@ false
 0
 0
 0
-::: test/avm2/pass/classes-3.abc :::
+::: test/avm2/shumway/classes-3.abc :::
 123
-::: test/avm2/pass/classes-2.abc :::
+::: test/avm2/shumway/classes-2.abc :::
 Creating Class C
 [class A]
 [object Object]
@@ -969,43 +969,43 @@ B::yoo
 A::xDefault 42
 A::xDefault 123
 --- DONE ---
-::: test/avm2/pass/classes-1.abc :::
+::: test/avm2/shumway/classes-1.abc :::
 Construct A
 -- SHOULD NOT CONSTRUCT AGAIN --
 -- DONE --
-::: test/avm2/pass/class-tostring.abc :::
+::: test/avm2/shumway/class-tostring.abc :::
 testA: testA
 testB: testB
 testAB: testAB
 toString: toString
 toString2: toString
-::: test/avm2/pass/class-scope.abc :::
-::: test/avm2/pass/class-order.abc :::
+::: test/avm2/shumway/class-scope.abc :::
+::: test/avm2/shumway/class-order.abc :::
 CLASS A
 CLASS B
-::: test/avm2/pass/callsuper8.abc :::
+::: test/avm2/shumway/callsuper8.abc :::
 2
 --
-::: test/avm2/pass/callsuper7.abc :::
+::: test/avm2/shumway/callsuper7.abc :::
 --
-::: test/avm2/pass/callsuper6.abc :::
+::: test/avm2/shumway/callsuper6.abc :::
 5
 6
 8
-::: test/avm2/pass/callsuper5.abc :::
+::: test/avm2/shumway/callsuper5.abc :::
 B
 A
-::: test/avm2/pass/callsuper3.abc :::
+::: test/avm2/shumway/callsuper3.abc :::
 AC
-::: test/avm2/pass/callsuper4.abc :::
+::: test/avm2/shumway/callsuper4.abc :::
 BC
-::: test/avm2/pass/callsuper2.abc :::
+::: test/avm2/shumway/callsuper2.abc :::
 C
 A
-::: test/avm2/pass/callsuper1.abc :::
+::: test/avm2/shumway/callsuper1.abc :::
 B
 A
-::: test/avm2/pass/coerce-0.abc :::
+::: test/avm2/shumway/coerce-0.abc :::
 -------------------------------+--------------+--------------+--------------+--------------+--------------+--------------+--------------+--------------+--------------+--------------+--------------+--------------+--------------+--------------+-------------
 value                          | typeof       | io Boolean   | io Number    | io int       | io uint      | io String    | io Object    | io Function  | is Boolean   | is Number    | is int       | is uint      | is String    | is Object    | is Function 
 -- x --------------------------+--------------+--------------+--------------+--------------+--------------+--------------+--------------+--------------+--------------+--------------+--------------+--------------+--------------+--------------+-------------
@@ -1255,31 +1255,31 @@ Infinity                       | number       | false        | true         | fa
 "08"                           | string       | false        | false        | false        | false        | true         | true         | false        | false        | false        | false        | false        | true         | true         | false       
 "1"                            | string       | false        | false        | false        | false        | true         | true         | false        | false        | false        | false        | false        | true         | true         | false       
 "A"                            | string       | false        | false        | false        | false        | true         | true         | false        | false        | false        | false        | false        | true         | true         | false       
-::: test/avm2/pass/call-1.abc :::
+::: test/avm2/shumway/call-1.abc :::
 --- Call Property Object ---
 0
 --- Call Property Array ---
 0
-::: test/avm2/pass/call-0.abc :::
+::: test/avm2/shumway/call-0.abc :::
 o.foo
 o.foo
 o.foo
 car
 bar
-::: test/avm2/pass/bug1125489.abc :::
+::: test/avm2/shumway/bug1125489.abc :::
 1
-::: test/avm2/pass/byte-arrays-1.abc :::
+::: test/avm2/shumway/byte-arrays-1.abc :::
 --- toString ---
 Byte Array: 100
 Byte Array: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 Byte Array: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-::: test/avm2/pass/boot.abc :::
+::: test/avm2/shumway/boot.abc :::
 Object: [class Object]
 Number instanceof Class: true
 Class instanceof Class: true
 1 instanceof Class: false
 new Object() instanceof Class: false
-::: test/avm2/pass/byte-arrays-0.abc :::
+::: test/avm2/shumway/byte-arrays-0.abc :::
 --- writeBoolean ---
 [1, 0, 1, 0], l: 4, p: 4
 --- writeByte ---
@@ -1344,12 +1344,12 @@ undefined
 a[7] is now gone undefined
 [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], l: 10, p: 0
 a[7] is still there 7
-::: test/avm2/pass/arrays-1.abc :::
+::: test/avm2/shumway/arrays-1.abc :::
 30
-::: test/avm2/pass/arrays-0.abc :::
+::: test/avm2/shumway/arrays-0.abc :::
 [42, 12, 31][0] 42 42
 [42, 12, 31]["1"] 12 12
-::: test/avm2/pass/add-0.abc :::
+::: test/avm2/shumway/add-0.abc :::
 --- Test 0 : Number + Number ---
 1
 --- Test 1 : Number + String --- 
@@ -1368,7 +1368,7 @@ XS
 V1
 --- Test 7 : Object + 1 (toString) ---
 S1
-::: test/avm2/pass/arrays.abc :::
+::: test/avm2/shumway/arrays.abc :::
 16
 9,1,2
 9
@@ -1408,7 +1408,7 @@ S1
 5
 4,3,2,1,0
 -- DONE --
-::: test/avm2/pass/numbers-0.abc :::
+::: test/avm2/shumway/numbers-0.abc :::
 Number.sqrt(2) 1 : 1
 Number.sqrt(2) 1.4 : 1.4
 Number.sqrt(2) 1.41 : 1.41
@@ -1429,7 +1429,7 @@ Number.sqrt(2) 1.4142135623730951 : 1.4142135623730951
 Number.sqrt(2) 1.41421356237309515 : 1.41421356237309515
 Number.sqrt(2) 1.414213562373095145 : 1.414213562373095145
 Number.sqrt(2) 1.4142135623730951455 : 1.4142135623730951455
-::: test/avm2/pass/vectors-1.abc :::
+::: test/avm2/shumway/vectors-1.abc :::
 0
 0
 3
@@ -1448,18 +1448,18 @@ ex
 0,1,2,3,4,5.123,[object Object],null
 8
 -
-::: test/avm2/pass/vectors-numeric-2.abc :::
+::: test/avm2/shumway/vectors-numeric-2.abc :::
 -- Not the Same Type --
 PASS expected: false, got: false. Should not be the same, behaves like a clone.
 DONE ------------
-::: test/avm2/pass/vectors-errors.abc :::
+::: test/avm2/shumway/vectors-errors.abc :::
 1,2,3,4,5
 1,2,3,4,5
 1,2,3,4,5
 1,2,3,4,5
 RangeError: Error #1125: The index 10 is out of range 10.
 DONE
-::: test/avm2/pass/vectors-numeric.abc :::
+::: test/avm2/shumway/vectors-numeric.abc :::
 Vector.<int>
 0
 1024
@@ -1696,7 +1696,7 @@ PASS expected: 3, got: 3
 Vector.<Number>
 1,2.45,3.67
 DONE ------------
-::: test/avm2/pass/switch-3.abc :::
+::: test/avm2/shumway/switch-3.abc :::
 --- 0 ---
 0
 1
@@ -1768,7 +1768,7 @@ R
 18 - R
 19 - R
 --- DONE ---
-::: test/avm2/pass/for-3.abc :::
+::: test/avm2/shumway/for-3.abc :::
 -- Horse Bug --
 0
 1
@@ -1776,7 +1776,7 @@ R
 3
 4
 -- DONE --
-::: test/avm2/pass/props-5.abc :::
+::: test/avm2/shumway/props-5.abc :::
 --- array ---
 2
 2
@@ -1818,7 +1818,7 @@ undefined
 --- Vector Loop ---
 10
 A
-::: test/avm2/pass/props-get.abc :::
+::: test/avm2/shumway/props-get.abc :::
 --- array ---
 2
 2
@@ -1855,13 +1855,13 @@ undefined
 2
 4
 4
-::: test/avm2/pass/sort.abc :::
+::: test/avm2/shumway/sort.abc :::
 First Sort: 1,1,2,4,5,6
 Second Sort: 6,5,4,2,1,1
-::: test/avm2/pass/type-2.abc :::
+::: test/avm2/shumway/type-2.abc :::
 A
 B
-::: test/avm2/pass/vectors-generic.abc :::
+::: test/avm2/shumway/vectors-generic.abc :::
 Vector.<*>
 -- Concat --
 A: 0,1,2,3,4 5
@@ -1928,7 +1928,7 @@ Hello
  0,1,2,3,50,51,52,4,5,6,7,8,9
  0,1,2,3,4,5,6,7,8,9,-1,-1,-1
 DONE ------------
-::: test/avm2/pass/reg-0.abc :::
+::: test/avm2/shumway/reg-0.abc :::
 --- Test 0 ---
 true
 true
@@ -1990,16 +1990,16 @@ uid=15 uid=15
 --- Test 9 ---
 t$Mes$t t$Mes$t
 --- DONE ---
-::: test/avm2/pass/reg-1.abc :::
+::: test/avm2/shumway/reg-1.abc :::
 --- Test 0 ---
 null: true
 e
 t
 te,te
 te,t
-::: test/avm2/pass/reg-2.abc :::
+::: test/avm2/shumway/reg-2.abc :::
 --- Test 0 ---
-::: test/avm2/pass/reg-3.abc :::
+::: test/avm2/shumway/reg-3.abc :::
 --- Test match ---
 true
 true
@@ -2008,7 +2008,7 @@ again]<
 --- Test search ---
 0
 -1
-::: test/avm2/pass/names-2.abc :::
+::: test/avm2/shumway/names-2.abc :::
 --- Test 0 ---
 0
 1
@@ -2019,7 +2019,7 @@ again]<
 0
 1
 2
-::: test/avm2/pass/class-defaults.abc :::
+::: test/avm2/shumway/class-defaults.abc :::
 -- Instance --
 bool: false
 int: 0
@@ -2041,14 +2041,14 @@ A: null
 : undefined
 : 123
 -- Done --
-::: test/avm2/pass/coerce-1.abc :::
+::: test/avm2/shumway/coerce-1.abc :::
 string
-::: test/avm2/pass/call-2.abc :::
+::: test/avm2/shumway/call-2.abc :::
 --- Cast Return Type : int ---
 number
 --- Cast Return Type : String ---
 string
-::: test/avm2/pass/type-4.abc :::
+::: test/avm2/shumway/type-4.abc :::
 --- Test 1 ---
 1
 1
@@ -2435,7 +2435,7 @@ null
 null
 [object Object]
 --- DONE ---
-::: test/avm2/pass/type-5.abc :::
+::: test/avm2/shumway/type-5.abc :::
 instanceof true
 is true
 as 0
@@ -2468,7 +2468,7 @@ NaN
 true
 true
 -- DONE ----------------
-::: test/avm2/pass/tmp.abc :::
+::: test/avm2/shumway/tmp.abc :::
 foo: 42
 foo: 42
 foo: 42
@@ -2568,11 +2568,11 @@ foo 32
 get bar
 set bar
 LAST: 1
-::: test/avm2/pass/inline-2.abc :::
+::: test/avm2/shumway/inline-2.abc :::
 10,20,30
 1
 ---------
-::: test/avm2/pass/vectors.abc :::
+::: test/avm2/shumway/vectors.abc :::
 boo:
 100 101 102
 103 104 105
@@ -2590,13 +2590,13 @@ too:
 100 101 102
 doo:
 100 101 102
-::: test/avm2/pass/vectors-4.abc :::
+::: test/avm2/shumway/vectors-4.abc :::
 19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0
 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19
 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19
 19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0
 DONE
-::: test/avm2/pass/getQualifiedClassName.abc :::
+::: test/avm2/shumway/getQualifiedClassName.abc :::
 String
 int
 String
@@ -2648,7 +2648,7 @@ Object
 Object
 getDefinitionByName
 --- DONE ---
-::: test/avm2/pass/classes-6.abc :::
+::: test/avm2/shumway/classes-6.abc :::
 [object Y] is [class X]: true
 [class int]
 true
@@ -3131,7 +3131,7 @@ IA is Class: true
 IA is Function: false
 IA: [class IA]
 -- Done --
-::: test/avm2/pass/toString.abc :::
+::: test/avm2/shumway/toString.abc :::
 --- Test 1 ---
 [object Object]
 --- Test 2 ---
@@ -3165,7 +3165,7 @@ public function toString
 [object C]
 AS3 function toString
 4d2
-::: test/avm2/pass/call-apply.abc :::
+::: test/avm2/shumway/call-apply.abc :::
 --- Test 0 ---
 A
 B
@@ -3193,7 +3193,7 @@ F 2
 1 0
 2 1
 3 2
-::: test/avm2/pass/inject.abc :::
+::: test/avm2/shumway/inject.abc :::
 1 Hello undefined
 2 Hello World
 0 undefined undefined
@@ -3201,7 +3201,7 @@ true
 World
 World
 -- DONE --
-::: test/avm2/pass/functions-3.abc :::
+::: test/avm2/shumway/functions-3.abc :::
 --- Object(x) ---
 3
 true
@@ -3399,7 +3399,7 @@ true
 true
 true
 -- DONE --
-::: test/avm2/pass/in-1.abc :::
+::: test/avm2/shumway/in-1.abc :::
 --- Test Array In ---
 true
 true
@@ -3417,7 +3417,7 @@ true
 true
 true
 -- DONE --
-::: test/avm2/pass/dynamic-0.abc :::
+::: test/avm2/shumway/dynamic-0.abc :::
 {x: 1, y: 2}
 {x: 0.7533842212760276, y: 2.105329478996652}
 {x: 0.33692366638978816, y: 0.9415319660141459}
@@ -3453,7 +3453,7 @@ for each object:
 1
 2
 -- DONE --
-::: test/avm2/pass/trait-types-0.abc :::
+::: test/avm2/shumway/trait-types-0.abc :::
 2
 23
 4294967286
@@ -3473,7 +3473,7 @@ great success: Error #1034: Type Coercion failed: cannot convert
 true
 [object Object]
 -- DONE --
-::: test/avm2/pass/verifier.abc :::
+::: test/avm2/shumway/verifier.abc :::
 Static Constructor of X
 --
 1
@@ -3529,28 +3529,28 @@ object
 Constructor of X
 Before New Class
 Constructor of X
-::: test/avm2/pass/proxy-4.abc :::
+::: test/avm2/shumway/proxy-4.abc :::
 RESULT: 42
-::: test/avm2/pass/proxy-3.abc :::
+::: test/avm2/shumway/proxy-3.abc :::
 -- START --
 No Call Proxy AS3 Trait Function
 AS3 callProperty: privateTraitFunction 
 No Call Proxy AS3 Public Trait Function
 AS3 callProperty: foo 123
 -- DONE --
-::: test/avm2/pass/proxy-2.abc :::
+::: test/avm2/shumway/proxy-2.abc :::
 -- START --
 AS3 hasProperty: 123
 AS3 hasProperty: 
 -- DONE --
-::: test/avm2/pass/proxy-1.abc :::
+::: test/avm2/shumway/proxy-1.abc :::
 -- START --
 AS3 getProperty: dynamicProperty
 AS3 hasProperty: traitProperty
 AS3 hasProperty: traitPropertyIn
 AS3 hasProperty: dynamicProperty
 -- DONE --
-::: test/avm2/pass/proxy-0.abc :::
+::: test/avm2/shumway/proxy-0.abc :::
 in constructor, target is: [object Object]
 AS3 getProperty: boo
 TARGET: [object Object]
@@ -3560,7 +3560,7 @@ AS3 getProperty: hello
 TARGET: [object Object]
 world
 -- DONE --
-::: test/avm2/pass/json.abc :::
+::: test/avm2/shumway/json.abc :::
 Parsing: { "test": 1, "arr": [1, 2, 3] }
 [object Object] 1 1,2,3
 1
@@ -3597,7 +3597,7 @@ A
 """""""""""""",,.14::::ABCDEEHLLO{{}}
 """""""""""""",,.14::::ABCDEEHLLO{{}}
 ==
-::: test/avm2/pass/base.abc :::
+::: test/avm2/shumway/base.abc :::
 [class Class]
 [object Object]
 [class Class]
@@ -3628,7 +3628,7 @@ A
 26
 mixed
 -- DONE --
-::: test/avm2/pass/native-object.abc :::
+::: test/avm2/shumway/native-object.abc :::
 --- Object ---
 [object Object]
 [object Object]
@@ -3641,14 +3641,14 @@ true
 false
 --- Number ---
 0
-::: test/avm2/pass/str-0.abc :::
+::: test/avm2/shumway/str-0.abc :::
 --- Test ---
 116
-::: test/avm2/pass/props-1.abc :::
+::: test/avm2/shumway/props-1.abc :::
 --- Test 2 ---
 [object Object]
 First,Second,Third
-::: test/avm2/pass/for.abc :::
+::: test/avm2/shumway/for.abc :::
 for k in array
 0
 1
@@ -3778,7 +3778,7 @@ for each in: 0,0,0,0,0
 1, 2, 3
 1, 2, 3
 -- DONE --
-::: test/avm2/pass/interfaceCast.abc :::
+::: test/avm2/shumway/interfaceCast.abc :::
 -- ClassA
 bar
 -- IClassA()
@@ -3792,7 +3792,7 @@ OK
 -- as IClassB
 true
 -- DONE --
-::: test/avm2/pass/xml-replace.abc :::
+::: test/avm2/shumway/xml-replace.abc :::
 Testing XML.protoype.replace()
 PASS
 PASS
@@ -3801,14 +3801,14 @@ PASS
 PASS
 PASS
 PASS
-::: test/avm2/pass/xml-4.abc :::
+::: test/avm2/shumway/xml-4.abc :::
 <a>0</a>: 0
 <a>0</a>.toString(): 0
 <a>0</a>.text(): 0
 x
 12
 --- DONE ---
-::: test/avm2/pass/interface-2.abc :::
+::: test/avm2/shumway/interface-2.abc :::
 fa
 fa
 fb
@@ -3844,28 +3844,28 @@ true
 true
 true
 -- DONE --
-::: test/avm2/pass/xml-anyname.abc :::
+::: test/avm2/shumway/xml-anyname.abc :::
 x1.* true
 x.a.* true
 xl.a.* true
 xmllist.* true
 xmllist[0].* true
 xml.a.@* true
-::: test/avm2/pass/iss-1034.abc :::
+::: test/avm2/shumway/iss-1034.abc :::
 Start 1
 Item 1
 Item 2
 End 1
-::: test/avm2/pass/xml-2.abc :::
+::: test/avm2/shumway/xml-2.abc :::
 item: string
 item: string
 item: string
 items total: 3
-::: test/avm2/pass/xml-5.abc :::
+::: test/avm2/shumway/xml-5.abc :::
 Hello
 World
 --- DONE ---
-::: test/avm2/pass/xml-10.abc :::
+::: test/avm2/shumway/xml-10.abc :::
 XML::hasOwnProperty
 x.a true
 x.b false
@@ -3898,7 +3898,7 @@ element element
 attribute attribute
 text text
 cdata text
-::: test/avm2/pass/xml-8.abc :::
+::: test/avm2/shumway/xml-8.abc :::
 Clone
 0. <t attr1="r"/>
 1. <t xmlns="http://foo">bar</t>
@@ -3930,7 +3930,7 @@ a
 Basic entity parsing
 <t a="&quot;&lt;>&#xA;&#xD;"/>
 <t>"&lt;&gt;AB"</t>
-::: test/avm2/pass/xml-basic.abc :::
+::: test/avm2/shumway/xml-basic.abc :::
 --- new Namespace("prefix", "uri") ---
 toString(): uri
 prefix: prefix
@@ -4080,9 +4080,9 @@ nameofobj
 http://someuri::attr1
 value3 value3
 --- DONE ---
-::: test/avm2/pass/xml-qname.abc :::
+::: test/avm2/shumway/xml-qname.abc :::
 PASS
-::: test/avm2/pass/xml-qualids.abc :::
+::: test/avm2/shumway/xml-qualids.abc :::
 xml
 1 true
 2 true
@@ -4100,7 +4100,7 @@ x1.ns::a true
 x1.ns::a true
 x1.@ns::['v'] true
 y1.@ns::*.length() true
-::: test/avm2/pass/xml.abc :::
+::: test/avm2/shumway/xml.abc :::
 XML statics
 0: true,true
 Testing Basic XML
@@ -4133,11 +4133,11 @@ K: String
 K: avmplus::A
 Testing XML.prototype.child as used by Candy Crush
 0: 21
-::: test/avm2/pass/iss-1057.abc :::
+::: test/avm2/shumway/iss-1057.abc :::
 18
 123123123123123
 number
-::: test/avm2/pass/byte-arrays-2.abc :::
+::: test/avm2/shumway/byte-arrays-2.abc :::
 1 2 3
 1 2 3
 1,2,3
@@ -4181,7 +4181,7 @@ undefined
 null
 string
 {"a":null}
-::: test/avm2/pass/byte-arrays-3.abc :::
+::: test/avm2/shumway/byte-arrays-3.abc :::
 -- Enumerating non-numeric properties on arrays.
 1
 data
@@ -4201,11 +4201,11 @@ object
 . test0
 object
 . null
-::: test/avm2/pass/you-0.abc :::
+::: test/avm2/shumway/you-0.abc :::
 [class Fields]
 A
 Q
-::: test/avm2/pass/describetype.abc :::
+::: test/avm2/shumway/describetype.abc :::
 describeType
 0: type
 1: type
