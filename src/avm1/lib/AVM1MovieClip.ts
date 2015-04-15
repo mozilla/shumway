@@ -128,11 +128,9 @@ module Shumway.AVM1.Lib {
         return undefined;
       }
 
-      var as2mc = this._insertChildAtDepth(mc, depth);
-      if (initObject instanceof AVM1Object) {
-        alForEachProperty(initObject, (name: string) => {
-          as2mc.alPut(name, initObject.alGet(name));
-        }, null);
+      var as2mc = <AVM1MovieClip>this._insertChildAtDepth(mc, depth);
+      if (initObject) {
+        as2mc._init(initObject);
       }
 
       return as2mc;
@@ -219,14 +217,40 @@ module Shumway.AVM1.Lib {
       return this.as3Object.dropTarget;
     }
 
-    private  _duplicate(name:any, depth:any, initObject:any):any {
-      var nativeAS3Object = <any> this.as3Object;
-      nativeAS3Object._duplicate(name, depth, initObject);
-    }
-
     public duplicateMovieClip(name, depth, initObject): AVM1MovieClip {
-      var mc = this._duplicate(name, +depth, initObject);
-      return <AVM1MovieClip>getAVM1Object(mc, this.context);
+      var nativeAS3Object = <any> this.as3Object;
+      var mc: flash.display.MovieClip;
+      if (nativeAS3Object._symbol) {
+        mc = Shumway.AVMX.AS.constructClassFromSymbol(nativeAS3Object._symbol, nativeAS3Object.axClass);
+      } else {
+        mc = new this.context.sec.flash.display.MovieClip();
+        mc.name = name;
+      }
+
+      // These are all properties that get copied over when duplicating a movie clip.
+      // Examined by testing.
+      mc.x = nativeAS3Object.x;
+      mc.scaleX = nativeAS3Object.scaleX;
+      mc.y = nativeAS3Object.y;
+      mc.scaleY = nativeAS3Object.scaleY;
+      mc.rotation = nativeAS3Object.rotation;
+      mc.alpha = nativeAS3Object.alpha;
+      mc.blendMode = nativeAS3Object.blendMode;
+      mc.cacheAsBitmap = nativeAS3Object.cacheAsBitmap;
+      mc.opaqueBackground = nativeAS3Object.opaqueBackground;
+      mc.tabChildren = nativeAS3Object.tabChildren;
+      // Not supported yet: _quality, _highquality, _soundbuftime.
+
+      mc.graphics.copyFrom(nativeAS3Object.graphics);
+
+      // TODO: Do event listeners get copied?
+
+      var as2mc = <AVM1MovieClip>this._insertChildAtDepth(mc, depth);
+      if (initObject) {
+        as2mc._init(initObject);
+      }
+
+      return as2mc;
     }
 
     public getEnabled() {
@@ -878,6 +902,14 @@ module Shumway.AVM1.Lib {
       for (var i = 0; i < scripts.length; i++) {
         var actionsData = scripts[i];
         context.executeActions(actionsData, this);
+      }
+    }
+
+    private _init(initObject) {
+      if (initObject instanceof AVM1Object) {
+        alForEachProperty(initObject, (name: string) => {
+          this.alPut(name, initObject.alGet(name));
+        }, null);
       }
     }
 
