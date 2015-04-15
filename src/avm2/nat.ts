@@ -184,7 +184,8 @@ module Shumway.AVMX.AS {
         return "null";
       }
       value = sec.box(value);
-      // The value might be from another domain, so don't use passed-in the current AXSecurityDomain.
+      // The value might be from another domain, so don't use passed-in the current
+      // AXSecurityDomain.
       var axClass = value.sec.AXClass.axIsType(value) ?
                     (<AXClass>value).superClass :
                     value.axClass.superClass;
@@ -2026,12 +2027,12 @@ module Shumway.AVMX.AS {
     return result;
   }
 
-  function walk(holder: any, name: string, reviver: Function) {
+  function walk(sec: AXSecurityDomain, holder: any, name: string, reviver: Function) {
     var val = holder[name];
     if (Array.isArray(val)) {
       var v: any[] = <any>val;
       for (var i = 0, limit = v.length; i < limit; i++) {
-        var newElement = walk(v, axCoerceString(i), reviver);
+        var newElement = walk(sec, v, axCoerceString(i), reviver);
         if (newElement === undefined) {
           delete v[i];
         } else {
@@ -2046,7 +2047,7 @@ module Shumway.AVMX.AS {
         if (!val.hasOwnProperty(p) || !Multiname.isPublicQualifiedName(p)) {
           break;
         }
-        var newElement = walk(val, p, reviver);
+        var newElement = walk(sec, val, p, reviver);
         if (newElement === undefined) {
           delete val[p];
         } else {
@@ -2056,12 +2057,12 @@ module Shumway.AVMX.AS {
     }
     return reviver.call(holder, name, val);
   }
-
   export class ASJSON extends ASObject {
-
-
-    static parse(text: string, reviver: AXFunction): any {
+    static parse(text: string, reviver: AXFunction = null): any {
       text = axCoerceString(text);
+      if (reviver !== null && !axIsCallable(reviver)) {
+        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, reviver, 'Function');
+      }
       if (text === null) {
         this.sec.throwError('SyntaxError', Errors.JSONInvalidParseInput);
       }
@@ -2072,10 +2073,10 @@ module Shumway.AVMX.AS {
         this.sec.throwError('SyntaxError', Errors.JSONInvalidParseInput);
       }
 
-      if (reviver === null || arguments.length < 2) {
+      if (reviver === null) {
         return unfiltered;
       }
-      return walk({"": unfiltered}, "", reviver.value);
+      return walk(this.sec, {"": unfiltered}, "", reviver.value);
     }
 
     static stringify(value: any, replacer = null, space = null): string {
@@ -2141,7 +2142,7 @@ module Shumway.AVMX.AS {
         }
         return JSON.stringify(transformASValueToJS(this.sec, value, true), replacerFunction, gap);
       } catch (e) {
-        this.sec.throwError('SyntaxError', Errors.JSONCyclicStructure);
+        this.sec.throwError('TypeError', Errors.JSONCyclicStructure);
       }
     }
   }
