@@ -373,7 +373,6 @@ module Shumway.AVM1 {
     public constructor(context: IAVM1Context) {
       super(context);
       this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
-      this.alSetOwnConstructorProperty(context.builtins.Function);
     }
 
     /**
@@ -430,7 +429,12 @@ module Shumway.AVM1 {
   export class AVM1EvalFunction extends AVM1Function {
     public constructor(context: IAVM1Context) {
       super(context);
-      this.alSetOwnPrototypeProperty(alNewObject(context));
+      var proto = new AVM1Object(context);
+      proto.alPrototype = context.builtins.Object.alGetPrototypeProperty();
+      proto.alSetOwnProperty('constructor', {
+        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE
+      });
+      this.alSetOwnPrototypeProperty(proto);
     }
     public alConstruct(args?: any[]): AVM1Object  {
       var obj = new AVM1Object(this.context);

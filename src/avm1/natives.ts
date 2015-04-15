@@ -31,6 +31,10 @@ module Shumway.AVM1.Natives {
     _initializePrototype() {
       var context = this.context;
       alDefineObjectProperties(this, {
+        constructor: {
+          value: context.builtins.Object,
+          writable: true
+        },
         valueOf: {
           value: this._valueOf,
           writable: true
@@ -89,11 +93,6 @@ module Shumway.AVM1.Natives {
         prototype: {
           value: proto
         },
-        constructor: {
-          value: this,
-          writable: true,
-          configurable: true
-        },
         registerClass: {
           value: this.registerClass
         }
@@ -141,6 +140,10 @@ module Shumway.AVM1.Natives {
       var context = this.context;
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
       alDefineObjectProperties(this, {
+        constructor: {
+          value: context.builtins.Function,
+          writable: true
+        },
         call: this.call,
         apply: this.apply
       });
@@ -164,11 +167,6 @@ module Shumway.AVM1.Natives {
       alDefineObjectProperties(this, {
         prototype: {
           value: proto
-        },
-        constructor: {
-          value: this,
-          writable: true,
-          configurable: true
         }
       });
     }
@@ -200,6 +198,10 @@ module Shumway.AVM1.Natives {
       super(context);
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
       alDefineObjectProperties(this, {
+        constructor: {
+          value: context.builtins.Boolean,
+          writable: true
+        },
         valueOf: {
           value: this._valueOf,
           writable: true
@@ -230,11 +232,6 @@ module Shumway.AVM1.Natives {
       alDefineObjectProperties(this, {
         prototype: {
           value: proto
-        },
-        constructor: {
-          value: this,
-          writable: true,
-          configurable: true
         }
       });
     }
@@ -275,6 +272,10 @@ module Shumway.AVM1.Natives {
       super(context);
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
       alDefineObjectProperties(this, {
+        constructor: {
+          value: context.builtins.Number,
+          writable: true
+        },
         valueOf: {
           value: this._valueOf,
           writable: true
@@ -305,11 +306,6 @@ module Shumway.AVM1.Natives {
       alDefineObjectProperties(this, {
         prototype: {
           value: proto
-        },
-        constructor: {
-          value: this,
-          writable: true,
-          configurable: true
         },
         NaN: NaN
         // TODO more constants
@@ -355,6 +351,10 @@ module Shumway.AVM1.Natives {
       super(context);
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
       alDefineObjectProperties(this, {
+        constructor: {
+          value: context.builtins.String,
+          writable: true
+        },
         valueOf: {
           value: this._valueOf,
           writable: true
@@ -508,11 +508,6 @@ module Shumway.AVM1.Natives {
       alDefineObjectProperties(this, {
         prototype: {
           value: proto
-        },
-        constructor: {
-          value: this,
-          writable: true,
-          configurable: true
         }
       });
     }
@@ -605,6 +600,10 @@ module Shumway.AVM1.Natives {
       super(context);
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
       alDefineObjectProperties(this, {
+        constructor: {
+          value: context.builtins.Array,
+          writable: true
+        },
         join: {
           value: this.join,
           writable: true
@@ -844,11 +843,6 @@ module Shumway.AVM1.Natives {
       alDefineObjectProperties(this, {
         prototype: {
           value: proto
-        },
-        constructor: {
-          value: this,
-          writable: true,
-          configurable: true
         }
       });
     }
@@ -1012,6 +1006,10 @@ module Shumway.AVM1.Natives {
       super(context);
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
       alDefineObjectProperties(this, {
+        constructor: {
+          value: context.builtins.Date,
+          writable: true
+        },
         valueOf: {
           value: this._valueOf,
           writable: true
@@ -1050,11 +1048,6 @@ module Shumway.AVM1.Natives {
       alDefineObjectProperties(this, {
         prototype: {
           value: proto
-        },
-        constructor: {
-          value: this,
-          writable: true,
-          configurable: true
         },
         UTC: {
           value: this._UTC,

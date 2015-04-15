@@ -339,8 +339,7 @@ module Shumway.AVM1.Lib {
     alDefineObjectProperties(wrappedPrototype, {
       constructor: {
         value: wrappedFn,
-        writable: true,
-        configurable: true
+        writable: true
       }
     });
     return wrappedFn;
