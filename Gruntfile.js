@@ -674,7 +674,11 @@ module.exports = function(grunt) {
     'exec:install_avmshell_travis',
     // 'exec:versions_travis', AVMShell exits with 1 for some reason.
     'build',
-    'gate'
+    //'gate'
+    'exec:test_avm2_pass',
+    'exec:test_swf_acceptance',
+    'exec:unit_test',
+    'exec:tracetest'
   ]);
   grunt.registerTask('gate', "Run this before checking in any code.", [
     // 'tslint:all', // Annoyingly slow, and not very useful most of the time.
