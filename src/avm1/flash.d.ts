@@ -109,7 +109,7 @@ declare module Shumway.AVMX.AS.flash {
       pixelBounds: geom.Rectangle;
       enabled: boolean;
       visible: boolean;
-      opaqueBackground: boolean;
+      opaqueBackground;
       useHandCursor: boolean;
       buttonMode: boolean;
       _mouseOver: boolean;
@@ -176,6 +176,7 @@ declare module Shumway.AVMX.AS.flash {
       lineTo: Function;
       moveTo: Function;
       beginGradientFill: Function;
+      copyFrom: Function;
     }
     class Loader extends DisplayObject {
       url: string;
