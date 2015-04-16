@@ -705,7 +705,7 @@
       "test/avm2/acceptance/ecma3/Expressions/instanceof_004_rt.abc",
       "test/avm2/acceptance/ecma3/Expressions/instanceof_006.abc",
       "test/avm2/acceptance/ecma3/Expressions/StrictEquality_001.abc",
-//      "test/avm2/acceptance/ecma3/Function/apply_001.abc",
+//    "test/avm2/acceptance/ecma3/Function/apply_001.abc",
       "test/avm2/acceptance/ecma3/Function/call_001_rt.abc",
       "test/avm2/acceptance/ecma3/Function/e15_3_4_3_1.abc",
       "test/avm2/acceptance/ecma3/Function/e15_3_4_4_1_rt.abc",
