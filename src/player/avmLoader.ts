@@ -31,7 +31,7 @@ module Shumway {
     SWF.enterTimeline('Load builton.abc file');
     SystemResourcesLoadingService.instance.load(SystemResourceId.BuiltinAbc).then(function (buffer) {
       var sec = new Shumway.AVMX.AXSecurityDomain();
-      var env = {url: SystemResourceId.BuiltinAbc, app: sec.system};
+      var env = {url: 'builtin.abc', app: sec.system};
       var builtinABC = new Shumway.AVMX.ABCFile(env, new Uint8Array(buffer));
       sec.system.loadABC(builtinABC);
       sec.initialize();
