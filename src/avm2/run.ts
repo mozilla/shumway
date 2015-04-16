@@ -1090,6 +1090,7 @@ module Shumway.AVMX {
       if (!release) { // Array values must only hold index keys.
         for (var k in value) {
           assert(isIndex(k));
+          checkValue(value[k]);
         }
       }
       return array;
@@ -1102,6 +1103,7 @@ module Shumway.AVMX {
       var array = this.createArrayUnsafe([]);
       for (var k in value) {
         array.axSetPublicProperty(k, value[k]);
+        release || checkValue(value[k]);
       }
       array.length = value.length;
       return array;
