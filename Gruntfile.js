@@ -453,6 +453,10 @@ module.exports = function(grunt) {
     })();
   }
 
+  grunt.registerTask('ensure-build-folder', function() {
+    grunt.file.mkdir('build');
+  });
+
   grunt.registerTask('closure-bundles', function () {
     var inputDir = 'build/bundles/';
     var outputDir = 'build/bundles-cc/';
@@ -646,6 +650,7 @@ module.exports = function(grunt) {
   grunt.registerTask('perf', ['exec:perf']);
   grunt.registerTask('gfx-test', ['exec:gfx-test']);
   grunt.registerTask('build', "Builds all modules.", [
+    'ensure-build-folder',
     'parallel:base',
     'parallel:playerglobal',
     'exec:build_tools_ts',
