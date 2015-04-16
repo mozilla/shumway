@@ -750,6 +750,15 @@ module Shumway.AVMX.AS {
     }
 
     push() {
+      // Amazingly, AS3 doesn't throw an error if `push` would make the argument too large.
+      // Instead, it just replaces the last element.
+      if (this.value.length + arguments.length > 0xffffffff) {
+        var limit = 0xffffffff - this.value.length;
+        for (var i = 0; i < limit; i++) {
+          this.value.push(arguments[i]);
+        }
+        return 0xffffffff;
+      }
       return this.value.push.apply(this.value, arguments);
     }
     pop() {
