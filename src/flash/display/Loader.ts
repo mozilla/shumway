@@ -237,10 +237,10 @@ module Shumway.AVMX.AS.flash.display {
       this._contentLoaderInfo._loader = this;
 
       // REDUX:
-      //var currentAbc = AVM2.currentAbc();
-      //if (currentAbc) {
-      //  this._contentLoaderInfo._loaderUrl = (<LoaderInfo>currentAbc.env.loaderInfo).url;
-      //}
+      var currentAbc = AVMX.getCurrentABC();
+      if (currentAbc) {
+        this._contentLoaderInfo._loaderUrl = currentAbc.env.url;
+      }
 
       this._fileLoader = null;
       this._loadStatus = LoadStatus.Unloaded;
@@ -432,11 +432,15 @@ module Shumway.AVMX.AS.flash.display {
 
     private _applyLoaderContext(context: LoaderContext) {
       var parameters = context && context.parameters ?
-        transformASValueToJS(this.sec, context.parameters, false) : {};
+                       transformASValueToJS(this.sec, context.parameters, false) :
+                       {};
       if (context && context.applicationDomain) {
         this._contentLoaderInfo._applicationDomain = context.applicationDomain;
       } else if (this._loaderInfo && this._loaderInfo._applicationDomain) {
         this._contentLoaderInfo._applicationDomain = this._loaderInfo._applicationDomain;
+      } else {
+        var domain = new this.sec.flash.system.ApplicationDomain(this.sec.application);
+        this._contentLoaderInfo._applicationDomain = domain;
       }
       this._contentLoaderInfo._parameters = parameters;
     }
@@ -507,23 +511,21 @@ module Shumway.AVMX.AS.flash.display {
       }
 
       if (loaderInfo._allowCodeExecution) {
-        var system = this.sec.system;
+        var app = loaderInfo.app;
 
         var abcBlocksLoaded = file.abcBlocks.length;
         var abcBlocksLoadedDelta = abcBlocksLoaded - loaderInfo._abcBlocksLoaded;
         if (abcBlocksLoadedDelta > 0) {
           for (var i = loaderInfo._abcBlocksLoaded; i < abcBlocksLoaded; i++) {
             var abcBlock = file.abcBlocks[i];
-            var abc = new ABCFile(abcBlock.data, abcBlock.name);
-            // REDUX: abc.env below is not yet available.
-            // abc.env.loaderInfo = loaderInfo;
+            var abc = new ABCFile(loaderInfo, abcBlock.data);
             if (abcBlock.flags) {
               // kDoAbcLazyInitializeFlag = 1 Indicates that the ABC block should not be executed
               // immediately.
-              system.loadABC(abc);
+              app.loadABC(abc);
             } else {
               // TODO: probably delay execution until playhead reaches the frame.
-              system.loadAndExecuteABC(abc);
+              app.loadAndExecuteABC(abc);
             }
           }
           loaderInfo._abcBlocksLoaded = abcBlocksLoaded;
@@ -534,7 +536,7 @@ module Shumway.AVMX.AS.flash.display {
         if (mappedSymbolsLoadedDelta > 0) {
           for (var i = loaderInfo._mappedSymbolsLoaded; i < mappedSymbolsLoaded; i++) {
             var symbolMapping = file.symbolClassesList[i];
-            var symbolClass = system.getClass(Multiname.FromFQNString(symbolMapping.className,
+            var symbolClass = app.getClass(Multiname.FromFQNString(symbolMapping.className,
                                                                       NamespaceType.Public));
             Object.defineProperty(symbolClass.tPrototype, "_symbol",
                                   {get: loaderInfo.getSymbolResolver(symbolClass, symbolMapping.id),

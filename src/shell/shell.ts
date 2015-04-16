@@ -369,7 +369,8 @@ module Shumway.Shell {
   function disassembleABCFile(sec: ISecurityDomain, file: string) {
     try {
       var buffer = read(file, "binary");
-      var abc = new ABCFile(new Uint8Array(buffer), file);
+      var env = {url: file, app: sec.application};
+      var abc = new ABCFile(env, new Uint8Array(buffer));
       // We need to load the ABCFile in a |sec| because the parser may
       // throw verifier errors.
       sec.application.loadABC(abc);
@@ -479,12 +480,12 @@ module Shumway.Shell {
       // Run libraries.
       run[0].forEach(function (file) {
         var buffer = new Uint8Array(read(file, "binary"));
-        var abc = new ABCFile(buffer);
+        var env = {url: file, app: sec.application};
+        var abc = new ABCFile(env, buffer);
         if (verbose) {
           writer.writeLn("executeABC: " + file);
         }
-        sec.application.loadABC(abc);
-        sec.application.executeABC(abc);
+        sec.application.loadAndExecuteABC(abc);
       });
       // Run files.
       run[1].forEach(function (file) {
@@ -493,7 +494,8 @@ module Shumway.Shell {
             writer.writeLn("executeABC: " + file);
           }
           var buffer = new Uint8Array(read(file, "binary"));
-          var abc = new ABCFile(buffer);
+          var env = {url: file, app: sec.application};
+          var abc = new ABCFile(env, buffer);
           sec.application.loadABC(abc);
           var t = Date.now();
           sec.application.executeABC(abc);
@@ -536,9 +538,9 @@ module Shumway.Shell {
           writer.writeLn("::: " + file + " :::");
         }
         var buffer = new Uint8Array(read(file, "binary"));
-        var abc = new ABCFile(buffer);
-        sec.application.loadABC(abc);
-        sec.application.executeABC(abc);
+        var env = {url: file, app: sec.application};
+        var abc = new ABCFile(env, buffer);
+        sec.application.loadAndExecuteABC(abc);
         if (verbose) {
           writer.writeLn("executeABC PASS: " + file);
         }
@@ -644,7 +646,8 @@ module Shumway.Shell {
   function parseFile(file: string, symbolFilters: string []): boolean {
     var fileName = file.replace(/^.*[\\\/]/, '');
     function parseABC(buffer: Uint8Array) {
-      var abcFile = new ABCFile(buffer, "ABC");
+      var env = {url: fileName, app: null};
+      var abcFile = new ABCFile(env, buffer);
       // abcFile.trace(writer);
     }
     var buffers = [];
@@ -717,18 +720,19 @@ module Shumway.Shell {
   function createSecurityDomain(builtinABCPath: string, shellABCPath: string, libraryPathInfo): ISecurityDomain {
     var buffer = read(builtinABCPath, 'binary');
     var sec = <ISecurityDomain>new AVMX.AXSecurityDomain();
-    var builtinABC = new ABCFile(new Uint8Array(buffer));
+    var env = {url: builtinABCPath, app: sec.system};
+    var builtinABC = new ABCFile(env, new Uint8Array(buffer));
     sec.system.loadABC(builtinABC);
-    sec.addCatalog(loadPlayerGlobalCatalog());
+    sec.addCatalog(loadPlayerGlobalCatalog(sec.system));
     sec.initialize();
     sec.system.executeABC(builtinABC);
     return sec;
   }
 
-  function loadPlayerGlobalCatalog(): AVMX.ABCCatalog {
+  function loadPlayerGlobalCatalog(app: AVMX.AXApplicationDomain): AVMX.ABCCatalog {
     var abcs = read(playerglobalInfo.abcs, 'binary');
     var index = JSON.parse(read(playerglobalInfo.catalog));
-    return new AVMX.ABCCatalog(abcs, index);
+    return new AVMX.ABCCatalog(app, abcs, index);
   }
 }
 

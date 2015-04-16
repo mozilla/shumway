@@ -67,7 +67,7 @@ module Shumway.AVMX {
   //  CannotVerifyUntilReferencedError     : {code: 1039, message: "Cannot verify method until it is referenced."},
     CantUseInstanceofOnNonObjectError    : {code: 1040, message: "The right-hand side of instanceof must be a class or function."},
     IsTypeMustBeClassError               : {code: 1041, message: "The right-hand side of operator must be a class."},
-  //  InvalidMagicError                    : {code: 1042, message: "Not an ABC file.  major_version=%1 minor_version=%2."},
+    InvalidMagicError                    : {code: 1042, message: "Not an ABC file.  major_version=%1 minor_version=%2."},
   //  InvalidCodeLengthError               : {code: 1043, message: "Invalid code_length=%1."},
   //  InvalidMethodInfoFlagsError          : {code: 1044, message: "MethodInfo-%1 unsupported flags=%2."},
     UnsupportedTraitsKindError           : {code: 1045, message: "Unsupported traits kind=%1."},

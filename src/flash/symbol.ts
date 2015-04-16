@@ -55,10 +55,10 @@ module Shumway.Timeline {
       release || assert (isInteger(data.id));
       this.data = data;
       if (data.className) {
-        var system = symbolDefaultClass.sec.system;
+        var app = symbolDefaultClass.sec.application;
         try {
-          var symbolClass = system.getClass(AVMX.Multiname.FromFQNString(data.className,
-                                                                         AVMX.NamespaceType.Public));
+          var symbolClass = app.getClass(AVMX.Multiname.FromFQNString(data.className,
+                                                                      AVMX.NamespaceType.Public));
           this.symbolClass = <ASClass><any>symbolClass;
         } catch (e) {
           warning ("Symbol " + data.id + " bound to non-existing class " + data.className);
