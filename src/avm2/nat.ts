@@ -684,6 +684,18 @@ module Shumway.AVMX.AS {
     static classInitializer = null;
   }
 
+  function createArrayValueFromArgs(sec: AXSecurityDomain, args: any[]) {
+    if (args.length === 1 && typeof args[0] === 'number') {
+      var len = args[0];
+      try {
+        return new Array(len);
+      } catch (e) {
+        sec.throwError('RangeError', Errors.ArrayIndexNotIntegerError, len);
+      }
+    }
+    return Array.apply(Array, args);
+  }
+
   export class ASArray extends ASObject {
     static classInitializer() {
       var proto: any = this.dPrototype;
@@ -724,7 +736,7 @@ module Shumway.AVMX.AS {
 
     constructor() {
       super();
-      this.value = Array.apply(Array, arguments);
+      this.value = createArrayValueFromArgs(this.sec, <any>arguments);
     }
 
     native_hasOwnProperty(nm: string): boolean {
@@ -742,11 +754,11 @@ module Shumway.AVMX.AS {
     value: any [];
 
     public static axApply(self: ASArray, args: any[]): ASArray {
-      return this.sec.createArray(Array.apply(Array, args));
+      return this.sec.createArrayUnsafe(createArrayValueFromArgs(this.sec, args));
     }
 
     public static axConstruct(args: any[]): ASArray {
-      return this.sec.createArray(Array.apply(Array, args));
+      return this.sec.createArrayUnsafe(createArrayValueFromArgs(this.sec, args));
     }
 
     push() {

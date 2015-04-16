@@ -31,7 +31,7 @@ module Shumway.AVMX {
     InvalidPrecisionError                : {code: 1002, message: "Number.toPrecision has a range of 1 to 21. Number.toFixed and Number.toExponential have a range of 0 to 20. Specified value is not within expected range."},
     InvalidRadixError                    : {code: 1003, message: "The radix argument must be between 2 and 36; got %1."},
     InvokeOnIncompatibleObjectError      : {code: 1004, message: "Method %1 was invoked on an incompatible object."},
-  //  ArrayIndexNotIntegerError            : {code: 1005, message: "Array index is not a positive integer (%1)."},
+    ArrayIndexNotIntegerError            : {code: 1005, message: "Array index is not a positive integer (%1)."},
     CallOfNonFunctionError               : {code: 1006, message: "%1 is not a function."},
     ConstructOfNonFunctionError          : {code: 1007, message: "Instantiation attempted on a non-constructor."},
   //  AmbiguousBindingError                : {code: 1008, message: "%1 is ambiguous; Found more than one matching binding."},
