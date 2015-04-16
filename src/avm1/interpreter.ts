@@ -185,84 +185,15 @@ module Shumway.AVM1 {
       this.eventObservers = Object.create(null);
     }
     resolveTarget(target: any) : any {
-      var result: AVM1Object;
-      if (target instanceof AVM1Object && target.isAVM1Instance) {
-        result = target;
-      } else {
-        target = isNullOrUndefined(target) ? '' : alToString(this, target);
-        if (target) {
-          result = this.lookupChild(alToString(this, target), true);
-          if (!(result instanceof AVM1Object) || !(<any>result).isAVM1Instance) {
-            throw new Error('Invalid AVM1 target object: ' + alToString(this, result));
-          }
-        } else {
-          result = avm1GetTarget(this, true);
-        }
-      }
-      return result;
+      return avm1ResolveTarget(this, target) || avm1GetTarget(this, true);
     }
     resolveLevel(level: number) : any {
-      // TODO levels 1, 2, etc.
-      // TODO _lockroot
-      if (level === 0) {
-        return this.root;
-      }
-      return undefined;
+      return avm1ResolveLevel(this, level);
     }
     checkTimeout() {
       if (Date.now() >= this.abortExecutionAt) {
         throw new AVM1CriticalError('long running script -- AVM1 instruction hang timeout');
       }
-    }
-    lookupChild(targetPath: string, fromCurrentTarget: boolean): AVM1Object {
-      release || Debug.assert(typeof targetPath === 'string');
-
-      var path: string[];
-      var defaultTarget: AVM1Object = avm1GetTarget(this, fromCurrentTarget);
-      var obj: AVM1Object = defaultTarget;
-
-      // special cases
-      if (!targetPath || targetPath === '.') {
-        return obj;
-      } else if (targetPath === '..') {
-        return obj.alGet('_parent');
-      }
-
-      if (targetPath.indexOf('/') >= 0) {
-        // Parsing legacy format, e.g. /A/B
-        path = targetPath.split('/');
-        if (path[0] === '') { // starts from root
-          path[0] = '_root';
-        }
-        for (var i = 0; i < path.length; i++) {
-          if (path[i] === '.' || path[i] === '') { // points to current child
-            path.splice(i, 1);
-          } else if (path[i] === '..') { // points to parent
-            path[i] = '_parent';
-          }
-        }
-      } else {
-        // Parsing simple dot notation, e.g. A.B
-        path = targetPath.split('.');
-      }
-
-      if (path[0] === '_level0' || path[0] === '_root') {
-        // Optimizing first item access
-        obj = this.resolveLevel(0);
-        path.shift();
-      }
-
-      while (path.length > 0) {
-        var prevObj = obj;
-        obj = isAVM1MovieClip(obj) ? (<Lib.AVM1MovieClip>obj)._lookupChildByName(path[0]) : null;
-        if (!obj) {
-          avm1Warn(path[0] + ' (expr ' + targetPath + ') is not found in ' +
-            (<Lib.AVM1MovieClip>prevObj).get_target());
-          return defaultTarget;
-        }
-        path.shift();
-      }
-      return obj;
     }
     addToPendingScripts(fn: Function) {
       var runner = function () {
@@ -747,7 +678,7 @@ module Shumway.AVM1 {
               registers[i] = oldScope.alGet('_parent');
               break;
             case ArgumentAssignmentType.Root:
-              registers[i] = currentContext.resolveLevel(0);
+              registers[i] = avm1ResolveLevel(currentContext, 0);
               break;
           }
         }
@@ -816,7 +747,11 @@ module Shumway.AVM1 {
 
       if (targetPath) {
         try {
-          newTarget = currentContext.lookupChild(targetPath, false);
+          newTarget = avm1LookupChild(currentContext, targetPath, false);
+          if (!(newTarget instanceof AVM1Object) || !(<any>newTarget).isAVM1Instance) {
+            avm1Warn('Invalid AVM1 target object: ' + targetPath);
+            newTarget = undefined;
+          }
         } catch (e) {
           avm1Warn('Unable to set target: ' + e);
         }
@@ -855,7 +790,7 @@ module Shumway.AVM1 {
       if (variableName.indexOf(':') >= 0) {
         // "/A/B:FOO references the FOO variable in the movie clip with a target path of /A/B."
         var parts = variableName.split(':');
-        obj = currentContext.lookupChild(parts[0], true);
+        obj = avm1LookupChild(currentContext, parts[0], true);
         if (!obj) {
           avm1Warn(parts[0] + ' is undefined');
           return null;
@@ -949,6 +884,84 @@ module Shumway.AVM1 {
 
       release || Debug.assert(false, 'Shall not reach this statement');
       return undefined;
+    }
+
+    function avm1ResolveTarget(context: AVM1ContextImpl, target: any): AVM1Object {
+      var result: AVM1Object;
+      if (target instanceof AVM1Object && target.isAVM1Instance) {
+        result = target;
+      } else {
+        target = isNullOrUndefined(target) ? '' : alToString(this, target);
+        if (target) {
+          var targetPath = alToString(context, target);
+          result = avm1LookupChild(context, targetPath, true);
+          if (!(result instanceof AVM1Object) || !(<any>result).isAVM1Instance) {
+            avm1Warn('Invalid AVM1 target object: ' + targetPath);
+            result = undefined;
+          }
+        } else {
+          result = avm1GetTarget(context, true);
+        }
+      }
+      return result;
+    }
+
+    function avm1ResolveLevel(context: AVM1ContextImpl, level: number): AVM1Object {
+      // TODO levels 1, 2, etc.
+      // TODO _lockroot
+      if (level === 0) {
+        return context.root;
+      }
+      return undefined;
+    }
+
+    function avm1LookupChild(context: AVM1ContextImpl, targetPath: string, fromCurrentTarget: boolean): AVM1Object {
+      release || Debug.assert(typeof targetPath === 'string');
+
+      var path: string[];
+      var defaultTarget: AVM1Object = avm1GetTarget(context, fromCurrentTarget);
+      var obj: AVM1Object = defaultTarget;
+
+      // special cases
+      if (!targetPath || targetPath === '.') {
+        return obj;
+      } else if (targetPath === '..') {
+        return obj.alGet('_parent');
+      }
+
+      if (targetPath.indexOf('/') >= 0) {
+        // Parsing legacy format, e.g. /A/B
+        path = targetPath.split('/');
+        if (path[0] === '') { // starts from root
+          path[0] = '_root';
+        }
+        for (var i = 0; i < path.length; i++) {
+          if (path[i] === '.' || path[i] === '') { // points to current child
+            path.splice(i, 1);
+          } else if (path[i] === '..') { // points to parent
+            path[i] = '_parent';
+          }
+        }
+      } else {
+        // Parsing simple dot notation, e.g. A.B
+        path = targetPath.split('.');
+      }
+
+      if (path[0] === '_level0' || path[0] === '_root') {
+        // Optimizing first item access
+        obj = avm1ResolveLevel(context, 0);
+        path.shift();
+      }
+
+      while (path.length > 0) {
+        obj = obj.alGet(path[0]);
+        if (!obj) {
+          avm1Warn(path[0] + 'is not found (expr ' + targetPath + ')');
+          return undefined;
+        }
+        path.shift();
+      }
+      return obj;
     }
 
     function avm1ProcessWith(ectx: ExecutionContext, obj, withBlock) {
@@ -1328,7 +1341,7 @@ module Shumway.AVM1 {
       var sp = stack.length;
       stack.push(undefined);
 
-      var resolved = ectx.context.resolveTarget(target);
+      var resolved = avm1ResolveTarget(ectx.context, target);
       var propertyName = PropertiesIndexMap[index];
       if (resolved && propertyName) {
         stack[sp] = resolved.alGet(propertyName);
@@ -1341,7 +1354,7 @@ module Shumway.AVM1 {
       var index = stack.pop();
       var target = stack.pop();
 
-      var resolved = ectx.context.resolveTarget(target);
+      var resolved = avm1ResolveTarget(ectx.context, target);
       var propertyName = PropertiesIndexMap[index];
       if (resolved && propertyName) {
         resolved.alPut(propertyName, value);
