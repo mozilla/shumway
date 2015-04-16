@@ -559,7 +559,7 @@ ShumwayChromeActions.prototype = {
 
     // TODO check more security stuff ?
     if (!this.externalInterface) {
-      var parentWindow = this.window.parent; // hosted page -- parent of PlayPreview frame
+      var parentWindow = this.window.parent; // host page -- parent of PlayPreview frame
       var embedTag = this.embedTag;
       this.externalInterface = new ExternalInterface(parentWindow, embedTag, function (call) {
         return this.onExternalCallback(call);
