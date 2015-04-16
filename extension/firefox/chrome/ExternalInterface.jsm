@@ -54,7 +54,7 @@ ExternalInterface.prototype = {
 
   initExternalCom: function (window, embedTag, onExternalCallback) {
     var traceExternalInterface = getBoolPref('shumway.externalInterface.trace', false);
-    // Initialize convenience functions. Notice that these functions can be
+    // Initialize convenience functions. Notice that these functions are
     // exposed to the content via Cu.exportFunction, so be careful (e.g. don't
     // use `this` pointer).
     this.__flash__toXML = function __flash__toXML(obj) {
