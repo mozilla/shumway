@@ -69,6 +69,18 @@ module Shumway.AVMX.AS.flash.system {
     }
 
     getDefinition(name: string): Object {
+      var definition = this.getDefinitionImpl(name);
+      if (!definition) {
+        this.sec.throwError('ReferenceError', Errors.UndefinedVarError, name);
+      }
+      return definition;
+    }
+
+    hasDefinition(name: string): boolean {
+      return !!this.getDefinitionImpl(name);
+    }
+
+    private getDefinitionImpl(name) {
       name = axCoerceString(name);
       if (!name) {
         this.sec.throwError('TypeError', Errors.NullPointerError, 'definitionName');
@@ -77,14 +89,6 @@ module Shumway.AVMX.AS.flash.system {
       var simpleName = name.replace("::", ".");
       var mn = Multiname.FromFQNString(simpleName, NamespaceType.Public);
       var definition = this.axDomain.getProperty(mn, false, false);
-      if (!definition) {
-        this.sec.throwError('ReferenceError', Errors.UndefinedVarError, name);
-      }
-      return definition;
-    }
-
-    hasDefinition(name: string): boolean {
-      return !!this.getDefinition(name);
     }
 
     getQualifiedDefinitionNames(): GenericVector {
