@@ -501,10 +501,18 @@ module Shumway.AVM1.Natives {
       var value = alToString(this.context, this);
       searchString = alToString(this.context, searchString);
       position = arguments.length < 2 ? NaN : alToNumber(this.context, position); // SWF6 alToNumber(undefined) === 0
+      if (position < 0) {
+        // Different from JS
+        return -1;
+      }
       return value.lastIndexOf(searchString, isNaN(position) ? undefined : position);
     }
 
     public slice(start: number, end?: number): string {
+      if (arguments.length === 0) {
+        // Different from JS
+        return undefined;
+      }
       var value = alToString(this.context, this);
       start = alToInteger(this.context, start);
       end = end === undefined ? undefined : alToInteger(this.context, end);
@@ -520,15 +528,30 @@ module Shumway.AVM1.Natives {
     }
 
     public substr(start: number, length?: number): string {
+      // Different from JS
       var value = alToString(this.context, this);
+      var valueLength = value.length;
       start = alToInteger(this.context, start);
-      length = length === undefined ? undefined : alToInteger(this.context, length);
+      length = length === undefined ? valueLength : alToInteger(this.context, length);
+      if (start < 0) {
+        start = Math.max(0, valueLength + start);
+      }
+      if (length < 0) {
+        if (-length <= start) { // this one is weird -- don't ask
+          return '';
+        }
+        length = Math.max(0, valueLength + length);
+      }
       return value.substr(start, length);
     }
 
     public substring(start: number, end?: number): string {
       var value = alToString(this.context, this);
       start = alToInteger(this.context, start);
+      if (start >= value.length) {
+        // Different from JS
+        return '';
+      }
       end = end === undefined ? undefined : alToInteger(this.context, end);
       return value.substring(start, end);
     }
@@ -565,7 +588,6 @@ module Shumway.AVM1.Natives {
     }
 
     public alCall(thisArg: any, args?: any[]): any {
-      // TODO returns number value?
       var value = args ? alToString(this.context, args[0]) : '';
       return value;
     }

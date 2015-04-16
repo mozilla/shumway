@@ -568,11 +568,11 @@ module Shumway.AVM1 {
     var builtins = context.builtins;
     var obj = undefined;
     if (cls === builtins.Array || cls === builtins.Object ||
-        cls === builtins.Date) {
+        cls === builtins.Date || cls === builtins.String ||
+        cls === builtins.Function) {
        obj = cls.alConstruct(args);
     }
-    if (cls === builtins.Boolean || cls === builtins.Number ||
-        cls === builtins.String || cls === builtins.Function) {
+    if (cls === builtins.Boolean || cls === builtins.Number) {
       obj = cls.alConstruct(args).value;
     }
     if (obj instanceof AVM1Object) {
@@ -581,7 +581,7 @@ module Shumway.AVM1 {
         value: cls
       });
     }
-    return undefined;
+    return obj;
   }
 
   class AVM1SuperWrapper extends AVM1Object {
@@ -1393,8 +1393,7 @@ module Shumway.AVM1 {
       var stack = ectx.stack;
 
       var value = stack.pop();
-      // undefined is always 'undefined' for trace (even for SWF6).
-      ectx.actions.trace(value === undefined ? 'undefined' : alToString(ectx.context, value));
+      ectx.actions.trace(value);
     }
     function avm1_0x34_ActionGetTime(ectx: ExecutionContext) {
       var stack = ectx.stack;

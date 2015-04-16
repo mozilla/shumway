@@ -288,8 +288,12 @@ module Shumway.AVM1.Lib {
       as3Object.callFrame(frameNum);
     }
 
-    public chr(number) {
-      return String.fromCharCode(number);
+    public chr(code) {
+      code = alToInteger(this.context, code);
+      if (this.context.swfVersion <= 5) {
+        code &= 0xFF;
+      }
+      return code ? String.fromCharCode(code) : '';
     }
 
     public duplicateMovieClip(target, newname, depth) {
@@ -450,8 +454,9 @@ module Shumway.AVM1.Lib {
       loader.addEventListener(flash.events.Event.COMPLETE, completeHandler);
     }
 
-    public mbchr(number) {
-      return String.fromCharCode(number);
+    public mbchr(code) {
+      code = alToInteger(this.context, code);
+      return code ? String.fromCharCode(code) : '';
     }
 
     public mblength(expression) {
@@ -556,7 +561,21 @@ module Shumway.AVM1.Lib {
       notImplemented('AVM1Globals.toggleHighQuality');
     }
     public trace(expression) {
-      Shumway.AVMX.AS.Natives.print(this.context.sec, expression);
+      var value: string;
+      switch (typeof expression) {
+        case 'undefined':
+          // undefined is always 'undefined' for trace (even for SWF6).
+          value = 'undefined';
+          break;
+        case 'string':
+          value = expression;
+          break;
+        default:
+          value = alToString(this.context, expression);
+          break;
+      }
+
+      Shumway.AVMX.AS.Natives.print(this.context.sec, value);
     }
 
     public unloadMovie(target) {
