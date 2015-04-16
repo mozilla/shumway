@@ -1238,8 +1238,24 @@ module Shumway.AVMX.AS {
     concat() {
       return this.value.concat.apply(this.value, arguments);
     }
-    localeCompare() {
-      return this.value.localeCompare.apply(this.value, arguments);
+    localeCompare(other: string) {
+      if (arguments.length > 1) {
+        this.sec.throwError('ArgumentError', Errors.WrongArgumentCountError,
+                            'Function/<anonymous>()', 0, 2);
+      }
+      var value = this.value;
+      release || assert(typeof this.value === 'string');
+      other = String(other);
+      if (other === value) {
+        return 0;
+      }
+      var len = Math.min(value.length, other.length);
+      for (var j = 0; j < len; j++) {
+        if (value[j] !== other[j]) {
+          return value.charCodeAt(j) - other.charCodeAt(j);
+        }
+      }
+      return value.length > other.length ? 1 : -1;
     }
     match(pattern /* : string | ASRegExp */) {
       if (this.sec.AXRegExp.axIsType(pattern)) {
@@ -1347,9 +1363,9 @@ module Shumway.AVMX.AS {
       var receiver = this == undefined ? '' : this;
       return String.prototype.concat.apply(receiver, arguments);
     }
-    generic_localeCompare() {
-      var receiver = this == undefined ? '' : this;
-      return String.prototype.localeCompare.apply(receiver, arguments);
+    generic_localeCompare(other: string) {
+      var receiver = this.sec.AXString.axBox(String(this));
+      return receiver.localeCompare.apply(receiver, arguments);
     }
     generic_match(pattern) {
       return this.sec.AXString.axBox(String(this)).match(pattern);
