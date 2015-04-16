@@ -66,6 +66,9 @@ module Shumway.AVMX.AS.flash.display {
     setFile(file: any /* SWFFile | ImageFile */) {
       release || assert(!this._file);
       this._file = file;
+      if (!this._applicationDomain) {
+        this._applicationDomain = new this.sec.flash.system.ApplicationDomain(this.sec.application);
+      }
       this._bytesTotal = file.bytesTotal;
       if (file instanceof SWFFile) {
         // TODO: remove these duplicated fields from LoaderInfo.
@@ -87,7 +90,7 @@ module Shumway.AVMX.AS.flash.display {
     _file: any /* SWFFile|ImageFile*/;
     _bytesLoaded: number /*uint*/;
     _bytesTotal: number /*uint*/;
-    _applicationDomain: AXApplicationDomain;
+    _applicationDomain: system.ApplicationDomain;
     _parameters: Object;
     _width: number /*int*/;
     _height: number /*int*/;
@@ -144,11 +147,7 @@ module Shumway.AVMX.AS.flash.display {
 
     get applicationDomain(): flash.system.ApplicationDomain {
       somewhatImplemented("public flash.display.LoaderInfo::get applicationDomain");
-      // REDUX:
-      // return this._file ? flash.system.ApplicationDomain.currentDomain : null;
-      return null;
-
-      // return this._applicationDomain;
+      return this._file ? this._applicationDomain : null;
     }
 
     get swfVersion(): number /*uint*/ {

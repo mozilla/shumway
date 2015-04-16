@@ -434,11 +434,9 @@ module Shumway.AVMX.AS.flash.display {
       var parameters = context && context.parameters ?
         transformASValueToJS(this.sec, context.parameters, false) : {};
       if (context && context.applicationDomain) {
-        this._contentLoaderInfo._applicationDomain = context.applicationDomain.axDomain;
-      } else {
-        this._contentLoaderInfo._applicationDomain = this._loaderInfo ?
-                                                     this._loaderInfo.applicationDomain.axDomain :
-                                                     this.sec.application;
+        this._contentLoaderInfo._applicationDomain = context.applicationDomain;
+      } else if (this._loaderInfo && this._loaderInfo._applicationDomain) {
+        this._contentLoaderInfo._applicationDomain = this._loaderInfo._applicationDomain;
       }
       this._contentLoaderInfo._parameters = parameters;
     }
