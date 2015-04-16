@@ -843,13 +843,16 @@ module Shumway.AVMX {
   function createValidException(sec: AXSecurityDomain, internalError, bc: Bytecode,
                                 value: any, receiver: any, a: any, b: any, mn: Multiname,
                                 expectedScopeStacksHeight: number) {
-    // Stack exhaustion errors are annoying to catch: Identifying them requires pattern-matching of
-    // error messages, and throwing them must be done very carefully to not cause the next one.
-    if (internalError &&
-        typeof internalError.name === 'string' && typeof internalError.message === 'string') {
+    var isProperErrorObject = internalError instanceof Error &&
+                              typeof internalError.name === 'string' &&
+                              typeof internalError.message === 'string';
+    if (isProperErrorObject) {
       if (internalError.name === 'InternalError') {
         var obj = Object.create(sec.AXError.tPrototype);
         obj._errorID = 1023;
+        // Stack exhaustion errors are annoying to catch: Identifying them requires
+        // pattern-matching of error messages, and throwing them must be done very
+        // carefully to not cause the next one.
         if (internalError.message === 'allocation size overflow') {
           obj.$Bgmessage = "allocation size overflow";
           return obj;
@@ -862,6 +865,8 @@ module Shumway.AVMX {
           scopeStacks.length = expectedScopeStacksHeight;
           return obj;
         }
+      } else if (internalError.name === 'RangeError') {
+
       }
     }
     var message: string;
@@ -901,6 +906,11 @@ module Shumway.AVMX {
           return sec.createError('TypeError', isSuper ?
                                               Errors.ConstructOfNonFunctionError :
                                               Errors.CallOfNonFunctionError, mn.name);
+        }
+        if (isProperErrorObject && internalError.name === 'RangeError' &&
+            (internalError.message.indexOf('arguments array passed') > -1 ||
+             internalError.message.indexOf('call stack size') > -1)) {
+          return sec.createError('RangeError', Errors.StackOverflowError);
         }
         break;
       case Bytecode.GETSUPER:
