@@ -24,7 +24,7 @@ module Shumway.AVM1.Lib {
       return wrapAVM1NativeClass(context, true, AVM1Color,
         [],
         ['getRGB', 'getTransform', 'setRGB', 'setTransform'],
-        AVM1Color.prototype.avm1Constructor);
+        null, AVM1Color.prototype.avm1Constructor);
     }
 
     private _target: IAVM1SymbolBase;
@@ -33,23 +33,24 @@ module Shumway.AVM1.Lib {
       this._target = AVM1Utils.resolveTarget(this.context, target_mc);
     }
 
-    public getRGB() {
-      var transform = this.getTransform();
-      return transform.axGetPublicProperty('color');
+    public getRGB(): number {
+      var transform = AVM1Color.prototype.getTransform.call(this);
+      return transform.alGet('rgb');
     }
 
-    public getTransform(): any {
-      return this._target.as3Object.transform.colorTransform;
+    public getTransform(): AVM1ColorTransform {
+      return AVM1ColorTransform.fromAS3ColorTransform(this.context,
+        this._target.as3Object.transform.colorTransform);
     }
 
-    public setRGB(offset) {
-      var transform = new this.context.sec.flash.geom.ColorTransform();
-      transform.axSetPublicProperty('color', offset);
-      this.setTransform(transform);
+    public setRGB(offset): void {
+      var transform = AVM1Color.prototype.getTransform.call(this);
+      transform.alPut('rgb', offset);
+      AVM1Color.prototype.setTransform.call(this, transform);
     }
 
-    public setTransform(transform: any) {
-      this._target.as3Object.transform.colorTransform = transform;
+    public setTransform(transform: AVM1Object): void {
+      this._target.as3Object.transform.colorTransform = toAS3ColorTransform(transform);
     }
   }
 }

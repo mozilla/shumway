@@ -280,6 +280,19 @@ declare module Shumway.AVMX.AS.flash {
   module geom {
     class ColorTransform extends ASObject {
       static axClass: typeof ColorTransform;
+
+      color: number;
+      redMultiplier: number;
+      greenMultiplier: number;
+      blueMultiplier: number;
+      alphaMultiplier: number;
+      redOffset: number;
+      greenOffset: number;
+      blueOffset: number;
+      alphaOffset: number;
+      constructor(redMultiplier: number, greenMultiplier: number, blueMultiplier: number, alphaMultiplier: number,
+                  redOffset: number, greenOffset: number, blueOffset: number, alphaOffset: number);
+      public concat(second: ColorTransform): void;
     }
     class Matrix extends ASObject {
       static axClass: typeof Matrix;

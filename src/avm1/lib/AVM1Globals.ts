@@ -258,7 +258,7 @@ module Shumway.AVM1.Lib {
       var filters: AVM1Object = alNewObject(context);
       this.flash.alPut('filters', filters);
       var geom: AVM1Object = alNewObject(context);
-      //geom.axSetPublicProperty('ColorTransform', wrapAVM1Builtin(sec.flash.geom.ColorTransform.axClass));
+      geom.alPut('ColorTransform', new AVM1ColorTransformFunction(context));
       //geom.axSetPublicProperty('Matrix', wrapAVM1Builtin(sec.flash.geom.Matrix.axClass));
       geom.alPut('Point', new AVM1PointFunction(context));
       geom.alPut('Rectangle', new AVM1RectangleFunction(context));
