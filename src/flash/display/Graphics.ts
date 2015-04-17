@@ -339,9 +339,6 @@ module Shumway.AVMX.AS.flash.display {
 
     static classInitializer: any = null;
 
-    static classSymbols: string [] = null;
-    static instanceSymbols: string [] = null;
-
     constructor () {
       super();
       this._id = flash.display.DisplayObject.getNextSyncID();

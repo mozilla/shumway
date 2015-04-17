@@ -334,7 +334,7 @@ module Shumway.Remoting.Player {
             this.output.writeInt(0);
           }
         } else {
-          // Check if we have a graphics object and write that as a child first.
+          // Check if we have a graphics or text object and write that as a child first.
           var count = (graphics || textContent) ? 1 : 0;
           var children = displayObject._children;
           if (children) {
