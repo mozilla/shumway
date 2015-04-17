@@ -39,6 +39,7 @@ module Shumway.AVMX.AS.flash.net {
   }
 
   export class SharedObject extends flash.events.EventDispatcher {
+    public static axClass: typeof SharedObject;
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -95,7 +96,7 @@ module Shumway.AVMX.AS.flash.net {
       }
       var data = getSharedObjectStorage().getItem(path);
       // TODO: JSON here probably needs to convert things into AS3 objects.
-      var so = SharedObject._create(path, data ? JSON.parse(data) : {});
+      var so = this.sec.flash.net.SharedObject.axClass._create(path, data ? JSON.parse(data) : {});
       // so._data[Multiname.getPublicQualifiedName("cookie")] = {};
       // so._data[Multiname.getPublicQualifiedName("cookie")][Multiname.getPublicQualifiedName("lc")] = 32;
       // so._data[Multiname.getPublicQualifiedName("levelCompleted")] = 32;
