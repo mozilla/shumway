@@ -25,12 +25,6 @@ module Shumway.AVMX.AS.flash.external {
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // ["marshallExceptions", "ensureInitialized", "addCallback", "convertToXML", "convertToXMLString", "convertFromXML", "convertToJSString", "call"];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
     constructor () {
       super();
     }
@@ -38,7 +32,7 @@ module Shumway.AVMX.AS.flash.external {
     // JS -> AS Bindings
     static marshallExceptions: boolean;
     static ensureInitialized: () => void;
-    static addCallback: (functionName: string, closure: ASFunction) => void;
+    static addCallback: (functionName: string, closure: AXFunction) => void;
     static convertToXML: (s: string) => ASXML;
     static convertToXMLString: (obj: any) => string;
     static convertFromXML: (xml: ASXML) => ASObject;
@@ -46,7 +40,7 @@ module Shumway.AVMX.AS.flash.external {
     // static call: (functionName: string) => any;
 
     private static initialized: boolean = false;
-    private static registeredCallbacks: Shumway.MapObject<Shumway.AVMX.AS.ASFunction> = Object.create(null);
+    private static registeredCallbacks: Shumway.MapObject<AXFunction> = Object.create(null);
 
     private static _getAvailable(): boolean {
       return ExternalInterfaceService.instance.enabled;
@@ -66,6 +60,7 @@ module Shumway.AVMX.AS.flash.external {
       if (!callback) {
         return;
       }
+      release || checkValue(callback);
       var asArgs = transformJSValueToAS(callback.sec, args, true);
       return (<any>callback).call(null, functionName, asArgs);
     }
@@ -74,7 +69,7 @@ module Shumway.AVMX.AS.flash.external {
       return (<AXObject><any>obj).axGetEnumerableKeys();
     }
 
-    static _addCallback(functionName: string, closure: Shumway.AVMX.AS.ASFunction, hasNullCallback: boolean): void {
+    static _addCallback(functionName: string, closure: AXFunction, hasNullCallback: boolean): void {
       if (hasNullCallback) {
         ExternalInterfaceService.instance.unregisterCallback(functionName);
         delete ExternalInterface.registeredCallbacks[functionName];

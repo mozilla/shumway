@@ -205,13 +205,23 @@ module Shumway.AVMX {
     return boxed;
   }
 
-  export function ensureBoxedReceiver(sec: AXSecurityDomain, receiver: any) {
+  export function ensureBoxedReceiver(sec: AXSecurityDomain, receiver: any, callable: any) {
     if (receiver && typeof receiver === 'object') {
       release || checkValue(receiver);
       return receiver;
     }
+    var boxedReceiver = sec.box(receiver);
     // Boxing still leaves `null` and `undefined` unboxed, so return the current global instead.
-    return sec.box(receiver) || scopeStacks[scopeStacks.length - 1].topScope().global.object;
+    if (!boxedReceiver) {
+      if (scopeStacks.length) {
+        boxedReceiver = scopeStacks[scopeStacks.length - 1].topScope().global.object;
+      } else if (callable.receiver) {
+        // If no scripts are on the stack (e.g., for ExternalInterface calls), use the function's
+        // own global.
+        boxedReceiver = callable.receiver.scope.global.object;
+      }
+    }
+    return boxedReceiver;
   }
 
   function axCoerceObject(x) {
@@ -1296,7 +1306,6 @@ module Shumway.AVMX {
 
     createAXGlobal(applicationDomain: AXApplicationDomain, scriptInfo: ScriptInfo) {
       var global: AXGlobal = Object.create(this.AXGlobalPrototype);
-      global.sec = this;
       global.applicationDomain = applicationDomain;
       global.scriptInfo = scriptInfo;
 

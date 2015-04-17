@@ -811,10 +811,10 @@ module Shumway.AVMX.AS {
       return this.value.lastIndexOf(value, arguments.length > 1 ? fromIndex : 0x7fffffff);
     }
     every(callbackfn: {value: Function}, thisArg?) {
-      thisArg = ensureBoxedReceiver(this.sec, thisArg);
       if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
         return true;
       }
+      thisArg = ensureBoxedReceiver(this.sec, thisArg, callbackfn);
       var o = this.value;
       for (var i = 0; i < o.length; i++) {
         if (callbackfn.value.call(thisArg, o[i], i, o) !== true) {
@@ -824,40 +824,40 @@ module Shumway.AVMX.AS {
       return true;
     }
     some(callbackfn: {value}, thisArg?) {
-      thisArg = ensureBoxedReceiver(this.sec, thisArg);
       if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
         return false;
       }
+      thisArg = ensureBoxedReceiver(this.sec, thisArg, callbackfn);
       var self = this;
       return this.value.some(function (currentValue, index, array) {
         return callbackfn.value.call(thisArg, currentValue, index, self);
       });
     }
     forEach(callbackfn: {value}, thisArg?) {
-      thisArg = ensureBoxedReceiver(this.sec, thisArg);
       if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
         return;
       }
+      thisArg = ensureBoxedReceiver(this.sec, thisArg, callbackfn);
       var self = this;
       this.value.forEach(function (currentValue, index) {
         callbackfn.value.call(thisArg, currentValue, index, self);
       });
     }
     map(callbackfn: {value}, thisArg?) {
-      thisArg = ensureBoxedReceiver(this.sec, thisArg);
       if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
         return this.sec.createArrayUnsafe([]);
       }
+      thisArg = ensureBoxedReceiver(this.sec, thisArg, callbackfn);
       var self = this;
       return this.sec.createArrayUnsafe(this.value.map(function (currentValue, index) {
         return callbackfn.value.call(thisArg, currentValue, index, self);
       }));
     }
     filter(callbackfn: {value: Function}, thisArg?) {
-      thisArg = ensureBoxedReceiver(this.sec, thisArg);
       if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
         return this.sec.createArrayUnsafe([]);
       }
+      thisArg = ensureBoxedReceiver(this.sec, thisArg, callbackfn);
       var result = [];
       var o = this.value;
       for (var i = 0; i < o.length; i++) {
@@ -1126,11 +1126,12 @@ module Shumway.AVMX.AS {
     }
 
     call(thisArg: any) {
-      return this.value.apply(ensureBoxedReceiver(this.sec, thisArg), sliceArguments(arguments, 1));
+      thisArg = ensureBoxedReceiver(this.sec, thisArg, this);
+      return this.value.apply(thisArg, sliceArguments(arguments, 1));
     }
 
     apply(thisArg: any, argArray?: ASArray): any {
-      thisArg = ensureBoxedReceiver(this.sec, thisArg);
+      thisArg = ensureBoxedReceiver(this.sec, thisArg, this);
       return this.value.apply(thisArg, argArray ? argArray.value : undefined);
     }
 
