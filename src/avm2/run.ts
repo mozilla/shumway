@@ -907,6 +907,14 @@ module Shumway.AVMX {
 
   export var scopeStacks: ScopeStack[] = [];
 
+  export function getCurrentABC() {
+    if (scopeStacks.length === 0) {
+      return null;
+    }
+    var globalObject = <any>scopeStacks[scopeStacks.length - 1].topScope().global.object;
+    return (<ScriptInfo>globalObject.scriptInfo).abc;
+  }
+
   /**
    * Provides security isolation between application domains.
    */
@@ -1539,7 +1547,7 @@ module Shumway.AVMX {
      */
     public parent: AXApplicationDomain;
 
-    public sec: AXSecurityDomain;
+    public sec: ISecurityDomain;
 
     private _abcs: ABCFile [];
 
@@ -1553,7 +1561,6 @@ module Shumway.AVMX {
     public loadABC(abc: ABCFile) {
       assert (this._abcs.indexOf(abc) < 0);
       this._abcs.push(abc);
-      abc.setApplicationDomain(this);
     }
 
     public loadAndExecuteABC(abc: ABCFile) {

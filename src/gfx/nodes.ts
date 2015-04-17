@@ -1056,6 +1056,10 @@ module Shumway.GFX {
 
     set filters(value: Filter []) {
       this._filters = value;
+      if (value.length) {
+        // TODO: We could avoid invalidating the node if the new filter list contains equal filter objects.
+        this._node.invalidate();
+      }
     }
 
     get blendMode() {

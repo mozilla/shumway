@@ -1270,18 +1270,15 @@ module Shumway.AVMX {
     public doubles: Float64Array;
 
     /**
-     * Application domain in which this ABC is loaded.
+     * Environment this ABC is loaded into.
+     * In the shell, this is just a wrapper around an applicationDomain, but in the
+     * SWF player, it's a flash.display.LoaderInfo object.
      */
-    private _applicationDomain: AXApplicationDomain = null;
+    public env: {app: AXApplicationDomain; url: string};
 
     public get applicationDomain() {
-      release || assert(this._applicationDomain);
-      return this._applicationDomain;
-    }
-
-    public setApplicationDomain(applicationDomain: AXApplicationDomain) {
-      assert(this._applicationDomain === null && applicationDomain);
-      this._applicationDomain = applicationDomain;
+      release || assert(this.env.app);
+      return this.env.app;
     }
 
     private _stream: AbcStream;
@@ -1310,10 +1307,10 @@ module Shumway.AVMX {
     public instances: InstanceInfo [];
 
     constructor(
-      private _buffer: Uint8Array,
-      private _fileName?: string
+      env: {app: AXApplicationDomain; url: string},
+      private _buffer: Uint8Array
     ) {
-      this._applicationDomain = null;
+      this.env = env;
       this._stream = new AbcStream(_buffer);
       this.hash = hashBytesTo32BitsAdler(_buffer, 0, _buffer.length);
       this._checkMagic();
@@ -1525,7 +1522,8 @@ module Shumway.AVMX {
       var magic = this._stream.readWord();
       var flashPlayerBrannan = 46 << 16 | 15;
       if (magic < flashPlayerBrannan) {
-        throw new Error("Invalid ABC File (magic = " + Number(magic).toString(16) + ")");
+        this.env.app.sec.throwError('VerifierError', Errors.InvalidMagicError, magic >> 16,
+                                    magic & 0xffff);
       }
     }
 
@@ -2096,7 +2094,10 @@ module Shumway.AVMX {
     map: Shumway.MapObject<Shumway.MapObject<string>>;
     abcs: Uint8Array;
     scripts: Shumway.MapObject<any>;
-    constructor(abcs: Uint8Array, index: any) {
+    app: AXApplicationDomain;
+
+    constructor(app: AXApplicationDomain, abcs: Uint8Array, index: any) {
+      this.app = app;
       this.map = ObjectUtilities.createMap<Shumway.MapObject<string>>();
       this.abcs = abcs;
       this.scripts = ObjectUtilities.createMap<string>();
@@ -2120,7 +2121,8 @@ module Shumway.AVMX {
       if (!entry) {
         return null;
       }
-      return new ABCFile(this.abcs.subarray(entry.offset, entry.offset + entry.length), scriptName);
+      var env = {url: scriptName, app: this.app};
+      return new ABCFile(env, this.abcs.subarray(entry.offset, entry.offset + entry.length));
     }
 
     getABCByMultiname(mn: Multiname): ABCFile {

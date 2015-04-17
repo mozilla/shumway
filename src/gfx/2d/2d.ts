@@ -187,6 +187,7 @@ module Shumway.GFX.Canvas2D {
     target: Canvas2DSurfaceRegion = null;
     matrix: Matrix = Matrix.createIdentity();
     colorMatrix: ColorMatrix = ColorMatrix.createIdentity();
+    filters: Filter[] = [];
 
     options: Canvas2DRendererOptions;
 
@@ -203,6 +204,7 @@ module Shumway.GFX.Canvas2D {
       this.matrix.set(state.matrix);
       this.colorMatrix.set(state.colorMatrix);
       this.flags = state.flags;
+      this.filters.push.apply(this.filters, state.filters);
       ArrayUtilities.copyFrom(this.clipList, state.clipList);
     }
 
@@ -599,6 +601,11 @@ module Shumway.GFX.Canvas2D {
         return;
       }
 
+      var filters = node.getLayer().filters;
+      if (filters) {
+        state.filters.push.apply(state.filters, filters);
+      }
+
       if (!(state.flags & RenderFlags.IgnoreNextLayer) &&
           (node.getLayer().blendMode !== BlendMode.Normal || node.getLayer().mask) &&
           this._options.blending) {
@@ -758,6 +765,9 @@ module Shumway.GFX.Canvas2D {
       }
       var context = state.target.context;
       Filters._applyColorMatrix(context, state.colorMatrix);
+      if (Filters._svgFiltersAreSupported && GFX.filters.value) {
+        Filters._applyFilters(this._devicePixelRatio, context, state.filters);
+      }
       // Only paint if it is visible.
       if (node.source instanceof RenderableVideo) {
         this.visitRenderableVideo(<RenderableVideo>node.source, state);

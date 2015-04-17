@@ -370,7 +370,7 @@ module Shumway.AVMX.AS.flash.display {
     loaderInfo: flash.display.LoaderInfo;
 
     constructor(data: Timeline.SymbolData, loaderInfo: flash.display.LoaderInfo) {
-      super(data, loaderInfo.sec.flash.display.MovieClip.axClass, true);
+      super(data, loaderInfo.app.sec.flash.display.MovieClip.axClass, true);
       this.loaderInfo = loaderInfo;
     }
 
@@ -383,6 +383,7 @@ module Shumway.AVMX.AS.flash.display {
       }
       symbol.frameScripts = [];
       var frames = data.frames;
+      var frameLabelCtor = loaderInfo.app.sec.flash.display.FrameLabel;
       for (var i = 0; i < frames.length; i++) {
         var frame = loaderInfo.getFrame(data, i);
         var actionBlocks = frame.actionBlocks;
@@ -393,7 +394,7 @@ module Shumway.AVMX.AS.flash.display {
           }
         }
         if (frame.labelName) {
-          symbol.labels.push(new loaderInfo.sec.flash.display.FrameLabel(frame.labelName, i + 1));
+          symbol.labels.push(new frameLabelCtor(frame.labelName, i + 1));
         }
         symbol.frames.push(frame);
       }

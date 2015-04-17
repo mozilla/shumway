@@ -91,15 +91,21 @@ module Shumway.AVMX.AS {
       public static classNatives: any [] = [DataBuffer];
       public static instanceNatives: any [] = [DataBuffer.prototype];
 
-      static classInitializer: any = function() {
+      static classInitializer() {
         var proto: any = DataBuffer.prototype;
         ObjectUtilities.defineNonEnumerableProperty(proto, '$BgtoJSON', proto.toJSON);
       }
 
+      _symbol: {
+        buffer: Uint8Array;
+        byteLength: number;
+      };
+
       constructor(source?: any) {
-        false && super();
-        var self: ByteArray = this;
-        DataBuffer.call(self);
+        super();
+        if (this._symbol) {
+          source = this._symbol;
+        }
         var buffer: ArrayBuffer;
         var length = 0;
         if (source) {
@@ -124,14 +130,14 @@ module Shumway.AVMX.AS {
         } else {
           buffer = new ArrayBuffer(ByteArray.INITIAL_SIZE);
         }
-        self._buffer = buffer;
-        self._length = length;
-        self._position = 0;
-        self._resetViews();
-        self._objectEncoding = ByteArray.defaultObjectEncoding;
-        self._littleEndian = false; // AS3 is bigEndian by default.
-        self._bitBuffer = 0;
-        self._bitLength = 0;
+        this._buffer = buffer;
+        this._length = length;
+        this._position = 0;
+        this._resetViews();
+        this._objectEncoding = ByteArray.defaultObjectEncoding;
+        this._littleEndian = false; // AS3 is bigEndian by default.
+        this._bitBuffer = 0;
+        this._bitLength = 0;
       }
 
       /* The initial size of the backing, in bytes. Doubled every OOM. */

@@ -39,7 +39,7 @@ module Shumway.Timeline {
     resolveAssetCallback: (data: any) => void;
   }
 
-  export interface SymbolData {id: number; className: string}
+  export interface SymbolData {id: number; className: string; env: {app: AVMX.AXApplicationDomain}}
   /**
    * TODO document
    */
@@ -55,10 +55,10 @@ module Shumway.Timeline {
       release || assert (isInteger(data.id));
       this.data = data;
       if (data.className) {
-        var system = symbolDefaultClass.sec.system;
+        var app = data.env.app;
         try {
-          var symbolClass = system.getClass(AVMX.Multiname.FromFQNString(data.className,
-                                                                         AVMX.NamespaceType.Public));
+          var symbolClass = app.getClass(AVMX.Multiname.FromFQNString(data.className,
+                                                                      AVMX.NamespaceType.Public));
           this.symbolClass = <ASClass><any>symbolClass;
         } catch (e) {
           warning ("Symbol " + data.id + " bound to non-existing class " + data.className);
@@ -104,7 +104,7 @@ module Shumway.Timeline {
     }
 
     static FromData(data: any, loaderInfo: flash.display.LoaderInfo): BinarySymbol {
-      var symbol = new BinarySymbol(data, loaderInfo.sec);
+      var symbol = new BinarySymbol(data, loaderInfo.app.sec);
       symbol.buffer = data.data;
       symbol.byteLength = data.data.byteLength;
       return symbol;

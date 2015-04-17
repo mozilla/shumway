@@ -100,6 +100,7 @@ module Shumway {
     _file: any; // {SWFFile|ImageFile}
 
     private _listener: ILoadListener;
+    private _env: any;
     private _loadingServiceSession: FileLoadingSession;
     private _delayedUpdatesPromise: Promise<any>;
     private _lastDelayedUpdate: LoadProgressUpdate;
@@ -107,10 +108,12 @@ module Shumway {
     private _queuedInitialData: Uint8Array;
 
 
-    constructor(listener: ILoadListener) {
+    constructor(listener: ILoadListener, env: any) {
       release || assert(listener);
       this._file = null;
+      this._url = '';
       this._listener = listener;
+      this._env = env;
       this._loadingServiceSession = null;
       this._delayedUpdatesPromise = null;
       this._bytesLoaded = 0;
@@ -161,7 +164,7 @@ module Shumway {
       var eagerlyParsedSymbolsCount = 0;
       var previousFramesLoaded = 0;
       if (!file) {
-        file = this._file = createFileInstanceForHeader(data, progressInfo.bytesTotal);
+        file = this._file = createFileInstanceForHeader(data, progressInfo.bytesTotal, this._env);
         this._listener.onLoadOpen(file);
       } else {
         if (file instanceof SWFFile) {
@@ -251,16 +254,16 @@ module Shumway {
     }
   }
 
-  function createFileInstanceForHeader(header: Uint8Array, fileLength: number): any {
+  function createFileInstanceForHeader(header: Uint8Array, fileLength: number, env: any): any {
     var magic = (header[0] << 16) | (header[1] << 8) | header[2];
 
     if ((magic & 0xffff) === FileTypeMagicHeaderBytes.SWF) {
-      return new SWFFile(header, fileLength);
+      return new SWFFile(header, fileLength, env);
     }
 
     if (magic === FileTypeMagicHeaderBytes.JPG || magic === FileTypeMagicHeaderBytes.PNG ||
         magic === FileTypeMagicHeaderBytes.GIF) {
-      return new ImageFile(header, fileLength);
+      return new ImageFile(header, fileLength, env);
     }
 
     // TODO: throw instead of returning null? Perhaps?

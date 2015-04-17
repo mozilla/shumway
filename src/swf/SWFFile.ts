@@ -60,6 +60,7 @@ module Shumway.SWF {
     dictionary: DictionaryEntry[];
     fonts: {name: string; style: string; id: number}[];
     data: Uint8Array;
+    env: any;
 
     symbolClassesMap: string[];
     symbolClassesList: {id: number; className: string}[];
@@ -84,7 +85,7 @@ module Shumway.SWF {
     private _currentInitActionBlocks: InitActionBlock[];
     private _currentExports: SymbolExport[];
 
-    constructor(initialBytes: Uint8Array, length: number) {
+    constructor(initialBytes: Uint8Array, length: number, env: any) {
       // TODO: cleanly abort loading/parsing instead of just asserting here.
       release || assert(initialBytes[0] === 67 || initialBytes[0] === 70 || initialBytes[0] === 90,
                         "Unsupported compression format: " + initialBytes[0]);
@@ -95,6 +96,8 @@ module Shumway.SWF {
       if (!release && SWF.traceLevel.value > 0) {
         console.log('Create SWFFile');
       }
+
+      this.env = env;
 
       this.compression = CompressionMethod.None;
       this.swfVersion = 0;
@@ -173,6 +176,7 @@ module Shumway.SWF {
         symbol = this.getParsedTag(unparsed);
       }
       symbol.className = this.symbolClassesMap[id] || null;
+      symbol.env = this.env;
       return symbol;
     }
 
@@ -708,7 +712,8 @@ module Shumway.SWF {
 
     private decodeEmbeddedFont(unparsed: UnparsedTag) {
       var definition = this.getParsedTag(unparsed);
-      var symbol = new EagerlyParsedDictionaryEntry(definition.id, unparsed, 'font', definition);
+      var symbol = new EagerlyParsedDictionaryEntry(definition.id, unparsed, 'font', definition,
+                                                    this.env);
       if (!release && traceLevel.value > 0) {
         console.info("Decoding embedded font " + definition.id + " with name '" +
                      definition.name + "'", definition);
@@ -751,7 +756,8 @@ module Shumway.SWF {
 
     private decodeEmbeddedImage(unparsed: UnparsedTag) {
       var definition = this.getParsedTag(unparsed);
-      var symbol = new EagerlyParsedDictionaryEntry(definition.id, unparsed, 'image', definition);
+      var symbol = new EagerlyParsedDictionaryEntry(definition.id, unparsed, 'image', definition,
+                                                    this.env);
       if (!release && traceLevel.value > 0) {
         console.info("Decoding embedded image " + definition.id + " of type " +
                      SWFTag[unparsed.tagCode] + " (start: " + unparsed.byteOffset +
@@ -833,11 +839,13 @@ module Shumway.SWF {
   export class EagerlyParsedDictionaryEntry extends DictionaryEntry {
     type: string;
     definition: Object;
+    env: any;
     ready: boolean;
-    constructor(id: number, unparsed: UnparsedTag, type: string, definition: any) {
+    constructor(id: number, unparsed: UnparsedTag, type: string, definition: any, env: any) {
       super(id, unparsed.tagCode, unparsed.byteOffset, unparsed.byteLength);
       this.type = type;
       this.definition = definition;
+      this.env = env;
       this.ready = false;
     }
   }

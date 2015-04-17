@@ -87,7 +87,7 @@ module Shumway.AVMX.AS.flash.display {
     _file: any /* SWFFile|ImageFile*/;
     _bytesLoaded: number /*uint*/;
     _bytesTotal: number /*uint*/;
-    _applicationDomain: AXApplicationDomain;
+    _applicationDomain: system.ApplicationDomain;
     _parameters: Object;
     _width: number /*int*/;
     _height: number /*int*/;
@@ -144,11 +144,11 @@ module Shumway.AVMX.AS.flash.display {
 
     get applicationDomain(): flash.system.ApplicationDomain {
       somewhatImplemented("public flash.display.LoaderInfo::get applicationDomain");
-      // REDUX:
-      // return this._file ? flash.system.ApplicationDomain.currentDomain : null;
-      return null;
+      return this._file ? this._applicationDomain : null;
+    }
 
-      // return this._applicationDomain;
+    get app() {
+      return this._applicationDomain.axDomain;
     }
 
     get swfVersion(): number /*uint*/ {
@@ -385,8 +385,12 @@ module Shumway.AVMX.AS.flash.display {
       release || assert(this._file.framesLoaded > 0);
       var symbol = <flash.display.SpriteSymbol>this._dictionary[0];
       if (!symbol) {
-        symbol = new flash.display.SpriteSymbol({id: 0, className: this._file.symbolClassesMap[0]},
-                                                this);
+        var data = {
+          id: 0,
+          className: this._file.symbolClassesMap[0],
+          env: this
+        };
+        symbol = new flash.display.SpriteSymbol(data, this);
         symbol.isRoot = true;
         symbol.numFrames = this._file.frameCount;
         this._syncAVM1Attributes(symbol);
