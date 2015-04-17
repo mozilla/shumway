@@ -290,7 +290,6 @@
     "stas": "/utils/swfdec/test/trace/default.stas",
     "filenames": [
       "/utils/swfdec/test/trace/getvariable-dotdot-5.swf",
-      "/utils/swfdec/test/trace/getvariable-slashpath-5.swf",
       "/utils/swfdec/test/trace/gotolabel.swf"
     ],
     "defaultRate": 20,
