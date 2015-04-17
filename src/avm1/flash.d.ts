@@ -308,7 +308,20 @@ declare module Shumway.AVMX.AS.flash {
       public y: number;
       public width: number;
       public height: number;
+      public size: Point;
       constructor(x: number, y: number, width: number, height: number);
+      public inflate(dx: number, dy: number);
+      public inflatePoint(point: Point): void;
+      public offset(dx: number, dy: number): void;
+      public offsetPoint(point: Point): void;
+      public contains(x: number, y: number): boolean;
+      public containsPoint(point: Point): boolean;
+      public containsRect(rect: Rectangle): boolean;
+      public intersection(toIntersect: Rectangle): Rectangle;
+      public intersects(toIntersect: Rectangle): boolean;
+      public union(toUnion: Rectangle): Rectangle;
+      public equals(toCompare: Rectangle): boolean;
+      public isEmpty(): boolean;
     }
     class Transform extends ASObject {
       matrix: Matrix;

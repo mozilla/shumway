@@ -261,7 +261,7 @@ module Shumway.AVM1.Lib {
       //geom.axSetPublicProperty('ColorTransform', wrapAVM1Builtin(sec.flash.geom.ColorTransform.axClass));
       //geom.axSetPublicProperty('Matrix', wrapAVM1Builtin(sec.flash.geom.Matrix.axClass));
       geom.alPut('Point', new AVM1PointFunction(context));
-      //geom.axSetPublicProperty('Rectangle', wrapAVM1Builtin(sec.flash.geom.Rectangle.axClass));
+      geom.alPut('Rectangle', new AVM1RectangleFunction(context));
       geom.alPut('Transform', AVM1Transform.createAVM1Class(context));
       this.flash.alPut('geom', geom);
       var text: AVM1Object = alNewObject(context);
@@ -530,14 +530,11 @@ module Shumway.AVM1.Lib {
       nativeTarget.removeMovieClip();
     }
 
-    public startDrag(target, lock, left, top, right, bottom) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
-      nativeTarget.startDrag(lock, arguments.length < 3 ?
-                                   null :
-                                   new this.context.sec.flash.geom.Rectangle(left, top,
-                                                                             right - left,
-                                                                             bottom - top));
+    public startDrag(target?, ...args: any[]): void {
+      var mc = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
+      mc.startDrag.apply(mc, args);
     }
+
     public stop() {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
       nativeTarget.stop();

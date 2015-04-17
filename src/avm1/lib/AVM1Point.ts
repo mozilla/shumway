@@ -61,6 +61,10 @@ module Shumway.AVM1.Lib {
         interpolate: {
           value: this.interpolate,
           writable: true
+        },
+        polar: {
+          value: this.polar,
+          writable: true
         }
       });
     }

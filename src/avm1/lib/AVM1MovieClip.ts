@@ -577,12 +577,17 @@ module Shumway.AVM1.Lib {
       throw 'Not implemented: set$_soundbuftime';
     }
 
-    public startDrag(lock, left, top?, right?, bottom?) {
-      this.as3Object.startDrag(lock, arguments.length < 3 ?
-                                     null :
-                                     new this.context.sec.flash.geom.Rectangle(left, top,
-                                                                               right - left,
-                                                                               bottom - top));
+    public startDrag(lock?: boolean, left?: number, top?: number, right?: number, bottom?: number): void {
+      lock = alToBoolean(this.context, lock);
+      var bounds = null;
+      if (arguments.length < 3) {
+        left = alToNumber(this.context, left);
+        top = alToNumber(this.context, top);
+        right = alToNumber(this.context, right);
+        bottom = alToNumber(this.context, bottom);
+        bounds = new this.context.sec.flash.geom.Rectangle(left, top, right - left, bottom - top);
+      }
+      this.as3Object.startDrag(lock, bounds);
     }
 
     public stop() {

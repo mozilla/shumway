@@ -36,6 +36,7 @@
 ///<reference path='lib/AVM1TextField.ts' />
 ///<reference path='lib/AVM1Color.ts' />
 ///<reference path='lib/AVM1Point.ts' />
+///<reference path='lib/AVM1Rectangle.ts' />
 ///<reference path='lib/AVM1Transform.ts' />
 ///<reference path='lib/AVM1TextFormat.ts' />
 ///<reference path='lib/AVM1BitmapData.ts' />
