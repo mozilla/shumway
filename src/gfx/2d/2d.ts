@@ -204,6 +204,7 @@ module Shumway.GFX.Canvas2D {
       this.matrix.set(state.matrix);
       this.colorMatrix.set(state.colorMatrix);
       this.flags = state.flags;
+      this.filters.length = 0;
       this.filters.push.apply(this.filters, state.filters);
       ArrayUtilities.copyFrom(this.clipList, state.clipList);
     }
