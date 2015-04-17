@@ -83,8 +83,7 @@ module Shumway.GFX {
 
     public addRenderableParent(renderable: Renderable) {
       release || assert(renderable);
-      var index = indexOf(this._renderableParents, renderable);
-      release || assert(index < 0);
+      release || assert(this._renderableParents.indexOf(renderable) === -1);
       this._renderableParents.push(renderable);
     }
 

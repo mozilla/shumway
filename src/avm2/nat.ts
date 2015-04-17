@@ -2148,11 +2148,11 @@ module Shumway.AVMX.AS {
 
       if (replacer === null) {
         return this.stringifySpecializedToString(value, null, null, gap);
-      } else if (Array.isArray(replacer)) {
-        return this.stringifySpecializedToString(value, this.computePropertyList(replacer), null,
-                                                 gap);
+      } else if (sec.AXArray.axIsType(replacer)) {
+        return this.stringifySpecializedToString(value, this.computePropertyList(replacer.value),
+                                                 null, gap);
       } else { // replacer is Function
-        return this.stringifySpecializedToString(value, null, replacer, gap);
+        return this.stringifySpecializedToString(value, null, replacer.value, gap);
       }
     }
 
