@@ -353,7 +353,7 @@ module Shumway.AVMX.AS.flash.display {
       this._contentLoaderInfo._url = request.url;
       this._applyLoaderContext(context);
       this._loadingType = LoadingType.External;
-      this._fileLoader = new FileLoader(this);
+      this._fileLoader = new FileLoader(this, this._contentLoaderInfo);
       if (!release && traceLoaderOption.value) {
         console.log("Loading url " + request.url);
       }
@@ -385,7 +385,7 @@ module Shumway.AVMX.AS.flash.display {
                                      '/[[DYNAMIC]]/' + (++loaderClass._embeddedContentLoadCount);
       this._applyLoaderContext(context);
       this._loadingType = LoadingType.Bytes;
-      this._fileLoader = new FileLoader(this);
+      this._fileLoader = new FileLoader(this, this._contentLoaderInfo);
       this._queuedLoadUpdate = null;
       if (!release && traceLoaderOption.value) {
         console.log("Loading embedded symbol " + this._contentLoaderInfo._url);
@@ -439,8 +439,7 @@ module Shumway.AVMX.AS.flash.display {
       } else if (this._loaderInfo && this._loaderInfo._applicationDomain) {
         this._contentLoaderInfo._applicationDomain = this._loaderInfo._applicationDomain;
       } else {
-        var domain = new this.sec.flash.system.ApplicationDomain(this.sec.application);
-        this._contentLoaderInfo._applicationDomain = domain;
+        this._contentLoaderInfo._applicationDomain = new this.sec.flash.system.ApplicationDomain();
       }
       this._contentLoaderInfo._parameters = parameters;
     }

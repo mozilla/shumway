@@ -629,7 +629,7 @@ module Shumway.Shell {
         },
         onImageBytesLoaded() {}
       };
-      var loader = new Shumway.FileLoader(loadListener);
+      var loader = new Shumway.FileLoader(loadListener, null);
       loader.loadBytes(buffer);
     } catch (x) {
       writer.redLn("Cannot parse SWF, reason: " + x);
@@ -701,7 +701,7 @@ module Shumway.Shell {
           },
           onImageBytesLoaded() {}
         };
-        var loader = new Shumway.FileLoader(loadListener);
+        var loader = new Shumway.FileLoader(loadListener, null);
         loader.loadBytes(buffer);
       } catch (x) {
         writer.redLn("Cannot parse: " + file + ", reason: " + x);

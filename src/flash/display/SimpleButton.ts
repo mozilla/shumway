@@ -319,7 +319,8 @@ module Shumway.AVMX.AS.flash.display {
           }
         } else {
           placeObjectTag = {flags: Shumway.SWF.Parser.PlaceObjectFlags.Move, depth: 1};
-          character = new flash.display.SpriteSymbol({id: -1, className: null}, loaderInfo);
+          character = new flash.display.SpriteSymbol({id: -1, className: null, env: null},
+                                                     loaderInfo);
           (<flash.display.SpriteSymbol>character).frames.push(new Shumway.SWF.SWFFrame(controlTags));
         }
         symbol[stateName + 'State'] = new ButtonState(character, placeObjectTag);

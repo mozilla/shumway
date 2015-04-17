@@ -1549,7 +1549,7 @@ module Shumway.AVMX {
      */
     public parent: AXApplicationDomain;
 
-    public sec: AXSecurityDomain;
+    public sec: ISecurityDomain;
 
     private _abcs: ABCFile [];
 

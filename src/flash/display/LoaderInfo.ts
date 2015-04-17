@@ -385,8 +385,12 @@ module Shumway.AVMX.AS.flash.display {
       release || assert(this._file.framesLoaded > 0);
       var symbol = <flash.display.SpriteSymbol>this._dictionary[0];
       if (!symbol) {
-        symbol = new flash.display.SpriteSymbol({id: 0, className: this._file.symbolClassesMap[0]},
-                                                this);
+        var data = {
+          id: 0,
+          className: this._file.symbolClassesMap[0],
+          env: this
+        };
+        symbol = new flash.display.SpriteSymbol(data, this);
         symbol.isRoot = true;
         symbol.numFrames = this._file.frameCount;
         this._syncAVM1Attributes(symbol);
