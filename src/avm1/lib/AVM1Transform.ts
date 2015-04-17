@@ -24,7 +24,7 @@ module Shumway.AVM1.Lib {
       return wrapAVM1NativeClass(context, true, AVM1Transform,
         [],
         ['matrix#', 'concatenatedMatrix#', 'colorTransform#', 'pixelBounds#'],
-        AVM1Transform.prototype.avm1Constructor);
+        null, AVM1Transform.prototype.avm1Constructor);
     }
 
     private _target:IAVM1SymbolBase;
@@ -34,54 +34,33 @@ module Shumway.AVM1.Lib {
     }
 
     public getMatrix(): AVM1Object {
-      return undefined; // REDUX this._target.as3Object.transform.matrix;
+      var transform = this._target.as3Object.transform;
+      return AVM1Matrix.fromAS3Matrix(this.context, transform.matrix);
     }
 
-    public setMatrix(value: AVM1Object) {
-      if (value instanceof flash.geom.Matrix) {
-        // REDUX this._target.as3Object.transform.matrix = value;
-        return;
-      }
-      if (isNullOrUndefined(value)) {
-        return;
-      }
-      // It accepts random objects with a,b,c,d,tx,ty properties
-      var m: any = this.getMatrix();  // REDUX
-      if (value.alHasProperty('a')) {
-        m.a = value.alGet('a');
-      }
-      if (value.alHasProperty('b')) {
-        m.b = value.alGet('b');
-      }
-      if (value.alHasProperty('c')) {
-        m.c = value.alGet('c');
-      }
-      if (value.alHasProperty('d')) {
-        m.d = value.alGet('d');
-      }
-      if (value.alHasProperty('tx')) {
-        m.tx = value.alGet('tx');
-      }
-      if (value.alHasProperty('ty')) {
-        m.ty = value.alGet('ty');
-      }
-      this._target.as3Object.transform.matrix = m;
+    public setMatrix(value: AVM1Matrix) {
+      var transform = this._target.as3Object.transform;
+      transform.matrix = toAS3Matrix(value);
     }
 
-    public getConcatenatedMatrix(): flash.geom.Matrix {
-      return this._target.as3Object.transform.concatenatedMatrix;
+    public getConcatenatedMatrix(): AVM1Matrix {
+      var transform = this._target.as3Object.transform;
+      return AVM1Matrix.fromAS3Matrix(this.context, transform.concatenatedMatrix);
     }
 
-    public getColorTransform(): flash.geom.ColorTransform {
-      return this._target.as3Object.transform.colorTransform;
+    public getColorTransform(): AVM1ColorTransform {
+      var transform = this._target.as3Object.transform;
+      return AVM1ColorTransform.fromAS3ColorTransform(this.context, transform.colorTransform);
     }
 
-    public setColorTransform(value: flash.geom.ColorTransform) {
-      this._target.as3Object.transform.colorTransform = value;
+    public setColorTransform(value: AVM1ColorTransform) {
+      var transform = this._target.as3Object.transform;
+      transform.colorTransform = toAS3ColorTransform(value);
     }
 
-    public getPixelBounds(): flash.geom.Rectangle {
-      return this._target.as3Object.pixelBounds;
+    public getPixelBounds(): AVM1Rectangle {
+      var transform = this._target.as3Object.transform;
+      return AVM1Rectangle.fromAS3Rectangle(this.context, transform.pixelBounds);
     }
   }
 }

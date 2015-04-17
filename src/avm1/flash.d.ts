@@ -296,6 +296,23 @@ declare module Shumway.AVMX.AS.flash {
     }
     class Matrix extends ASObject {
       static axClass: typeof Matrix;
+
+      a: number;
+      b: number;
+      c: number;
+      d: number;
+      tx: number;
+      ty: number;
+      constructor(a: number, b: number, c: number, d: number, tx: number, ty: number);
+      concat(other: Matrix): void;
+      createBox(scaleX: number, scaleY: number, rotation: number, tx: number, ty: number): void;
+      createGradientBox(width: number, height: number, rotation: number, tx: number, ty: number): void;
+      deltaTransformPoint(point: Point): Point;
+      invert(): void;
+      rotate(angle: number): void;
+      scale(sx: number, sy: number): void;
+      transformPoint(point: Point): Point;
+      translate(tx: number, ty: number): void;
     }
     class Point extends ASObject {
       static axClass: typeof Point;
@@ -341,6 +358,7 @@ declare module Shumway.AVMX.AS.flash {
       concatenatedMatrix: Matrix;
       colorTransform: ColorTransform;
       concatenatedColorTransform: ColorTransform;
+      pixelBounds: flash.geom.Rectangle;
     }
   }
   module media {
