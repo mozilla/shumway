@@ -457,6 +457,10 @@ module.exports = function(grunt) {
     grunt.file.mkdir('build');
   });
 
+  grunt.registerTask('ensure-test-folder', function() {
+    grunt.file.mkdir('build/test');
+  });
+
   grunt.registerTask('closure-bundles', function () {
     var inputDir = 'build/bundles/';
     var outputDir = 'build/bundles-cc/';
@@ -686,6 +690,7 @@ module.exports = function(grunt) {
     'exec:test_unit'
   ]);
   grunt.registerTask('gate', "Run this before checking in any code.", [
+    'ensure-test-folder',
     // 'tslint:all', // Annoyingly slow, and not very useful most of the time.
     // 'closure', REDUX: Temporarily commented out.
     'parallel:test',
