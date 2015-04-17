@@ -237,7 +237,7 @@ module Shumway.AVM1.Lib {
       this.MovieClipLoader = AVM1MovieClipLoader.createAVM1Class(context);
 
       this.Sound = AVM1Sound.createAVM1Class(context);
-      this.SharedObject = undefined; // wrapAVM1Builtin(sec.flash.net.SharedObject.axClass);
+      this.SharedObject = new AVM1SharedObjectFunction(context);
       this.ContextMenu = undefined; // wrapAVM1Builtin(sec.flash.ui.ContextMenu.axClass);
       this.ContextMenuItem = undefined; // wrapAVM1Builtin(sec.flash.ui.ContextMenuItem.axClass);
       this.TextFormat = AVM1TextFormat.createAVM1Class(context);

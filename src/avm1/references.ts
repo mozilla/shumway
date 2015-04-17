@@ -44,4 +44,5 @@
 ///<reference path='lib/AVM1ExternalInterface.ts' />
 ///<reference path='lib/AVM1Sound.ts' />
 ///<reference path='lib/AVM1System.ts' />
+///<reference path='lib/AVM1SharedObject.ts' />
 ///<reference path='lib/AVM1MovieClipLoader.ts' />

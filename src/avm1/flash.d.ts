@@ -370,6 +370,11 @@ declare module Shumway.AVMX.AS.flash {
     }
     class SharedObject extends ASObject {
       static axClass: typeof SharedObject;
+      size: number;
+      fps: number;
+      clear(): void;
+      flush(minDiskSpace?: number /*int*/): string;
+      static getLocal(name: string, localPath: string, secure: boolean): SharedObject;
     }
   }
   module system {
