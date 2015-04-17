@@ -167,17 +167,6 @@ module Shumway.AVM1.Lib {
   }
 
   export class AVM1Utils {
-    static addProperty(obj: any, propertyName: string, getter: () => any,
-                       setter: (v:any) => any, enumerable:boolean = true): any
-    {
-      obj.axDefinePublicProperty(propertyName, {
-        get: getter,
-        set: setter || undefined,
-        enumerable: enumerable,
-        configurable: true
-      });
-    }
-
     static resolveTarget<T extends IAVM1SymbolBase>(context: AVM1Context, target_mc: any = undefined): any {
       return context.resolveTarget(target_mc);
     }

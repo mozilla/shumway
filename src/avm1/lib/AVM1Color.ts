@@ -35,7 +35,7 @@ module Shumway.AVM1.Lib {
 
     public getRGB() {
       var transform = this.getTransform();
-      return transform.asGetPublicProperty('color');
+      return transform.axGetPublicProperty('color');
     }
 
     public getTransform(): any {

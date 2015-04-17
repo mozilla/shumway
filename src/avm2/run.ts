@@ -32,8 +32,6 @@ interface IMetaobjectProtocol {
   axSetNumericProperty(nm: number, value: any);
   axGetNumericProperty(nm: number): any;
 
-  axDefinePublicProperty(nm: any, description: any): any;
-
   axGetSlot(i: number): any;
   axSetSlot(i: number, value: any);
 

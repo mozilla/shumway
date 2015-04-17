@@ -228,9 +228,9 @@ module Shumway.AVM1.Lib {
       result.alPut('textFieldHeight', textHeight + 4);
       var metrics = measureTextField.getLineMetrics(0);
       result.alPut('ascent',
-        metrics.asGetPublicProperty('ascent'));
+        metrics.axGetPublicProperty('ascent'));
       result.alPut('descent',
-        metrics.asGetPublicProperty('descent'));
+        metrics.axGetPublicProperty('descent'));
       return result;
     }
 

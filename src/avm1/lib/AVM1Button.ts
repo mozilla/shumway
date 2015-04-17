@@ -377,8 +377,8 @@ module Shumway.AVM1.Lib {
           continue;
         }
         if ((action.keyCode < 32 &&
-          AVM1KeyCodeMap[action.keyCode] === event.asGetPublicProperty('keyCode')) ||
-          action.keyCode === event.asGetPublicProperty('charCode'))
+          AVM1KeyCodeMap[action.keyCode] === event.axGetPublicProperty('keyCode')) ||
+          action.keyCode === event.axGetPublicProperty('charCode'))
         {
           this._runAction(action);
         }
