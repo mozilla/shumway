@@ -41,6 +41,7 @@ module Shumway.Player {
   import IBitmapDataSerializer = flash.display.IBitmapDataSerializer;
   import IAssetResolver = Timeline.IAssetResolver;
   import IFSCommandListener = flash.system.IFSCommandListener;
+  import IScriptsExecutionManager = flash.system.IScriptsExecutionManager;
   import IVideoElementService = flash.net.IVideoElementService;
   import IRootElementService = flash.display.IRootElementService;
   import ICrossDomainSWFLoadingWhitelist = flash.system.ICrossDomainSWFLoadingWhitelist;
@@ -225,7 +226,8 @@ module Shumway.Player {
    * synchronizes the frame tree with the display list.
    */
   export class Player implements IBitmapDataSerializer, IFSCommandListener, IVideoElementService,
-                                 IAssetResolver, IRootElementService, ICrossDomainSWFLoadingWhitelist {
+                                 IAssetResolver, IRootElementService, ICrossDomainSWFLoadingWhitelist,
+                                 IScriptsExecutionManager {
     _stage: flash.display.Stage;
     private _loader: flash.display.Loader;
     private _loaderInfo: flash.display.LoaderInfo;
@@ -470,12 +472,17 @@ module Shumway.Player {
     public executeFSCommand(command: string, args: string) {
       switch (command) {
         case 'quit':
-          this._leaveEventLoop();
+          this.stopScripts();
           break;
         default:
           somewhatImplemented('FSCommand ' + command);
       }
       this._gfxService.fscommand(command, args);
+    }
+
+    public stopScripts() {
+      // TODO stop also timers
+      this._leaveEventLoop();
     }
 
     public requestRendering(): void {

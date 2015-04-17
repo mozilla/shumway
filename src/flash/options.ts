@@ -37,4 +37,8 @@ module Shumway.AVM2.AS {
   export var flvOption = flashOptions.register (
     new Shumway.Options.Option(null, "FLV support.", "string", "unsupported", "Defines how to deal with FLV streams.")
   );
+
+  export var scriptsTimeout = flashOptions.register (
+    new Shumway.Options.Option("", "Scripts timeout", "number", 1000, "Specifies script execution timeout before hang is declared (in ms).")
+  );
 }

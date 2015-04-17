@@ -61,4 +61,8 @@ module Shumway.AVM2.AS.flash.system {
   export interface IFSCommandListener {
     executeFSCommand(command: string, args: string);
   }
+
+  export interface IScriptsExecutionManager {
+    stopScripts();
+  }
 }

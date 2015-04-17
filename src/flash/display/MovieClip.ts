@@ -188,6 +188,7 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = null; // ["currentLabels"];
 
     static runFrameScripts() {
+      var start = Date.now();
       enterTimeline("MovieClip.executeFrame");
       var queue: MovieClip[] = MovieClip._callQueue;
       MovieClip._callQueue = [];
@@ -219,6 +220,16 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
       leaveTimeline();
+
+      // Running individual scripts might not take long time, however if lots of
+      // objects present the total execution time might be unacceptable.
+      var duration = Date.now() - start;
+      if (scriptsTimeout.value > 0 && duration > scriptsTimeout.value) {
+        console.warn('runFrameScripts timeout -- stopping scripts execution');
+        var manager: flash.system.IScriptsExecutionManager =
+          Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+        manager.stopScripts();
+      }
     }
 
     constructor () {

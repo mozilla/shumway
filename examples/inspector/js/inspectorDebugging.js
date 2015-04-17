@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+Shumway.AVM2.AS.scriptsTimeout.value = 0;
 Shumway.AVM1.avm1TimeoutDisabled.value = true;
 
 // Examples of the commands to control the AVM1 debugger
