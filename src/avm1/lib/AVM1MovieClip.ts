@@ -46,7 +46,7 @@ module Shumway.AVM1.Lib {
           'getBytesLoaded', 'getBytesTotal', 'getDepth', 'getInstanceAtDepth',
           'getNextHighestDepth', 'getRect', 'getSWFVersion', 'getTextSnapshot',
           'getURL', 'globalToLocal', 'gotoAndPlay', 'gotoAndStop', '_height#',
-          '_highquality#', 'hitArea#', 'hitTest', 'lineGradientStyle', 'listStyle',
+          '_highquality#', 'hitArea#', 'hitTest', 'lineGradientStyle', 'lineStyle',
           'lineTo', 'loadMovie', 'loadVariables', 'localToGlobal', '_lockroot#',
           'menu#', 'moveTo', '_name#', 'nextFrame', 'opaqueBackground#', '_parent#',
           'play', 'prevFrame', '_quality#', 'removeMovieClip', '_rotation#',
@@ -635,6 +635,10 @@ module Shumway.AVM1.Lib {
       }
       var path = '';
       do {
+        if (isNullOrUndefined(nativeObject)) {
+          release || Debug.assert(false);
+          return undefined; // something went wrong
+        }
         path = '/' + nativeObject.name + path;
         nativeObject = nativeObject.parent;
       } while (nativeObject !== nativeObject.root);
