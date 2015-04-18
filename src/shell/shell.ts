@@ -596,7 +596,7 @@ module Shumway.Shell {
         writer.redLns(x.stack);
       }
     }
-    writer.writeLn("Completed " + testCount + " test" + (testCount > 1 ? "s" : "") + " in " + (Date.now()- start).toFixed(2) + " ms.");
+    writer.writeLn("Executed JS File: " + file);
     writer.outdent();
   }
 
