@@ -110,7 +110,7 @@ package flash.external {
       }
     }
 
-    private static function convertFromXML(xml: XML): Object {
+    private static function convertFromXML(xml: Object /* XML | XMLList */): * {
       switch (String(xml.name())) {
         case 'true':
           return true;
@@ -126,7 +126,7 @@ package flash.external {
           return new Date(Number(xml.children()));
         case 'exception':
           if (marshallExceptions) {
-            throw new Error(String(xml.children()));
+            throw new Error(xml.children());
           }
           return undefined;
         case 'array':
