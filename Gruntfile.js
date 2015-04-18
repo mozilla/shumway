@@ -213,7 +213,7 @@ module.exports = function(grunt) {
       test_mock: {
         maxBuffer: Infinity,
         cmd: 'mkdir -p build/test;' +
-             'js build/ts/shell.js -x test/mock/jwplayer.js examples/jwplayer/jwplayer.flash.swf -fc 10 > build/test/test_mock.run;' +
+             'utils/jsshell/js build/ts/shell.js -x test/mock/jwplayer.js examples/jwplayer/jwplayer.flash.swf -fc 10 > build/test/test_mock.run;' +
              'diff build/test/test_mock.run test/test_mock.baseline;'
       },
       bench_avm2: {
