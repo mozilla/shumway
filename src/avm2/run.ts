@@ -163,11 +163,13 @@ module Shumway.AVMX {
   export enum WriterFlags {
     None = 0,
     Runtime = 1,
-    Interpreter = 2
+    Execution = 2,
+    Interpreter = 4
   }
 
   var writer = new IndentingWriter(false, function (x) { dumpLine(x); } );
   export var runtimeWriter = null;
+  export var executionWriter = null;
   export var interpreterWriter = null;
 
   export function sliceArguments(args, offset: number) {
@@ -176,6 +178,7 @@ module Shumway.AVMX {
 
   export function setWriters(flags: WriterFlags) {
     runtimeWriter = (flags & WriterFlags.Runtime) ? writer : null;
+    executionWriter = (flags & (WriterFlags.Execution | WriterFlags.Interpreter)) ? writer : null;
     interpreterWriter = (flags & WriterFlags.Interpreter) ? writer : null;
   }
 

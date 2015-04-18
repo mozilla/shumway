@@ -239,7 +239,7 @@ module Shumway.Shell {
 
     fuzzMillOption = shellOptions.register(new Option('', "fuzz", "string", "", "Generates random SWFs XML."));
 
-    writersOption = shellOptions.register(new Option("w", "writers", "string", "", "Writers Filter [r: runtime, i: interpreter]"));
+    writersOption = shellOptions.register(new Option("w", "writers", "string", "", "Writers Filter [r: runtime, e: execution, i: interpreter]"));
 
     var argumentParser = new ArgumentParser();
     argumentParser.addBoundOptionSet(systemOptions);
@@ -298,6 +298,9 @@ module Shumway.Shell {
     var writerFlags = WriterFlags.None;
     if (writersOption.value.indexOf("r") >= 0) {
       writerFlags |= WriterFlags.Runtime;
+    }
+    if (writersOption.value.indexOf("e") >= 0) {
+      writerFlags |= WriterFlags.Execution;
     }
     if (writersOption.value.indexOf("i") >= 0) {
       writerFlags |= WriterFlags.Interpreter;

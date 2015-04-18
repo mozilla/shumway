@@ -93,13 +93,13 @@ module Shumway.AVMX {
 
 
   export function interpret(self: Object, methodInfo: MethodInfo, savedScope: Scope, args: any []) {
-    interpreterWriter && interpreterWriter.enter("> " + methodInfo);
+    executionWriter && executionWriter.enter("> " + methodInfo);
     try {
       var result = _interpret(self, methodInfo, savedScope, args);
-      interpreterWriter && interpreterWriter.leave("< " + methodInfo.trait);
+      executionWriter && executionWriter.leave("< " + methodInfo.trait);
       return result;
     } catch (e) {
-      interpreterWriter && interpreterWriter.leave("< " + methodInfo.trait + ", Exception: " + e);
+      executionWriter && executionWriter.leave("< " + methodInfo.trait + ", Exception: " + e);
       throw e;
     }
   }
