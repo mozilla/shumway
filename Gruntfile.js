@@ -210,6 +210,12 @@ module.exports = function(grunt) {
         maxBuffer: Infinity,
         cmd: 'mongo ats --eval \'db.swfs.find({"parse_result.uses_avm1": false}).forEach(function (x) { print("test/ats/swfs/" + x.file); })\' | parallel -k --gnu -X -N10 utils/jsshell/js build/ts/shell.js -x -fc 10 {} | tee test/ats/test_swf_avm2_all.run;'
       },
+      test_mock: {
+        maxBuffer: Infinity,
+        cmd: 'mkdir -p build/test;' +
+             'js build/ts/shell.js -x test/mock/jwplayer.js examples/jwplayer/jwplayer.flash.swf -fc 10 > build/test/test_mock.run;' +
+             'diff build/test/test_mock.run test/test_mock.baseline;'
+      },
       bench_avm2: {
         maxBuffer: Infinity,
         cmd: 'find -L test/avm2/jsbench -name "*.abc" | xargs utils/jsshell/js build/ts/shell.js -x --printABCFileName'
@@ -271,7 +277,8 @@ module.exports = function(grunt) {
           'exec:test_swf',
           'exec:test_avm2_ats',
           'exec:test_unit',
-          'exec:test_trace'
+          'exec:test_trace',
+          'exec:test_mock'
         ]
       },
       base: {
@@ -687,7 +694,8 @@ module.exports = function(grunt) {
     'exec:test_trace_swfdec',
     'exec:test_avm2_ats',
     //'exec:test_avm2_ats_parse',
-    'exec:test_unit'
+    'exec:test_unit',
+    'exec:test_mock'
   ]);
   grunt.registerTask('gate', "Run this before checking in any code.", [
     'ensure-test-folder',
