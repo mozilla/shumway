@@ -1444,10 +1444,6 @@ module Shumway.AVMX {
      */
     initialize() {
       var D = defineNonEnumerableProperty;
-      var P = function setPublicProperty(object, name, value) {
-        defineNonEnumerableProperty(object, Multiname.getPublicMangledName(name),
-                                    AXFunction.axBox(value));
-      };
       
       // The basic dynamic prototype that all objects in this security domain have in common.
       var dynamicObjectPrototype = Object.create(AXBasePrototype);
