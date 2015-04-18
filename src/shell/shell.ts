@@ -428,6 +428,8 @@ module Shumway.Shell {
         quit(127);
       }
       player.load(file, buffer);
+      // Set a default size for the stage container.
+      player.stage.setStageContainerSize(512, 512, 1);
       return player;
     }
 
