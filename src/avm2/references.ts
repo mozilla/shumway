@@ -18,16 +18,18 @@
 
 ///<reference path='module.ts' />
 ///<reference path='errors.ts' />
+///<reference path='options.ts' />
+
 ///<reference path='abc/stream.ts' />
 ///<reference path='abc/ops.ts' />
 ///<reference path='abc/lazy.ts' />
-///<reference path='options.ts' />
+
 ///<reference path='int.ts' />
 ///<reference path='run.ts' />
-
 ///<reference path='nat.ts' />
 
-// ///<reference path='native.ts' />
+// ///<reference path='compiler/verifier.ts' />
+// ///<reference path='compiler/baseline.ts' />
 
 ///<reference path='natives/GenericVector.ts' />
 ///<reference path='natives/int32Vector.ts' />
@@ -41,8 +43,5 @@
 ///<reference path='natives/date.ts' />
 ///<reference path='natives/byteArray.ts' />
 ///<reference path='natives/system.ts' />
-
-// ///<reference path='compiler/verifier.ts' />
-// ///<reference path='compiler/baseline.ts' />
 
 ///<reference path='amf.ts' />
