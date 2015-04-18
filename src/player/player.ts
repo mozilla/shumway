@@ -537,14 +537,14 @@ module Shumway.Player {
       var self = this;
 
       if (this._env === 'test') {
-        flash.external.ExternalInterface._initJS();
-        flash.external.ExternalInterface._addCallback('__tick__', this.sec.AXFunction.axBox(function () {
+        flash.external.ExternalInterface.ensureInitialized();
+        flash.external.ExternalInterface._addCallback('__tick__', function () {
           console.log('tick');
           self._eventLoopTick();
-        }), false);
-        flash.external.ExternalInterface._addCallback('__takeScreenshot__', this.sec.AXFunction.axBox(function () {
+        });
+        flash.external.ExternalInterface._addCallback('__takeScreenshot__', function () {
           // TODO
-        }), false);
+        });
         this._eventLoopTick();
         return;
       }
