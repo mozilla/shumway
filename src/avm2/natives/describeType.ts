@@ -50,7 +50,7 @@ module Shumway.AVMX.AS {
         $Bgmethods: null,
         $Bgbases: sec.createArray([])
       }
-    }
+    };
   }
 
   export function describeTypeJSON(sec: AXSecurityDomain, o: any, flags: number): any {

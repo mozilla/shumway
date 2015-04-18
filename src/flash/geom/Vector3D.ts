@@ -30,6 +30,7 @@ module Shumway.AVMX.AS.flash.geom {
       v.y = y;
       v.z = z;
       v.w = w;
+      return v;
     }
 
     public static X_AXIS: Vector3D;

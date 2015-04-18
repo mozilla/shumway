@@ -118,7 +118,7 @@ module Shumway.AVMX.AS.flash.text {
       this._lineMetricsData = null;
 
       var defaultTextFormat = new this.sec.flash.text.TextFormat(
-        Font.DEFAULT_FONT_SERIF,
+        this.sec.flash.text.Font.axClass.DEFAULT_FONT_SERIF,
         12,
         0,
         false,
