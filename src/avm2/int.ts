@@ -866,7 +866,7 @@ module Shumway.AVMX {
           return obj;
         }
       } else if (internalError.name === 'RangeError') {
-
+        // ..
       }
     }
     var message: string;
