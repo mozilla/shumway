@@ -510,7 +510,6 @@ module Shumway.AVMX.AS {
           var namespace = lookupNs(prefix);
           if (namespace === undefined) {
             sec.throwError('TypeError', Errors.XMLPrefixNotBound, prefix, localName);
-            throw "Unknown namespace: " + prefix;
           }
           return {
             name: namespace + '::' + localName,
@@ -945,8 +944,7 @@ module Shumway.AVMX.AS {
           }
           else {
             // ii. Else throw a TypeError exception
-            this.sec.throwError('TypeError', Errors.XMLNamespaceWithPrefixAndNoURI,
-                                           prefixValue);
+            this.sec.throwError('TypeError', Errors.XMLNamespaceWithPrefixAndNoURI, prefixValue);
           }
         }
         // d. Else if prefixValue is undefined, let n.prefix = undefined

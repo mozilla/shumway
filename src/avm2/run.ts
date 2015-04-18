@@ -727,13 +727,13 @@ module Shumway.AVMX {
     defaultValue: any;
     tPrototype: AXObject;
     dPrototype: AXObject;
-    axBox: any;
+    axBox: (x: any) => any;
     axConstruct: (args: any[]) => AXObject;
-    axApply: any;
-    axCoerce: any;
-    axIsType: any;
-    axAsType: any;
-    axIsInstanceOf: any;
+    axApply: (self: AXObject, args: any[]) => any;
+    axCoerce: (x: any) => any;
+    axIsType: (x: any) => boolean;
+    axAsType: (x: any) => boolean;
+    axIsInstanceOf: (x: any) => boolean;
     axImplementsInterface: (x: AXClass) => boolean;
   }
 
