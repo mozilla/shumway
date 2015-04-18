@@ -20,13 +20,11 @@ module Shumway.AVMX.AS.flash.ui {
   export class ContextMenu extends flash.display.NativeMenu {
     
     static classInitializer: any = null;
-    static classSymbols: string [] = null;
-    static instanceSymbols: string [] = null;
-    
+
     constructor () {
       super();
-      this.builtInItems = new this.sec.flash.ui.ContextMenuBuiltInItems();
-      this.customItems = [];
+      this._builtInItems = new this.sec.flash.ui.ContextMenuBuiltInItems();
+      this._customItems = [];
     }
     
     static get isSupported(): boolean {
@@ -51,16 +49,16 @@ module Shumway.AVMX.AS.flash.ui {
       somewhatImplemented("public flash.ui.ContextMenu::set builtInItems");
       this._builtInItems = value;
     }
-    get customItems(): any [] {
+    get customItems(): ASArray {
       // TODO: Should clone here probably.
       somewhatImplemented("public flash.ui.ContextMenu::get customItems");
-      return this._customItems;
+      return this.sec.createArrayUnsafe(this._customItems);
     }
-    set customItems(value: any []) {
+    set customItems(value: ASArray) {
       // TODO: Should clone here probably.
       value = value;
       somewhatImplemented("public flash.ui.ContextMenu::set customItems");
-      this._customItems = value;
+      this._customItems = value.value;
     }
     get link(): flash.net.URLRequest {
       somewhatImplemented("public flash.ui.ContextMenu::get link");
@@ -106,13 +104,13 @@ module Shumway.AVMX.AS.flash.ui {
     }
 
     clone(): ContextMenu {
-      var result = new this.sec.flash.ui.ContextMenu();
-      result.builtInItems = this.builtInItems.clone();
+      var result: ContextMenu = new this.sec.flash.ui.ContextMenu();
+      result._builtInItems = this._builtInItems.clone();
 
       this.cloneLinkAndClipboardProperties(result);
-      var customItems = this.customItems;
+      var customItems = this._customItems;
       for (var i = 0; i < customItems.length; i++) {
-        result.customItems.push(customItems[i].clone());
+        result._customItems.push(customItems[i].clone());
       }
       return result;
     }

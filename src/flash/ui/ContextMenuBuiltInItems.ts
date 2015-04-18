@@ -18,9 +18,7 @@ module Shumway.AVMX.AS.flash.ui {
   export class ContextMenuBuiltInItems extends ASObject {
     
     static classInitializer: any = null;
-    static classSymbols: string [] = null; // [];
-    static instanceSymbols: string [] = null;
-    
+
     constructor () {
       super();
 
