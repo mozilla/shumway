@@ -190,14 +190,18 @@ function executeFile(path, buffer, movieParams, remoteDebugging) {
     new Shumway.Player.BrowserSystemResourcesLoadingService(builtinPath, playerglobalInfo, shellAbcPath);
 
   if (fileName.endsWith(".abc")) {
-    Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal | Shumway.AVM2LoadLibrariesFlags.Shell).then(function (securityDomain) {
-      function runAbc(file, buffer) {
-        securityDomain.system.loadAndExecuteABC(new Shumway.AVMX.ABCFile(new Uint8Array(buffer)));
+    var flags = Shumway.AVM2LoadLibrariesFlags.Builtin |
+                Shumway.AVM2LoadLibrariesFlags.Playerglobal |
+                Shumway.AVM2LoadLibrariesFlags.Shell;
+    Shumway.createSecurityDomain(flags).then(function (securityDomain) {
+      function runAbc(env, buffer) {
+        securityDomain.system.loadAndExecuteABC(new Shumway.AVMX.ABCFile(env, new Uint8Array(buffer)));
       }
       function shift() {
         var file = files.shift();
         new BinaryFileReader(file).readAll(null, function(buffer) {
-          runAbc(file, buffer);
+          var env = {url: file, app: securityDomain.system};
+          runAbc(env, buffer);
           if (files.length) {
             shift();
           }
