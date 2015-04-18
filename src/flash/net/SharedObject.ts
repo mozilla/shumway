@@ -15,6 +15,7 @@
  */
 // Class: SharedObject
 module Shumway.AVMX.AS.flash.net {
+  import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
   import axCoerceString = Shumway.AVMX.axCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
@@ -35,6 +36,7 @@ module Shumway.AVMX.AS.flash.net {
         _sharedObjectStorage = (<any>window).sessionStorage;
       }
     }
+    release || assert(_sharedObjectStorage, "SharedObjectStorage is not available.");
     return _sharedObjectStorage;
   }
 
