@@ -1241,19 +1241,17 @@ module Shumway.AVMX {
         fun = function () {
           return interpret(this, methodInfo, scope, <any>arguments);
         };
-      }
-      // REDUX: enable arg count checking on native ctors. Currently impossible because natives
-      // are frozen.
-      if (!methodInfo.isNative()) {
-        fun.methodInfo = methodInfo;
-      }
-      if (!release) {
-        try {
-          var className = classInfo.instanceInfo.getName().toFQNString(false);
-          Object.defineProperty(fun, 'name', {value: className});
-        } catch (e) {
-          // Ignore errors in browsers that don't allow overriding Function#length;
+        if (!release) {
+          try {
+            var className = classInfo.instanceInfo.getName().toFQNString(false);
+            Object.defineProperty(fun, 'name', {value: className});
+          } catch (e) {
+            // Ignore errors in browsers that don't allow overriding Function#length;
+          }
         }
+        // REDUX: enable arg count checking on native ctors. Currently impossible because natives
+        // are frozen.
+        fun.methodInfo = methodInfo;
       }
       return fun;
     }

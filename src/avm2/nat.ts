@@ -1942,7 +1942,8 @@ module Shumway.AVMX.AS {
 
     static classInitializer(asClass?: any) {
       defineNonEnumerableProperty(this, '$Bglength', 1);
-      defineNonEnumerableProperty(this.dPrototype, '$Bgname', asClass.name);
+      release || assert(asClass.name.indexOf('AS') === 0);
+      defineNonEnumerableProperty(this.dPrototype, '$Bgname', asClass.name.substr(2));
       if (asClass === ASError) {
         defineNonEnumerableProperty(this.dPrototype, '$Bgmessage', 'Error');
         defineNonEnumerableProperty(this.dPrototype, '$BgtoString', ASError.prototype.toString);

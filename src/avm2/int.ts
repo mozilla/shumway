@@ -989,8 +989,7 @@ module Shumway.AVMX {
             if (lastFunctionEntry.indexOf('AXBasePrototype_valueOf') === 0 ||
                 lastFunctionEntry.indexOf('AXBasePrototype_toString') === 0)
             {
-              return sec.createError('TypeError', Errors.CallOfNonFunctionError,
-                                                'value');
+              return sec.createError('TypeError', Errors.CallOfNonFunctionError, 'value');
             }
         }
     }
