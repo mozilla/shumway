@@ -52,6 +52,9 @@ module Shumway.AVMX.AS.flash.display {
     static instanceSymbols: string [] = null; // [];
     
     constructor (bitmapData: flash.display.BitmapData = null, pixelSnapping: string = "auto", smoothing: boolean = false) {
+      if (this._symbol && !this._fieldsInitialized) {
+        this.applySymbol();
+      }
       super();
       if (!this._symbol) {
         this.bitmapData = bitmapData;
