@@ -2783,9 +2783,6 @@ module Shumway.AVMX.AS {
       toXMLList(value, list);
       return list;
     }
-    public static axCoerce(value: any): ASXMLList {
-      return this.Create(value);
-    }
 
     // 11.4.1 The Addition Operator ( + )
     public static addXML(left: ASXMLList, right: ASXMLList) {
