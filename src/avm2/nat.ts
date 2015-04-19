@@ -363,13 +363,12 @@ module Shumway.AVMX.AS {
       var qualifiedName = qualifyPublicName(axCoerceString(nm));
       enumerable = !!enumerable;
       var instanceInfo = this.axClass.classInfo.instanceInfo;
-      if (instanceInfo.isSealed()) {
-        this.sec.throwError('ReferenceError', Errors.WriteSealedError, nm,
-                                       instanceInfo.name.name);
+      if (instanceInfo.isSealed() && this !== this.axClass.dPrototype) {
+        this.sec.throwError('ReferenceError', Errors.WriteSealedError, nm, instanceInfo.name.name);
       }
       // Silently ignore trait properties.
       var descriptor = Object.getOwnPropertyDescriptor(this.axClass.tPrototype, qualifiedName);
-      if (descriptor) {
+      if (descriptor && this !== this.axClass.dPrototype) {
         return;
       }
       var descriptor = Object.getOwnPropertyDescriptor(this, qualifiedName);
