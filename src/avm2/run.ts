@@ -531,6 +531,7 @@ module Shumway.AVMX {
     object: AXObject;
     isWith: boolean;
     cache: any;
+    defaultNamespace: Namespace;
 
     constructor(parent: Scope, object: any, isWith: boolean = false) {
       this.parent = parent;
@@ -538,6 +539,7 @@ module Shumway.AVMX {
       this.global = parent ? parent.global : this;
       this.isWith = isWith;
       this.cache = [];
+      this.defaultNamespace = null;
     }
 
     public findDepth(object: any): number {
@@ -920,6 +922,13 @@ module Shumway.AVMX {
   }
 
   export var scopeStacks: ScopeStack[] = [];
+
+  export function getCurrentScope(): Scope {
+    if (scopeStacks.length === 0) {
+      return null;
+    }
+    return scopeStacks[scopeStacks.length - 1].topScope();
+  }
 
   export function getCurrentABC() {
     if (scopeStacks.length === 0) {

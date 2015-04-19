@@ -279,7 +279,7 @@ module Shumway.AVMX.AS {
     }
     // The E4X spec says we must throw a TypeError for non-Boolean, Number, or String objects.
     // Flash thinks otherwise.
-    var defaultNamespace = targetList.sec.AXNamespace.defaultNamespace;
+    var defaultNamespace = getDefaultNamespace(targetList.sec);
     var parentString = '<parent xmlns="' + escapeAttributeValue(defaultNamespace.uri) + '">' +
                        value + '</parent>';
     var x = toXML(parentString, targetList.sec);
@@ -355,7 +355,7 @@ module Shumway.AVMX.AS {
       if (mn.isAnyNamespace()) {
         out.namespaces = mn.namespaces;
       } else {
-        var defaultNS = sec.AXNamespace.defaultNamespace;
+        var defaultNS = getDefaultNamespace(sec);
         var namespaces = mn.namespaces;
         var containsDefaultNS = false;
         for (var i = 0; i < namespaces.length; i++) {
@@ -398,8 +398,14 @@ module Shumway.AVMX.AS {
 
   // 12.1 GetDefaultNamespace
   function getDefaultNamespace(sec: AXSecurityDomain): Namespace {
-    // The scope's default xml namespace is stored in sec.AXNamespace.defaultNamespace.
-    // TODO: don't be like this. Store the default namespace on the scope. Please.
+    var scope = getCurrentScope();
+    while (scope) {
+      if (scope.defaultNamespace) {
+        return scope.defaultNamespace;
+      }
+      scope = scope.parent;
+    }
+    // The outermost default xml namespace is stored in sec.AXNamespace.defaultNamespace.
     return sec.AXNamespace.defaultNamespace;
   }
 
@@ -447,15 +453,16 @@ module Shumway.AVMX.AS {
     }
     private parseXml(s) {
       var sec = this.sec;
+      var defaultNs = getDefaultNamespace(this.sec);
       var i = 0, scopes: any [] = [{
         namespaces: [],
         lookup: {
           "xmlns": 'http://www.w3.org/2000/xmlns/',
           "xml": 'http://www.w3.org/XML/1998/namespace'
         },
-        inScopes: [this.sec.AXNamespace.defaultNamespace],
+        inScopes: [defaultNs],
         space: 'default',
-        xmlns: this.sec.AXNamespace.defaultNamespace.uri
+        xmlns: defaultNs.uri
       }];
       function resolveEntities(s) {
         return s.replace(/&([^;]+);/g, function(all, entity) {
