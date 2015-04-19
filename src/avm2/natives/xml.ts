@@ -1205,6 +1205,8 @@ module Shumway.AVMX.AS {
     ALL = FLAG_IGNORE_COMMENTS | FLAG_IGNORE_PROCESSING_INSTRUCTIONS | FLAG_IGNORE_WHITESPACE | FLAG_PRETTY_PRINTING
   }
 
+  // Note: the order of the entries is relevant, because some checks are of
+  // the form `type > ASXMLKind.Element`.
   export enum ASXMLKind {
     Unknown = 0,
     Element = 1,
@@ -1811,18 +1813,77 @@ module Shumway.AVMX.AS {
       }
       return inScopeNS;
     }
+
+    // 13.4.4.18
     insertChildAfter(child1: any, child2: any): any {
       if (!this || this.axClass !== this.sec.AXXML) {
         this.sec.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
-      notImplemented("public.XML::insertChildAfter"); return;
+
+      // Step 1.
+      if (this._kind > ASXMLKind.Element) {
+        return;
+      }
+
+      // Step 2.
+      if (child1 == null) {
+        this.insert(0, child2);
+        return this;
+      }
+
+      // Step 3.
+      // The spec doesn't mention it, but Tamarin seems to unpack single-entry XMLLists here.
+      if (child1.axClass === this.sec.AXXMLList && child1._children.length === 1) {
+        child1 = child1._children[0];
+      }
+      if (child1.axClass === this.sec.AXXML) {
+        for (var i = 0; i < this._children.length; i++) {
+          var child = this._children[i];
+          if (child === child1) {
+            this.insert(i + 1, child2);
+            return this;
+          }
+        }
+      }
+
+      // Step 4 (implicit).
     }
+
+    // 13.4.4.19
     insertChildBefore(child1: any, child2: any): any {
       if (!this || this.axClass !== this.sec.AXXML) {
         this.sec.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
-      notImplemented("public.XML::insertChildBefore"); return;
+
+      // Step 1.
+      if (this._kind > ASXMLKind.Element) {
+        return;
+      }
+
+      // Step 2.
+      if (child1 == null) {
+        this.insert(this._children.length, child2);
+        return this;
+      }
+
+      // Step 3.
+      // The spec doesn't mention it, but Tamarin seems to unpack single-entry XMLLists here.
+      if (child1.axClass === this.sec.AXXMLList && child1._children.length === 1) {
+        child1 = child1._children[0];
+      }
+      if (child1.axClass === this.sec.AXXML) {
+        for (var i = 0; i < this._children.length; i++) {
+          var child = this._children[i];
+          if (child === child1) {
+            this.insert(i, child2);
+            return this;
+          }
+        }
+      }
+
+      // Step 4 (implicit).
     }
+
     // XML.[[Length]]
     length(): number {
       if (!this || this.axClass !== this.sec.AXXML) {
@@ -2588,10 +2649,7 @@ module Shumway.AVMX.AS {
 
     // 9.1.1.11 [[Insert]] (P, V)
     insert(p, v) {
-      if (this._kind === ASXMLKind.Text ||
-          this._kind === ASXMLKind.Comment ||
-          this._kind === ASXMLKind.ProcessingInstruction ||
-          this._kind === ASXMLKind.Attribute) {
+      if (this._kind > ASXMLKind.Element) {
         return;
       }
       var i = p >>> 0;
