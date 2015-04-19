@@ -3128,15 +3128,15 @@
       "test/avm2/acceptance/as3/Statements/switch/switch_001.abc",
       "test/avm2/acceptance/as3/Statements/switch/switch_002.abc",
       "test/avm2/acceptance/as3/Statements/switch/switch_003.abc",
-      "test/avm2/acceptance/as3/String/localeCompare_585791.abc",
-      "test/avm2/acceptance/as3/Workers/ByteArrayAPI.abc",
-      "test/avm2/acceptance/as3/Workers/ByteArrayWorkersLzma.abc",
-      "test/avm2/acceptance/as3/Workers/ConditionAndMutexAPI.abc",
-      "test/avm2/acceptance/as3/Workers/regress/bug774294.abc",
-      "test/avm2/acceptance/as3/Workers/regress/bug774302.abc",
-      "test/avm2/acceptance/as3/Workers/Worker.abc",
-      "test/avm2/acceptance/as3/Workers/WorkerDomain.abc",
-      "test/avm2/acceptance/as3/Workers/WorkerErrors.abc"
+      "test/avm2/acceptance/as3/String/localeCompare_585791.abc"
+//      "test/avm2/acceptance/as3/Workers/ByteArrayAPI.abc",
+//      "test/avm2/acceptance/as3/Workers/ByteArrayWorkersLzma.abc",
+//      "test/avm2/acceptance/as3/Workers/ConditionAndMutexAPI.abc",
+//      "test/avm2/acceptance/as3/Workers/regress/bug774294.abc",
+//      "test/avm2/acceptance/as3/Workers/regress/bug774302.abc",
+//      "test/avm2/acceptance/as3/Workers/Worker.abc",
+//      "test/avm2/acceptance/as3/Workers/WorkerDomain.abc",
+//      "test/avm2/acceptance/as3/Workers/WorkerErrors.abc"
     ]
   ],
 
