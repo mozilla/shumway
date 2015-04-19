@@ -3500,9 +3500,9 @@
       "test/avm2/acceptance/misc/superInit.abc",
       "test/avm2/acceptance/misc/unchecked.abc",
       // "test/avm2/acceptance/mmgc/memlimit.abc", // Too slow.
-      "test/avm2/acceptance/mmgc/memstats.abc",
+//      "test/avm2/acceptance/mmgc/memstats.abc",
 //      "test/avm2/acceptance/mmgc/outofmemory.abc",
-      "test/avm2/acceptance/mmgc/pauseForGCIfCollectionImminent.abc",
+//      "test/avm2/acceptance/mmgc/pauseForGCIfCollectionImminent.abc",
 
       // Disable tests that require avmplus.Domain.
 //      "test/avm2/acceptance/misc/invalid_opcodes.abc",
