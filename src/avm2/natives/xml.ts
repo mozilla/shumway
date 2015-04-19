@@ -1377,7 +1377,14 @@ module Shumway.AVMX.AS {
       this._value = x._value;
       this._attributes = x._attributes;
       this._inScopeNamespaces = x._inScopeNamespaces;
-      this._children = x._children;
+      var children = x._children;
+      this._children = children;
+      if (children) {
+        for (var i = 0; i < children.length; i++) {
+          var child = children[i];
+          child._parent = this;
+        }
+      }
     }
 
     valueOf() {
@@ -2649,14 +2656,21 @@ module Shumway.AVMX.AS {
 
     // 9.1.1.11 [[Insert]] (P, V)
     insert(p, v) {
+      // Step 1.
       if (this._kind > ASXMLKind.Element) {
         return;
       }
+
+      // Step 2.
       var i = p >>> 0;
+
+      // Step 3.
       if (String(p) !== String(i)) {
         throw "TypeError in XML.prototype.insert(): invalid property name " + p;
       }
-      if (this._kind === ASXMLKind.Element) {
+
+      // Step 4.
+      if (v && v.axClass === this.axClass) {
         var a = this;
         while (a) {
           if (a === v) {
@@ -2665,27 +2679,40 @@ module Shumway.AVMX.AS {
           a = a._parent;
         }
       }
-      var n: number;
-      if (this && this.axClass === this.sec.AXXMLList) {
+
+      // Step 5.
+      var n = 1;
+
+      // Step 6.
+      if (v && v.axClass === this.sec.AXXMLList) {
         n = this._children.length;
+        // Step 7.
         if (n === 0) {
           return;
         }
-      } else {
-        n = 1;
       }
+
+      // Step 8.
       for (var j = this._children.length - 1; j >= i; j--) {
         this._children[j + n] = this._children[j];
         assert(this._children[0]);
       }
-      if (this && this.axClass === this.sec.AXXMLList) {
+
+      // Step 9 (implicit).
+
+      // Step 10.
+      if (v && v.axClass === this.sec.AXXMLList) {
         n = v._children.length;
         for (var j = 0; j < n; j++) {
           v._children[j]._parent = this;
           this[i + j] = v[j];
         }
+        // Step 11.
       } else {
-        //x.replace(i, v);
+        //x.replace(i, v), inlined;
+        if (!(v && v.axClass === this.axClass)) {
+          v = this.sec.AXXML.Create(v);
+        }
         v._parent = this;
         if (!this._children) {
           this._children = [];
