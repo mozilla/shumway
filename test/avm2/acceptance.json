@@ -3096,7 +3096,7 @@
       "test/avm2/acceptance/as3/Array/regress_524122.abc",
       "test/avm2/acceptance/as3/Array/regress_636535.abc",
       "test/avm2/acceptance/as3/Array/regress_733384.abc",
-      "test/avm2/acceptance/as3/asc/import-with-float4-helper.abc",
+//      "test/avm2/acceptance/as3/asc/import-with-float4-helper.abc",
       "test/avm2/acceptance/as3/ByteArray/ByteArray.abc",
 //      "test/avm2/acceptance/as3/ByteArray/ByteArray_bug662851.abc",
 //      "test/avm2/acceptance/as3/ByteArray/ByteArray_bug763519.abc",
