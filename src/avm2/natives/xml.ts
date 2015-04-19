@@ -2660,7 +2660,7 @@ module Shumway.AVMX.AS {
         var a = this;
         while (a) {
           if (a === v) {
-            throw "Error in XML.prototype.insert()";
+            this.sec.throwError('TypeError', Errors.XMLIllegalCyclicalLoop);
           }
           a = a._parent;
         }

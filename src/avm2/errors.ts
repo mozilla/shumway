@@ -137,7 +137,7 @@ module Shumway.AVMX {
   //  NotConstructorError                  : {code: 1115, message: "%1 is not a constructor."},
   //  ApplyError                           : {code: 1116, message: "second argument to Function.prototype.apply must be an array."},
     XMLInvalidName                       : {code: 1117, message: "Invalid XML name: %1."},
-  //  XMLIllegalCyclicalLoop               : {code: 1118, message: "Illegal cyclical loop between nodes."},
+    XMLIllegalCyclicalLoop               : {code: 1118, message: "Illegal cyclical loop between nodes."},
   //  DeleteTypeError                      : {code: 1119, message: "Delete operator is not supported with operand of type %1."},
   //  DeleteSealedError                    : {code: 1120, message: "Cannot delete property %1 on %2."},
   //  DuplicateMethodBodyError             : {code: 1121, message: "Method %1 has a duplicate method body."},
