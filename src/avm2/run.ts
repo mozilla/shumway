@@ -752,6 +752,7 @@ module Shumway.AVMX {
 
   export interface AXXMLClass extends AXClass {
     Create(value?: any): AS.ASXML;
+    resetSettings: () => void;
     _flags: number;
     _prettyIndent: number;
     prettyPrinting: boolean;

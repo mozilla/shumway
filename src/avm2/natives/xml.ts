@@ -1283,6 +1283,10 @@ module Shumway.AVMX.AS {
       return xml;
     }
 
+    static resetSettings() {
+      this._flags = ASXML_FLAGS.ALL;
+    }
+
     axInitializer: (value?: any) => any;
 
 

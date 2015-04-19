@@ -524,8 +524,17 @@ module Shumway.Shell {
           }
           errors ++;
         }
+        resetSecurityDomain(sec);
       });
     });
+  }
+
+  function resetSecurityDomain(sec: AVMX.AXSecurityDomain) {
+    // Only reset XML settings if AXXML has been initialized.
+    if (sec.AXXML.resetSettings) {
+      sec.AXNamespace.defaultNamespace = new AVMX.Namespace(null, AVMX.NamespaceType.Public, '');
+      sec.AXXML.resetSettings();
+    }
   }
 
   function executeABCFiles(files: string []) {
