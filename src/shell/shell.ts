@@ -662,7 +662,9 @@ module Shumway.Shell {
       var SWF_TAG_CODE_DO_ABC_ = SwfTag.CODE_DO_ABC_DEFINE;
       try {
         var buffer = read(file, "binary");
-        if (!((buffer[0] === 'F'.charCodeAt(0) || buffer[0] === 'C'.charCodeAt(0)) &&
+        if (!((buffer[0] === 'Z'.charCodeAt(0) ||
+               buffer[0] === 'F'.charCodeAt(0) ||
+               buffer[0] === 'C'.charCodeAt(0)) &&
              buffer[1] === 'W'.charCodeAt(0) &&
              buffer[2] === 'S'.charCodeAt(0))) {
           writer.redLn("Cannot parse: " + file + " because it doesn't have a valid header. " + buffer[0] + " " + buffer[1] + " " + buffer[2]);
