@@ -2023,20 +2023,20 @@ module Shumway.AVMX.AS {
       // Step 5.
       return list;
     }
-    prependChild(value: any): ASXML {
 
-      notImplemented("public.XML::prependChild"); return;
+    // 13.4.4.29
+    prependChild(child: any): ASXML {
+      this.insert(0, child);
+      return this;
     }
+
     removeNamespace(ns: any): ASXML {
 
       notImplemented("public.XML::removeNamespace"); return;
     }
     // 9.1.1.12 [[Replace]] (P, V)
     replace(p: any, v: any): ASXML {
-      if (this._kind === ASXMLKind.Text ||
-          this._kind === ASXMLKind.Comment ||
-          this._kind === ASXMLKind.ProcessingInstruction ||
-          this._kind === ASXMLKind.Attribute) {
+      if (this._kind > ASXMLKind.Element) {
         return this;
       }
       if (v._kind === ASXMLKind.Element) {
