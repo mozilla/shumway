@@ -208,7 +208,7 @@ module Shumway.AVMX.AS {
   M("flash.text.StyleSheet", flash.text.StyleSheet);
   M("flash.text.TextFormat", flash.text.TextFormat);
   M("flash.text.TextRun", flash.text.TextRun);
-  M("flash.text.TextLineMetrics", null); // REDUX: null?
+  M("flash.text.TextLineMetrics", flash.text.TextLineMetrics);
 
   M("flash.media.Sound", flash.media.Sound);
   M("flash.media.SoundChannel", flash.media.SoundChannel);
@@ -222,9 +222,10 @@ module Shumway.AVMX.AS {
   M("flash.net.FileFilter", flash.net.FileFilter);
   M("flash.net.NetConnection", flash.net.NetConnection);
   M("flash.net.NetStream", flash.net.NetStream);
+  M("flash.net.NetStreamInfo", flash.net.NetStreamInfo);
   M("flash.net.Responder", flash.net.Responder);
   M("flash.net.URLRequest", flash.net.URLRequest);
-  M("flash.net.URLRequestHeader", null); // REDUX: null?
+  M("flash.net.URLRequestHeader", flash.net.URLRequestHeader);
   M("flash.net.URLStream", flash.net.URLStream);
   M("flash.net.URLLoader", flash.net.URLLoader);
   M("flash.net.SharedObject", flash.net.SharedObject);
