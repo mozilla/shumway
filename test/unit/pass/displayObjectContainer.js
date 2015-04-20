@@ -244,18 +244,18 @@
     container.addChild(square2);
 
     var pt = new Point(10, 20);
-    var objects = container.getObjectsUnderPoint(pt);
+    var objects = container.getObjectsUnderPoint(pt).value;
     eq(objects.length, 1);
 
     pt = new Point(35, 20);
-    objects = container.getObjectsUnderPoint(pt);
+    objects = container.getObjectsUnderPoint(pt).value;
     eq(objects.length, 2);
 
     eq(objects[0], square1);
     eq(objects[1], square2);
 
     container.swapChildrenAt(0, 1);
-    objects = container.getObjectsUnderPoint(pt);
+    objects = container.getObjectsUnderPoint(pt).value;
     eq(objects.length, 2);
 
     eq(objects[0], square2);
