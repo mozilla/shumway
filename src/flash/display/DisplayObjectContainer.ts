@@ -644,7 +644,7 @@ module Shumway.AVMX.AS.flash.display {
      * Note that, while the Flash documentation makes it sound like it doesn't, the result also
      * contains the receiver object if that matches the criteria above.
      */
-    getObjectsUnderPoint(globalPoint: flash.geom.Point): DisplayObject [] {
+    getObjectsUnderPoint(globalPoint: flash.geom.Point): ASArray {
       release || counter.count("DisplayObjectContainer::getObjectsUnderPoint");
 
       var globalX = globalPoint.x * 20 | 0;
@@ -652,7 +652,7 @@ module Shumway.AVMX.AS.flash.display {
       var objects = [];
       this._containsGlobalPoint(globalX, globalY, HitTestingType.ObjectsUnderPoint, objects);
       // getObjectsUnderPoint returns results in exactly the opposite order we collect them in.
-      return objects.reverse();
+      return this.sec.createArrayUnsafe(objects.reverse());
     }
 
     areInaccessibleObjectsUnderPoint(point: flash.geom.Point): boolean {
