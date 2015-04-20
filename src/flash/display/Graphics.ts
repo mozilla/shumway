@@ -475,7 +475,7 @@ module Shumway.AVMX.AS.flash.display {
       this._graphicsData.beginFill((color << 8) | alpha);
     }
 
-    beginGradientFill(type: string, colors: number[], alphas: number[], ratios: number[],
+    beginGradientFill(type: string, colors: ASArray, alphas: ASArray, ratios: ASArray,
                       matrix: flash.geom.Matrix = null, spreadMethod: string = "pad",
                       interpolationMethod: string = "rgb", focalPointRatio: number = 0): void
     {
@@ -543,7 +543,7 @@ module Shumway.AVMX.AS.flash.display {
                                    lineScaleMode, capsStyle, jointStyle, miterLimit);
     }
 
-    lineGradientStyle(type: string, colors: any [], alphas: any [], ratios: any [],
+    lineGradientStyle(type: string, colors: ASArray, alphas: ASArray, ratios: ASArray,
                       matrix: flash.geom.Matrix = null, spreadMethod: string = "pad",
                       interpolationMethod: string = "rgb", focalPointRatio: number = 0): void
     {
@@ -1256,7 +1256,8 @@ module Shumway.AVMX.AS.flash.display {
     {
       if (isNullOrUndefined(bitmap)) {
         this.sec.throwError('TypeError', Errors.NullPointerError, 'bitmap');
-      } else if (!(this.sec.flash.display.BitmapData.axIsType(bitmap))) {
+      }
+      if (!(this.sec.flash.display.BitmapData.axIsType(bitmap))) {
         this.sec.throwError('TypeError', Errors.CheckTypeFailedError, 'bitmap',
                                        'flash.display.BitmapData');
       }
@@ -1287,7 +1288,7 @@ module Shumway.AVMX.AS.flash.display {
      * case, it only does arguments checks so the right exceptions are thrown.
      */
     private _writeGradientStyle(pathCommand: PathCommand, type: string,
-                                colors: number[], alphas: number[], ratios: number[],
+                                colors_: ASArray, alphas_: ASArray, ratios_: ASArray,
                                 matrix: geom.Matrix, spreadMethod: string,
                                 interpolationMethod: string, focalPointRatio: number,
                                 skipWrite: boolean): void
@@ -1300,26 +1301,30 @@ module Shumway.AVMX.AS.flash.display {
         this.sec.throwError("ArgumentError", Errors.InvalidEnumError, "type");
       }
 
-      if (isNullOrUndefined(colors)) {
+      if (isNullOrUndefined(colors_)) {
         this.sec.throwError('TypeError', Errors.NullPointerError, 'colors');
       }
-      if (!(colors instanceof Array)) {
+      var arrayClass = this.sec.AXArray;
+      if (!arrayClass.axIsInstanceOf(colors_)) {
         this.sec.throwError('TypeError', Errors.CheckTypeFailedError, 'colors', 'Array');
       }
+      var colors: number[] = colors_.value;
 
-      if (!(alphas instanceof Array)) {
-        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, 'alphas', 'Array');
-      }
-      if (isNullOrUndefined(alphas)) {
+      if (isNullOrUndefined(alphas_)) {
         this.sec.throwError('TypeError', Errors.NullPointerError, 'alphas');
       }
-
-      if (!(ratios instanceof Array)) {
-        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, 'ratios', 'Array');
+      if (!arrayClass.axIsInstanceOf(alphas_)) {
+        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, 'alphas', 'Array');
       }
-      if (isNullOrUndefined(ratios)) {
+      var alphas: number[] = alphas_.value;
+
+      if (isNullOrUndefined(ratios_)) {
         this.sec.throwError('TypeError', Errors.NullPointerError, 'ratios');
       }
+      if (!arrayClass.axIsInstanceOf(ratios_)) {
+        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, 'ratios', 'Array');
+      }
+      var ratios: number[] = ratios_.value;
 
       var colorsRGBA: number[] = [];
       var coercedRatios: number[] = [];
@@ -1364,10 +1369,16 @@ module Shumway.AVMX.AS.flash.display {
       if (interpolation < 0) {
         interpolation = InterpolationMethod.toNumber(InterpolationMethod.RGB);
       }
+
+      // Matrix has to be transformed to ShapeMatrix because the scaling is totally different.
+      var scaledMatrix = {
+        a: matrix.a * 819.2, b: matrix.b * 819.2, c: matrix.c * 819.2,
+        d: matrix.d * 819.2, tx: matrix.tx, ty: matrix.ty
+      };
       // Focal point is scaled by 0xff, divided by 2, rounded and stored as a signed short.
       focalPointRatio = clamp(+focalPointRatio, -1, 1) / 2 * 0xff | 0;
       this._graphicsData.beginGradient(pathCommand, colorsRGBA, coercedRatios, gradientType,
-                                       matrix, spread, interpolation, focalPointRatio);
+                                       scaledMatrix, spread, interpolation, focalPointRatio);
     }
 
     private _extendBoundsByPoint(x: number, y: number): void {
