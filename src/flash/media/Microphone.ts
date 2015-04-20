@@ -20,28 +20,15 @@ module Shumway.AVMX.AS.flash.media {
   import axCoerceString = Shumway.AVMX.axCoerceString;
   export class Microphone extends flash.events.EventDispatcher {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
 
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
     constructor () {
       super();
     }
     
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    // static _names: any [];
-    // static _isSupported: boolean;
-    static get names(): any [] {
+    static get names(): ASArray {
       somewhatImplemented("public flash.media.Microphone::get names");
-      return [];
+      return this.sec.createArrayUnsafe([]);
       // return this._names;
     }
     static get isSupported(): boolean {

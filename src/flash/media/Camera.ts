@@ -19,30 +19,17 @@ module Shumway.AVMX.AS.flash.media {
   import axCoerceString = Shumway.AVMX.axCoerceString;
   export class Camera extends flash.events.EventDispatcher {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
+
     constructor () {
       super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    // static _names: any [];
-    // static _isSupported: boolean;
-    get names(): any [] {
+
+    static get names(): ASArray {
       notImplemented("public flash.media.Camera::get names"); return;
       // return this._names;
     }
-    get isSupported(): boolean {
+    static get isSupported(): boolean {
       notImplemented("public flash.media.Camera::get isSupported"); return;
       // return this._isSupported;
     }
