@@ -42,12 +42,12 @@ module Shumway.AVMX.AS.flash.net {
     close() {
       this.invoke(1);
     }
-    addHeader(operation:String, mustUnderstand:Boolean = false, param:Object = null):void {
-      this.invokeWithArgsArray(3, [axCoerceString(operation), !!mustUnderstand, param]);
+    addHeader(operation: string, mustUnderstand:Boolean = false, param:Object = null):void {
+      this._invoke(3, [axCoerceString(operation), !!mustUnderstand, param]);
     }
-    call(command:String, responder:Responder /* more args can be provided */):void {
+    call(command: string, responder:Responder /* more args can be provided */):void {
       arguments[0] = axCoerceString(command);
-      this.invokeWithArgsArray(2, <any>arguments);
+      this._invoke(2, <any>arguments);
     }
 
     // AS -> JS Bindings
@@ -219,10 +219,6 @@ module Shumway.AVMX.AS.flash.net {
     invoke(index: number /*uint*/): any {
       index = index >>> 0;
       return this._invoke(index, Array.prototype.slice.call(arguments, 1));
-    }
-    invokeWithArgsArray(index: number /*uint*/, p_arguments: any []): any {
-      index = index >>> 0;
-      return this._invoke.call(this, index, p_arguments);
     }
     private _invoke(index: number, args: any[]): any {
       var simulated = false;

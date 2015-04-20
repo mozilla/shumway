@@ -410,9 +410,9 @@ module Shumway.AVMX.AS.flash.net {
       index = index >>> 0;
       return this._invoke(index, Array.prototype.slice.call(arguments, 1));
     }
-    invokeWithArgsArray(index: number /*uint*/, p_arguments: any []): any {
+    invokeWithArgsArray(index: number /*uint*/, p_arguments: ASArray): any {
       index = index >>> 0; p_arguments = p_arguments;
-      return this._invoke.call(this, index, p_arguments);
+      return this._invoke.call(this, index, p_arguments.value);
     }
 
     get inBufferSeek(): boolean {
