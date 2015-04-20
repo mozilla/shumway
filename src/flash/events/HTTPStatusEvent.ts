@@ -19,22 +19,16 @@ module Shumway.AVMX.AS.flash.events {
 
     static classInitializer: any = null;
 
-    static classSymbols: string [] = null;
-    static instanceSymbols: string [] = null;
-
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 status: number /*int*/ = 0) {
       super(type, bubbles, cancelable);
       this._status = status | 0;
     }
 
-    // JS -> AS Bindings
     static HTTP_STATUS: string = "httpStatus";
     static HTTP_RESPONSE_STATUS: string = "httpResponseStatus";
 
     private _status: number;
-    private _responseURL: string;
-    private _responseHeaders: any[];
 
     _setStatus(value: number): void {
       this._status = value;
@@ -42,30 +36,15 @@ module Shumway.AVMX.AS.flash.events {
     get status(): number {
       return this._status;
     }
-    get responseURL(): string {
-      return this._responseURL;
-    }
-    set responseURL(value: string) {
-      this._responseURL = value;
-    }
-    get responseHeaders(): any[] {
-      return this._responseHeaders;
-    }
-    set responseHeaders(value: any[]) {
-      this._responseHeaders = value;
-    }
 
     clone(): Event {
-      var event = new this.sec.flash.events.HTTPStatusEvent(this.type, this.bubbles,
-                                                                       this.cancelable, this.status);
-      event.responseURL = this.responseURL;
-      event.responseHeaders = this.responseHeaders;
-      return event;
+      return new this.sec.flash.events.HTTPStatusEvent(this.type, this.bubbles, this.cancelable,
+                                                       this.status);
     }
 
     toString(): string {
       return this.formatToString('HTTPStatusEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
-                                 'status', 'responseURL', 'responseHeaders');
+                                 'status');
     }
   }
 }
