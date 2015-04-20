@@ -23,7 +23,7 @@ module Shumway.AVMX.AS.flash.filters {
     static classInitializer: any = null;
 
     public static FromUntyped(obj: {matrix: number[]}) {
-      var filter = Object.create(this.sec.flash.filters.ColorMatrixFilter.tPrototype);
+      var filter = Object.create(this.sec.flash.filters.ColorMatrixFilter.axClass.tPrototype);
       filter._matrix = obj.matrix;
       return filter;
     }
