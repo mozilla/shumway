@@ -161,8 +161,6 @@ module Shumway.AVM1 {
     pendingScripts;
     actions: Lib.AVM1NativeActions;
 
-    private eventObservers: MapObject<IAVM1EventPropertyObserver[]>;
-
     constructor(loaderInfo: Shumway.AVMX.AS.flash.display.LoaderInfo) {
       var swfVersion = loaderInfo.swfVersion;
       super(swfVersion);
@@ -182,7 +180,6 @@ module Shumway.AVM1 {
       this.errorsIgnored = 0;
       this.deferScriptExecution = true;
       this.pendingScripts = [];
-      this.eventObservers = Object.create(null);
     }
     _createExecutionContext(): ExecutionContext {
       // We probably entering this function from some native function,
@@ -281,33 +278,6 @@ module Shumway.AVM1 {
         // Note: this doesn't use `finally` because that's a no-go for performance.
         throw caughtError;
       }
-    }
-    public registerEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver) {
-      // TODO case insensitive SWF5
-      var observers = this.eventObservers[propertyName];
-      if (!observers) {
-        observers = [];
-        this.eventObservers[propertyName] = observers;
-      }
-      observers.push(observer);
-    }
-    public unregisterEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver) {
-      var observers = this.eventObservers[propertyName];
-      if (!observers) {
-        return;
-      }
-      var j = observers.indexOf(observer);
-      if (j < 0) {
-        return;
-      }
-      observers.splice(j, 1);
-    }
-    broadcastEventPropertyChange(propertyName) {
-      var observers = this.eventObservers[propertyName];
-      if (!observers) {
-        return;
-      }
-      observers.forEach((observer: IAVM1EventPropertyObserver) => observer.onEventPropertyModified(propertyName));
     }
   }
 

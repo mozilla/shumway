@@ -38,6 +38,10 @@ module Shumway.AVM1.Lib {
     public onUnbind(target: IAVM1SymbolBase): void {}
   }
 
+  function normalizeEventName(context: AVM1Context, eventName: string): string {
+    return context.isPropertyCaseSensitive ? eventName : eventName.toLowerCase();
+  }
+
   // TODO replace to AVM1NativeSymbolObject
   export class AVM1SymbolBase<T extends flash.display.DisplayObject> extends AVM1Object implements IAVM1SymbolBase, IAVM1EventPropertyObserver {
     public get isAVM1Instance(): boolean {
@@ -67,10 +71,11 @@ module Shumway.AVM1.Lib {
       this._eventsMap = eventsMap;
       this._eventsListeners = Object.create(null);
       var observer = this;
-      var context = (<any>this).context;
+      var context: AVM1Context = (<any>this).context;
       events.forEach(function (event: AVM1EventHandler) {
-        eventsMap[event.propertyName] = event;
-        context.registerEventPropertyObserver(event.propertyName, observer);
+        var propertyName = normalizeEventName(context, event.propertyName);
+        eventsMap[propertyName] = event;
+        context.registerEventPropertyObserver(propertyName, observer);
         observer._updateEvent(event);
       });
 
@@ -110,28 +115,31 @@ module Shumway.AVM1.Lib {
     }
 
     private _addEventListener(event: AVM1EventHandler) {
-      var listener: any = this._eventsListeners[event.propertyName];
+      var propertyName = normalizeEventName(this.context, event.propertyName);
+      var listener: any = this._eventsListeners[propertyName];
       if (!listener) {
         listener = function avm1EventHandler() {
           var args = event.argsConverter ? event.argsConverter.apply(null, arguments) : null;
-          avm1BroadcastEvent(this.context, this, event.propertyName, args);
+          avm1BroadcastEvent(this.context, this, propertyName, args);
         }.bind(this);
         this.as3Object.addEventListener(event.eventName, listener);
         event.onBind(this);
-        this._eventsListeners[event.propertyName] = listener;
+        this._eventsListeners[propertyName] = listener;
       }
     }
 
     private _removeEventListener(event: AVM1EventHandler) {
-      var listener: any = this._eventsListeners[event.propertyName];
+      var propertyName = normalizeEventName(this.context, event.propertyName);
+      var listener: any = this._eventsListeners[propertyName];
       if (listener) {
         event.onUnbind(this);
         this.as3Object.removeEventListener(event.eventName, listener);
-        this._eventsListeners[event.propertyName] = null;
+        this._eventsListeners[propertyName] = null;
       }
     }
 
-    public onEventPropertyModified(propertyName) {
+    public onEventPropertyModified(propertyName: string) {
+      var propertyName = normalizeEventName(this.context, propertyName);
       var event = this._eventsMap[propertyName];
       this._updateEvent(event);
     }

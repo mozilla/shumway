@@ -67,6 +67,7 @@ module Shumway.AVM1 {
     public actionsDataFactory: ActionsDataFactory;
     public swfVersion: number;
 
+    private eventObservers: MapObject<IAVM1EventPropertyObserver[]>;
     private assets: MapObject<number>;
     private assetsSymbols: Array<any>;
     private assetsClasses: Array<any>;
@@ -81,6 +82,7 @@ module Shumway.AVM1 {
       this.builtins = <any>{};
       Shumway.AVM1.Natives.installBuiltins(this);
 
+      this.eventObservers = Object.create(null);
       this.assets = {};
       this.assetsSymbols = [];
       this.assetsClasses = [];
@@ -96,10 +98,45 @@ module Shumway.AVM1 {
     public addToPendingScripts(fn, defaultTarget) {}
     public checkTimeout() {}
 
-    public registerEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver) {}
-    public unregisterEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver) {}
-
     public executeActions(actionsData: AVM1ActionsData, scopeObj): void {}
+
+    private _getEventPropertyObservers(propertyName: string, create: boolean): IAVM1EventPropertyObserver[] {
+      if (!this.isPropertyCaseSensitive) {
+        propertyName = propertyName.toLowerCase();
+      }
+      var observers = this.eventObservers[propertyName];
+      if (observers) {
+        return observers;
+      }
+      if (create) {
+        observers = [];
+        this.eventObservers[propertyName] = observers;
+        return observers;
+      }
+      return null;
+    }
+    public registerEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver): void {
+      var observers = this._getEventPropertyObservers(propertyName, true);
+      observers.push(observer);
+    }
+    public unregisterEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver): void {
+      var observers = this._getEventPropertyObservers(propertyName, false);
+      if (!observers) {
+        return;
+      }
+      var j = observers.indexOf(observer);
+      if (j < 0) {
+        return;
+      }
+      observers.splice(j, 1);
+    }
+    public broadcastEventPropertyChange(propertyName: string): void {
+      var observers = this._getEventPropertyObservers(propertyName, false);
+      if (!observers) {
+        return;
+      }
+      observers.forEach((observer: IAVM1EventPropertyObserver) => observer.onEventPropertyModified(propertyName));
+    }
 
     public addAsset(className: string, symbolId: number, symbolProps): void {
       release || Debug.assert(typeof className === 'string' && !isNaN(symbolId));
