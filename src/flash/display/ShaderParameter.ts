@@ -40,11 +40,11 @@ module Shumway.AVMX.AS.flash.display {
     // _value: any [];
     // _type: string;
     // _index: number /*int*/;
-    get value(): any [] {
+    get value(): ASArray {
       notImplemented("public flash.display.ShaderParameter::get value"); return;
       // return this._value;
     }
-    set value(v: any []) {
+    set value(v: ASArray) {
       v = v;
       notImplemented("public flash.display.ShaderParameter::set value"); return;
       // this._value = v;
