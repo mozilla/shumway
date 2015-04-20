@@ -118,7 +118,7 @@ module Shumway.Unit {
     if (a.a !== b.a || a.b !== b.b ||
         a.c !== b.c || a.d !== b.d ||
         a.tx !== b.tx || a.ty !== b.ty) {
-      return fail("FAIL" + test + " matices differ." + failedLocation());
+      return fail("FAIL" + test + " matrices differ." + failedLocation());
     }
     writer.debugLn("PASS" + test);
   }

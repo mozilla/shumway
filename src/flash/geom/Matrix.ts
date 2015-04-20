@@ -77,14 +77,14 @@ module Shumway.AVMX.AS.flash.geom {
 
     public static FromUntyped(object: any): Matrix {
       return new this.sec.flash.geom.Matrix(object.a, object.b, object.c, object.d,
-                                                       object.tx, object.ty);
+                                            object.tx, object.ty);
     }
 
     // Keep in sync with writeExternal below!
     public static FromDataBuffer(input: DataBuffer) {
       return new this.sec.flash.geom.Matrix(input.readFloat(), input.readFloat(),
-                                                       input.readFloat(), input.readFloat(),
-                                                       input.readFloat(), input.readFloat());
+                                            input.readFloat(), input.readFloat(),
+                                            input.readFloat(), input.readFloat());
     }
 
     public static FROZEN_IDENTITY_MATRIX: Matrix;
@@ -340,7 +340,7 @@ module Shumway.AVMX.AS.flash.geom {
     public transformPoint(point: Point): Point {
       var m = this._data;
       return new this.sec.flash.geom.Point(m[0] * point.x + m[2] * point.y + m[4],
-                                                      m[1] * point.x + m[3] * point.y + m[5]);
+                                           m[1] * point.x + m[3] * point.y + m[5]);
     }
 
     public transformPointInPlace(point): Point {
@@ -471,6 +471,15 @@ module Shumway.AVMX.AS.flash.geom {
       var m = this._data;
       m[4] /= 20;
       m[5] /= 20;
+      return this;
+    }
+
+    public toSerializedScaleInPlace(): Matrix {
+      var m = this._data;
+      m[0] *= 819.2;
+      m[1] *= 819.2;
+      m[2] *= 819.2;
+      m[3] *= 819.2;
       return this;
     }
 
