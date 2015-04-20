@@ -321,7 +321,7 @@ module Shumway.AVMX.AS.flash.net {
       notImplemented("public flash.net.NetStream::get farNonce"); return;
       // return this._farNonce;
     }
-    get peerStreams(): any [] {
+    get peerStreams(): ASArray {
       notImplemented("public flash.net.NetStream::get peerStreams"); return;
       // return this._peerStreams;
     }

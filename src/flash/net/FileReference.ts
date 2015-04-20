@@ -19,26 +19,15 @@ module Shumway.AVMX.AS.flash.net {
   import axCoerceString = Shumway.AVMX.axCoerceString;
   export class FileReference extends flash.events.EventDispatcher {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
 
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["load", "save"];
-    
     constructor () {
       super();
     }
     
-    // JS -> AS Bindings
-    
     load: () => void;
     save: (data: any, defaultFileName: string = null) => void;
-    
-    // AS -> JS Bindings
-    
+
     // _creationDate: ASDate;
     // _creator: string;
     // _modificationDate: ASDate;
@@ -85,7 +74,7 @@ module Shumway.AVMX.AS.flash.net {
       notImplemented("public flash.net.FileReference::get data"); return;
       // return this._data;
     }
-    browse(typeFilter: any [] = null): boolean {
+    browse(typeFilter: ASArray = null): boolean {
       typeFilter = typeFilter;
       notImplemented("public flash.net.FileReference::browse"); return;
     }

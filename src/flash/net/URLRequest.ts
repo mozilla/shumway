@@ -83,14 +83,14 @@ module Shumway.AVMX.AS.flash.net {
       value = axCoerceString(value);
       this._contentType = value;
     }
-    get requestHeaders(): any [] {
-      return this._requestHeaders;
+    get requestHeaders(): ASArray {
+      return this.sec.createArrayUnsafe(this._requestHeaders);
     }
-    set requestHeaders(value: any []) {
-      if (!Array.isArray(value)) {
+    set requestHeaders(value: ASArray) {
+      if (!this.sec.AXArray.axIsType(value)) {
         this.sec.throwError('ArgumentError', Errors.InvalidArgumentError, "value");
       }
-      this._requestHeaders = value;
+      this._requestHeaders = value.value;
     }
     get digest(): string {
       return this._digest;

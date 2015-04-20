@@ -19,30 +19,18 @@ module Shumway.AVMX.AS.flash.net {
   import axCoerceString = Shumway.AVMX.axCoerceString;
   export class FileReferenceList extends flash.events.EventDispatcher {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
 
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
     constructor () {
       super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
+
     // _fileList: any [];
-    get fileList(): any [] {
+    get fileList(): ASArray {
       notImplemented("public flash.net.FileReferenceList::get fileList"); return;
       // return this._fileList;
     }
-    browse(typeFilter: any [] = null): boolean {
+    browse(typeFilter: ASArray = null): boolean {
       typeFilter = typeFilter;
       notImplemented("public flash.net.FileReferenceList::browse"); return;
     }
