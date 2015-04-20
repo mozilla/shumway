@@ -53,7 +53,7 @@ module Shumway.AVMX.AS.flash.text {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0; includeLineEndings = !!includeLineEndings;
       notImplemented("public flash.text.TextSnapshot::getText"); return;
     }
-    getTextRunInfo(beginIndex: number /*int*/, endIndex: number /*int*/): any [] {
+    getTextRunInfo(beginIndex: number /*int*/, endIndex: number /*int*/): ASArray {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0;
       notImplemented("public flash.text.TextSnapshot::getTextRunInfo"); return;
     }

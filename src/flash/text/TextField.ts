@@ -766,7 +766,7 @@ module Shumway.AVMX.AS.flash.text {
       return format;
     }
 
-    getTextRuns(beginIndex: number /*int*/ = 0, endIndex: number /*int*/ = 2147483647): any [] {
+    getTextRuns(beginIndex: number /*int*/ = 0, endIndex: number /*int*/ = 2147483647): ASArray {
       var textRuns = this._textContent.textRuns;
       var result = [];
       for (var i = 0; i < textRuns.length; i++) {
@@ -775,7 +775,7 @@ module Shumway.AVMX.AS.flash.text {
           result.push(textRun.clone());
         }
       }
-      return result;
+      return this.sec.createArrayUnsafe(result);
     }
 
     getRawText(): string {

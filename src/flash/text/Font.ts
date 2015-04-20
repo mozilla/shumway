@@ -900,10 +900,10 @@ module Shumway.AVMX.AS.flash.text {
     advances: number[];
 
     // AS -> JS Bindings
-    static enumerateFonts(enumerateDeviceFonts: boolean = false): any [] {
+    static enumerateFonts(enumerateDeviceFonts: boolean = false): ASArray {
       //TODO: support iterating device fonts, perhaps?
       somewhatImplemented("public flash.text.Font::static enumerateFonts");
-      return Font._fonts.slice();
+      return this.sec.createArrayUnsafe(this._fonts.slice());
     }
 
     static registerFont(font: ASClass): void {

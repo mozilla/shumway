@@ -205,16 +205,15 @@ module Shumway.AVMX.AS.flash.text {
       this._size = TextFormat.coerceNumber(value);
     }
 
-    get tabStops(): any [] {
-      return this._tabStops;
+    get tabStops(): ASArray {
+      return this.sec.createArrayUnsafe(this._tabStops);
     }
 
-    set tabStops(value: any []) {
-      if (!(value instanceof Array)) {
-        this.sec.throwError("ArgumentError", Errors.CheckTypeFailedError, value,
-                                       'Array');
+    set tabStops(value: ASArray) {
+      if (!this.sec.AXArray.axIsType(value)) {
+        this.sec.throwError("ArgumentError", Errors.CheckTypeFailedError, value, 'Array');
       }
-      this._tabStops = value;
+      this._tabStops = value.value;
     }
 
     get target(): string {

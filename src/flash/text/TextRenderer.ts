@@ -62,7 +62,7 @@ module Shumway.AVMX.AS.flash.text {
       notImplemented("public flash.text.TextRenderer::set displayMode"); return;
       // this._displayMode = value;
     }
-    static setAdvancedAntiAliasingTable(fontName: string, fontStyle: string, colorType: string, advancedAntiAliasingTable: any []): void {
+    static setAdvancedAntiAliasingTable(fontName: string, fontStyle: string, colorType: string, advancedAntiAliasingTable: ASArray): void {
       fontName = axCoerceString(fontName); fontStyle = axCoerceString(fontStyle); colorType = axCoerceString(colorType); advancedAntiAliasingTable = advancedAntiAliasingTable;
       notImplemented("public flash.text.TextRenderer::static setAdvancedAntiAliasingTable"); return;
     }

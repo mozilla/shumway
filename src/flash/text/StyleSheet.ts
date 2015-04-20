@@ -49,7 +49,7 @@ module Shumway.AVMX.AS.flash.text {
 
     private _rules: { [key: string]: Style; };
 
-    get styleNames(): string[] {
+    get styleNames(): ASArray {
       var styles = this._rules;
       var names = [];
       for (var name in styles) {
@@ -57,7 +57,7 @@ module Shumway.AVMX.AS.flash.text {
           names.push(name);
         }
       }
-      return names;
+      return this.sec.createArrayUnsafe(names);
     }
 
     getStyle(styleName: string): Style {
