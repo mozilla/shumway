@@ -25,12 +25,6 @@ module Shumway.AVMX.AS.flash.filters {
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null;
-
     private static EPS: number = 0.000000001;
 
     // Step widths for blur based filters, for quality values 1..15:

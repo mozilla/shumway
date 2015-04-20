@@ -20,14 +20,7 @@ module Shumway.AVMX.AS.flash.filters {
 
     static axClass: typeof ConvolutionFilter;
 
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null;
 
     public static FromUntyped(obj: any) {
       return new this.sec.flash.filters.ConvolutionFilter(
@@ -44,7 +37,10 @@ module Shumway.AVMX.AS.flash.filters {
       );
     }
 
-    constructor (matrixX: number = 0, matrixY: number = 0, matrix: any [] = null, divisor: number = 1, bias: number = 0, preserveAlpha: boolean = true, clamp: boolean = true, color: number /*uint*/ = 0, alpha: number = 0) {
+    constructor(matrixX: number = 0, matrixY: number = 0, matrix: ASArray = null,
+                divisor: number = 1, bias: number = 0, preserveAlpha: boolean = true,
+                clamp: boolean = true, color: number /*uint*/ = 0, alpha: number = 0)
+    {
       super();
       this.matrixX = matrixX;
       this.matrixY = matrixY;
@@ -71,10 +67,6 @@ module Shumway.AVMX.AS.flash.filters {
       return a;
     }
 
-    // JS -> AS Bindings
-
-    // AS -> JS Bindings
-
     private _matrix: number [];
     private _matrixX: number;
     private _matrixY: number;
@@ -85,22 +77,22 @@ module Shumway.AVMX.AS.flash.filters {
     private _color: number /*uint*/;
     private _alpha: number;
 
-    get matrix(): any [] {
-      return this._matrix.slice(0, this._matrixX * this._matrixY);
+    get matrix(): ASArray {
+      return this.sec.createArrayUnsafe(this._matrix.slice(0, this._matrixX * this._matrixY));
     }
-    set matrix(value: any []) {
-      if (!isNullOrUndefined(value)) {
-        var actualLen = this._matrixX * this._matrixY;
-        var minLen = Math.min(value.length, actualLen);
-        var matrix = Array(minLen);
-        for (var i = 0; i < minLen; i++) {
-          matrix[i] = toNumber(value[i]);
-        }
-        this._expandArray(matrix, actualLen);
-        this._matrix = matrix;
-      } else {
+    set matrix(value_: ASArray) {
+      if (isNullOrUndefined(value_)) {
         this.sec.throwError("TypeError", Errors.NullPointerError, "matrix");
       }
+      var value: number[] = value_.value;
+      var actualLen = this._matrixX * this._matrixY;
+      var minLen = Math.min(value.length, actualLen);
+      var matrix = Array(minLen);
+      for (var i = 0; i < minLen; i++) {
+        matrix[i] = toNumber(value[i]);
+      }
+      this._expandArray(matrix, actualLen);
+      this._matrix = matrix;
     }
 
     get matrixX(): number {

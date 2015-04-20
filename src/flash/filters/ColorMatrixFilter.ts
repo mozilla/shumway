@@ -20,20 +20,15 @@ module Shumway.AVMX.AS.flash.filters {
 
     static axClass: typeof ColorMatrixFilter;
 
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
 
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null;
-
-    public static FromUntyped(obj: any) {
-      return new this.sec.flash.filters.ColorMatrixFilter(obj.matrix);
+    public static FromUntyped(obj: {matrix: number[]}) {
+      var filter = Object.create(this.sec.flash.filters.ColorMatrixFilter.tPrototype);
+      filter._matrix = obj.matrix;
+      return filter;
     }
 
-    constructor (matrix: any [] = null) {
+    constructor (matrix: ASArray = null) {
       super();
       if (matrix) {
         this.matrix = matrix;
@@ -56,30 +51,26 @@ module Shumway.AVMX.AS.flash.filters {
       }
     }
 
-    // JS -> AS Bindings
+    private _matrix: number[];
 
-    // AS -> JS Bindings
-
-    private _matrix: number [];
-
-    get matrix(): any [] {
-      return this._matrix.concat();
+    get matrix(): ASArray {
+      return this.sec.createArrayUnsafe(this._matrix.concat());
     }
-    set matrix(value: any []) {
-      if (!isNullOrUndefined(value)) {
-        var matrix = [
-          0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0
-        ];
-        for (var i = 0, n = Math.min(value.length, 20); i < n; i++) {
-          matrix[i] = toNumber(value[i]);
-        }
-        this._matrix = matrix;
-      } else {
+    set matrix(value_: ASArray) {
+      if (isNullOrUndefined(value_)) {
         this.sec.throwError("TypeError", Errors.NullPointerError, "matrix");
       }
+      var matrix = [
+        0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0
+      ];
+      var value = value_.value;
+      for (var i = 0, n = Math.min(value.length, 20); i < n; i++) {
+        matrix[i] = toNumber(value[i]);
+      }
+      this._matrix = matrix;
     }
 
     clone(): BitmapFilter {
