@@ -96,7 +96,7 @@ module Shumway.AVMX.AS.flash.system {
       panel = axCoerceString(panel);
       notImplemented("public flash.system.Security::static showSettings"); return;
     }
-    static duplicateSandboxBridgeInputArguments(toplevel: ASObject, args: any []): any [] {
+    static duplicateSandboxBridgeInputArguments(toplevel: ASObject, args: ASArray): ASArray {
       toplevel = toplevel; args = args;
       notImplemented("public flash.system.Security::static duplicateSandboxBridgeInputArguments"); return;
     }
