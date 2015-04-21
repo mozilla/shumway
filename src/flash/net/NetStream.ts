@@ -488,45 +488,46 @@ module Shumway.AVMX.AS.flash.net {
           flash.media.SoundMixer._updateSoundSource(this);
           break;
         case VideoPlaybackEvent.PlayStart:
-          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
+          this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS,
             false, false, this.sec.createObjectFromJS({code: "NetStream.Play.Start", level: "status"})));
           break;
         case VideoPlaybackEvent.PlayStop:
-          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
+          this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS,
             false, false, this.sec.createObjectFromJS({code: "NetStream.Buffer.Flush", level: "status"})));
-          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
+          this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS,
             false, false, this.sec.createObjectFromJS({code: "NetStream.Play.Stop", level: "status"})));
 
           flash.media.SoundMixer._unregisterSoundSource(this);
           break;
         case VideoPlaybackEvent.BufferFull:
-          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
+          debugger;
+          this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS,
             false, false, this.sec.createObjectFromJS({code: "NetStream.Buffer.Full", level: "status"})));
           break;
         case VideoPlaybackEvent.BufferEmpty:
-          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
+          this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS,
             false, false, this.sec.createObjectFromJS({code: "NetStream.Buffer.Empty", level: "status"})));
           break;
         case VideoPlaybackEvent.Error:
           var code = data.code === 4 ? "NetStream.Play.NoSupportedTrackFound" :
               data.code === 3 ? "NetStream.Play.FileStructureInvalid" : "NetStream.Play.StreamNotFound";
-          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
+          this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS,
             false, false, this.sec.createObjectFromJS({code: code, level: "error"})));
           break;
         case VideoPlaybackEvent.Pause:
-          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
+          this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS,
             false, false, this.sec.createObjectFromJS({code: "NetStream.Pause.Notify", level: "status"})));
           break;
         case VideoPlaybackEvent.Unpause:
-          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
+          this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS,
             false, false, this.sec.createObjectFromJS({code: "NetStream.Unpause.Notify", level: "status"})));
           break;
         case VideoPlaybackEvent.Seeking:
-          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
+          this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS,
             false, false, this.sec.createObjectFromJS({code: "NetStream.Seek.Notify", level: "status"})));
           break;
         case VideoPlaybackEvent.Seeked:
-          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
+          this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS,
             false, false, this.sec.createObjectFromJS({code: "NetStream.Seek.Complete", level: "status"})));
           break;
         case VideoPlaybackEvent.Metadata:
