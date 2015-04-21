@@ -197,7 +197,7 @@ module Shumway.AVMX.AS {
     export function getDefinitionByName(sec: AXSecurityDomain, name: string): AXClass {
       name = axCoerceString(name).replace("::", ".");
       var mn = Multiname.FromFQNString(name, NamespaceType.Public);
-      return sec.application.getClass(mn);
+      return getCurrentABC().env.app.getClass(mn);
     }
 
     export function describeType(sec: AXSecurityDomain, value: any, flags: number) {
@@ -2276,7 +2276,7 @@ module Shumway.AVMX.AS {
 
   function FlashUtilScript_getDefinitionByName(sec: AXSecurityDomain, name: string): ASClass {
     var simpleName = String(name).replace("::", ".");
-    return <any>sec.application.getClass(Multiname.FromSimpleName(simpleName));
+    return <any>getCurrentABC().env.app.getClass(Multiname.FromSimpleName(simpleName));
   }
 
   export function FlashUtilScript_getTimer(sec: AXSecurityDomain) {

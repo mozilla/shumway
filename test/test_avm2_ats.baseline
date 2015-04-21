@@ -904,14 +904,19 @@ Frame: 11 HASHCODE: test/ats/swfs/01ca980ea6587a57123390eff316532fc9806b424eae3e
 HASHCODE: test/ats/swfs/01ca980ea6587a57123390eff316532fc9806b424eae3e716a3de81bb51992c09646dc0668a29878cb945826fb9b1e0b0a80d538e2e68b2fa84188c912db544a.swf: 0x77a01a8d
 [91msomewhatImplemented: public flash.media.SoundTransform::_updateTransform[0m
 Frame: 1 HASHCODE: test/ats/swfs/01da8aa0a11f67be4364bae32c074da8272a0d558b99bb18a52c5896555f8300deec559d2bdd103812fb638ce3fd71c930db993fd7dd1ba37ad96aabb8d37372.swf: 0xc352eae7
-[91mcaught error under broadcast event enterFrame: , VideoError: 1008: VideoPlayer.iNCManagerClass has not been set or its value is invalid: fl.video.NCManager[0m
+[91msomewhatImplemented: public flash.net.NetConnection::connect[0m
+[91msomewhatImplemented: public flash.net.NetStream::set client[0m
+[91msomewhatImplemented: NetStream._invoke (4)[0m
 Frame: 2 HASHCODE: test/ats/swfs/01da8aa0a11f67be4364bae32c074da8272a0d558b99bb18a52c5896555f8300deec559d2bdd103812fb638ce3fd71c930db993fd7dd1ba37ad96aabb8d37372.swf: 0x6a5d5ce0
+[91msomewhatImplemented: NetStream._invoke (300)[0m
 Frame: 3 HASHCODE: test/ats/swfs/01da8aa0a11f67be4364bae32c074da8272a0d558b99bb18a52c5896555f8300deec559d2bdd103812fb638ce3fd71c930db993fd7dd1ba37ad96aabb8d37372.swf: 0xa4a12a07
 Frame: 4 HASHCODE: test/ats/swfs/01da8aa0a11f67be4364bae32c074da8272a0d558b99bb18a52c5896555f8300deec559d2bdd103812fb638ce3fd71c930db993fd7dd1ba37ad96aabb8d37372.swf: 0xb2d701c0
 Frame: 5 HASHCODE: test/ats/swfs/01da8aa0a11f67be4364bae32c074da8272a0d558b99bb18a52c5896555f8300deec559d2bdd103812fb638ce3fd71c930db993fd7dd1ba37ad96aabb8d37372.swf: 0x6b5c2127
 Frame: 6 HASHCODE: test/ats/swfs/01da8aa0a11f67be4364bae32c074da8272a0d558b99bb18a52c5896555f8300deec559d2bdd103812fb638ce3fd71c930db993fd7dd1ba37ad96aabb8d37372.swf: 0xc37aeea0
 Frame: 7 HASHCODE: test/ats/swfs/01da8aa0a11f67be4364bae32c074da8272a0d558b99bb18a52c5896555f8300deec559d2bdd103812fb638ce3fd71c930db993fd7dd1ba37ad96aabb8d37372.swf: 0x6f35d047
 Frame: 8 HASHCODE: test/ats/swfs/01da8aa0a11f67be4364bae32c074da8272a0d558b99bb18a52c5896555f8300deec559d2bdd103812fb638ce3fd71c930db993fd7dd1ba37ad96aabb8d37372.swf: 0x3ad72380
+[91msomewhatImplemented: NetStream._invoke (305)[0m
+[91msomewhatImplemented: NetStream._invoke (306)[0m
 Frame: 9 HASHCODE: test/ats/swfs/01da8aa0a11f67be4364bae32c074da8272a0d558b99bb18a52c5896555f8300deec559d2bdd103812fb638ce3fd71c930db993fd7dd1ba37ad96aabb8d37372.swf: 0xe3603767
 Frame: 10 HASHCODE: test/ats/swfs/01da8aa0a11f67be4364bae32c074da8272a0d558b99bb18a52c5896555f8300deec559d2bdd103812fb638ce3fd71c930db993fd7dd1ba37ad96aabb8d37372.swf: 0x4bf9a060
 Frame: 11 HASHCODE: test/ats/swfs/01da8aa0a11f67be4364bae32c074da8272a0d558b99bb18a52c5896555f8300deec559d2bdd103812fb638ce3fd71c930db993fd7dd1ba37ad96aabb8d37372.swf: 0xf68d5687
@@ -1065,7 +1070,10 @@ Frame: 11 HASHCODE: test/ats/swfs/028994b40d12fb96de40256a39d7c5f7ed4bab10a3dbfb
 HASHCODE: test/ats/swfs/028994b40d12fb96de40256a39d7c5f7ed4bab10a3dbfb92163bffe5a85ef3d46a131c5f0e8a33dc1290bf99dbe236f5c351ce4684245b841da1256a2b1f28ae.swf: 0x9128f1ee
 [91msomewhatImplemented: public flash.media.SoundTransform::_updateTransform[0m
 Frame: 1 HASHCODE: test/ats/swfs/028b6c3ae47d7ca2bf150632dd491bb986401e2081fdbda1e29e77d5c1015e2f2cd0e8ca896684748aa9daff0c92d553516be50d05305e33c3d8ebd6a3b0804b.swf: 0xceb36253
-[91mcaught error under broadcast event enterFrame: , VideoError: 1008: VideoPlayer.iNCManagerClass has not been set or its value is invalid: fl.video.NCManager[0m
+[91msomewhatImplemented: public flash.net.NetConnection::connect[0m
+[91msomewhatImplemented: public flash.net.NetStream::set client[0m
+[91msomewhatImplemented: NetStream._invoke (4)[0m
+[91msomewhatImplemented: public flash.net.NetStream::play[0m
 Frame: 2 HASHCODE: test/ats/swfs/028b6c3ae47d7ca2bf150632dd491bb986401e2081fdbda1e29e77d5c1015e2f2cd0e8ca896684748aa9daff0c92d553516be50d05305e33c3d8ebd6a3b0804b.swf: 0xd66c4a60
 Frame: 3 HASHCODE: test/ats/swfs/028b6c3ae47d7ca2bf150632dd491bb986401e2081fdbda1e29e77d5c1015e2f2cd0e8ca896684748aa9daff0c92d553516be50d05305e33c3d8ebd6a3b0804b.swf: 0xc5d063f3
 Frame: 4 HASHCODE: test/ats/swfs/028b6c3ae47d7ca2bf150632dd491bb986401e2081fdbda1e29e77d5c1015e2f2cd0e8ca896684748aa9daff0c92d553516be50d05305e33c3d8ebd6a3b0804b.swf: 0xc2ef7cc0
@@ -1073,6 +1081,8 @@ Frame: 5 HASHCODE: test/ats/swfs/028b6c3ae47d7ca2bf150632dd491bb986401e2081fdbda
 Frame: 6 HASHCODE: test/ats/swfs/028b6c3ae47d7ca2bf150632dd491bb986401e2081fdbda1e29e77d5c1015e2f2cd0e8ca896684748aa9daff0c92d553516be50d05305e33c3d8ebd6a3b0804b.swf: 0x9b6f9720
 Frame: 7 HASHCODE: test/ats/swfs/028b6c3ae47d7ca2bf150632dd491bb986401e2081fdbda1e29e77d5c1015e2f2cd0e8ca896684748aa9daff0c92d553516be50d05305e33c3d8ebd6a3b0804b.swf: 0xa136af33
 Frame: 8 HASHCODE: test/ats/swfs/028b6c3ae47d7ca2bf150632dd491bb986401e2081fdbda1e29e77d5c1015e2f2cd0e8ca896684748aa9daff0c92d553516be50d05305e33c3d8ebd6a3b0804b.swf: 0x54529980
+[91msomewhatImplemented: NetStream._invoke (305)[0m
+[91msomewhatImplemented: NetStream._invoke (306)[0m
 Frame: 9 HASHCODE: test/ats/swfs/028b6c3ae47d7ca2bf150632dd491bb986401e2081fdbda1e29e77d5c1015e2f2cd0e8ca896684748aa9daff0c92d553516be50d05305e33c3d8ebd6a3b0804b.swf: 0x04b3f8d3
 Frame: 10 HASHCODE: test/ats/swfs/028b6c3ae47d7ca2bf150632dd491bb986401e2081fdbda1e29e77d5c1015e2f2cd0e8ca896684748aa9daff0c92d553516be50d05305e33c3d8ebd6a3b0804b.swf: 0x607e83e0
 Frame: 11 HASHCODE: test/ats/swfs/028b6c3ae47d7ca2bf150632dd491bb986401e2081fdbda1e29e77d5c1015e2f2cd0e8ca896684748aa9daff0c92d553516be50d05305e33c3d8ebd6a3b0804b.swf: 0x7e055a73
