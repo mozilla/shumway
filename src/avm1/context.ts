@@ -186,6 +186,7 @@ module Shumway.AVM1 {
     public setStage(stage: Shumway.AVMX.AS.flash.display.Stage): void {
       Lib.AVM1Key.bindStage(this, this.globals.Key, stage);
       Lib.AVM1Mouse.bindStage(this, this.globals.Mouse, stage);
+      Lib.AVM1Stage.bindStage(this, this.globals.Stage, stage);
     }
 
     public setRoot(root: Shumway.AVMX.AS.flash.display.DisplayObject, parameters: any): any {

@@ -362,7 +362,8 @@ module Shumway.AVM1.Lib {
     if (!events) {
       return;
     }
-    //var stageListeners = [];
+    var stageListeners = [];
+    var as3Stage = (<any>context.globals.Stage)._as3Stage;
     for (var j = 0; j < events.length; j++) {
       var swfEvent = events[j];
       var actionsData;
@@ -383,31 +384,30 @@ module Shumway.AVM1.Lib {
           continue;
         }
         var eventName = ClipEventMappings[eventFlag];
-        //if (eventName === 'mouseDown' || eventName === 'mouseUp' || eventName === 'mouseMove') {
-        //  // FIXME regressed, avm1 mouse events shall be received all the time.
-        //  stageListeners.push({eventName: eventName, handler: handler});
-        //  as3Object.stage.addEventListener(eventName, handler);
-        //} else {
-        // AVM1 MovieClips are set to button mode if one of the button-related event listeners is
-        // set. This behaviour is triggered regardless of the actual value they are set to.
-        switch (eventFlag) {
-          case AVM1ClipEvents.Release:
-          case AVM1ClipEvents.ReleaseOutside:
-          case AVM1ClipEvents.RollOver:
-          case AVM1ClipEvents.RollOut:
-            as3Object.buttonMode = true;
+        if (eventName === 'mouseDown' || eventName === 'mouseUp' || eventName === 'mouseMove') {
+          stageListeners.push({eventName: eventName, handler: handler});
+          as3Stage.addEventListener(eventName, handler);
+        } else {
+          // AVM1 MovieClips are set to button mode if one of the button-related event listeners is
+          // set. This behaviour is triggered regardless of the actual value they are set to.
+          switch (eventFlag) {
+            case AVM1ClipEvents.Release:
+            case AVM1ClipEvents.ReleaseOutside:
+            case AVM1ClipEvents.RollOver:
+            case AVM1ClipEvents.RollOut:
+              as3Object.buttonMode = true;
+          }
+          as3Object.addEventListener(eventName, handler);
         }
-        as3Object.addEventListener(eventName, handler);
-        //}
       }
     }
-    //if (stageListeners.length > 0) {
-    //  as3Object.addEventListener('removedFromStage', function () {
-    //    for (var i = 0; i < stageListeners.length; i++) {
-    //      this.removeEventListener(stageListeners[i].eventName, stageListeners[i].fn, false);
-    //    }
-    //  }, false);
-    //}
+    if (stageListeners.length > 0) {
+      as3Object.addEventListener('removedFromStage', function () {
+        for (var i = 0; i < stageListeners.length; i++) {
+          as3Stage.removeEventListener(stageListeners[i].eventName, stageListeners[i].fn, false);
+        }
+      }, false);
+    }
   }
 
   function clipEventHandler(actionsData: AVM1.AVM1ActionsData,

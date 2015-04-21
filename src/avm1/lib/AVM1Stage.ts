@@ -27,9 +27,11 @@ module Shumway.AVM1.Lib {
       return wrapped;
     }
 
-    private get _as3Stage(): Shumway.AVMX.AS.flash.display.Stage {
-      return (<IAVM1SymbolBase>this.context.root).as3Object.stage; // REDUX
+    public static bindStage(context: AVM1Context, cls: AVM1Object, stage: Shumway.AVMX.AS.flash.display.Stage): void  {
+      (<AVM1Stage>cls)._as3Stage = stage;
     }
+
+    _as3Stage: Shumway.AVMX.AS.flash.display.Stage;
 
     public getAlign() { return this._as3Stage.align; }
     public setAlign(value) { this._as3Stage.align = value; }
