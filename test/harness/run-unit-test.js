@@ -150,7 +150,7 @@ function executeTestFile(testFile) {
 }
 
 // Shumway.AVM2.Runtime.traceExecution.value = true;
-Shumway.AVM2.Runtime.globalMultinameAnalysis.value = true;
+//Shumway.AVM2.Runtime.globalMultinameAnalysis.value = true;
 
 var builtinPath = "build/libs/builtin.abc";
 

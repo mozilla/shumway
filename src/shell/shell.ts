@@ -122,7 +122,6 @@ module Shumway.Shell {
   import OptionSet = Shumway.Options.OptionSet;
   import ArgumentParser = Shumway.Options.ArgumentParser;
 
-  import Runtime = Shumway.AVM2.Runtime;
   import SwfTag = Shumway.SWF.Parser.SwfTag;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
