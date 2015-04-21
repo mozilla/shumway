@@ -90,7 +90,7 @@ module Shumway.AVM1 {
     }
 
     public constructor(avm1Context: IAVM1Context) {
-      false && super();
+      super();
       this._avm1Context = avm1Context;
       this._ownProperties = Object.create(null);
       this._prototype = null;

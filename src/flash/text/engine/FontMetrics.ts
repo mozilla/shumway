@@ -34,7 +34,7 @@ module Shumway.AVMX.AS.flash.text.engine {
     
     constructor (emBox: flash.geom.Rectangle, strikethroughOffset: number, strikethroughThickness: number, underlineOffset: number, underlineThickness: number, subscriptOffset: number, subscriptScale: number, superscriptOffset: number, superscriptScale: number, lineGap: number = 0) {
       emBox = emBox; strikethroughOffset = +strikethroughOffset; strikethroughThickness = +strikethroughThickness; underlineOffset = +underlineOffset; underlineThickness = +underlineThickness; subscriptOffset = +subscriptOffset; subscriptScale = +subscriptScale; superscriptOffset = +superscriptOffset; superscriptScale = +superscriptScale; lineGap = +lineGap;
-      false && super();
+      super();
       dummyConstructor("public flash.text.engine.FontMetrics");
     }
     

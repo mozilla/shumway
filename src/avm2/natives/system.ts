@@ -24,7 +24,7 @@ module Shumway.AVMX.AS {
   export module flash.system {
     export class IME extends ASObject /* flash.events.EventDispatcher */ {
       constructor () {
-        false && super();
+        super();
       }
       static get enabled(): boolean {
         notImplemented("public flash.system.IME::static get enabled"); return;

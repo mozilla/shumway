@@ -209,7 +209,7 @@ module Shumway.AVMX.AS {
     private _buffer: any [];
 
     constructor (length: number /*uint*/ = 0, fixed: boolean = false) {
-      false && super();
+      super();
       length = length >>> 0; fixed = !!fixed;
       this._fixed = !!fixed;
       this._buffer = new Array(length);

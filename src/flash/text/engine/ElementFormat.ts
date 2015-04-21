@@ -34,7 +34,7 @@ module Shumway.AVMX.AS.flash.text.engine {
     
     constructor (fontDescription: flash.text.engine.FontDescription = null, fontSize: number = 12, color: number /*uint*/ = 0, alpha: number = 1, textRotation: string = "auto", dominantBaseline: string = "roman", alignmentBaseline: string = "useDominantBaseline", baselineShift: number = 0, kerning: string = "on", trackingRight: number = 0, trackingLeft: number = 0, locale: string = "en", breakOpportunity: string = "auto", digitCase: string = "default", digitWidth: string = "default", ligatureLevel: string = "common", typographicCase: string = "default") {
       fontDescription = fontDescription; fontSize = +fontSize; color = color >>> 0; alpha = +alpha; textRotation = axCoerceString(textRotation); dominantBaseline = axCoerceString(dominantBaseline); alignmentBaseline = axCoerceString(alignmentBaseline); baselineShift = +baselineShift; kerning = axCoerceString(kerning); trackingRight = +trackingRight; trackingLeft = +trackingLeft; locale = axCoerceString(locale); breakOpportunity = axCoerceString(breakOpportunity); digitCase = axCoerceString(digitCase); digitWidth = axCoerceString(digitWidth); ligatureLevel = axCoerceString(ligatureLevel); typographicCase = axCoerceString(typographicCase);
-      false && super();
+      super();
       dummyConstructor("public flash.text.engine.ElementFormat");
     }
     

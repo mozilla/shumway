@@ -73,7 +73,7 @@ module Shumway.AVMX.AS.flash.events {
 
 
     constructor(type: string, bubbles: boolean, cancelable: boolean) {
-      false && super();
+      super();
       this._type = axCoerceString(type);
       this._bubbles = !!bubbles;
       this._cancelable = !!cancelable;

@@ -34,7 +34,7 @@ module Shumway.AVMX.AS.flash.text.engine {
     
     constructor (content: flash.text.engine.ContentElement = null, tabStops: ASVector<any /* flash.text.engine.TabStop */> = null, textJustifier: flash.text.engine.TextJustifier = null, lineRotation: string = "rotate0", baselineZero: string = "roman", bidiLevel: number /*int*/ = 0, applyNonLinearFontScaling: boolean = true, baselineFontDescription: flash.text.engine.FontDescription = null, baselineFontSize: number = 12) {
       content = content; tabStops = tabStops; textJustifier = textJustifier; lineRotation = axCoerceString(lineRotation); baselineZero = axCoerceString(baselineZero); bidiLevel = bidiLevel | 0; applyNonLinearFontScaling = !!applyNonLinearFontScaling; baselineFontDescription = baselineFontDescription; baselineFontSize = +baselineFontSize;
-      false && super();
+      super();
       dummyConstructor("public flash.text.engine.TextBlock");
     }
     

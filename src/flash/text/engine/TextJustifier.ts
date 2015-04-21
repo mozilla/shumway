@@ -34,7 +34,7 @@ module Shumway.AVMX.AS.flash.text.engine {
     
     constructor (locale: string, lineJustification: string) {
       locale = axCoerceString(locale); lineJustification = axCoerceString(lineJustification);
-      false && super();
+      super();
       dummyConstructor("public flash.text.engine.TextJustifier");
     }
     

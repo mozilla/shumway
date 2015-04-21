@@ -34,7 +34,7 @@ module Shumway.AVMX.AS.flash.text.engine {
     
     constructor (fontName: string = "_serif", fontWeight: string = "normal", fontPosture: string = "normal", fontLookup: string = "device", renderingMode: string = "cff", cffHinting: string = "horizontalStem") {
       fontName = axCoerceString(fontName); fontWeight = axCoerceString(fontWeight); fontPosture = axCoerceString(fontPosture); fontLookup = axCoerceString(fontLookup); renderingMode = axCoerceString(renderingMode); cffHinting = axCoerceString(cffHinting);
-      false && super();
+      super();
       dummyConstructor("public flash.text.engine.FontDescription");
     }
     

@@ -34,7 +34,7 @@ module Shumway.AVMX.AS.flash.text.engine {
     
     constructor (alignment: string = "start", position: number = 0, decimalAlignmentToken: string = "") {
       alignment = axCoerceString(alignment); position = +position; decimalAlignmentToken = axCoerceString(decimalAlignmentToken);
-      false && super();
+      super();
       dummyConstructor("public flash.text.engine.TabStop");
     }
     

@@ -106,7 +106,7 @@ module Shumway.AVMX.AS {
     private _offset: number;
 
     constructor (length: number = 0, fixed: boolean = false) {
-      false && super();
+      super();
       length = length >>> 0;
       this._fixed = !!fixed;
       this._buffer = new Uint32Array(Math.max(Uint32Vector.INITIAL_CAPACITY,

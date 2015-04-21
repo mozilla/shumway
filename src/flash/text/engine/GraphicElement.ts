@@ -34,7 +34,7 @@ module Shumway.AVMX.AS.flash.text.engine {
     
     constructor (graphic: flash.display.DisplayObject = null, elementWidth: number = 15, elementHeight: number = 15, elementFormat: flash.text.engine.ElementFormat = null, eventMirror: flash.events.EventDispatcher = null, textRotation: string = "rotate0") {
       graphic = graphic; elementWidth = +elementWidth; elementHeight = +elementHeight; elementFormat = elementFormat; eventMirror = eventMirror; textRotation = axCoerceString(textRotation);
-      false && super(undefined, undefined, undefined);
+      super(undefined, undefined, undefined);
       dummyConstructor("public flash.text.engine.GraphicElement");
     }
     

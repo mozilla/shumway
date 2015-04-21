@@ -33,7 +33,7 @@ module Shumway.AVMX.AS.flash.text.engine {
     static instanceSymbols: string [] = null; // ["userData", "focusRect", "tabChildren", "tabEnabled", "tabIndex", "contextMenu", "getMirrorRegion", "flushAtomData"];
     
     constructor () {
-      false && super();
+      super();
       dummyConstructor("public flash.text.engine.TextLine");
     }
     

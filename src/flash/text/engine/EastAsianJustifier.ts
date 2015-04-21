@@ -34,7 +34,7 @@ module Shumway.AVMX.AS.flash.text.engine {
     
     constructor (locale: string = "ja", lineJustification: string = "allButLast", justificationStyle: string = "pushInKinsoku") {
       locale = axCoerceString(locale); lineJustification = axCoerceString(lineJustification); justificationStyle = axCoerceString(justificationStyle);
-      false && super(undefined, undefined);
+      super(undefined, undefined);
       dummyConstructor("public flash.text.engine.EastAsianJustifier");
     }
     

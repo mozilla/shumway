@@ -1367,8 +1367,7 @@ module Shumway.AVMX.AS {
     }
 
     constructor (value?: any) {
-      false && super();
-
+      super();
       this._parent = null;
 
       if (isNullOrUndefined(value)) {
@@ -2904,7 +2903,7 @@ module Shumway.AVMX.AS {
     axInitializer: (value?: any) => any;
 
     constructor (value?: any) {
-      false && super();
+      super();
       this._children = [];
 
       if (isNullOrUndefined(value)) {

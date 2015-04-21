@@ -35,7 +35,7 @@ module Shumway.AVMX.AS {
       private primitiveMap: Object;
 
       constructor(weakKeys: boolean = false) {
-        false && super();
+        super();
         this.map = new WeakMap();
         this.keys = null;
         this.weakKeys = !!weakKeys;

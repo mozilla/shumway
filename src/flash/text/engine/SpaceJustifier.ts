@@ -34,7 +34,7 @@ module Shumway.AVMX.AS.flash.text.engine {
     
     constructor (locale: string = "en", lineJustification: string = "unjustified", letterSpacing: boolean = false) {
       locale = axCoerceString(locale); lineJustification = axCoerceString(lineJustification); letterSpacing = !!letterSpacing;
-      false && super(undefined, undefined);
+      super(undefined, undefined);
       dummyConstructor("public flash.text.engine.SpaceJustifier");
     }
     

@@ -34,7 +34,7 @@ module Shumway.AVMX.AS.flash.text.engine {
     
     constructor (elements: ASVector<any> = null, elementFormat: flash.text.engine.ElementFormat = null, eventMirror: flash.events.EventDispatcher = null, textRotation: string = "rotate0") {
       elements = elements; elementFormat = elementFormat; eventMirror = eventMirror; textRotation = axCoerceString(textRotation);
-      false && super(undefined, undefined, undefined);
+      super(undefined, undefined, undefined);
       dummyConstructor("public flash.text.engine.GroupElement");
     }
     
