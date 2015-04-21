@@ -85,11 +85,10 @@ module Shumway.AVMX.AS.flash.system {
       name = axCoerceString(name);
       if (!name) {
         this.sec.throwError('TypeError', Errors.NullPointerError, 'definitionName');
-        return null;
       }
       var simpleName = name.replace("::", ".");
       var mn = Multiname.FromFQNString(simpleName, NamespaceType.Public);
-      var definition = this.axDomain.getProperty(mn, false, false);
+      return this.axDomain.getProperty(mn, false, false);
     }
 
     getQualifiedDefinitionNames(): GenericVector {
