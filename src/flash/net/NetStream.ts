@@ -838,6 +838,7 @@ module Shumway.AVMX.AS.flash.net {
       // TODO Ignoring reset actions for now.
       if (netStreamAppendBytesAction === 'endSequence') {
         if (!this._decoder) { // Probably pushed not enough data.
+          // REDUX: throw a proper internal error. Or something.
           throw new Error('Internal appendBytes error');
         }
         this._decoder.close();

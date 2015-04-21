@@ -207,7 +207,7 @@ module Shumway.AVMX.AS.flash.external {
         case 'null':
           return null;
         case 'date':
-          return new Date(Number(String(xml.children())));
+          return this.sec.AXDate.axConstruct([Number(String(xml.children()))]);
         case 'exception':
           if (this.$BgmarshallExceptions) {
             throw this.sec.AXError.axConstruct([String(xml.children())]);

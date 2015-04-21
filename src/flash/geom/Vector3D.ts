@@ -108,10 +108,10 @@ module Shumway.AVMX.AS.flash.geom {
              this.z * a.z;
     }
     crossProduct(a: flash.geom.Vector3D): flash.geom.Vector3D {
-      return new Vector3D(this.y * a.z - this.z * a.y,
-                          this.z * a.x - this.x * a.z,
-                          this.x * a.y - this.y * a.x,
-                          1.0);
+      return new this.sec.flash.geom.Vector3D(this.y * a.z - this.z * a.y,
+                                              this.z * a.x - this.x * a.z,
+                                              this.x * a.y - this.y * a.x,
+                                              1.0);
     }
     normalize(): number {
       var length = this.length;
