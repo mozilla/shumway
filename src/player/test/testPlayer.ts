@@ -22,7 +22,7 @@ module Shumway.Player.Test {
 
   export class TestGFXService extends GFXServiceBase {
     private _worker;
-    private _fontOrImageRequests: PromiseWrapper<any>[];
+    private _assetDecodingRequests: PromiseWrapper<any>[];
 
     constructor(sec: ISecurityDomain) {
       super(sec);
@@ -30,7 +30,7 @@ module Shumway.Player.Test {
       // TODO this is temporary worker to test postMessage tranfers
       this._worker = Shumway.Player.Test.FakeSyncWorker.instance;
       this._worker.addEventListener('message', this._onWorkerMessage.bind(this));
-      this._fontOrImageRequests = [];
+      this._assetDecodingRequests = [];
     }
 
     update(updates: DataBuffer, assets: any[]): void {
@@ -72,13 +72,12 @@ module Shumway.Player.Test {
     }
 
     registerFont(syncId: number, data: any): Promise<any> {
-      var requestId = this._fontOrImageRequests.length;
+      var requestId = this._assetDecodingRequests.length;
       var result = new PromiseWrapper<any>();
-      this._fontOrImageRequests[requestId] = result;
+      this._assetDecodingRequests[requestId] = result;
       var message = {
-        type: 'registerFontOrImage',
+        type: 'registerFont',
         syncId: syncId,
-        assetType: 'font',
         data: data,
         requestId: requestId
       };
@@ -87,14 +86,13 @@ module Shumway.Player.Test {
     }
 
     registerImage(syncId: number, symbolId: number, data: any): Promise<any> {
-      var requestId = this._fontOrImageRequests.length;
+      var requestId = this._assetDecodingRequests.length;
       var result = new PromiseWrapper<any>();
-      this._fontOrImageRequests[requestId] = result;
+      this._assetDecodingRequests[requestId] = result;
       var message = {
-        type: 'registerFontOrImage',
+        type: 'registerImage',
         syncId: syncId,
         symbolId: symbolId,
-        assetType: 'image',
         data: data,
         requestId: requestId
       };
@@ -126,10 +124,11 @@ module Shumway.Player.Test {
         case 'displayParameters':
           this.processDisplayParameters(data.params);
           break;
-        case 'registerFontOrImageResponse':
-          var request = this._fontOrImageRequests[data.requestId];
+        case 'registerFontResponse':
+        case 'registerImageResponse':
+          var request = this._assetDecodingRequests[data.requestId];
           release || Debug.assert(request);
-          delete this._fontOrImageRequests[data.requestId];
+          delete this._assetDecodingRequests[data.requestId];
           request.resolve(data.result);
           break;
       }

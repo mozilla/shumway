@@ -328,6 +328,9 @@ module Shumway.AVMX.AS.flash.display {
             data = data.definition;
           }
           symbol = flash.display.BitmapSymbol.FromData(data, this);
+          if (symbol.ready === false) {
+            this.sec.player.registerImage(<Timeline.EagerlyResolvedSymbol><any>symbol, data);
+          }
           break;
         case 'label':
           symbol = flash.text.TextSymbol.FromLabelData(data, this);
@@ -350,6 +353,9 @@ module Shumway.AVMX.AS.flash.display {
           }
           symbol = flash.text.FontSymbol.FromData(data, this);
           var font = constructClassFromSymbol(symbol, symbol.symbolClass);
+          if (symbol.ready === false) {
+            this.sec.player.registerFont(<Timeline.EagerlyResolvedSymbol><any>symbol, data);
+          }
           break;
         case 'sound':
           symbol = flash.media.SoundSymbol.FromData(data, this);
@@ -360,24 +366,7 @@ module Shumway.AVMX.AS.flash.display {
       }
       release || assert(symbol, "Unknown symbol type " + data.type);
       this._dictionary[id] = symbol;
-      if (symbol.ready === false) {
-        this._registerFontOrImage(<Timeline.EagerlyResolvedSymbol><any>symbol, data);
-      }
       return symbol;
-    }
-
-    private _registerFontOrImage(symbol: Timeline.EagerlyResolvedSymbol, data: any) {
-      var resolver: Timeline.IAssetResolver =  this.sec.player;
-      switch (data.type) {
-        case 'font':
-          resolver.registerFont(<Timeline.EagerlyResolvedSymbol><any>symbol, data);
-          break;
-        case 'image':
-          resolver.registerImage(<Timeline.EagerlyResolvedSymbol><any>symbol, data);
-          break;
-        default:
-          console.warn('Unsupported asset type: ' + data.type);
-      }
     }
 
     getRootSymbol(): flash.display.SpriteSymbol {

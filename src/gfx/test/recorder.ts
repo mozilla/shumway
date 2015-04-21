@@ -108,8 +108,9 @@ module Shumway.GFX.Test {
     PlayerCommand = 1,
     PlayerCommandAsync = 2,
     Frame = 3,
-    FontOrImage = 4,
-    FSCommand = 5
+    Font = 4,
+    Image = 5,
+    FSCommand = 6
   }
 
   export class MovieRecorder {
@@ -176,13 +177,19 @@ module Shumway.GFX.Test {
       this._createRecord(MovieRecordType.Frame, null);
     }
 
-    public recordFontOrImage(syncId: number, symbolId: number, assetType: string, data: any) {
+    public recordFont(syncId: number, data: any) {
+      var buffer = new DataBuffer();
+      buffer.writeInt(syncId);
+      writeUint8Array(buffer, serializeObj(data));
+      this._createRecord(MovieRecordType.Font, buffer);
+    }
+
+    public recordImage(syncId: number, symbolId: number, data: any) {
       var buffer = new DataBuffer();
       buffer.writeInt(syncId);
       buffer.writeInt(symbolId);
-      buffer.writeUTF(assetType);
       writeUint8Array(buffer, serializeObj(data));
-      this._createRecord(MovieRecordType.FontOrImage, buffer);
+      this._createRecord(MovieRecordType.Image, buffer);
     }
 
     public recordFSCommand(command: string, args: string) {
@@ -299,12 +306,17 @@ module Shumway.GFX.Test {
       return { command: command, args: args };
     }
 
-    public parseFontOrImage(): any {
+    public parseFont(): any {
+      var syncId = this.currentData.readInt();
+      var data = deserializeObj(this.currentData);
+      return {syncId: syncId, data: data};
+    }
+
+    public parseImage(): any {
       var syncId = this.currentData.readInt();
       var symbolId = this.currentData.readInt();
-      var assetType = this.currentData.readUTF();
       var data = deserializeObj(this.currentData);
-      return {syncId: syncId, symbolId: symbolId, assetType: assetType, data: data};
+      return {syncId: syncId, symbolId: symbolId, data: data};
     }
 
     public dump() {
@@ -320,8 +332,11 @@ module Shumway.GFX.Test {
           case MovieRecordType.FSCommand:
             console.log(this.parseFSCommand());
             break;
-          case MovieRecordType.FontOrImage:
-            console.log(this.parseFontOrImage());
+          case MovieRecordType.Font:
+            console.log(this.parseFont());
+            break;
+          case MovieRecordType.Image:
+            console.log(this.parseImage());
             break;
         }
       }
