@@ -23,23 +23,21 @@ module Shumway.AVM1.Lib {
   export class AVM1Mouse extends AVM1Object {
     public static createAVM1Class(context: AVM1Context): AVM1Object {
       var wrapped = wrapAVM1NativeClass(context, false, AVM1Mouse, ['show', 'hide'], []);
-      (<any>wrapped)._bind = AVM1Mouse._bind; // REDUX
       return wrapped;
     }
 
-    public static _bind(stage: flash.display.Stage, context: AVM1Context) {
-      // REDUX
+    public static bindStage(context: AVM1Context, cls: AVM1Object, stage: flash.display.Stage): void {
       stage.addEventListener('mouseDown', function (e: flash.events.MouseEvent) {
-        alCallProperty(context.globals.Mouse, 'broadcastMessage', ['onMouseDown']);
+        alCallProperty(cls, 'broadcastMessage', ['onMouseDown']);
       }, false);
       stage.addEventListener('mouseMove', function (e: flash.events.MouseEvent) {
-        alCallProperty(context.globals.Mouse, 'broadcastMessage', ['onMouseMove']);
+        alCallProperty(cls, 'broadcastMessage', ['onMouseMove']);
       }, false);
       stage.addEventListener('mouseOut', function (e: flash.events.MouseEvent) {
-        alCallProperty(context.globals.Mouse, 'broadcastMessage', ['onMouseMove']);
+        alCallProperty(cls, 'broadcastMessage', ['onMouseMove']);
       }, false);
       stage.addEventListener('mouseUp', function (e: flash.events.MouseEvent) {
-        alCallProperty(context.globals.Mouse, 'broadcastMessage', ['onMouseUp']);
+        alCallProperty(cls, 'broadcastMessage', ['onMouseUp']);
       }, false);
     }
 

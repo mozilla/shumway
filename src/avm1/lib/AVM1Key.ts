@@ -27,35 +27,42 @@ module Shumway.AVM1.Lib {
     public static RIGHT: number = 39;
     public static UP: number = 38;
 
-    private static _keyStates: any[] = []; // REDUX mutates
-    private static _lastKeyCode: number = 0;
+    private static _keyStates: any[];
+    private static _lastKeyCode: number;
 
     public static createAVM1Class(context: AVM1Context): AVM1Object {
       var wrapped = wrapAVM1NativeClass(context, false, AVM1Key,
         ['DOWN', 'LEFT', 'RIGHT', 'UP', 'isDown'],
         []);
-      (<any>wrapped)._bind = AVM1Key._bind; // REDUX
       return wrapped;
     }
 
-    public static _bind(stage: flash.display.Stage, context: AVM1Context) {
+    static alInitStatic(context: AVM1Context): void {
+      this._keyStates = [];
+      this._lastKeyCode = 0;
+    }
+
+    public static bindStage(context: AVM1Context, cls: AVM1Object, stage: flash.display.Stage): void {
       stage.addEventListener('keyDown', function (e: flash.events.KeyboardEvent) {
         var keyCode = e.axGetPublicProperty('keyCode');
-        AVM1Key._lastKeyCode = keyCode;
-        AVM1Key._keyStates[keyCode] = 1;
-        alCallProperty(context.globals.Key, 'broadcastMessage', ['onKeyDown']);
+        var staticState: typeof AVM1Key = context.getStaticState(AVM1Key);
+        staticState._lastKeyCode = keyCode;
+        staticState._keyStates[keyCode] = 1;
+        alCallProperty(cls, 'broadcastMessage', ['onKeyDown']);
       }, false);
 
       stage.addEventListener('keyUp', function (e: flash.events.KeyboardEvent) {
         var keyCode = e.axGetPublicProperty('keyCode');
-        AVM1Key._lastKeyCode = keyCode;
-        delete AVM1Key._keyStates[keyCode];
-        alCallProperty(context.globals.Key, 'broadcastMessage', ['onKeyUp']);
+        var staticState: typeof AVM1Key = context.getStaticState(AVM1Key);
+        staticState._lastKeyCode = keyCode;
+        delete staticState._keyStates[keyCode];
+        alCallProperty(cls, 'broadcastMessage', ['onKeyUp']);
       }, false);
     }
 
     public static isDown(context: AVM1Context, code) {
-      return !!AVM1Key._keyStates[code];
+      var staticState: typeof AVM1Key = context.getStaticState(AVM1Key);
+      return !!staticState._keyStates[code];
     }
 
   }

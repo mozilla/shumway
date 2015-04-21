@@ -84,8 +84,13 @@ module Shumway.AVM1.Lib {
   }
 
   export class AVM1System extends AVM1Object {
-    static _capabilities: AVM1Object; // REDUX
-    static _security: AVM1Object; // REDUX
+    static _capabilities: AVM1Object;
+    static _security: AVM1Object;
+
+    static alInitStatic(context: AVM1Context): void  {
+      this._capabilities = new AVM1Capabilities(context);
+      this._security = new AVM1Security(context);
+    }
 
     static createAVM1Class(context: AVM1Context): AVM1Object {
       return wrapAVM1NativeClass(context, false, AVM1System,
@@ -94,17 +99,13 @@ module Shumway.AVM1.Lib {
     }
 
     public static getCapabilities(context: AVM1Context) {
-      if (!AVM1System._capabilities) {
-        AVM1System._capabilities = new AVM1Capabilities(context);
-      }
-      return AVM1System._capabilities;
+      var staticState: typeof AVM1System = context.getStaticState(AVM1System);
+      return staticState._capabilities;
     }
 
     public static getSecurity(context: AVM1Context) {
-      if (!AVM1System._security) {
-        AVM1System._security = new AVM1Security(context);
-      }
-      return AVM1System._security;
+      var staticState: typeof AVM1System = context.getStaticState(AVM1System);
+      return staticState._security;
     }
   }
 }

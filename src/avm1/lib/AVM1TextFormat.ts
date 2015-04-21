@@ -66,6 +66,13 @@ module Shumway.AVM1.Lib {
 
     private static _measureTextField: flash.text.TextField; // REDUX security domain
 
+    static alInitStatic(context: AVM1Context): void {
+      // See _measureTextField usage in the getTextExtent() below.
+      var measureTextField = new context.sec.flash.text.TextField();
+      measureTextField.multiline = true;
+      this._measureTextField = measureTextField;
+    }
+
     public getAlign(): string {
       return this._as3Object.align;
     }
@@ -204,13 +211,8 @@ module Shumway.AVM1.Lib {
       text = alCoerceString(this.context, text);
       width = +width;
 
-      var measureTextField = AVM1TextFormat._measureTextField;
-      if (!measureTextField) {
-        measureTextField = new this.context.sec.flash.text.TextField();
-        measureTextField.multiline = true;
-        AVM1TextFormat._measureTextField = measureTextField;
-      }
-
+      var staticState: typeof AVM1TextFormat = this.context.getStaticState(AVM1TextFormat);
+      var measureTextField = staticState._measureTextField;
       if (!isNaN(width) && width > 0) {
         measureTextField.width = width + 4;
         measureTextField.wordWrap = true;

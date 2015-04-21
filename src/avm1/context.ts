@@ -71,6 +71,7 @@ module Shumway.AVM1 {
     private assets: MapObject<number>;
     private assetsSymbols: Array<any>;
     private assetsClasses: Array<any>;
+    private staticStates: WeakMap<typeof AVM1Object, any>;
 
     constructor(swfVersion: number) {
       this.swfVersion = swfVersion;
@@ -86,6 +87,7 @@ module Shumway.AVM1 {
       this.assets = {};
       this.assetsSymbols = [];
       this.assetsClasses = [];
+      this.staticStates = new WeakMap<typeof AVM1Object, any>();
     }
 
     public utils: IAVM1RuntimeUtils;
@@ -182,8 +184,8 @@ module Shumway.AVM1 {
     }
 
     public setStage(stage: Shumway.AVMX.AS.flash.display.Stage): void {
-      (<any>this.globals.Key)._bind(stage, this);
-      (<any>this.globals.Mouse)._bind(stage, this);
+      Lib.AVM1Key.bindStage(this, this.globals.Key, stage);
+      Lib.AVM1Mouse.bindStage(this, this.globals.Mouse, stage);
     }
 
     public setRoot(root: Shumway.AVMX.AS.flash.display.DisplayObject, parameters: any): any {
@@ -195,6 +197,19 @@ module Shumway.AVM1 {
           as2Object.alPut(paramName, parameters[paramName]);
         }
       }
+    }
+
+    public getStaticState(cls: typeof AVM1Object): any {
+      var state = this.staticStates.get(cls);
+      if (!state) {
+        state = Object.create(null);
+        var initStatic: Function = (<any>cls).alInitStatic;
+        if (initStatic) {
+          initStatic.call(state, this);
+        }
+        this.staticStates.set(cls, state);
+      }
+      return state;
     }
   }
 }
