@@ -112,6 +112,7 @@ interface ISecurityDomain {
       LoaderContext: typeof flashPackage.system.LoaderContext;
       JPEGLoaderContext: typeof flashPackage.system.JPEGLoaderContext;
       ApplicationDomain: typeof flashPackage.system.ApplicationDomain;
+      SecurityDomain: typeof flashPackage.system.SecurityDomain;
       fscommand: typeof flashPackage.system.fscommand;
     }
   }
