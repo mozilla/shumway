@@ -58,6 +58,9 @@ module Shumway.AVMX.AS.flash.display {
     static instanceSymbols: string [] = null; // [];
 
     constructor () {
+      if (this._symbol && !this._fieldsInitialized) {
+        this.applySymbol();
+      }
       super();
       if (!this._fieldsInitialized) {
         this._initializeFields();

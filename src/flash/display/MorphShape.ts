@@ -34,6 +34,9 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     constructor () {
+      if (this._symbol && !this._fieldsInitialized) {
+        this.applySymbol();
+      }
       super();
       release || assert(!this._symbol);
     }

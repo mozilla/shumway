@@ -34,6 +34,9 @@ module Shumway.AVMX.AS.flash.display {
       this._setStaticContentFromSymbol(this._symbol);
     }
     constructor () {
+      if (this._symbol && !this._fieldsInitialized) {
+        this.applySymbol();
+      }
       super();
       if (!this._fieldsInitialized) {
         this._initializeFields();
