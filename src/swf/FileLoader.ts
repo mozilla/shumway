@@ -37,9 +37,11 @@
      symbols.
   5. `LoaderInfo#getSymbolById` creates a `{Font,Bitmap}Symbol` instance, which gets a `syncID` and
      a `resolveAssetPromise` and a `ready` flag set to `false`.
-  6. `LoaderInfo#getSymbolById` invokes `Timeline.IAssetResolver#registerFontOrImage`. The singleton
-     implementation of `IAssetResolver` is the active instance of `Player`.
-  7. `Player#registerFontOrImage` send sync message to GFX side requesting decoding of asset.
+  6. `LoaderInfo#getSymbolById` invokes `Timeline.IAssetResolver#registerFont` or
+     `Timeline.IAssetResolver#registerImage`. The singleton implementation of `IAssetResolver` is
+     the active instance of `Player`.
+  7. `Player#registerFont` or `Player#registerImage` send sync message to GFX side requesting
+     decoding of asset.
   8. `GFXChannelDeserializerContext#register{Font,Image}` is called, which triggers the actual
      decoding and, in the image case, registration of the asset.
   9.

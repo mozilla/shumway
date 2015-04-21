@@ -91,9 +91,17 @@ module Shumway.GFX.Test {
       return Promise.resolve(buffer);
     }
 
-    private _sendRegisterFontOrImageResponse(requestId: number, result: any) {
+    private _sendRegisterFontResponse(requestId: number, result: any) {
       this._worker.postMessage({
-        type: 'registerFontOrImageResponse',
+        type: 'registerFontResponse',
+        requestId: requestId,
+        result: result
+      });
+    }
+
+    private _sendRegisterImageResponse(requestId: number, result: any) {
+      this._worker.postMessage({
+        type: 'registerImageResponse',
         requestId: requestId,
         result: result
       });
@@ -124,9 +132,14 @@ module Shumway.GFX.Test {
           e.result = this.processVideoControl(data.id, data.eventType, data.data);
           e.handled = true;
           break;
-        case 'registerFontOrImage':
-          this.processRegisterFontOrImage(data.syncId, data.symbolId, data.assetType, data.data,
-            this._sendRegisterFontOrImageResponse.bind(this, data.requestId));
+        case 'registerFont':
+          this.processRegisterFont(data.syncId, data.data,
+                                   this._sendRegisterFontResponse.bind(this, data.requestId));
+          e.handled = true;
+          break;
+        case 'registerImage':
+          this.processRegisterImage(data.syncId, data.symbolId, data.imageType, data.data,
+                                    this._sendRegisterImageResponse.bind(this, data.requestId));
           e.handled = true;
           break;
         case 'fscommand':

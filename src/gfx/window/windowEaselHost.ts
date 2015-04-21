@@ -85,9 +85,17 @@ module Shumway.GFX.Window {
       }.bind(this));
     }
 
-    private _sendRegisterFontOrImageResponse(requestId: number, result: any) {
+    private _sendRegisterFontResponse(requestId: number, result: any) {
       this._playerWindow.postMessage({
-        type: 'registerFontOrImageResponse',
+        type: 'registerFontResponse',
+        requestId: requestId,
+        result: result
+      }, '*');
+    }
+
+    private _sendRegisterImageResponse(requestId: number, result: any) {
+      this._playerWindow.postMessage({
+        type: 'registerImageResponse',
         requestId: requestId,
         result: result
       }, '*');
@@ -108,9 +116,12 @@ module Shumway.GFX.Window {
           this.processFrame();
         } else if (data.type === 'videoControl') {
           data.result = this.processVideoControl(data.id, data.eventType, data.data);
-        } else if (data.type === 'registerFontOrImage') {
-          this.processRegisterFontOrImage(data.syncId, data.symbolId, data.assetType, data.data,
-            this._sendRegisterFontOrImageResponse.bind(this, data.requestId));
+        } else if (data.type === 'registerFont') {
+          this.processRegisterFont(data.syncId, data.data,
+                                   this._sendRegisterFontResponse.bind(this, data.requestId));
+        } else if (data.type === 'registerImage') {
+          this.processRegisterImage(data.syncId, data.symbolId, data.imageType, data.data,
+                                    this._sendRegisterImageResponse.bind(this, data.requestId));
         } else if (data.type === 'fscommand') {
           this.processFSCommand(data.command, data.args);
         } else if (data.type === 'timelineResponse' && data.timeline) {

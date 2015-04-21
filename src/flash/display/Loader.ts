@@ -477,14 +477,14 @@ module Shumway.AVMX.AS.flash.display {
       release || assert(file instanceof ImageFile);
       var data = {
         id: -1,
-        data: file.data,
+        data: file.data, // TODO: check if we can just remove this.
         mimeType: file.mimeType,
         dataType: file.type,
         type: 'image'
       };
       var symbol = BitmapSymbol.FromData(data, this._contentLoaderInfo);
       this._imageSymbol = symbol;
-      this.sec.player.registerImage(symbol, data);
+      this.sec.player.registerImage(symbol, file.type, file.data);
       release || assert(symbol.resolveAssetPromise);
     }
 

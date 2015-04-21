@@ -23,7 +23,7 @@ module Shumway.Player.Window {
   export class WindowGFXService extends GFXServiceBase {
     private _window;
     private _parent;
-    private _fontOrImageRequests: PromiseWrapper<any>[];
+    private _assetDecodingRequests: PromiseWrapper<any>[];
 
     constructor(sec: ISecurityDomain, window, parent?) {
       super(sec);
@@ -33,7 +33,7 @@ module Shumway.Player.Window {
       this._window.addEventListener('message', function (e) {
         this.onWindowMessage(e.data);
       }.bind(this));
-      this._fontOrImageRequests = [];
+      this._assetDecodingRequests = [];
     }
 
     update(updates: DataBuffer, assets: any[]): void {
@@ -88,14 +88,13 @@ module Shumway.Player.Window {
       return message.result;
     }
 
-    registerFont(syncId: number, data: any): Promise<any> {
-      var requestId = this._fontOrImageRequests.length;
+    registerFont(syncId: number, data: Uint8Array): Promise<any> {
+      var requestId = this._assetDecodingRequests.length;
       var result = new PromiseWrapper<any>();
-      this._fontOrImageRequests[requestId] = result;
+      this._assetDecodingRequests[requestId] = result;
       var message = {
-        type: 'registerFontOrImage',
+        type: 'registerFont',
         syncId: syncId,
-        assetType: 'font',
         data: data,
         requestId: requestId
       };
@@ -103,15 +102,16 @@ module Shumway.Player.Window {
       return result.promise;
     }
 
-    registerImage(syncId: number, symbolId: number, data: any): Promise<any> {
-      var requestId = this._fontOrImageRequests.length;
+    registerImage(syncId: number, symbolId: number, imageType: ImageType,
+                  data: Uint8Array): Promise<any> {
+      var requestId = this._assetDecodingRequests.length;
       var result = new PromiseWrapper<any>();
-      this._fontOrImageRequests[requestId] = result;
+      this._assetDecodingRequests[requestId] = result;
       var message = {
-        type: 'registerFontOrImage',
+        type: 'registerImage',
         syncId: syncId,
         symbolId: symbolId,
-        assetType: 'image',
+        imageType: imageType,
         data: data,
         requestId: requestId
       };
@@ -141,10 +141,11 @@ module Shumway.Player.Window {
           case 'displayParameters':
             this.processDisplayParameters(data.params);
             break;
-          case 'registerFontOrImageResponse':
-            var request = this._fontOrImageRequests[data.requestId];
+          case 'registerFontResponse':
+          case 'registerImageResponse':
+            var request = this._assetDecodingRequests[data.requestId];
             release || Debug.assert(request);
-            delete this._fontOrImageRequests[data.requestId];
+            delete this._assetDecodingRequests[data.requestId];
             request.resolve(data.result);
             break;
           case 'options':
