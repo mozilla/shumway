@@ -237,6 +237,7 @@ module Shumway.AVMX.AS {
 
   M("flash.system.Capabilities", flash.system.Capabilities);
   M("flash.system.Security", flash.system.Security);
+  M("flash.system.System", flash.system.System);
   M("flash.system.SecurityDomain", flash.system.SecurityDomain);
   M("flash.system.ApplicationDomain", flash.system.ApplicationDomain);
   M("flash.system.JPEGLoaderContext", flash.system.JPEGLoaderContext);
