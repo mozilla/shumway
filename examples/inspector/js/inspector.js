@@ -29,6 +29,21 @@ var shumwayOptions = Shumway.Settings.shumwayOptions;
 var avm2Options = shumwayOptions.register(new Shumway.Options.OptionSet("AVM2"));
 var sysCompiler = avm2Options.register(new Shumway.Options.Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter (requires restart)"));
 var appCompiler = avm2Options.register(new Shumway.Options.Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter (requires restart)"));
+
+
+var WriterFlags = Shumway.AVMX.WriterFlags;
+var writerFlags = WriterFlags.None;
+if (Shumway.AVM2.Runtime.traceRuntime.value) {
+  writerFlags |= WriterFlags.Runtime;
+}
+if (Shumway.AVM2.Runtime.traceExecution.value) {
+  writerFlags |= WriterFlags.Execution;
+}
+if (Shumway.AVM2.Runtime.traceInterpreter.value) {
+  writerFlags |= WriterFlags.Interpreter;
+}
+Shumway.AVMX.setWriters(writerFlags);
+
 var BinaryFileReader = Shumway.BinaryFileReader;
 
 function timeAllocation(C, count) {
