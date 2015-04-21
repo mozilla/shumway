@@ -236,7 +236,6 @@ module Shumway.AVMX.AS.flash.display {
       this._contentLoaderInfo = new loaderInfoCtor(loaderInfoCtor.axClass.CtorToken);
       this._contentLoaderInfo._loader = this;
 
-      // REDUX:
       var currentAbc = AVMX.getCurrentABC();
       if (currentAbc) {
         this._contentLoaderInfo._loaderUrl = currentAbc.env.url;
