@@ -110,6 +110,9 @@ module Shumway.GFX.Canvas2D {
      * To support multiple filters, we need to group them in SVG nodes.
      */
     static _applyFilters(ratio: number, context: CanvasRenderingContext2D, filters: Filter []) {
+      if (!Filters._svgFiltersAreSupported || !Array.isArray(filters)) {
+        return;
+      }
       Filters._prepareSVGFilters();
       Filters._removeFilters(context);
       var scale = ratio;
@@ -278,7 +281,8 @@ module Shumway.GFX.Canvas2D {
       }
     }
 
-    public draw(source: Canvas2DSurfaceRegion, x: number, y: number, w: number, h: number, blendMode: BlendMode) {
+    public draw(source: Canvas2DSurfaceRegion, x: number, y: number, w: number, h: number,
+                blendMode: BlendMode, filters: Filter [], devicePixelRatio: number) {
       this.context.setTransform(1, 0, 0, 1, 0, 0);
       var sourceCanvas, sx = 0, sy = 0;
       // Handle copying from and to the same canvas.
@@ -308,9 +312,10 @@ module Shumway.GFX.Canvas2D {
         this.context.clip();
       }
       this.context.globalCompositeOperation = getCompositeOperation(blendMode);
+      Filters._applyFilters(devicePixelRatio, this.context, filters);
       this.context.drawImage(sourceCanvas, sx, sy, w, h, x, y, w, h);
       this.context.globalCompositeOperation = getCompositeOperation(BlendMode.Normal);
-
+      Filters._removeFilters(this.context);
       if (clip) {
         this.context.restore();
       }
