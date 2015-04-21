@@ -157,7 +157,7 @@ module Shumway {
             if (prevTextRun && prevTextRun.textFormat.equals(textFormat)) {
               prevTextRun.endIndex = endIndex;
             } else {
-              prevTextRun = new flash.text.TextRun(beginIndex, endIndex, textFormat);
+              prevTextRun = new this.sec.flash.text.TextRun(beginIndex, endIndex, textFormat);
               textRuns.push(prevTextRun);
             }
             beginIndex = endIndex;
@@ -341,7 +341,7 @@ module Shumway {
       this._plainText = value;
       this.textRuns.length = 0;
       if (value) {
-        var textRun = new flash.text.TextRun(0, value.length, this.defaultTextFormat);
+        var textRun = new this.sec.flash.text.TextRun(0, value.length, this.defaultTextFormat);
         this.textRuns[0] = textRun;
       }
       this._serializeTextRuns();
@@ -506,7 +506,8 @@ module Shumway {
         format = this.defaultTextFormat;
       }
       var plainText = this._plainText;
-      var newRun = new flash.text.TextRun(plainText.length, plainText.length + newText.length, format);
+      var newRun = new this.sec.flash.text.TextRun(plainText.length,
+                                                   plainText.length + newText.length, format);
       this._plainText = plainText + newText;
       this.textRuns.push(newRun);
       this._writeTextRun(newRun);
@@ -526,7 +527,7 @@ module Shumway {
         run.endIndex += shift;
       }
       textRuns.unshift(
-        new flash.text.TextRun(0, shift, format)
+        new this.sec.flash.text.TextRun(0, shift, format)
       );
       this._serializeTextRuns();
     }
@@ -607,7 +608,7 @@ module Shumway {
             // If a a text format was passed, a new run needs to be inserted.
             if (format) {
               newTextRuns.push(
-                new flash.text.TextRun(beginIndex, newEndIndex, newFormat)
+                new this.sec.flash.text.TextRun(beginIndex, newEndIndex, newFormat)
               );
               run.beginIndex = newEndIndex;
             } else {

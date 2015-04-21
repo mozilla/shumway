@@ -70,6 +70,7 @@ interface ISecurityDomain {
       StaticText: typeof flashPackage.text.StaticText;
       TextField: typeof flashPackage.text.TextField;
       TextFormat: typeof flashPackage.text.TextFormat;
+      TextRun: typeof flashPackage.text.TextRun;
       TextLineMetrics: typeof flashPackage.text.TextLineMetrics;
       Font: typeof flashPackage.text.Font;
     };
