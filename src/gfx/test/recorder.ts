@@ -208,52 +208,53 @@ module Shumway.GFX.Test {
   }
 
   function deserializeObj(source: DataBuffer) {
-    function deserialize() {
-      var type: MovieRecordObjectType = buffer.readByte();
-      switch(type) {
-        case MovieRecordObjectType.Undefined:
-          return undefined;
-        case MovieRecordObjectType.Null:
-          return null;
-        case MovieRecordObjectType.True:
-          return true;
-        case MovieRecordObjectType.False:
-          return false;
-        case MovieRecordObjectType.Number:
-          return buffer.readDouble();
-        case MovieRecordObjectType.String:
-          return buffer.readUTF();
-        case MovieRecordObjectType.Array:
-          var arr = [];
-          var length = buffer.readInt();
-          for (var i = 0; i < length; i++) {
-            arr[i] = deserialize();
-          }
-          return arr;
-        case MovieRecordObjectType.Object:
-          var obj = {};
-          var key;
-          while ((key = buffer.readUTF())) {
-            obj[key] = deserialize();
-          }
-          return obj;
-        case MovieRecordObjectType.ArrayBuffer:
-          return readUint8Array(buffer).buffer;
-        case MovieRecordObjectType.Uint8Array:
-          return readUint8Array(buffer);
-        case MovieRecordObjectType.PlainObjectDataBufferBE:
-        case MovieRecordObjectType.PlainObjectDataBufferLE:
-          var data = readUint8Array(buffer);
-          return new PlainObjectDataBuffer(data.buffer, data.length,
-            type === MovieRecordObjectType.PlainObjectDataBufferLE);
-        case MovieRecordObjectType.Int32Array:
-          return new Int32Array(readUint8Array(buffer).buffer);
-      }
-    }
     var buffer = new DataBuffer();
     var length = source.readInt();
     source.readBytes(buffer, 0, length);
-    return deserialize();
+    return deserializeObjImpl(buffer);
+  }
+
+  function deserializeObjImpl(buffer: DataBuffer) {
+    var type: MovieRecordObjectType = buffer.readByte();
+    switch(type) {
+      case MovieRecordObjectType.Undefined:
+        return undefined;
+      case MovieRecordObjectType.Null:
+        return null;
+      case MovieRecordObjectType.True:
+        return true;
+      case MovieRecordObjectType.False:
+        return false;
+      case MovieRecordObjectType.Number:
+        return buffer.readDouble();
+      case MovieRecordObjectType.String:
+        return buffer.readUTF();
+      case MovieRecordObjectType.Array:
+        var arr = [];
+        var length = buffer.readInt();
+        for (var i = 0; i < length; i++) {
+          arr[i] = deserializeObjImpl(buffer);
+        }
+        return arr;
+      case MovieRecordObjectType.Object:
+        var obj = {};
+        var key;
+        while ((key = buffer.readUTF())) {
+          obj[key] = deserializeObjImpl(buffer);
+        }
+        return obj;
+      case MovieRecordObjectType.ArrayBuffer:
+        return readUint8Array(buffer).buffer;
+      case MovieRecordObjectType.Uint8Array:
+        return readUint8Array(buffer);
+      case MovieRecordObjectType.PlainObjectDataBufferBE:
+      case MovieRecordObjectType.PlainObjectDataBufferLE:
+        var data = readUint8Array(buffer);
+        return new PlainObjectDataBuffer(data.buffer, data.length,
+                                         type === MovieRecordObjectType.PlainObjectDataBufferLE);
+      case MovieRecordObjectType.Int32Array:
+        return new Int32Array(readUint8Array(buffer).buffer);
+    }
   }
 
   export class MovieRecordParser {
