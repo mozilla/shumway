@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-var release = true;
-
 window.print = function(msg) {
   console.log(msg);
 };
