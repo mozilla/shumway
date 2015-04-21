@@ -688,33 +688,24 @@ module Shumway.AVMX.AS.flash.display {
      * and wrap the root timeline into it. This associates the AVM1Context with this AVM1
      * MovieClip tree, including potential nested SWFs.
      */
-    private _initAvm1Root(root: flash.display.DisplayObject) {
-      var avm1Context = this._contentLoaderInfo._avm1Context;
-      var as2Object = Shumway.AVM1.Lib.getAVM1Object(root, avm1Context);
-
+    private _initAvm1Root(root: flash.display.DisplayObject): flash.display.DisplayObject {
       // Only create an AVM1Movie container for the outermost AVM1 SWF. Nested AVM1 SWFs just get
       // their content added to the loading SWFs display list directly.
       if (this.loaderInfo && this.loaderInfo._avm1Context) {
-        as2Object.context = this.loaderInfo._avm1Context;
         return root;
       }
 
-      avm1Context.root = as2Object;
+      var avm1Context = this._contentLoaderInfo._avm1Context;
+
       root.addEventListener('frameConstructed',
                             avm1Context.flushPendingScripts.bind(avm1Context),
                             false,
                             Number.MAX_VALUE);
 
-      var avm1Movie = new this.sec.flash.display.AVM1Movie(<MovieClip>root);
-
-      // transfer parameters
       var parameters = this._contentLoaderInfo._parameters;
-      for (var paramName in parameters) {
-        if (!(paramName in as2Object)) { // not present yet
-          as2Object[paramName] = parameters[paramName];
-        }
-      }
+      avm1Context.setRoot(root, parameters);
 
+      var avm1Movie = new this.sec.flash.display.AVM1Movie(<MovieClip>root);
       return avm1Movie;
     }
   }

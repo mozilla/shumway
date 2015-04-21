@@ -187,8 +187,7 @@ module Shumway.AVMX.AS.flash.display {
       this._frames = symbol.frames;
       if (symbol.isAVM1Object) {
         if (symbol.frameScripts) {
-          var avm1MovieClip = Shumway.AVM1.Lib.getAVM1Object(this, symbol.avm1Context);
-          // avm1MovieClip.context = symbol.avm1Context; // REDUX
+          var avm1MovieClip = <Shumway.AVM1.Lib.AVM1MovieClip>Shumway.AVM1.Lib.getAVM1Object(this, symbol.avm1Context);
           var data = symbol.frameScripts;
           for (var i = 0; i < data.length; i += 2) {
             avm1MovieClip.addFrameScript(data[i], data[i + 1]);
@@ -244,12 +243,14 @@ module Shumway.AVMX.AS.flash.display {
         this._addSoundStreamBlock(frames.length, frameInfo.soundStreamBlock);
       }
       if (spriteSymbol.isAVM1Object) {
-        Shumway.AVM1.Lib.getAVM1Object(this, spriteSymbol.avm1Context).addFrameActionBlocks(frames.length - 1, frameInfo);
+        var avm1Context = spriteSymbol.avm1Context;
+        var avm1MovieClip = <Shumway.AVM1.Lib.AVM1MovieClip>Shumway.AVM1.Lib.getAVM1Object(this, avm1Context);
+        avm1MovieClip.addFrameActionBlocks(frames.length - 1, frameInfo);
         if (frameInfo.exports) {
           var exports = frameInfo.exports;
           for (var i = 0; i < exports.length; i++) {
             var asset = exports[i];
-            spriteSymbol.avm1Context.addAsset(asset.className, asset.symbolId, null);
+            avm1Context.addAsset(asset.className, asset.symbolId, null);
           }
         }
       }

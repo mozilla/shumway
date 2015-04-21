@@ -23,18 +23,21 @@ declare module Shumway.AVM1 {
   }
   export class AVM1Context {
     static create(loaderInfo: flash.display.LoaderInfo): AVM1Context;
-    addAsset(className: string, symbolId: number, symbolProps);
-    executeActions(actionsData: AVM1ActionsData, scopeObj);
-    flushPendingScripts();
+    addAsset(className: string, symbolId: number, symbolProps): void;
+    executeActions(actionsData: AVM1ActionsData, scopeObj): void;
+    flushPendingScripts(): void;
     setStage(stage: flash.display.Stage): void;
-
-    root: Lib.AVM1MovieClip;
-    sec: ISecurityDomain;
+    setRoot(stage: flash.display.DisplayObject, parameters: any): void;
+  }
+  export class AVM1Object {
   }
   export module Lib {
-    function getAVM1Object(obj, context: AVM1Context);
-    function initializeAVM1Object(as3Object, context: AVM1Context,
-                                  placeObjectTag: Shumway.SWF.PlaceObjectTag);
-    class AVM1MovieClip {}
+    function getAVM1Object(as3Object:flash.display.DisplayObject, context: AVM1Context): AVM1Object;
+    function initializeAVM1Object(as3Object: flash.display.DisplayObject, context: AVM1Context,
+                                  placeObjectTag: Shumway.SWF.PlaceObjectTag): void;
+    class AVM1MovieClip extends AVM1Object {
+      addFrameActionBlocks(frameIndex: number, frameData: any): void;
+      addFrameScript(frameIndex: number, actionsBlock: Uint8Array): void;
+    }
   }
 }

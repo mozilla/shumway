@@ -185,5 +185,16 @@ module Shumway.AVM1 {
       (<any>this.globals.Key)._bind(stage, this);
       (<any>this.globals.Mouse)._bind(stage, this);
     }
+
+    public setRoot(root: Shumway.AVMX.AS.flash.display.DisplayObject, parameters: any): any {
+      var as2Object = <AVM1MovieClip>Lib.getAVM1Object(root, this);
+      this.root = as2Object;
+      // transfer parameters
+      for (var paramName in parameters) {
+        if (!as2Object.alHasProperty(paramName)) {
+          as2Object.alPut(paramName, parameters[paramName]);
+        }
+      }
+    }
   }
 }
