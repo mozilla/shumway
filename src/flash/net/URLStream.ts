@@ -178,7 +178,9 @@ module Shumway.AVMX.AS.flash.net {
       return this._buffer.readUTFBytes(length);
     }
     close(): void {
-      this._session.close();
+      if (this._session) {
+        this._session.close();
+      }
     }
     readObject(): any {
       notImplemented("public flash.net.URLStream::readObject"); return;
