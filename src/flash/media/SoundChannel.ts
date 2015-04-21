@@ -161,16 +161,9 @@ module Shumway.AVMX.AS.flash.media {
 
   export class SoundChannel extends flash.events.EventDispatcher implements ISoundSource {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
 
     _symbol: SoundChannel;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
     
     constructor () {
       super();
@@ -180,7 +173,7 @@ module Shumway.AVMX.AS.flash.media {
       this._leftPeak = 0;
       this._rightPeak = 0;
       this._pcmData = null;
-      this._soundTransform = new flash.media.SoundTransform();
+      this._soundTransform = new this.sec.flash.media.SoundTransform();
       this._playing = false;
       this._element = null;
     }
