@@ -146,27 +146,32 @@ module Shumway.AVM1.Lib {
   }
 
   export function avm1HasEventProperty(context: AVM1Context, target: any, propertyName: string): boolean {
-    if (context.utils.hasProperty(target, propertyName)) {
+    if (target.alHasProperty(propertyName) &&
+        (target.alGet(propertyName) instanceof AVM1Function)) {
       return true;
     }
-    var _listeners = context.utils.getProperty(target, '_listeners');
-    if (!_listeners) {
+    var listenersField = target.alGet('_listeners');
+    if (!(listenersField instanceof Natives.AVM1ArrayNative)) {
       return false;
     }
-    return _listeners.some(function (listener) {
-      return context.utils.hasProperty(listener, propertyName);
+    var listeners: any[] = listenersField.value;
+    return listeners.some(function (listener) {
+      return (listener instanceof AVM1Object) && listener.alHasProperty(propertyName);
     });
   }
 
   export function avm1BroadcastEvent(context: AVM1Context, target: any, propertyName: string, args: any[] = null): void {
-    var handler: AVM1Function = context.utils.getProperty(target, propertyName);
+    var handler: AVM1Function = target.alGet(propertyName);
     if (handler instanceof AVM1Function) {
       handler.alCall(target, args);
     }
-    var _listeners = context.utils.getProperty(target, '_listeners');
+    var _listeners = target.alGet('_listeners');
     if (_listeners instanceof Natives.AVM1ArrayNative) {
       _listeners.value.forEach(function (listener) {
-        var handlerOnListener: AVM1Function = context.utils.getProperty(listener, propertyName);
+        if (!(listener instanceof AVM1Object)) {
+          return;
+        }
+        var handlerOnListener: AVM1Function = listener.alGet(propertyName);
         if (handlerOnListener instanceof AVM1Function) {
           handlerOnListener.alCall(target, args);
         }

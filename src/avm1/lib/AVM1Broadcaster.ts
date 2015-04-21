@@ -18,6 +18,7 @@
 
 module Shumway.AVM1.Lib {
   function _updateAllSymbolEvents(symbolInstance: IAVM1SymbolBase) {
+    // REDUX
     if (!symbolInstance.isAVM1Instance) {
       return;
     }
@@ -37,23 +38,34 @@ module Shumway.AVM1.Lib {
       obj.alSetOwnProperty('broadcastMessage', {
         flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
         value: new AVM1NativeFunction(context, function broadcastMessage(eventName: string, ...args): void {
+          var listenersField = this.alGet('_listeners');
+          if (!(listenersField instanceof Natives.AVM1ArrayNative)) {
+            return;
+          }
           avm1BroadcastEvent(context, this, eventName, args);
         })
       });
       obj.alSetOwnProperty('addListener', {
         flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-        value: new AVM1NativeFunction(context, function addListener(listener: any): void {
-          // REDUX
-          var listeners: any[] = context.utils.getProperty(this, '_listeners').value;
+        value: new AVM1NativeFunction(context, function addListener(listener: any): boolean {
+          var listenersField = this.alGet('_listeners');
+          if (!(listenersField instanceof Natives.AVM1ArrayNative)) {
+            return false;
+          }
+          var listeners: any[] = (<Natives.AVM1ArrayNative>listenersField).value;
           listeners.push(listener);
           _updateAllSymbolEvents(<any>this);
+          return true;
         })
       });
       obj.alSetOwnProperty('removeListener', {
         flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
         value: new AVM1NativeFunction(context, function removeListener(listener: any): boolean {
-          // REDUX
-          var listeners: any[] = context.utils.getProperty(this, '_listeners').value;
+          var listenersField = this.alGet('_listeners');
+          if (!(listenersField instanceof Natives.AVM1ArrayNative)) {
+            return false;
+          }
+          var listeners: any[] = (<Natives.AVM1ArrayNative>listenersField).value;
           var i = listeners.indexOf(listener);
           if (i < 0) {
             return false;
