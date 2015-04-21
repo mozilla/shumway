@@ -88,7 +88,7 @@ module Shumway.Player.Window {
       return message.result;
     }
 
-    registerFont(syncId: number, data: any): Promise<any> {
+    registerFont(syncId: number, data: Uint8Array): Promise<any> {
       var requestId = this._assetDecodingRequests.length;
       var result = new PromiseWrapper<any>();
       this._assetDecodingRequests[requestId] = result;
@@ -102,7 +102,8 @@ module Shumway.Player.Window {
       return result.promise;
     }
 
-    registerImage(syncId: number, symbolId: number, data: any): Promise<any> {
+    registerImage(syncId: number, symbolId: number, imageType: ImageType,
+                  data: Uint8Array): Promise<any> {
       var requestId = this._assetDecodingRequests.length;
       var result = new PromiseWrapper<any>();
       this._assetDecodingRequests[requestId] = result;
@@ -110,6 +111,7 @@ module Shumway.Player.Window {
         type: 'registerImage',
         syncId: syncId,
         symbolId: symbolId,
+        imageType: imageType,
         data: data,
         requestId: requestId
       };

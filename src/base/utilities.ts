@@ -3486,7 +3486,7 @@ module Shumway {
     export var instance: ISystemResourcesLoadingService;
   }
 
-  export function registerCSSFont(id: number, buffer: ArrayBuffer, forceFontInit: boolean) {
+  export function registerCSSFont(id: number, data: Uint8Array, forceFontInit: boolean) {
     if (!inBrowser) {
       Debug.warning('Cannot register CSS font outside the browser');
       return;
@@ -3495,7 +3495,7 @@ module Shumway {
     head.insertBefore(document.createElement('style'), head.firstChild);
     var style = <CSSStyleSheet>document.styleSheets[0];
     var rule = '@font-face{font-family:swffont' + id + ';src:url(data:font/opentype;base64,' +
-               Shumway.StringUtilities.base64ArrayBuffer(buffer) + ')' + '}';
+               Shumway.StringUtilities.base64ArrayBuffer(data.buffer) + ')' + '}';
     style.insertRule(rule, style.cssRules.length);
     // In at least Chrome, the browser only decodes a font once it's used in the page at all.
     // Because it still does so asynchronously, we create a with some text using the font, take

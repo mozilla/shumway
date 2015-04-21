@@ -177,18 +177,19 @@ module Shumway.GFX.Test {
       this._createRecord(MovieRecordType.Frame, null);
     }
 
-    public recordFont(syncId: number, data: any) {
+    public recordFont(syncId: number, data: Uint8Array) {
       var buffer = new DataBuffer();
       buffer.writeInt(syncId);
-      writeUint8Array(buffer, serializeObj(data));
+      writeUint8Array(buffer, data);
       this._createRecord(MovieRecordType.Font, buffer);
     }
 
-    public recordImage(syncId: number, symbolId: number, data: any) {
+    public recordImage(syncId: number, symbolId: number, imageType: ImageType, data: Uint8Array) {
       var buffer = new DataBuffer();
       buffer.writeInt(syncId);
       buffer.writeInt(symbolId);
-      writeUint8Array(buffer, serializeObj(data));
+      buffer.writeInt(imageType);
+      writeUint8Array(buffer, data);
       this._createRecord(MovieRecordType.Image, buffer);
     }
 
@@ -316,8 +317,9 @@ module Shumway.GFX.Test {
     public parseImage(): any {
       var syncId = this.currentData.readInt();
       var symbolId = this.currentData.readInt();
+      var imageType = this.currentData.readInt();
       var data = deserializeObj(this.currentData);
-      return {syncId: syncId, symbolId: symbolId, data: data};
+      return {syncId: syncId, symbolId: symbolId, imageType: imageType, data: data};
     }
 
     public dump() {

@@ -329,7 +329,8 @@ module Shumway.AVMX.AS.flash.display {
           }
           symbol = flash.display.BitmapSymbol.FromData(data, this);
           if (symbol.ready === false) {
-            this.sec.player.registerImage(<Timeline.EagerlyResolvedSymbol><any>symbol, data);
+            this.sec.player.registerImage(<Timeline.EagerlyResolvedSymbol><any>symbol,
+                                          data.dataType, data.data);
           }
           break;
         case 'label':
@@ -354,7 +355,7 @@ module Shumway.AVMX.AS.flash.display {
           symbol = flash.text.FontSymbol.FromData(data, this);
           var font = constructClassFromSymbol(symbol, symbol.symbolClass);
           if (symbol.ready === false) {
-            this.sec.player.registerFont(<Timeline.EagerlyResolvedSymbol><any>symbol, data);
+            this.sec.player.registerFont(<Timeline.EagerlyResolvedSymbol><any>symbol, data.data);
           }
           break;
         case 'sound':

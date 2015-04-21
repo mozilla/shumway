@@ -138,7 +138,7 @@ module Shumway.GFX.Test {
           e.handled = true;
           break;
         case 'registerImage':
-          this.processRegisterImage(data.syncId, data.symbolId, data.data,
+          this.processRegisterImage(data.syncId, data.symbolId, data.imageType, data.data,
                                     this._sendRegisterImageResponse.bind(this, data.requestId));
           e.handled = true;
           break;

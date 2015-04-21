@@ -123,7 +123,8 @@ module Shumway.GFX.Test {
           break;
         case MovieRecordType.Image:
           data = this._parser.parseImage();
-          this.processRegisterImage(data.syncId, data.symbolId, data.data, function () {});
+          this.processRegisterImage(data.syncId, data.symbolId, data.imageType, data.data,
+                                    function () {});
           break;
         case MovieRecordType.FSCommand:
           data = this._parser.parseFSCommand();
