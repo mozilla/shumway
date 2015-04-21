@@ -924,7 +924,7 @@ module Shumway.AVMX.AS.flash.text {
                                 loaderInfo: flash.display.LoaderInfo): void {
       var syncId = this.sec.flash.display.DisplayObject.axClass.getNextSyncID();
       var resolverProp = {
-        get: this.resolveEmbeddedFont.bind(Font, loaderInfo, fontMapping.id, syncId),
+        get: this.resolveEmbeddedFont.bind(this, loaderInfo, fontMapping.id, syncId),
         configurable: true
       };
       Object.defineProperty(this._fontsByName, fontMapping.name.toLowerCase() + fontMapping.style,
