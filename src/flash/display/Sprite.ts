@@ -291,11 +291,13 @@ module Shumway.AVMX.AS.flash.display {
         this._dragDeltaY = this.y - mousePosition.y;
       }
       this._dragBounds = bounds;
-      flash.ui.Mouse.draggableObject = this;
+      // TODO: Our mouse handling logic looks up draggableObject on stage.sec.flash.ui.Mouse.axClass
+      // to update its position. Could there be a case where stage.sec !== this.sec?
+      this.sec.flash.ui.Mouse.axClass.draggableObject = this;
     }
     stopDrag(): void {
-      if (flash.ui.Mouse.draggableObject === this) {
-        flash.ui.Mouse.draggableObject = null;
+      if (this.sec.flash.ui.Mouse.axClass.draggableObject === this) {
+        this.sec.flash.ui.Mouse.axClass.draggableObject = null;
         this._dragMode = DragMode.Inactive;
         this._dragDeltaX = 0;
         this._dragDeltaY = 0;
