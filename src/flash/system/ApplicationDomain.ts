@@ -41,8 +41,9 @@ module Shumway.AVMX.AS.flash.system {
 
     // This must return a new object each time.
     static get currentDomain(): flash.system.ApplicationDomain {
-      // REDUX
-      return new this.sec.flash.system.ApplicationDomain(this.sec.application);
+      var currentABC = getCurrentABC();
+      var app = currentABC ? currentABC.env.app : this.sec.application;
+      return new this.sec.flash.system.ApplicationDomain(app);
     }
 
     static get MIN_DOMAIN_MEMORY_LENGTH(): number /*uint*/ {
@@ -51,10 +52,10 @@ module Shumway.AVMX.AS.flash.system {
     }
 
     get parentDomain(): flash.system.ApplicationDomain {
-      if (this.axDomain.parent) {
-        return new this.sec.flash.system.ApplicationDomain(this.axDomain.parent);
-      }
-      return null;
+      var currentABC = getCurrentABC();
+      var app = currentABC ? currentABC.env.app : this.sec.application;
+      release || Debug.assert(app.parent !== undefined);
+      return new this.sec.flash.system.ApplicationDomain(app.parent);
     }
 
     get domainMemory(): flash.utils.ByteArray {
@@ -84,11 +85,10 @@ module Shumway.AVMX.AS.flash.system {
       name = axCoerceString(name);
       if (!name) {
         this.sec.throwError('TypeError', Errors.NullPointerError, 'definitionName');
-        return null;
       }
       var simpleName = name.replace("::", ".");
       var mn = Multiname.FromFQNString(simpleName, NamespaceType.Public);
-      var definition = this.axDomain.getProperty(mn, false, false);
+      return this.axDomain.getProperty(mn, false, false);
     }
 
     getQualifiedDefinitionNames(): GenericVector {

@@ -18,21 +18,16 @@ module Shumway.AVMX.AS.flash.system {
     
     static classInitializer: any = null;
 
-    static _currentDomain: SecurityDomain;
-    
     constructor () {
-      this.sec.throwError('ArgumentError', Errors.CantInstantiateError, 'SecurityDomain');
       super();
+      this.sec.throwError('ArgumentError', Errors.CantInstantiateError, 'SecurityDomain');
     }
 
-    // AS -> JS Bindings
     static get currentDomain(): flash.system.SecurityDomain {
-      // REDUX: properly implement this, now that we can
-      if (!this._currentDomain) {
-        this._currentDomain = Object.create(this.tPrototype);
-      }
-      Debug.somewhatImplemented("public flash.system.SecurityDomain::get currentDomain");
-      return this._currentDomain;
+      var currentABC = getCurrentABC();
+      var sec = currentABC ? currentABC.env.app.sec : this.sec;
+      // TODO: memoize the flash.system.SecurityDomain instance
+      return Object.create(sec.flash.system.SecurityDomain.axClass.tPrototype);
     }
   }
 }

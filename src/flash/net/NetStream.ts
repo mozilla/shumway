@@ -500,7 +500,6 @@ module Shumway.AVMX.AS.flash.net {
           flash.media.SoundMixer._unregisterSoundSource(this);
           break;
         case VideoPlaybackEvent.BufferFull:
-          debugger;
           this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS,
             false, false, this.sec.createObjectFromJS({code: "NetStream.Buffer.Full", level: "status"})));
           break;
