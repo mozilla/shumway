@@ -794,8 +794,8 @@ module Shumway.AVMX.AS.flash.text {
 
       this._id = symbol.syncId;
       this._fontName = symbol.name;
-      var Font = this.sec.flash.text.Font.axClass;
-      this._fontFamily = Font.resolveFontName(symbol.name);
+      var fontClass = this.sec.flash.text.Font.axClass;
+      this._fontFamily = fontClass.resolveFontName(symbol.name);
       if (symbol.bold) {
         if (symbol.italic) {
           this._fontStyle = FontStyle.BOLD_ITALIC;
@@ -819,7 +819,7 @@ module Shumway.AVMX.AS.flash.text {
       // Font symbols without any glyphs describe device fonts.
       this._fontType = metrics ? FontType.EMBEDDED : FontType.DEVICE;
 
-      var fontProp = Object.getOwnPropertyDescriptor(Font._fontsBySymbolId, symbol.syncId + '');
+      var fontProp = Object.getOwnPropertyDescriptor(fontClass._fontsBySymbolId, symbol.syncId + '');
       // Define mapping or replace lazy getter with value.
       if (!fontProp || !fontProp.value) {
         // Keeping resolverProp.configurable === true, some old movies might
@@ -828,10 +828,10 @@ module Shumway.AVMX.AS.flash.text {
           value: this,
           configurable: true
         };
-        Object.defineProperty(Font._fontsBySymbolId, symbol.syncId + '', resolverProp);
-        Object.defineProperty(Font._fontsByName, symbol.name.toLowerCase() + this._fontStyle, resolverProp);
+        Object.defineProperty(fontClass._fontsBySymbolId, symbol.id + '', resolverProp);
+        Object.defineProperty(fontClass._fontsByName, symbol.name.toLowerCase() + this._fontStyle, resolverProp);
         if (this._fontType === FontType.EMBEDDED) {
-          Object.defineProperty(Font._fontsByName, 'swffont' + symbol.syncId + this._fontStyle, resolverProp);
+          Object.defineProperty(fontClass._fontsByName, 'swffont' + symbol.syncId + this._fontStyle, resolverProp);
         }
       }
     }
@@ -911,7 +911,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     /**
-     * Registers an embedded font as available in the system.
+     * Registers a font symbol as available in the system.
      *
      * Firefox decodes fonts synchronously, allowing us to do the decoding upon first actual use.
      * All we need to do here is let the system know about the family name and ID, so that both
@@ -920,25 +920,28 @@ module Shumway.AVMX.AS.flash.text {
      *
      * For all other browsers, the decoding has been triggered by the Loader at this point.
      */
-    static registerEmbeddedFont(fontMapping: {name: string; style: string; id: number},
-                                loaderInfo: flash.display.LoaderInfo): void {
+    static registerFontSymbol(fontMapping: {name: string; style: string; id: number},
+                              loaderInfo: flash.display.LoaderInfo): void {
       var syncId = this.sec.flash.display.DisplayObject.axClass.getNextSyncID();
+      var key = fontMapping.name.toLowerCase() + fontMapping.style;
       var resolverProp = {
-        get: this.resolveEmbeddedFont.bind(this, loaderInfo, fontMapping.id, syncId),
+        get: this.resolveFontSymbol.bind(this, loaderInfo, fontMapping.id, syncId, key),
         configurable: true
       };
-      Object.defineProperty(this._fontsByName, fontMapping.name.toLowerCase() + fontMapping.style,
-                            resolverProp);
+      Object.defineProperty(this._fontsByName, key, resolverProp);
       Object.defineProperty(this._fontsByName, 'swffont' + syncId + fontMapping.style,
                             resolverProp);
       Object.defineProperty(this._fontsBySymbolId, syncId + '', resolverProp);
     }
 
-    static resolveEmbeddedFont(loaderInfo: flash.display.LoaderInfo, id: number, syncId: number) {
+    static resolveFontSymbol(loaderInfo: flash.display.LoaderInfo, id: number, syncId: number,
+                             key: string) {
       // Force font resolution and installation in _fontsByName and _fontsBySymbolId.
       var symbol = <FontSymbol>loaderInfo.getSymbolById(id);
       symbol.syncId = syncId;
-      return this._fontsBySymbolId[id];
+      release || assert('value' in Object.getOwnPropertyDescriptor(this._fontsBySymbolId, id + ''));
+      release || assert('value' in Object.getOwnPropertyDescriptor(this._fontsByName, key));
+      return this._fontsByName[key];
     }
 
     get fontName(): string {
