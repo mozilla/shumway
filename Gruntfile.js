@@ -264,6 +264,18 @@ module.exports = function(grunt) {
       ats_parsetest: {
         cmd: "parallel --will-cite node run.js --task parse ::: 0 1 2 3 4 5 6 7 8 9 a b c d e f",
         cwd: "test/ats"
+      },
+      restartless: {
+        cmd: 'ln -fs ../../../examples/inspector/debug/pingpong.js chrome/pingpong.js;' +
+          'ln -fs ../../../src/gfx content/gfx;' +
+          'ln -fs ../../../build/playerglobal content/playerglobal;' +
+          'ln -fs ../../../build/libs content/libs;' +
+          'ln -fs ../../../build/bundles/shumway.gfx.js content/shumway.gfx.js;' +
+          'ln -fs ../../../build/bundles/shumway.player.js content/shumway.player.js;' +
+          'ln -fs ../../../build/version/version.txt content/version.txt;' +
+          'OUT=' + (grunt.option('profile') || '').replace(/ /g, '\\ ') + '/extensions/shumway@research.mozilla.org;' +
+          'rm -r "$OUT" 2>/dev/null; pwd > "$OUT"',
+        cwd: "extension/firefox"
       }
     },
     parallel: {
