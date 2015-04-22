@@ -722,8 +722,11 @@ module Shumway.AVMX.AS.flash.text {
       notImplemented("public flash.text.TextField::getLineOffset"); return;
     }
     getLineText(lineIndex: number /*int*/): string {
-      lineIndex = lineIndex | 0;
-      notImplemented("public flash.text.TextField::getLineText"); return;
+      var lines = this._textContent.plainText.split('\n');
+      if (lineIndex < 0 || lineIndex >= lines.length) {
+        this.sec.throwError('RangeError', Errors.ParamRangeError);
+      }
+      return lines[lineIndex];
     }
     getParagraphLength(charIndex: number /*int*/): number /*int*/ {
       charIndex = charIndex | 0;
