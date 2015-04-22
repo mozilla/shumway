@@ -74,6 +74,9 @@ module Shumway.Shell
             self.onopen,
             self.onclose,
             self.onhttpstatus);
+        },
+        close: function () {
+          // doing nothing in the shell
         }
       };
     },

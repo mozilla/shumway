@@ -39,7 +39,7 @@ module Shumway.AVMX.AS.flash.net {
 
     private _buffer: utils.ByteArray;
     private _writePosition: number;
-    private _session;
+    private _session: FileLoadingSession;
 
     private _connected: boolean;
     // _diskCacheEnabled: boolean;

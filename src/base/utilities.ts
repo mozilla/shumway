@@ -3459,6 +3459,7 @@ module Shumway {
     onhttpstatus?: (location: string, httpStatus: number, httpHeaders: any) => void;
     onerror?: (e) => void;
     open(request: FileLoadingRequest);
+    close: () => void;
   }
 
   export interface IFileLoadingService {
