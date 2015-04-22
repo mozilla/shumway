@@ -27,13 +27,19 @@ module Shumway.AVM1.Lib {
     }
 
     public static getAvailable(context: AVM1Context): boolean {
-      return context.sec.flash.external.ExternalInterface.available;
+      return context.sec.flash.external.ExternalInterface.axClass.available;
     }
 
-    public static addCallback(context: AVM1Context, methodName: string, instance: any, method: Function): boolean {
+    public static addCallback(context: AVM1Context, methodName: string, instance: any, method: AVM1Function): boolean {
+      methodName = alCoerceString(context, methodName);
+      if (!alIsFunction(method)) {
+        return false;
+      }
       try {
-        context.sec.flash.external.ExternalInterface.addCallback(methodName, function () {
-          return method.apply(instance, arguments);
+        context.sec.flash.external.ExternalInterface.axClass.addCallback(methodName, function () {
+          var args = Array.prototype.slice.call(arguments, 0);
+          var result = context.executeFunction(method, instance, args);
+          return result;
         });
         return true;
       } catch (e) {
@@ -41,9 +47,16 @@ module Shumway.AVM1.Lib {
       return false;
     }
 
-    public static call(context: AVM1Context, methodName: string): any {
-      var args = Array.prototype.slice.call(arguments, 0);
-      return context.sec.flash.external.ExternalInterface.call(args);
+    public static call(context: AVM1Context, methodName: string, ...parameters: any[]): any {
+      var args = [alCoerceString(context, methodName)];
+      for (var i = 0; i < parameters.length; i++) {
+        // TODO convert AVM1 objects to AVM2
+        args.push(parameters[i]);
+      }
+      var result = context.sec.flash.external.ExternalInterface.axClass.call.apply(
+        context.sec.flash.external.ExternalInterface.axClass, args);
+      // TODO convert AVM2 result to AVM1
+      return result;
     }
   }
 }

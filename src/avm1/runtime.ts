@@ -379,10 +379,12 @@ module Shumway.AVM1 {
      * Wraps the function to the callable JavaScript function.
      * @returns {Function} a JavaScript function.
      */
-    public toJSFunction(): Function {
+    public toJSFunction(thisArg: AVM1Object = null): Function {
       var fn = this;
+      var context = this.context;
       return function () {
-        return fn.alCall(null, Array.prototype.slice.call(arguments, 0));
+        var args = Array.prototype.slice.call(arguments, 0);
+        return context.executeFunction(fn, thisArg, args);
       };
     }
   }

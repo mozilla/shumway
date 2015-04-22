@@ -832,7 +832,12 @@ module Shumway.AVM1.Natives {
       if (!alIsFunction(comparefn)) {
         arr.sort();
       } else {
-        arr.sort(<any>comparefn.toJSFunction());
+        var args = [undefined, undefined];
+        arr.sort(function (a, b) {
+          args[0] = a;
+          args[1] = b;
+          return comparefn.alCall(null, args);
+        });
       }
       return this;
     }

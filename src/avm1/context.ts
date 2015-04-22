@@ -101,6 +101,7 @@ module Shumway.AVM1 {
     public checkTimeout() {}
 
     public executeActions(actionsData: AVM1ActionsData, scopeObj): void {}
+    public executeFunction(fn: AVM1Function, thisArg, args: any): any {}
 
     private _getEventPropertyObservers(propertyName: string, create: boolean): IAVM1EventPropertyObserver[] {
       if (!this.isPropertyCaseSensitive) {

@@ -120,7 +120,7 @@ module Shumway.AVM1.Lib {
       if (!listener) {
         listener = function avm1EventHandler() {
           var args = event.argsConverter ? event.argsConverter.apply(null, arguments) : null;
-          avm1BroadcastEvent(this.context, this, propertyName, args);
+          avm1BroadcastNativeEvent(this.context, this, propertyName, args);
         }.bind(this);
         this.as3Object.addEventListener(event.eventName, listener);
         event.onBind(this);
@@ -158,6 +158,25 @@ module Shumway.AVM1.Lib {
     return listeners.some(function (listener) {
       return (listener instanceof AVM1Object) && listener.alHasProperty(propertyName);
     });
+  }
+
+  function avm1BroadcastNativeEvent(context: AVM1Context, target: any, propertyName: string, args: any[] = null): void {
+    var handler: AVM1Function = target.alGet(propertyName);
+    if (handler instanceof AVM1Function) {
+      context.executeFunction(handler, target, args);
+    }
+    var _listeners = target.alGet('_listeners');
+    if (_listeners instanceof Natives.AVM1ArrayNative) {
+      _listeners.value.forEach(function (listener) {
+        if (!(listener instanceof AVM1Object)) {
+          return;
+        }
+        var handlerOnListener: AVM1Function = listener.alGet(propertyName);
+        if (handlerOnListener instanceof AVM1Function) {
+          context.executeFunction(handlerOnListener, target, args);
+        }
+      });
+    }
   }
 
   export function avm1BroadcastEvent(context: AVM1Context, target: any, propertyName: string, args: any[] = null): void {

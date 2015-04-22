@@ -272,6 +272,8 @@ declare module Shumway.AVMX.AS.flash {
   }
   module external {
     class ExternalInterface {
+      static axClass: typeof ExternalInterface;
+
       static available: boolean;
       static addCallback(methodName: string, callback: Function);
       static call: Function;

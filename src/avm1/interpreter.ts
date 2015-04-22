@@ -273,11 +273,37 @@ module Shumway.AVM1 {
       } catch (e) {
         caughtError = e;
       }
-      this.isActive = false;
+      this.isActive = savedIsActive;
       if (caughtError) {
         // Note: this doesn't use `finally` because that's a no-go for performance.
         throw caughtError;
       }
+    }
+    public executeFunction(fn: AVM1Function, thisArg, args: any[]): any {
+      if (this.executionProhibited) {
+        return; // no more avm1 for this context
+      }
+
+      var savedIsActive = this.isActive;
+      if (!savedIsActive) {
+        this.isActive = true;
+        this.abortExecutionAt = avm1TimeoutDisabled.value ?
+          Number.MAX_VALUE : Date.now() + MAX_AVM1_HANG_TIMEOUT;
+        this.errorsIgnored = 0;
+      }
+      var caughtError;
+      var result;
+      try {
+        result = fn.alCall(thisArg, args);
+      } catch (e) {
+        caughtError = e;
+      }
+      this.isActive = savedIsActive;
+      if (caughtError) {
+        // Note: this doesn't use `finally` because that's a no-go for performance.
+        throw caughtError;
+      }
+      return result;
     }
   }
 

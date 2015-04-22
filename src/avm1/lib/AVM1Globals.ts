@@ -111,6 +111,7 @@ module Shumway.AVM1.Lib {
       if (arguments.length < 2) {
         return undefined;
       }
+      var context = this.context;
       var args: any[] = [];
       if (alIsFunction(arguments[0])) {
         var fn: AVM1Function = arguments[0];
@@ -120,20 +121,24 @@ module Shumway.AVM1.Lib {
           return undefined;
         }
         var obj: any = arguments[0];
-        var funName: any = arguments[1];
-        if (!(obj && typeof obj === 'object' && typeof funName === 'string')) {
+        var funName: string = arguments[1];
+        if (!(obj instanceof AVM1Object) || typeof funName !== 'string') {
           return undefined;
         }
         args.push(function () {
-          // TODO add AVM1 property resolution (and case ignore)
-          alCallProperty(obj, funName, Array.prototype.slice.call(arguments, 0));
+          var fn: AVM1Function = obj.alGet(funName);
+          if (!alIsFunction(fn)) {
+            return;
+          }
+          var args = Array.prototype.slice.call(arguments, 0);
+          context.executeFunction(fn, obj, args);
         });
       }
       for (var i = 2; i < arguments.length; i++) {
         args.push(arguments[i]);
       }
       // Unconditionally coerce interval to int, as one would do.
-      args[1] = alToInteger(this.context, args[1]);
+      args[1] = alToInteger(context, args[1]);
       var internalId = setInterval.apply(null, args);
       return _internalTimeouts.push(internalId);
     }
