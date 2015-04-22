@@ -803,6 +803,9 @@ module Shumway.AVMX {
           case Bytecode.DEBUGFILE:
             u30();
             break;
+          case Bytecode.NOP:
+          case Bytecode.BKPT:
+            break;
           default:
             Debug.notImplemented(Bytecode[bc]);
         }
