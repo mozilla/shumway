@@ -61,6 +61,11 @@ module Shumway.Timeline {
           var symbolClass = app.getClass(AVMX.Multiname.FromFQNString(data.className,
                                                                       AVMX.NamespaceType.Public));
           this.symbolClass = <ASClass><any>symbolClass;
+          // The symbolClass should have received a lazy symbol resolver in Loader#_applyLoadUpdate.
+          release || assert(symbolClass.tPrototype.hasOwnProperty('_symbol'));
+          // Replace it by this symbol without triggering the resolver and causing an infinite
+          // recursion.
+          Object.defineProperty(symbolClass.tPrototype, '_symbol', {value: this});
         } catch (e) {
           warning ("Symbol " + data.id + " bound to non-existing class " + data.className);
           this.symbolClass = symbolDefaultClass;
