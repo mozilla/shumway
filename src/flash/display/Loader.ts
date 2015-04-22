@@ -535,7 +535,7 @@ module Shumway.AVMX.AS.flash.display {
           for (var i = loaderInfo._mappedSymbolsLoaded; i < mappedSymbolsLoaded; i++) {
             var symbolMapping = file.symbolClassesList[i];
             var symbolClass = app.getClass(Multiname.FromFQNString(symbolMapping.className,
-                                                                      NamespaceType.Public));
+                                                                   NamespaceType.Public));
             Object.defineProperty(symbolClass.tPrototype, "_symbol",
                                   {get: loaderInfo.getSymbolResolver(symbolClass, symbolMapping.id),
                                    configurable: true});
