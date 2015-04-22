@@ -210,6 +210,7 @@ module Shumway.AVMX.AS {
   M("flash.text.StyleSheet", flash.text.StyleSheet);
   M("flash.text.TextFormat", flash.text.TextFormat);
   M("flash.text.TextRun", flash.text.TextRun);
+  M("flash.text.TextSnapshot", flash.text.TextSnapshot);
   M("flash.text.TextLineMetrics", flash.text.TextLineMetrics);
 
   M("flash.media.Sound", flash.media.Sound);
