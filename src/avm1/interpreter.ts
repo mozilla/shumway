@@ -568,17 +568,14 @@ module Shumway.AVM1 {
   }
 
   // TODO Registers are shared across all AVM1Contents -- improve that.
-  var cachedRegisters = [];
+  var cachedRegisters: any[][] = [];
   var MAX_CACHED_REGISTERS = 10;
-  function createRegisters(registersLength: number) {
-    if (cachedRegisters.length > 0) {
-      return cachedRegisters.pop();
-    }
-    var registers = [];
+  function createRegisters(registersLength: number): any[] {
+    var registers: any[] = cachedRegisters.length > 0 ? cachedRegisters.pop() : [];
     registers.length = registersLength;
     return registers;
   }
-  function disposeRegisters(registers) {
+  function disposeRegisters(registers: any[]): void {
     if (cachedRegisters.length > MAX_CACHED_REGISTERS) {
       return;
     }
