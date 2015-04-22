@@ -108,6 +108,10 @@ module Shumway.AVMX.AS.flash.media {
     static instanceSymbols: string [] = null; // ["load"];
     
     constructor (stream?: flash.net.URLRequest, context?: flash.media.SoundLoaderContext) {
+      if (this._symbol) {
+        this.applySymbol();
+      }
+
       super();
 
       Telemetry.instance.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.SOUND_FEATURE});
