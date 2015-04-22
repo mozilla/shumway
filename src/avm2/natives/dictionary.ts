@@ -116,6 +116,17 @@ module Shumway.AVMX.AS {
         return true;
       }
 
+      axGetPublicProperty(nm: any): any {
+        if (<any>this === this.axClass.dPrototype) {
+          return super.axGetPublicProperty(nm);
+        }
+        var key = Dictionary.makePrimitiveKey(nm);
+        if (key !== undefined) {
+          return this.primitiveMap[<any>key];
+        }
+        return this.map.get(Object(nm));
+      }
+
       public axGetEnumerableKeys(): any [] {
         if (<any>this === this.axClass.dPrototype) {
           return super.axGetEnumerableKeys();
