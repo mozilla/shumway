@@ -21,8 +21,6 @@ module Shumway.AVM2.AS.flash.media {
   import Telemetry = Shumway.Telemetry;
   import Multiname = Shumway.AVM2.ABC.Multiname;
 
-  var PLAY_USING_AUDIO_TAG = true;
-
   declare var Blob;
   declare var URL;
   declare var decodeMP3;
@@ -62,7 +60,7 @@ module Shumway.AVM2.AS.flash.media {
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Sound) {
+    static initializer: any = function (symbol: SoundSymbol) {
       this._playQueue = [];
       this._url = null;
       this._length = 0;
@@ -72,27 +70,25 @@ module Shumway.AVM2.AS.flash.media {
 
       Telemetry.instance.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.SOUND_FEATURE});
 
-      //if (symbol1) {
-      //  notImplemented("public flash.media.Sound::initializer");
-      //  var symbol:any = symbol1;
-      //  var soundData = new SoundData();
-      //  if (symbol.pcm) {
-      //    soundData.sampleRate = symbol.sampleRate;
-      //    soundData.channels = symbol.channels;
-      //    soundData.pcm = symbol.pcm;
-      //    soundData.end = symbol.pcm.length;
-      //  }
-      //  soundData.completed = true;
-      //  if (symbol.packaged) {
-      //    soundData.data = symbol.packaged.data.buffer;
-      //    soundData.mimeType = symbol.packaged.mimeType;
-      //  }
-      //  var _this = this;
-      //  getAudioDescription(soundData, function (description) {
-      //    _this._length = description.duration;
-      //  });
-      //  this._soundData = soundData;
-      //}
+      if (symbol) {
+        var soundData = new SoundData();
+        soundData.sampleRate = symbol.sampleRate;
+        soundData.channels = symbol.channels;
+        soundData.completed = true;
+        if (symbol.pcm) {
+          soundData.pcm = symbol.pcm;
+          soundData.end = symbol.pcm.length;
+        }
+        if (symbol.packaged) {
+          soundData.data = symbol.packaged.data.buffer;
+          soundData.mimeType = symbol.packaged.mimeType;
+        }
+        var self = this;
+        getAudioDescription(soundData, function (description) {
+          self._length = description.duration;
+        });
+        this._soundData = soundData;
+      }
     };
     
     // List of static symbols to link.
@@ -101,41 +97,38 @@ module Shumway.AVM2.AS.flash.media {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["load"];
     
-    constructor (stream: flash.net.URLRequest = null, context: flash.media.SoundLoaderContext = null) {
+    constructor (stream?: flash.net.URLRequest, context?: flash.media.SoundLoaderContext) {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.media.Sound");
+      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      this._isURLInaccessible = false;
+      this._isBuffering = false;
+      this.load(stream, context);
     }
 
     private _playQueue: any[];
     private _soundData: SoundData;
     private _stream: flash.net.URLStream;
-
-    // JS -> AS Bindings
-    
-    load: (stream: flash.net.URLRequest, context?: flash.media.SoundLoaderContext) => void;
-    
-    // AS -> JS Bindings
-    
     private _url: string;
-    // _isURLInaccessible: boolean;
+    _isURLInaccessible: boolean;
     private _length: number;
-    // _isBuffering: boolean;
+    _isBuffering: boolean;
     private _bytesLoaded: number /*uint*/;
     private _bytesTotal: number /*int*/;
     private _id3: ID3Info;
+
     get url(): string {
       return this._url;
     }
     get isURLInaccessible(): boolean {
-      notImplemented("public flash.media.Sound::get isURLInaccessible"); return;
-      // return this._isURLInaccessible;
+      somewhatImplemented("public flash.media.Sound::get isURLInaccessible");
+      return this._isURLInaccessible;
     }
     get length(): number {
       return this._length;
     }
     get isBuffering(): boolean {
-      notImplemented("public flash.media.Sound::get isBuffering"); return;
-      // return this._isBuffering;
+      somewhatImplemented("public flash.media.Sound::get isBuffering");
+      return this._isBuffering;
     }
     get bytesLoaded(): number /*uint*/ {
       return this._bytesLoaded;
@@ -164,9 +157,24 @@ module Shumway.AVM2.AS.flash.media {
         channel: channel,
         startTime: startTime
       });
+      if (disableAudioOption.value) {
+        return channel;
+      }
       if (this._soundData) {
-        if (PLAY_USING_AUDIO_TAG) {
+        if (!webAudioOption.value && !webAudioMP3Option.value) {
           channel._playSoundDataViaAudio(this._soundData, startTime, loops);
+        } else if (!this._soundData.pcm) {
+          if (this._soundData.mimeType === 'audio/mpeg' && webAudioMP3Option.value) {
+            SWF.MP3DecoderSession.processAll(new Uint8Array(this._soundData.data)).then(function (result) {
+              this._soundData.pcm = result.data;
+              this._soundData.end = result.data.length;
+              channel._playSoundDataViaChannel(this._soundData, startTime, loops);
+            }.bind(this), function (reason) {
+              console.warn('Unable to decode MP3 data: ' + reason);
+            });
+          } else {
+            console.warn('Unable to decode packaged sound data of type: ' + this._soundData.mimeType);
+          }
         } else {
           channel._playSoundDataViaChannel(this._soundData, startTime, loops);
         }
@@ -180,16 +188,19 @@ module Shumway.AVM2.AS.flash.media {
       target = target; length = +length; startPosition = +startPosition;
       notImplemented("public flash.media.Sound::extract"); return;
     }
-    _load(request: flash.net.URLRequest, checkPolicyFile: boolean, bufferTime: number): void {
-      checkPolicyFile = !!checkPolicyFile; bufferTime = +bufferTime;
+    load(request: flash.net.URLRequest, context?: SoundLoaderContext): void {
       if (!request) {
         return;
       }
+
+      var checkPolicyFile: boolean = context ? context.checkPolicyFile : false;
+      var bufferTime: number = context ? context.bufferTime : 1000;
 
       var _this = this;
       var stream = this._stream = new flash.net.URLStream();
       var data = new flash.utils.ByteArray();
       var dataPosition = 0;
+      var playUsingWebAudio = webAudioOption.value;
       var mp3DecodingSession = null;
       var soundData = new SoundData();
       soundData.completed = false;
@@ -198,7 +209,7 @@ module Shumway.AVM2.AS.flash.media {
         _this._bytesLoaded = event[Multiname.getPublicQualifiedName("bytesLoaded")];
         _this._bytesTotal = event[Multiname.getPublicQualifiedName("bytesTotal")];
 
-        if (!PLAY_USING_AUDIO_TAG && !mp3DecodingSession) {
+        if (playUsingWebAudio && !mp3DecodingSession) {
           // initialize MP3 decoding
           mp3DecodingSession = decodeMP3(soundData, function (duration, final) {
             if (_this._length === 0) {
@@ -231,7 +242,7 @@ module Shumway.AVM2.AS.flash.media {
         soundData.mimeType = 'audio/mpeg';
         soundData.completed = true;
 
-        if (PLAY_USING_AUDIO_TAG) {
+        if (!playUsingWebAudio) {
           _this._soundData = soundData;
 
           getAudioDescription(soundData, function (description) {
@@ -249,6 +260,26 @@ module Shumway.AVM2.AS.flash.media {
       });
 
       stream.load(request);
+    }
+  }
+
+  export class SoundSymbol extends Timeline.Symbol {
+    channels: number;
+    sampleRate: number;
+    pcm: Float32Array;
+    packaged;
+
+    constructor(data: Timeline.SymbolData) {
+      super(data, flash.media.Sound);
+    }
+
+    static FromData(data: any): SoundSymbol {
+      var symbol = new SoundSymbol(data);
+      symbol.channels = data.channels;
+      symbol.sampleRate = data.sampleRate;
+      symbol.pcm = data.pcm;
+      symbol.packaged = data.packaged;
+      return symbol;
     }
   }
 }

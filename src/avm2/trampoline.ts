@@ -19,6 +19,7 @@ module Shumway.AVM2.Runtime {
   import Multiname = Shumway.AVM2.ABC.Multiname;
   import Namespace = Shumway.AVM2.ABC.Namespace;
   import ClassInfo = Shumway.AVM2.ABC.ClassInfo;
+  import MethodInfo = Shumway.AVM2.ABC.MethodInfo;
   import InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
   import Trait = Shumway.AVM2.ABC.Trait;
   import IndentingWriter = Shumway.IndentingWriter;
@@ -30,8 +31,6 @@ module Shumway.AVM2.Runtime {
   import defineReadOnlyProperty = Shumway.ObjectUtilities.defineReadOnlyProperty;
 
   import bindSafely = Shumway.FunctionUtilities.bindSafely;
-
-  declare var callWriter: IndentingWriter;
 
   var counter = Shumway.Metrics.Counter.instance;
 
@@ -50,7 +49,7 @@ module Shumway.AVM2.Runtime {
     return key;
   }
 
-  export function checkMethodOverrides(methodInfo) {
+  export function checkMethodOverrides(methodInfo: MethodInfo) {
     if (methodInfo.name) {
       var key = getMethodOverrideKey(methodInfo);
       if (key in VM_METHOD_OVERRIDES) {
@@ -58,6 +57,51 @@ module Shumway.AVM2.Runtime {
         return VM_METHOD_OVERRIDES[key];
       }
     }
+  }
+
+  var patterns = [
+    [208, 48, 71],
+    [208, 48, 208, 73, 0, 71]
+  ];
+
+  /**
+   * Checks for common method patterns.
+   */
+  export function checkCommonMethodPatterns(methodInfo: MethodInfo) {
+    var code = methodInfo.code;
+    if (!code) {
+      return null;
+    }
+    // All common patterns start with the same two bytes.
+    if (code[0] !== 208 || code[1] !== 48) {
+      return null;
+    }
+    if (code[2] === 71) { // Pattern 1.
+      return function () {
+        // 1     getlocal0
+        // 2     pushscope
+        // 3     returnvoid
+      };
+    }
+    if (methodInfo.holder instanceof InstanceInfo) {
+      if (code[2] === 208 && code[3] === 73 && code[4] === 0 && code[5] === 71) {
+        var instanceInfo = <InstanceInfo>methodInfo.holder;
+        if (Multiname.getQualifiedName(instanceInfo.superName) === Multiname.Object) {
+          return function () {
+            // 1     getlocal0
+            // 2     pushscope
+            // 3     getlocal0
+            // 4     constructsuper      argCount:0
+            // 6     returnvoid
+          };
+        }
+      }
+    } else if (code.length < 10) {
+      // TODO: Add more here as needed.
+      // methodInfo.trace(new IndentingWriter());
+      // console.info(Array.prototype.join.call(methodInfo.code, ", "));
+    }
+    return null;
   }
 
   /*
@@ -93,10 +137,10 @@ module Shumway.AVM2.Runtime {
    * as well, but under a different name |m'|. Whenever we want to avoid creating a method closure, we just
    * access the |m'| property on the object. The expression |a.m()| is compiled by Shumway to |a.m'()|.
    *
-   * Memoizers are installed whenever traits are applied which happens when a class is created. At this point
-   * we don't actually have the function |m| available, it hasn't been compiled yet. We only want to compile the
-   * code that is executed and thus we defer compilation until |m| is actually called. To do this, we create a
-   * trampoline that compiles |m| before executing it.
+   * Memoizers are installed whenever traits are applied which happens when a class is created. For AS3-implemented
+   * traits, we don't actually have the function |m| available at this point; it hasn't been compiled yet.
+   * We only want to compile code that is executed and thus we defer compilation until |m| is actually called.
+   * To do this, we create a trampoline that compiles |m| before executing it.
    *
    * Tm = function trampoline() {
    *   return compile(m).apply(this, arguments);
@@ -129,12 +173,8 @@ module Shumway.AVM2.Runtime {
    *   }
    * }();
    *
-   * This doesn't guarantee that the trampoline won't be called again, an unpatched reference to the trampoline
-   * could have leaked somewhere.
-   *
-   * In fact, the memoizer first has to memoize the trampoline. When the trampoline is executed it needs to patch
-   * the memoizer so that the next time around it memoizes |Fm| instead of the trampoline. The trampoline also has
-   * to patch |m'| with |Fm|, as well as |m| on the instance with a bound |Fm|.
+   * To guarantee that no unpatched references to the trampoline leak, memoizers resolve the trampoline before
+   * memoizing the target function.
    *
    * Class inheritance further complicates this picture. Suppose we extend class |A| and call the |m| method on an
    * instance of |B|.
@@ -152,7 +192,7 @@ module Shumway.AVM2.Runtime {
    * the copied trampoline |Ta| which will patch |A.instance.prototype.m'| and not |m'| in |B|s instance prototype.
    *
    * To solve this we keep track of where trampolines are copied and then patching these locations. We store copy
-   * locations in the trampoline function object themselves.
+   * locations in the trampoline function objects themselves.
    *
    */
 
@@ -173,100 +213,77 @@ module Shumway.AVM2.Runtime {
    * callback is only executed the first time the trampoline is executed and its result is cached in
    * the trampoline closure.
    */
-  export function makeTrampoline(forward: Function, parameterLength: number, description?: string): ITrampoline {
-    release || assert (forward && typeof forward === "function");
-    return (function trampolineContext() {
-      var target = null;
-      /**
-       * Triggers the trampoline and executes it.
-       */
-      var trampoline: ITrampoline = <ITrampoline><any>function execute() {
-        if (Shumway.AVM2.Runtime.traceExecution.value >= 3) {
-          log("Trampolining");
-        }
-        countTimeline("Executing Trampoline");
-        Shumway.AVM2.Runtime.traceCallExecution.value > 1 && callWriter.writeLn("Trampoline: " + description);
-        if (!target) {
-          target = forward(trampoline);
-          release || assert (target);
-        }
-        return target.asApply(this, arguments);
-      };
-      /**
-       * Just triggers the trampoline without executing it.
-       */
-      trampoline.trigger = function trigger() {
-        countTimeline("Triggering Trampoline");
-        if (!target) {
-          target = forward(trampoline);
-          release || assert (target);
-        }
-      };
-      trampoline.isTrampoline = true;
-      trampoline.debugName = "Trampoline #" + vmNextTrampolineId++;
-      // Make sure that the length property of the trampoline matches the trait's number of
-      // parameters. However, since we can't redefine the |length| property of a function,
-      // we define a new hidden |VM_LENGTH| property to store this value.
-      defineReadOnlyProperty(trampoline, VM_LENGTH, parameterLength);
-      return trampoline;
-    })();
+  export function makeTrampoline(trait: Trait, scope: Scope, natives: any,
+                                 patchTargets: IPatchTarget[], parameterLength: number,
+                                 description: string): ITrampoline {
+    var target = null;
+    /**
+     * Triggers the trampoline and executes it.
+     */
+    var trampoline: ITrampoline = <ITrampoline><any>function execute() {
+      release || debugLogTrampoline(description);
+      target || trampoline.trigger();
+      return target.apply(this, arguments);
+    };
+    /**
+     * Just triggers the trampoline without executing it.
+     */
+    trampoline.trigger = function trigger() {
+      release || countTimeline("Triggering Trampoline");
+      release || assert(!target);
+      release || assert(!trait.methodInfo.isNative());
+      target = createFunction(trait.methodInfo, scope, false, false, false);
+      release || assert(target);
+      patch(patchTargets, target);
+      trait = scope = natives = patchTargets = null;
+    };
+    trampoline.isTrampoline = true;
+    trampoline.patchTargets = patchTargets;
+    // Make sure that the length property of the trampoline matches the trait's number of
+    // parameters. However, since we can't redefine the |length| property of a function,
+    // we define a new hidden |VM_LENGTH| property to store this value.
+    defineReadOnlyProperty(trampoline, VM_LENGTH, parameterLength);
+    return trampoline;
   }
 
+  function debugLogTrampoline(description: string) {
+    assert(!release);
+    countTimeline("Executing Trampoline");
+    if (Shumway.AVM2.Runtime.traceExecution.value >= 1) {
+      callWriter.writeLn("Trampoline: " + description);
+      Shumway.AVM2.Runtime.traceExecution.value >= 3 && console.log("Trampolining");
+    }
+  }
+
+  /**
+   * Returns a function that, when installed as a getter on a prototype, creates a
+   * unique-per-instance MethodClosure and installs that on the receiver object it is invoke on.
+   * After that, consecutive gets on the same receiver will directly resolve to the MethodClosure
+   * instance.
+   */
   export function makeMemoizer(qn, target): IMemoizer {
     function memoizer() {
-      countTimeline("Runtime: Memoizing");
-      // release || assert (!Object.prototype.hasOwnProperty.call(this, "class"), this);
-      if (Shumway.AVM2.Runtime.traceExecution.value >= 3) {
-        log("Memoizing: " + qn);
+      if (target.value.isTrampoline) {
+        // If the memoizer target is a trampoline then we need to trigger it before we bind the
+        // memoizer target to |this|. Triggering the trampoline will patch the memoizer target but
+        // not actually call it.
+        target.value.trigger();
+        release || assert (!target.value.isTrampoline, "We should avoid binding trampolines.");
       }
-      Shumway.AVM2.Runtime.traceCallExecution.value > 1 && callWriter.writeLn("Memoizing: " + qn);
+      var methodClosure = bindSafely(target.value, this);
+      ObjectUtilities.defineReadOnlyProperty(methodClosure, 'asLength', target.value.length);
       if (isNativePrototype(this)) {
         countTimeline("Runtime: Method Closures");
-        return bindSafely(target.value, this);
+        return methodClosure;
       }
-      if (isTrampoline(target.value)) {
-        // If the memoizer target is a trampoline then we need to trigger it before we bind the memoizer
-        // target to |this|. Triggering the trampoline will patch the memoizer target but not actually
-        // call it.
-        target.value.trigger();
-      }
-      release || assert (!isTrampoline(target.value), "We should avoid binding trampolines.");
-      var mc = null;
-      if (this instanceof Shumway.AVM2.AS.ASClass) {
-        countTimeline("Runtime: Static Method Closures");
-        mc = bindSafely(target.value, this);
-        defineReadOnlyProperty(this, qn, mc);
-        return mc;
-      }
-      if (Object.prototype.hasOwnProperty.call(this, qn)) {
-        var pd = Object.getOwnPropertyDescriptor(this, qn);
-        if (pd.get) {
-          countTimeline("Runtime: Method Closures");
-          return bindSafely(target.value, this);
-        }
-        countTimeline("Runtime: Unpatched Memoizer");
-        return this[qn];
-      }
-      mc = bindSafely(target.value, this);
-      mc.methodInfo = target.value.methodInfo;
-      defineReadOnlyProperty(mc, Multiname.getPublicQualifiedName("prototype"), null);
-      defineReadOnlyProperty(this, qn, mc);
-      return mc;
+      (<any>methodClosure).methodInfo = target.value.methodInfo;
+      defineReadOnlyProperty(methodClosure, Multiname.getPublicQualifiedName("prototype"), null);
+      defineReadOnlyProperty(this, qn, methodClosure);
+      return methodClosure;
     }
     var m: IMemoizer = <IMemoizer><any>memoizer;
     countTimeline("Runtime: Memoizers");
     m.isMemoizer = true;
-    m.debugName = "Memoizer #" + vmNextMemoizerId++;
     return m;
-  }
-
-  function isTrampoline(fn) {
-    release || assert (fn && typeof fn === "function");
-    return fn.isTrampoline;
-  }
-
-  export function isMemoizer(fn) {
-    release || assert (fn && typeof fn === "function");
-    return fn.isMemoizer;
   }
 }

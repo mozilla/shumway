@@ -28,9 +28,7 @@ public class BitmapData implements IBitmapDrawable {
   public native function get width():int;
   public native function get height():int;
   public native function get transparent():Boolean;
-  public function get rect():Rectangle {
-    return new Rectangle(0, 0, width, height);
-  }
+  public native function get rect():Rectangle;
   public native function clone():BitmapData;
   public native function getPixel(x:int, y:int):uint;
   public native function getPixel32(x:int, y:int):uint;

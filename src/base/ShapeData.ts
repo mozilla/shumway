@@ -147,17 +147,17 @@ module Shumway {
    */
   export enum PathCommand {
     BeginSolidFill = 1,
-    BeginGradientFill,
-    BeginBitmapFill,
-    EndFill,
-    LineStyleSolid,
-    LineStyleGradient,
-    LineStyleBitmap,
-    LineEnd,
-    MoveTo,
-    LineTo,
-    CurveTo,
-    CubicCurveTo,
+    BeginGradientFill = 2,
+    BeginBitmapFill = 3,
+    EndFill = 4,
+    LineStyleSolid = 5,
+    LineStyleGradient = 6,
+    LineStyleBitmap = 7,
+    LineEnd = 8,
+    MoveTo = 9,
+    LineTo = 10,
+    CurveTo = 11,
+    CubicCurveTo = 12,
   }
 
   export enum GradientType {
@@ -176,6 +176,13 @@ module Shumway {
     LinearRGB = 1
   }
 
+  export enum LineScaleMode {
+    None = 0,
+    Normal = 1,
+    Vertical = 2,
+    Horizontal = 3
+  }
+
   export interface ShapeMatrix {
     a: number;
     b: number;
@@ -187,9 +194,11 @@ module Shumway {
 
   export class PlainObjectShapeData {
     constructor(public commands: Uint8Array, public commandsPosition: number,
-                public coordinates: Int32Array, public coordinatesPosition: number,
-                public morphCoordinates: Int32Array,
-                public styles: ArrayBuffer, public stylesLength: number)
+                public coordinates: Int32Array, public morphCoordinates: Int32Array,
+                public coordinatesPosition: number,
+                public styles: ArrayBuffer, public stylesLength: number,
+                public morphStyles: ArrayBuffer, public morphStylesLength: number,
+                public hasFills: boolean, public hasLines: boolean)
     {}
   }
 
@@ -208,6 +217,9 @@ module Shumway {
     morphCoordinates: Int32Array;
     coordinatesPosition: number;
     styles: DataBuffer;
+    morphStyles: DataBuffer;
+    hasFills: boolean;
+    hasLines: boolean;
 
     constructor(initialize: boolean = true) {
       if (initialize) {
@@ -224,6 +236,13 @@ module Shumway {
       data.coordinatesPosition = source.coordinatesPosition;
       data.styles = DataBuffer.FromArrayBuffer(source.styles, source.stylesLength);
       data.styles.endian = 'auto';
+      if (source.morphStyles) {
+        data.morphStyles = DataBuffer.FromArrayBuffer(
+          source.morphStyles, source.morphStylesLength);
+        data.morphStyles.endian = 'auto';
+      }
+      data.hasFills = source.hasFills;
+      data.hasLines = source.hasLines;
       return data;
     }
 
@@ -267,6 +286,11 @@ module Shumway {
       this.ensurePathCapacities(1, 0);
       this.commands[this.commandsPosition++] = PathCommand.BeginSolidFill;
       this.styles.writeUnsignedInt(color);
+      this.hasFills = true;
+    }
+
+    writeMorphFill(color: number) {
+      this.morphStyles.writeUnsignedInt(color);
     }
 
     endFill() {
@@ -280,7 +304,7 @@ module Shumway {
     }
 
     lineStyle(thickness: number, color: number, pixelHinting: boolean,
-              scaleMode: number, caps: number, joints: number, miterLimit: number): void
+              scaleMode: LineScaleMode, caps: number, joints: number, miterLimit: number): void
     {
       release || assert(thickness === (thickness|0), thickness >= 0 && thickness <= 0xff * 20);
       this.ensurePathCapacities(2, 0);
@@ -293,6 +317,12 @@ module Shumway {
       styles.writeUnsignedByte(caps);
       styles.writeUnsignedByte(joints);
       styles.writeUnsignedByte(miterLimit);
+      this.hasLines = true;
+    }
+
+    writeMorphLineStyle(thickness: number, color: number) {
+      this.morphCoordinates[this.coordinatesPosition - 1] = thickness;
+      this.morphStyles.writeUnsignedInt(color);
     }
 
     /**
@@ -305,14 +335,18 @@ module Shumway {
     {
       release || assert(pathCommand === PathCommand.BeginBitmapFill ||
              pathCommand === PathCommand.LineStyleBitmap);
-
       this.ensurePathCapacities(1, 0);
       this.commands[this.commandsPosition++] = pathCommand;
       var styles: DataBuffer = this.styles;
       styles.writeUnsignedInt(bitmapId);
-      this._writeStyleMatrix(matrix);
+      this._writeStyleMatrix(matrix, false);
       styles.writeBoolean(repeat);
       styles.writeBoolean(smooth);
+      this.hasFills = true;
+    }
+
+    writeMorphBitmap(matrix: ShapeMatrix) {
+      this._writeStyleMatrix(matrix, true);
     }
 
     /**
@@ -333,9 +367,7 @@ module Shumway {
       styles.writeUnsignedByte(gradientType);
       release || assert(focalPointRatio === (focalPointRatio|0));
       styles.writeShort(focalPointRatio);
-
-      this._writeStyleMatrix(matrix);
-
+      this._writeStyleMatrix(matrix, false);
       var colorStops = colors.length;
       styles.writeByte(colorStops);
       for (var i = 0; i < colorStops; i++) {
@@ -344,9 +376,20 @@ module Shumway {
         // Colors are coerced to uint32, with the highest byte stripped.
         styles.writeUnsignedInt(colors[i]);
       }
-
       styles.writeUnsignedByte(spread);
       styles.writeUnsignedByte(interpolation);
+      this.hasFills = true;
+    }
+
+    writeMorphGradient(colors: number[], ratios: number[], matrix: ShapeMatrix) {
+      this._writeStyleMatrix(matrix, true);
+      var styles: DataBuffer = this.morphStyles;
+      for (var i = 0; i < colors.length; i++) {
+        // Ratio must be valid, otherwise we'd have bailed above.
+        styles.writeUnsignedByte(ratios[i]);
+        // Colors are coerced to uint32, with the highest byte stripped.
+        styles.writeUnsignedInt(colors[i]);
+      }
     }
 
     writeCommandAndCoordinates(command: PathCommand, x: number, y: number) {
@@ -375,6 +418,7 @@ module Shumway {
       this.coordinates = new Int32Array(DefaultSize.Coordinates);
       this.styles = new DataBuffer(DefaultSize.Styles);
       this.styles.endian = 'auto';
+      this.hasFills = this.hasLines = false;
     }
 
     isEmpty() {
@@ -389,14 +433,23 @@ module Shumway {
       copy.coordinatesPosition = this.coordinatesPosition;
       copy.styles = new DataBuffer(this.styles.length);
       copy.styles.writeRawBytes(this.styles.bytes);
+      if (this.morphStyles) {
+        copy.morphStyles = new DataBuffer(this.morphStyles.length);
+        copy.morphStyles.writeRawBytes(this.morphStyles.bytes);
+      }
+      copy.hasFills = this.hasFills;
+      copy.hasLines = this.hasLines;
       return copy;
     }
 
     toPlainObject(): PlainObjectShapeData {
       return new PlainObjectShapeData(this.commands, this.commandsPosition,
-                                      this.coordinates, this.coordinatesPosition,
-                                      this.morphCoordinates,
-                                      this.styles.buffer, this.styles.length);
+                                      this.coordinates, this.morphCoordinates,
+                                      this.coordinatesPosition,
+                                      this.styles.buffer, this.styles.length,
+                                      this.morphStyles && this.morphStyles.buffer,
+                                      this.morphStyles ? this.morphStyles.length : 0,
+                                      this.hasFills, this.hasLines);
     }
 
     public get buffers(): ArrayBuffer[] {
@@ -404,18 +457,16 @@ module Shumway {
       if (this.morphCoordinates) {
         buffers.push(this.morphCoordinates.buffer);
       }
+      if (this.morphStyles) {
+        buffers.push(this.morphStyles.buffer);
+      }
       return buffers;
     }
 
-    private _writeStyleMatrix(matrix: ShapeMatrix)
+    private _writeStyleMatrix(matrix: ShapeMatrix, isMorph: boolean)
     {
-      var styles: DataBuffer = this.styles;
-      styles.writeFloat(matrix.a);
-      styles.writeFloat(matrix.b);
-      styles.writeFloat(matrix.c);
-      styles.writeFloat(matrix.d);
-      styles.writeFloat(matrix.tx);
-      styles.writeFloat(matrix.ty);
+      var styles: DataBuffer = isMorph ? this.morphStyles : this.styles;
+      styles.write6Floats(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
     }
 
     private ensurePathCapacities(numCommands: number, numCoordinates: number)

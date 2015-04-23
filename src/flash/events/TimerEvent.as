@@ -22,12 +22,8 @@ public class TimerEvent extends Event {
   public function TimerEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false) {
     super(type, bubbles, cancelable);
   }
-  public override function clone():Event {
-    return new TimerEvent(type, bubbles, cancelable);
-  }
-  public override function toString():String {
-    return formatToString('TimerEvent', 'type', 'bubbles', 'cancelable', 'eventPhase');
-  }
+  public override native function clone():Event;
+  public override native function toString():String;
   public native function updateAfterEvent():void;
 }
 }

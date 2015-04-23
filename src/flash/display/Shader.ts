@@ -16,6 +16,7 @@
 // Class: Shader
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Shader extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.display {
     constructor (code: flash.utils.ByteArray = null) {
       code = code;
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.Shader");
+      dummyConstructor("public flash.display.Shader");
     }
     
     // JS -> AS Bindings

@@ -13,71 +13,134 @@ module Shumway.GFX {
     Simple
   }
 
-  export class TreeStageRendererOptions extends StageRendererOptions {
+  export class TreeRendererOptions extends RendererOptions {
     layout: Layout = Layout.Simple;
   }
 
-  export class TreeStageRenderer extends StageRenderer {
-    _options: TreeStageRendererOptions;
-    context: CanvasRenderingContext2D;
-    _viewport: Rectangle;
+  export class TreeRenderer extends Renderer {
+    _options: TreeRendererOptions;
+    _canvas: HTMLCanvasElement;
+    _context: CanvasRenderingContext2D;
     layout: any;
 
-    constructor(canvas: HTMLCanvasElement,
+    constructor(container: HTMLDivElement,
                 stage: Stage,
-                options: TreeStageRendererOptions = new TreeStageRendererOptions()) {
-      super(canvas, stage, options);
-      this.context = canvas.getContext("2d");
-      this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
+                options: TreeRendererOptions = new TreeRendererOptions()) {
+      super(container, stage, options);
+      this._canvas = document.createElement("canvas");
+      this._container.appendChild(this._canvas);
+      this._context = this._canvas.getContext("2d");
+      this._listenForContainerSizeChanges();
+    }
+
+    private _listenForContainerSizeChanges() {
+      var pollInterval = 10;
+      var w = this._containerWidth;
+      var h = this._containerHeight;
+      this._onContainerSizeChanged();
+      var self = this;
+      setInterval(function () {
+        if (w !== self._containerWidth || h !== self._containerHeight) {
+          self._onContainerSizeChanged();
+          w = self._containerWidth;
+          h = self._containerHeight;
+        }
+      }, pollInterval);
+    }
+
+    private _getRatio(): number {
+      var devicePixelRatio = window.devicePixelRatio || 1;
+      var backingStoreRatio = 1;
+      var ratio = 1;
+      if (devicePixelRatio !== backingStoreRatio) {
+        ratio = devicePixelRatio / backingStoreRatio;
+      }
+      return ratio;
+    }
+
+    private _onContainerSizeChanged() {
+      var ratio = this._getRatio();
+      var w = Math.ceil(this._containerWidth * ratio);
+      var h = Math.ceil(this._containerHeight * ratio);
+      var canvas = this._canvas;
+      if (ratio > 0) {
+        canvas.width = w * ratio;
+        canvas.height = h * ratio;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+      } else {
+        canvas.width = w;
+        canvas.height = h;
+      }
+    }
+
+    private get _containerWidth(): number {
+      return this._container.clientWidth;
+    }
+
+    private get _containerHeight(): number {
+      return this._container.clientHeight;
     }
 
     public render() {
-      var context = this.context;
+      var context = this._context;
       context.save();
-      context.clearRect(0, 0, this._stage.w, this._stage.h);
+
+      context.clearRect(0, 0, this._canvas.width, this._canvas.height);
       context.scale(1, 1);
       if (this._options.layout === Layout.Simple) {
-        this._renderFrameSimple(this.context, this._stage, Matrix.createIdentity(), this._viewport, []);
+        this._renderNodeSimple(this._context, this._stage, Matrix.createIdentity());
       }
       context.restore();
     }
 
-    static clearContext(context: CanvasRenderingContext2D, rectangle: Rectangle) {
-      var canvas = context.canvas;
-      context.clearRect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
-    }
-
-    _renderFrameSimple(context: CanvasRenderingContext2D, root: Frame, transform: Matrix, clipRectangle: Rectangle, cullRectanglesAABB: Rectangle []) {
+    _renderNodeSimple(context: CanvasRenderingContext2D, root: Node, transform: Matrix) {
       var self = this;
       context.save();
+      var fontHeight = 16;
+      context.font = fontHeight + "px Arial";
       context.fillStyle = "white";
       var x = 0, y = 0;
-      var w = 6, h = 2, hPadding = 1, wColPadding = 8;
+      var w = 20, h = fontHeight, hPadding = 2, wColPadding = 8;
       var colX = 0;
       var maxX = 0;
-      function visit(frame: Frame) {
-        var isFrameContainer = frame instanceof FrameContainer;
-        if (frame._hasFlags(FrameFlags.InvalidPaint)) {
+      function visit(node: Node) {
+        var children = node.getChildren();
+        if (node.hasFlags(NodeFlags.Dirty)) {
           context.fillStyle = "red";
-        } else if (frame._hasFlags(FrameFlags.InvalidConcatenatedMatrix)) {
-          context.fillStyle = "blue";
         } else {
           context.fillStyle = "white";
         }
-        var t = isFrameContainer ? 2 : w;
-        context.fillRect(x, y, t, h);
-        if (isFrameContainer) {
-          x += t + 2;
+
+        var l = String(node.id);
+
+        if (node instanceof RenderableText) {
+          l = "T" + l;
+        } else if (node instanceof RenderableShape) {
+          l = "S" + l;
+        } else if (node instanceof RenderableBitmap) {
+          l = "B" + l;
+        } else if (node instanceof RenderableVideo) {
+          l = "V" + l;
+        }
+
+        if (node instanceof Renderable) {
+          l = l + " [" + (<any>node)._parents.length + "]";
+        }
+
+        var t = context.measureText(l).width;
+        // context.fillRect(x, y, t, h);
+        context.fillText(l, x, y);
+        if (children) {
+          x += t + 4;
           maxX = Math.max(maxX, x + w);
-          var frameContainer = <FrameContainer>frame;
-          var children = frameContainer._children;
           for (var i = 0; i < children.length; i++) {
             visit(children[i]);
             if (i < children.length - 1) {
               y += h + hPadding;
               if (y > self._canvas.height) {
                 context.fillStyle = "gray";
-                context.fillRect(maxX + 4, 0, 2, self._canvas.height);
+                // context.fillRect(maxX + 4, 0, 2, self._canvas.height);
                 x = x - colX + maxX + wColPadding;
                 colX = maxX + wColPadding;
                 y = 0;
@@ -85,7 +148,7 @@ module Shumway.GFX {
               }
             }
           }
-          x -= t + 2;
+          x -= t + 4;
         }
       }
       visit(root);

@@ -17,7 +17,8 @@
 package flash.display {
 import flash.events.EventDispatcher;
 
+[native(cls='NativeMenuClass')]
 public class NativeMenu extends EventDispatcher {
-  public function NativeMenu() {}
+  public native function NativeMenu();
 }
 }

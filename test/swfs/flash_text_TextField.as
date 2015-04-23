@@ -1,4 +1,3 @@
-/* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
  Compiled with: (from shumway tld, assuming the internal playerglobal.abc in the shumway checkout's parent dir)
  java -jar utils/asc.jar -AS3 -strict -import ../playerglobal.abc -in test/printers.as -swf TextFieldTest,600,600 test/swfs/flash_text_TextField.as

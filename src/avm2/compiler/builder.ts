@@ -24,11 +24,11 @@ module Shumway.AVM2.Compiler {
   import ConstantPool = Shumway.AVM2.ABC.ConstantPool;
   import notImplemented = Shumway.Debug.notImplemented;
   import assert = Shumway.Debug.assert;
+  import assertUnreachable = Shumway.Debug.assertUnreachable;
   import popManyIntoVoid = Shumway.ArrayUtilities.popManyIntoVoid;
   import top = Shumway.ArrayUtilities.top;
   import unique = Shumway.ArrayUtilities.unique;
   import Scope = Shumway.AVM2.Runtime.Scope;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import Runtime = Shumway.AVM2.Runtime
   import GlobalMultinameResolver = Shumway.AVM2.Runtime.GlobalMultinameResolver;
 
@@ -187,7 +187,7 @@ module Shumway.AVM2.Compiler {
 
     merge(control: Control, other: State) {
       release || assert (control);
-      release || assert (this.matches(other), this, " !== ", other);
+      release || assert (this.matches(other), this + " !== " + other);
       State.mergeValues(control, this.local, other.local);
       State.mergeValues(control, this.stack, other.stack);
       State.mergeValues(control, this.scope, other.scope);
@@ -299,7 +299,7 @@ module Shumway.AVM2.Compiler {
       case OP.not:            return Operator.FALSE;
       case OP.bitnot:         return Operator.BITWISE_NOT;
       default:
-        notImplemented(String(op));
+        assertUnreachable('Invalid operator op: ' + op);
     }
   }
 
@@ -334,12 +334,17 @@ module Shumway.AVM2.Compiler {
   }
 
   function binary(operator: IR.Operator, left: Value, right: Value): Value {
-    var node = new Binary(operator, left, right);
-    if (left.ty && left.ty !== Shumway.AVM2.Verifier.Type.Any && left.ty === right.ty) {
-      if (operator === Operator.EQ) {
-        node.operator = Operator.SEQ;
-      } else if (operator === Operator.NE) {
-        node.operator = Operator.SNE;
+    var node: Value = new Binary(operator, left, right);
+    if ((operator === Operator.EQ || operator === Operator.NE)) {
+      if (left.ty && left.ty.isStrictComparableWith(right.ty)) {
+        (<Binary>node).operator = operator === Operator.EQ ? Operator.SEQ : Operator.SNE;
+        // A fast non-strict compare is only possible if we can guarantee that at least one operand
+        // isn't an XML or XMLList object.
+      } else if ((!left.ty || left.ty.canBeXML()) || (!right.ty || right.ty.canBeXML())) {
+        node = new Call(null, null, globalProperty("asEquals"), null, [left, right], 0);
+        if (operator === Operator.NE) {
+          node = unary(Operator.FALSE, node);
+        }
       }
     }
     if (peepholeOptimizer) {
@@ -407,10 +412,24 @@ module Shumway.AVM2.Compiler {
     return callPure(globalProperty("asCoerceString"), null, [value]);
   }
 
+  function escapeXMLAttribute(value: Value): Value {
+    if (isConstant(value)) {
+      return new Constant(Runtime.escapeXMLAttribute(asConstant(value).value));
+    }
+    return callPure(globalProperty("escapeXMLAttribute"), null, [value]);
+  }
+
+  function escapeXMLElement(value: Value): Value {
+    if (isConstant(value)) {
+      return new Constant(Runtime.escapeXMLElement(asConstant(value).value));
+    }
+    return callPure(globalProperty("escapeXMLElement"), null, [value]);
+  }
+
   var coerceObject = callGlobalProperty.bind(null, "asCoerceObject");
 
 
-  var coercers = createEmptyObject();
+  var coercers = Object.create(null);
   coercers[Multiname.Int] = coerceInt;
   coercers[Multiname.Uint] = coerceUint;
   coercers[Multiname.Number] = coerceNumber;
@@ -423,7 +442,7 @@ module Shumway.AVM2.Compiler {
     return coercers[Multiname.getQualifiedName(multiname)];
   }
 
-  var callableConstructors = createEmptyObject();
+  var callableConstructors = Object.create(null);
   callableConstructors[Multiname.Int] = coerceInt;
   callableConstructors[Multiname.Uint] = coerceUint;
   callableConstructors[Multiname.Number] = callGlobalProperty.bind(null, "Number");
@@ -466,11 +485,14 @@ module Shumway.AVM2.Compiler {
 
     popMultiname(): ASMultiname {
       var multiname = this.constantPool.multinames[this.bc.index];
-      var namespaces, name, flags = multiname.flags;
+      var namespaces, name, flags;
       if (multiname.isRuntimeName()) {
         name = this.state.stack.pop();
+        // TODO: figure out what `flags` should be set to for runtime names.
+        flags = constant(0);
       } else {
         name = constant(multiname.name);
+        flags = constant(multiname.flags);
       }
       if (multiname.isRuntimeNamespace()) {
         namespaces = shouldFloat(new NewArray(this.region, [this.state.stack.pop()]));
@@ -594,7 +616,7 @@ module Shumway.AVM2.Compiler {
             return slowPath;
           }
           return constant(ti.object);
-        } else if (ti.scopeDepth !== undefined) {
+        } else if (ti.scopeDepth !== -1) {
           return this.getScopeObject(this.topScope(ti.scopeDepth));
         }
       }
@@ -748,10 +770,15 @@ module Shumway.AVM2.Compiler {
       var ti = this.bc.ti;
       var region = this.region;
       var state = this.state;
-      if (ti && ti.trait && ti.trait.isGetter() && ti.baseClass) {
-        var qn = Runtime.VM_OPEN_GET_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
-        var callee = this.getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
-        return this.call(callee, object, []);
+      if (ti && ti.trait && ti.baseClass) {
+        if (ti.trait.isGetter()) {
+          var qn = Runtime.VM_OPEN_GET_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
+          var callee = this.getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
+          return this.call(callee, object, []);
+        } else if (ti.trait.isMethod()) {
+          var qn = Runtime.VM_OPEN_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
+          return this.getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
+        }
       }
       return this.store(new IR.ASGetSuper(region, state.store, object, multiname, scope));
     }
@@ -1145,6 +1172,12 @@ module Shumway.AVM2.Compiler {
           case OP.convert_s:
             push(convertString(pop()));
             break;
+          case OP.esc_xattr:
+            push(escapeXMLAttribute(pop()));
+            break;
+          case OP.esc_xelem:
+            push(escapeXMLElement(pop()));
+            break;
           case OP.astype:
             if (bc.ti && bc.ti.noCoercionNeeded) {
               countTimeline("Compiler: NoCoercionNeeded");
@@ -1156,7 +1189,7 @@ module Shumway.AVM2.Compiler {
               value = pop();
               var typeName = this.constantPool.multinames[bc.index];
               multiname = new IR.ASMultiname(constant(typeName.namespaces), constant(typeName.name),
-                                             typeName.flags);
+                                             constant(typeName.flags));
               type = this.getProperty(this.findProperty(multiname, false), multiname);
               push(this.call(globalProperty("asAsType"), null, [type, value]));
             }
@@ -1374,7 +1407,7 @@ module Shumway.AVM2.Compiler {
           case OP.in:
             object = pop();
             value = pop();
-            multiname = new IR.ASMultiname(Undefined, value, 0);
+            multiname = new IR.ASMultiname(Undefined, value, constant(0));
             push(this.store(new IR.ASHasProperty(region, state.store, object, multiname)));
             break;
           case OP.typeof:
@@ -1445,7 +1478,7 @@ module Shumway.AVM2.Compiler {
       this.scope = scope;
       this.methodInfo = methodInfo;
       this.hasDynamicScope = hasDynamicScope;
-      this.traceBuilder = Shumway.AVM2.Compiler.traceLevel.value > 2;
+      this.traceBuilder = Shumway.AVM2.Compiler.traceLevel.value > 3;
       this.createFunctionCallee = globalProperty("createFunction");
       this.stopPoints = [];
       this.bytecodes = this.methodInfo.analysis.bytecodes;
@@ -1487,8 +1520,15 @@ module Shumway.AVM2.Compiler {
 
       if (mi.needsRest() || mi.needsArguments()) {
         var offset = constant(parameterIndexOffset + (mi.needsRest() ? parameterCount : 0));
+        var callee;
+        if (mi.needsArguments()) {
+          callee = getJSPropertyWithState(state, args, "callee");
+        } else {
+          callee = constant(undefined);
+        }
         state.local[parameterCount + 1] =
-          new Call(start, state.store, globalProperty("sliceArguments"), null, [args, offset], IR.Flags.PRISTINE);
+          new Call(start, state.store, globalProperty("sliceArguments"), null,
+            [args, offset, callee], IR.Flags.PRISTINE);
       }
 
       var argumentsLength = getJSPropertyWithState(state, args, "length");
@@ -1651,8 +1691,13 @@ module Shumway.AVM2.Compiler {
         leaveTimeline();
       }
 
-      var traceSource = Shumway.AVM2.Compiler.traceLevel.value > 0;
-      var traceIR = Shumway.AVM2.Compiler.traceLevel.value > 1;
+      var traceTiming = Shumway.AVM2.Compiler.traceLevel.value > 0;
+      var traceSource = Shumway.AVM2.Compiler.traceLevel.value > 1;
+      var traceIR = Shumway.AVM2.Compiler.traceLevel.value > 2;
+
+      if (traceTiming) {
+        var startTime = window.performance.now();
+      }
 
       enterTimeline("Build IR");
       Node.startNumbering();
@@ -1689,6 +1734,12 @@ module Shumway.AVM2.Compiler {
       traceSource && writer.writeLn(result.body);
       Node.stopNumbering();
       leaveTimeline();
+
+      if (traceTiming) {
+        var name = methodInfo.name ? 'function ' + methodInfo.name : 'anonymous function';
+        writer.writeLn('Compiled ' + name + ' in ' +
+                       (window.performance.now() - startTime).toPrecision(2) + 'ms');
+      }
 
       return result;
     }

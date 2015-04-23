@@ -17,26 +17,14 @@
 package flash.text {
 import flash.events.EventDispatcher;
 
+[native(cls='StyleSheetClass')]
 public dynamic class StyleSheet extends EventDispatcher {
-  public function StyleSheet() {
-    _styles = {};
-  }
-  private var _styles: Object;
-  public function get styleNames(): Array {
-    notImplemented("styleNames");
-    return null;
-  }
-  public function getStyle(styleName: String): Object {
-    notImplemented("getStyle");
-    return null;
-  }
-  public function setStyle(styleName: String,
-                           styleObject: Object): void { notImplemented("setStyle"); }
-  public function clear(): void { notImplemented("clear"); }
-  public function transform(formatObject: Object): TextFormat {
-    notImplemented("transform");
-    return null;
-  }
-  public function parseCSS(CSSText: String): void { notImplemented("parseCSS"); }
+  public native function StyleSheet();
+  public native function get styleNames(): Array;
+  public native function getStyle(styleName: String): Object;
+  public native function setStyle(styleName: String, styleObject: Object): void;
+  public native function clear(): void;
+  public native function transform(formatObject: Object): TextFormat;
+  public native function parseCSS(CSSText: String): void;
 }
 }

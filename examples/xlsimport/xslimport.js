@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2013 Mozilla Foundation
  *
@@ -50,7 +48,7 @@ function main(avm2) {
   })
 }
 
-var BUILTIN_PATH = SHUMWAY_ROOT + 'avm2/generated/builtin/builtin.abc';
+var BUILTIN_PATH = SHUMWAY_ROOT + 'build/libs/builtin.abc';
 var PLAYERGLOBAL_ABCS = SHUMWAY_ROOT + "build/playerglobal/playerglobal.abcs";
 var PLAYERGLOBAL_CATALOG = SHUMWAY_ROOT + "build/playerglobal/playerglobal.json";
 var AS3XLS_PATH = './as3xls-lib.swc';

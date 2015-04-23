@@ -16,6 +16,7 @@
 // Class: Telemetry
 module Shumway.AVM2.AS.flash.profiler {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Telemetry extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.profiler {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.profiler.Telemetry");
+      dummyConstructor("public flash.profiler.Telemetry");
     }
     
     // JS -> AS Bindings

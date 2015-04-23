@@ -1,0 +1,57 @@
+[
+  {  "id": "basic",
+    "stas": "swfs/trace.stas",
+    "filenames": [
+      "swfs/targetPath1.swf"
+    ],
+    "type": "stas"
+  },
+  {  "id": "AVM1Movie",
+    "stas": "swfs/trace.stas",
+    "filenames": [
+      "swfs/avm1movie/AVM1MovieTest.swf"
+    ],
+    "type": "stas"
+  },
+  {  "id": "acid-platformer",
+    "frames": [10],
+    "swf": "swfs/acid/acid-platformer.swf",
+    "type": "eq"
+  },
+  {  "id": "acid-text-5",
+    "frames": [1, 5, 10],
+    "swf": "swfs/acid/acid-text-5.swf",
+    "type": "eq"
+  },
+  {  "id": "acid-blend",
+     "frames": [1, 5, 10],
+     "swf": "swfs/acid/acid-blend.swf",
+     "type": "eq"
+  },
+  {  "id": "acid-blend-2",
+     "frames": [1, 5, 10],
+     "swf": "swfs/acid/acid-blend-2.swf",
+     "type": "eq"
+  },
+  {  "id": "avm1-moviecliploader",
+    "stas": "swfs/trace.stas",
+    "filenames": [
+      "swfs/avm1/moviecliploader/loader.swf"
+    ],
+    "type": "stas"
+  },
+  {  "id": "image-loading",
+    "stas": "swfs/trace.stas",
+    "filenames": [
+      "swfs/image-loading/image-loading.swf"
+    ],
+    "type": "stas"
+  },
+  {  "id": "flash_text_TextField trace",
+    "stas": "swfs/trace.stas",
+    "filenames": [
+      "swfs/flash_text_TextField.swf"
+    ],
+    "type": "stas"
+  }
+]

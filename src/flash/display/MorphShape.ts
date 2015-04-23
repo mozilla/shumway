@@ -15,45 +15,26 @@
  */
 // Class: MorphShape
 module Shumway.AVM2.AS.flash.display {
-  import Bounds = Shumway.Bounds;
   export class MorphShape extends flash.display.DisplayObject {
-
-    // Called whenever the class is initialized.
-    static classInitializer: any = null;
-
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Shumway.Timeline.MorphShapeSymbol) {
-      var self: MorphShape = this;
-      if (symbol) {
-        self._graphics = symbol.graphics;
-        self.morphFillBounds = symbol.morphFillBounds;
-        self.morphLineBounds = symbol.morphLineBounds;
-      } else {
-        self._graphics = new flash.display.Graphics();
-        self.morphFillBounds = null;
-        self.morphLineBounds = null;
-      }
-    };
-
-    // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-
-    // List of instance symbols to link.
     static instanceSymbols: string [] = null; // [];
+
+    static classInitializer: any = null;
+    static initializer: any = function (symbol: flash.display.MorphShapeSymbol) {
+      var self: MorphShape = this;
+      self._graphics = null;
+      if (symbol) {
+        this._setStaticContentFromSymbol(symbol);
+        // TODO: Check what do do if the computed bounds of the graphics object don't
+        // match those given by the symbol.
+      }
+      this._setFlags(DisplayObjectFlags.ContainsMorph);
+    };
     
     constructor () {
       false && super();
       DisplayObject.instanceConstructorNoInitialize.call(this);
     }
-
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-
-    _graphics: flash.display.Graphics;
-    morphFillBounds: Bounds;
-    morphLineBounds: Bounds;
 
     _canHaveGraphics(): boolean {
       return true;
@@ -65,6 +46,30 @@ module Shumway.AVM2.AS.flash.display {
 
     get graphics(): flash.display.Graphics {
       return this._ensureGraphics();
+    }
+
+    _containsPointDirectly(localX: number, localY: number,
+                           globalX: number, globalY: number): boolean {
+      var graphics = this._getGraphics();
+      return graphics && graphics._containsPoint(localX, localY, true, this._ratio / 0xffff);
+    }
+  }
+
+  export class MorphShapeSymbol extends flash.display.ShapeSymbol {
+    morphFillBounds: Bounds;
+    morphLineBounds: Bounds;
+    constructor(data: Timeline.SymbolData) {
+      super(data, flash.display.MorphShape);
+    }
+
+    static FromData(data: any, loaderInfo: flash.display.LoaderInfo): MorphShapeSymbol {
+      var symbol = new MorphShapeSymbol(data);
+      symbol._setBoundsFromData(data);
+      symbol.graphics = flash.display.Graphics.FromData(data);
+      symbol.processRequires(data.require, loaderInfo);
+      symbol.morphFillBounds = data.morphFillBounds;
+      symbol.morphLineBounds = data.morphLineBounds;
+      return symbol;
     }
   }
 }

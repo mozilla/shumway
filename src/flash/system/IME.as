@@ -23,10 +23,7 @@ public final class IME extends EventDispatcher {
   public static native function set enabled(enabled:Boolean):void;
   public static native function get conversionMode():String;
   public static native function set conversionMode(mode:String):void;
-  public static function get isSupported():Boolean {
-    notImplemented("isSupported");
-    return false;
-  }
+  public static native function get isSupported():Boolean;
   public static native function setCompositionString(composition:String):void;
   public static native function doConversion():void;
   public static native function compositionSelectionChanged(start:int, end:int):void;

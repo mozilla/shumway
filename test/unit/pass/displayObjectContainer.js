@@ -48,7 +48,6 @@
     var s = new Shape();
     var c = new DisplayObjectContainer();
     var r = "";
-    var addedToStageEventWasTriggered = false;
     s.addEventListener(Event.ADDED_TO_STAGE, function () {
       r += "A";
     });
@@ -64,7 +63,6 @@
     var s = new Shape();
     var c = new DisplayObjectContainer();
     var r = "";
-    var addedToStageEventWasTriggered = false;
     s.addEventListener(Event.ADDED_TO_STAGE, function () {
       r += "A";
     });
@@ -145,38 +143,94 @@
     eq(r, "AA");
   });
 
-  unitTests.push(function () {
-    Random.seed(0x12343);
-    var s1 = new Shape();
-    var s2 = new Shape();
-    var c = new DisplayObjectContainer();
-    c.addChildAtDepth(s1, 1);
-    c.addChildAtDepth(s2, 2);
-    eq(c.getChildAtDepth(1), s1);
-    eq(c.getChildAtDepth(2), s2);
-    eq(c.getChildAtDepth(3), null);
-    c.addChild(s1);
-    eq(c.getChildAtDepth(1), null);
-    c.setChildIndex(s2, 1);
-    eq(c.getChildAtDepth(2), null);
-  });
-
-  unitTests.push(function () {
-    Random.seed(0x12343);
+  unitTests.push(function addAndGetAndRemoveChildAt() {
     var s1 = new Shape();
     var s2 = new Shape();
     var s3 = new Shape();
     var c = new DisplayObjectContainer();
-    c.addChildAtDepth(s2, 2);
-    c.addChildAtDepth(s3, 3);
-    c.addChildAtDepth(s1, 1);
+    var exceptionMessage = null;
+    try {
+      c.addChildAt(s1, 10);
+    } catch (e) {
+      exceptionMessage = e.toString();
+    }
+    eq(exceptionMessage, 'RangeError: Error #2006: The supplied index is out of bounds.');
+
+    exceptionMessage = null;
+    try {
+      c.getChildAt(10);
+    } catch (e) {
+      exceptionMessage = e.toString();
+    }
+    eq(exceptionMessage, 'RangeError: Error #2006: The supplied index is out of bounds.');
+
+    exceptionMessage = null;
+    try {
+      c.removeChildAt(10);
+    } catch (e) {
+      exceptionMessage = e.toString();
+    }
+    eq(exceptionMessage, 'RangeError: Error #2006: The supplied index is out of bounds.');
+
+    c.addChildAt(s1, 0);
+    eq(c.getChildAt(0), s1);
+    c.addChildAt(s2, 1);
+    eq(c.getChildAt(1), s2);
+    c.addChildAt(s3, 0);
+    eq(c.getChildAt(0), s3);
+    eq(c.getChildAt(1), s1);
+    eq(c.getChildAt(2), s2);
+    c.removeChildAt(0);
+    eq(c.getChildAt(0), s1);
+    eq(c.getChildAt(1), s2);
+    c.removeChildAt(1);
+    eq(c.getChildAt(0), s1);
+  });
+
+  unitTests.push(function timelineObjectHandling() {
+    var s1 = new Shape();
+    var s2 = new Shape();
+    var s3 = new Shape();
+    var c = new DisplayObjectContainer();
+    c.addTimelineObjectAtDepth(s1, 1);
+    c.addTimelineObjectAtDepth(s3, 3);
+    c.addTimelineObjectAtDepth(s2, 2);
     eq(c.getChildIndex(s1), 0);
+    eq(c.getTimelineObjectAtDepth(1), s1);
+    eq(c.getTimelineObjectAtDepth(2), s2);
+    eq(c.getTimelineObjectAtDepth(3), s3);
+    eq(c.getTimelineObjectAtDepth(4), null);
+    c.addChild(s1);
+    eq(c.getTimelineObjectAtDepth(1), null);
+    c.setChildIndex(s2, 1);
+    eq(c.getTimelineObjectAtDepth(2), null);
+  });
+
+  unitTests.push(function getChildByName() {
+    var s1 = new Shape();
+    s1.name = 's1';
+    var s2 = new Shape();
+    s2.name = 's2';
+    var s3 = new Shape();
+    s3.name = 's3';
+    var c = new DisplayObjectContainer();
+
+    eq(c.getChildByName('foo'), null);
+
+    c.addChild(s1);
+    c.addChild(s2);
+    c.addChild(s3);
+    eq(c.getChildByName('s1'), s1);
+    eq(c.getChildByName('s2'), s2);
+    eq(c.getChildByName('s3'), s3);
   });
 
   unitTests.push(function getObjectsUnderPoint() {
     Random.seed(0x12343);
 
+    var stage = new Stage();
     var container = new Sprite();
+    stage.addChild(container);
 
     var square1 = new Sprite();
     square1.graphics.beginFill(0xFFCC00);
@@ -214,6 +268,58 @@
 
     eq(container.hitTestPoint(80, 0), true);
     eq(container.hitTestPoint(80, 0, true), false);
+  });
+
+  unitTests.push(function setChildInex() {
+    var exceptionMessage = null;
+    var s = new Shape();
+    var c = new DisplayObjectContainer();
+    try {
+      c.setChildIndex(s, 0);
+    } catch (e) {
+      exceptionMessage = e.toString();
+    }
+    eq(exceptionMessage, 'RangeError: Error #2006: The supplied index is out of bounds.');
+  });
+
+  unitTests.push(function setChildInex() {
+    var exceptionMessage = null;
+    var s0 = new Shape();
+    var s1 = new Shape();
+    var c = new DisplayObjectContainer();
+    try {
+      c.addChild(s0);
+      c.setChildIndex(s1, 0);
+    } catch (e) {
+      exceptionMessage = e.toString();
+    }
+    eq(exceptionMessage, 'ArgumentError: Error #2025: The supplied DisplayObject must be a child of the caller.');
+  });
+
+  unitTests.push(function addChildWrongType() {
+    var exceptionMessage = null;
+    var s = "A";
+    var c = new DisplayObjectContainer();
+    try {
+      c.addChild(s);
+    } catch (e) {
+      exceptionMessage = e.toString();
+    }
+    eq(exceptionMessage, 'TypeError: Error #1034: Type Coercion failed: cannot convert A to flash.display.DisplayObject.');
+  });
+
+  unitTests.push(function emptyChildBounds() {
+    var c1 = new Sprite();
+    var c2 = new Sprite();
+    var s = new Sprite();
+    s.graphics.beginFill(0x00CCFF);
+    s.graphics.drawRect(0, 0, 100, 100);
+    c2.addChild(s);
+    var c3 = new Sprite();
+    c1.addChild(c2);
+    c1.addChild(c3);
+    eq(c1.width, 100);
+    eq(c1.height, 100);
   });
 
 })();

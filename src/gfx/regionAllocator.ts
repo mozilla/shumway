@@ -198,6 +198,8 @@ module Shumway.GFX {
         if (freeList.length > 0) {
           var cell = freeList.pop();
           release || assert (cell.allocated === false);
+          cell.w = w;
+          cell.h = h;
           cell.allocated = true;
           return cell;
         } else if (index < this._total) {
@@ -290,7 +292,7 @@ module Shumway.GFX {
               // a new bucket that can fit the requested size. So give up.
               return null;
             }
-            var gridSize = roundToMultipleOfPowerOfTwo(size, 2);
+            var gridSize = roundToMultipleOfPowerOfTwo(size, 8);
             var bucketHeight = gridSize * 2;
             if (bucketHeight > remainingSpace) {
               bucketHeight = remainingSpace;
@@ -330,7 +332,7 @@ module Shumway.GFX {
       /**
        * Allocates a 2D region.
        */
-      allocate(w: number, h: number): ISurfaceRegion;
+      allocate(w: number, h: number, excludeSurface: ISurface): ISurfaceRegion;
 
       /**
        * Frees the specified region.
@@ -361,9 +363,13 @@ module Shumway.GFX {
         this._surfaces.push(surface);
       }
 
-      allocate(w: number, h: number): ISurfaceRegion {
+      allocate(w: number, h: number, excludeSurface: ISurface): ISurfaceRegion {
         for (var i = 0; i < this._surfaces.length; i++) {
-          var region = this._surfaces[i].allocate(w, h);
+          var surface = this._surfaces[i];
+          if (surface === excludeSurface) {
+            continue;
+          }
+          var region = surface.allocate(w, h);
           if (region) {
             return region;
           }

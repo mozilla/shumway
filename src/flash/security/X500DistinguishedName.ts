@@ -16,6 +16,7 @@
 // Class: X500DistinguishedName
 module Shumway.AVM2.AS.flash.security {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class X500DistinguishedName extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.security {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.security.X500DistinguishedName");
+      dummyConstructor("public flash.security.X500DistinguishedName");
     }
     
     // JS -> AS Bindings

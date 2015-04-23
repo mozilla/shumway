@@ -16,6 +16,7 @@
 // Class: MicrophoneEnhancedOptions
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class MicrophoneEnhancedOptions extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.media {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.media.MicrophoneEnhancedOptions");
+      dummyConstructor("public flash.media.MicrophoneEnhancedOptions");
     }
     
     // JS -> AS Bindings

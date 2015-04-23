@@ -1,0 +1,3 @@
+#!/usr/bash
+
+colordiff -y --difftype=diffy <(js build/ts/shell.js -x -bl $1) <($AVM $1)

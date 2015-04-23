@@ -13,11 +13,11 @@
 # limitations under the License.
 
 default:
-	@echo "run: make [check-system|install-utils|install-libs|build-tamarin-tests|"
-	@echo "           build-playerglobal|build-extension|build-bundle|build-web|"
-	@echo "           run-tamarin-tests|run-tamarin-sanity-tests|check-extension|"
-	@echo "           test|push-test|build-bot|start-build-bot|update-flash-refs|"
-	@echo "           install-avmshell|install-tamarin-src|bootstrap]"
+	@echo "run: make [check-system|bootstrap|install-utils|install-libs|"
+	@echo "           build-playerglobal|build-extension|build-web|build-libs|"
+	@echo "           run-tamarin-tests|run-tamarin-sanity-tests|test-avm2|"
+	@echo "           reftest|makeref|update-flash-refs|build-tamarin-tests|"
+	@echo "           install-avmshell|install-tamarin-src|link-utils]"
 
 check-system:
 	echo "Checking the presence of grunt-cli..."
@@ -31,7 +31,7 @@ check-system:
 	fi
 	echo "The environment is good"
 
-bootstrap: check-system install-libs install-utils build-libs build-playerglobal
+bootstrap: check-system install-libs install-utils build-libs
 
 install-libs:
 	git submodule init
@@ -52,8 +52,11 @@ install-tamarin-src: check-system
 BASE ?= $(error ERROR: Specify BASE that points to the Shumway folder with installed utils)
 
 link-utils:
-	ln -s $(BASE)/node_modules .
-	ln -s $(BASE)/utils/tamarin-redux $(BASE)/utils/jsshell utils/
+	cp -R $(BASE)/node_modules .
+	ln -s $(BASE)/utils/tamarin-redux $(BASE)/utils/jsshell $(BASE)/utils/swfdec utils/
+
+clone-build:
+	cp -R $(BASE)/build .
 
 run-tamarin-sanity-tests:
 	make -C utils/ run-tamarin-sanity-tests
@@ -62,31 +65,16 @@ run-tamarin-tests:
 	make -C utils/ run-tamarin-tests
 
 build-libs:
-	grunt avm2 avm1 stage
+	grunt shu
 
 build-playerglobal:
 	make -C utils/ build-playerglobal
 
-build-playerglobal-fp:
-	make -C utils/ build-playerglobal-fp
+build-extension:
+	grunt firefox
 
-build-playerglobal-min:
-	make -C utils/ install-apparat
-	make -C utils/playerglobal build-min
-
-build-bundle:
-	grunt build-bundle
-
-build-extension: build-bundle
-	make -C extension/firefox/ build
-
-FIREFOX_PATH ?= $(error ERROR: Specify FIREFOX_PATH)
-
-check-extension: build-extension
-	cd test/extension; python check.py -b "$(FIREFOX_PATH)"
-
-build-web: build-bundle build-extension
-	make -C web/ build
+build-web:
+	grunt web
 
 MXMLC_FLAGS ?= -static-link-runtime-shared-libraries
 MXMLC = ./utils/flex_sdk/bin/mxmlc $(MXMLC_FLAGS)
@@ -96,11 +84,8 @@ MXMLC = ./utils/flex_sdk/bin/mxmlc $(MXMLC_FLAGS)
 update-flash-refs:
 	grunt update-flash-refs
 
-test-avm1:
-	make -C src/avm1/tests/ test
-
 test-avm2:
-	make -C src/avm2/bin/ test-regress
+	grunt exec:test_avm2_quick
 
 reftest:
 	grunt reftest
@@ -109,57 +94,16 @@ makeref:
 	grunt makeref
 
 reftest-swfdec:
-	make -C test/ reftest-swfdec
+	grunt reftest-swfdec
 
 lint:
-	grunt lint
-
-hello-world:
-	make -C src/avm2/bin/ hello-world
-
-IRC_ROOM = shumway-build-bot
+	grunt tslint:all
 
 server:
 	grunt server
 
-push-test:
-	git pull origin master
-
-	echo "Started test-interpreter-all" > /tmp/irc.mozilla.org/#$(IRC_ROOM)/in
-	make THREADS=8 -C src/avm2/bin/ test-interpreter-all
-	rsync -r -avz -e ssh src/avm2/bin/runs/ haxpath@haxpath.com:~/public/haxpath.com/public/Shumway/src/avm2/bin/runs/
-	echo "http://haxpath.com/Shumway/src/avm2/bin/plot/plot.html?runs="`cat .build_bot_latest_head`.i.parallel > /tmp/irc.mozilla.org/#$(IRC_ROOM)/in
-
-	echo "Started test-all" > /tmp/irc.mozilla.org/#$(IRC_ROOM)/in
-	make THREADS=8 -C src/avm2/bin/ test-all
-	rsync -r -avz -e ssh src/avm2/bin/runs/ haxpath@haxpath.com:~/public/haxpath.com/public/Shumway/src/avm2/bin/runs/
-	echo "http://haxpath.com/Shumway/src/avm2/bin/plot/plot.html?runs="`cat .build_bot_latest_head`.icov.parallel > /tmp/irc.mozilla.org/#$(IRC_ROOM)/in
-
-build-bot:
-	if [ ! -f .build_bot_previous_head ] ; then \
-		git rev-parse master > .build_bot_previous_head ; \
-	fi
-	git pull origin master ;
-	git rev-parse master > .build_bot_latest_head ;
-	if ! diff .build_bot_latest_head .build_bot_previous_head > /dev/null ; then \
-		echo "Building" ; \
-		cat .build_bot_latest_head > .build_bot_previous_head ; \
-		echo "Started "`cat .build_bot_latest_head` > /tmp/irc.mozilla.org/#$(IRC_ROOM)/in ; \
-		make push-test ; \
-		echo "Finished All" > /tmp/irc.mozilla.org/#$(IRC_ROOM)/in ; \
-	fi
-
-start-build-bot:
-	# Login to IRC
-	ii -i /tmp -s irc.mozilla.org -n shumway-build-bot &
-	echo "/JOIN #$(IRC_ROOM)" > /tmp/irc.mozilla.org/in
-	while [ 1 ] ; do \
-		make build-bot ; \
-		sleep 60 ; \
-	done
-
 .PHONY: check-system install-libs install-utils build-tamarin-tests \
-        build-playerglobal build-extension build-web test default \
-        reftest reftest-swfdec makeref check-browser-manifest \
-        test-avm1 test-avm2
+        build-playerglobal build-extension build-web default \
+        reftest makeref check-browser-manifest test-avm2 \
+        link-utils clone-build bootstrap
 

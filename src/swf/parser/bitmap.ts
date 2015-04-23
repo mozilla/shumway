@@ -19,6 +19,7 @@ module Shumway.SWF.Parser {
   import assert = Shumway.Debug.assert;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
   import roundToMultipleOfFour = Shumway.IntegerUtilities.roundToMultipleOfFour;
+  import Inflate = Shumway.ArrayUtilities.Inflate;
 
   export enum BitmapFormat {
     /**
@@ -77,8 +78,8 @@ module Shumway.SWF.Parser {
     var colorTableSize = roundToMultipleOfFour(colorTableLength * colorTableEntrySize);
 
     var dataSize = colorTableSize + ((width + padding) * height);
-    var stream = createInflatedStream(tag.bmpData, dataSize);
-    var bytes: Uint8Array = stream.bytes;
+
+    var bytes: Uint8Array = Inflate.inflate(tag.bmpData, dataSize, true);
 
     var view = new Uint32Array(width * height);
 
@@ -127,10 +128,8 @@ module Shumway.SWF.Parser {
 
     // Even without alpha, 24BPP is stored as 4 bytes, probably for alignment reasons.
     var dataSize = height * width * 4;
-    var stream = createInflatedStream(tag.bmpData, dataSize);
-    // Make sure we've deflated enough bytes.
-    stream.ensure(dataSize);
-    var bytes: Uint8Array = stream.bytes;
+
+    var bytes: Uint8Array = Inflate.inflate(tag.bmpData, dataSize, true);
     if (hasAlpha) {
       return bytes;
     }
@@ -177,9 +176,8 @@ module Shumway.SWF.Parser {
     return null;
   }
 
-  export function defineBitmap(tag: any): ImageDefinition {
+  export function defineBitmap(tag: any): {definition: ImageDefinition; type: string} {
     enterTimeline("defineBitmap");
-    var bmpData = tag.bmpData;
     var data: Uint32Array;
     var type = ImageType.None;
     switch (tag.format) {
@@ -200,13 +198,17 @@ module Shumway.SWF.Parser {
     }
     leaveTimeline();
     return {
-      type: 'image',
-      id: tag.id,
-      width: tag.width,
-      height: tag.height,
-      mimeType: 'application/octet-stream',
-      data: data,
-      dataType: type
+      definition: {
+        type: 'image',
+        id: tag.id,
+        width: tag.width,
+        height: tag.height,
+        mimeType: 'application/octet-stream',
+        data: data,
+        dataType: type,
+        image: null
+      },
+      type: 'image'
     };
   }
 }

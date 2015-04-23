@@ -20,69 +20,35 @@ package flash.events {
 public class KeyboardEvent extends Event {
   public static const KEY_DOWN:String = "keyDown";
   public static const KEY_UP:String = "keyUp";
-  private var _charCode:uint;
-  private var _keyCode:uint;
-  private var _keyLocation:uint;
-  private var _ctrlKey:Boolean;
-  private var _altKey:Boolean;
-  private var _shiftKey:Boolean;
+
   public function KeyboardEvent(type:String, bubbles:Boolean = true, cancelable:Boolean = false,
                                 charCodeValue:uint = 0, keyCodeValue:uint = 0,
                                 keyLocationValue:uint = 0, ctrlKeyValue:Boolean = false,
                                 altKeyValue:Boolean = false, shiftKeyValue:Boolean = false)
   {
     super(type, bubbles, cancelable);
-    _charCode = charCodeValue;
-    _keyCode = keyCodeValue;
-    _keyLocation = keyLocationValue;
-    _ctrlKey = ctrlKeyValue;
-    _altKey = altKeyValue;
-    _shiftKey = shiftKeyValue;
+    charCode = charCodeValue;
+    keyCode = keyCodeValue;
+    keyLocation = keyLocationValue;
+    ctrlKey = ctrlKeyValue;
+    altKey = altKeyValue;
+    shiftKey = shiftKeyValue;
   }
-  public function get charCode():uint {
-    return _charCode;
-  }
-  public function set charCode(value:uint):void {
-    _charCode = value;
-  }
-  public function get keyCode():uint {
-    return _keyCode;
-  }
-  public function set keyCode(value:uint):void {
-    _keyCode = value;
-  }
-  public function get keyLocation():uint {
-    return _keyLocation;
-  }
-  public function set keyLocation(value:uint):void {
-    _keyLocation = value;
-  }
-  public function get ctrlKey():Boolean {
-    return _ctrlKey;
-  }
-  public function set ctrlKey(value:Boolean):void {
-    _ctrlKey = value;
-  }
-  public function get altKey():Boolean {
-    return _altKey;
-  }
-  public function set altKey(value:Boolean):void {
-    _altKey = value;
-  }
-  public function get shiftKey():Boolean {
-    return _shiftKey;
-  }
-  public function set shiftKey(value:Boolean):void {
-    _shiftKey = value;
-  }
-  public override function clone():Event {
-    return new KeyboardEvent(type, bubbles, cancelable, charCode, keyCode, keyLocation, ctrlKey,
-                               altKey, shiftKey);
-  }
-  public override function toString():String {
-    return formatToString('KeyboardEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
-                          'charCode', 'keyCode', 'keyLocation', 'ctrlKey', 'altKey', 'shiftKey');
-  }
+  public native function get charCode():uint;
+  public native function set charCode(value:uint):void;
+  public native function get keyCode():uint;
+  public native function set keyCode(value:uint):void;
+  public native function get keyLocation():uint;
+  public native function set keyLocation(value:uint):void;
+  public native function get ctrlKey():Boolean;
+  public native function set ctrlKey(value:Boolean):void;
+  public native function get altKey():Boolean;
+  public native function set altKey(value:Boolean):void;
+  public native function get shiftKey():Boolean;
+  public native function set shiftKey(value:Boolean):void;
+
+  public override native function clone():Event;
+  public override native function toString():String;
   public native function updateAfterEvent():void;
 }
 }

@@ -16,13 +16,14 @@
 // Class: XMLDocument
 module Shumway.AVM2.AS.flash.xml {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class XMLDocument extends flash.xml.XMLNode {
     static initializer: any = null;
     constructor (source: string = null) {
       source = asCoerceString(source);
       false && super(undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.xml.XMLDocument");
+      dummyConstructor("public flash.xml.XMLDocument");
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings

@@ -16,6 +16,7 @@
 // Class: DeleteObjectSample
 module Shumway.AVM2.AS.flash.sampler {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class DeleteObjectSample extends flash.sampler.Sample {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.sampler {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.sampler.DeleteObjectSample");
+      dummyConstructor("public flash.sampler.DeleteObjectSample");
     }
     
     // JS -> AS Bindings

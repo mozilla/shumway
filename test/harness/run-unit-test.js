@@ -152,8 +152,7 @@ function executeTestFile(testFile) {
 // Shumway.AVM2.Runtime.traceExecution.value = true;
 Shumway.AVM2.Runtime.globalMultinameAnalysis.value = true;
 
-var avm2Root = "src/avm2/";
-var builtinPath = avm2Root + "generated/builtin/builtin.abc";
+var builtinPath = "build/libs/builtin.abc";
 
 // different playerglobals can be used here
 var playerglobalInfo = {

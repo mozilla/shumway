@@ -16,6 +16,7 @@
 // Class: Context3DRenderMode
 module Shumway.AVM2.AS.flash.display3D {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Context3DRenderMode extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.display3D {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.display3D.Context3DRenderMode");
+      dummyConstructor("public flash.display3D.Context3DRenderMode");
     }
     
     // JS -> AS Bindings

@@ -16,6 +16,7 @@
 // Class: LocalConnection
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import FileLoadingService = Shumway.FileLoadingService;
@@ -36,7 +37,7 @@ module Shumway.AVM2.AS.flash.net {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.net.LocalConnection");
+      dummyConstructor("public flash.net.LocalConnection");
     }
     
     // JS -> AS Bindings

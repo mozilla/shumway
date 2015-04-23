@@ -17,7 +17,7 @@
 package flash.display {
 import flash.events.EventDispatcher;
 
-[native(cls='MenuItemClass')]
+[native(cls='NativeMenuItemClass')]
 public class NativeMenuItem extends EventDispatcher {
   public native function NativeMenuItem();
   public native function get enabled():Boolean;

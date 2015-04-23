@@ -29,7 +29,6 @@ module Shumway.AVM2 {
   import applyType = Shumway.AVM2.Runtime.applyType;
   import createFunction = Shumway.AVM2.Runtime.createFunction;
   import createClass = Shumway.AVM2.Runtime.createClass;
-  import getDescendants = Shumway.AVM2.Runtime.getDescendants;
   import checkFilter = Shumway.AVM2.Runtime.checkFilter;
   import asAdd = Shumway.AVM2.Runtime.asAdd;
   import translateError = Shumway.AVM2.Runtime.translateError;
@@ -144,7 +143,8 @@ module Shumway.AVM2 {
       if (method.needsRest()) {
         locals.push(sliceArguments(methodArgs, parameterCount));
       } else if (method.needsArguments()) {
-        locals.push(sliceArguments(methodArgs, 0));
+        locals.push(sliceArguments(methodArgs, 0,
+                                   methodArgs.asGetPublicProperty('callee')));
       }
 
       var bytecodes = method.analysis.bytecodes;
@@ -227,12 +227,12 @@ module Shumway.AVM2 {
           case OP.ifeq:
             b = stack.pop();
             a = stack.pop();
-            pc = a == b ? bc.offset : pc + 1;
+            pc = asEquals(a, b) ? bc.offset : pc + 1;
             continue;
           case OP.ifne:
             b = stack.pop();
             a = stack.pop();
-            pc = a != b ? bc.offset : pc + 1;
+            pc = !asEquals(a, b) ? bc.offset : pc + 1;
             continue;
           case OP.ifstricteq:
             b = stack.pop();
@@ -322,7 +322,7 @@ module Shumway.AVM2 {
             scopeStack.push(boxValue(stack.pop()), false);
             break;
           case OP.newfunction:
-            stack.push(createFunction(methods[bc.index], scopeStack.topScope(), true));
+            stack.push(createFunction(methods[bc.index], scopeStack.topScope(), true, false));
             break;
           case OP.call:
             popManyInto(stack, bc.argCount, args);
@@ -407,7 +407,7 @@ module Shumway.AVM2 {
             break;
           case OP.getdescendants:
             popNameInto(stack, multinames[bc.index], mn);
-            stack.push(getDescendants(stack.pop(), mn));
+            stack[stack.length - 1] = (<any>stack[stack.length - 1]).descendants(mn.name);
             break;
           case OP.newcatch:
             release || assert(exceptions[bc.index].scopeObject);
@@ -462,7 +462,13 @@ module Shumway.AVM2 {
             asSetSlot(object, bc.index, value);
             break;
           case OP.convert_s:
-            stack[stack.length - 1] = stack[stack.length - 1] + '';
+            stack[stack.length - 1] = asCoerceString(stack[stack.length - 1]);
+            break;
+          case OP.esc_xattr:
+            stack[stack.length - 1] = Runtime.escapeXMLAttribute(stack[stack.length - 1]);
+            break;
+          case OP.esc_xelem:
+            stack[stack.length - 1] = Runtime.escapeXMLElement(stack[stack.length - 1]);
             break;
           case OP.coerce_i:
           case OP.convert_i:
@@ -559,7 +565,7 @@ module Shumway.AVM2 {
             stack[stack.length - 2] ^= stack.pop();
             break;
           case OP.equals:
-            stack[stack.length - 2] = stack[stack.length - 2] == stack.pop();
+            stack[stack.length - 2] = asEquals(stack[stack.length - 2], stack.pop());
             break;
           case OP.strictequals:
             stack[stack.length - 2] = stack[stack.length - 2] === stack.pop();

@@ -16,6 +16,7 @@
 // Class: SampleDataEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class SampleDataEvent extends flash.events.Event {
 
     static classInitializer: any = null;
@@ -27,7 +28,7 @@ module Shumway.AVM2.AS.flash.events {
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 theposition: number = 0, thedata: flash.utils.ByteArray = null) {
       super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.SampleDataEvent");
+      dummyConstructor("public flash.events.SampleDataEvent");
     }
 
     // JS -> AS Bindings

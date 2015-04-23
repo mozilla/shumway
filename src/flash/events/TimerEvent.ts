@@ -15,7 +15,7 @@
  */
 // Class: TimerEvent
 module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class TimerEvent extends flash.events.Event {
 
     static classInitializer: any = null;
@@ -24,18 +24,25 @@ module Shumway.AVM2.AS.flash.events {
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
-    constructor(type: string, bubbles: boolean = false, cancelable: boolean = false) {
+    constructor(type: string, bubbles?: boolean, cancelable?: boolean) {
       super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.TimerEvent");
+      dummyConstructor("public flash.events.TimerEvent");
     }
 
     // JS -> AS Bindings
     static TIMER: string = "timer";
     static TIMER_COMPLETE: string = "timerComplete";
 
+    clone(): Event {
+      return new events.TimerEvent(this.type, this.bubbles, this.cancelable);
+    }
+
+    toString(): string {
+      return this.formatToString('TimerEvent', 'type', 'bubbles', 'cancelable', 'eventPhase');
+    }
+
     updateAfterEvent(): void {
-      notImplemented("public flash.events.TimerEvent::updateAfterEvent");
-      return;
+      Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'].requestRendering();
     }
   }
 }

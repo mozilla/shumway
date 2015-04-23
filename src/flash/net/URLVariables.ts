@@ -15,34 +15,68 @@
  */
 // Class: URLVariables
 module Shumway.AVM2.AS.flash.net {
-  import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
+  declare var escape;
+  declare var unescape;
+
   export class URLVariables extends ASNative {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = ["decode!"]; // "toString"
+    static instanceSymbols: string [] = null;
     
     constructor (source: string = null) {
       false && super();
-      notImplemented("Dummy Constructor: public flash.net.URLVariables");
+      this._ignoreDecodingErrors = false;
+      source && this.decode(source);
     }
-    
-    // JS -> AS Bindings
-    
-    decode: (source: string) => void;
-    unescape: (s: string) => string;
-    escape: (s: string) => string;
-    
-    // AS -> JS Bindings
-    
+
+    _ignoreDecodingErrors: boolean;
+
+    decode(source: string): void {
+      source = asCoerceString(source);
+      var variables = source.split('&');
+      for (var i = 0; i < variables.length; i++) {
+        var p = variables[i];
+        var j = p.indexOf('=');
+        if (j < 0) {
+          if (this._ignoreDecodingErrors) {
+            j = p.length;
+          } else {
+            throwError('Error', Errors.DecodeParamError);
+          }
+        }
+        var name = unescape(p.substring(0, j).split('+').join(' '));
+        var value = unescape(p.substring(j + 1).split('+').join(' '));
+        var currentValue = this.asGetPublicProperty(name);
+        if (typeof currentValue === 'undefined') {
+          this.asSetPublicProperty(name, value);
+        } else if (Array.isArray(currentValue)) {
+          currentValue.push(value);
+        } else {
+          this.asSetPublicProperty(name, [currentValue, value]);
+        }
+      }
+    }
+
+    toString(): string {
+      var pairs = [];
+      var keys = this.asGetEnumerableKeys();
+      for (var i = 0; i < keys.length; i++) {
+        var name = keys[i].split(' ').join('+');
+        var value = this.asGetPublicProperty(name);
+        name = escape(name).split(' ').join('+');
+        if (Array.isArray(value)) {
+          for (var j = 0; j < value.length; j++) {
+            pairs.push(name + '=' + escape(value[j]));
+          }
+        } else {
+          pairs.push(name + '=' + escape(value));
+        }
+      }
+      return pairs.join('&');
+    }
   }
 }

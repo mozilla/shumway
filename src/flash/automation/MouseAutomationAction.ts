@@ -16,13 +16,14 @@
 // Class: MouseAutomationAction
 module Shumway.AVM2.AS.flash.automation {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class MouseAutomationAction extends flash.automation.AutomationAction {
     static initializer: any = null;
     constructor (type: string, stageX: number = 0, stageY: number = 0, delta: number /*int*/ = 0) {
       type = asCoerceString(type); stageX = +stageX; stageY = +stageY; delta = delta | 0;
       false && super();
-      notImplemented("Dummy Constructor: public flash.automation.MouseAutomationAction");
+      dummyConstructor("public flash.automation.MouseAutomationAction");
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings

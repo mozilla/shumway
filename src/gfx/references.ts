@@ -26,15 +26,16 @@
 /// <reference path='2d/debug.ts'/>
 /// <reference path='2d/surface.ts'/>
 /// <reference path='2d/2d.ts'/>
-/// <reference path='dom/dom.ts'/>
 /// <reference path='easel.ts'/>
 /// <reference path='debug/tree.ts'/>
 
-/// <reference path='../player/remotingGfx.ts' />
-/// <reference path='../player/easelHost.ts' />
-/// <reference path='../player/window/windowEaselHost.ts' />
-/// <reference path='../player/test/testEaselHost.ts' />
-/// <reference path='../player/test/fakeSyncWorker.ts' />
+/// <reference path='remotingGfx.ts' />
+/// <reference path='easelHost.ts' />
+/// <reference path='window/windowEaselHost.ts' />
+/// <reference path='test/testEaselHost.ts' />
+/// <reference path='test/recorder.ts' />
+/// <reference path='test/playbackEaselHost.ts' />
+/// <reference path='test/recordingEaselHost.ts' />
 
 interface WebGLActiveInfo {
   location: any;

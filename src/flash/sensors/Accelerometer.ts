@@ -16,6 +16,7 @@
 // Class: Accelerometer
 module Shumway.AVM2.AS.flash.sensors {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Accelerometer extends flash.events.EventDispatcher {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.sensors {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.sensors.Accelerometer");
+      dummyConstructor("public flash.sensors.Accelerometer");
     }
     
     // JS -> AS Bindings

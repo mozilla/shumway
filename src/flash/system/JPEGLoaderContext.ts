@@ -16,6 +16,7 @@
 // Class: JPEGLoaderContext
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class JPEGLoaderContext extends flash.system.LoaderContext {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.system {
     constructor (deblockingFilter: number = 0, checkPolicyFile: boolean = false, applicationDomain: flash.system.ApplicationDomain = null, securityDomain: flash.system.SecurityDomain = null) {
       deblockingFilter = +deblockingFilter; checkPolicyFile = !!checkPolicyFile; applicationDomain = applicationDomain; securityDomain = securityDomain;
       false && super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.system.JPEGLoaderContext");
+      dummyConstructor("public flash.system.JPEGLoaderContext");
     }
     
     // JS -> AS Bindings

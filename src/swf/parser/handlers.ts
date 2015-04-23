@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2013 Mozilla Foundation
  *
@@ -17,7 +15,7 @@
  */
 
 /// <reference path='references.ts'/>
-module Shumway.SWF.Parser {
+module Shumway.SWF.Parser.LowLevel {
   function defineShape($bytes, $stream, output, swfVersion, tagCode) {
     output || (output = {});
     output.id = readUi16($bytes, $stream);
@@ -47,85 +45,90 @@ module Shumway.SWF.Parser {
     return output;
   }
 
-  function placeObject($bytes, $stream, $, swfVersion, tagCode) {
+  function placeObject($bytes, $stream, $, swfVersion, tagCode, tagEnd) {
     var flags;
     $ || ($ = {});
-    if (tagCode > SwfTag.CODE_PLACE_OBJECT) {
-      flags = $.flags = tagCode > SwfTag.CODE_PLACE_OBJECT2 ?
-                        readUi16($bytes, $stream) :
-                        readUi8($bytes, $stream);
-      $.depth = readUi16($bytes, $stream);
-      if (flags & PlaceObjectFlags.HasClassName) {
-        $.className = readString($bytes, $stream, 0);
-      }
-      if (flags & PlaceObjectFlags.HasCharacter) {
-        $.symbolId = readUi16($bytes, $stream);
-      }
-      if (flags & PlaceObjectFlags.HasMatrix) {
-        var $0 = $.matrix = {};
-        matrix($bytes, $stream, $0, swfVersion, tagCode);
-      }
-      if (flags & PlaceObjectFlags.HasColorTransform) {
-        var $1 = $.cxform = {};
-        cxform($bytes, $stream, $1, swfVersion, tagCode);
-      }
-      if (flags & PlaceObjectFlags.HasRatio) {
-        $.ratio = readUi16($bytes, $stream);
-      }
-      if (flags & PlaceObjectFlags.HasName) {
-        $.name = readString($bytes, $stream, 0);
-      }
-      if (flags & PlaceObjectFlags.HasClipDepth) {
-        $.clipDepth = readUi16($bytes, $stream);
-      }
-      if (flags & PlaceObjectFlags.HasFilterList) {
-        var count = readUi8($bytes, $stream);
-        var $2 = $.filters = [];
-        var $3 = count;
-        while ($3--) {
-          var $4 = {};
-          anyFilter($bytes, $stream, $4, swfVersion, tagCode);
-          $2.push($4);
-        }
-      }
-      if (flags & PlaceObjectFlags.HasBlendMode) {
-        $.blendMode = readUi8($bytes, $stream);
-      }
-      if (flags & PlaceObjectFlags.HasCacheAsBitmap) {
-        $.bmpCache = readUi8($bytes, $stream);
-      }
-      if (flags & PlaceObjectFlags.HasClipActions) {
-        var reserved = readUi16($bytes, $stream);
-        if (swfVersion >= 6) {
-          var allFlags = readUi32($bytes, $stream);
-        }
-        else {
-          var allFlags = readUi16($bytes, $stream);
-        }
-        var $28 = $.events = [];
-        do {
-          var $29 = {};
-          var eoe = events($bytes, $stream, $29, swfVersion, tagCode);
-          $28.push($29);
-        } while (!eoe);
-      }
-      if (flags & PlaceObjectFlags.OpaqueBackground) {
-        $.backgroundColor = argb($bytes, $stream);
-      }
-      if (flags & PlaceObjectFlags.HasVisible) {
-        $.visibility = readUi8($bytes, $stream);
-      }
-    } else {
+    if (tagCode === SwfTag.CODE_PLACE_OBJECT) {
       $.symbolId = readUi16($bytes, $stream);
       $.depth = readUi16($bytes, $stream);
       $.flags |= PlaceObjectFlags.HasMatrix;
-      var $30 = $.matrix = {};
-      matrix($bytes, $stream, $30, swfVersion, tagCode);
-      if ($stream.remaining()) {
+      $.matrix = matrix($bytes, $stream);
+      if ($stream.pos < tagEnd) {
         $.flags |= PlaceObjectFlags.HasColorTransform;
         var $31 = $.cxform = {};
-        cxform($bytes, $stream, $31, swfVersion, tagCode);
+        cxform($bytes, $stream, $31, tagCode);
       }
+      return $;
+    }
+    flags = $.flags = tagCode > SwfTag.CODE_PLACE_OBJECT2 ?
+                      readUi16($bytes, $stream) :
+                      readUi8($bytes, $stream);
+    $.depth = readUi16($bytes, $stream);
+    if (flags & PlaceObjectFlags.HasClassName) {
+      $.className = readString($bytes, $stream, -1);
+    }
+    if (flags & PlaceObjectFlags.HasCharacter) {
+      $.symbolId = readUi16($bytes, $stream);
+    }
+    if (flags & PlaceObjectFlags.HasMatrix) {
+      $.matrix = matrix($bytes, $stream);
+    }
+    if (flags & PlaceObjectFlags.HasColorTransform) {
+      var $1 = $.cxform = {};
+      cxform($bytes, $stream, $1, tagCode);
+    }
+    if (flags & PlaceObjectFlags.HasRatio) {
+      $.ratio = readUi16($bytes, $stream);
+    }
+    if (flags & PlaceObjectFlags.HasName) {
+      $.name = readString($bytes, $stream, -1);
+    }
+    if (flags & PlaceObjectFlags.HasClipDepth) {
+      $.clipDepth = readUi16($bytes, $stream);
+    }
+    if (flags & PlaceObjectFlags.HasFilterList) {
+      var count = readUi8($bytes, $stream);
+      var $2 = $.filters = [];
+      var $3 = count;
+      while ($3--) {
+        var $4 = {};
+        anyFilter($bytes, $stream, $4);
+        $2.push($4);
+      }
+    }
+    if (flags & PlaceObjectFlags.HasBlendMode) {
+      $.blendMode = readUi8($bytes, $stream);
+    }
+    if (flags & PlaceObjectFlags.HasCacheAsBitmap) {
+      $.bmpCache = readUi8($bytes, $stream);
+    }
+    if (flags & PlaceObjectFlags.HasVisible) {
+      $.visibility = readUi8($bytes, $stream);
+    }
+    if (flags & PlaceObjectFlags.OpaqueBackground) {
+      $.backgroundColor = argb($bytes, $stream);
+    }
+    if (flags & PlaceObjectFlags.HasClipActions) {
+      var reserved = readUi16($bytes, $stream);
+      if (swfVersion >= 6) {
+        var allFlags = readUi32($bytes, $stream);
+      }
+      else {
+        var allFlags = readUi16($bytes, $stream);
+      }
+      var $28 = $.events = [];
+      do {
+        var $29 = {};
+        if (events($bytes, $stream, $29, swfVersion)) {
+          break;
+        }
+        if ($stream.pos > tagEnd) {
+          Debug.warning('PlaceObject handler attempted to read clip events beyond tag end');
+          $stream.pos = tagEnd;
+          break;
+        }
+        $28.push($29);
+      } while (true);
     }
     return $;
   }
@@ -139,60 +142,63 @@ module Shumway.SWF.Parser {
     return $;
   }
 
-  function defineImage($bytes, $stream, $, swfVersion, tagCode) {
+  export function defineImage($bytes: Uint8Array, $stream: Stream, $, swfVersion, tagCode: number,
+                              tagEnd: number, jpegTables: Uint8Array) {
     var imgData;
-    $ || ($ = {});
-    $.id = readUi16($bytes, $stream);
+    var tag: any = $ || {};
+    tag.id = readUi16($bytes, $stream);
     if (tagCode > 21) {
       var alphaDataOffset = readUi32($bytes, $stream);
       if (tagCode === 90) {
-        $.deblock = readFixed8($bytes, $stream);
+        tag.deblock = readFixed8($bytes, $stream);
       }
-      imgData = $.imgData = readBinary($bytes, $stream, alphaDataOffset, true);
-      $.alphaData = readBinary($bytes, $stream, 0, true);
+      alphaDataOffset += $stream.pos;
+      imgData = tag.imgData = $bytes.subarray($stream.pos, alphaDataOffset);
+      tag.alphaData = $bytes.subarray(alphaDataOffset, tagEnd);
+      $stream.pos = tagEnd;
     }
     else {
-      imgData = $.imgData = readBinary($bytes, $stream, 0, true);
+      imgData = tag.imgData = $bytes.subarray($stream.pos, tagEnd);
+      $stream.pos = tagEnd;
     }
     switch (imgData[0] << 8 | imgData[1]) {
       case 65496:
       case 65497:
-        $.mimeType = "image/jpeg";
+        tag.mimeType = "image/jpeg";
         break;
       case 35152:
-        $.mimeType = "image/png";
+        tag.mimeType = "image/png";
         break;
       case 18249:
-        $.mimeType = "image/gif";
+        tag.mimeType = "image/gif";
         break;
       default:
-        $.mimeType = "application/octet-stream";
+        tag.mimeType = "application/octet-stream";
     }
-    if (tagCode === 6) {
-      $.incomplete = 1;
-    }
-    return $;
+    tag.jpegTables = tagCode === 6 ? jpegTables : null;
+    return tag;
   }
 
-  function defineButton($bytes, $stream, $, swfVersion, tagCode) {
+  function defineButton($bytes, $stream, $, swfVersion, tagCode, tagEnd) {
     var eob: boolean;
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
-    if (tagCode == 7) {
-      var $0 = $.characters = [];
+    if (tagCode == SwfTag.CODE_DEFINE_BUTTON) {
+      var characters = $.characters = [];
       do {
         var $1 = {};
         var temp = button($bytes, $stream, $1, swfVersion, tagCode);
         eob = temp.eob;
-        $0.push($1);
+        characters.push($1);
       } while (!eob);
-      $.actionsData = readBinary($bytes, $stream, 0, false);
+      $.actionsData = $bytes.subarray($stream.pos, tagEnd);
+      $stream.pos = tagEnd;
     }
     else {
       var trackFlags = readUi8($bytes, $stream);
       $.trackAsMenu = trackFlags >> 7 & 1;
       var actionOffset = readUi16($bytes, $stream);
-      var $28 = $.characters = [];
+      var characters = $.characters = [];
       do {
         var $29: any = {};
         var flags = readUi8($bytes, $stream);
@@ -211,11 +217,10 @@ module Shumway.SWF.Parser {
         if (!eob) {
           $29.symbolId = readUi16($bytes, $stream);
           $29.depth = readUi16($bytes, $stream);
-          var $30 = $29.matrix = {};
-          matrix($bytes, $stream, $30, swfVersion, tagCode);
+          $29.matrix = matrix($bytes, $stream);
           if (tagCode === 34) {
             var $31 = $29.cxform = {};
-            cxform($bytes, $stream, $31, swfVersion, tagCode);
+            cxform($bytes, $stream, $31, tagCode);
           }
           if ($29.flags & PlaceObjectFlags.HasFilterList) {
             var count = readUi8($bytes, $stream);
@@ -223,7 +228,7 @@ module Shumway.SWF.Parser {
             var $3 = count;
             while ($3--) {
               var $4 = {};
-              anyFilter($bytes, $stream, $4, swfVersion, tagCode);
+              anyFilter($bytes, $stream, $4);
               $2.push($4);
             }
           }
@@ -231,43 +236,34 @@ module Shumway.SWF.Parser {
             $29.blendMode = readUi8($bytes, $stream);
           }
         }
-        $28.push($29);
+        characters.push($29);
       } while (!eob);
       if (!!actionOffset) {
         var $56 = $.buttonActions = [];
-        do {
-          var $57 = {};
-          buttonCondAction($bytes, $stream, $57, swfVersion, tagCode);
+        while ($stream.pos < tagEnd) {
+          var $57 = buttonCondAction($bytes, $stream, tagEnd);
+          // Ignore actions that exceed the tag length.
+          if ($stream.pos > tagEnd) {
+            break;
+          }
           $56.push($57);
-        } while ($stream.remaining() > 0);
+        }
+        $stream.pos = tagEnd;
       }
     }
     return $;
   }
 
-  function defineJPEGTables($bytes, $stream, $, swfVersion, tagCode) {
-    $ || ($ = {});
-    $.id = 0;
-    $.imgData = readBinary($bytes, $stream, 0, false);
-    $.mimeType = "application/octet-stream";
-    return $;
-  }
-
-  function setBackgroundColor($bytes, $stream, $, swfVersion, tagCode) {
-    $ || ($ = {});
-    $.color = rgb($bytes, $stream);
-    return $;
-  }
-
-  function defineBinaryData($bytes, $stream, $, swfVersion, tagCode) {
+  function defineBinaryData($bytes, $stream, $, swfVersion, tagCode, tagEnd) {
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
-    var reserved = readUi32($bytes, $stream);
-    $.data = readBinary($bytes, $stream, 0, false);
+    readUi32($bytes, $stream); // Reserved
+    $.data = $bytes.subarray($stream.pos, tagEnd);
+    $stream.pos = tagEnd;
     return $;
   }
 
-  function defineFont($bytes, $stream, $, swfVersion, tagCode) {
+  export function defineFont($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
     var firstOffset = readUi16($bytes, $stream);
@@ -294,8 +290,7 @@ module Shumway.SWF.Parser {
     $.id = readUi16($bytes, $stream);
     var $0 = $.bbox = {};
     bbox($bytes, $stream, $0, swfVersion, tagCode);
-    var $1 = $.matrix = {};
-    matrix($bytes, $stream, $1, swfVersion, tagCode);
+    $.matrix = matrix($bytes, $stream);
     var glyphBits = $.glyphBits = readUi8($bytes, $stream);
     var advanceBits = $.advanceBits = readUi8($bytes, $stream);
     var $2 = $.records = [];
@@ -308,16 +303,7 @@ module Shumway.SWF.Parser {
     return $;
   }
 
-  function doAction($bytes, $stream, $, swfVersion, tagCode) {
-    $ || ($ = {});
-    if (tagCode === 59) {
-      $.spriteId = readUi16($bytes, $stream);
-    }
-    $.actionsData = readBinary($bytes, $stream, 0, false);
-    return $;
-  }
-
-  function defineSound($bytes, $stream, $, swfVersion, tagCode) {
+  function defineSound($bytes, $stream, $, swfVersion, tagCode, tagEnd) {
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
     var soundFlags = readUi8($bytes, $stream);
@@ -326,7 +312,8 @@ module Shumway.SWF.Parser {
     $.soundSize = soundFlags >> 1 & 1;
     $.soundType = soundFlags & 1;
     $.samplesCount = readUi32($bytes, $stream);
-    $.soundData = readBinary($bytes, $stream, 0, false);
+    $.soundData = $bytes.subarray($stream.pos, tagEnd);
+    $stream.pos = tagEnd;
     return $;
   }
 
@@ -336,15 +323,14 @@ module Shumway.SWF.Parser {
       $.soundId = readUi16($bytes, $stream);
     }
     if (tagCode == 89) {
-      $.soundClassName = readString($bytes, $stream, 0);
+      $.soundClassName = readString($bytes, $stream, -1);
     }
-    var $0 = $.soundInfo = {};
-    soundInfo($bytes, $stream, $0, swfVersion, tagCode);
+    $.soundInfo = soundInfo($bytes, $stream);
     return $;
   }
 
-  function soundStreamHead($bytes, $stream, $, swfVersion, tagCode) {
-    $ || ($ = {});
+  export function soundStreamHead($bytes, $stream, tagEnd: number) {
+    var $: any = {};
     var playbackFlags = readUi8($bytes, $stream);
     $.playbackRate = playbackFlags >> 2 & 3;
     $.playbackSize = playbackFlags >> 1 & 1;
@@ -354,31 +340,26 @@ module Shumway.SWF.Parser {
     $.streamRate = streamFlags >> 2 & 3;
     $.streamSize = streamFlags >> 1 & 1;
     $.streamType = streamFlags & 1;
-    $.samplesCount = readUi32($bytes, $stream);
-    if (streamCompression == 2) {
+    $.samplesCount = readUi16($bytes, $stream);
+    if (streamCompression == 2 && tagEnd - $stream.pos >= 2) {
       $.latencySeek = readSi16($bytes, $stream);
     }
     return $;
   }
 
-  function soundStreamBlock($bytes, $stream, $, swfVersion, tagCode) {
-    $ || ($ = {});
-    $.data = readBinary($bytes, $stream, 0, false);
-    return $;
-  }
-
-  function defineBitmap($bytes, $stream, $, swfVersion, tagCode) {
-    $ || ($ = {});
-    $.id = readUi16($bytes, $stream);
-    var format = $.format = readUi8($bytes, $stream);
-    $.width = readUi16($bytes, $stream);
-    $.height = readUi16($bytes, $stream);
-    $.hasAlpha = tagCode === 36;
+  export function defineBitmap(bytes, stream, $, swfVersion, tagCode: number, tagEnd: number) {
+    var tag: any = $ || {};
+    tag.id = readUi16(bytes, stream);
+    var format = tag.format = readUi8(bytes, stream);
+    tag.width = readUi16(bytes, stream);
+    tag.height = readUi16(bytes, stream);
+    tag.hasAlpha = tagCode === 36;
     if (format === 3) {
-      $.colorTableSize = readUi8($bytes, $stream);
+      tag.colorTableSize = readUi8(bytes, stream);
     }
-    $.bmpData = readBinary($bytes, $stream, 0, false);
-    return $;
+    tag.bmpData = bytes.subarray(stream.pos, tagEnd);
+    stream.pos = tagEnd;
+    return tag;
   }
 
   function defineText($bytes, $stream, $, swfVersion, tagCode) {
@@ -407,7 +388,7 @@ module Shumway.SWF.Parser {
       $.fontId = readUi16($bytes, $stream);
     }
     if (hasFontClass) {
-      $.fontClass = readString($bytes, $stream, 0);
+      $.fontClass = readString($bytes, $stream, -1);
     }
     if (hasFont) {
       $.fontHeight = readUi16($bytes, $stream);
@@ -425,39 +406,30 @@ module Shumway.SWF.Parser {
       $.indent = readSi16($bytes, $stream);
       $.leading = readSi16($bytes, $stream);
     }
-    $.variableName = readString($bytes, $stream, 0);
+    $.variableName = readString($bytes, $stream, -1);
     if (hasText) {
-      $.initialText = readString($bytes, $stream, 0);
+      $.initialText = readString($bytes, $stream, -1);
     }
     return $;
   }
 
-  function frameLabel($bytes, $stream, $, swfVersion, tagCode) {
-    $ || ($ = {});
-    $.name = readString($bytes, $stream, 0);
-    return $;
-  }
-
-  function defineFont2($bytes, $stream, $, swfVersion, tagCode) {
+  export function defineFont2($bytes, $stream, $, swfVersion, tagCode, tagEnd) {
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
-    var hasLayout = $.hasLayout = readUb($bytes, $stream, 1);
-    var reserved: any;
-    if (swfVersion > 5) {
-      $.shiftJis = readUb($bytes, $stream, 1);
-    } else {
-      reserved = readUb($bytes, $stream, 1);
-    }
-    $.smallText = readUb($bytes, $stream, 1);
-    $.ansi = readUb($bytes, $stream, 1);
-    var wideOffset = $.wideOffset = readUb($bytes, $stream, 1);
-    var wide = $.wide = readUb($bytes, $stream, 1);
-    $.italic = readUb($bytes, $stream, 1);
-    $.bold = readUb($bytes, $stream, 1);
+    var flags = readUi8($bytes, $stream);
+    var hasLayout = $.hasLayout = (flags & 0x80) ? 1 : 0;
+    $.shiftJis = (swfVersion > 5 && flags & 0x40) ? 1 : 0;
+    $.smallText = (flags & 0x20) ? 1 : 0;
+    $.ansi = (flags & 0x10) ? 1 : 0;
+    var wideOffset = $.wideOffset = (flags & 0x08) ? 1 : 0;
+    var wide = $.wide = (flags & 0x04) ? 1 : 0;
+    $.italic = (flags & 0x02) ? 1 : 0;
+    $.bold = (flags & 0x01) ? 1 : 0;
     if (swfVersion > 5) {
       $.language = readUi8($bytes, $stream);
     } else {
-      reserved = readUi8($bytes, $stream);
+      // Skip reserved byte.
+      readUi8($bytes, $stream);
       $.language = 0;
     }
     var nameLength = readUi8($bytes, $stream);
@@ -466,6 +438,11 @@ module Shumway.SWF.Parser {
       $.resolution = 20;
     }
     var glyphCount = $.glyphCount = readUi16($bytes, $stream);
+    // The SWF format docs don't say that, but the DefineFont{2,3} tag ends here for device fonts.
+    if (glyphCount === 0) {
+      return $;
+    }
+    var startpos = $stream.pos;
     if (wideOffset) {
       var $0 = $.offsets = [];
       var $1 = glyphCount;
@@ -485,6 +462,13 @@ module Shumway.SWF.Parser {
     var $5 = glyphCount;
     while ($5--) {
       var $6 = {};
+      var dist = $.offsets[glyphCount-$5]+startpos-$stream.pos;
+      // when just one byte difference between two offsets, just read that and insert a eos record
+      if( dist === 1 ) {
+        readUi8($bytes,$stream);
+        $4.push({"records":[{"type":0,"eos":true,"hasNewStyles":0,"hasLineStyle":0,"hasFillStyle1":0,"hasFillStyle0":0,"move":0}]});
+        continue;
+      }
       shape($bytes, $stream, $6, swfVersion, tagCode);
       $4.push($6);
     }
@@ -520,71 +504,29 @@ module Shumway.SWF.Parser {
       var kerningCount = readUi16($bytes, $stream);
       var $56 = $.kerning = [];
       var $57 = kerningCount;
-      while ($57--) {
+      // DefineFont2 tags tend to have a wrong kerning count so we have to make sure here that there is enough unread
+      // data remaining before parsing the next kerning record. If not, we have to bail out earlier in the following
+      // loop to avoid reading out of bound.
+      while ($57-- && tagEnd - $stream.pos >= (wide ? 4 : 2) + 2) {
         var $58 = {};
-        kerning($bytes, $stream, $58, swfVersion, tagCode, wide);
+        kerning($bytes, $stream, $58, wide);
         $56.push($58);
       }
     }
     return $;
   }
 
-  function fileAttributes($bytes, $stream, $, swfVersion, tagCode) {
+  export function defineFont4($bytes, $stream, $, swfVersion, tagCode, tagEnd) {
     $ || ($ = {});
-    var reserved = readUb($bytes, $stream, 1);
-    $.useDirectBlit = readUb($bytes, $stream, 1);
-    $.useGpu = readUb($bytes, $stream, 1);
-    $.hasMetadata = readUb($bytes, $stream, 1);
-    $.doAbc = readUb($bytes, $stream, 1);
-    $.noCrossDomainCaching = readUb($bytes, $stream, 1);
-    $.relativeUrls = readUb($bytes, $stream, 1);
-    $.network = readUb($bytes, $stream, 1);
-    var pad = readUb($bytes, $stream, 24);
-    return $;
-  }
-
-  function doABC($bytes, $stream, $, swfVersion, tagCode) {
-    $ || ($ = {});
-    if (tagCode === 82) {
-      $.flags = readUi32($bytes, $stream);
-    }
-    else {
-      $.flags = 0;
-    }
-    if (tagCode === 82) {
-      $.name = readString($bytes, $stream, 0);
-    }
-    else {
-      $.name = "";
-    }
-    $.data = readBinary($bytes, $stream, 0, false);
-    return $;
-  }
-
-  function exportAssets($bytes, $stream, $, swfVersion, tagCode) {
-    $ || ($ = {});
-    var exportsCount = readUi16($bytes, $stream);
-    var $0 = $.exports = [];
-    var $1 = exportsCount;
-    while ($1--) {
-      var $2: any = {};
-      $2.symbolId = readUi16($bytes, $stream);
-      $2.className = readString($bytes, $stream, 0);
-      $0.push($2);
-    }
-    return $;
-  }
-
-  function symbolClass($bytes, $stream, $, swfVersion, tagCode) {
-    $ || ($ = {});
-    var symbolCount = readUi16($bytes, $stream);
-    var $0 = $.exports = [];
-    var $1 = symbolCount;
-    while ($1--) {
-      var $2: any = {};
-      $2.symbolId = readUi16($bytes, $stream);
-      $2.className = readString($bytes, $stream, 0);
-      $0.push($2);
+    $.id = readUi16($bytes, $stream);
+    var flags = readUi8($bytes, $stream);
+    var hasFontData = $.hasFontData = (flags & 0x4) ? 1 : 0;
+    $.italic = (flags & 0x2) ? 1 : 0;
+    $.bold = (flags & 0x1) ? 1 : 0;
+    $.name = readString($bytes, $stream, -1);
+    if (hasFontData) {
+      $.data = $bytes.subarray($stream.pos, tagEnd);
+      $stream.pos = tagEnd;
     }
     return $;
   }
@@ -597,7 +539,7 @@ module Shumway.SWF.Parser {
     return $;
   }
 
-  function defineScene($bytes, $stream, $, swfVersion, tagCode) {
+  export function defineScene($bytes, $stream, $) {
     $ || ($ = {});
     var sceneCount = readEncodedU32($bytes, $stream);
     var $0 = $.scenes = [];
@@ -605,7 +547,7 @@ module Shumway.SWF.Parser {
     while ($1--) {
       var $2: any = {};
       $2.offset = readEncodedU32($bytes, $stream);
-      $2.name = readString($bytes, $stream, 0);
+      $2.name = readString($bytes, $stream, -1);
       $0.push($2);
     }
     var labelCount = readEncodedU32($bytes, $stream);
@@ -614,7 +556,7 @@ module Shumway.SWF.Parser {
     while ($4--) {
       var $5: any = {};
       $5.frame = readEncodedU32($bytes, $stream);
-      $5.name = readString($bytes, $stream, 0);
+      $5.name = readString($bytes, $stream, -1);
       $3.push($5);
     }
     return $;
@@ -634,7 +576,7 @@ module Shumway.SWF.Parser {
     align($bytes, $stream);
   }
 
-  function rgb($bytes, $stream): number {
+  export function rgb($bytes, $stream): number {
     return ((readUi8($bytes, $stream) << 24) | (readUi8($bytes, $stream) <<16) |
             (readUi8($bytes, $stream) << 8) | 0xff) >>> 0;
   }
@@ -649,19 +591,8 @@ module Shumway.SWF.Parser {
            (readUi8($bytes, $stream) << 16) | (readUi8($bytes, $stream) << 8);
   }
 
-  function fillSolid($bytes, $stream, $, swfVersion, tagCode, isMorph) {
-    if (tagCode > 22 || isMorph) {
-      $.color = rgba($bytes, $stream);
-    }
-    else {
-      $.color = rgb($bytes, $stream);
-    }
-    if (isMorph) {
-      $.colorMorph = rgba($bytes, $stream);
-    }
-  }
-
-  function matrix($bytes, $stream, $, swfVersion, tagCode) {
+  function matrix($bytes, $stream) {
+    var $: any = {};
     align($bytes, $stream);
     var hasScale = readUb($bytes, $stream, 1);
     if (hasScale) {
@@ -689,9 +620,10 @@ module Shumway.SWF.Parser {
     $.tx = e;
     $.ty = f;
     align($bytes, $stream);
+    return $;
   }
 
-  function cxform($bytes, $stream, $, swfVersion, tagCode) {
+  function cxform($bytes, $stream, $, tagCode) {
     align($bytes, $stream);
     var hasOffsets = readUb($bytes, $stream, 1);
     var hasMultipliers = readUb($bytes, $stream, 1);
@@ -731,16 +663,6 @@ module Shumway.SWF.Parser {
     align($bytes, $stream);
   }
 
-  function fillGradient($bytes, $stream, $, swfVersion, tagCode, isMorph, type) {
-    var $128 = $.matrix = {};
-    matrix($bytes, $stream, $128, swfVersion, tagCode);
-    if (isMorph) {
-      var $129 = $.matrixMorph = {};
-      matrix($bytes, $stream, $129, swfVersion, tagCode);
-    }
-    gradient($bytes, $stream, $, swfVersion, tagCode, isMorph, type);
-  }
-
   function gradient($bytes, $stream, $, swfVersion, tagCode, isMorph, type) {
     if (tagCode === 83) {
       $.spreadMode = readUb($bytes, $stream, 2);
@@ -754,7 +676,7 @@ module Shumway.SWF.Parser {
     var $131 = count;
     while ($131--) {
       var $132 = {};
-      gradientRecord($bytes, $stream, $132, swfVersion, tagCode, isMorph);
+      gradientRecord($bytes, $stream, $132, tagCode, isMorph);
       $130.push($132);
     }
     if (type === 19) {
@@ -765,7 +687,7 @@ module Shumway.SWF.Parser {
     }
   }
 
-  function gradientRecord($bytes, $stream, $, swfVersion, tagCode, isMorph) {
+  function gradientRecord($bytes, $stream, $, tagCode, isMorph) {
     $.ratio = readUi8($bytes, $stream);
     if (tagCode > 22) {
       $.color = rgba($bytes, $stream);
@@ -784,34 +706,30 @@ module Shumway.SWF.Parser {
     temp = styles($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes);
     var lineBits = temp.lineBits;
     var fillBits = temp.fillBits;
-    var $160 = $.records = [];
+    var records = $.records = [];
     do {
-      var $161 = {};
-      temp = shapeRecord($bytes, $stream, $161, swfVersion, tagCode, isMorph,
-        fillBits, lineBits, hasStrokes, bits);
+      var record = {};
+      temp = shapeRecord($bytes, $stream, record, swfVersion, tagCode, isMorph,
+                         fillBits, lineBits, hasStrokes, bits);
       eos = temp.eos;
-      var flags = temp.flags;
-      var type = temp.type;
-      var fillBits = temp.fillBits;
-      var lineBits = temp.lineBits;
+      fillBits = temp.fillBits;
+      lineBits = temp.lineBits;
       bits = temp.bits;
-      $160.push($161);
+      records.push(record);
     } while (!eos);
-    temp = styleBits($bytes, $stream, $, swfVersion, tagCode);
+    temp = styleBits($bytes, $stream);
     var fillBits = temp.fillBits;
     var lineBits = temp.lineBits;
-    var $162 = $.recordsMorph = [];
+    var recordsMorph = $.recordsMorph = [];
     do {
-      var $163 = {};
-      temp = shapeRecord($bytes, $stream, $163, swfVersion, tagCode, isMorph,
-        fillBits, lineBits, hasStrokes, bits);
+      var morphRecord = {};
+      temp = shapeRecord($bytes, $stream, morphRecord, swfVersion, tagCode, isMorph,
+                         fillBits, lineBits, hasStrokes, bits);
       eos = temp.eos;
-      var flags = temp.flags;
-      var type = temp.type;
-      var fillBits = temp.fillBits;
-      var lineBits = temp.lineBits;
+      fillBits = temp.fillBits;
+      lineBits = temp.lineBits;
       bits = temp.bits;
-      $162.push($163);
+      recordsMorph.push(morphRecord);
     } while (!eos);
   }
 
@@ -824,30 +742,29 @@ module Shumway.SWF.Parser {
     do {
       var $161 = {};
       temp = shapeRecord($bytes, $stream, $161, swfVersion, tagCode, isMorph,
-        fillBits, lineBits, hasStrokes, bits);
+                         fillBits, lineBits, hasStrokes, bits);
       eos = temp.eos;
-      var flags = temp.flags;
-      var type = temp.type;
-      var fillBits = temp.fillBits;
-      var lineBits = temp.lineBits;
+      fillBits = temp.fillBits;
+      lineBits = temp.lineBits;
       bits = temp.bits;
       $160.push($161);
     } while (!eos);
   }
 
-  function shapeRecord($bytes, $stream, $, swfVersion, tagCode, isMorph, fillBits, lineBits, hasStrokes, bits: number) {
+  function shapeRecord($bytes, $stream, $, swfVersion, tagCode, isMorph, fillBits, lineBits,
+                       hasStrokes, bits: number) {
     var eos: boolean, temp: any;
     var type = $.type = readUb($bytes, $stream, 1);
     var flags = readUb($bytes, $stream, 5);
     eos = $.eos = !(type || flags);
     if (type) {
-      temp = shapeRecordEdge($bytes, $stream, $, swfVersion, tagCode, flags, bits);
+      temp = shapeRecordEdge($bytes, $stream, $, flags);
       bits = temp.bits;
     } else {
       temp = shapeRecordSetup($bytes, $stream, $, swfVersion, tagCode, flags, isMorph,
         fillBits, lineBits, hasStrokes, bits);
-      var fillBits = temp.fillBits;
-      var lineBits = temp.lineBits;
+      fillBits = temp.fillBits;
+      lineBits = temp.lineBits;
       bits = temp.bits;
     }
     return {
@@ -860,18 +777,16 @@ module Shumway.SWF.Parser {
     };
   }
 
-  function shapeRecordEdge($bytes, $stream, $, swfVersion, tagCode, flags, bits: number) {
-    var isStraight = 0, tmp = 0, bits = 0, isGeneral = 0, isVertical = 0;
-    isStraight = $.isStraight = flags >> 4;
-    tmp = flags & 0x0f;
-    bits = tmp + 2;
+  function shapeRecordEdge($bytes, $stream, $, flags) {
+    var bits = (flags & 0x0f) + 2;
+    var isStraight = $.isStraight = flags >> 4;
     if (isStraight) {
-      isGeneral = $.isGeneral = readUb($bytes, $stream, 1);
+      var isGeneral = $.isGeneral = readUb($bytes, $stream, 1);
       if (isGeneral) {
         $.deltaX = readSb($bytes, $stream, bits);
         $.deltaY = readSb($bytes, $stream, bits);
       } else {
-        isVertical = $.isVertical = readUb($bytes, $stream, 1);
+        var isVertical = $.isVertical = readUb($bytes, $stream, 1);
         if (isVertical) {
           $.deltaY = readSb($bytes, $stream, bits);
         } else {
@@ -888,17 +803,11 @@ module Shumway.SWF.Parser {
   }
 
   function shapeRecordSetup($bytes, $stream, $, swfVersion, tagCode, flags, isMorph, fillBits: number, lineBits: number, hasStrokes, bits: number) {
-    var hasNewStyles = 0, hasLineStyle = 0, hasFillStyle1 = 0;
-    var hasFillStyle0 = 0, move = 0;
-    if (tagCode > 2) {
-      hasNewStyles = $.hasNewStyles = flags >> 4;
-    } else {
-      hasNewStyles = $.hasNewStyles = 0;
-    }
-    hasLineStyle = $.hasLineStyle = flags >> 3 & 1;
-    hasFillStyle1 = $.hasFillStyle1 = flags >> 2 & 1;
-    hasFillStyle0 = $.hasFillStyle0 = flags >> 1 & 1;
-    move = $.move = flags & 1;
+    var hasNewStyles = $.hasNewStyles = tagCode > 2 ? flags >> 4 : 0;
+    var hasLineStyle = $.hasLineStyle = flags >> 3 & 1;
+    var hasFillStyle1 = $.hasFillStyle1 = flags >> 2 & 1;
+    var hasFillStyle0 = $.hasFillStyle0 = flags >> 1 & 1;
+    var move = $.move = flags & 1;
     if (move) {
       bits = readUb($bytes, $stream, 5);
       $.moveX = readSb($bytes, $stream, bits);
@@ -928,7 +837,7 @@ module Shumway.SWF.Parser {
   function styles($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
     fillStyleArray($bytes, $stream, $, swfVersion, tagCode, isMorph);
     lineStyleArray($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes);
-    var temp = styleBits($bytes, $stream, $, swfVersion, tagCode);
+    var temp = styleBits($bytes, $stream);
     var fillBits = temp.fillBits;
     var lineBits = temp.lineBits;
     return {fillBits: fillBits, lineBits: lineBits};
@@ -969,7 +878,7 @@ module Shumway.SWF.Parser {
     }
   }
 
-  function styleBits($bytes, $stream, $, swfVersion, tagCode) {
+  function styleBits($bytes, $stream) {
     align($bytes, $stream);
     var fillBits = readUb($bytes, $stream, 4);
     var lineBits = readUb($bytes, $stream, 4);
@@ -983,18 +892,30 @@ module Shumway.SWF.Parser {
     var type = $.type = readUi8($bytes, $stream);
     switch (type) {
       case 0:
-        fillSolid($bytes, $stream, $, swfVersion, tagCode, isMorph);
+        $.color = tagCode > 22 || isMorph ? rgba($bytes, $stream) : rgb($bytes, $stream);
+        if (isMorph) {
+          $.colorMorph = rgba($bytes, $stream);
+        }
         break;
       case 16:
       case 18:
       case 19:
-        fillGradient($bytes, $stream, $, swfVersion, tagCode, isMorph, type);
+        $.matrix = matrix($bytes, $stream);
+        if (isMorph) {
+          $.matrixMorph = matrix($bytes, $stream);
+        }
+        gradient($bytes, $stream, $, swfVersion, tagCode, isMorph, type);
         break;
       case 64:
       case 65:
       case 66:
       case 67:
-        fillBitmap($bytes, $stream, $, swfVersion, tagCode, isMorph, type);
+        $.bitmapId = readUi16($bytes, $stream);
+        $.condition = type === 64 || type === 67;
+        $.matrix = matrix($bytes, $stream);
+        if (isMorph) {
+          $.matrixMorph = matrix($bytes, $stream);
+        }
         break;
       default:
     }
@@ -1041,18 +962,7 @@ module Shumway.SWF.Parser {
     }
   }
 
-  function fillBitmap($bytes, $stream, $, swfVersion, tagCode, isMorph, type) {
-    $.bitmapId = readUi16($bytes, $stream);
-    var $18 = $.matrix = {};
-    matrix($bytes, $stream, $18, swfVersion, tagCode);
-    if (isMorph) {
-      var $19 = $.matrixMorph = {};
-      matrix($bytes, $stream, $19, swfVersion, tagCode);
-    }
-    $.condition = type === 64 || type === 67;
-  }
-
-  function filterGlow($bytes, $stream, $, swfVersion, tagCode, type) {
+  function filterGlow($bytes, $stream, $, type) {
     var count;
     if (type === 4 || type === 7) {
       count = readUi8($bytes, $stream);
@@ -1093,14 +1003,14 @@ module Shumway.SWF.Parser {
     }
   }
 
-  function filterBlur($bytes, $stream, $, swfVersion, tagCode) {
+  function filterBlur($bytes, $stream, $) {
     $.blurX = readFixed($bytes, $stream);
     $.blurY = readFixed($bytes, $stream);
     $.quality = readUb($bytes, $stream, 5);
     var reserved = readUb($bytes, $stream, 3);
   }
 
-  function filterConvolution($bytes, $stream, $, swfVersion, tagCode) {
+  function filterConvolution($bytes, $stream, $) {
     var matrixX = $.matrixX = readUi8($bytes, $stream);
     var matrixY = $.matrixY = readUi8($bytes, $stream);
     $.divisor = readFloat($bytes, $stream);
@@ -1116,7 +1026,7 @@ module Shumway.SWF.Parser {
     $.preserveAlpha = readUb($bytes, $stream, 1);
   }
 
-  function filterColorMatrix($bytes, $stream, $, swfVersion, tagCode) {
+  function filterColorMatrix($bytes, $stream, $) {
     var $20 = $.matrix = [];
     var $21 = 20;
     while ($21--) {
@@ -1124,7 +1034,7 @@ module Shumway.SWF.Parser {
     }
   }
 
-  function anyFilter($bytes, $stream, $, swfVersion, tagCode) {
+  function anyFilter($bytes, $stream, $) {
     var type = $.type = readUi8($bytes, $stream);
     switch (type) {
       case 0:
@@ -1132,61 +1042,43 @@ module Shumway.SWF.Parser {
       case 3:
       case 4:
       case 7:
-        filterGlow($bytes, $stream, $, swfVersion, tagCode, type);
+        filterGlow($bytes, $stream, $, type);
         break;
       case 1:
-        filterBlur($bytes, $stream, $, swfVersion, tagCode);
+        filterBlur($bytes, $stream, $);
         break;
       case 5:
-        filterConvolution($bytes, $stream, $, swfVersion, tagCode);
+        filterConvolution($bytes, $stream, $);
         break;
       case 6:
-        filterColorMatrix($bytes, $stream, $, swfVersion, tagCode);
+        filterColorMatrix($bytes, $stream, $);
         break;
       default:
     }
   }
 
-  function events($bytes, $stream, $, swfVersion, tagCode) {
-    var flags = swfVersion >= 6 ? readUi32($bytes, $stream) : readUi16($bytes, $stream);
-    var eoe = $.eoe = !flags;
-    var keyPress;
-    $.onKeyUp = flags >> 7 & 1;
-    $.onKeyDown = flags >> 6 & 1;
-    $.onMouseUp = flags >> 5 & 1;
-    $.onMouseDown = flags >> 4 & 1;
-    $.onMouseMove = flags >> 3 & 1;
-    $.onUnload = flags >> 2 & 1;
-    $.onEnterFrame = flags >> 1 & 1;
-    $.onLoad = flags & 1;
-    if (swfVersion >= 6) {
-      $.onDragOver = flags >> 15 & 1;
-      $.onRollOut = flags >> 14 & 1;
-      $.onRollOver = flags >> 13 & 1;
-      $.onReleaseOutside = flags >> 12 & 1;
-      $.onRelease = flags >> 11 & 1;
-      $.onPress = flags >> 10 & 1;
-      $.onInitialize = flags >> 9 & 1;
-      $.onData = flags >> 8 & 1;
-      if (swfVersion >= 7) {
-        $.onConstruct = flags >> 18 & 1;
-      } else {
-        $.onConstruct = 0;
-      }
-      keyPress = $.keyPress = flags >> 17 & 1;
-      $.onDragOut = flags >> 16 & 1;
+  function events($bytes, $stream, $, swfVersion) {
+    var flags = $.flags = swfVersion >= 6 ? readUi32($bytes, $stream) : readUi16($bytes, $stream);
+    if (!flags) {
+      // `true` means this is the EndOfEvents marker.
+      return true;
     }
-    if (!eoe) {
-      var length = $.length = readUi32($bytes, $stream);
-      if (keyPress) {
-        $.keyCode = readUi8($bytes, $stream);
-      }
-      $.actionsData = readBinary($bytes, $stream, length - +keyPress, false);
+    // The Construct event is only allowed in 7+. It can't be set in < 6, so mask it out for 6.
+    if (swfVersion === 6) {
+      flags = flags & ~AVM1ClipEvents.Construct;
     }
-    return eoe;
+    var length = $.length = readUi32($bytes, $stream);
+    if (flags & AVM1ClipEvents.KeyPress) {
+      $.keyCode = readUi8($bytes, $stream);
+      length--;
+    }
+    var end = $stream.pos + length;
+    $.actionsData = $bytes.subarray($stream.pos, end);
+    $stream.pos = end;
+    return false;
   }
 
-  function kerning($bytes, $stream, $, swfVersion, tagCode, wide) {
+  function kerning($bytes, $stream, $, wide) {
     if (wide) {
       $.code1 = readUi16($bytes, $stream);
       $.code2 = readUi16($bytes, $stream);
@@ -1198,7 +1090,7 @@ module Shumway.SWF.Parser {
     $.adjustment = readUi16($bytes, $stream);
   }
 
-  function textEntry($bytes, $stream, $, swfVersion, tagCode, glyphBits, advanceBits) {
+  function textEntry($bytes, $stream, $, glyphBits, advanceBits) {
     $.glyphIndex = readUb($bytes, $stream, glyphBits);
     $.advance = readSb($bytes, $stream, advanceBits);
   }
@@ -1246,20 +1138,21 @@ module Shumway.SWF.Parser {
       var $7 = glyphCount;
       while ($7--) {
         var $8 = {};
-        textEntry($bytes, $stream, $8, swfVersion, tagCode, glyphBits, advanceBits);
+        textEntry($bytes, $stream, $8, glyphBits, advanceBits);
         $6.push($8);
       }
     }
     return {eot: eot};
   }
 
-  function soundEnvelope($bytes, $stream, $, swfVersion, tagCode) {
+  function soundEnvelope($bytes, $stream, $) {
     $.pos44 = readUi32($bytes, $stream);
     $.volumeLeft = readUi16($bytes, $stream);
     $.volumeRight = readUi16($bytes, $stream);
   }
 
-  function soundInfo($bytes, $stream, $, swfVersion, tagCode) {
+  function soundInfo($bytes, $stream) {
+    var $: any = {};
     var reserved = readUb($bytes, $stream, 2);
     $.stop = readUb($bytes, $stream, 1);
     $.noMultiple = readUb($bytes, $stream, 1);
@@ -1282,10 +1175,11 @@ module Shumway.SWF.Parser {
       var $2 = envelopeCount;
       while ($2--) {
         var $3 = {};
-        soundEnvelope($bytes, $stream, $3, swfVersion, tagCode);
+        soundEnvelope($bytes, $stream, $3);
         $1.push($3);
       }
     }
+    return $;
   }
 
   function button($bytes, $stream, $, swfVersion, tagCode) {
@@ -1305,16 +1199,15 @@ module Shumway.SWF.Parser {
     if (!eob) {
       $.symbolId = readUi16($bytes, $stream);
       $.depth = readUi16($bytes, $stream);
-      var $2 = $.matrix = {};
-      matrix($bytes, $stream, $2, swfVersion, tagCode);
+      $.matrix = matrix($bytes, $stream);
       if (tagCode === SwfTag.CODE_DEFINE_BUTTON2) {
         var $3 = $.cxform = {};
-        cxform($bytes, $stream, $3, swfVersion, tagCode);
+        cxform($bytes, $stream, $3, tagCode);
       }
       if ($.flags & PlaceObjectFlags.HasFilterList) {
         $.filterCount = readUi8($bytes, $stream);
         var $4 = $.filters = {};
-        anyFilter($bytes, $stream, $4, swfVersion, tagCode);
+        anyFilter($bytes, $stream, $4);
       }
       if ($.flags & PlaceObjectFlags.HasBlendMode) {
         $.blendMode = readUi8($bytes, $stream);
@@ -1323,20 +1216,26 @@ module Shumway.SWF.Parser {
     return {eob: eob};
   }
 
-  function buttonCondAction($bytes, $stream, $, swfVersion, tagCode) {
+  function buttonCondAction($bytes, $stream, tagEnd) {
+    var start = $stream.pos;
     var tagSize = readUi16($bytes, $stream);
+    // If no tagSize is given, read to the tag's end.
+    var end = tagSize ? start + tagSize : tagEnd;
     var conditions = readUi16($bytes, $stream);
-    // The 7 upper bits hold a key code the button should respond to.
-    $.keyCode = (conditions & 0xfe00) >> 9;
-    // The lower 9 bits hold state transition flags. See the enum in AS2Button for details.
-    $.stateTransitionFlags = conditions & 0x1ff;
-    // If no tagSize is given, pass `0` to readBinary.
-    $.actionsData = readBinary($bytes, $stream, (tagSize || 4) - 4, false);
+    $stream.pos = end;
+    return {
+      // The 7 upper bits hold a key code the button should respond to.
+      keyCode: (conditions & 0xfe00) >> 9,
+      // The lower 9 bits hold state transition flags. See the enum in AVM1Button for details.
+      stateTransitionFlags: conditions & 0x1ff,
+      // If no tagSize is given, pass `0` to readBinary.
+      actionsData: $bytes.subarray(start + 4, end)
+    };
   }
 
   function shape($bytes, $stream, $, swfVersion, tagCode) {
     var eos: boolean, bits: number, temp: any;
-    temp = styleBits($bytes, $stream, $, swfVersion, tagCode);
+    temp = styleBits($bytes, $stream);
     var fillBits = temp.fillBits;
     var lineBits = temp.lineBits;
     var $4 = $.records = [];
@@ -1347,14 +1246,14 @@ module Shumway.SWF.Parser {
       temp = shapeRecord($bytes, $stream, $5, swfVersion, tagCode, isMorph,
         fillBits, lineBits, hasStrokes, bits);
       eos = temp.eos;
-      var fillBits = temp.fillBits;
-      var lineBits = temp.lineBits;
-      bits = bits;
+      fillBits = temp.fillBits;
+      lineBits = temp.lineBits;
+      bits = temp.bits;
       $4.push($5);
     } while (!eos);
   }
 
-  export var tagHandler:any = {
+  export var tagHandlers: any = {
     /* End */                            0: undefined,
     /* ShowFrame */                      1: undefined,
     /* DefineShape */                    2: defineShape,
@@ -1362,17 +1261,17 @@ module Shumway.SWF.Parser {
     /* RemoveObject */                   5: removeObject,
     /* DefineBits */                     6: defineImage,
     /* DefineButton */                   7: defineButton,
-    /* JPEGTables */                     8: defineJPEGTables,
-    /* SetBackgroundColor */             9: setBackgroundColor,
+    /* JPEGTables */                     8: undefined,
+    /* SetBackgroundColor */             9: undefined,
     /* DefineFont */                    10: defineFont,
     /* DefineText */                    11: defineLabel,
-    /* DoAction */                      12: doAction,
+    /* DoAction */                      12: undefined,
     /* DefineFontInfo */                13: undefined,
     /* DefineSound */                   14: defineSound,
     /* StartSound */                    15: startSound,
     /* DefineButtonSound */             17: undefined,
-    /* SoundStreamHead */               18: soundStreamHead,
-    /* SoundStreamBlock */              19: soundStreamBlock,
+    /* SoundStreamHead */               18: undefined,
+    /* SoundStreamBlock */              19: undefined,
     /* DefineBitsLossless */            20: defineBitmap,
     /* DefineBitsJPEG2 */               21: defineImage,
     /* DefineShape2 */                  22: defineShape,
@@ -1387,31 +1286,31 @@ module Shumway.SWF.Parser {
     /* DefineBitsLossless2 */           36: defineBitmap,
     /* DefineEditText */                37: defineText,
     /* DefineSprite */                  39: undefined,
-    /* FrameLabel */                    43: frameLabel,
-    /* SoundStreamHead2 */              45: soundStreamHead,
+    /* FrameLabel */                    43: undefined,
+    /* SoundStreamHead2 */              45: undefined,
     /* DefineMorphShape */              46: defineShape,
     /* DefineFont2 */                   48: defineFont2,
-    /* ExportAssets */                  56: exportAssets,
+    /* ExportAssets */                  56: undefined,
     /* ImportAssets */                  57: undefined,
     /* EnableDebugger */                58: undefined,
-    /* DoInitAction */                  59: doAction,
+    /* DoInitAction */                  59: undefined,
     /* DefineVideoStream */             60: undefined,
     /* VideoFrame */                    61: undefined,
     /* DefineFontInfo2 */               62: undefined,
     /* EnableDebugger2 */               64: undefined,
     /* ScriptLimits */                  65: undefined,
     /* SetTabIndex */                   66: undefined,
-    /* FileAttributes */                69: fileAttributes,
+    /* FileAttributes */                69: undefined,
     /* PlaceObject3 */                  70: placeObject,
     /* ImportAssets2 */                 71: undefined,
-    /* DoABC (undoc) */                 72: doABC,
+    /* DoABC (undoc) */                 72: undefined,
     /* DefineFontAlignZones */          73: undefined,
     /* CSMTextSettings */               74: undefined,
     /* DefineFont3 */                   75: defineFont2,
-    /* SymbolClass */                   76: symbolClass,
+    /* SymbolClass */                   76: undefined,
     /* Metadata */                      77: undefined,
     /* DefineScalingGrid */             78: defineScalingGrid,
-    /* DoABC */                         82: doABC,
+    /* DoABC */                         82: undefined,
     /* DefineShape4 */                  83: defineShape,
     /* DefineMorphShape2 */             84: defineShape,
     /* DefineSceneAndFrameLabelData */  86: defineScene,
@@ -1419,27 +1318,24 @@ module Shumway.SWF.Parser {
     /* DefineFontName */                88: undefined,
     /* StartSound2 */                   89: startSound,
     /* DefineBitsJPEG4 */               90: defineImage,
-    /* DefineFont4 */                   91: undefined
+    /* DefineFont4 */                   91: defineFont4
   };
 
 
-  export function readHeader($bytes, $stream, $, swfVersion, tagCode) {
-    $ || ($ = {});
-    var $0: any = $.bbox = {};
-    align($bytes, $stream);
+  export function readHeader($bytes, $stream) {
     var bits = readUb($bytes, $stream, 5);
     var xMin = readSb($bytes, $stream, bits);
     var xMax = readSb($bytes, $stream, bits);
     var yMin = readSb($bytes, $stream, bits);
     var yMax = readSb($bytes, $stream, bits);
-    $0.xMin = xMin;
-    $0.xMax = xMax;
-    $0.yMin = yMin;
-    $0.yMax = yMax;
     align($bytes, $stream);
     var frameRateFraction = readUi8($bytes, $stream);
-    $.frameRate = readUi8($bytes, $stream) + frameRateFraction / 256;
-    $.frameCount = readUi16($bytes, $stream);
-    return $;
+    var frameRate = readUi8($bytes, $stream) + frameRateFraction / 256;
+    var frameCount = readUi16($bytes, $stream);
+    return {
+      frameRate: frameRate,
+      frameCount: frameCount,
+      bounds: new Shumway.Bounds(xMin, yMin, xMax, yMax)
+    };
   }
 }

@@ -38,7 +38,7 @@ module Shumway.GFX.WebGL {
 
     public gl: WebGLRenderingContext;
     private _canvas: HTMLCanvasElement;
-    private _options: WebGLStageRendererOptions;
+    private _options: WebGLRendererOptions;
     private _w: number;
     private _h: number;
     private _programCache: {};
@@ -64,7 +64,7 @@ module Shumway.GFX.WebGL {
 
     private _surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator;
 
-    constructor (canvas: HTMLCanvasElement, options: WebGLStageRendererOptions) {
+    constructor (canvas: HTMLCanvasElement, options: WebGLRendererOptions) {
       this._canvas = canvas;
       this._options = options;
       this.gl = <WebGLRenderingContext> (
@@ -190,7 +190,7 @@ module Shumway.GFX.WebGL {
     }
 
     public allocateSurfaceRegion(w: number, h: number, discardCache: boolean = true): WebGLSurfaceRegion {
-      return <WebGLSurfaceRegion>this._surfaceRegionAllocator.allocate(w, h);
+      return <WebGLSurfaceRegion>this._surfaceRegionAllocator.allocate(w, h, null);
     }
 
     /*
@@ -258,7 +258,7 @@ module Shumway.GFX.WebGL {
       var request = new XMLHttpRequest();
       request.open("GET", path, false);
       request.send();
-      release || assert (request.status === 200, "File : " + path + " not found.");
+      release || assert (request.status === 200 || request.status === 0, "File : " + path + " not found.");
       var shaderType;
       if (endsWith(path, ".vert")) {
         shaderType = gl.VERTEX_SHADER;

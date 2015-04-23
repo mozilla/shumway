@@ -13,24 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Class: Loader
 module Shumway.AVM2.AS.flash.display {
   import assert = Shumway.Debug.assert;
-  import notImplemented = Shumway.Debug.notImplemented;
-  import FileLoadingService = Shumway.FileLoadingService;
-  import Telemetry = Shumway.Telemetry;
-
-  import AVM2 = Shumway.AVM2.Runtime.AVM2;
-  import AbcFile = Shumway.AVM2.ABC.AbcFile;
+  import assertUnreachable = Shumway.Debug.assertUnreachable;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+  import throwError = Shumway.AVM2.Runtime.throwError;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
-  import events = flash.events;
   import ActionScriptVersion = flash.display.ActionScriptVersion;
+  import AVM2 = Shumway.AVM2.Runtime.AVM2;
 
-  import Bounds = Shumway.Bounds;
+  import LoaderContext = flash.system.LoaderContext;
+  import events = flash.events;
+  import ICrossDomainSWFLoadingWhitelist = flash.system.ICrossDomainSWFLoadingWhitelist;
 
-  declare var SHUMWAY_ROOT: string;
-  declare var LOADER_WORKER_PATH: string;
+  import FileLoader = Shumway.FileLoader;
+  import ILoadListener = Shumway.ILoadListener;
+  import AbcFile = Shumway.AVM2.ABC.AbcFile;
+  import SWFFile = Shumway.SWF.SWFFile;
+
+  import enterTimeline = Shumway.AVM2.enterTimeline;
+  import leaveTimeline = Shumway.AVM2.leaveTimeline;
 
   enum LoadStatus {
     Unloaded    = 0,
@@ -39,85 +42,181 @@ module Shumway.AVM2.AS.flash.display {
     Complete    = 3
   }
 
-  export class Loader extends flash.display.DisplayObjectContainer implements IAdvancable {
+  enum LoadingType {
+    External    = 0,
+    Bytes       = 1
+  }
 
+  export class Loader extends flash.display.DisplayObjectContainer
+                      implements IAdvancable, ILoadListener {
+
+    static runtimeStartTime: number;
     private static _rootLoader: Loader;
     private static _loadQueue: Loader [];
+    private static _embeddedContentLoadCount: number;
 
     /**
-     * Creates or returns the root Loader instance. The loader property of that instances LoaderInfo
-     * object is always null. Also, no OPEN event ever gets dispatched.
+     * Creates or returns the root Loader instance. The loader property of that instance's
+     * LoaderInfo object is always null. Also, no OPEN event ever gets dispatched.
      */
     static getRootLoader(): Loader {
       if (Loader._rootLoader) {
         return Loader._rootLoader;
       }
       var loader = new flash.display.Loader();
+      // The root loader gets a default name, but it's not visible and hence the instance id must
+      // not be used up.
+      flash.display.DisplayObject._instanceID--;
+      // The root loaderInfo's `loader` property is always null.
       loader._contentLoaderInfo._loader = null;
-      loader._loadStatus = LoadStatus.Opened;
       Loader._rootLoader = loader;
       return loader;
     }
 
-    // Called whenever the class is initialized.
+    static reset() {
+      Loader._loadQueue.forEach(loader => loader.unload());
+      Loader.classInitializer();
+    }
+
     static classInitializer: any = function () {
       Loader._rootLoader = null;
       Loader._loadQueue = [];
+      Loader.runtimeStartTime = 0;
+      Loader._embeddedContentLoadCount = 0;
     };
-
-    // Called whenever an instance of the class is initialized.
     static initializer: any = function() {
       var self: Loader = this;
-      DisplayObject._advancableInstances.push(self);
+      display.DisplayObject._advancableInstances.push(self);
     };
 
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = ["load!"]; // ["uncaughtErrorEvents", "addChild", "addChildAt", "removeChild", "removeChildAt", "setChildIndex", "load", "sanitizeContext", "loadBytes", "close", "unload", "unloadAndStop", "cloneObject"];
-
-    static WORKERS_ENABLED = typeof Worker !== 'undefined';
-    static LOADER_PATH = 'swf/worker.js';
+    static classSymbols: string [] = null;
+    static instanceSymbols: string [] = null;
 
     /**
-     * Handles the load status and dispatches progress events. This gets manually triggered in the
-     * event loop to ensure the correct order of operations.
+     * In each turn of the event loop, Loader events are processed in two batches:
+     * first INIT and COMPLETE events are dispatched for all active Loaders, then
+     * OPEN and PROGRESS.
+     *
+     * A slightly weird result of this is that INIT and COMPLETE are dispatched at
+     * least one turn later than the other events: INIT is dispatched after the
+     * content has been created. That, in turn, happens under
+     * `DisplayObject.performFrameNavigation` in reaction to enough data being
+     * marked as available - which happens in the second batch of Loader event
+     * processing.
      */
-    static progress() {
+    static processEvents() {
+      Loader.processEarlyEvents();
+      Loader.processLateEvents();
+    }
+    private static processEarlyEvents() {
       var queue = Loader._loadQueue;
       for (var i = 0; i < queue.length; i++) {
         var instance = queue[i];
+        release || assert(instance._loadStatus !== LoadStatus.Complete);
         var loaderInfo = instance._contentLoaderInfo;
-        var bytesLoaded = loaderInfo._bytesLoaded;
+        var imageSymbol = instance._imageSymbol;
+
+        // For images, only dispatch INIT and COMPLETE once the image has been decoded.
+        if (loaderInfo._file instanceof ImageFile) {
+          if (!imageSymbol || !imageSymbol.ready || instance._queuedLoadUpdate) {
+            continue;
+          }
+          release || assert(loaderInfo.bytesLoaded === loaderInfo.bytesTotal);
+          instance._applyDecodedImage(imageSymbol);
+          release || assert(instance._content);
+        }
+
+        if (instance._loadStatus === LoadStatus.Opened && instance._content) {
+          enterTimeline("Loader.INIT");
+          try {
+            loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.INIT));
+          } catch (e) {
+            console.warn('caught error under loaderInfo INIT event:', e);
+          }
+          leaveTimeline();
+          instance._loadStatus = LoadStatus.Initialized;
+          // Only for the root loader, progress events for the data loaded up until now are
+          // dispatched here.
+          if (instance === Loader._rootLoader) {
+            enterTimeline("Loader.Progress", 'rootLoader');
+            try {
+              loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
+                                                                false, false,
+                                                                loaderInfo.bytesLoaded,
+                                                                loaderInfo.bytesTotal));
+            } catch (e) {
+              console.warn('caught error under loaderInfo PROGRESS event:', e);
+            }
+            leaveTimeline();
+          }
+        }
+
+        if (instance._loadStatus === LoadStatus.Initialized &&
+            loaderInfo.bytesLoaded === loaderInfo.bytesTotal) {
+          queue.splice(i--, 1);
+          release || assert(queue.indexOf(instance) === -1);
+          instance._loadStatus = LoadStatus.Complete;
+          enterTimeline("Loader.Complete");
+          try {
+            loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.COMPLETE));
+          } catch (e) {
+            console.warn('caught error under loaderInfo COMPLETE event: ', e);
+          }
+          leaveTimeline();
+        }
+      }
+    }
+
+    private static processLateEvents() {
+      var queue = Loader._loadQueue;
+      for (var i = 0; i < queue.length; i++) {
+        var instance = queue[i];
+        release || assert(instance._loadStatus !== LoadStatus.Complete);
+
+        var loaderInfo = instance._contentLoaderInfo;
+        var update = instance._queuedLoadUpdate;
         var bytesTotal = loaderInfo._bytesTotal;
-        switch (instance._loadStatus) {
-          case LoadStatus.Unloaded:
-            if (bytesTotal) {
+        if ((!update || !bytesTotal) && instance._loadStatus !== LoadStatus.Opened) {
+          continue;
+        }
+        instance._queuedLoadUpdate = null;
+
+        if (instance._loadStatus === LoadStatus.Unloaded) {
+          // OPEN is only dispatched when loading external resources, not for loadBytes.
+          if (instance._loadingType === LoadingType.External) {
+            enterTimeline("Loader.Open");
+            try {
               loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.OPEN));
-              loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
-                                                                false, false, 0, bytesTotal));
-              instance._loadStatus = LoadStatus.Opened;
-            } else {
-              break;
+            } catch (e) {
+              console.warn('caught error under loaderInfo OPEN event: ', e);
             }
-          case LoadStatus.Opened:
-            if (instance._content && instance._content._hasFlags(DisplayObjectFlags.Constructed)) {
-              instance._loadStatus = LoadStatus.Initialized;
-              loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.INIT));
-            } else {
-              break;
-            }
-          case LoadStatus.Initialized:
-            if (bytesLoaded === bytesTotal) {
-              instance._loadStatus = LoadStatus.Complete;
-              loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
-                                                                false, false, bytesLoaded,
-                                                                bytesTotal));
-              loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.COMPLETE));
-              queue.splice(i--, 0);
-            }
-            break;
+            leaveTimeline();
+          }
+          // The first time any progress is made at all, a progress event with bytesLoaded = 0
+          // is dispatched.
+          enterTimeline("Loader.Progress");
+          try {
+            loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
+                                                              false, false, 0, bytesTotal));
+          } catch (e) {
+            console.warn('caught error under loaderInfo PROGRESS event: ', e);
+          }
+          leaveTimeline();
+          instance._loadStatus = LoadStatus.Opened;
+        }
+
+        // TODO: The Flash player reports progress in 16kb chunks, in a tight loop right here.
+        if (update) {
+          instance._applyLoadUpdate(update);
+          enterTimeline("Loader.Progress");
+          try {
+            loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
+                                                              false, false, update.bytesLoaded,
+                                                              bytesTotal));
+          } catch (e) {
+            console.warn('caught error under loaderInfo PROGRESS event: ', e);
+          }
+          leaveTimeline();
         }
       }
     }
@@ -127,21 +226,29 @@ module Shumway.AVM2.AS.flash.display {
       DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
 
       this._content = null;
-      this._contentLoaderInfo = new flash.display.LoaderInfo();
-
-      this._worker = null;
-      this._loadStatus = LoadStatus.Unloaded;
-
+      if (Loader._rootLoader) {
+        // Loader reserves the next instance ID to use for the loaded content.
+        // This isn't needed for the first, root, loader, because that uses "root1" as the name.
+        this._contentID = DisplayObject._instanceID++;
+      } else {
+        // The root loader itself doesn't get an ID.
+        //DisplayObject._instanceID--;
+      }
+      this._contentLoaderInfo = new display.LoaderInfo(display.LoaderInfo.CtorToken);
       this._contentLoaderInfo._loader = this;
 
-      this._commitDataQueue = Promise.resolve();
+      var currentAbc = AVM2.currentAbc();
+      if (currentAbc) {
+        this._contentLoaderInfo._loaderUrl = (<LoaderInfo>currentAbc.env.loaderInfo).url;
+      }
 
-      this._codeExecutionPromise = new PromiseWrapper<any>();
-      this._progressPromise = new PromiseWrapper<any>();
-      this._startPromise = Promise.all([
-        this._codeExecutionPromise.promise,
-        this._progressPromise.promise
-      ]);
+      this._fileLoader = null;
+      this._loadStatus = LoadStatus.Unloaded;
+    }
+
+    _setStage(stage: Stage) {
+      release || assert(this === Loader.getRootLoader());
+      this._stage = stage;
     }
 
     _initFrame(advance: boolean) {
@@ -149,350 +256,63 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _constructFrame() {
+      if (this === Loader.getRootLoader() && this._content) {
+        display.DisplayObject._advancableInstances.remove(this);
+        this._children[0] = this._content;
+        this._constructChildren();
+        this._children.length = 0;
+        return;
+      }
       this._constructChildren();
     }
 
-    // JS -> AS Bindings
+    addChild(child: DisplayObject): DisplayObject {
+      throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+      return null;
+    }
 
-    //uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
-    //addChild: (child: flash.display.DisplayObject) => flash.display.DisplayObject;
-    //addChildAt: (child: flash.display.DisplayObject, index: number /*int*/) => flash.display.DisplayObject;
-    //removeChild: (child: flash.display.DisplayObject) => flash.display.DisplayObject;
-    //removeChildAt: (index: number /*int*/) => flash.display.DisplayObject;
-    //setChildIndex: (child: flash.display.DisplayObject, index: number /*int*/) => void;
-    //load: (request: flash.net.URLRequest, context: flash.system.LoaderContext = null) => void;
-    //sanitizeContext: (context: flash.system.LoaderContext) => flash.system.LoaderContext;
-    //loadBytes: (bytes: flash.utils.ByteArray, context: flash.system.LoaderContext = null) => void;
-    //close: () => void;
-    //unload: () => void;
-    //unloadAndStop: (gc: boolean = true) => void;
-    //cloneObject: (obj: ASObject) => ASObject;
+    addChildAt(child: DisplayObject, index: number): DisplayObject {
+      throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+      return null;
+    }
+
+    removeChild(child: DisplayObject): DisplayObject {
+      throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+      return null;
+    }
+
+    removeChildAt(index: number): DisplayObject {
+      throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+      return null;
+    }
+
+    setChildIndex(child: DisplayObject, index: number): void {
+      throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+    }
 
     // AS -> JS Bindings
 
     private _content: flash.display.DisplayObject;
+    private _contentID: number;
     private _contentLoaderInfo: flash.display.LoaderInfo;
-    // _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
+    private _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
-    private _worker: Worker;
+    private _fileLoader: FileLoader;
+    private _imageSymbol: BitmapSymbol;
     private _loadStatus: LoadStatus;
-
-    private _commitDataQueue: Promise<any>;
-
-    /**
-     * Resolved when both |_progressPromise| and |_codeExecutionPromise| are resolved.
-     */
-    _startPromise: Promise<any>;
+    private _loadingType: LoadingType;
+    private _queuedLoadUpdate: LoadProgressUpdate;
 
     /**
-     * Resolved after the first progress event. This ensures that at least 64K of data have been
-     * parsed before playback begins.
+     * No way of knowing what's in |data|, so do a best effort to print out some meaninfgul debug
+     * info.
      */
-    private _progressPromise: PromiseWrapper<any>;
-
-    /**
-     * Resolved after AVM2 and AVM1 (if used) have been initialized.
-     */
-    private _codeExecutionPromise: PromiseWrapper<any>;
-
-    private _commitData(data: any): void {
-      this._commitDataQueue = this._commitDataQueue.then(
-        this._commitQueuedData.bind(this, data));
-    }
-
-    private _commitQueuedData(data: any): Promise<any> {
-      var loaderInfo = this._contentLoaderInfo;
-      var command = data.command;
-      var suspendUntil: Promise<any> = null;
-      switch (command) {
-        case 'init':
-          var info = data.result;
-
-          loaderInfo._bytesLoaded = info.bytesLoaded;
-          loaderInfo._bytesTotal = info.bytesTotal;
-          loaderInfo._swfVersion = info.swfVersion;
-          if (!info.fileAttributes || !info.fileAttributes.doAbc) {
-            loaderInfo._actionScriptVersion = ActionScriptVersion.ACTIONSCRIPT2;
-            suspendUntil = this._initAvm1(loaderInfo);
-          }
-          loaderInfo._frameRate = info.frameRate;
-          var bbox = info.bbox;
-          loaderInfo._width = bbox.xMax - bbox.xMin;
-          loaderInfo._height = bbox.yMax - bbox.yMin;
-
-          var rootSymbol = new Timeline.SpriteSymbol(0, true);
-          rootSymbol.numFrames = info.frameCount;
-          loaderInfo.registerSymbol(rootSymbol);
-          break;
-        case 'progress':
-          var info = data.result;
-          var bytesLoaded = info.bytesLoaded;
-          var bytesTotal = info.bytesTotal;
-          release || assert (bytesLoaded <= bytesTotal, "Loaded bytes should not exceed total bytes.");
-          loaderInfo._bytesLoaded = bytesLoaded;
-          if (!loaderInfo._bytesTotal) {
-            loaderInfo._bytesTotal = bytesTotal;
-          } else {
-            release || assert (loaderInfo._bytesTotal === bytesTotal, "Total bytes should not change.");
-          }
-          if (this._loadStatus !== LoadStatus.Unloaded) {
-            loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS, false,
-                                                              false, bytesLoaded, bytesTotal));
-            this._progressPromise.resolve(undefined);
-          }
-          break;
-        case 'complete':
-          if (data.stats) {
-            Telemetry.instance.reportTelemetry(data.stats);
-          }
-
-          this._worker && this._worker.terminate();
-          break;
-        //case 'empty':
-        //  this._lastPromise = Promise.resolve();
-        //  break;
-        case 'error':
-          this._contentLoaderInfo.dispatchEvent(new events.IOErrorEvent(
-                                                    events.IOErrorEvent.IO_ERROR));
-          break;
-        default:
-          //TODO: fix special-casing. Might have to move document class out of dictionary[0].
-          if (data.id === 0) {
-            break;
-          }
-          if (data.isSymbol) {
-            this._commitAsset(data);
-          } else if (data.type === 'frame') {
-            this._commitFrame(data);
-          } else if (data.type === 'image') {
-            this._commitImage(data);
-          } else if (data.type === 'abc') {
-            var appDomain = AVM2.instance.applicationDomain;
-            var abc = new AbcFile(data.data, data.name);
-            if (data.flags) {
-              // kDoAbcLazyInitializeFlag = 1 Indicates that the ABC block should not be executed
-              // immediately.
-              appDomain.loadAbc(abc);
-            } else {
-              if (loaderInfo._allowCodeExecution) {
-                appDomain.executeAbc(abc);
-              }
-            }
-          }
-          break;
+    private _describeData(data: any): string {
+      var keyValueParis = [];
+      for (var k in data) {
+        keyValueParis.push(k + ":" + StringUtilities.toSafeString(data[k]));
       }
-      return suspendUntil;
-    }
-
-    private _initAvm1(loaderInfo: LoaderInfo): Promise<any> {
-      return AVM2.instance.loadAVM1().then(function() {
-        loaderInfo._avm1Context = Shumway.AVM1.AS2Context.create(loaderInfo.swfVersion);
-      });
-    }
-
-    private _commitAsset(data: any): void {
-      var loaderInfo = this._contentLoaderInfo;
-      var symbolId = data.id;
-      var symbol;
-      if (data.updates) {
-        var updates = data.updates;
-        symbol = loaderInfo.getSymbolById(symbolId);
-        if (updates.scale9Grid) {
-          symbol.scale9Grid = Bounds.FromUntyped(updates.scale9Grid);
-        }
-        return;
-      }
-      switch (data.type) {
-        case 'shape':
-          symbol = Timeline.ShapeSymbol.FromData(data, loaderInfo);
-          break;
-        case 'morphshape':
-          symbol = Timeline.MorphShapeSymbol.FromData(data, loaderInfo);
-          break;
-        case 'image':
-          symbol = Timeline.BitmapSymbol.FromData(data);
-          break;
-        case 'label':
-        case 'text':
-          symbol = Timeline.TextSymbol.FromTextData(data);
-          break;
-        case 'button':
-          symbol = Timeline.ButtonSymbol.FromData(data, loaderInfo);
-          break;
-        case 'sprite':
-          symbol = Timeline.SpriteSymbol.FromData(data, loaderInfo);
-          break;
-        case 'font':
-          symbol = Timeline.FontSymbol.FromData(data);
-          var font = flash.text.Font.initializeFrom(symbol);
-          flash.text.Font.instanceConstructorNoInitialize.call(font);
-          AVM2.instance.globals['Shumway.Player.Utils'].registerFont(font);
-          break;
-        case 'sound':
-          symbol = Timeline.SoundSymbol.FromData(data);
-          break;
-        case 'binary':
-          symbol = Timeline.BinarySymbol.FromData(data);
-          break;
-      }
-      release || assert (symbol, "Unknown symbol type.");
-      loaderInfo.registerSymbol(symbol);
-    }
-
-    private _commitFrame(data: any): void {
-      var loaderInfo = this._contentLoaderInfo;
-
-      // HACK: Someone should figure out how to set the color on the stage better.
-      if (data.bgcolor !== undefined) {
-        loaderInfo._colorRGBA = data.bgcolor;
-      }
-
-      if (data.symbolClasses) {
-        var symbolClasses = data.symbolClasses;
-        var appDomain = AVM2.instance.applicationDomain;
-        for (var i = 0; i < symbolClasses.length; i++) {
-          var asset = symbolClasses[i];
-          if (loaderInfo._allowCodeExecution) {
-            var symbolClass = appDomain.getClass(asset.className);
-            var symbol = loaderInfo.getSymbolById(asset.symbolId);
-            release || assert (symbol, "Symbol is not defined.");
-            symbolClass.defaultInitializerArgument = symbol;
-            symbol.symbolClass = symbolClass;
-          }
-        }
-      }
-
-      if (data.exports && loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
-        var exports = data.exports;
-        for (var i = 0; i < exports.length; i++) {
-          var asset = exports[i];
-          var symbol = loaderInfo.getSymbolById(asset.symbolId);
-          release || assert (symbol);
-          loaderInfo._avm1Context.addAsset(asset.className, symbol);
-        }
-      }
-
-      var rootSymbol = <Shumway.Timeline.SpriteSymbol>loaderInfo.getSymbolById(0);
-      var documentClass = rootSymbol.symbolClass;
-      var frames = rootSymbol.frames;
-      var frameIndex = frames.length;
-
-      var frame = new Timeline.FrameDelta(loaderInfo, data.commands);
-      var repeat = data.repeat;
-      while (repeat--) {
-        frames.push(frame);
-      }
-
-      var root = this._content;
-      if (!root) {
-        root = documentClass.initializeFrom(rootSymbol);
-
-        if (MovieClip.isType(root)) {
-          var mc = <MovieClip>root;
-          if (data.sceneData) {
-            var scenes = data.sceneData.scenes;
-            for (var i = 0, n = scenes.length; i < n; i++) {
-              var sceneInfo = scenes[i];
-              var offset = sceneInfo.offset;
-              var endFrame = i < n - 1 ? scenes[i + 1].offset : rootSymbol.numFrames;
-              mc.addScene(sceneInfo.name, [], offset, endFrame - offset);
-            }
-            var labels = data.sceneData.labels;
-            for (var i = 0; i < labels.length; i++) {
-              var labelInfo = labels[i];
-              mc.addFrameLabel(labelInfo.name, labelInfo.frame + 1);
-            }
-          } else {
-            mc.addScene('Scene 1', [], 0, rootSymbol.numFrames);
-          }
-        }
-
-        if (loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
-          this._initAvm1Root(root);
-        }
-
-        this._codeExecutionPromise.resolve(undefined);
-
-        root._loaderInfo = loaderInfo;
-        this._content = root;
-        this.addChildAtDepth(this._content, 0);
-      }
-
-      if (MovieClip.isType(root)) {
-        if (data.labelName) {
-          (<MovieClip>root).addFrameLabel(data.labelName, frameIndex + 1);
-        }
-
-        if (loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
-          this._executeAvm1Actions(<MovieClip>root, frameIndex, data);
-        }
-      }
-
-      //if (frame.startSounds) {
-      //  root._registerStartSounds(frameNum, frame.startSounds);
-      //}
-      //if (frame.soundStream) {
-      //  root._initSoundStream(frame.soundStream);
-      //}
-      //if (frame.soundStreamBlock) {
-      //  root._addSoundStreamBlock(frameNum, frame.soundStreamBlock);
-      //}
-    }
-
-    private _initAvm1Root(root: flash.display.DisplayObject) {
-      // Finding movie top root
-      var topRoot = root;
-      var parent = this._parent;
-      if (parent && parent !== this._stage) {
-        var parentLoader = parent.loaderInfo._loader;
-        while (parentLoader._parent && parentLoader._parent !== this._stage) {
-          parentLoader = parentLoader._parent.loaderInfo._loader;
-        }
-        if (parentLoader.loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
-          notImplemented('AVM1Movie');
-          this._worker && this._worker.terminate();
-          return;
-        }
-        topRoot = parentLoader._content;
-      }
-
-      var avm1Context = this._contentLoaderInfo._avm1Context;
-      var as2Object = Shumway.AVM1.getAS2Object(topRoot);
-      avm1Context.globals.asSetPublicProperty('_root', as2Object);
-      avm1Context.globals.asSetPublicProperty('_level0', as2Object);
-
-      // transfer parameters
-      var parameters = this._contentLoaderInfo._parameters;
-      for (var paramName in parameters) {
-        if (!(paramName in as2Object)) { // not present yet
-          as2Object[paramName] = parameters[paramName];
-        }
-      }
-    }
-
-    private _executeAvm1Actions(root: flash.display.MovieClip, frameIndex: number, frameData: any) {
-      var initActionBlocks: any[] = frameData.initActionBlocks;
-      var actionBlocks: any[] = frameData.actionBlocks;
-
-      if (initActionBlocks) {
-        root.addAS2InitActionBlocks(frameIndex, initActionBlocks);
-      }
-
-      if (actionBlocks) {
-        for (var i = 0; i < actionBlocks.length; i++) {
-          root.addAS2FrameScript(frameIndex, actionBlocks[i]);
-        }
-      }
-    }
-
-    private _commitImage(data: any): void {
-      var b = new BitmapData(data.width, data.height);
-      this._content = new Bitmap(b);
-      this.addChildAtDepth(this._content, 0);
-
-      var loaderInfo = this._contentLoaderInfo;
-      loaderInfo._width = data.width;
-      loaderInfo._height = data.height;
+      return "{" + keyValueParis.join(", ") + "}";
     }
 
     get content(): flash.display.DisplayObject {
@@ -506,27 +326,6 @@ module Shumway.AVM2.AS.flash.display {
       return this._contentLoaderInfo;
     }
 
-    load: (request: flash.net.URLRequest, context?: flash.system.LoaderContext) => void;
-
-    _close(): void {
-      if (this._worker && this._loadStatus === LoadStatus.Unloaded) {
-        this._worker.terminate();
-        this._worker = null;
-      }
-    }
-
-    _unload(stopExecution: boolean, gc: boolean): void {
-      stopExecution = !!stopExecution; gc = !!gc;
-      if (this._loadStatus < LoadStatus.Initialized) {
-        return;
-      }
-      this._content = null;
-      this._contentLoaderInfo._loader = null;
-      this._worker = null;
-      this._loadStatus = LoadStatus.Unloaded;
-      this.dispatchEvent(events.Event.getInstance(events.Event.UNLOAD));
-    }
-
     _getJPEGLoaderContextdeblockingfilter(context: flash.system.LoaderContext): number {
       if (flash.system.JPEGLoaderContext.isType(context)) {
         return (<flash.system.JPEGLoaderContext>context).deblockingFilter;
@@ -534,70 +333,391 @@ module Shumway.AVM2.AS.flash.display {
       return 0.0;
     }
 
-    _getUncaughtErrorEvents(): events.UncaughtErrorEvents {
-      notImplemented("public flash.display.Loader::_getUncaughtErrorEvents"); return;
-    }
-    _setUncaughtErrorEvents(value: events.UncaughtErrorEvents): void {
-      value = value;
-      notImplemented("public flash.display.Loader::_setUncaughtErrorEvents"); return;
+    get uncaughtErrorEvents(): events.UncaughtErrorEvents {
+      somewhatImplemented("public flash.display.Loader::uncaughtErrorEvents");
+      if (!this._uncaughtErrorEvents) {
+        this._uncaughtErrorEvents = new events.UncaughtErrorEvents();
+      }
+      return this._uncaughtErrorEvents;
     }
 
-    _load(request: flash.net.URLRequest, checkPolicyFile: boolean, applicationDomain: flash.system.ApplicationDomain, securityDomain: flash.system.SecurityDomain, requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject, deblockingFilter: number, allowCodeExecution: boolean, imageDecodingPolicy: string): void {
-      var loaderInfo = this._contentLoaderInfo;
-      //request = request; checkPolicyFile = !!checkPolicyFile; applicationDomain = applicationDomain; securityDomain = securityDomain; requestedContentParent = requestedContentParent; parameters = parameters; deblockingFilter = +deblockingFilter; allowCodeExecution = !!allowCodeExecution; imageDecodingPolicy = asCoerceString(imageDecodingPolicy);
-      //if (flash.net.URLRequest.isType(request)) {
-        this._contentLoaderInfo._url = request.url;
-      //}
-      var worker;
-      if (Loader.WORKERS_ENABLED) {
-        var loaderPath = typeof LOADER_WORKER_PATH !== 'undefined' ?
-          LOADER_WORKER_PATH : SHUMWAY_ROOT + Loader.LOADER_PATH;
-        worker = new Worker(loaderPath);
-      } else {
-        var ResourceLoader = (<any>Shumway).SWF.ResourceLoader;
-        worker = new ResourceLoader(window, false);
+    private _canLoadSWFFromDomain(url: string): boolean {
+      url = FileLoadingService.instance.resolveUrl(url);
+      var whitelist: ICrossDomainSWFLoadingWhitelist = AVM2.instance.globals['Shumway.Player.Utils'];
+      return whitelist.checkDomainForSWFLoading(url);
+    }
+
+    load(request: flash.net.URLRequest, context?: LoaderContext): void {
+      this.close();
+      // TODO: clean up contentloaderInfo.
+      this._contentLoaderInfo._url = request.url;
+      this._applyLoaderContext(context);
+      this._loadingType = LoadingType.External;
+      this._fileLoader = new FileLoader(this);
+      if (!release && traceLoaderOption.value) {
+        console.log("Loading url " + request.url);
       }
-      if (!loaderInfo._allowCodeExecution) {
-        this._codeExecutionPromise.reject('Disabled by _allowCodeExecution');
-      }
-      var loader = this;
-      //loader._worker = worker;
-      worker.onmessage = function (e) {
-        if (e.data.type === 'exception') {
-          console.log('error in parser: \n' + e.data.stack);
-          AVM2.instance.exceptions.push({
-            source: 'parser',
-            message: e.data.message,
-            stack: e.data.stack
-          });
+      // Starts loading on the next script execution turn, in case if allowDomain
+      // will be called. This is a very simplified heuristic to restrict
+      // unwanted SWFs that can break the loading one.
+      Promise.resolve<any>(undefined).then(function (fileLoader: FileLoader, fileRequest) {
+        if (this._canLoadSWFFromDomain(fileRequest.url)) {
+          fileLoader.loadFile(fileRequest);
         } else {
-          loader._commitData(e.data);
+          console.error('Loading of ' + fileRequest.url + ' was rejected based on allowDomain heuristic.');
+          // TODO trigger some loading error
         }
-      };
-      //if (flash.net.URLRequest.class.isInstanceOf(request)) {
-        var session = FileLoadingService.instance.createSession();
-        session.onprogress = function (data, progress) {
-          worker.postMessage({ data: data, progress: progress });
-        };
-        session.onerror = function (error) {
-          loader._commitData({ command: 'error', error: error });
-        };
-        session.onopen = function () {
-          worker.postMessage('pipe:');
-        };
-        session.onclose = function () {
-          worker.postMessage({ data: null });
-        };
-        session.open(request._toFileRequest());
-      //} else {
-      //  worker.postMessage(request);
-      //}
+      }.bind(this, this._fileLoader, request._toFileRequest()));
+
+      this._queuedLoadUpdate = null;
+      release || assert(Loader._loadQueue.indexOf(this) === -1);
       Loader._loadQueue.push(this);
     }
 
-    _loadBytes(bytes: flash.utils.ByteArray, checkPolicyFile: boolean, applicationDomain: flash.system.ApplicationDomain, securityDomain: flash.system.SecurityDomain, requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject, deblockingFilter: number, allowCodeExecution: boolean, imageDecodingPolicy: string): void {
-      bytes = bytes; checkPolicyFile = !!checkPolicyFile; applicationDomain = applicationDomain; securityDomain = securityDomain; requestedContentParent = requestedContentParent; parameters = parameters; deblockingFilter = +deblockingFilter; allowCodeExecution = !!allowCodeExecution; imageDecodingPolicy = asCoerceString(imageDecodingPolicy);
-      notImplemented("public flash.display.Loader::_loadBytes"); return;
+    loadBytes(data: flash.utils.ByteArray, context?: LoaderContext) {
+      this.close();
+      // TODO: properly coerce object arguments to their types.
+      // In case this is the initial root loader, we won't have a loaderInfo object. That should
+      // only happen in the inspector when a file is loaded from a Blob, though.
+      this._contentLoaderInfo._url = (this.loaderInfo ? this.loaderInfo._url : '') +
+                                     '/[[DYNAMIC]]/' + (++Loader._embeddedContentLoadCount);
+      this._applyLoaderContext(context);
+      this._loadingType = LoadingType.Bytes;
+      this._fileLoader = new FileLoader(this);
+      this._queuedLoadUpdate = null;
+      if (!release && traceLoaderOption.value) {
+        console.log("Loading embedded symbol " + this._contentLoaderInfo._url);
+      }
+      // Just passing in the bytes won't do, because the buffer can contain slop at the end.
+      this._fileLoader.loadBytes(new Uint8Array((<any>data).bytes, 0, data.length));
+
+      release || assert(Loader._loadQueue.indexOf(this) === -1);
+      Loader._loadQueue.push(this);
+    }
+
+    close(): void {
+      var queueIndex = Loader._loadQueue.indexOf(this);
+      if (queueIndex > -1) {
+        Loader._loadQueue.splice(queueIndex, 1);
+      }
+      this._contentLoaderInfo.reset();
+      if (!this._fileLoader) {
+        return;
+      }
+      this._fileLoader.abortLoad();
+      this._fileLoader = null;
+    }
+
+    _unload(stopExecution: boolean, gc: boolean): void {
+      if (this._loadStatus < LoadStatus.Initialized) {
+        this._loadStatus = LoadStatus.Unloaded;
+        return;
+      }
+      this.close();
+      this._content = null;
+      this._contentLoaderInfo._loader = null;
+      this._loadStatus = LoadStatus.Unloaded;
+      this.dispatchEvent(events.Event.getInstance(events.Event.UNLOAD));
+    }
+    unload() {
+      this._unload(false, false);
+    }
+    unloadAndStop(gc: boolean) {
+      // TODO: remove all DisplayObjects originating from the unloaded SWF from all lists and stop
+      // them.
+      this._unload(true, !!gc);
+    }
+
+    private _applyLoaderContext(context: LoaderContext) {
+      var parameters = {};
+      if (context && context.parameters) {
+        var contextParameters = context.parameters;
+        for (var key in contextParameters) {
+          var value = contextParameters[key];
+          if (!isString(value)) {
+            throwError('IllegalOperationError', Errors.ObjectWithStringsParamError,
+                       'LoaderContext.parameters');
+          }
+          parameters[key] = value;
+        }
+      }
+      if (context && context.applicationDomain) {
+        var domain = new system.ApplicationDomain(system.ApplicationDomain.currentDomain);
+        this._contentLoaderInfo._applicationDomain = domain;
+      }
+      this._contentLoaderInfo._parameters = parameters;
+    }
+
+    onLoadOpen(file: any) {
+      this._contentLoaderInfo.setFile(file);
+    }
+
+    onLoadProgress(update: LoadProgressUpdate) {
+      release || assert(update);
+      this._queuedLoadUpdate = update;
+    }
+
+    onNewEagerlyParsedSymbols(dictionaryEntries: SWF.EagerlyParsedDictionaryEntry[],
+                              delta: number): Promise<any> {
+      var promises: Promise<any>[] = [];
+      for (var i = dictionaryEntries.length - delta; i < dictionaryEntries.length; i++) {
+        var dictionaryEntry = dictionaryEntries[i];
+        var symbol = this._contentLoaderInfo.getSymbolById(dictionaryEntry.id);
+        // JPEGs with alpha channel are parsed with our JS parser for now. They're ready
+        // immediately, so don't need any more work here. We'll change them to using the system
+        // parser, but for now, just skip further processing here.
+        if (symbol.ready) {
+          continue;
+        }
+        release || assert(symbol.resolveAssetPromise);
+        release || assert(symbol.ready === false);
+        promises.push(symbol.resolveAssetPromise.promise);
+      }
+      return Promise.all(promises);
+    }
+
+    onImageBytesLoaded() {
+      var file = this._contentLoaderInfo._file;
+      release || assert(file instanceof ImageFile);
+      var data = {
+        id: -1,
+        data: file.data,
+        mimeType: file.mimeType,
+        dataType: file.type,
+        type: 'image'
+      };
+      var symbol = BitmapSymbol.FromData(data);
+      this._imageSymbol = symbol;
+      var resolver: Timeline.IAssetResolver = AVM2.instance.globals['Shumway.Player.Utils'];
+      resolver.registerImage(symbol, data);
+      release || assert(symbol.resolveAssetPromise);
+    }
+
+    private _applyDecodedImage(symbol: BitmapSymbol) {
+      var bitmapData = symbol.createSharedInstance();
+      this._content = new flash.display.Bitmap(bitmapData);
+      this._contentLoaderInfo._width = this._content.width * 20;
+      this._contentLoaderInfo._height = this._content.height * 20;
+      this.addTimelineObjectAtDepth(this._content, 0);
+    }
+
+    private _applyLoadUpdate(update: LoadProgressUpdate) {
+      var loaderInfo = this._contentLoaderInfo;
+      loaderInfo._bytesLoaded = update.bytesLoaded;
+      var file = loaderInfo._file;
+
+      if (!(file instanceof SWFFile)) {
+        return;
+      }
+
+      if (file.framesLoaded === 0) {
+        return;
+      }
+
+      if (loaderInfo._allowCodeExecution) {
+        var appDomain = AVM2.instance.applicationDomain;
+
+        var abcBlocksLoaded = file.abcBlocks.length;
+        var abcBlocksLoadedDelta = abcBlocksLoaded - loaderInfo._abcBlocksLoaded;
+        if (abcBlocksLoadedDelta > 0) {
+          for (var i = loaderInfo._abcBlocksLoaded; i < abcBlocksLoaded; i++) {
+            var abcBlock = file.abcBlocks[i];
+            var abc = new AbcFile(abcBlock.data, abcBlock.name);
+            abc.env.loaderInfo = loaderInfo;
+            if (abcBlock.flags) {
+              // kDoAbcLazyInitializeFlag = 1 Indicates that the ABC block should not be executed
+              // immediately.
+              appDomain.loadAbc(abc);
+            } else {
+              // TODO: probably delay execution until playhead reaches the frame.
+              appDomain.executeAbc(abc);
+            }
+          }
+          loaderInfo._abcBlocksLoaded = abcBlocksLoaded;
+        }
+
+        var mappedSymbolsLoaded = file.symbolClassesList.length;
+        var mappedSymbolsLoadedDelta = mappedSymbolsLoaded - loaderInfo._mappedSymbolsLoaded;
+        if (mappedSymbolsLoadedDelta > 0) {
+          for (var i = loaderInfo._mappedSymbolsLoaded; i < mappedSymbolsLoaded; i++) {
+            var symbolMapping = file.symbolClassesList[i];
+            var symbolClass = appDomain.getClass(symbolMapping.className);
+            Object.defineProperty(symbolClass, "defaultInitializerArgument",
+                                  {get: loaderInfo.getSymbolResolver(symbolClass, symbolMapping.id),
+                                   configurable: true});
+          }
+          loaderInfo._mappedSymbolsLoaded = mappedSymbolsLoaded;
+        }
+      }
+
+      // In browsers that can't synchronously decode fonts, we have already registered all
+      // embedded fonts at this point.
+      if (inFirefox) {
+        var fontsLoaded = file.fonts.length;
+        var fontsLoadedDelta = fontsLoaded - loaderInfo._fontsLoaded;
+        if (fontsLoadedDelta > 0) {
+          for (var i = loaderInfo._fontsLoaded; i < fontsLoaded; i++) {
+            flash.text.Font.registerEmbeddedFont(file.fonts[i], loaderInfo);
+          }
+          loaderInfo._fontsLoaded = fontsLoaded;
+        }
+      }
+
+      var rootSymbol = loaderInfo.getRootSymbol();
+      var framesLoadedDelta = file.framesLoaded - rootSymbol.frames.length;
+      if (framesLoadedDelta === 0) {
+        return;
+      }
+      var root = this._content;
+      if (!root) {
+        root = this.createContentRoot(rootSymbol, file.sceneAndFrameLabelData);
+      }
+      var rootSprite = <Sprite><any>root;
+      for (var i = 0; i < framesLoadedDelta; i++) {
+        var frameInfo = loaderInfo.getFrame(null, rootSymbol.frames.length);
+        rootSprite._addFrame(frameInfo);
+      }
+    }
+
+    onLoadComplete() {
+      // Go away, tslint.
+    }
+    onLoadError() {
+      release || Debug.warning('Not implemented: flash.display.Loader loading-error handling');
+    }
+
+    private _addScenesToMovieClip(mc: MovieClip, sceneData, numFrames: number) {
+      // Creating scenes so we will always have frames assigned to some scene.
+      if (!sceneData) {
+        mc.addScene('Scene 1', [], 0, numFrames);
+        return;
+      }
+
+      // Sorting scenes by offset
+      var sceneInfos = [];
+      var scenes = sceneData.scenes;
+      for (var i = 0; i < scenes.length; i++) {
+        sceneInfos.push({offset: scenes[i].offset, name: scenes[i].name});
+      }
+      sceneInfos.sort((a, b) => a.offset - b.offset);
+
+      var n = sceneInfos.length;
+      var offset, endFrame;
+      if (n > 0 && sceneInfos[0].offset > 0) {
+        // Starting from non-zero frame, we need to create a fake scene.
+        offset = sceneInfos[0].offset;
+        endFrame = Math.min(offset, numFrames);
+        mc.addScene('Scene 0', [], 0, endFrame);
+      }
+
+      for (var i = 0, n = sceneInfos.length; i < n; i++) {
+        var sceneInfo = sceneInfos[i];
+        offset = sceneInfo.offset;
+        if (offset >= numFrames) {
+          break; // out of the movie clip timeline range
+        }
+        endFrame = i < n - 1 ? Math.min(scenes[i + 1].offset, numFrames) : numFrames;
+        mc.addScene(sceneInfo.name, [], offset, endFrame - offset);
+      }
+
+      var labels = sceneData.labels;
+      for (var i = 0; i < labels.length; i++) {
+        var labelInfo = labels[i];
+        mc.addFrameLabel(labelInfo.name, labelInfo.frame + 1);
+      }
+    }
+
+    private createContentRoot(symbol: SpriteSymbol, sceneData) {
+      if (symbol.isAVM1Object) {
+        this._initAvm1(symbol);
+      }
+      var root = symbol.symbolClass.initializeFrom(symbol);
+      // The initial SWF's root object gets a default of 'root1', which doesn't use up a
+      // DisplayObject instance ID. For the others, we have reserved on in `_contentID`.
+      flash.display.DisplayObject._instanceID--;
+      if (this === Loader._rootLoader) {
+        root._name = 'root1';
+      } else {
+        root._name = 'instance' + this._contentID;
+      }
+
+      if (MovieClip.isType(root)) {
+        this._addScenesToMovieClip(<MovieClip>root, sceneData, symbol.numFrames);
+      }
+
+      var loaderInfo = this._contentLoaderInfo;
+      root._loaderInfo = loaderInfo;
+      var rootTimeline = root;
+      if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
+        root = this._initAvm1Root(root);
+      } else if (this === Loader.getRootLoader()) {
+        display.MovieClip.frameNavigationModel = loaderInfo.swfVersion < 10 ?
+                                                 flash.display.FrameNavigationModel.SWF9 :
+                                                 flash.display.FrameNavigationModel.SWF10;
+      }
+      this._content = root;
+      if (this === Loader.getRootLoader()) {
+        Loader.runtimeStartTime = Date.now();
+        this._stage.setRoot(root);
+      } else {
+        this.addTimelineObjectAtDepth(root, 0);
+      }
+      // Always return the non-wrapped MovieClip instead of AVM1Movie for AVM1 SWFs.
+      return rootTimeline;
+    }
+
+    private _initAvm1(symbol: SpriteSymbol): void {
+      var contentLoaderInfo: LoaderInfo = this._contentLoaderInfo;
+      var context;
+      // Only the outermost AVM1 SWF gets an AVM1Context. SWFs loaded into it share that context.
+      if (this.loaderInfo && this.loaderInfo._avm1Context) {
+        context = contentLoaderInfo._avm1Context = this.loaderInfo._avm1Context;
+      } else {
+        Shumway.AVM1.Lib.installObjectMethods();
+        context = Shumway.AVM1.AVM1Context.create(contentLoaderInfo);
+        contentLoaderInfo._avm1Context = context;
+        if (this === Loader.getRootLoader()) {
+          context.globals.Key._bind(this._stage, context);
+          context.globals.Mouse._bind(this._stage, context);
+          display.MovieClip.frameNavigationModel = flash.display.FrameNavigationModel.SWF1;
+        }
+      }
+      symbol.avm1Context = context;
+    }
+
+    /**
+     * For AVM1 SWFs that aren't loaded into other AVM1 SWFs, create an AVM1Movie container
+     * and wrap the root timeline into it. This associates the AVM1Context with this AVM1
+     * MovieClip tree, including potential nested SWFs.
+     */
+    private _initAvm1Root(root: flash.display.DisplayObject) {
+      var avm1Context = this._contentLoaderInfo._avm1Context;
+      var as2Object = Shumway.AVM1.Lib.getAVM1Object(root, avm1Context);
+
+      // Only create an AVM1Movie container for the outermost AVM1 SWF. Nested AVM1 SWFs just get
+      // their content added to the loading SWFs display list directly.
+      if (this.loaderInfo && this.loaderInfo._avm1Context) {
+        as2Object.context = this.loaderInfo._avm1Context;
+        return root;
+      }
+
+      avm1Context.root = as2Object;
+      root.addEventListener('frameConstructed',
+                            avm1Context.flushPendingScripts.bind(avm1Context),
+                            false,
+                            Number.MAX_VALUE);
+
+      var avm1Movie = new flash.display.AVM1Movie(<MovieClip>root);
+
+      // transfer parameters
+      var parameters = this._contentLoaderInfo._parameters;
+      for (var paramName in parameters) {
+        if (!(paramName in as2Object)) { // not present yet
+          as2Object[paramName] = parameters[paramName];
+        }
+      }
+
+      return avm1Movie;
     }
   }
 }

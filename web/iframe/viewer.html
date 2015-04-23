@@ -25,14 +25,9 @@ limitations under the License.
       body {
         margin: 0;
         overflow: hidden;
-        background-color: rgba(0, 0, 0, 0.78);
       }
 
-      body.started {
-        background-color: transparent;
-      }
-
-      #stageContainer {
+      #easelContainer {
         position:fixed !important;
         left:0;top:0;bottom:0;right:0;
         overflow: hidden;
@@ -41,13 +36,15 @@ limitations under the License.
       #playerWindow {
         position:fixed !important;
         right:0;top:0;width:0;height:0;
+        visibility: hidden;
       }
     </style>
-    <script src="../../build/bundles/shumway.gfx.js"></script>
+    <script src="compatibility.js"></script>
+    <script src="../build/bundles/shumway.gfx.js"></script>
   </head>
 
-  <body contextmenu="shumwayMenu">
-    <div id="stageContainer"></div>
+  <body>
+    <div id="easelContainer"></div>
     <iframe id="playerWindow" src="viewer.player.html"></iframe>
     <script src="viewer.js"></script>
   </body>

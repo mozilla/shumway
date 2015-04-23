@@ -16,16 +16,15 @@
 
 module Shumway.Player {
   import assert = Shumway.Debug.assert;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import flash = Shumway.AVM2.AS.flash;
   import Point = Shumway.AVM2.AS.flash.geom.Point;
-  import FrameContainer = Shumway.GFX.FrameContainer;
-  import Easel = Shumway.GFX.Easel;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import AVM2 = Shumway.AVM2.Runtime.AVM2;
-  import avm1lib = Shumway.AVM2.AS.avm1lib;
   import IExternalInterfaceService = Shumway.IExternalInterfaceService;
 
   import Event = flash.events.Event;
+  import BitmapData = flash.display.BitmapData;
   import DisplayObject = flash.display.DisplayObject;
   import DisplayObjectContainer = flash.display.DisplayObjectContainer;
   import EventDispatcher = flash.events.EventDispatcher;
@@ -40,26 +39,231 @@ module Shumway.Player {
   import FocusEventData = Shumway.Remoting.Player.FocusEventData;
 
   import IBitmapDataSerializer = flash.display.IBitmapDataSerializer;
+  import IAssetResolver = Timeline.IAssetResolver;
+  import IFSCommandListener = flash.system.IFSCommandListener;
+  import IVideoElementService = flash.net.IVideoElementService;
+  import IRootElementService = flash.display.IRootElementService;
+  import ICrossDomainSWFLoadingWhitelist = flash.system.ICrossDomainSWFLoadingWhitelist;
+  import MessageTag = Shumway.Remoting.MessageTag;
+  import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
+  import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
+
+  import DisplayParameters = Shumway.Remoting.DisplayParameters;
+
+  import FocusEventType = Remoting.FocusEventType;
+  import IGFXService = Shumway.Remoting.IGFXService;
+  import IGFXServiceObserver = Shumway.Remoting.IGFXServiceObserver;
+
+  /**
+   * Base class implementation of the IGFXServer. The different transports shall
+   * inherit this class
+   */
+  export class GFXServiceBase implements IGFXService {
+    _observers: IGFXServiceObserver[] = [];
+
+    addObserver(observer: IGFXServiceObserver) {
+      this._observers.push(observer);
+    }
+
+    removeObserver(observer: IGFXServiceObserver) {
+      var i = this._observers.indexOf(observer);
+      if (i >= 0) {
+        this._observers.splice(i, 1);
+      }
+    }
+
+    update(updates: DataBuffer, assets: any[]): void {
+      throw new Error('This method is abstract');
+    }
+
+    updateAndGet(updates: DataBuffer, assets: any[]): any {
+      throw new Error('This method is abstract');
+    }
+
+    frame(): void {
+      throw new Error('This method is abstract');
+    }
+
+    videoControl(id: number, eventType: VideoControlEvent, data: any): any {
+      throw new Error('This method is abstract');
+    }
+
+    registerFont(syncId: number, data: any): Promise<any> {
+      throw new Error('This method is abstract');
+    }
+
+    registerImage(syncId: number, symbolId: number, data: any): Promise<any> {
+      throw new Error('This method is abstract');
+    }
+
+    fscommand(command: string, args: string): void {
+      throw new Error('This method is abstract');
+    }
+
+    public processUpdates(updates: DataBuffer, assets: any []) {
+      var deserializer = new Remoting.Player.PlayerChannelDeserializer();
+
+      deserializer.input = updates;
+      deserializer.inputAssets = assets;
+
+      var message = deserializer.read();
+      switch (message.tag) {
+        case MessageTag.KeyboardEvent:
+          this._observers.forEach(function (observer) {
+            observer.keyboardEvent(message);
+          });
+          break;
+        case MessageTag.MouseEvent:
+          this._observers.forEach(function (observer) {
+            observer.mouseEvent(message);
+          });
+          break;
+        case MessageTag.FocusEvent:
+          this._observers.forEach(function (observer) {
+            observer.focusEvent(message);
+          });
+          break;
+      }
+    }
+
+    public processDisplayParameters(displayParameters: DisplayParameters) {
+      this._observers.forEach(function (observer) {
+        observer.displayParameters(displayParameters);
+      });
+    }
+
+    public processVideoEvent(id: number, eventType: VideoPlaybackEvent, data: any) {
+      this._observers.forEach(function (observer) {
+        observer.videoEvent(id, eventType, data);
+      });
+    }
+  }
+
+  /**
+   * Helper class to handle GFXService notifications/events and forward them to
+   * the Player object.
+   */
+  class GFXServiceObserver implements IGFXServiceObserver {
+    private _player: Player;
+    private _mouseEventDispatcher: MouseEventDispatcher;
+    private _keyboardEventDispatcher: KeyboardEventDispatcher;
+    private _videoEventListeners: {(eventType: VideoPlaybackEvent, data: any):void}[] = [];
+    private _writer: IndentingWriter;
+
+    constructor (player: Player) {
+      this._player = player;
+      this._keyboardEventDispatcher = new KeyboardEventDispatcher();
+      this._mouseEventDispatcher = new MouseEventDispatcher();
+      this._writer = new IndentingWriter();
+    }
+
+    videoEvent(id: number, eventType: VideoPlaybackEvent, data: any) {
+      var listener = this._videoEventListeners[id];
+      Debug.assert(listener, 'Video event listener is not found');
+      listener(eventType, data);
+    }
+
+    displayParameters(displayParameters: DisplayParameters) {
+      this._player._stage.setStageContainerSize(displayParameters.stageWidth, displayParameters.stageHeight, displayParameters.pixelRatio);
+    }
+
+    focusEvent(data: any) {
+      var message: FocusEventData = data;
+      var focusType = message.type;
+      switch (focusType) {
+        case FocusEventType.DocumentHidden:
+          this._player._isPageVisible = false;
+          break;
+        case FocusEventType.DocumentVisible:
+          this._player._isPageVisible = true;
+          break;
+        case FocusEventType.WindowBlur:
+          // TODO: This is purposely disabled so that applications don't pause when they are out of
+          // focus while the debugging window is open.
+          // EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.DEACTIVATE));
+          this._player._hasFocus = false;
+          break;
+        case FocusEventType.WindowFocus:
+          EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.ACTIVATE));
+          this._player._hasFocus = true;
+          break;
+      }
+
+    }
+
+    keyboardEvent(data: any) {
+      var message: KeyboardEventData = data;
+      // If the stage doesn't have a focus then dispatch events on the stage
+      // directly.
+      var target = this._player._stage.focus ? this._player._stage.focus : this._player._stage;
+      this._keyboardEventDispatcher.target = target;
+      this._keyboardEventDispatcher.dispatchKeyboardEvent(message);
+    }
+
+    mouseEvent(data: any) {
+      var message: MouseEventAndPointData = data;
+      this._mouseEventDispatcher.stage = this._player._stage;
+      var target = this._mouseEventDispatcher.handleMouseEvent(message);
+      if (traceMouseEventOption.value) {
+        this._writer.writeLn("Mouse Event: type: " + message.type + ", point: " + message.point + ", target: " + target + (target ? ", name: " + target._name : ""));
+        if (message.type === "click" && target) {
+          target.debugTrace();
+        }
+      }
+      this._player._currentMouseTarget = this._mouseEventDispatcher.currentTarget;
+    }
+
+    registerEventListener(id: number, listener: (eventType: VideoPlaybackEvent, data: any)=>void) {
+      this._videoEventListeners[id] = listener;
+    }
+  }
 
   /**
    * Shumway Player
    *
-   * This class brings everything together. Load the swf, runs the event loop and
+   * This class brings everything together. Loads the swf, runs the event loop and
    * synchronizes the frame tree with the display list.
    */
-  export class Player implements IBitmapDataSerializer {
-    private _stage: flash.display.Stage;
+  export class Player implements IBitmapDataSerializer, IFSCommandListener, IVideoElementService,
+                                 IAssetResolver, IRootElementService, ICrossDomainSWFLoadingWhitelist {
+    _stage: flash.display.Stage;
     private _loader: flash.display.Loader;
     private _loaderInfo: flash.display.LoaderInfo;
-    private _syncTimeout: number;
     private _frameTimeout: number;
+    private _eventLoopIsRunning: boolean;
+    private _framesPlayed: number = 0;
 
-    private static _syncFrameRate = 60;
+    private _writer: IndentingWriter;
 
-    private _mouseEventDispatcher: MouseEventDispatcher;
-    private _keyboardEventDispatcher: KeyboardEventDispatcher;
+    private _gfxService: IGFXService;
+    private _gfxServiceObserver: GFXServiceObserver;
 
-    public externalCallback: (functionName: string, args: any[]) => any = null;
+    private _env: string;
+
+    /**
+     * If set, overrides SWF file background color.
+     */
+    public defaultStageColor: number;
+
+    /**
+     * Movie parameters, such as flashvars.
+     */
+    public movieParams: Map<string>;
+
+    /**
+     * Initial stage alignment: l|r|t|tr|tl.
+     */
+    public stageAlign: string;
+
+    /**
+     * Initial stage scaling: showall|noborder|exactfit|noscale.
+     */
+    public stageScale: string;
+
+    /**
+     * Initial display parameters.
+     */
+    public displayParameters: DisplayParameters;
 
     /**
      * Time since the last time we've synchronized the display list.
@@ -69,28 +273,49 @@ module Shumway.Player {
     /**
      * Page Visibility API visible state.
      */
-    private _isPageVisible = true;
+    _isPageVisible = true;
 
     /**
      * Page focus state.
      */
-    private _hasFocus = true;
+    _hasFocus = true;
 
-    constructor() {
-      this._keyboardEventDispatcher = new KeyboardEventDispatcher();
-      this._mouseEventDispatcher = new MouseEventDispatcher();
+    /**
+     * Stage current mouse target.
+     */
+    _currentMouseTarget: flash.display.InteractiveObject = null;
+
+    /**
+     * Page URL that hosts SWF.
+     */
+    private _pageUrl: string = null;
+
+    /**
+     * SWF URL.
+     */
+    private _swfUrl: string = null;
+
+    /**
+     * Loader URL, can be different from SWF URL.
+     */
+    private _loaderUrl: string = null;
+
+    constructor(gfxService: IGFXService, env: string = 'dev') {
+      release || Debug.assert(gfxService);
+      this._writer = new IndentingWriter();
+      this._gfxService = gfxService;
+      this._gfxServiceObserver = new GFXServiceObserver(this);
+      this._gfxService.addObserver(this._gfxServiceObserver);
+      this._env = env;
 
       AVM2.instance.globals['Shumway.Player.Utils'] = this;
     }
 
     /**
-     * Abstract method to notify about updates.
-     * @param updates
-     * @param assets
+     * Movie stage object.
      */
-    onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>, async: boolean = true): DataBuffer {
-      throw new Error('This method is abstract');
-      return null;
+    get stage() {
+      return this._stage;
     }
 
     /**
@@ -107,94 +332,64 @@ module Shumway.Player {
       return !this._isPageVisible;
     }
 
-    public load(url: string) {
+    public get pageUrl(): string {
+      return this._pageUrl;
+    }
+
+    public set pageUrl(value: string) {
+      this._pageUrl = value || null;
+    }
+
+    public get loaderUrl(): string {
+      return this._loaderUrl;
+    }
+
+    public set loaderUrl(value: string) {
+      this._loaderUrl = value || null;
+    }
+
+    public get swfUrl(): string {
+      return this._swfUrl;
+    }
+
+    public load(url: string, buffer?: ArrayBuffer) {
       release || assert (!this._loader, "Can't load twice.");
-      var self = this;
-      var stage = this._stage = new flash.display.Stage();
+      this._swfUrl = this._loaderUrl = url;
+      this._stage = new flash.display.Stage();
       var loader = this._loader = flash.display.Loader.getRootLoader();
       var loaderInfo = this._loaderInfo = loader.contentLoaderInfo;
-
       if (playAllSymbolsOption.value) {
         this._playAllSymbols();
         loaderInfo._allowCodeExecution = false;
       } else {
-        var startPromise = loader._startPromise;
-        startPromise.then(function () {
-          if (loaderInfo.actionScriptVersion === flash.display.ActionScriptVersion.ACTIONSCRIPT2) {
-            var AS2Key = (<any>avm1lib).AS2Key;
-            var AS2Mouse = (<any>avm1lib).AS2Mouse;
-            AS2Key.asCallPublicProperty('__bind', [stage]);
-            AS2Mouse.asCallPublicProperty('__bind', [stage]);
-            var avm1Context = loaderInfo._avm1Context;
-            stage.addEventListener('frameConstructed',
-                                   avm1Context.flushPendingScripts.bind(avm1Context),
-                                   false,
-                                   Number.MAX_VALUE);
-          }
-
-          var root = loader.content;
-          stage._loaderInfo = loaderInfo;
-          stage.frameRate = loaderInfo.frameRate;
-          stage.stageWidth = loaderInfo.width;
-          stage.stageHeight = loaderInfo.height;
-          stage.color = ColorUtilities.RGBAToARGB(loaderInfo._colorRGBA);
-          stage.addChildAtDepth(root, 0);
-          self._enterLoops();
-        });
+        this._enterRootLoadingLoop();
       }
-      this._loader.load(new flash.net.URLRequest(url));
-    }
-
-    public processEventUpdates(updates: DataBuffer) {
-      var deserializer = new Remoting.Player.PlayerChannelDeserializer();
-      var EventKind = Remoting.Player.EventKind;
-      var FocusEventType = Remoting.FocusEventType;
-
-      deserializer.input = updates;
-
-      var event = deserializer.readEvent();
-      switch (<Remoting.Player.EventKind>(event.kind)) {
-        case EventKind.Keyboard:
-          // If the stage doesn't have a focus then dispatch events on the stage
-          // directly.
-          var target = this._stage.focus ? this._stage.focus : this._stage;
-          this._keyboardEventDispatcher.target = target;
-          this._keyboardEventDispatcher.dispatchKeyboardEvent(<KeyboardEventData>event);
-          break;
-        case EventKind.Mouse:
-          this._mouseEventDispatcher.stage = this._stage;
-          this._mouseEventDispatcher.handleMouseEvent(<MouseEventAndPointData>event);
-          break;
-        case EventKind.Focus:
-          var focusType = (<FocusEventData>event).type;
-          switch (focusType) {
-            case FocusEventType.DocumentHidden:
-              this._isPageVisible = false;
-              break;
-            case FocusEventType.DocumentVisible:
-              this._isPageVisible = true;
-              break;
-            case FocusEventType.WindowBlur:
-              // TODO: This is purposely disabled so that applications don't pause when they are out of
-              // focus while the debugging window is open.
-              // EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.DEACTIVATE));
-              this._hasFocus = false;
-              break;
-            case FocusEventType.WindowFocus:
-              EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.ACTIVATE));
-              this._hasFocus = true;
-              break;
-          }
-          break;
+      this.addToSWFLoadingWhitelist(FileLoadingService.instance.resolveUrl(url), false);
+      var context = this.createLoaderContext();
+      if (buffer) {
+        var symbol = Shumway.Timeline.BinarySymbol.FromData({id: -1, data: buffer});
+        var byteArray = symbol.symbolClass.initializeFrom(symbol);
+        symbol.symbolClass.instanceConstructorNoInitialize.call(byteArray);
+        this._loader.loadBytes(byteArray, context);
+      } else {
+        this._loader.load(new flash.net.URLRequest(url), context);
       }
     }
 
-    private _enterLoops(): void {
-      this._enterEventLoop();
+    private createLoaderContext() : flash.system.LoaderContext {
+      var loaderContext = new flash.system.LoaderContext();
+      if (this.movieParams) {
+        var parameters: any = {};
+        for (var i in this.movieParams) {
+          parameters.asSetPublicProperty(i, this.movieParams[i]);
+        }
+        loaderContext.parameters = <Shumway.AVM2.AS.ASObject>parameters;
+      }
+      return loaderContext;
     }
 
     private _pumpDisplayListUpdates(): void {
-      this.syncDisplayObject(this._stage);
+      this.syncDisplayObject(this._stage, true);
     }
 
     public syncDisplayObject(displayObject: flash.display.DisplayObject, async: boolean = true): DataBuffer {
@@ -205,36 +400,35 @@ module Shumway.Player {
       serializer.outputAssets = assets;
 
       if (flash.display.Stage.isType(displayObject)) {
-        serializer.writeStage(<flash.display.Stage>displayObject);
+        serializer.writeStage(<flash.display.Stage>displayObject, this._currentMouseTarget);
       }
 
-      serializer.phase = Remoting.RemotingPhase.Objects;
-      enterTimeline("remoting objects");
-      serializer.writeDisplayObject(displayObject);
-      leaveTimeline("remoting objects");
-
-      serializer.phase = Remoting.RemotingPhase.References;
-      enterTimeline("remoting references");
-      serializer.writeDisplayObject(displayObject);
-      leaveTimeline("remoting references");
-
+      serializer.begin(displayObject);
+      serializer.remoteObjects();
+      serializer.remoteReferences();
       updates.writeInt(Remoting.MessageTag.EOF);
 
       enterTimeline("remoting assets");
-      var output = this.onSendUpdates(updates, assets, async);
+      var output;
+      if (async) {
+        this._gfxService.update(updates, assets);
+      } else {
+        output = this._gfxService.updateAndGet(updates, assets);
+      }
       leaveTimeline("remoting assets");
 
       return output;
     }
 
-    public registerFont(font: flash.text.Font) {
-      var updates = new DataBuffer();
+    public requestBitmapData(bitmapData: BitmapData): DataBuffer {
+      var output = new DataBuffer();
       var assets = [];
-      var serializer = new Shumway.Remoting.Player.PlayerChannelSerializer();
-      serializer.output = updates;
+      var serializer = new Remoting.Player.PlayerChannelSerializer();
+      serializer.output = output;
       serializer.outputAssets = assets;
-      serializer.writeFont(font);
-      this.onSendUpdates(updates, assets);
+      serializer.writeRequestBitmapData(bitmapData);
+      output.writeInt(Remoting.MessageTag.EOF);
+      return this._gfxService.updateAndGet(output, assets);
     }
 
     public drawToBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
@@ -251,15 +445,9 @@ module Shumway.Player {
       } else {
         var displayObject = <flash.display.DisplayObject>source;
 
-        serializer.phase = Remoting.RemotingPhase.Objects;
-        enterTimeline("drawToBitmap");
-        serializer.writeDisplayObject(displayObject);
-        leaveTimeline("drawToBitmap");
-
-        serializer.phase = Remoting.RemotingPhase.References;
-        enterTimeline("drawToBitmap 2");
-        serializer.writeDisplayObject(displayObject);
-        leaveTimeline("drawToBitmap 2");
+        serializer.begin(displayObject);
+        serializer.remoteObjects();
+        serializer.remoteReferences();
       }
 
       serializer.writeDrawToBitmap(bitmapData, source, matrix, colorTransform, blendMode, clipRect, smoothing);
@@ -267,8 +455,27 @@ module Shumway.Player {
       updates.writeInt(Shumway.Remoting.MessageTag.EOF);
 
       enterTimeline("sendUpdates");
-      this.onSendUpdates(updates, assets);
+      this._gfxService.updateAndGet(updates, assets); // TODO replace to update() ?
       leaveTimeline("sendUpdates");
+    }
+
+    public registerEventListener(id: number, listener: (eventType: VideoPlaybackEvent, data: any)=>void) {
+      this._gfxServiceObserver.registerEventListener(id, listener);
+    }
+
+    public notifyVideoControl(id: number, eventType: VideoControlEvent, data: any): any {
+      return this._gfxService.videoControl(id, eventType, data);
+    }
+
+    public executeFSCommand(command: string, args: string) {
+      switch (command) {
+        case 'quit':
+          this._leaveEventLoop();
+          break;
+        default:
+          somewhatImplemented('FSCommand ' + command);
+      }
+      this._gfxService.fscommand(command, args);
     }
 
     public requestRendering(): void {
@@ -301,42 +508,143 @@ module Shumway.Player {
       clearInterval(this._frameTimeout);
     }
 
+    private _getFrameInterval(): number {
+      var frameRate = frameRateOption.value;
+      if (frameRate < 0) {
+        frameRate = this._stage.frameRate;
+      }
+      return Math.floor(1000 / frameRate);
+    }
+
     private _enterEventLoop(): void {
+      this._eventLoopIsRunning = true;
+      // this._eventLoopTick = this._eventLoopTick.bind(this);
+
       var self = this;
-      var stage = this._stage;
-      var rootInitialized = false;
-      var runFrameScripts = !playAllSymbolsOption.value;
-      var dontSkipFrames = dontSkipFramesOption.value;
-      (function tick() {
-        // TODO: change this to the mode described in http://www.craftymind.com/2008/04/18/updated-elastic-racetrack-for-flash-9-and-avm2/
-        self._frameTimeout = setTimeout(tick, 1000 / frameRateOption.value);
-        if (!dontSkipFrames && (
-              !frameEnabledOption.value && runFrameScripts ||
-              self._shouldThrottleDownFrameExecution()))
-        {
-          return;
-        }
-        stage.scaleX = stage.scaleY = stageScaleOption.value;
-        for (var i = 0; i < frameRateMultiplierOption.value; i++) {
-          enterTimeline("eventLoop");
-          DisplayObject.performFrameNavigation(stage, true, runFrameScripts);
-          Loader.progress();
-          leaveTimeline("eventLoop");
-        }
-        if (rootInitialized) {
-          stage.render();
-        } else {
-          rootInitialized = true;
-        }
-        self._pumpUpdates();
-        self.onFrameProcessed();
-      })();
+
+      if (this._env === 'test') {
+        flash.external.ExternalInterface._initJS();
+        flash.external.ExternalInterface._addCallback('__tick__', function (request: string, args: any []) {
+          console.log('tick');
+          self._eventLoopTick();
+        }, false);
+        flash.external.ExternalInterface._addCallback('__takeScreenshot__', function (request: string, args: any []) {
+
+        }, false);
+        this._eventLoopTick();
+        return;
+      }
+
+      function tick() {
+        // TODO: change this to the mode described in
+        // http://www.craftymind.com/2008/04/18/updated-elastic-racetrack-for-flash-9-and-avm2/
+        self._frameTimeout = setTimeout(tick, self._getFrameInterval());
+        self._eventLoopTick();
+      }
+
+      tick();
     }
 
     private _leaveEventLoop(): void {
-      release || assert (this._frameTimeout > -1);
-      clearInterval(this._frameTimeout);
-      this._frameTimeout = -1;
+      release || assert (this._eventLoopIsRunning);
+      clearTimeout(this._frameTimeout);
+      this._eventLoopIsRunning = false;
+    }
+
+    private _enterRootLoadingLoop(): void {
+      var self = this;
+      var rootLoader = Loader.getRootLoader();
+      rootLoader._setStage(this._stage);
+      function rootLoadingLoop() {
+        var loaderInfo = rootLoader.contentLoaderInfo;
+        if (!loaderInfo._file) {
+          setTimeout(rootLoadingLoop, self._getFrameInterval());
+          return;
+        }
+        if (self._env === 'test' && !Loader.getRootLoader().content) {
+          Loader.processEvents();
+          setTimeout(rootLoadingLoop, self._getFrameInterval());
+          return;
+        }
+
+        var stage = self._stage;
+
+        var bgcolor = self.defaultStageColor !== undefined ?
+                      self.defaultStageColor :
+                      loaderInfo._file.backgroundColor;
+
+        stage._loaderInfo = loaderInfo;
+        stage.align = self.stageAlign || '';
+
+        if (!self.stageScale || flash.display.StageScaleMode.toNumber(self.stageScale) < 0) {
+            stage.scaleMode = flash.display.StageScaleMode.SHOW_ALL;
+        } else {
+            stage.scaleMode = self.stageScale;
+        }
+
+        stage.frameRate = loaderInfo.frameRate;
+        stage.setStageWidth(loaderInfo.width);
+        stage.setStageHeight(loaderInfo.height);
+        stage.setStageColor(ColorUtilities.RGBAToARGB(bgcolor));
+
+        if (self.displayParameters) {
+          self._gfxServiceObserver.displayParameters(self.displayParameters);
+        }
+
+        self._enterEventLoop();
+      }
+      rootLoadingLoop();
+    }
+
+    private _eventLoopTick(): void {
+      var runFrameScripts = !playAllSymbolsOption.value;
+      var dontSkipFrames = dontSkipFramesOption.value;
+      if (!dontSkipFrames && (
+        !frameEnabledOption.value && runFrameScripts ||
+        this._shouldThrottleDownFrameExecution()))
+      {
+        return;
+      }
+      // The stage is required for frame event cycle processing.
+      DisplayObject._stage = this._stage;
+      // Until the root SWF is initialized, only process Loader events.
+      // Once the root loader's content is created, directly process all events again to avoid
+      // further delay in initialization.
+      if (!Loader.getRootLoader().content) {
+        Loader.processEvents();
+        if (!Loader.getRootLoader().content) {
+          return;
+        }
+      }
+      for (var i = 0; i < frameRateMultiplierOption.value; i++) {
+        enterTimeline("eventLoop");
+        var start = performance.now();
+        DisplayObject.performFrameNavigation(true, runFrameScripts);
+        counter.count("performFrameNavigation", 1, performance.now() - start);
+        Loader.processEvents();
+        leaveTimeline("eventLoop");
+      }
+      this._framesPlayed++;
+      if (tracePlayerOption.value > 0 && (this._framesPlayed % tracePlayerOption.value === 0)) {
+        this._tracePlayer();
+      }
+      this._stage.render();
+      this._pumpUpdates();
+      this._gfxService.frame();
+    }
+
+    private _tracePlayer(): void {
+      var writer = this._writer;
+      writer.enter("Frame: " + this._framesPlayed);
+
+      Shumway.AVM2.counter.traceSorted(writer, true);
+      Shumway.AVM2.counter.clear();
+
+      Shumway.Player.counter.traceSorted(writer, true);
+      Shumway.Player.counter.clear();
+
+      writer.writeLn("advancableInstances: " + flash.display.DisplayObject._advancableInstances.length);
+      writer.outdent();
     }
 
     private _playAllSymbols() {
@@ -351,12 +659,12 @@ module Shumway.Player {
           return;
         }
         loaderInfo.removeEventListener(flash.events.ProgressEvent.PROGRESS, onProgress);
-        self._enterLoops();
+        self._enterEventLoop();
       });
 
       loaderInfo.addEventListener(flash.events.Event.COMPLETE, function onProgress() {
-        stage.stageWidth = 1024;
-        stage.stageHeight = 1024;
+        stage.setStageWidth(1024);
+        stage.setStageHeight(1024);
 
         var symbols = [];
         loaderInfo._dictionary.forEach(function (symbol, key) {
@@ -370,7 +678,7 @@ module Shumway.Player {
           flash.display.MovieClip.reset();
           var symbolInstance = symbol.symbolClass.initializeFrom(symbol);
           symbol.symbolClass.instanceConstructorNoInitialize.call(symbolInstance);
-          if (symbol instanceof Shumway.Timeline.BitmapSymbol) {
+          if (symbol instanceof flash.display.BitmapSymbol) {
             symbolInstance = new flash.display.Bitmap(symbolInstance);
           }
           while (stage.numChildren > 0) {
@@ -402,80 +710,71 @@ module Shumway.Player {
           var frames = 1;
           if (symbol && symbol.id > 0) {
             show(symbol);
-            if (symbol instanceof Shumway.Timeline.SpriteSymbol) {
-              frames = (<Shumway.Timeline.SpriteSymbol>symbol).numFrames;
+            if (symbol instanceof flash.display.SpriteSymbol) {
+              frames = (<flash.display.SpriteSymbol>symbol).numFrames;
             }
           }
           if (playSymbolFrameDurationOption.value > 0) {
             frames = playSymbolFrameDurationOption.value;
           }
-          setTimeout(showNextSymbol, (1000 / frameRateOption.value) * frames);
+          setTimeout(showNextSymbol, self._getFrameInterval() * frames);
         }
-        setTimeout(showNextSymbol, 1000 / frameRateOption.value);
+        setTimeout(showNextSymbol, self._getFrameInterval());
       });
     }
 
-    public processExternalCallback(request) {
-      if (!this.externalCallback) {
+    registerFont(symbol: Timeline.EagerlyResolvedSymbol, data: any): void {
+      release || assert(symbol.syncId);
+      symbol.resolveAssetPromise = new PromiseWrapper(); // TODO no need for wrapper here, change to Promise
+      this._gfxService.registerFont(symbol.syncId, data).then(function (result) {
+        symbol.resolveAssetPromise.resolve(result);
+      });
+      // Fonts are immediately available in Firefox, so we can just mark the symbol as ready.
+      if (inFirefox) {
+        symbol.ready = true;
+      } else {
+        symbol.resolveAssetPromise.then(symbol.resolveAssetCallback, null);
+      }
+    }
+
+    registerImage(symbol: Timeline.EagerlyResolvedSymbol, data: any): void {
+      release || assert(symbol.syncId);
+      symbol.resolveAssetPromise = new PromiseWrapper(); // TODO no need for wrapper here, change to Promise
+      this._gfxService.registerImage(symbol.syncId, symbol.id, data).then(function (result) {
+        symbol.resolveAssetPromise.resolve(result);
+      });
+      symbol.resolveAssetPromise.then(symbol.resolveAssetCallback, null);
+    }
+
+    private _crossDomainSWFLoadingWhitelist: {protocol: string; hostname: string; insecure: boolean}[] = [];
+
+    addToSWFLoadingWhitelist(domain: string, insecure: boolean) {
+      if (domain.indexOf('/') < 0) { // anything without path, this includes '*'
+        this._crossDomainSWFLoadingWhitelist.push({protocol: 'http:', hostname: domain, insecure: insecure});
         return;
       }
-
       try {
-        request.result = this.externalCallback(request.functionName, request.args);
+        var url = new (<any>window).URL(domain);
+        this._crossDomainSWFLoadingWhitelist.push({protocol: url.protocol, hostname: url.hostname, insecure: insecure});
+      } catch (e) { }
+    }
+
+    checkDomainForSWFLoading(domain: string): boolean {
+      try {
+        var url = new (<any>window).URL(domain);
       } catch (e) {
-        request.error = e.message;
+        return false;
       }
-    }
-
-    onExternalCommand(command) {
-      throw new Error('This method is abstract');
-    }
-
-    onFrameProcessed() {
-      throw new Error('This method is abstract');
-    }
-
-    public createExternalInterfaceService() : IExternalInterfaceService {
-      var isEnabled: boolean;
-      var player = this;
-      return  {
-        get enabled() {
-          if (isEnabled === undefined) {
-            var cmd: any = {action: 'isEnabled'};
-            player.onExternalCommand(cmd);
-            isEnabled = cmd.result;
-          }
-          return isEnabled;
-        },
-        initJS(callback: (functionName: string, args: any[]) => any) {
-          player.externalCallback = callback;
-          var cmd: any = {action: 'initJS'};
-          player.onExternalCommand(cmd);
-        },
-        registerCallback(functionName: string) {
-          var cmd: any = {action: 'register', functionName: functionName, remove: false};
-          player.onExternalCommand(cmd);
-        },
-        unregisterCallback(functionName: string) {
-          var cmd: any = {action: 'register', functionName: functionName, remove: true};
-          player.onExternalCommand(cmd);
-        },
-        eval(expression: string): any {
-          var cmd: any = {action: 'eval', expression: expression};
-          player.onExternalCommand(cmd);
-          return cmd.result;
-        },
-        call(request: string): any {
-          var cmd: any = {action: 'call', request: request};
-          player.onExternalCommand(cmd);
-          return cmd.result;
-        },
-        getId(): string {
-          var cmd: any = {action: 'getId'};
-          player.onExternalCommand(cmd);
-          return cmd.result;
+      return this._crossDomainSWFLoadingWhitelist.some(function (entry) {
+        if (url.hostname !== entry.hostname && entry.hostname !== '*') {
+          return false;
         }
-      };
+        if (entry.insecure) {
+          return true;
+        }
+        // The HTTPS SWF has to be more protected than it's whitelisted HTTP equivalent.
+        return url.protocol === 'https:' || entry.protocol !== 'https:';
+      }, this);
     }
   }
 }

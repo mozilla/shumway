@@ -1,0 +1,23 @@
+[
+  {
+    "id": "reftrace",
+    "stas": "/utils/swfdec/test/trace/default.stas",
+    "filenames": [
+      "/utils/swfdec/test/trace/loadmovie-case-7.swf",
+
+      "/utils/swfdec/test/trace/setinterval-clear.swf",
+      "/utils/swfdec/test/trace/setinterval2.swf",
+
+      "/utils/swfdec/test/trace/settimeout-clear-self-5.swf",
+      "/utils/swfdec/test/trace/settimeout-clear-self-6.swf",
+      "/utils/swfdec/test/trace/settimeout-clear-self-7.swf",
+      "/utils/swfdec/test/trace/settimeout-clear-self-8.swf",
+
+      "/utils/swfdec/test/trace/stack-overflow-5.swf",
+      "/utils/swfdec/test/trace/stack-overflow-6.swf",
+      "/utils/swfdec/test/trace/stack-overflow-7.swf"
+    ],
+    "defaultRate": 20,
+    "type": "stas"
+  }
+]

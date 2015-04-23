@@ -112,7 +112,7 @@
     eq(GradientType.fromNumber(shape.styles.readUnsignedByte()), GradientType.LINEAR,
        'gradient type is stored');
     eq(shape.styles.readShort(), -93, 'focal point is stored as fixed8');
-    structEq(Matrix.FromDataBuffer(shape.styles), matrix, "matrix is stored");
+    matrixEq(Matrix.FromDataBuffer(shape.styles), matrix, "matrix is stored");
 
     eq(shape.styles.readUnsignedByte(), 2, 'number of color stops is stored');
     eq(shape.styles.readUnsignedByte(), 45, 'first ratio is stored');
@@ -148,7 +148,7 @@
     var index = shape.styles.readUnsignedInt();
     eq(index, 0, "beginBitmapFill stores given bitmap's id");
     eq(g.getUsedTextures()[index], bitmap, "beginBitmapFill stores given bitmap's id");
-    structEq(Matrix.FromDataBuffer(shape.styles), Matrix.FROZEN_IDENTITY_MATRIX,
+    matrixEq(Matrix.FromDataBuffer(shape.styles), Matrix.FROZEN_IDENTITY_MATRIX,
              "default matrix is serialized if none is provided");
     eq(shape.styles.readBoolean(), true, "defaults to repeat");
     eq(shape.styles.readBoolean(), false, "defaults to no smooting");
@@ -173,7 +173,7 @@
     g.beginBitmapFill(bitmap, matrix, false, true);
     shape.styles.position = 0;
     shape.styles.readUnsignedInt(); // skip bitmap id
-    structEq(Matrix.FromDataBuffer(shape.styles), matrix,
+    matrixEq(Matrix.FromDataBuffer(shape.styles), matrix,
              "serialized matrix is identical to input matrix");
     eq(shape.styles.readBoolean(), false, "repeat flag is written correctly");
     eq(shape.styles.readBoolean(), true, "smooth flag is written correctly");
@@ -281,7 +281,7 @@
     eq(GradientType.fromNumber(shape.styles.readUnsignedByte()), GradientType.LINEAR,
        'gradient type is stored');
     eq(shape.styles.readShort(), -93, 'focal point is stored as fixed8');
-    structEq(Matrix.FromDataBuffer(shape.styles), matrix, "matrix is stored");
+    matrixEq(Matrix.FromDataBuffer(shape.styles), matrix, "matrix is stored");
 
     eq(shape.styles.readUnsignedByte(), 2, 'number of color stops is stored');
     eq(shape.styles.readUnsignedByte(), 45, 'first ratio is stored');
@@ -328,7 +328,7 @@
     var index = shape.styles.readUnsignedInt();
     eq(index, 0, "lineBitmapStyle stores given bitmap's id");
     eq(g.getUsedTextures()[index], bitmap, "lineBitmapStyle stores given bitmap's id");
-    structEq(Matrix.FromDataBuffer(shape.styles), Matrix.FROZEN_IDENTITY_MATRIX,
+    matrixEq(Matrix.FromDataBuffer(shape.styles), Matrix.FROZEN_IDENTITY_MATRIX,
              "default matrix is serialized if none is provided");
     eq(shape.styles.readBoolean(), true, "defaults to repeat");
     eq(shape.styles.readBoolean(), false, "defaults to no smooting");
@@ -355,7 +355,7 @@
     g.lineBitmapStyle(bitmap, matrix, false, true);
     shape.styles.position = initialPosition;
     shape.styles.readUnsignedInt(); // skip bitmap id
-    structEq(Matrix.FromDataBuffer(shape.styles), matrix,
+    matrixEq(Matrix.FromDataBuffer(shape.styles), matrix,
              "serialized matrix is identical to input matrix");
     eq(shape.styles.readBoolean(), false, "repeat flag is written correctly");
     eq(shape.styles.readBoolean(), true, "smooth flag is written correctly");
@@ -483,13 +483,22 @@
     structEq(g._getContentBounds(true), {xMin: 477, xMax: 2610, yMin: 477, yMax: 2610},
              "curve extends line bounds correctly");
 
-    // Disabled because we return a yMax value of 2548. Will investigate later.
-//    g.clear();
-//    g.lineStyle(1);
-//    g.moveTo(30, 50);
-//    g.cubicCurveTo(60, -10, 180, 200, 150, 100);
-//    structEq(g._getContentBounds(false), {xMin: 600, xMax: 3095, yMin: 780, yMax: 2549},
-//             "cubic curve extends fill bounds correctly");
+    g.clear();
+    g.lineStyle(1);
+    g.moveTo(30, 50);
+    g.cubicCurveTo(60, -10, 180, 200, 150, 100);
+    structEq(g._getContentBounds(false), {xMin: 600, xMax: 3095, yMin: 780, yMax: 2549},
+             "cubic curve extends fill bounds correctly");
+    structEq(g._getContentBounds(true), {xMin: 590, xMax: 3105, yMin: 770, yMax: 2559},
+             "cubic curve extends line bounds correctly");
+
+    g.clear();
+    g.lineStyle(1);
+    g.cubicCurveTo(100, 50, -100, 100, 0, 150);
+    structEq(g._getContentBounds(false), {xMin: -577, xMax: 577, yMin: 0, yMax: 3000},
+             "cubic curve extends fill bounds correctly");
+    structEq(g._getContentBounds(true), {xMin: -587, xMax: 587, yMin: -10, yMax: 3010},
+             "cubic curve extends line bounds correctly");
   }
 
   function createGraphics() {

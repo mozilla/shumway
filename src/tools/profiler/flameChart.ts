@@ -17,7 +17,6 @@ module Shumway.Tools.Profiler {
 
   import clamp = NumberUtilities.clamp;
   import trimMiddle = StringUtilities.trimMiddle;
-  import createEmptyObject = ObjectUtilities.createEmptyObject;
 
   interface KindStyle {
     bgColor: string;
@@ -43,7 +42,7 @@ module Shumway.Tools.Profiler {
     constructor(controller: Controller, snapshot: TimelineBufferSnapshot) {
       super(controller);
       this._snapshot = snapshot;
-      this._kindStyle = createEmptyObject();
+      this._kindStyle = Object.create(null);
     }
 
     setSize(width: number, height?: number) {

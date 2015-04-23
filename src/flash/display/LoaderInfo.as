@@ -15,7 +15,6 @@
  */
 
 package flash.display {
-import flash.errors.IllegalOperationError;
 import flash.events.Event;
 import flash.events.EventDispatcher;
 import flash.events.UncaughtErrorEvents;
@@ -50,19 +49,7 @@ public class LoaderInfo extends EventDispatcher {
   public native function get loader():Loader;
   public native function get content():DisplayObject;
   public native function get bytes():ByteArray;
-  public function get uncaughtErrorEvents():UncaughtErrorEvents {
-    var events:UncaughtErrorEvents = _getUncaughtErrorEvents();
-    if (!events) {
-      events = new UncaughtErrorEvents();
-      _setUncaughtErrorEvents(events);
-    }
-    return events;
-  }
-  private native function _getUncaughtErrorEvents():UncaughtErrorEvents;
-  private native function _setUncaughtErrorEvents(value:UncaughtErrorEvents):void;
-  public override function dispatchEvent(event:Event):Boolean {
-    Error.throwError(IllegalOperationError, 2118);
-    return false;
-  }
+  public native function get uncaughtErrorEvents():UncaughtErrorEvents;
+//  public native override function dispatchEvent(event:Event):Boolean;
 }
 }

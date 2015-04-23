@@ -17,7 +17,7 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import ButtonSymbol = Shumway.Timeline.ButtonSymbol;
+  import assert = Shumway.Debug.assert;
 
   export class SimpleButton extends flash.display.InteractiveObject {
 
@@ -28,7 +28,7 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = function (symbol: ButtonSymbol) {
       var self: SimpleButton = this;
 
-      DisplayObject._advancableInstances.push(self);
+      display.DisplayObject._advancableInstances.push(self);
 
       self._useHandCursor = true;
       self._enabled = true;
@@ -45,16 +45,20 @@ module Shumway.AVM2.AS.flash.display {
 
       if (symbol) {
         if (symbol.upState) {
-          self._upState = DisplayObject.createAnimatedDisplayObject(symbol.upState, true);
+          self._upState = self.createAnimatedDisplayObject(symbol.upState.symbol,
+                                                           symbol.upState.placeObjectTag, true);
         }
         if (symbol.overState) {
-          self._overState = DisplayObject.createAnimatedDisplayObject(symbol.overState, true);
+          self._overState = self.createAnimatedDisplayObject(symbol.overState.symbol,
+                                                             symbol.overState.placeObjectTag, true);
         }
         if (symbol.downState) {
-          self._downState = DisplayObject.createAnimatedDisplayObject(symbol.downState, true);
+          self._downState = self.createAnimatedDisplayObject(symbol.downState.symbol,
+                                                             symbol.downState.placeObjectTag, true);
         }
         if (symbol.hitTestState) {
-          self._hitTestState = DisplayObject.createAnimatedDisplayObject(symbol.hitTestState, true);
+          self._hitTestState = self.createAnimatedDisplayObject(symbol.hitTestState.symbol,
+                                                                symbol.hitTestState.placeObjectTag, true);
         }
       }
     };
@@ -65,10 +69,25 @@ module Shumway.AVM2.AS.flash.display {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // [];
 
-    constructor (upState: flash.display.DisplayObject = null, overState: flash.display.DisplayObject = null, downState: flash.display.DisplayObject = null, hitTestState: flash.display.DisplayObject = null) {
-      upState = upState; overState = overState; downState = downState; hitTestState = hitTestState;
+    constructor(upState: flash.display.DisplayObject = null,
+                overState: flash.display.DisplayObject = null,
+                downState: flash.display.DisplayObject = null,
+                hitTestState: flash.display.DisplayObject = null) {
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.SimpleButton");
+      InteractiveObject.instanceConstructorNoInitialize.call(this);
+      if (upState) {
+        this.upState = upState;
+      }
+      if (overState) {
+        this.overState = overState;
+      }
+      if (downState) {
+        this.downState = downState;
+      }
+      if (hitTestState) {
+        this.hitTestState = hitTestState;
+      }
+      this._updateButton();
     }
 
     _initFrame(advance: boolean) {
@@ -129,7 +148,6 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set upState(value: flash.display.DisplayObject) {
-      //value = value;
       var old = this._upState;
       if (value._parent) {
         value._parent.removeChild(value);
@@ -145,7 +163,6 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set overState(value: flash.display.DisplayObject) {
-      //value = value;
       var old = this._overState;
       if (value._parent) {
         value._parent.removeChild(value);
@@ -161,7 +178,6 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set downState(value: flash.display.DisplayObject) {
-      //value = value;
       var old = this._downState;
       if (value._parent) {
         value._parent.removeChild(value);
@@ -177,7 +193,6 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set hitTestState(value: flash.display.DisplayObject) {
-      //value = value;
       this._hitTestState = value;
     }
 
@@ -192,22 +207,49 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Override of DisplayObject#_isUnderMouse that applies the test on hitTestState if
+     * Override of DisplayObject#_containsPoint that applies the test on hitTestState if
      * that is defined.
      */
-    _isUnderMouse(x: number, y: number): boolean
-    {
-      var matrix = this._getInvertedConcatenatedMatrix();
-      var localX = matrix.transformX(x, y);
-      var localY = matrix.transformY(x, y);
-      var target = this.hitTestState || this;
-      if (target !== this) {
-        matrix = target._getInvertedMatrix();
-        var tmpX = matrix.transformX(localX, localY);
-        localY = matrix.transformY(localX, localY);
-        localX = tmpX;
+    _containsPoint(globalX: number, globalY: number, localX: number, localY: number,
+                   testingType: HitTestingType, objects: DisplayObject[]): HitTestingResult {
+      var target = testingType === HitTestingType.Mouse ? this._hitTestState : this._currentState;
+      if (!target) {
+        return HitTestingResult.None;
       }
-      return target._containsPoint(localX, localY, true, false, false);
+      // Hit testing relies on being able to get combined transforms and all that, so, a parent.
+      target._parent = <any>this;
+      var result = target._containsGlobalPoint(globalX, globalY, testingType, objects);
+      target._parent = null;
+      // For mouse target finding, SimpleButtons always return themselves as the hit.
+      if (result !== HitTestingResult.None && testingType === HitTestingType.Mouse &&
+          objects && this._mouseEnabled) {
+        objects[0] = this;
+        release || assert(objects.length === 1);
+      }
+      return result;
+    }
+
+    /**
+     * Override of DisplayObject#_getChildBounds that retrieves the current hitTestState's bounds.
+     */
+    _getChildBounds(bounds: Bounds, includeStrokes: boolean) {
+      if (!this._currentState) {
+        return;
+      }
+      this._currentState._parent = <any>this;
+      bounds.unionInPlace(this._currentState._getTransformedBounds(this, includeStrokes));
+      this._currentState._parent = null;
+    }
+
+    _propagateFlagsDown(flags: DisplayObjectFlags) {
+      if (this._hasFlags(flags)) {
+        return;
+      }
+      this._setFlags(flags);
+      this._upState && this._upState._propagateFlagsDown(flags);
+      this._overState && this._overState._propagateFlagsDown(flags);
+      this._downState && this._downState._propagateFlagsDown(flags);
+      this._hitTestState && this._hitTestState._propagateFlagsDown(flags);
     }
 
     _updateButton(): void {
@@ -234,6 +276,50 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._setDirtyFlags(DisplayObjectFlags.DirtyChildren);
       this._invalidateFillAndLineBounds(true, true);
+    }
+  }
+
+  export class ButtonState {
+    constructor(public symbol: Timeline.DisplaySymbol, public placeObjectTag: SWF.PlaceObjectTag) {
+    }
+  }
+
+  export class ButtonSymbol extends Timeline.DisplaySymbol {
+    upState: ButtonState = null;
+    overState: ButtonState = null;
+    downState: ButtonState = null;
+    hitTestState: ButtonState = null;
+    loaderInfo: flash.display.LoaderInfo;
+
+    constructor(data: Timeline.SymbolData, loaderInfo: flash.display.LoaderInfo) {
+      super(data, flash.display.SimpleButton, true);
+      this.loaderInfo = loaderInfo;
+    }
+
+    static FromData(data: any, loaderInfo: flash.display.LoaderInfo): ButtonSymbol {
+      var symbol = new ButtonSymbol(data, loaderInfo);
+      if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
+        symbol.isAVM1Object = true;
+      }
+      var states = data.states;
+      var character: Shumway.Timeline.DisplaySymbol = null;
+      var placeObjectTag: Shumway.SWF.PlaceObjectTag;
+      for (var stateName in states) {
+        var controlTags = states[stateName];
+        if (controlTags.length === 1) {
+          placeObjectTag = controlTags[0];
+          character = <Shumway.Timeline.DisplaySymbol>loaderInfo.getSymbolById(placeObjectTag.symbolId);
+          if (!character) {
+            continue;
+          }
+        } else {
+          placeObjectTag = {flags: Shumway.SWF.Parser.PlaceObjectFlags.Move, depth: 1};
+          character = new flash.display.SpriteSymbol({id: -1, className: null}, loaderInfo);
+          (<flash.display.SpriteSymbol>character).frames.push(new Shumway.SWF.SWFFrame(controlTags));
+        }
+        symbol[stateName + 'State'] = new ButtonState(character, placeObjectTag);
+      }
+      return symbol;
     }
   }
 }

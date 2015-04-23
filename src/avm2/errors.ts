@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2014 Mozilla Foundation
  *
@@ -26,7 +24,7 @@ module Shumway.AVM2 {
   //  NotImplementedError                  : {code: 1001, message: "The method %1 is not implemented."},
   //  InvalidPrecisionError                : {code: 1002, message: "Number.toPrecision has a range of 1 to 21. Number.toFixed and Number.toExponential have a range of 0 to 20. Specified value is not within expected range."},
   //  InvalidRadixError                    : {code: 1003, message: "The radix argument must be between 2 and 36; got %1."},
-  //  InvokeOnIncompatibleObjectError      : {code: 1004, message: "Method %1 was invoked on an incompatible object."},
+    InvokeOnIncompatibleObjectError      : {code: 1004, message: "Method %1 was invoked on an incompatible object."},
   //  ArrayIndexNotIntegerError            : {code: 1005, message: "Array index is not a positive integer (%1)."},
     CallOfNonFunctionError               : {code: 1006, message: "%1 is not a function."},
   //  ConstructOfNonFunctionError          : {code: 1007, message: "Instantiation attempted on a non-constructor."},
@@ -92,7 +90,7 @@ module Shumway.AVM2 {
   //  AlreadyBoundError                    : {code: 1071, message: "Function %1 has already been bound to %2."},
   //  ZeroDispIdError                      : {code: 1072, message: "Disp_id 0 is illegal."},
   //  DuplicateDispIdError                 : {code: 1073, message: "Non-override method %1 replaced because of duplicate disp_id %2."},
-  //  ConstWriteError                      : {code: 1074, message: "Illegal write to read-only property %1 on %2."},
+    ConstWriteError                      : {code: 1074, message: "Illegal write to read-only property %1 on %2."},
   //  MathNotFunctionError                 : {code: 1075, message: "Math is not a function."},
   //  MathNotConstructorError              : {code: 1076, message: "Math is not a constructor."},
   //  WriteOnlyError                       : {code: 1077, message: "Illegal read of write-only property %1 on %2."},
@@ -104,10 +102,10 @@ module Shumway.AVM2 {
   //  XMLPrefixNotBound                    : {code: 1083, message: "The prefix \"%1\" for element \"%2\" is not bound."},
   //  XMLBadQName                          : {code: 1084, message: "Element or attribute (\"%1\") does not match QName production: QName::=(NCName':')?NCName."},
   //  XMLUnterminatedElementTag            : {code: 1085, message: "The element type \"%1\" must be terminated by the matching end-tag \"</%2>\"."},
-  //  XMLOnlyWorksWithOneItemLists         : {code: 1086, message: "The %1 method only works on lists containing one item."},
-  //  XMLAssignmentToIndexedXMLNotAllowed  : {code: 1087, message: "Assignment to indexed XML is not allowed."},
+    XMLOnlyWorksWithOneItemLists         : {code: 1086, message: "The %1 method only works on lists containing one item."},
+    XMLAssignmentToIndexedXMLNotAllowed  : {code: 1087, message: "Assignment to indexed XML is not allowed."},
     XMLMarkupMustBeWellFormed            : {code: 1088, message: "The markup in the document following the root element must be well-formed."},
-  //  XMLAssigmentOneItemLists             : {code: 1089, message: "Assignment to lists with more than one item is not supported."},
+    XMLAssigmentOneItemLists             : {code: 1089, message: "Assignment to lists with more than one item is not supported."},
   //  XMLMalformedElement                  : {code: 1090, message: "XML parser failure: element is malformed."},
   //  XMLUnterminatedCData                 : {code: 1091, message: "XML parser failure: Unterminated CDATA section."},
   //  XMLUnterminatedXMLDecl               : {code: 1092, message: "XML parser failure: Unterminated XML declaration."},
@@ -116,7 +114,7 @@ module Shumway.AVM2 {
   //  XMLUnterminatedAttribute             : {code: 1095, message: "XML parser failure: Unterminated attribute."},
   //  XMLUnterminatedElement               : {code: 1096, message: "XML parser failure: Unterminated element."},
   //  XMLUnterminatedProcessingInstruction : {code: 1097, message: "XML parser failure: Unterminated processing instruction."},
-  //  XMLNamespaceWithPrefixAndNoURI       : {code: 1098, message: "Illegal prefix %1 for no namespace."},
+    XMLNamespaceWithPrefixAndNoURI       : {code: 1098, message: "Illegal prefix %1 for no namespace."},
   //  RegExpFlagsArgumentError             : {code: 1100, message: "Cannot supply flags when constructing one RegExp from another."},
   //  NoScopeError                         : {code: 1101, message: "Cannot verify method %1 with unknown scope."},
   //  IllegalDefaultValue                  : {code: 1102, message: "Illegal default value for type %1."},
@@ -144,9 +142,9 @@ module Shumway.AVM2 {
     VectorFixedError                     : {code: 1126, message: "Cannot change the length of a fixed Vector."},
   //  TypeAppOfNonParamType                : {code: 1127, message: "Type application attempted on a non-parameterized type."},
   //  WrongTypeArgCountError               : {code: 1128, message: "Incorrect number of type parameters for %1. Expected %2, got %3."},
-  //  JSONCyclicStructure                  : {code: 1129, message: "Cyclic structure cannot be converted to JSON string."},
-  //  JSONInvalidReplacer                  : {code: 1131, message: "Replacer argument to JSON stringifier must be an array or a two parameter function."},
-  //  JSONInvalidParseInput                : {code: 1132, message: "Invalid JSON parse input."},
+    JSONCyclicStructure                  : {code: 1129, message: "Cyclic structure cannot be converted to JSON string."},
+    JSONInvalidReplacer                  : {code: 1131, message: "Replacer argument to JSON stringifier must be an array or a two parameter function."},
+    JSONInvalidParseInput                : {code: 1132, message: "Invalid JSON parse input."},
   //  FileOpenError                        : {code: 1500, message: "Error occurred opening file %1."},
   //  FileWriteError                       : {code: 1501, message: "Error occurred writing to file %1."},
   //  ScriptTimeoutError                   : {code: 1502, message: "A script has executed for longer than the default timeout period of 15 seconds."},
@@ -161,20 +159,20 @@ module Shumway.AVM2 {
     ParamRangeError                      : {code: 2006, message: "The supplied index is out of bounds."},
     NullPointerError                     : {code: 2007, message: "Parameter %1 must be non-null."},
     InvalidEnumError                     : {code: 2008, message: "Parameter %1 must be one of the accepted values."},
-  //  CantInstantiateError                 : {code: 2012, message: "%1 class cannot be instantiated."},
-  InvalidBitmapData                      : {code: 2015, message: "Invalid BitmapData."},
-  //  EOFError                             : {code: 2030, message: "End of file was encountered."},
-    CompressedDataError                  : {code: 2058, message: "There was an error decompressing the data."},
+    CantInstantiateError                 : {code: 2012, message: "%1 class cannot be instantiated."},
+    InvalidBitmapData                    : {code: 2015, message: "Invalid BitmapData."},
+    EOFError                             : {code: 2030, message: "End of file was encountered.", fqn: 'flash.errors.EOFError'},
+    CompressedDataError                  : {code: 2058, message: "There was an error decompressing the data.", fqn: 'flash.errors.IOError'},
   //  EmptyStringError                     : {code: 2085, message: "Parameter %1 must be non-empty string."},
-  //  ProxyGetPropertyError                : {code: 2088, message: "The Proxy class does not implement getProperty. It must be overridden by a subclass."},
-  //  ProxySetPropertyError                : {code: 2089, message: "The Proxy class does not implement setProperty. It must be overridden by a subclass."},
-  //  ProxyCallPropertyError               : {code: 2090, message: "The Proxy class does not implement callProperty. It must be overridden by a subclass."},
-  //  ProxyHasPropertyError                : {code: 2091, message: "The Proxy class does not implement hasProperty. It must be overridden by a subclass."},
-  //  ProxyDeletePropertyError             : {code: 2092, message: "The Proxy class does not implement deleteProperty. It must be overridden by a subclass."},
-  //  ProxyGetDescendantsError             : {code: 2093, message: "The Proxy class does not implement getDescendants. It must be overridden by a subclass."},
-  //  ProxyNextNameIndexError              : {code: 2105, message: "The Proxy class does not implement nextNameIndex. It must be overridden by a subclass."},
-  //  ProxyNextNameError                   : {code: 2106, message: "The Proxy class does not implement nextName. It must be overridden by a subclass."},
-  //  ProxyNextValueError                  : {code: 2107, message: "The Proxy class does not implement nextValue. It must be overridden by a subclass."},
+    ProxyGetPropertyError                : {code: 2088, message: "The Proxy class does not implement getProperty. It must be overridden by a subclass."},
+    ProxySetPropertyError                : {code: 2089, message: "The Proxy class does not implement setProperty. It must be overridden by a subclass."},
+    ProxyCallPropertyError               : {code: 2090, message: "The Proxy class does not implement callProperty. It must be overridden by a subclass."},
+    ProxyHasPropertyError                : {code: 2091, message: "The Proxy class does not implement hasProperty. It must be overridden by a subclass."},
+    ProxyDeletePropertyError             : {code: 2092, message: "The Proxy class does not implement deleteProperty. It must be overridden by a subclass."},
+    ProxyGetDescendantsError             : {code: 2093, message: "The Proxy class does not implement getDescendants. It must be overridden by a subclass."},
+    ProxyNextNameIndexError              : {code: 2105, message: "The Proxy class does not implement nextNameIndex. It must be overridden by a subclass."},
+    ProxyNextNameError                   : {code: 2106, message: "The Proxy class does not implement nextName. It must be overridden by a subclass."},
+    ProxyNextValueError                  : {code: 2107, message: "The Proxy class does not implement nextValue. It must be overridden by a subclass."},
   //  InvalidArrayLengthError              : {code: 2108, message: "The value %1 is not a valid Array length."},
   //  ReadExternalNotImplementedError      : {code: 2173, message: "Unable to read object in stream.  The class %1 does not implement flash.utils.IExternalizable but is aliased to an externalizable class."},
 
@@ -234,10 +232,10 @@ module Shumway.AVM2 {
   //  NoCloneMethodError                                        : { code: 2062, message: "Children of Event must override clone() {return new MyEventClass (...);}."},
   //  IMEError                                                  : { code: 2063, message: "Error attempting to execute IME command."},
   //  FocusNotSetError                                          : { code: 2065, message: "The focus cannot be set for this target."},
-  //  DelayRangeError                                           : { code: 2066, message: "The Timer delay specified is out of range."},
+    DelayRangeError                                           : { code: 2066, message: "The Timer delay specified is out of range."},
     ExternalInterfaceNotAvailableError                        : { code: 2067, message: "The ExternalInterface is not available in this container. ExternalInterface requires Internet Explorer ActiveX, Firefox, Mozilla 1.7.5 and greater, or other browsers that support NPRuntime."},
   //  InvalidSoundError                                         : { code: 2068, message: "Invalid sound."},
-  //  InvalidLoaderMethodError                                  : { code: 2069, message: "The Loader class does not implement this method."},
+    InvalidLoaderMethodError                                  : { code: 2069, message: "The Loader class does not implement this method."},
   //  StageOwnerSecurityError                                   : { code: 2070, message: "Security sandbox violation: caller %1 cannot access Stage owned by %2."},
     InvalidStageMethodError                                   : { code: 2071, message: "The Stage class does not implement this property or method."},
   //  ProductManagerDiskError                                   : { code: 2073, message: "There was a problem saving the application to disk."},
@@ -255,10 +253,10 @@ module Shumway.AVM2 {
   //  AsyncError                                                : { code: 2095, message: "%1 was unable to invoke callback %2."},
   //  DisallowedHTTPHeaderError                                 : { code: 2096, message: "The HTTP request header %1 cannot be set via ActionScript."},
   //  FileFilterError                                           : { code: 2097, message: "The FileFilter Array is not in the correct format."},
-  //  LoadingObjectNotSWFError                                  : { code: 2098, message: "The loading object is not a .swf file, you cannot request SWF properties from it."},
-  //  LoadingObjectNotInitializedError                          : { code: 2099, message: "The loading object is not sufficiently loaded to provide this information."},
+    LoadingObjectNotSWFError                                  : { code: 2098, message: "The loading object is not a .swf file, you cannot request SWF properties from it."},
+    LoadingObjectNotInitializedError                          : { code: 2099, message: "The loading object is not sufficiently loaded to provide this information."},
   //  EmptyByteArrayError                                       : { code: 2100, message: "The ByteArray parameter in Loader.loadBytes() must have length greater than 0."},
-  //  DecodeParamError                                          : { code: 2101, message: "The String passed to URLVariables.decode() must be a URL-encoded query string containing name/value pairs."},
+    DecodeParamError                                          : { code: 2101, message: "The String passed to URLVariables.decode() must be a URL-encoded query string containing name/value pairs."},
   //  NotAnXMLChildError                                        : { code: 2102, message: "The before XMLNode parameter must be a child of the caller."},
   //  XMLRecursionError                                         : { code: 2103, message: "XML recursion failure: new child would create infinite loop."},
     SceneNotFoundError                                        : { code: 2108, message: "Scene %1 was not found."},
@@ -270,7 +268,7 @@ module Shumway.AVM2 {
   //  NonNullPointerError                                       : { code: 2114, message: "Parameter %1 must be null."},
   //  TrueParamError                                            : { code: 2115, message: "Parameter %1 must be false."},
   //  FalseParamError                                           : { code: 2116, message: "Parameter %1 must be true."},
-  //  InvalidLoaderInfoMethodError                              : { code: 2118, message: "The LoaderInfo class does not implement this method."},
+    InvalidLoaderInfoMethodError                              : { code: 2118, message: "The LoaderInfo class does not implement this method."},
   //  LoaderInfoAppDomainSecurityError                          : { code: 2119, message: "Security sandbox violation: caller %1 cannot access LoaderInfo.applicationDomain owned by %2."},
   //  SecuritySwfNotAllowedError                                : { code: 2121, message: "Security sandbox violation: %1: %2 cannot access %3. This may be worked around by calling Security.allowDomain."},
   //  SecurityNonSwfIncompletePolicyFilesError                  : { code: 2122, message: "Security sandbox violation: %1: %2 cannot access %3. A policy file is required, but the checkPolicyFile flag was not set when this media was loaded."},
@@ -344,7 +342,7 @@ module Shumway.AVM2 {
   //  SecurityContentAccessDeniedError                          : { code: 2193, message: "Security sandbox violation: %1: %2 cannot access %3."},
   //  LoaderParamError                                          : { code: 2194, message: "Parameter %1 cannot be a Loader."},
   //  LoaderAsyncError                                          : { code: 2195, message: "Error thrown as Loader called %1."},
-  //  ObjectWithStringsParamError                               : { code: 2196, message: "Parameter %1 must be an Object with only String values."},
+    ObjectWithStringsParamError                               : { code: 2196, message: "Parameter %1 must be an Object with only String values."},
   //  SystemUpdaterPlayerNotSupportedError                      : { code: 2200, message: "The SystemUpdater class is not supported by this player."},
   //  SystemUpdaterOSNotSupportedError                          : { code: 2201, message: "The requested update type is not supported on this operating system."},
   //  SystemUpdaterBusy                                         : { code: 2202, message: "Only one SystemUpdater action is allowed at a time."},
@@ -621,21 +619,28 @@ module Shumway.AVM2 {
   //  CubeMapSamplerMustUseMipmap                               : { code: 3704, message: "AGAL validation failed: Cube map samplers must enable mipmapping for %2 at token %3 of %1 program."}
   };
 
+  for (var k in Errors) {
+    var error = Errors[k];
+    error.typeName = k;
+    Errors[error.code] = error;
+  }
+
   export function getErrorMessage(index: number): string {
+    var message = "Error #" + index;
     if (!Shumway.AVM2.Runtime.debuggerMode.value) {
-      return "Error #" + index;
+      return message;
     }
-    for (var k in Errors) {
-      if (Errors[k].code == index) {
-        return "Error #" + index + ": " + Errors[k].message;
-      }
-    }
-    return "Error #" + index + ": (unknown)";
+    var error = Errors[index];
+    return message + ": " + (error && error.message || "(unknown)");
+  }
+
+  export function getErrorInfo(index: number): {code: number; message: string; typeName: string} {
+    return Errors[index];
   }
 
   export function formatErrorMessage(error, ...args) {
     var message = error.message;
-    Array.prototype.slice.call(arguments, 1).forEach(function (x, i) {
+    args.forEach(function (x, i) {
       message = message.replace("%" + (i + 1), x);
     });
     return "Error #" + error.code + ": " + message;
@@ -658,7 +663,5 @@ module Shumway.AVM2 {
   }
 }
 
-import Errors = Shumway.AVM2.Errors;
-import getErrorMessage = Shumway.AVM2.getErrorMessage;
-import formatErrorMessage = Shumway.AVM2.formatErrorMessage;
-import translateErrorMessage = Shumway.AVM2.translateErrorMessage;
+// Errors is used in dataBuffer.ts, which is compiled way before this. Gotta break the cycle.
+Errors = Shumway.AVM2.Errors;

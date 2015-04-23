@@ -26,26 +26,9 @@ module Shumway.ArrayUtilities {
   import floatToInt32 = Shumway.IntegerUtilities.floatToInt32;
   import int32ToFloat = Shumway.IntegerUtilities.int32ToFloat;
 
-  function throwEOFError() {
-    notImplemented("throwEOFError");
-    // Runtime.throwErrorFromVM(AVM2.currentDomain(), "flash.errors.EOFError", "End of file was encountered.");
-  }
-
-  function throwRangeError() {
-    notImplemented("throwRangeError");
-    // var error = Errors.ParamRangeError;
-    // Runtime.throwErrorFromVM("RangeError", getErrorMessage(error.code), error.code);
-  }
-
-  function throwCompressedDataError() {
-    notImplemented("throwCompressedDataError");
-//    var error = Errors.CompressedDataError;
-//    Runtime.throwErrorFromVM("CompressedDataError", getErrorMessage(error.code), error.code);
-  }
-
   function checkRange(x: number, min: number, max: number) {
     if (x !== clamp(x, min, max)) {
-      throwRangeError();
+      throwError('RangeError', Errors.ParamRangeError);
     }
   }
 
@@ -98,6 +81,17 @@ module Shumway.ArrayUtilities {
     }
   }
 
+  var bitMasks = new Uint32Array(33);
+  for (var i = 1, mask = 0; i <= 32; i++) {
+    bitMasks[i] = mask = (mask << 1) | 1;
+  }
+
+  enum TypedArrayViewFlags {
+    U8  = 1,
+    I32 = 2,
+    F32 = 4
+  }
+
   export class DataBuffer implements IDataInput, IDataOutput {
     private static _nativeLittleEndian = new Int8Array(new Int32Array([1]).buffer)[0] === 1;
 
@@ -109,20 +103,26 @@ module Shumway.ArrayUtilities {
     private _position: number;
     private _littleEndian: boolean;
     private _objectEncoding: number;
-    private _i8View: Int8Array;
-    private _u8View: Uint8Array;
-    private _i32View: Int32Array;
-    private _dataView: DataView;
+    private _u8: Uint8Array;
+    private _i32: Int32Array;
+    private _f32: Float32Array;
 
     private _bitBuffer: number;
     private _bitLength: number;
 
+    private static _arrayBufferPool = new ArrayBufferPool();
+    
     constructor(initialSize: number = DataBuffer.INITIAL_SIZE) {
+      // If we're constructing a child class of DataBuffer (or ByteArray), buffer initialization
+      // has already happened at this point.
+      if (this._buffer) {
+        return;
+      }
       this._buffer = new ArrayBuffer(initialSize);
       this._length = 0;
       this._position = 0;
-      this._cacheViews();
-      this._littleEndian = false; // AS3 is bigEndian by default.
+      this._resetViews();
+      this._littleEndian = DataBuffer._nativeLittleEndian;
       this._bitBuffer = 0;
       this._bitLength = 0;
     }
@@ -132,8 +132,8 @@ module Shumway.ArrayUtilities {
       dataBuffer._buffer = buffer;
       dataBuffer._length = length === -1 ? buffer.byteLength : length;
       dataBuffer._position = 0;
-      dataBuffer._cacheViews();
-      dataBuffer._littleEndian = false; // AS3 is bigEndian by default.
+      dataBuffer._resetViews();
+      dataBuffer._littleEndian = DataBuffer._nativeLittleEndian;
       dataBuffer._bitBuffer = 0;
       dataBuffer._bitLength = 0;
       return dataBuffer;
@@ -149,50 +149,48 @@ module Shumway.ArrayUtilities {
       return new PlainObjectDataBuffer(this._buffer, this._length, this._littleEndian);
     }
 
-    private _get(m: string, size: number) {
-      if (this._position + size > this._length) {
-        throwEOFError();
-      }
-      var v = this._dataView[m](this._position, this._littleEndian);
-      this._position += size;
-      return v;
+    /**
+     * By default, we only have a byte view. All other views are |null|.
+     */
+    private _resetViews() {
+      this._u8 = new Uint8Array(this._buffer);
+      this._i32 = null;
+      this._f32 = null;
     }
 
-    private _set(m: string, size: number, v: any) {
-      var length = this._position + size;
-      this._ensureCapacity(length);
-      this._dataView[m](this._position, v, this._littleEndian);
-      this._position = length;
-      if (length > this._length) {
-        this._length = length;
-      }
-    }
-
-    _cacheViews() {
-      this._i8View = new Int8Array(this._buffer);
-      this._u8View = new Uint8Array(this._buffer);
+    /**
+     * We don't want to eagerly allocate views if we won't ever need them. You must call this method
+     * before using a view of a certain type to make sure it's available. Once a view is allocated,
+     * it is not re-allocated unless the view becomes |null| as a result of a call to |resetViews|.
+     */
+    private _requestViews(flags: TypedArrayViewFlags) {
       if ((this._buffer.byteLength & 0x3) === 0) {
-        this._i32View = new Int32Array(this._buffer);
+        if (this._i32 === null && flags & TypedArrayViewFlags.I32) {
+          this._i32 = new Int32Array(this._buffer);
+        }
+        if (this._f32 === null && flags & TypedArrayViewFlags.F32) {
+          this._f32 = new Float32Array(this._buffer);
+        }
       }
-      this._dataView = new DataView(this._buffer);
     }
 
     getBytes(): Uint8Array {
       return new Uint8Array(this._buffer, 0, this._length);
     }
 
-    _ensureCapacity(length: number) {
+    private _ensureCapacity(length: number) {
       var currentBuffer = this._buffer;
       if (currentBuffer.byteLength < length) {
         var newLength = Math.max(currentBuffer.byteLength, 1);
         while (newLength < length) {
           newLength *= 2;
         }
-        var newBuffer = new ArrayBuffer(newLength);
-        var curentView = this._i8View;
+        var newBuffer = DataBuffer._arrayBufferPool.acquire(newLength);
+        var curentView = this._u8;
         this._buffer = newBuffer;
-        this._cacheViews();
-        this._i8View.set(curentView);
+        this._resetViews();
+        this._u8.set(curentView);
+        DataBuffer._arrayBufferPool.release(currentBuffer);
       }
     }
 
@@ -201,114 +199,141 @@ module Shumway.ArrayUtilities {
       this._position = 0;
     }
 
-    /**
-     * For byte-sized reads and writes we can just go through the |Uint8Array| and not
-     * the slower DataView.
-     */
-
     readBoolean(): boolean {
-      if (this._position + 1 > this._length) {
-        throwEOFError();
-      }
-      return this._i8View[this._position++] !== 0;
+      return this.readUnsignedByte() !== 0;
     }
 
     readByte(): number /*int*/ {
-      if (this._position + 1 > this._length) {
-        throwEOFError();
-      }
-      return this._i8View[this._position++];
+      return this.readUnsignedByte() << 24 >> 24;
     }
 
     readUnsignedByte(): number /*uint*/ {
       if (this._position + 1 > this._length) {
-        throwEOFError();
+        throwError('EOFError', Errors.EOFError);
       }
-      return this._u8View[this._position++];
+      return this._u8[this._position++];
     }
 
     readBytes(bytes: DataBuffer, offset: number /*uint*/ = 0, length: number /*uint*/ = 0): void {
-      var pos = this._position;
+      var position = this._position;
       if (!offset) {
         offset = 0;
       }
       if (!length) {
-        length = this._length - pos;
+        length = this._length - position;
       }
-      if (pos + length > this._length) {
-        throwEOFError();
+      if (position + length > this._length) {
+        throwError('EOFError', Errors.EOFError);
       }
       if (bytes.length < offset + length) {
         bytes._ensureCapacity(offset + length);
         bytes.length = offset + length;
       }
-      bytes._i8View.set(new Int8Array(this._buffer, pos, length), offset);
+      bytes._u8.set(new Uint8Array(this._buffer, position, length), offset);
       this._position += length;
     }
 
     readShort(): number /*int*/ {
-      return this._get('getInt16', 2);
+      return this.readUnsignedShort() << 16 >> 16;
     }
 
     readUnsignedShort(): number /*uint*/ {
-      return this._get('getUint16', 2);
+      var u8 = this._u8;
+      var position = this._position;
+      if (position + 2 > this._length) {
+        throwError('EOFError', Errors.EOFError);
+      }
+      var a = u8[position + 0];
+      var b = u8[position + 1];
+      this._position = position + 2;
+      return this._littleEndian ? (b << 8) | a : (a << 8) | b;
     }
 
     readInt(): number /*int*/ {
-      if ((this._position & 0x3) === 0 && this._i32View) {
-        if (this._position + 4 > this._length) {
-          throwEOFError();
-        }
-        var value = this._i32View[this._position >> 2];
-        this._position += 4;
-        if (this._littleEndian !== DataBuffer._nativeLittleEndian) {
-          value = swap32(value);
-        }
-        return value;
-      } else {
-        return this._get('getInt32', 4);
+      var u8 = this._u8;
+      var position = this._position;
+      if (position + 4 > this._length) {
+        throwError('EOFError', Errors.EOFError);
       }
+      var a = u8[position + 0];
+      var b = u8[position + 1];
+      var c = u8[position + 2];
+      var d = u8[position + 3];
+      this._position = position + 4;
+      return this._littleEndian ?
+        (d << 24) | (c << 16) | (b << 8) | a :
+        (a << 24) | (b << 16) | (c << 8) | d;
     }
 
     readUnsignedInt(): number /*uint*/ {
-      return this._get('getUint32', 4);
+      return this.readInt() >>> 0;
     }
 
     readFloat(): number {
-      if ((this._position & 0x3) === 0 && this._i32View) {
-        if (this._position + 4 > this._length) {
-          throwEOFError();
-        }
-        var bytes = this._i32View[this._position >> 2];
-        if (this._littleEndian !== DataBuffer._nativeLittleEndian) {
-          bytes = swap32(bytes);
-        }
-        var value = int32ToFloat(bytes);
-        this._position += 4;
-        return value;
+      var position = this._position;
+      if (position + 4 > this._length) {
+        throwError('EOFError', Errors.EOFError);
+      }
+      this._position = position + 4;
+      this._requestViews(TypedArrayViewFlags.F32);
+      if (this._littleEndian && (position & 0x3) === 0 && this._f32) {
+        return this._f32[position >> 2];
       } else {
-        return this._get('getFloat32', 4);
+        var u8 = this._u8;
+        var t8 = IntegerUtilities.u8;
+        if (this._littleEndian) {
+          t8[0] = u8[position + 0];
+          t8[1] = u8[position + 1];
+          t8[2] = u8[position + 2];
+          t8[3] = u8[position + 3];
+        } else {
+          t8[3] = u8[position + 0];
+          t8[2] = u8[position + 1];
+          t8[1] = u8[position + 2];
+          t8[0] = u8[position + 3];
+        }
+        return IntegerUtilities.f32[0];
       }
     }
 
     readDouble(): number {
-      return this._get('getFloat64', 8);
+      var u8 = this._u8;
+      var position = this._position;
+      if (position + 8 > this._length) {
+        throwError('EOFError', Errors.EOFError);
+      }
+      var t8 = IntegerUtilities.u8;
+      if (this._littleEndian) {
+        t8[0] = u8[position + 0];
+        t8[1] = u8[position + 1];
+        t8[2] = u8[position + 2];
+        t8[3] = u8[position + 3];
+        t8[4] = u8[position + 4];
+        t8[5] = u8[position + 5];
+        t8[6] = u8[position + 6];
+        t8[7] = u8[position + 7];
+      } else {
+        t8[0] = u8[position + 7];
+        t8[1] = u8[position + 6];
+        t8[2] = u8[position + 5];
+        t8[3] = u8[position + 4];
+        t8[4] = u8[position + 3];
+        t8[5] = u8[position + 2];
+        t8[6] = u8[position + 1];
+        t8[7] = u8[position + 0];
+      }
+      this._position = position + 8;
+      return IntegerUtilities.f64[0];
     }
 
     writeBoolean(value: boolean): void {
-      value = !!value;
-      var length = this._position + 1;
-      this._ensureCapacity(length);
-      this._i8View[this._position++] = value ? 1 : 0;
-      if (length > this._length) {
-        this._length = length;
-      }
+      this.writeByte(!!value ? 1 : 0)
     }
 
     writeByte(value: number /*int*/): void {
       var length = this._position + 1;
       this._ensureCapacity(length);
-      this._i8View[this._position++] = value;
+      this._u8[this._position++] = value;
       if (length > this._length) {
         this._length = length;
       }
@@ -317,7 +342,7 @@ module Shumway.ArrayUtilities {
     writeUnsignedByte(value: number /*uint*/): void {
       var length = this._position + 1;
       this._ensureCapacity(length);
-      this._u8View[this._position++] = value;
+      this._u8[this._position++] = value;
       if (length > this._length) {
         this._length = length;
       }
@@ -326,7 +351,7 @@ module Shumway.ArrayUtilities {
     writeRawBytes(bytes: Uint8Array): void {
       var length = this._position + bytes.length;
       this._ensureCapacity(length);
-      this._i8View.set(bytes, this._position);
+      this._u8.set(bytes, this._position);
       this._position = length;
       if (length > this._length) {
         this._length = length;
@@ -334,6 +359,9 @@ module Shumway.ArrayUtilities {
     }
 
     writeBytes(bytes: DataBuffer, offset: number /*uint*/ = 0, length: number /*uint*/ = 0): void {
+      if (isNullOrUndefined(bytes)) {
+        throwError('TypeError', Errors.NullPointerError, 'bytes');
+      }
       if (arguments.length < 2) {
         offset = 0;
       }
@@ -349,54 +377,191 @@ module Shumway.ArrayUtilities {
     }
 
     writeShort(value: number /*int*/): void {
-      this._set('setInt16', 2, value);
+      this.writeUnsignedShort(value);
     }
 
     writeUnsignedShort(value: number /*uint*/): void {
-      this._set('setUint16', 2, value);
-    }
-
-    writeInt(value: number /*int*/): void {
-      if ((this._position & 0x3) === 0 && this._i32View) {
-        if (this._littleEndian !== DataBuffer._nativeLittleEndian) {
-          value = swap32(value);
-        }
-        var length = this._position + 4;
-        this._ensureCapacity(length);
-        this._i32View[this._position >> 2] = value;
-        this._position += 4;
-        if (length > this._length) {
-          this._length = length;
-        }
+      var position = this._position;
+      this._ensureCapacity(position + 2);
+      var u8 = this._u8;
+      if (this._littleEndian) {
+        u8[position + 0] = value;
+        u8[position + 1] = value >> 8;
       } else {
-        this._set('setInt32', 4, value);
+        u8[position + 0] = value >> 8;
+        u8[position + 1] = value;
+      }
+      position += 2;
+      this._position = position;
+      if (position > this._length) {
+        this._length = position;
       }
     }
 
+    writeInt(value: number /*int*/): void {
+      this.writeUnsignedInt(value);
+    }
+
+    write2Ints(a: number, b: number): void {
+      this.write2UnsignedInts(a, b);
+    }
+
+    write4Ints(a: number, b: number, c: number, d: number): void {
+      this.write4UnsignedInts(a, b, c, d);
+    }
+
     writeUnsignedInt(value: number /*uint*/): void {
-      this._set('setUint32', 4, value);
+      var position = this._position;
+      this._ensureCapacity(position + 4);
+      this._requestViews(TypedArrayViewFlags.I32);
+      if (this._littleEndian === DataBuffer._nativeLittleEndian && (position & 0x3) === 0 && this._i32) {
+        this._i32[position >> 2] = value;
+      } else {
+        var u8 = this._u8;
+        if (this._littleEndian) {
+          u8[position + 0] = value;
+          u8[position + 1] = value >> 8;
+          u8[position + 2] = value >> 16;
+          u8[position + 3] = value >> 24;
+        } else {
+          u8[position + 0] = value >> 24;
+          u8[position + 1] = value >> 16;
+          u8[position + 2] = value >> 8;
+          u8[position + 3] = value;
+        }
+      }
+      position += 4;
+      this._position = position;
+      if (position > this._length) {
+        this._length = position;
+      }
+    }
+
+    write2UnsignedInts(a: number, b: number): void {
+      var position = this._position;
+      this._ensureCapacity(position + 8);
+      this._requestViews(TypedArrayViewFlags.I32);
+      if (this._littleEndian === DataBuffer._nativeLittleEndian && (position & 0x3) === 0 && this._i32) {
+        this._i32[(position >> 2) + 0] = a;
+        this._i32[(position >> 2) + 1] = b;
+        position += 8;
+        this._position = position;
+        if (position > this._length) {
+          this._length = position;
+        }
+      } else {
+        this.writeUnsignedInt(a);
+        this.writeUnsignedInt(b);
+      }
+    }
+
+    write4UnsignedInts(a: number, b: number, c: number, d: number): void {
+      var position = this._position;
+      this._ensureCapacity(position + 16);
+      this._requestViews(TypedArrayViewFlags.I32);
+      if (this._littleEndian === DataBuffer._nativeLittleEndian && (position & 0x3) === 0 && this._i32) {
+        this._i32[(position >> 2) + 0] = a;
+        this._i32[(position >> 2) + 1] = b;
+        this._i32[(position >> 2) + 2] = c;
+        this._i32[(position >> 2) + 3] = d;
+        position += 16;
+        this._position = position;
+        if (position > this._length) {
+          this._length = position;
+        }
+      } else {
+        this.writeUnsignedInt(a);
+        this.writeUnsignedInt(b);
+        this.writeUnsignedInt(c);
+        this.writeUnsignedInt(d);
+      }
     }
 
     writeFloat(value: number): void {
-      if ((this._position & 0x3) === 0 && this._i32View) {
-        var length = this._position + 4;
-        this._ensureCapacity(length);
-        var bytes = floatToInt32(value);
-        if (this._littleEndian !== DataBuffer._nativeLittleEndian) {
-          bytes = swap32(bytes);
+      var position = this._position;
+      this._ensureCapacity(position + 4);
+      this._requestViews(TypedArrayViewFlags.F32);
+      if (this._littleEndian === DataBuffer._nativeLittleEndian && (position & 0x3) === 0 && this._f32) {
+        this._f32[position >> 2] = value;
+      } else {
+        var u8 = this._u8;
+        IntegerUtilities.f32[0] = value;
+        var t8 = IntegerUtilities.u8;
+        if (this._littleEndian) {
+          u8[position + 0] = t8[0];
+          u8[position + 1] = t8[1];
+          u8[position + 2] = t8[2];
+          u8[position + 3] = t8[3];
+        } else {
+          u8[position + 0] = t8[3];
+          u8[position + 1] = t8[2];
+          u8[position + 2] = t8[1];
+          u8[position + 3] = t8[0];
         }
-        this._i32View[this._position >> 2] = bytes;
-        this._position += 4;
-        if (length > this._length) {
-          this._length = length;
+      }
+      position += 4;
+      this._position = position;
+      if (position > this._length) {
+        this._length = position;
+      }
+    }
+
+    write6Floats(a: number, b: number, c: number, d: number, e: number, f: number): void {
+      var position = this._position;
+      this._ensureCapacity(position + 24);
+      this._requestViews(TypedArrayViewFlags.F32);
+      if (this._littleEndian === DataBuffer._nativeLittleEndian && (position & 0x3) === 0 && this._f32) {
+        this._f32[(position >> 2) + 0] = a;
+        this._f32[(position >> 2) + 1] = b;
+        this._f32[(position >> 2) + 2] = c;
+        this._f32[(position >> 2) + 3] = d;
+        this._f32[(position >> 2) + 4] = e;
+        this._f32[(position >> 2) + 5] = f;
+        position += 24;
+        this._position = position;
+        if (position > this._length) {
+          this._length = position;
         }
       } else {
-        this._set('setFloat32', 4, value);
+        this.writeFloat(a);
+        this.writeFloat(b);
+        this.writeFloat(c);
+        this.writeFloat(d);
+        this.writeFloat(e);
+        this.writeFloat(f);
       }
     }
 
     writeDouble(value: number): void {
-      this._set('setFloat64', 8, value);
+      var position = this._position;
+      this._ensureCapacity(position + 8);
+      var u8 = this._u8;
+      IntegerUtilities.f64[0] = value;
+      var t8 = IntegerUtilities.u8;
+      if (this._littleEndian) {
+        u8[position + 0] = t8[0];
+        u8[position + 1] = t8[1];
+        u8[position + 2] = t8[2];
+        u8[position + 3] = t8[3];
+        u8[position + 4] = t8[4];
+        u8[position + 5] = t8[5];
+        u8[position + 6] = t8[6];
+        u8[position + 7] = t8[7];
+      } else {
+        u8[position + 0] = t8[7];
+        u8[position + 1] = t8[6];
+        u8[position + 2] = t8[5];
+        u8[position + 3] = t8[4];
+        u8[position + 4] = t8[3];
+        u8[position + 5] = t8[2];
+        u8[position + 6] = t8[1];
+        u8[position + 7] = t8[0];
+      }
+      position += 8;
+      this._position = position;
+      if (position > this._length) {
+        this._length = position;
+      }
     }
 
     readRawBytes(): Int8Array {
@@ -424,7 +589,7 @@ module Shumway.ArrayUtilities {
       length = length >>> 0;
       var pos = this._position;
       if (pos + length > this._length) {
-        throwEOFError();
+        throwError('EOFError', Errors.EOFError);
       }
       this._position += length;
       return utf8encode(new Int8Array(this._buffer, pos, length));
@@ -458,11 +623,12 @@ module Shumway.ArrayUtilities {
     }
 
     get bytes(): Uint8Array {
-      return this._u8View;
+      return this._u8;
     }
 
     get ints(): Int32Array {
-      return this._i32View;
+      this._requestViews(TypedArrayViewFlags.I32);
+      return this._i32;
     }
 
     set position(position: number /*uint*/) {
@@ -495,8 +661,8 @@ module Shumway.ArrayUtilities {
       return utf8encode(new Int8Array(this._buffer, 0, this._length));
     }
 
-    toBlob(): Blob {
-      return new Blob([new Int8Array(this._buffer, this._position, this._length)]);
+    toBlob(type: string): Blob {
+      return new Blob([new Int8Array(this._buffer, this._position, this._length)], {type: type});
     }
 
     writeMultiByte(value: string, charSet: string): void {
@@ -514,302 +680,177 @@ module Shumway.ArrayUtilities {
       if (name >= this._length) {
         return undefined;
       }
-      return this._u8View[name];
+      return this._u8[name];
     }
 
     setValue(name: number, value: any) {
       name = name | 0;
       var length = name + 1;
       this._ensureCapacity(length);
-      this._u8View[name] = value;
+      this._u8[name] = value;
       if (length > this._length) {
         this._length = length;
       }
     }
 
-    /*
-     * Inflate / Deflate Support
-     *
-     * TODO: Perhaps this code should be moved outside of this class in the future. I couldn't take it out
-     * easily because it is tightly coupled with ByteArrays.
-     */
-
-    private static _codeLengthOrder = null;
-    private static _distanceCodes = null;
-    private static _distanceExtraBits = null;
-
-    private static _fixedLiteralTable = null;
-    private static _fixedDistanceTable = null;
-
-    private static _lengthCodes = null;
-    private static _lengthExtraBits = null;
-
-    /**
-     * Construct tables lazily only if needed in order to avoid startup cost.
-     */
-    private static _initializeTables() {
-      if (DataBuffer._codeLengthOrder) {
-        return;
-      }
-
-      DataBuffer._codeLengthOrder = [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15]
-      DataBuffer._distanceCodes = [];
-      DataBuffer._distanceExtraBits = [];
-
-      for (var i = 0, j = 0, code = 1; i < 30; ++i) {
-        DataBuffer._distanceCodes[i] = code;
-        code += 1 << (DataBuffer._distanceExtraBits[i] = ~~((j += (i > 2 ? 1 : 0)) / 2));
-      }
-
-      var bitLengths = [];
-      for (var i = 0; i < 32; ++i) {
-        bitLengths[i] = 5;
-      }
-
-      DataBuffer._fixedDistanceTable = DataBuffer._makeHuffmanTable(bitLengths);
-
-      DataBuffer._lengthCodes = [];
-      DataBuffer._lengthExtraBits = [];
-      for (var i = 0, j = 0, code = 3; i < 29; ++i) {
-        DataBuffer._lengthCodes[i] = code - (i == 28 ? 1 : 0);
-        code += 1 << (DataBuffer._lengthExtraBits[i] = ~~(((j += (i > 4 ? 1 : 0)) / 4) % 6));
-      }
-
-      for (var i = 0; i < 288; ++i) {
-        bitLengths[i] = i < 144 || i > 279 ? 8 : (i < 256 ? 9 : 7);
-      }
-
-      DataBuffer._fixedLiteralTable = DataBuffer._makeHuffmanTable(bitLengths);
+    readFixed(): number {
+      return this.readInt() / 65536;
     }
 
-    private static _makeHuffmanTable(bitLengths: number []) {
-      var maxBits = Math.max.apply(null, bitLengths);
-      var numLengths = bitLengths.length;
-      var size = 1 << maxBits;
-      var codes = new Uint32Array(size);
-      for (var code = 0, len = 1, skip = 2;
-           len <= maxBits;
-           code <<= 1, ++len, skip <<= 1)
-      {
-        for (var val = 0; val < numLengths; ++val) {
-          if (bitLengths[val] === len) {
-            var lsb = 0;
-            for (var i = 0; i < len; ++i) {
-              lsb = (lsb * 2) + ((code >> i) & 1);
-            }
-            for (var i = lsb; i < size; i += skip) {
-              codes[i] = (len << 16) | val;
-            }
-            ++code;
-          }
+    readFixed8(): number {
+      return this.readShort() / 256;
+    }
+
+    readFloat16(): number {
+      var uint16 = this.readUnsignedShort();
+      var sign = uint16 >> 15 ? -1 : 1;
+      var exponent = (uint16 & 0x7c00) >> 10;
+      var fraction = uint16 & 0x03ff;
+      if (!exponent) {
+        return sign * Math.pow(2, -14) * (fraction / 1024);
+      }
+      if (exponent === 0x1f) {
+        return fraction ? NaN : sign * Infinity;
+      }
+      return sign * Math.pow(2, exponent - 15) * (1 + (fraction / 1024));
+    }
+
+    readEncodedU32(): number {
+      var value = this.readUnsignedByte();
+      if (!(value & 0x080)) {
+        return value;
+      }
+      value = (value & 0x7f) | this.readUnsignedByte() << 7;
+      if (!(value & 0x4000)) {
+        return value;
+      }
+      value = (value & 0x3fff)| this.readUnsignedByte() << 14;
+      if (!(value & 0x200000)) {
+        return value;
+      }
+      value = (value & 0x1FFFFF) | this.readUnsignedByte() << 21;
+      if (!(value & 0x10000000)) {
+        return value;
+      }
+      return (value & 0xFFFFFFF) | (this.readUnsignedByte() << 28);
+    }
+
+    readBits(size: number): number {
+      return (this.readUnsignedBits(size) << (32 - size)) >> (32 - size);
+    }
+
+    readUnsignedBits(size: number): number {
+      var buffer = this._bitBuffer;
+      var length = this._bitLength;
+      while (size > length) {
+        buffer = (buffer << 8) | this.readUnsignedByte();
+        length += 8;
+      }
+      length -= size;
+      var value = (buffer >>> length) & bitMasks[size];
+      this._bitBuffer = buffer;
+      this._bitLength = length;
+      return value;
+    }
+
+    readFixedBits(size: number): number {
+      return this.readBits(size) / 65536;
+    }
+
+    readString(length?: number): string {
+      var position = this._position;
+      if (length) {
+        if (position + length > this._length) {
+          throwError('EOFError', Errors.EOFError);
         }
-      }
-      return { codes: codes, maxBits: maxBits };
-    }
-
-    private static readBits(input: DataBuffer, size: number) {
-      var buffer = input._bitBuffer;
-      var bufflen = input._bitLength;
-      while (size > bufflen) {
-        buffer |= input.readUnsignedByte() << bufflen;
-        bufflen += 8;
-      }
-      input._bitBuffer = buffer >>> size;
-      input._bitLength = bufflen - size;
-      return buffer & ((1 << size) - 1);
-    }
-
-    private static inflateBlock(input: DataBuffer, output: DataBuffer) {
-      var readBits = DataBuffer.readBits;
-      var header = readBits(input, 3);
-      switch (header >> 1) {
-        case 0:
-          input._bitBuffer = input._bitLength = 0;
-          var len = input.readUnsignedShort();
-          var nlen = input.readUnsignedShort();
-          // release || assert((~nlen & 0xffff) === len, 'bad uncompressed block length', 'inflate');
-          if ((~nlen & 0xffff) !== len) {
-            throwCompressedDataError();
-          }
-          output.writeBytes(input, input.position, len);
-          input.position += len;
-          break;
-        case 1:
-          DataBuffer.inflate(input, output, DataBuffer._fixedLiteralTable, DataBuffer._fixedDistanceTable);
-          break;
-        case 2:
-          var bitLength = [];
-          var numLiteralCodes = readBits(input, 5) + 257;
-          var numDistanceCodes = readBits(input, 5) + 1;
-          var numCodes = numLiteralCodes + numDistanceCodes;
-          var numLengthCodes = readBits(input, 4) + 4;
-          for (var i = 0; i < 19; ++i) {
-            bitLength[DataBuffer._codeLengthOrder[i]] = i < numLengthCodes ?
-              readBits(input, 3) : 0;
-          }
-          var codeLengthTable = DataBuffer._makeHuffmanTable(bitLength);
-          bitLength = [];
-          var i = 0;
-          var prev = 0;
-          while (i < numCodes) {
-            var j = 1;
-            var sym = DataBuffer.readCode(input, codeLengthTable);
-            switch(sym){
-              case 16:
-                j = readBits(input, 2) + 3;
-                sym = prev;
-                break;
-              case 17:
-                j = readBits(input, 3) + 3;
-                sym = 0;
-                break;
-              case 18:
-                j = readBits(input, 7) + 11;
-                sym = 0;
-                break;
-              default:
-                prev = sym;
-            }
-            while (j--) {
-              bitLength[i++] = sym;
-            }
-          }
-          var distanceTable = DataBuffer._makeHuffmanTable(bitLength.splice(numLiteralCodes,
-            numDistanceCodes));
-          var literalTable = DataBuffer._makeHuffmanTable(bitLength);
-          DataBuffer.inflate(input, output, literalTable, distanceTable);
-          break;
-        default:
-          Shumway.Debug.unexpected('unknown block type: inflate');
-      }
-    }
-
-    static inflate(input: DataBuffer, output: DataBuffer, literalTable, distanceTable) {
-      var readBits = DataBuffer.readBits;
-      var readCode = DataBuffer.readCode;
-      var lengthCodes = DataBuffer._lengthCodes;
-      var lengthExtraBits = DataBuffer._lengthExtraBits;
-      var distanceCodes = DataBuffer._distanceCodes;
-      var distanceExtraBits = DataBuffer._distanceExtraBits;
-
-      var sym;
-      while ((sym = readCode(input, literalTable)) !== 256) {
-        if (sym < 256) {
-          output.writeUnsignedByte(sym);
-        } else {
-          sym -= 257;
-          var len = lengthCodes[sym] + readBits(input, lengthExtraBits[sym]);
-          sym = readCode(input, distanceTable);
-          var distance = distanceCodes[sym] + readBits(input, distanceExtraBits[sym]);
-          output.writeBytes(output, output.position - distance, len);
+        this._position += length;
+      } else {
+        length = 0;
+        for (var i = position; i < this._length && this._u8[i]; i++) {
+          length++;
         }
+        this._position += length + 1;
       }
+      return utf8encode(new Int8Array(this._buffer, position, length));
     }
 
-    static readCode(input: DataBuffer, codeTable): number {
-      var buffer = input._bitBuffer;
-      var bitlen = input._bitLength;
-      var maxBits = codeTable.maxBits;
-      while (maxBits > bitlen) {
-        buffer |= input.readUnsignedByte() << bitlen;
-        bitlen += 8;
-      }
-      var code = codeTable.codes[buffer & ((1 << maxBits) - 1)];
-      var len = code >> 16;
-      //release || assert(len, 'bad encoding', 'inflate');
-      if (!len) {
-        throwCompressedDataError();
-      }
-      input._bitBuffer = buffer >>> len;
-      input._bitLength = bitlen - len;
-      return code & 0xffff;
+    align() {
+      this._bitBuffer = 0;
+      this._bitLength = 0;
     }
 
-    static adler32(data, start, end): number {
-      var a = 1;
-      var b = 0;
-      for (var i = start; i < end; ++i) {
-        a = (a + (data[i] & 0xff)) % 65521;
-        b = (b + a) % 65521;
-      }
-      return (b << 16) | a;
+    deflate() {
+      this.compress('deflate');
     }
 
-    private _compress(algorithm: string): void {
-      algorithm = asCoerceString(algorithm);
-      DataBuffer._initializeTables();
+    inflate() {
+      this.uncompress('deflate');
+    }
 
-      this._position = 0;
-      var output = new DataBuffer();
+    compress(algorithm: string): void {
+      if (arguments.length === 0) {
+        algorithm = 'zlib';
+      } else {
+        algorithm = asCoerceString(algorithm);
+      }
+
+      var deflate: Deflate;
       switch (algorithm) {
         case 'zlib':
-          output.writeUnsignedByte(0x78);
-          output.writeUnsignedByte(0x9C);
+          deflate = new Deflate(true);
+          break;
         case 'deflate':
-          output._littleEndian = true;
-
-          var len = this.length;
-
-          output._ensureCapacity(len + Math.ceil(len / 0xFFFF) * 5 + 4);
-
-          while (len > 0xFFFF) {
-            output.writeUnsignedByte(0x00);
-            output.writeUnsignedShort(0xFFFF);
-            output.writeUnsignedShort(0x0000);
-
-            output.writeBytes(this, this._position, 0xFFFF);
-            this._position += 0xFFFF;
-
-            len -= 0xFFFF;
-          }
-
-          output.writeUnsignedByte(0x00);
-          output.writeUnsignedShort(len);
-          output.writeUnsignedShort(~len & 0xffff);
-
-          output.writeBytes(this, this._position, len);
-
-          if (algorithm === 'zlib') {
-            output.writeUnsignedInt(DataBuffer.adler32(this._u8View, 0, this.length));
-          }
+          deflate = new Deflate(false);
           break;
         default:
           return;
       }
 
-      this._ensureCapacity(output._u8View.length);
-      this._u8View.set(output._u8View);
+      var output = new DataBuffer();
+      deflate.onData = output.writeRawBytes.bind(output);
+      deflate.push(this._u8.subarray(0, this._length));
+      deflate.close();
+
+      this._ensureCapacity(output._u8.length);
+      this._u8.set(output._u8);
       this.length = output.length;
       this._position = 0;
     }
 
-    private _uncompress(algorithm: string): void {
-      algorithm = asCoerceString(algorithm);
-      DataBuffer._initializeTables();
+    uncompress(algorithm: string): void {
+      if (arguments.length === 0) {
+        algorithm = 'zlib';
+      } else {
+        algorithm = asCoerceString(algorithm);
+      }
 
-      var output = new DataBuffer();
+      var inflate: IDataDecoder;
       switch (algorithm) {
         case 'zlib':
-          var header = this.readUnsignedShort();
-          if ((header & 0x0f00) !== 0x0800 ||
-            (header % 31) !== 0 ||
-            (header & 0x20)) {
-            throwCompressedDataError();
-          }
+          inflate = Inflate.create(true);
+          break;
         case 'deflate':
-          var littleEndian = this._littleEndian;
-          this._littleEndian = true;
-          while (this._position < this.length - 6) {
-            DataBuffer.inflateBlock(this, output);
-          }
-          this._littleEndian = littleEndian;
+          inflate = Inflate.create(false);
+          break;
+        case 'lzma':
+          inflate = new LzmaDecoder(false);
           break;
         default:
           return;
       }
 
-      this._ensureCapacity(output._u8View.length);
-      this._u8View.set(output._u8View);
+      var output = new DataBuffer();
+      var error;
+      inflate.onData = output.writeRawBytes.bind(output);
+      inflate.onError = (e) => error = e;
+      inflate.push(this._u8.subarray(0, this._length));
+      if (error) {
+        throwError('IOError', Errors.CompressedDataError);
+      }
+      inflate.close();
+
+      this._ensureCapacity(output._u8.length);
+      this._u8.set(output._u8);
       this.length = output.length;
       this._position = 0;
     }

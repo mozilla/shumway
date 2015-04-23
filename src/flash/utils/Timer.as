@@ -16,72 +16,18 @@
 
 package flash.utils {
 import flash.events.EventDispatcher;
-import flash.events.TimerEvent;
 
 [native(cls='TimerClass')]
 public class Timer extends EventDispatcher {
-  public function Timer(delay:Number, repeatCount:int = 0) {
-    if (delay < 0 || !isFinite(delay)) {
-      Error.throwError(RangeError, 2066);
-    }
-    _delay = delay;
-    _repeatCount = repeatCount;
-  }
-  private var _delay:Number;
-  private var _repeatCount:int;
-  private var _iteration:int;
+  public native function Timer(delay:Number, repeatCount:int = 0);
   public native function get running():Boolean;
-  public function get delay():Number {
-    return _delay;
-  }
-  public function set delay(value:Number):void {
-    if (value < 0 || !isFinite(value)) {
-      Error.throwError(RangeError, 2066);
-    }
-    _delay = value;
-
-    if (running) {
-      stop();
-      start();
-    }
-  }
-  public function get repeatCount():int {
-    return _repeatCount;
-  }
-  public function set repeatCount(value:int):void {
-    _repeatCount = value;
-    if (_repeatCount && running) {
-      if (_iteration >= _repeatCount) {
-        stop();
-      }
-    }
-  }
-  public function get currentCount():int {
-    return _iteration;
-  }
-  public function reset():void {
-    if (running) {
-      stop();
-    }
-    _iteration = 0;
-  }
+  public native function get delay():Number;
+  public native function set delay(value:Number):void;
+  public native function get repeatCount():int;
+  public native function set repeatCount(value:int):void;
+  public native function get currentCount():int;
+  public native function reset():void;
   public native function stop():void;
-  public function start():void {
-    if (!running) {
-      _start(_delay, tick);
-    }
-  }
-  private native function _start(delay:Number, closure:Function):void;
-  private function tick():void {
-    _iteration++;
-    _tick();
-    if (_repeatCount != 0) {
-      if (_iteration >= _repeatCount) {
-        stop();
-        dispatchEvent(new TimerEvent(TimerEvent.TIMER_COMPLETE, false, false));
-      }
-    }
-  }
-  private native function _tick():void;
+  public native function start():void;
 }
 }

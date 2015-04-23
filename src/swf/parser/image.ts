@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2013 Mozilla Foundation
  *
@@ -20,22 +18,40 @@
 /// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
   import assert = Shumway.Debug.assert;
+  import Inflate = Shumway.ArrayUtilities.Inflate;
 
-  function getUint16(buff, pos) {
-    return (buff[pos] << 8) | buff[pos + 1];
+  /**
+   * Reads the next two bytes at the specified position.
+   */
+  function readUint16(bytes: Uint8Array, position: number) {
+    return (bytes[position] << 8) | bytes[position + 1];
   }
 
-  export function parseJpegChunks(image: any, bytes) {
+  /**
+   * Reads the next two bytes at the specified position.
+   */
+  function readInt32(bytes: Uint8Array, position: number) {
+    return (bytes[position] << 24) | (bytes[position + 1] << 16) |
+           (bytes[position + 2] << 8) | bytes[position + 3];
+  }
+
+  /**
+   * Parses JPEG chunks and reads image width and height information. JPEG data
+   * in SWFs is encoded in chunks and not directly decodable by the JPEG parser.
+   */
+  export function parseJpegChunks(image: any, bytes:Uint8Array,
+                                  chunks: Uint8Array[]): Uint8Array [] {
     var i = 0;
     var n = bytes.length;
-    var chunks = [];
     var code;
     do {
       var begin = i;
-      while (i < n && bytes[i] !== 0xff)
+      while (i < n && bytes[i] !== 0xff) {
         ++i;
-      while (i < n && bytes[i] === 0xff)
+      }
+      while (i < n && bytes[i] === 0xff) {
         ++i;
+      }
       code = bytes[i++];
       if (code === 0xda) {
         i = n;
@@ -43,17 +59,52 @@ module Shumway.SWF.Parser {
         i += 2;
         continue;
       } else if (code < 0xd0 || code > 0xd8) {
-        var length = getUint16(bytes, i);
+        var length = readUint16(bytes, i);
         if (code >= 0xc0 && code <= 0xc3) {
-          image.height = getUint16(bytes, i + 3);
-          image.width = getUint16(bytes, i + 5);
+          image.height = readUint16(bytes, i + 3);
+          image.width = readUint16(bytes, i + 5);
         }
         i += length;
       }
       chunks.push(bytes.subarray(begin, i));
     } while (i < n);
-    release || assert(image.width && image.height, 'bad image', 'jpeg');
+    if (!release && !(image.width && image.height)) {
+      Debug.warning('bad jpeg image');
+    }
     return chunks;
+  }
+
+  /**
+   * Extracts PNG width and height information.
+   */
+  export function parsePngHeaders(image: any, bytes: Uint8Array): void {
+    var ihdrOffset = 12;
+    if (bytes[ihdrOffset] !== 0x49 || bytes[ihdrOffset + 1] !== 0x48 ||
+        bytes[ihdrOffset + 2] !== 0x44 || bytes[ihdrOffset + 3] !== 0x52) {
+      return;
+    }
+    image.width = readInt32(bytes, ihdrOffset + 4);
+    image.height = readInt32(bytes, ihdrOffset + 8);
+    var type = bytes[ihdrOffset + 14];
+    image.hasAlpha = type === 4 || type === 6;
+  }
+
+  /**
+   * Joins all the chunks in a larger byte array.
+   */
+  function joinChunks(chunks: Uint8Array []): Uint8Array {
+    var length = 0;
+    for (var i = 0; i < chunks.length; i++) {
+      length += chunks[i].length;
+    }
+    var bytes = new Uint8Array(length);
+    var offset = 0;
+    for (var i = 0; i < chunks.length; i++) {
+      var chunk = chunks[i];
+      bytes.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return bytes;
   }
 
   export interface ImageDefinition {
@@ -64,6 +115,7 @@ module Shumway.SWF.Parser {
     mimeType: string;
     data: Uint8Array;
     dataType?: ImageType;
+    image: any; // For some reason, tsc doesn't like us using the DOM Image definition here.
   }
 
   export interface DefineImageTag {
@@ -71,10 +123,10 @@ module Shumway.SWF.Parser {
     imgData: Uint8Array;
     mimeType: string;
     alphaData: boolean;
-    incomplete: boolean;
+    jpegTables: Uint8Array;
   }
 
-  export function defineImage(tag: DefineImageTag, dictionary: any): ImageDefinition {
+  export function defineImage(tag: DefineImageTag): ImageDefinition {
     enterTimeline("defineImage");
     var image: any = {
       type: 'image',
@@ -82,55 +134,51 @@ module Shumway.SWF.Parser {
       mimeType: tag.mimeType
     };
     var imgData = tag.imgData;
-    var chunks;
 
     if (tag.mimeType === 'image/jpeg') {
-      var alphaData = tag.alphaData;
+      var alphaData: Uint8Array = <any>tag.alphaData;
       if (alphaData) {
         var jpegImage = new Shumway.JPEG.JpegImage();
-        jpegImage.parse(imgData);
-
-        var width = image.width = jpegImage.width;
-        var height = image.height = jpegImage.height;
+        jpegImage.parse(joinChunks(parseJpegChunks(image, imgData, [])));
+        release || assert(image.width === jpegImage.width);
+        release || assert(image.height === jpegImage.height);
+        var width = image.width;
+        var height = image.height;
         var length = width * height;
-        var symbolMaskBytes = createInflatedStream(alphaData, length).bytes;
-        var data = image.data = new Uint8ClampedArray(length * 4);
 
-        jpegImage.copyToImageData(image);
-
-        for (var i = 0, k = 3; i < length; i++, k += 4) {
-          data[k] = symbolMaskBytes[i];
+        var alphaMaskBytes;
+        try {
+          alphaMaskBytes = Inflate.inflate(alphaData, length, true);
+        } catch (e) {
+          // Alpha layer is invalid, so hiding everything.
+          alphaMaskBytes = new Uint8Array(width);
         }
 
+        var data = image.data = new Uint8ClampedArray(length * 4);
+        jpegImage.copyToImageData(image);
+        for (var i = 0, k = 3; i < length; i++, k += 4) {
+          data[k] = alphaMaskBytes[i];
+        }
         image.mimeType = 'application/octet-stream';
         image.dataType = ImageType.StraightAlphaRGBA;
       } else {
-        chunks = parseJpegChunks(image, imgData);
+        var chunks = [];
+        if (tag.jpegTables) {
+          chunks.push(tag.jpegTables);
+        }
+        parseJpegChunks(image, imgData, chunks);
 
-        if (tag.incomplete) {
-          var tables = dictionary[0];
-          release || assert(tables, 'missing tables', 'jpeg');
-          var header = tables.data;
-          if (header && header.size) {
-            chunks[0] = chunks[0].subarray(2);
-            chunks.unshift(header.slice(0, header.size - 2));
-          }
+        if (tag.jpegTables && tag.jpegTables.byteLength > 0) {
+          chunks[1] = chunks[1].subarray(2);
         }
-        var length = 0;
-        for (var i = 0; i < chunks.length; i++) {
-          length += chunks[i].length;
-        }
-        var data = new Uint8Array(length);
-        var offset = 0;
-        for (var i = 0; i < chunks.length; i++) {
-          var chunk = chunks[i];
-          data.set(chunk, offset);
-          offset += chunk.length;
-        }
-        image.data = data;
+
+        image.data = joinChunks(chunks);
+        image.dataType = ImageType.JPEG;
       }
     } else {
+      parsePngHeaders(image, imgData);
       image.data = imgData;
+      image.dataType = ImageType.PNG;
     }
     leaveTimeline();
     return image;

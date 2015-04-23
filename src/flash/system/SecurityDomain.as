@@ -19,7 +19,6 @@ package flash.system {
 [native(cls='SecurityDomainClass')]
 public class SecurityDomain {
   public static native function get currentDomain():SecurityDomain;
-  public function SecurityDomain() {}
-  public native function get domainID():String;
+  public native function SecurityDomain();
 }
 }

@@ -16,6 +16,7 @@
 // Class: Trace
 module Shumway.AVM2.AS.flash.trace {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Trace extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.trace {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.trace.Trace");
+      dummyConstructor("public flash.trace.Trace");
     }
     
     // JS -> AS Bindings

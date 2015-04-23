@@ -26,6 +26,6 @@ public final class Mouse {
   public static native function show(): void;
   public static native function registerCursor(name: String, cursor: MouseCursorData): void;
   public static native function unregisterCursor(name: String): void;
-  public function Mouse() {}
+  public native function Mouse();
 }
 }

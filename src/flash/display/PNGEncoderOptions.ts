@@ -16,6 +16,7 @@
 // Class: PNGEncoderOptions
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class PNGEncoderOptions extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.display {
     constructor (fastCompression: boolean = false) {
       fastCompression = !!fastCompression;
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.PNGEncoderOptions");
+      dummyConstructor("public flash.display.PNGEncoderOptions");
     }
     
     // JS -> AS Bindings

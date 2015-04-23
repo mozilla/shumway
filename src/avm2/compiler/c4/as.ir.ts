@@ -27,12 +27,13 @@ module Shumway.AVM2.Compiler.IR {
   ASScope.prototype.nodeName = "ASScope";
 
   export class ASMultiname extends Value {
-    constructor(public namespaces: Value, public name: Value, public flags: number) {
+    constructor(public namespaces: Value, public name: Value, public flags: Value) {
       super();
     }
     visitInputs(visitor: NodeVisitor) {
       visitor(this.namespaces);
       visitor(this.name);
+      visitor(this.flags);
     }
   }
   ASMultiname.prototype.mustFloat = true;

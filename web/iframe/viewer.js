@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2013 Mozilla Foundation
  *
@@ -52,26 +50,32 @@ function getPluginParams() {
   };
 }
 
+var playerWindowIframe, playerWindowIframeReady;
 var easelHost;
 
-function runViewer() {
-  var flashParams = getPluginParams();
-  if (!flashParams.url) {
-    console.log("no movie url provided -- stopping here");
-    return;
-  }
-
-  var playerWindowIframe = document.getElementById("playerWindow");
-  playerWindowIframe.addEventListener('load', function () {
+function runViewer(flashParams) {
+  playerWindowIframeReady.then(function () {
     var playerWindow = playerWindowIframe.contentWindow;
 
     var easel = createEasel();
-    easelHost = new Shumway.Player.Window.WindowEaselHost(easel, playerWindow, window);
-
+    easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWindow, window);
     var data = {
       type: 'runSwf',
       settings: Shumway.Settings.getSettings(),
-      flashParams: flashParams
+      flashParams: {
+        url: flashParams.url,
+        baseUrl: flashParams.baseUrl || flashParams.url,
+        movieParams: flashParams.movieParams || {},
+        objectParams: flashParams.objectParams || {},
+        compilerSettings: flashParams.compilerSettings || {
+          sysCompiler: true,
+          appCompiler: true,
+          verifier: true
+        },
+        isRemote: flashParams.isRemote,
+        bgcolor: undefined,
+        displayParameters: easel.getDisplayParameters()
+      }
     };
     playerWindow.postMessage(data,  '*');
   });
@@ -80,11 +84,35 @@ function runViewer() {
 function createEasel() {
   var Stage = Shumway.GFX.Stage;
   var Easel = Shumway.GFX.Easel;
-  var Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
+  var Canvas2DRenderer = Shumway.GFX.Canvas2DRenderer;
 
-  Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
-  var backend = Shumway.GFX.backend.value | 0;
-  return new Easel(document.getElementById("stageContainer"), backend);
+  Shumway.GFX.WebGL.SHADER_ROOT = "../src/gfx/gl/shaders/";
+  var easel = new Easel(document.getElementById("easelContainer"));
+  easel.startRendering();
+  return easel;
 }
 
-document.addEventListener("DOMContentLoaded", runViewer);
+function waitForParametersMessage(e) {
+  if (e.data && typeof e.data === 'object' && e.data.type === 'pluginParams') {
+    window.removeEventListener('message', waitForParametersMessage);
+    runViewer(e.data.flashParams);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  playerWindowIframe = document.getElementById("playerWindow");
+  playerWindowIframeReady = new Promise(function (resolve) {
+    playerWindowIframe.addEventListener('load', function load() {
+      playerWindowIframe.removeEventListener('load', load);
+      resolve();
+    });
+  });
+
+  var flashParams = getPluginParams();
+  if (!flashParams.url) {
+    // no movie url provided -- waiting for parameters via postMessage
+    window.addEventListener('message', waitForParametersMessage);
+  } else {
+    runViewer(flashParams);
+  }
+});

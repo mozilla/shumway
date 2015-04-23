@@ -26,25 +26,117 @@ module Shumway.AVM2.AS.flash.display {
   import events = flash.events;
   import Multiname = Shumway.AVM2.ABC.Multiname;
 
+  import SwfTag = Shumway.SWF.Parser.SwfTag;
+
+  /**
+   * Controls how to behave on inter-frame navigation.
+   */
+  export enum FrameNavigationModel {
+    SWF1  =  1,
+    SWF9  =  9,
+    SWF10 = 10
+  }
+
+  interface SoundClip {
+    channel?;
+    object: flash.media.Sound;
+  }
+
+  class MovieClipSoundsManager {
+    private _mc: MovieClip;
+    private _startSoundRegistrations: Map<any>;
+    private _soundStream: MovieClipSoundStream;
+    private _soundClips: Map<SoundClip>;
+
+    constructor(mc: MovieClip) {
+      this._mc = mc;
+      this._startSoundRegistrations = null;
+      this._soundStream = null;
+    }
+
+    registerStartSounds(frameNum: number, soundStartInfo) {
+      if (this._startSoundRegistrations === null) {
+        this._startSoundRegistrations = {};
+      }
+      this._startSoundRegistrations[frameNum] = soundStartInfo;
+    }
+
+    initSoundStream(streamInfo: any) {
+      this._soundStream = new MovieClipSoundStream(streamInfo, this._mc);
+    }
+
+    addSoundStreamBlock(frameNum: number, streamBlock: Uint8Array) {
+      if (this._soundStream) {
+        this._soundStream.appendBlock(frameNum, streamBlock);
+      }
+    }
+
+    private _startSounds(frameNum) {
+      var starts = this._startSoundRegistrations[frameNum];
+      if (starts) {
+        var sounds = this._soundClips || (this._soundClips = {});
+        var loaderInfo = this._mc.loaderInfo;
+        for (var i = 0; i < starts.length; i++) {
+          var start = starts[i];
+          var symbolId = start.soundId;
+          var info = start.soundInfo;
+          var sound: SoundClip = sounds[symbolId];
+          if (!sound) {
+            var symbolInfo = <flash.media.SoundSymbol>loaderInfo.getSymbolById(symbolId);
+            if (!symbolInfo) {
+              continue;
+            }
+
+            var symbolClass = symbolInfo.symbolClass;
+            var soundObj = symbolClass.initializeFrom(symbolInfo);
+            symbolClass.instanceConstructorNoInitialize.call(soundObj);
+            sounds[symbolId] = sound = { object: soundObj };
+          }
+          if (sound.channel && info.stop) {
+            sound.channel.stop();
+            sound.channel = null;
+          }
+          if (!info.stop &&
+              (!sound.channel || !sound.channel.playing)) {
+            // TODO envelope, in/out point
+            var loops = info.hasLoops ? info.loopCount : 0;
+            sound.channel = sound.object.play(0, loops);
+          }
+        }
+      }
+    }
+
+    syncSounds(frameNum: number) {
+      if (this._startSoundRegistrations !== null) {
+        this._startSounds(frameNum);
+      }
+      if (this._soundStream) {
+        this._soundStream.playFrame(frameNum);
+      }
+    }
+  }
+
   export class MovieClip extends flash.display.Sprite implements IAdvancable {
+
+    static frameNavigationModel: FrameNavigationModel;
 
     private static _callQueue: MovieClip [];
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
       MovieClip.reset();
-
     };
 
     static reset() {
+      MovieClip.frameNavigationModel = FrameNavigationModel.SWF10;
       MovieClip._callQueue = [];
     }
 
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Shumway.Timeline.SpriteSymbol) {
+    static initializer: any = function (symbol: flash.display.SpriteSymbol) {
       var self: MovieClip = this;
 
-      DisplayObject._advancableInstances.push(self);
+      display.DisplayObject._advancableInstances.push(self);
 
       self._currentFrame = 0;
       self._totalFrames = 1;
@@ -59,6 +151,8 @@ module Shumway.AVM2.AS.flash.display {
       self._stopped = false;
       self._allowFrameNavigation = true;
 
+      self._sounds = null;
+
       self._buttonFrames = Object.create(null);
       self._currentButtonState = null;
 
@@ -69,11 +163,17 @@ module Shumway.AVM2.AS.flash.display {
           self.addScene('', symbol.labels, 0, symbol.numFrames);
         }
         self._frames = symbol.frames;
-
-        if (symbol.isAS2Object && symbol.frameScripts) {
-          var data = symbol.frameScripts;
-          for (var i = 0; i < data.length; i += 2) {
-            self.addAS2FrameScript(data[i], data[i + 1]);
+        if (symbol.isAVM1Object) {
+          if (symbol.frameScripts) {
+            var avm1MovieClip = Shumway.AVM1.Lib.getAVM1Object(this, symbol.avm1Context);
+            avm1MovieClip.context = symbol.avm1Context;
+            var data = symbol.frameScripts;
+            for (var i = 0; i < data.length; i += 2) {
+              avm1MovieClip.addFrameScript(data[i], data[i + 1]);
+            }
+          }
+          if (symbol.avm1Name) {
+            self.name = symbol.avm1Name;
           }
         }
       } else {
@@ -89,18 +189,33 @@ module Shumway.AVM2.AS.flash.display {
 
     static runFrameScripts() {
       enterTimeline("MovieClip.executeFrame");
-      var queue: MovieClip[] = MovieClip._callQueue.concat();
-      MovieClip._callQueue.length = 0;
+      var queue: MovieClip[] = MovieClip._callQueue;
+      MovieClip._callQueue = [];
       for (var i = 0; i < queue.length; i++) {
         var instance = queue[i];
 
-        instance._allowFrameNavigation = false;
+        if (instance._hasFlags(DisplayObjectFlags.NeedsLoadEvent)) {
+          instance._removeFlags(DisplayObjectFlags.NeedsLoadEvent);
+          instance.dispatchEvent(events.Event.getInstance(events.Event.AVM1_LOAD));
+          continue;
+        }
+
+        instance._allowFrameNavigation = display.MovieClip.frameNavigationModel === FrameNavigationModel.SWF1;
         instance.callFrame(instance._currentFrame);
         instance._allowFrameNavigation = true;
 
-        // Frame navigation is only triggered if the MovieClip is on stage.
-        if (instance._nextFrame !== instance._currentFrame && instance.stage) {
-          DisplayObject.performFrameNavigation(instance.stage, false, true);
+        // If the destination frame isn't the same as before the `callFrame` operation, a frame
+        // navigation has happened inside the frame script. In that case, we didn't immediately
+        // run frame navigation as described in `_gotoFrameAbs`. Instead, we have to do it here.
+        if (instance._nextFrame !== instance._currentFrame) {
+          if (display.MovieClip.frameNavigationModel === FrameNavigationModel.SWF9) {
+            instance._advanceFrame();
+            instance._constructFrame();
+            instance._removeFlags(DisplayObjectFlags.HasFrameScriptPending);
+            instance.callFrame(instance._currentFrame);
+          } else {
+            DisplayObject.performFrameNavigation(false, true);
+          }
         }
       }
       leaveTimeline();
@@ -111,30 +226,53 @@ module Shumway.AVM2.AS.flash.display {
       Sprite.instanceConstructorNoInitialize.call(this);
     }
 
-    _setParent(parent: DisplayObjectContainer, depth: number) {
-      super._setParent(parent, depth);
-      if (parent && this._hasFlags(DisplayObjectFlags.HasFrameScriptPending)) {
-        parent._propagateFlagsUp(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
+    _addFrame(frameInfo: any) {
+      var spriteSymbol = <flash.display.SpriteSymbol><any>this._symbol;
+      var frames = spriteSymbol.frames;
+      frames.push(frameInfo);
+      if (frameInfo.labelName) {
+        // Frame indices are 1-based, so use frames.length after pushing the frame.
+        this.addFrameLabel(frameInfo.labelName, frames.length);
+      }
+      if (frameInfo.soundStreamHead) {
+        this._initSoundStream(frameInfo.soundStreamHead);
+      }
+      if (frameInfo.soundStreamBlock) {
+        // Frame indices are 1-based, so use frames.length after pushing the frame.
+        this._addSoundStreamBlock(frames.length, frameInfo.soundStreamBlock);
+      }
+      if (spriteSymbol.isAVM1Object) {
+        Shumway.AVM1.Lib.getAVM1Object(this, spriteSymbol.avm1Context).addFrameActionBlocks(frames.length - 1, frameInfo);
+        if (frameInfo.exports) {
+          var exports = frameInfo.exports;
+          for (var i = 0; i < exports.length; i++) {
+            var asset = exports[i];
+            spriteSymbol.avm1Context.addAsset(asset.className, asset.symbolId, null);
+          }
+        }
+      }
+      if (frames.length === 1) {
+        this._initializeChildren(frames[0]);
       }
     }
 
     _initFrame(advance: boolean) {
-      if (advance && this.buttonMode) {
-        var state: string = null;
-        if (this._mouseOver) {
-          state = this._mouseDown ? '_down' : '_over';
-        } else if (this._currentButtonState !== null) {
-          state = '_up';
-        }
-        if (state !== this._currentButtonState) {
-          this.stop();
-          this._gotoFrame(state, null);
-          this._currentButtonState = state;
-          this._advanceFrame();
-          return;
-        }
-      }
       if (advance) {
+        if (this.buttonMode) {
+          var state: string = null;
+          if (this._mouseOver) {
+            state = this._mouseDown ? '_down' : '_over';
+          } else if (this._currentButtonState !== null) {
+            state = '_up';
+          }
+          if (state !== this._currentButtonState && this._buttonFrames[state]) {
+            this.stop();
+            this._gotoFrame(state, null);
+            this._currentButtonState = state;
+            this._advanceFrame();
+            return;
+          }
+        }
         if (this._totalFrames > 1 && !this._stopped &&
             this._hasFlags(DisplayObjectFlags.Constructed)) {
           this._nextFrame++;
@@ -148,6 +286,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _enqueueFrameScripts() {
+      if (this._hasFlags(DisplayObjectFlags.NeedsLoadEvent)) {
+        MovieClip._callQueue.push(this);
+      }
       if (this._hasFlags(DisplayObjectFlags.HasFrameScriptPending)) {
         this._removeFlags(DisplayObjectFlags.HasFrameScriptPending);
         MovieClip._callQueue.push(this);
@@ -163,7 +304,7 @@ module Shumway.AVM2.AS.flash.display {
     private _currentFrame: number;
     private _nextFrame: number;
     private _totalFrames: number;
-    private _frames: Shumway.Timeline.FrameDelta[];
+    private _frames: Shumway.SWF.SWFFrame[];
     private _frameScripts: any;
     private _scenes: Scene[];
 
@@ -174,9 +315,7 @@ module Shumway.AVM2.AS.flash.display {
     private _trackAsMenu: boolean;
     private _allowFrameNavigation: boolean;
 
-    _as2SymbolClass;
-    private _boundExecuteAS2FrameScripts: () => void;
-    private _as2FrameScripts: AVM1.AS2ActionsData[][];
+    private _sounds: MovieClipSoundsManager;
 
     private _buttonFrames: Shumway.Map<number>;
     private _currentButtonState: string;
@@ -213,14 +352,18 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get currentLabel(): string {
-      var label: FrameLabel = this._labelForFrame(this.currentFrame);
+      var label: FrameLabel = this._labelForFrame(this._currentFrame);
       return label ? label.name : null;
     }
 
+    get currentLabels(): FrameLabel[] {
+      return this._sceneForFrameIndex(this._currentFrame).labels;
+    }
+
     get currentFrameLabel(): string {
-      var currentFrame = this.currentFrame;
-      var label: FrameLabel = this._labelForFrame(currentFrame);
-      return label && label.frame === currentFrame ? label.name : null;
+      var scene = this._sceneForFrameIndex(this._currentFrame);
+      var label = scene.getLabelByFrame(this._currentFrame - scene.offset);
+      return label && label.name;
     }
 
     get enabled(): boolean {
@@ -248,13 +391,12 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Implementation for both gotoAndPlay and gotoAndStop.
-     *
-     * Technically, we should throw all errors from those functions directly so the stack is
-     * correct.
-     * We might at some point do that by explicitly inlining this function using some build step.
+     * Resolves frame and scene into absolute frame number. If scene is not specified,
+     * the current scene is used. In legacy mode, it might return `undefined` if frame/scene
+     * was not found.
      */
-    private _gotoFrame(frame: string, sceneName: string): void {
+    _getAbsFrameNumber(frame: string, sceneName: string): number {
+      var legacyMode = display.MovieClip.frameNavigationModel !== FrameNavigationModel.SWF10;
       var scene: Scene;
       if (sceneName !== null) {
         sceneName = asCoerceString(sceneName);
@@ -267,6 +409,9 @@ module Shumway.AVM2.AS.flash.display {
           }
         }
         if (i === scenes.length) {
+          if (legacyMode) {
+            return undefined; // noop for SWF9 and below
+          }
           throwError('ArgumentError', Errors.SceneNotFoundError, sceneName);
         }
       } else {
@@ -278,20 +423,32 @@ module Shumway.AVM2.AS.flash.display {
       /* tslint:disable */
       var frameNum = parseInt(frame, 10);
       if (<any>frameNum != frame) { // TypeScript doesn't like using `==` for number,string vars.
-        var labels = scene.labels;
-        for (var i = 0; i < labels.length; i++) {
-          var label = labels[i];
-          if (label.name === frame) {
-            frameNum = label.frame;
-            break;
+        var label = scene.getLabelByName(frame, legacyMode);
+        if (!label) {
+          if (legacyMode) {
+            return undefined; // noop for SWF9 and below
           }
-        }
-        if (i === labels.length) {
           throwError('ArgumentError', Errors.FrameLabelNotFoundError, frame, sceneName);
         }
+        frameNum = label.frame;
       }
       /* tslint:enable */
-      this._gotoFrameAbs(scene.offset + frameNum);
+      return scene.offset + frameNum;
+    }
+
+    /**
+     * Implementation for both gotoAndPlay and gotoAndStop.
+     *
+     * Technically, we should throw all errors from those functions directly so the stack is
+     * correct.
+     * We might at some point do that by explicitly inlining this function using some build step.
+     */
+    private _gotoFrame(frame: string, sceneName: string): void {
+      var frameNum = this._getAbsFrameNumber(frame, sceneName);
+      if (frameNum === undefined) {
+        return;
+      }
+      this._gotoFrameAbs(frameNum);
     }
 
     private _gotoFrameAbs(frame: number): void {
@@ -306,10 +463,19 @@ module Shumway.AVM2.AS.flash.display {
 
       this._nextFrame = frame;
 
-      // Frame navigation is only triggered if the MovieClip is on stage.
-      if (this._allowFrameNavigation && this.stage) { // TODO: also check if ActionScriptVersion < 3
-        // TODO test inter-frame navigation behaviour for SWF versions < 10
-        DisplayObject.performFrameNavigation(this.stage, false, true);
+      // Frame navigation only happens immediately if not triggered from under a frame script.
+      if (this._allowFrameNavigation) {
+        if (display.MovieClip.frameNavigationModel === FrameNavigationModel.SWF9) {
+          // In FP 9, the only thing that happens on inter-frame navigation is advancing the frame
+          // and constructing new timeline objects.
+          this._advanceFrame();
+          this._constructFrame();
+        } else {
+          // Frame navigation in an individual timeline triggers an iteration of the whole
+          // frame navigation cycle in FP 10+. This includes broadcasting frame events to *all*
+          // display objects.
+          DisplayObject.performFrameNavigation(false, true);
+        }
       }
     }
 
@@ -336,48 +502,31 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
 
-      var frames = this._frames;
-      var startIndex = currentFrame;
-      if (nextFrame < currentFrame) {
-        var frame = frames[0];
-        release || assert (frame, "FrameDelta is not defined.");
-        var stateAtDepth = frame.stateAtDepth;
-        var children = this._children.slice();
-        for (var i = 0; i < children.length; i++) {
-          var child = children[i];
-          if (child._depth) {
-            var state = stateAtDepth[child._depth];
-            if (!state || !state.canBeAnimated(child)) {
-              this._removeAnimatedChild(child);
+      var currentSwfFrame = this._frames[currentFrame - 1];
+      var nextSwfFrame = this._frames[nextFrame - 1];
+
+      if (nextSwfFrame !== currentSwfFrame) {
+        this._seekToFrame(nextFrame);
+
+        if (nextSwfFrame.controlTags) {
+          var tags = nextSwfFrame.controlTags;
+          var soundStarts: Shumway.Timeline.SoundStart[];
+          for (var i = 0; i < tags.length; i++) {
+            var tag: any = tags[i];
+            // controlTags might contain parsed and unparsed tags.
+            if (tag.tagCode === SwfTag.CODE_START_SOUND) {
+              var loaderInfo = (<SpriteSymbol>this._symbol).loaderInfo;
+              tag = <any>loaderInfo._file.getParsedTag(tag);
             }
-          }
-        }
-        startIndex = 0;
-      }
-      for (var i = startIndex; i < nextFrame; i++) {
-        var frame = frames[i];
-        release || assert (frame, "FrameDelta is not defined.");
-        var stateAtDepth = frame.stateAtDepth;
-        for (var depth in stateAtDepth) {
-          var child = this.getChildAtDepth(depth);
-          var state = stateAtDepth[depth];
-          if (child) {
-            if (state && state.canBeAnimated(child)) {
-              if (state.symbol && !state.symbol.dynamic) {
-                // TODO: Handle http://wahlers.com.br/claus/blog/hacking-swf-2-placeobject-and-ratio/.
-                child._setStaticContentFromSymbol(state.symbol);
+            if (tag.code === SwfTag.CODE_START_SOUND) {
+              if (!soundStarts) {
+                soundStarts = [];
               }
-              child._animate(state);
-              continue;
+              soundStarts.push(new Shumway.Timeline.SoundStart(tag.soundId, tag.soundInfo));
             }
-            this._removeAnimatedChild(child);
           }
-          if (state && state.symbol) {
-            var character = DisplayObject.createAnimatedDisplayObject(state, false);
-            this.addChildAtDepth(character, state.depth);
-            if (state.symbol.isAS2Object) {
-              this._initAvm1Bindings(character, state);
-            }
+          if (soundStarts) {
+            this._registerStartSounds(nextFrame, soundStarts);
           }
         }
       }
@@ -388,6 +537,75 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       this._currentFrame = this._nextFrame = nextFrame;
+
+      this._syncSounds(nextFrame);
+    }
+
+    private _seekToFrame(frame: number) {
+      var currentFrame = this._currentFrame;
+      var frames = this._frames;
+
+      if (frame === currentFrame + 1) {
+        var nextSwfFrame = frames[frame - 1];
+        if (nextSwfFrame.controlTags) {
+          this._processControlTags(nextSwfFrame.controlTags, false);
+        }
+        return;
+      }
+
+      var currentSwfFrame = frames[currentFrame - 1];
+      var loaderInfo = (<SpriteSymbol>this._symbol).loaderInfo;
+      var backwards = frame < currentFrame;
+      var controlTags = [];
+      var removedObjects: { [key: string]: boolean; };
+
+      // We scan all control tags in reverse order and make sure we only apply those related to
+      // objects that exist in the new frame.
+      var i = frame;
+      var n = backwards ? 0 : currentFrame;
+      while (i-- > n) {
+        var swfFrame = frames[i];
+        if (swfFrame === currentSwfFrame) {
+          continue;
+        }
+        currentSwfFrame = swfFrame;
+        var tags = swfFrame.controlTags;
+        if (!tags) {
+          continue;
+        }
+        var j = tags.length;
+        while (j--) {
+          // We may have a mix of the parsed and unparsed tags.
+          var parsedOrUnparsedTag = tags[j];
+          var tag = parsedOrUnparsedTag.tagCode === undefined ?
+                    parsedOrUnparsedTag : <any>loaderInfo._file.getParsedTag(parsedOrUnparsedTag);
+          switch (tag.code) {
+            case SwfTag.CODE_REMOVE_OBJECT:
+            case SwfTag.CODE_REMOVE_OBJECT2:
+              if (!removedObjects) {
+                removedObjects = Object.create(null);
+              }
+              removedObjects[tag.depth] = true;
+              if (!backwards) {
+                controlTags.push(tag);
+              }
+              break;
+            case SwfTag.CODE_PLACE_OBJECT:
+            case SwfTag.CODE_PLACE_OBJECT2:
+            case SwfTag.CODE_PLACE_OBJECT3:
+              if (!(removedObjects && removedObjects[tag.depth])) {
+                controlTags.push(tag);
+              }
+              break;
+            default:
+              controlTags.push(tag);
+          }
+        }
+      }
+      // Bring the order back to normal.
+      controlTags.reverse();
+
+      this._processControlTags(controlTags, backwards);
     }
 
     /**
@@ -435,18 +653,6 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
       return label;
-    }
-
-    private _removeAnimatedChild(child: flash.display.DisplayObject) {
-      this.removeChild(child);
-      child._removeReference();
-      if (child._name) {
-        var mn = Multiname.getPublicQualifiedName(child._name);
-        if (this[mn] === child) {
-          this[mn] = null;
-        }
-        //child._removeReference();
-      }
     }
 
     callFrame(frame: number): void {
@@ -535,58 +741,36 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
 
-    addAS2FrameScript(frameIndex: number, actionsBlock: Uint8Array): void {
-      var frameScripts = this._as2FrameScripts;
-      if (!frameScripts) {
-        release || assert(!this._boundExecuteAS2FrameScripts);
-        this._boundExecuteAS2FrameScripts = this._executeAS2FrameScripts.bind(this);
-        frameScripts = this._as2FrameScripts = [];
-      }
-      var scripts: AVM1.AS2ActionsData[] = frameScripts[frameIndex + 1];
-      if (!scripts) {
-        scripts = frameScripts[frameIndex + 1] = [];
-        this.addFrameScript(frameIndex, this._boundExecuteAS2FrameScripts);
-      }
-      var actionsData = new AVM1.AS2ActionsData(actionsBlock,
-                                                'f' + frameIndex + 'i' + scripts.length);
-      scripts.push(actionsData);
+    get _avm1SymbolClass(): any {
+      return (this._symbol &&
+              (<flash.display.SpriteSymbol>this._symbol).avm1SymbolClass) || null;
     }
 
-    /**
-     * InitActionBlocks are executed once, before the children are initialized for a frame.
-     * That matches AS3's enterFrame event, so we can add an event listener that just bails
-     * as long as the target frame isn't reached, and executes the InitActionBlocks once it is.
-     *
-     * After that, the listener removes itself.
-     */
-    addAS2InitActionBlocks(frameIndex: number, actionsBlocks: {actionsData: Uint8Array} []): void {
-      var self: MovieClip = this;
-      function listener (e) {
-        if (self._currentFrame !== frameIndex + 1) {
-          return;
-        }
-        self.removeEventListener('enterFrame', listener);
-
-        var avm1Context = self.loaderInfo._avm1Context;
-        var as2Object = Shumway.AVM1.getAS2Object(self);
-        var stage = self.stage;
-        for (var i = 0; i < actionsBlocks.length; i++) {
-          var actionsData = new AVM1.AS2ActionsData(actionsBlocks[i].actionsData,
-                                                    'f' + frameIndex + 'i' + i);
-          avm1Context.executeActions(actionsData, stage, as2Object);
-        }
-      }
-      this.addEventListener('enterFrame', listener);
+    get _isFullyLoaded(): boolean {
+      return this.framesLoaded >= this.totalFrames;
     }
 
-    private _executeAS2FrameScripts() {
-      var avm1Context = this.loaderInfo._avm1Context;
-      var as2Object = Shumway.AVM1.getAS2Object(this);
-      var scripts: AVM1.AS2ActionsData[] = this._as2FrameScripts[this._currentFrame];
-      release || assert(scripts && scripts.length);
-      for (var i = 0; i < scripts.length; i++) {
-        var actionsData = scripts[i];
-        avm1Context.executeActions(actionsData, this.stage, as2Object);
+    _registerStartSounds(frameNum: number, soundStartInfo) {
+      if (this._sounds === null) {
+        this._sounds = new MovieClipSoundsManager(this);
+      }
+      this._sounds.registerStartSounds(frameNum, soundStartInfo);
+    }
+
+    _initSoundStream(streamInfo: any) {
+      if (this._sounds === null) {
+        this._sounds = new MovieClipSoundsManager(this);
+      }
+      this._sounds.initSoundStream(streamInfo);
+    }
+
+    _addSoundStreamBlock(frameNum: number, streamBlock: any) {
+      this._sounds.addSoundStreamBlock(frameNum, streamBlock);
+    }
+
+    private _syncSounds(frameNum: number) {
+      if (this._sounds !== null) {
+        this._sounds.syncSounds(frameNum);
       }
     }
 
@@ -595,7 +779,10 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     addFrameLabel(name: string, frame: number): void {
-      this._sceneForFrameIndex(frame)._labels.push(new flash.display.FrameLabel(name, frame));
+      var scene = this._sceneForFrameIndex(frame);
+      if (!scene.getLabelByName(name, false)) {
+        scene.labels.push(new flash.display.FrameLabel(name, frame - scene.offset));
+      }
     }
 
     prevScene(): void {
@@ -610,7 +797,24 @@ module Shumway.AVM2.AS.flash.display {
 
     nextScene(): void {
       var currentScene = this._sceneForFrameIndex(this._currentFrame);
+      if (currentScene.offset + currentScene.numFrames === this._totalFrames) {
+        return;
+      }
       this._gotoFrameAbs(currentScene.offset + currentScene.numFrames + 1);
+    }
+
+    _containsPointImpl(globalX: number, globalY: number, localX: number, localY: number,
+                       testingType: HitTestingType, objects: DisplayObject[],
+                       skipBoundsCheck: boolean): HitTestingResult {
+      var result = super._containsPointImpl(globalX, globalY, localX, localY, testingType, objects,
+                                            true);
+      // In AVM1 SWFs, MovieClips are transparent to the mouse as long as they don't have a handler
+      // attached to them for any of the button-related events.
+      if (result === HitTestingResult.Shape && testingType === HitTestingType.Mouse &&
+          '_as2Object' in this && !this.buttonMode && objects[0] === this) {
+        objects.length = 0;
+      }
+      return result;
     }
   }
 }

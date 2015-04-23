@@ -23,7 +23,7 @@ module Shumway.AVM2.AS.flash.text {
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
-    static initializer: any = function (symbol: Shumway.Timeline.TextSymbol) {
+    static initializer: any = function (symbol: flash.text.TextSymbol) {
       var self: StaticText = this;
       self._textContent = null;
       if (symbol) {

@@ -17,10 +17,7 @@
 package flash.net {
 [native(cls="URLRequestClass")]
 public final class URLRequest {
-  public function URLRequest(url:String = null) {
-    this.requestHeaders = [];
-    this.url = url;
-  }
+  public native function URLRequest(url:String = null);
   public native function get url():String;
   public native function set url(value:String):void;
   public native function get data():Object;

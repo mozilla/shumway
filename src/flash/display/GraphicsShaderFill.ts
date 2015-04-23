@@ -16,6 +16,7 @@
 // Class: GraphicsShaderFill
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GraphicsShaderFill extends ASNative implements IGraphicsFill, IGraphicsData {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.display {
     constructor (shader: flash.display.Shader = null, matrix: flash.geom.Matrix = null) {
       shader = shader; matrix = matrix;
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.GraphicsShaderFill");
+      dummyConstructor("public flash.display.GraphicsShaderFill");
     }
     
     // JS -> AS Bindings

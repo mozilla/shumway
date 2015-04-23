@@ -16,6 +16,7 @@
 // Class: PrintJobOrientation
 module Shumway.AVM2.AS.flash.printing {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class PrintJobOrientation extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.printing {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.printing.PrintJobOrientation");
+      dummyConstructor("public flash.printing.PrintJobOrientation");
     }
     
     // JS -> AS Bindings

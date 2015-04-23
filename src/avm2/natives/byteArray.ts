@@ -15,14 +15,11 @@
  */
 
 module Shumway.AVM2.AS {
-  import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
   import unexpected = Shumway.Debug.unexpected;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import Namespace = Shumway.AVM2.ABC.Namespace;
   import Multiname = Shumway.AVM2.ABC.Multiname;
-  import throwError = Shumway.AVM2.Runtime.throwError;
 
   import utf8decode = Shumway.StringUtilities.utf8decode;
   import utf8encode = Shumway.StringUtilities.utf8encode;
@@ -33,35 +30,21 @@ module Shumway.AVM2.AS {
   import int32ToFloat = Shumway.IntegerUtilities.int32ToFloat;
 
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
-
-  function throwEOFError() {
-    notImplemented("throwEOFError");
-    // Runtime.throwErrorFromVM(AVM2.currentDomain(), "flash.errors.EOFError", "End of file was encountered.");
-  }
-
-  function throwRangeError() {
-    notImplemented("throwEOFError");
-    // var error = Errors.ParamRangeError;
-    // Runtime.throwErrorFromVM("RangeError", getErrorMessage(error.code), error.code);
-  }
-
-  function throwCompressedDataError() {
-    notImplemented("throwEOFError");
-//    var error = Errors.CompressedDataError;
-//    Runtime.throwErrorFromVM("CompressedDataError", getErrorMessage(error.code), error.code);
-  }
-
-  function checkRange(x: number, min: number, max: number) {
-    if (x !== clamp(x, min, max)) {
-      throwRangeError();
-    }
-  }
+  import assert = Shumway.Debug.assert;
 
   export module flash.net {
     export class ObjectEncoding extends ASNative {
       public static AMF0 = 0;
       public static AMF3 = 3;
       public static DEFAULT = ObjectEncoding.AMF3;
+
+      static get dynamicPropertyWriter(): any /* flash.net.IDynamicPropertyWriter */ {
+        notImplemented("public flash.net.ObjectEncoding::get dynamicPropertyWriter");
+        return null;
+      }
+      static set dynamicPropertyWriter(value: any /* flash.net.IDynamicPropertyWriter */) {
+        notImplemented("public flash.net.ObjectEncoding::set dynamicPropertyWriter");
+      }
     }
   }
 
@@ -118,37 +101,42 @@ module Shumway.AVM2.AS {
       public static instanceNatives: any [] = [DataBuffer.prototype];
       public static callableConstructor: any = null;
 
+      static classInitializer: any = function() {
+        var proto: any = DataBuffer.prototype;
+        ObjectUtilities.defineNonEnumerableProperty(proto, '$BgtoJSON', proto.toJSON);
+      }
+
       static initializer = function (source: any) {
         var self: ByteArray = this;
-        var align = false;
-        var buffer, length;
+
+        var buffer: ArrayBuffer;
+        var length = 0;
         if (source) {
-          length = 'byteLength' in source ? source.byteLength : source.length;
-          align = (length & 0x7) !== 0;
           if (source instanceof ArrayBuffer) {
-            buffer = source;
-          } else if ('buffer' in source && source.buffer instanceof ArrayBuffer) {
-            buffer = align ? source.buffer : source.buffer.slice();
-          } else if (Array.isArray) {
-            buffer = align ? source : (new Uint8Array(source)).buffer;
+            buffer = source.slice();
+          } else if (Array.isArray(source)) {
+            buffer = new Uint8Array(source).buffer;
+          } else if ('buffer' in source) {
+            if (source.buffer instanceof ArrayBuffer) {
+              buffer = new Uint8Array(source.buffer).buffer;
+            } else if (source.buffer instanceof Uint8Array) {
+              var begin = source.buffer.byteOffset;
+              buffer = source.buffer.buffer.slice(begin, begin + source.buffer.length);
+            } else {
+              release || assert(source.buffer instanceof ArrayBuffer);
+              buffer = source.buffer.slice();
+            }
+          } else {
+            Debug.unexpected("Source type.");
           }
-          // We have to make sure that the length of the buffer is a multiple of 8 or else
-          // constructing 64 bit views will fail.
-          if (align) {
-            length = (length + 7) & ~0x7;
-            var tmp = new ArrayBuffer(length);
-            // Copy into new buffer.
-            (new Uint8Array(tmp)).set(new Uint8Array(buffer));
-            buffer = tmp;
-          }
+          length = buffer.byteLength;
         } else {
           buffer = new ArrayBuffer(ByteArray.INITIAL_SIZE);
-          length = 0;
         }
         self._buffer = buffer;
         self._length = length;
         self._position = 0;
-        self._cacheViews();
+        self._resetViews();
         self._objectEncoding = ByteArray.defaultObjectEncoding;
         self._littleEndian = false; // AS3 is bigEndian by default.
         self._bitBuffer = 0;
@@ -175,6 +163,10 @@ module Shumway.AVM2.AS {
         false && super();
       }
 
+      toJSON() {
+        return "ByteArray";
+      }
+
       private _buffer: ArrayBuffer;
       private _length: number;
       private _position: number;
@@ -184,7 +176,7 @@ module Shumway.AVM2.AS {
       private _bitBuffer: number;
       private _bitLength: number;
 
-      private _cacheViews: () => void;
+      private _resetViews: () => void;
 
       asGetNumericProperty: (name: number) => number;
       asSetNumericProperty: (name: number, value: number) => void;
@@ -246,29 +238,33 @@ module Shumway.AVM2.AS {
       writeRawBytes: (bytes: Uint8Array) => void;
       position: number;
       length: number;
-
-//      Maybe Someday
-//      atomicCompareAndSwapIntAt(byteIndex: number /*int*/, expectedValue: number /*int*/, newValue: number /*int*/): number /*int*/ {
-//        byteIndex = byteIndex | 0; expectedValue = expectedValue | 0; newValue = newValue | 0;
-//        notImplemented("public flash.utils.ByteArray::atomicCompareAndSwapIntAt"); return;
-//      }
-//      atomicCompareAndSwapLength(expectedLength: number /*int*/, newLength: number /*int*/): number /*int*/ {
-//        expectedLength = expectedLength | 0; newLength = newLength | 0;
-//        notImplemented("public flash.utils.ByteArray::atomicCompareAndSwapLength"); return;
-//      }
-//      get shareable(): boolean {
-//        notImplemented("public flash.utils.ByteArray::get shareable"); return;
-//      }
-//      set shareable(newValue: boolean) {
-//        newValue = !!newValue;
-//        notImplemented("public flash.utils.ByteArray::set shareable"); return;
-//      }
-
     }
 
     ByteArray.prototype.asGetNumericProperty = DataBuffer.prototype.getValue;
     ByteArray.prototype.asSetNumericProperty = DataBuffer.prototype.setValue;
 
     export var OriginalByteArray = ByteArray;
+
+    export class CompressionAlgorithm extends ASNative {
+
+      static classInitializer: any = function() {
+        ObjectUtilities.defineNonEnumerableProperty(this, '$BgZLIB', CompressionAlgorithm.ZLIB);
+        ObjectUtilities.defineNonEnumerableProperty(this, '$BgDEFLATE',
+                                                    CompressionAlgorithm.DEFLATE);
+        ObjectUtilities.defineNonEnumerableProperty(this, '$BgLZMA', CompressionAlgorithm.LZMA);
+      }
+
+      static initializer: any = null;
+      static classSymbols: string [] = null; // [];
+      static instanceSymbols: string [] = null; // [];
+
+      constructor () {
+        false && super();
+      }
+
+      static ZLIB: string = "zlib";
+      static DEFLATE: string = "deflate";
+      static LZMA: string = "lzma";
+    }
   }
 }

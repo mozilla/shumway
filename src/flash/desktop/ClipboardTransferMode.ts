@@ -16,6 +16,7 @@
 // Class: ClipboardTransferMode
 module Shumway.AVM2.AS.flash.desktop {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ClipboardTransferMode extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.desktop {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.desktop.ClipboardTransferMode");
+      dummyConstructor("public flash.desktop.ClipboardTransferMode");
     }
     
     // JS -> AS Bindings

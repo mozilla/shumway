@@ -27,7 +27,7 @@ module Shumway.AVM2.Runtime {
   };
 
   VM_METHOD_OVERRIDES["com.midasplayer.debug.DebugLog::trace"] = function (msg) {
-    log(msg);
+    console.log(msg);
   };
 
   VM_METHOD_OVERRIDES["com.midasplayer.engine.comm.DebugGameComm::getGameData"] = function () {
@@ -46,8 +46,48 @@ module Shumway.AVM2.Runtime {
     return []; // ServicesConnection's SETTracker fails
   };
 
+//  VM_METHOD_OVERRIDES["org.swiftsuspenders.Reflector::classExtendsOrImplements"] = function () {
+//    return true;
+//  };
+//
+  VM_METHOD_OVERRIDES["org.robotlegs.base.CommandMap::org.robotlegs.base:CommandMap.verifyCommandClass"] = function () {
+    return;
+  };
+
+//  VM_METHOD_OVERRIDES["org.swiftsuspenders.injectionpoints.PropertyInjectionPoint::org.swiftsuspenders.injectionpoints:PropertyInjectionPoint.initializeInjection"] = function () {
+//    return;
+//  };
+
+//  VM_METHOD_OVERRIDES["org.swiftsuspenders.injectionpoints.NoParamsConstructorInjectionPoint::applyInjection"] = function () {
+//    return;
+//  };
+
+//  VM_METHOD_OVERRIDES["org.swiftsuspenders.injectionpoints.PropertyInjectionPoint::applyInjection"] = function () {
+//    return;
+//  };
+
+  VM_METHOD_OVERRIDES["static utility.SWFUtils::getCompilationDate"] = function () {
+      return new Date("Wed Oct 8 16:08:55 2014 UTC");
+  };
+
+//  VM_METHOD_OVERRIDES["org.swiftsuspenders.Injector::instantiate"] = function () {
+//    return;
+//  };
+
   VM_METHOD_OVERRIDES["com.spilgames.api.components.TextFields.AutoFitTextFieldEx::com.spilgames.api.components.TextFields:AutoFitTextFieldEx.updateProperties"] =
   VM_METHOD_OVERRIDES["com.spilgames.api.components.TextFields.AutoFitTextFieldEx::com.spilgames.api.components.TextFields:AutoFitTextFieldEx.updateTextSize"] = function () {
     // flash.text.engine stuff
+  };
+
+  VM_METHOD_OVERRIDES["Preloader::isNeedSite"] = function () {
+    return true;
+  };
+
+  VM_METHOD_OVERRIDES["facebook.utils.FBURI::isFacebookURI"] = function () {
+    return true;
+  };
+
+  VM_METHOD_OVERRIDES["facebook.utils.FBURI::is_facebook_cdn_url"] = function () {
+    return !!this.asGetPublicProperty('authority');
   };
 }

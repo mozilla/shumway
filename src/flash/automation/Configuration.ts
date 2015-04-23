@@ -16,12 +16,13 @@
 // Class: Configuration
 module Shumway.AVM2.AS.flash.automation {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Configuration extends ASNative {
     static initializer: any = null;
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.automation.Configuration");
+      dummyConstructor("public flash.automation.Configuration");
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings

@@ -25,9 +25,9 @@ module Shumway.AVM2.AS.flash.display {
   import swap32 = Shumway.IntegerUtilities.swap32;
   import premultiplyARGB = Shumway.ColorUtilities.premultiplyARGB;
   import unpremultiplyARGB = Shumway.ColorUtilities.unpremultiplyARGB;
+  import RGBAToARGB = Shumway.ColorUtilities.RGBAToARGB;
   import tableLookupUnpremultiplyARGB = Shumway.ColorUtilities.tableLookupUnpremultiplyARGB;
   import blendPremultipliedBGRA = Shumway.ColorUtilities.blendPremultipliedBGRA;
-  import ensureInverseSourceAlphaTable = Shumway.ColorUtilities.ensureInverseSourceAlphaTable;
   import indexOf = Shumway.ArrayUtilities.indexOf;
 
   import Rectangle = flash.geom.Rectangle;
@@ -40,11 +40,11 @@ module Shumway.AVM2.AS.flash.display {
   export class BitmapData extends ASNative implements IBitmapDrawable, Shumway.Remoting.IRemotable {
 
     static classInitializer: any = function () {
-      ensureInverseSourceAlphaTable();
+      // ...
     };
 
-    _symbol: Shumway.Timeline.BitmapSymbol;
-    static initializer: any = function (symbol: Shumway.Timeline.BitmapSymbol) {
+    _symbol: BitmapSymbol;
+    static initializer: any = function (symbol: BitmapSymbol) {
       this._symbol = symbol;
     };
 
@@ -59,43 +59,63 @@ module Shumway.AVM2.AS.flash.display {
                 fillColorARGB: number /*uint*/ = 4294967295) {
       width = width | 0;
       height = height | 0;
+      transparent = !!transparent;
       fillColorARGB = fillColorARGB | 0;
       false && super();
-      this._id = flash.display.DisplayObject.getNextSyncID();
-      if (this._symbol) {
-        width = this._symbol.width;
-        height = this._symbol.height;
+      var symbol = this._symbol;
+      if (symbol) {
+        width = symbol.width | 0;
+        height = symbol.height | 0;
       }
       if (width > BitmapData.MAXIMUM_WIDTH || width <= 0 ||
           height > BitmapData.MAXIMUM_HEIGHT || height <= 0 ||
           width * height > BitmapData.MAXIMUM_DIMENSION) {
         throwError('ArgumentError', Errors.InvalidBitmapData);
       }
-      this._bitmapReferrers = [];
-      this._transparent = !!transparent;
       this._rect = new Rectangle(0, 0, width, height);
-      this._fillColorBGRA = swap32(fillColorARGB); // Specified as ARGB but stored as BGRA.
-      if (this._symbol) {
-        this._data = new Uint8Array(this._symbol.data.buffer);
-        this._type = this._symbol.type;
-        if (this._type === ImageType.PremultipliedAlphaARGB ||
-            this._type === ImageType.StraightAlphaARGB ||
-            this._type === ImageType.StraightAlphaRGBA) {
-          this._view = new Int32Array(this._symbol.data.buffer);
+      this._transparent = transparent;
+
+      if (symbol) {
+        release || assert(symbol.syncId);
+        this._id = symbol.syncId;
+        if (symbol.type === ImageType.PremultipliedAlphaARGB ||
+            symbol.type === ImageType.StraightAlphaARGB ||
+            symbol.type === ImageType.StraightAlphaRGBA) {
+          release || assert(symbol.data);
+          this._setData(symbol.data, symbol.type);
+        } else {
+          this._isDirty = false;
+          this._isRemoteDirty = true;
         }
+        this._solidFillColorPBGRA = null;
       } else {
-        this._data = new Uint8Array(width * height * 4);
-        this._view = new Int32Array(this._data.buffer);
-        this._type = ImageType.PremultipliedAlphaARGB;
+        this._id = flash.display.DisplayObject.getNextSyncID();
+        this._setData(new Uint8Array(width * height * 4), ImageType.PremultipliedAlphaARGB);
         var alpha = fillColorARGB >> 24;
         if (alpha === 0 && transparent) {
           // No need to do an initial fill since this would all be zeros anyway.
+          this._solidFillColorPBGRA = 0;
         } else {
-          this.fillRect(this.rect, fillColorARGB);
+          this.fillRect(this._rect, fillColorARGB);
         }
       }
-      this._dataBuffer = DataBuffer.FromArrayBuffer(this._data.buffer);
-      this._invalidate();
+      this._bitmapReferrers = [];
+      release || assert(this._isDirty === !!this._data);
+      release || assert(this._isRemoteDirty === !this._data);
+    }
+
+    private _setData(data: Uint8Array, type: ImageType) {
+      // Alpha images are parsed to Uint8Clamped array. Easiest to just handle here.
+      if (data instanceof Uint8ClampedArray) {
+        data = new Uint8Array(data.buffer);
+      }
+      release || assert(data instanceof Uint8Array);
+      this._data = data;
+      this._type = type;
+      this._view = new Int32Array(data.buffer);
+      this._dataBuffer = DataBuffer.FromArrayBuffer(data.buffer);
+      this._isDirty = true;
+      this._isRemoteDirty = false;
     }
 
     /**
@@ -106,13 +126,13 @@ module Shumway.AVM2.AS.flash.display {
 
     _addBitmapReferrer(bitmap: flash.display.Bitmap) {
       var index = indexOf(this._bitmapReferrers, bitmap);
-      release && assert(index < 0);
+      release || assert(index < 0);
       this._bitmapReferrers.push(bitmap);
     }
 
     _removeBitmapReferrer(bitmap: flash.display.Bitmap) {
       var index = indexOf(this._bitmapReferrers, bitmap);
-      release && assert(index >= 0);
+      release || assert(index >= 0);
       this._bitmapReferrers[index] = null;
     }
 
@@ -124,6 +144,7 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       this._isDirty = true;
+      this._isRemoteDirty = false;
       // TODO: We probably don't need to propagate any flags if |_locked| is true.
       for (var i = 0; i < this._bitmapReferrers.length; i++) {
         var bitmap = this._bitmapReferrers[i];
@@ -137,7 +158,6 @@ module Shumway.AVM2.AS.flash.display {
     _rect: flash.geom.Rectangle;
 
     _id: number;
-    _fillColorBGRA: number;
     _locked: boolean;
 
     /**
@@ -146,7 +166,7 @@ module Shumway.AVM2.AS.flash.display {
     _type: ImageType;
 
     /**
-     * Actual image bytes, this may be raw pixel data or compressed JPEG, PNG, GIF.
+     * Actual image bytes as raw pixel data of the format given by `_type`.
      */
     _data: Uint8Array;
 
@@ -167,6 +187,37 @@ module Shumway.AVM2.AS.flash.display {
      */
     _isDirty: boolean;
 
+    /**
+     * Indicates whether this bitmap data's data buffer has changed on the remote end and needs to be read
+     * back before any pixel operations can be performed.
+     */
+    _isRemoteDirty: boolean;
+
+
+    /**
+     * If non-null then this value indicates that the bitmap is filled with a solid color. This is useful
+     * for optimizations.
+     */
+    _solidFillColorPBGRA: any; // any | number;
+
+    /**
+     * Pool of temporary rectangles that is used to prevent allocation. We don't need more than 3 for now.
+     */
+    private static _temporaryRectangles: Rectangle [] = [
+      new flash.geom.Rectangle(),
+      new flash.geom.Rectangle(),
+      new flash.geom.Rectangle()
+    ];
+
+    private _getTemporaryRectangleFrom(rect: Rectangle, index: number = 0): Rectangle {
+      release || assert (index >= 0 && index < BitmapData._temporaryRectangles.length);
+      var r = BitmapData._temporaryRectangles[index];
+      if (rect) {
+        r.copyFrom(rect);
+      }
+      return r;
+    }
+
     getDataBuffer(): DataBuffer {
       return this._dataBuffer;
     }
@@ -179,7 +230,7 @@ module Shumway.AVM2.AS.flash.display {
      * TODO: Not tested.
      */
     private _getPixelData(rect: flash.geom.Rectangle): Int32Array {
-      var r = this.rect.intersectInPlace(rect);
+      var r = this._getTemporaryRectangleFrom(this._rect).intersectInPlace(rect);
       if (r.isEmpty()) {
         return;
       }
@@ -208,7 +259,7 @@ module Shumway.AVM2.AS.flash.display {
      * TODO: Not tested.
      */
     private _putPixelData(rect: flash.geom.Rectangle, input: Int32Array): void {
-      var r = this.rect.intersectInPlace(rect);
+      var r = this._getTemporaryRectangleFrom(this._rect).intersectInPlace(rect);
       if (r.isEmpty()) {
         return;
       }
@@ -254,7 +305,7 @@ module Shumway.AVM2.AS.flash.display {
       somewhatImplemented("public flash.display.BitmapData::clone");
       // This should be coping the buffer not the view.
       var bd = new BitmapData(this._rect.width, this._rect.height, this._transparent,
-                              this._fillColorBGRA);
+                              this._solidFillColorPBGRA);
       bd._view.set(this._view);
       return bd;
     }
@@ -277,10 +328,19 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._rect.contains(x, y)) {
         return 0;
       }
-      release || assert(this._type === ImageType.PremultipliedAlphaARGB);
-      var pARGB = swap32(this._view[y * this._rect.width + x]);
-      var uARGB = unpremultiplyARGB(pARGB);
-      return uARGB >>> 0;
+      this._ensureBitmapData();
+      var value = this._view[y * this._rect.width + x];
+      switch (this._type) {
+        case ImageType.PremultipliedAlphaARGB:
+          var pARGB = swap32(value);
+          var uARGB = unpremultiplyARGB(pARGB);
+          return uARGB >>> 0;
+        case ImageType.StraightAlphaRGBA:
+          return RGBAToARGB(swap32(value));
+        default:
+          Shumway.Debug.notImplemented(ImageType[this._type]);
+          return 0;
+      }
     }
 
     setPixel(x: number /*int*/, y: number /*int*/, uARGB: number /*uint*/): void {
@@ -290,12 +350,14 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._rect.contains(x, y)) {
         return;
       }
+      this._ensureBitmapData();
       var i = y * this._rect.width + x;
       var a = this._view[i] & 0xff;
       uARGB = uARGB & 0x00ffffff | a << 24;
       var pARGB = premultiplyARGB(uARGB);
       this._view[i] = swap32(pARGB);
       this._invalidate();
+      this._solidFillColorPBGRA = null;
     }
 
     setPixel32(x: number /*int*/, y: number /*int*/, uARGB: number /*uint*/): void {
@@ -304,6 +366,7 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._rect.contains(x, y)) {
         return;
       }
+      this._ensureBitmapData();
       var a = uARGB >>> 24;
       var uRGB = uARGB & 0x00ffffff;
       if (this._transparent) {
@@ -314,6 +377,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._view[y * this._rect.width + x] = swap32(pARGB);
       this._invalidate();
+      this._solidFillColorPBGRA = null;
     }
 
     applyFilter(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle,
@@ -361,7 +425,6 @@ module Shumway.AVM2.AS.flash.display {
                alphaPoint: flash.geom.Point = null,
                mergeAlpha: boolean = false): void
     {
-      enterTimeline("BitmapData.copyPixels");
       mergeAlpha = !!mergeAlpha;
 
       if (alphaBitmapData || alphaPoint) {
@@ -372,44 +435,52 @@ module Shumway.AVM2.AS.flash.display {
       // Deal with fractional pixel coordinates, looks like Flash "rounds" the corners of
       // the source rect, however a width of |0.5| rounds down rather than up so we're not
       // quite correct here.
-      var sR = sourceRect.clone().roundInPlace();
+      var sRect = this._getTemporaryRectangleFrom(sourceRect, 0).roundInPlace();
 
-      // Remember the original source rect in case in case the intersection changes it.
-      var oR = sR.clone();
-      var sR = sR.intersectInPlace(sourceBitmapData._rect);
+      var tBRect = this._rect;
+      var sBRect = sourceBitmapData._rect;
 
-      // Clipped source rect is empty so there's nothing to do.
-      if (sR.isEmpty()) {
-        leaveTimeline();
+      // Clip sRect against SBRect.
+      var sL = Math.max(sRect.x, 0);
+      var sT = Math.max(sRect.y, 0);
+      var sR = Math.min(sRect.x + sRect.width, sBRect.width);
+      var sB = Math.min(sRect.y + sRect.height, sBRect.height);
+
+      // Compute source rect offsets (in case the source rect had negative x, y coordinates).
+      var oX = sL - sRect.x ;
+      var oY = sT - sRect.y;
+
+      var tL = destPoint.x | 0 + oX;
+      var tT = destPoint.y | 0 + oY;
+
+      if (tL < 0) {
+        sL -= tL;
+        tL = 0;
+      }
+
+      if (tT < 0) {
+        sT -= tT;
+        tT = 0;
+      }
+
+      var tW = Math.min(sR - sL, tBRect.width - tL);
+      var tH = Math.min(sB - sT, tBRect.height - tT);
+
+      if (tW <= 0 || tH <= 0) {
         return;
       }
 
-      // Compute source rect offsets (in case the source rect had negative x, y coordinates).
-      var oX = sR.x - oR.x;
-      var oY = sR.y - oR.y;
+      var sX = sL;
+      var sY = sT;
 
-      // Compute the target rect taking into account the offsets and then clip it against the
-      // target.
-      var tR = new geom.Rectangle (
-        destPoint.x | 0 + oX,
-        destPoint.y | 0 + oY,
-        oR.width - oX,
-        oR.height - oY
-      );
-
-      tR.intersectInPlace(this._rect);
-
-      var sX = sR.x;
-      var sY = sR.y;
-
-      var tX = tR.x;
-      var tY = tR.y;
-
-      var tW = tR.width;
-      var tH = tR.height;
+      var tX = tL;
+      var tY = tT;
 
       var sStride = sourceBitmapData._rect.width;
       var tStride = this._rect.width;
+
+      this._ensureBitmapData();
+      sourceBitmapData._ensureBitmapData();
 
       var s = sourceBitmapData._view;
       var t = this._view;
@@ -423,52 +494,87 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
 
+      // No reason to copy pixels since since both source and target are the same solid fill, regardless
+      // of alpha blending. (TODO: I think the math works out for mergeAlpha also.)
+      if (this._solidFillColorPBGRA !== null &&
+          this._solidFillColorPBGRA === sourceBitmapData._solidFillColorPBGRA) {
+        return;
+      }
+
+      // Source has a solid fill but is fully opaque, we can get away without alpha blending here.
+      if (sourceBitmapData._solidFillColorPBGRA !== null &&
+          (sourceBitmapData._solidFillColorPBGRA & 0xFF) === 0xFF) {
+        mergeAlpha = false;
+      }
+
       // Finally do the copy. All the math above is needed just so we don't do any branches inside
       // this hot loop.
 
       if (mergeAlpha) {
-        var sP = sY * sStride + sX;
-        var tP = tY * tStride + tX;
-        for (var y = 0; y < tH; y++) {
-          for (var x = 0; x < tW; x++) {
-            var spBGRA = s[sP + x];
-            if ((spBGRA & 0xFF) === 0xFF) {
-              t[tP + x] = spBGRA; // Opaque, just copy value over.
-            } else {
-              t[tP + x] = blendPremultipliedBGRA(t[tP + x], spBGRA);
-            }
-          }
-          sP += sStride;
-          tP += tStride;
-        }
+        this._copyPixelsAndMergeAlpha(s, sX, sY, sStride, t, tX, tY, tStride, tW, tH);
       } else {
-        var sP = sY * sStride + sX;
-        var tP = tY * tStride + tX;
+        var sP = (sY * sStride + sX) | 0;
+        var tP = (tY * tStride + tX) | 0;
         if ((tW & 3) === 0) {
-          for (var y = 0; y < tH; y++) {
-            for (var x = 0; x < tW; x += 4) {
-              t[tP + x + 0] = s[sP + x + 0];
-              t[tP + x + 1] = s[sP + x + 1];
-              t[tP + x + 2] = s[sP + x + 2];
-              t[tP + x + 3] = s[sP + x + 3];
+          for (var y = 0; y < tH; y = y + 1 | 0) {
+            for (var x = 0; x < tW; x = x + 4 | 0) {
+              t[(tP + x + 0) | 0] = s[(sP + x + 0) | 0];
+              t[(tP + x + 1) | 0] = s[(sP + x + 1) | 0];
+              t[(tP + x + 2) | 0] = s[(sP + x + 2) | 0];
+              t[(tP + x + 3) | 0] = s[(sP + x + 3) | 0];
             }
-            sP += sStride;
-            tP += tStride;
+            sP = sP + sStride | 0;
+            tP = tP + tStride | 0;
           }
         } else {
-          for (var y = 0; y < tH; y++) {
-            for (var x = 0; x < tW; x++) {
-              t[tP + x] = s[sP + x];
+          for (var y = 0; y < tH; y = y + 1 | 0) {
+            for (var x = 0; x < tW; x = x + 1 | 0) {
+              t[tP + x | 0] = s[sP + x | 0];
             }
-            sP += sStride;
-            tP += tStride;
+            sP = sP + sStride | 0;
+            tP = tP + tStride | 0;
           }
         }
       }
 
+      this._solidFillColorPBGRA = null;
       this._invalidate();
-      somewhatImplemented("public flash.display.BitmapData::copyPixels");
-      leaveTimeline();
+    }
+
+    private _copyPixelsAndMergeAlpha(s: Int32Array, sX: number, sY: number, sStride: number,
+                                     t: Int32Array, tX: number, tY: number, tStride: number, tW: number, tH: number) {
+      var sP = (sY * sStride + sX) | 0;
+      var tP = (tY * tStride + tX) | 0;
+      for (var y = 0; y < tH; y = y + 1 | 0) {
+        for (var x = 0; x < tW; x = x + 1 | 0) {
+          var spBGRA = s[sP + x | 0];
+          var sA = spBGRA & 0xff;
+          // Optimize for the case where the source pixel is fully opaque or transparent. This
+          // pays off if the source image has many such pixels but slows down the normal case.
+          if (sA === 0xff) {
+            t[tP + x | 0] = spBGRA; // Opaque, just copy value over.
+          } else if (sA === 0) {
+            // Transparent, don't do anything.
+          } else {
+            // Compute the blending equation: src.rgb + (dst.rgb * (1 - src.a)). The trick here
+            // is to compute GA and BR at the same time without pulling apart each channel.
+            // We use the "double blend trick" (http://stereopsis.com/doubleblend.html) to
+            // compute GA and BR without unpacking them.
+            var sGA = spBGRA      & 0x00ff00ff;
+            var sBR = spBGRA >> 8 & 0x00ff00ff;
+            var tpBGRA = t[tP + x | 0];
+            var tGA = tpBGRA      & 0x00ff00ff;
+            var tBR = tpBGRA >> 8 & 0x00ff00ff;
+            var A = 256 - sA;
+            tGA = Math.imul(tGA, A) >> 8;
+            tBR = Math.imul(tBR, A) >> 8;
+            // TODO: Not sure if target alpha is computed correctly.
+            t[tP + x | 0] = ((sBR + tBR & 0x00ff00ff) << 8) | (sGA + tGA & 0x00ff00ff);
+          }
+        }
+        sP = sP + sStride | 0;
+        tP = tP + tStride | 0;
+      }
     }
 
     dispose(): void {
@@ -486,6 +592,7 @@ module Shumway.AVM2.AS.flash.display {
         matrix = matrix.clone().toTwipsInPlace();
       }
       serializer.drawToBitmap(this, source, matrix, colorTransform, blendMode, clipRect, smoothing);
+      this._isRemoteDirty = true;
     }
 
     drawWithQuality(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null,
@@ -504,28 +611,54 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     fillRect(rect: flash.geom.Rectangle, uARGB: number /*uint*/): void {
+      this._ensureBitmapData();
+      // TODO: what guarantees this, and why do we even need it?
+      release || assert(this._type === ImageType.PremultipliedAlphaARGB);
       if (this._transparent) {
         var pARGB = premultiplyARGB(uARGB);
       } else {
         var pARGB = uARGB | 0xff000000;
       }
-      release || assert(this._type === ImageType.PremultipliedAlphaARGB);
       var pBGRA = swap32(pARGB);
-      var r = this.rect.intersectInPlace(rect);
+      var r = this._getTemporaryRectangleFrom(this._rect).intersectInPlace(rect);
       if (r.isEmpty()) {
         return;
       }
-      var xMin = r.x;
-      var xMax = r.x + r.width;
-      var yMin = r.y;
-      var yMax = r.y + r.height;
+      // Filling with the same color?
+      if (this._solidFillColorPBGRA === pBGRA) {
+        return;
+      }
       var view = this._view;
-      var width = this._rect.width;
-      for (var y = yMin; y < yMax; y++) {
-        var offset = y * width;
-        for (var x = xMin; x < xMax; x++) {
-          view[offset + x] = pBGRA;
+      // If we are filling the entire buffer, we can do a little better ~ 25% faster.
+      if (r.equals(this._rect)) {
+        var length = view.length | 0;
+        // Unroll 4 iterations, ~ 5% faster.
+        if ((length & 0x3) === 0) {
+          for (var i = 0; i < length; i += 4) {
+            view[i]     = pBGRA;
+            view[i + 1] = pBGRA;
+            view[i + 2] = pBGRA;
+            view[i + 3] = pBGRA;
+          }
+        } else {
+          for (var i = 0; i < length; i++) {
+            view[i] = pBGRA;
+          }
         }
+        this._solidFillColorPBGRA = pBGRA;
+      } else {
+        var xMin = r.x | 0;
+        var xMax = r.x + r.width | 0;
+        var yMin = r.y | 0;
+        var yMax = r.y + r.height | 0;
+        var width = this._rect.width | 0;
+        for (var y = yMin; y < yMax; y++) {
+          var offset = y * width | 0;
+          for (var x = xMin; x < xMax; x++) {
+            view[offset + x] = pBGRA;
+          }
+        }
+        this._solidFillColorPBGRA = null;
       }
       this._invalidate();
     }
@@ -712,11 +845,115 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.BitmapData::encode");
       return;
     }
+
+    /**
+     * Ensures that we have the most up-to-date version of the bitmap data. If a call to
+     * |BitmpaData.draw| was made since the last time this method was called, then we need to send
+     * a synchronous message to the GFX remote requesting the latest image data.
+     *
+     * Here we also normalize the image format to |ImageType.StraightAlphaRGBA|. We only need the
+     * normalized pixel data for pixel operations, so we defer image decoding as late as possible.
+     */
+    private _ensureBitmapData() {
+      if (this._isRemoteDirty) {
+        var serializer = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+        var data = serializer.requestBitmapData(this);
+        this._setData(data.getBytes(), ImageType.StraightAlphaRGBA);
+        this._isRemoteDirty = false;
+        this._isDirty = false;
+        this._solidFillColorPBGRA = null;
+      }
+
+      release || assert(!(this._type === ImageType.JPEG || this._type === ImageType.PNG ||
+                          this._type === ImageType.GIF));
+
+      if (this._type !== ImageType.PremultipliedAlphaARGB) {
+        ColorUtilities.convertImage(this._type, ImageType.PremultipliedAlphaARGB, this._view,
+                                    this._view);
+        this._type = ImageType.PremultipliedAlphaARGB;
+        this._solidFillColorPBGRA = null;
+      }
+
+      release || assert(this._data);
+      release || assert(this._dataBuffer);
+      release || assert(this._view);
+    }
   }
+
 
   export interface IBitmapDataSerializer {
     drawToBitmap(bitmapData: flash.display.BitmapData, source: flash.display.IBitmapDrawable,
                  matrix: flash.geom.Matrix, colorTransform: flash.geom.ColorTransform,
                  blendMode: string, clipRect: flash.geom.Rectangle, smoothing: boolean);
+  }
+
+  export class BitmapSymbol extends Timeline.DisplaySymbol
+                            implements Timeline.EagerlyResolvedSymbol {
+    width: number;
+    height: number;
+    syncId: number;
+    data: Uint8Array;
+    type: ImageType;
+
+    private sharedInstance: flash.display.BitmapData;
+
+    constructor(data: Timeline.SymbolData) {
+      super(data, flash.display.BitmapData, false);
+      this.ready = false;
+    }
+
+    static FromData(data: any): BitmapSymbol {
+      var symbol = new BitmapSymbol(data);
+      // For non-decoded images, we don't yet have dimensions.
+      symbol.width = data.width || -1;
+      symbol.height = data.height || -1;
+      symbol.syncId = flash.display.DisplayObject.getNextSyncID();
+      symbol.data = data.data;
+      switch (data.mimeType) {
+        case "application/octet-stream":
+          symbol.type = data.dataType;
+          symbol.ready = true;
+          break;
+        case "image/jpeg":
+          symbol.type = ImageType.JPEG;
+          break;
+        case "image/png":
+          symbol.type = ImageType.PNG;
+          break;
+        case "image/gif":
+          symbol.type = ImageType.GIF;
+          break;
+        default:
+          notImplemented(data.mimeType);
+      }
+      return symbol;
+    }
+
+    getSharedInstance() {
+      return this.sharedInstance || this.createSharedInstance();
+    }
+    createSharedInstance() {
+      release || assert(this.ready);
+      this.sharedInstance = this.symbolClass.initializeFrom(this);
+      this.symbolClass.instanceConstructorNoInitialize.call(this.sharedInstance);
+      return this.sharedInstance;
+    }
+
+    get resolveAssetCallback() {
+      return this._unboundResolveAssetCallback.bind(this);
+    }
+
+    private _unboundResolveAssetCallback(data: any) {
+      release || assert(!this.ready);
+      this.ready = true;
+      if (!data) {
+        release || Debug.error("Error while decoding image");
+        return;
+      }
+      release || assert(data.width);
+      release || assert(data.height);
+      this.width = data.width;
+      this.height = data.height;
+    }
   }
 }

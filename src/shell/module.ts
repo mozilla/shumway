@@ -14,25 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * Fake out just enough document to get things loaded.
- */
-document = <any>({
-  createElementNS: function (namespaceURI: string, qualifiedName: string) {
-    return null;
-  },
-  createElement: function (tagName: string) {
-    switch (tagName) {
-      case "canvas":
-        return {
-          getContext: function (x) {
-            return null;
-          }
-        }
-    }
-  }
-});
-
 function addLogPrefix(prefix, args) {
   return [].concat.apply([prefix], args);
 }

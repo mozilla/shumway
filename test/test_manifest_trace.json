@@ -1,0 +1,167 @@
+[
+    {  "id": "basic",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/encoding1.swf",
+         "swfs/fscommand1.swf",
+         "swfs/local2global.swf",
+         "swfs/movieinfo1.swf",
+         "swfs/stream1.swf",
+         "swfs/stroke1.swf"
+       ],
+       "type": "stas"
+    },
+    {  "id": "avm1core",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/add.swf",
+        "swfs/avm1/undefined/undefined-swf6.swf",
+        "swfs/avm1/undefined/undefined-swf7.swf",
+        "swfs/avm1/super/super.swf",
+        "swfs/avm1/scope/avm1-scope-1.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "hittesting as3",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/hittesting/hittesting.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "timeline_as2",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/timeline/timeline_as2_4.swf",
+        "swfs/avm1/label/avm1-label-1.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "flash_events_Event trace",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/flash_events_Event.swf"
+       ],
+       "type": "stas"
+    },
+    {  "id": "flash_geom_Matrix3D trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/flash_geom_Matrix3D.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "flash_net_classes trace",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/flash_net_classes.swf"
+       ],
+       "type": "stas"
+    },
+    {  "id": "flash.display.Loader events trace",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/as3-loader/events/loader-events.swf"
+       ],
+       "type": "stas"
+    },
+    {  "id": "flash.display.LoaderInfo trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/as3-loader/loaderinfo/Preloader.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "lzma",
+      "stas": "swfs/lzma.stas",
+      "filenames": [
+        "swfs/lzma.swf",
+        "swfs/lzma_bytes.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "avm1 setInterval trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/setinterval/setinterval.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "avm1 setTimeout trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/settimeout/settimeout.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "flash_utils_Timer",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/flash_utils_Timer.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "registerClass_as2_trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/doubleAndRegister.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "haxe_as2_trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/haxe/flocons1.swf",
+        "swfs/avm1/haxe/flocons2.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "blendmode_trace",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/blendmode/blendmode_1.swf",
+         "swfs/blendmode/blendmode_2.swf"
+       ],
+       "type": "stas"
+    },
+    {  "id": "timeline",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/timeline/timeline_name_0.swf",
+        "swfs/timeline/timeline_loop.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "navigation",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/timeline/nav/blendMode.swf",
+        "swfs/timeline/nav/cacheAsBitmap.swf",
+        "swfs/timeline/nav/clipDepth.swf",
+        "swfs/timeline/nav/colorTransform.swf",
+        "swfs/timeline/nav/filters.swf",
+        "swfs/timeline/nav/matrix.swf",
+        "swfs/timeline/nav/morphShape.swf",
+        "swfs/timeline/nav/name.swf",
+        "swfs/timeline/nav/ratio.swf",
+        "swfs/timeline/nav/ratio2.swf",
+        "swfs/timeline/nav/ratio3.swf",
+        "swfs/timeline/nav/shape.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "styleheet",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/captions.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "Bug 1093712 - Loadee does not call frames if Loader is not on the stage",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/as3-loader/bug1093712/loader.swf"
+       ],
+       "type": "stas"
+    }
+]

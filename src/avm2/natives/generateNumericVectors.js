@@ -22,8 +22,8 @@ var filePath = path.join(__dirname + '/' + template);
 fs.readFile(filePath, {encoding: 'utf-8'}, function(err, data) {
   if (!err) {
     data = "/* THIS FILE WAS AUTOMATICALLY GENERATED FROM " + template + " */\n\n" + data;
-    var uint32 = data.replace(/Int32Vector/g, "Uint32Vector").replace(/Int32Array/g, "Uint32Array");
-    var float64 = data.replace(/Int32Vector/g, "Float64Vector").replace(/Int32Array/g, "Float64Array");
+    var uint32 = data.replace(/Int32Vector/g, "Uint32Vector").replace(/Int32Array/g, "Uint32Array").replace(/<int>/g, "<uint>");
+    var float64 = data.replace(/Int32Vector/g, "Float64Vector").replace(/Int32Array/g, "Float64Array").replace(/<int>/g, "<Number>");
 
     fs.writeFile(__dirname + '/uint32Vector.ts', uint32, function (err) {
       if (!err) {

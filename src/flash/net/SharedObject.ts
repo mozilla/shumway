@@ -18,9 +18,25 @@ module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
 
-  declare var sessionStorage;
+  interface IStorage {
+    getItem(key: string): string;
+    setItem(key: string, value: string): void;
+    removeItem(key: string): void;
+  }
+
+  var _sharedObjectStorage: IStorage;
+
+  function getSharedObjectStorage(): IStorage  {
+    if (!_sharedObjectStorage) {
+      if (typeof ShumwayCom !== 'undefined' && ShumwayCom.createSpecialStorage) {
+        _sharedObjectStorage = ShumwayCom.createSpecialStorage();
+      } else {
+        _sharedObjectStorage = (<any>window).sessionStorage;
+      }
+    }
+    return _sharedObjectStorage;
+  }
 
   export class SharedObject extends flash.events.EventDispatcher {
     
@@ -39,10 +55,10 @@ module Shumway.AVM2.AS.flash.net {
     constructor () {
       false && super(undefined);
       flash.events.EventDispatcher.instanceConstructorNoInitialize.call(this);
-      this._data = createEmptyObject();
+      this._data = Object.create(null);
     }
 
-    static _sharedObjects: any = createEmptyObject();
+    static _sharedObjects: any = Object.create(null);
 
     private _path: string;
 
@@ -81,7 +97,7 @@ module Shumway.AVM2.AS.flash.net {
       if (SharedObject._sharedObjects[path]) {
         return SharedObject._sharedObjects[path];
       }
-      var data = sessionStorage.getItem(path);
+      var data = getSharedObjectStorage().getItem(path);
       // TODO: JSON here probably needs to convert things into AS3 objects.
       var so = SharedObject._create(path, data ? JSON.parse(data) : {});
       // so._data[Multiname.getPublicQualifiedName("cookie")] = {};
@@ -98,7 +114,7 @@ module Shumway.AVM2.AS.flash.net {
     static get defaultObjectEncoding(): number /*uint*/ {
       return SharedObject._defaultObjectEncoding;
     }
-    set defaultObjectEncoding(version: number /*uint*/) {
+    static set defaultObjectEncoding(version: number /*uint*/) {
       version = version >>> 0;
       SharedObject._defaultObjectEncoding = version;
     }
@@ -148,11 +164,11 @@ module Shumway.AVM2.AS.flash.net {
           break;
         case 6: // clear
           this._data = {};
-          sessionStorage.removeItem(this._path);
+          getSharedObjectStorage().removeItem(this._path);
           simulated = true;
           break;
         case 2: // flush
-          sessionStorage.setItem(this._path, JSON.stringify(this._data));
+          getSharedObjectStorage().setItem(this._path, JSON.stringify(this._data));
           simulated = true;
           result = true;
           break;

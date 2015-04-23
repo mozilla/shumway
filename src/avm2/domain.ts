@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+declare module Shumway.SWF {
+  function enterTimeline(name: string, data?: any): void;
+  function leaveTimeline(data?: any): void;
+}
+
 module Shumway.AVM2.Runtime {
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
   import Hashes = Shumway.AVM2.ABC.Hashes;
@@ -27,7 +32,6 @@ module Shumway.AVM2.Runtime {
   import Timer = Shumway.Metrics.Timer;
 
   var counter = Shumway.Metrics.Counter.instance;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import assert = Shumway.Debug.assert;
   import IndentingWriter = Shumway.IndentingWriter;
 
@@ -44,22 +48,19 @@ module Shumway.AVM2.Runtime {
     var abc = script.abc;
     release || assert(!script.executing && !script.executed);
     var global = new Global(script);
-    if (abc.applicationDomain.allowNatives) {
-      global[Multiname.getPublicQualifiedName("unsafeJSNative")] = Shumway.AVM2.AS.getNative;
-    }
     script.executing = true;
     var scope = new Scope(null, script.global);
     // XXX interpreted methods populate stack with every call, compiled don't
     // pushing current runtime to the stack, so Runtime.currentDomain is successful
-    createFunction(script.init, scope, false).call(script.global, false);
+    createFunction(script.init, scope, false, false).call(script.global, false);
     script.executed = true;
     leaveTimeline();
   }
 
-  export function ensureScriptIsExecuted(script, reason: string = "") {
+  export function ensureScriptIsExecuted(script, reason: string) {
     if (!script.executed && !script.executing) {
-      if (Shumway.AVM2.Runtime.traceExecution.value >= 2) {
-        log("Executing Script For: " + reason);
+      if (!release && Shumway.AVM2.Runtime.traceExecution.value >= 2) {
+        console.log("Executing Script For: " + reason);
       }
       executeScript(script);
     }
@@ -102,25 +103,9 @@ module Shumway.AVM2.Runtime {
     return null;
   }
 
-  function promiseFile(path, responseType) {
-    return new Promise(function (resolve, reject) {
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', path);
-      xhr.responseType = responseType;
-      xhr.onload = function () {
-        var response = xhr.response;
-        if (response) {
-          if (responseType === 'json' && xhr.responseType !== 'json') {
-            // some browsers (e.g. Safari) have no idea what json is
-            response = JSON.parse(response);
-          }
-          resolve(response);
-        } else {
-          reject('Unable to load ' + path + ': ' + xhr.statusText);
-        }
-      };
-      xhr.send();
-    });
+  enum StackFormat {
+    SpiderMonkey,
+    V8
   }
 
   export class AVM2 {
@@ -132,23 +117,17 @@ module Shumway.AVM2.Runtime {
     public globals: Map<any>;
     public builtinsLoaded: boolean;
 
-    private _loadAVM1: (next) => void;
-    private _loadAVM1Promise: Promise<void>;
-
     public static instance: AVM2;
-    public static initialize(sysMode: ExecutionMode, appMode: ExecutionMode, loadAVM1: (next) => void = null) {
+    public static initialize(sysMode: ExecutionMode, appMode: ExecutionMode) {
       release || assert (!AVM2.instance);
-      AVM2.instance = new AVM2(sysMode, appMode, loadAVM1);
+      AVM2.instance = new AVM2(sysMode, appMode);
     }
 
-    constructor(sysMode: ExecutionMode, appMode: ExecutionMode, loadAVM1: (next) => void) {
+    constructor(sysMode: ExecutionMode, appMode: ExecutionMode) {
       // TODO: this will change when we implement security domains.
       this.systemDomain = new ApplicationDomain(this, null, sysMode, true);
       this.applicationDomain = new ApplicationDomain(this, this.systemDomain, appMode, false);
       this.findDefiningAbc = findDefiningAbc;
-
-      this._loadAVM1 = loadAVM1;
-      this._loadAVM1Promise = null;
 
       /**
        * All runtime exceptions are boxed in this object to tag them as having
@@ -157,29 +136,34 @@ module Shumway.AVM2.Runtime {
       this.exception = { value: undefined };
       this.exceptions = [];
 
-      this.globals = createEmptyObject();
+      this.globals = Object.create(null);
     }
 
     // We sometimes need to know where we came from, such as in
     // |ApplicationDomain.currentDomain|.
 
     public static currentAbc() {
-      var caller: any = arguments.callee;
-      var maxDepth = 20;
-      var abc = null;
-      for (var i = 0; i < maxDepth && caller; i++) {
-        var mi = caller.methodInfo;
-        if (mi) {
-          abc = mi.abc;
-          break;
+      var stack = new Error().stack.split('\n');
+      var format = stack[1].indexOf('    at ') === 0 ? StackFormat.V8 : StackFormat.SpiderMonkey;
+      for (var i = 0; i < stack.length; i++) {
+        var entry = stack[i];
+        var funName = format === StackFormat.SpiderMonkey ?
+                      entry.substr(0, entry.indexOf('@')) :
+                      entry.substr(7, entry.indexOf(' ', 8));
+        var fun = funName && jsGlobal[funName];
+        if (fun && fun.methodInfo) {
+          return fun.methodInfo.abc;
         }
-        caller = caller.caller;
       }
-      return abc;
+      return null;
     }
 
     public static currentDomain() {
       var abc = AVM2.currentAbc();
+      // If we can't find an abc just default to the current system domain.
+      if (abc === null) {
+        return AVM2.instance.systemDomain;
+      }
       release || assert (abc && abc.applicationDomain,
           "No domain environment was found on the stack, increase STACK_DEPTH or " +
           "make sure that a compiled / interpreted function is on the call stack.");
@@ -190,24 +174,13 @@ module Shumway.AVM2.Runtime {
       return !!playerglobal;
     }
 
-    public loadAVM1(): Promise<void> {
-      var loadAVM1Callback = this._loadAVM1;
-      release || assert(loadAVM1Callback);
-
-      if (!this._loadAVM1Promise) {
-        this._loadAVM1Promise = new Promise<void>(function (resolve) {
-          loadAVM1Callback(resolve);
-        });
-      }
-      return this._loadAVM1Promise;
-    }
-
-    public static loadPlayerglobal(abcsPath, catalogPath) {
+    public static loadPlayerglobal(): Promise<any> {
       if (playerglobalLoadedPromise) {
         return Promise.reject('Playerglobal is already loaded');
       }
-      playerglobalLoadedPromise = Promise.all([
-        promiseFile(abcsPath, 'arraybuffer'), promiseFile(catalogPath, 'json')]).
+      return Promise.all([
+        SystemResourcesLoadingService.instance.load(SystemResourceId.PlayerglobalAbcs),
+        SystemResourcesLoadingService.instance.load(SystemResourceId.PlayerglobalManifest)]).
         then(function (result) {
           playerglobal = {
             abcs: result[0],
@@ -228,19 +201,7 @@ module Shumway.AVM2.Runtime {
               }
             }
           }
-        }, function (e) {
-          console.error(e);
         });
-      return playerglobalLoadedPromise;
-    }
-
-    public notifyConstruct(instanceConstructor, args) {
-      // REMOVEME
-    }
-
-    public static getStackTrace(): string {
-      Shumway.Debug.notImplemented("getStackTrace");
-      return;
     }
   }
 
@@ -273,13 +234,13 @@ module Shumway.AVM2.Runtime {
       this.loadedClasses = [];
 
       // Classes cache.
-      this.classCache = createEmptyObject();
+      this.classCache = Object.create(null);
 
       // Script cache.
-      this.scriptCache = createEmptyObject();
+      this.scriptCache = Object.create(null);
 
       // Class Info cache.
-      this.classInfoCache = createEmptyObject();
+      this.classInfoCache = Object.create(null);
 
       // Our parent.
       this.base = base;
@@ -324,11 +285,11 @@ module Shumway.AVM2.Runtime {
       };
     }
 
-    public getType(multiname) {
+    public getType(multiname: Multiname) {
       return this.getProperty(multiname, true, true);
     }
 
-    public getProperty(multiname, strict, execute) {
+    public getProperty(multiname: Multiname, strict: boolean, execute: boolean) {
       var resolved = this.findDefiningScript(multiname, execute);
       if (resolved) {
         if (!resolved.script.executing) {
@@ -340,30 +301,22 @@ module Shumway.AVM2.Runtime {
       if (strict) {
         return Shumway.Debug.unexpected("Cannot find property " + multiname);
       }
-
       return undefined;
     }
 
-    public getClass(simpleName): Shumway.AVM2.AS.ASClass {
+    public getClass(simpleName: string, strict: boolean = true): Shumway.AVM2.AS.ASClass {
       var cache = this.classCache;
-      var c = cache[simpleName];
-      if (!c) {
-        c = cache[simpleName] = this.getProperty(Multiname.fromSimpleName(simpleName), true, true);
+      var cls = cache[simpleName];
+      if (!cls) {
+        cls = cache[simpleName] = this.getProperty(Multiname.fromSimpleName(simpleName), strict, true);
       }
-      release || assert(c instanceof Shumway.AVM2.AS.ASClass);
-      return c;
+      release || (cls && assert(cls instanceof Shumway.AVM2.AS.ASClass));
+      return cls;
     }
 
-    public findClass(simpleName) {
-      if (simpleName in this.classCache) {
-        return true;
-      }
-      return this.findDomainProperty(Multiname.fromSimpleName(simpleName), false, true);
-    }
-
-    public findDomainProperty(multiname, strict, execute) {
-      if (Shumway.AVM2.Runtime.traceDomain.value) {
-        log("ApplicationDomain.findDomainProperty: " + multiname);
+    public findDomainProperty(multiname: Multiname, strict: boolean, execute: boolean) {
+      if (!release && Shumway.AVM2.Runtime.traceDomain.value) {
+        console.log("ApplicationDomain.findDomainProperty: " + multiname);
       }
       var resolved = this.findDefiningScript(multiname, execute);
       if (resolved) {
@@ -371,8 +324,6 @@ module Shumway.AVM2.Runtime {
       }
       if (strict) {
         return Shumway.Debug.unexpected("Cannot find property " + multiname);
-      } else {
-        return undefined;
       }
       return undefined;
     }
@@ -399,6 +350,9 @@ module Shumway.AVM2.Runtime {
           return ci;
         }
       }
+      return this.findClassInfoSlow(mn, originalQn);
+    }
+    findClassInfoSlow(mn, originalQn) {
       // The class info may be among the loaded ABCs, go looking for it.
       var abcs = this.abcs;
       for (var i = 0; i < abcs.length; i++) {
@@ -458,9 +412,11 @@ module Shumway.AVM2.Runtime {
           return resolved;
         }
       }
+      return this.findDefiningScriptSlow(mn, execute);
+    }
 
-      countTimeline("ApplicationDomain: findDefiningScript");
-
+    findDefiningScriptSlow(mn, execute) {
+      countTimeline("ApplicationDomain: findDefiningScriptSlow");
       var abcs = this.abcs;
       for (var i = 0; i < abcs.length; i++) {
         var abc = abcs[i];
@@ -473,13 +429,13 @@ module Shumway.AVM2.Runtime {
               var trait = traits[k];
               if (mn.hasQName(trait.name)) {
                 if (execute) {
-                  ensureScriptIsExecuted(script, String(trait.name));
+                  ensureScriptIsExecuted(script, release ? '' : String(trait.name));
                 }
                 return (this.scriptCache[mn.runtimeId] = { script: script, trait: trait });
               }
             }
           } else {
-            Shumway.Debug.unexpected();
+            release || Shumway.Debug.unexpected();
           }
         }
       }
@@ -510,7 +466,7 @@ module Shumway.AVM2.Runtime {
 
     public loadAbc(abc: AbcFile) {
       if (Shumway.AVM2.Runtime.traceExecution.value) {
-        log("Loading: " + abc.name);
+        console.log("Loading: " + abc.name);
       }
       abc.applicationDomain = this;
       GlobalMultinameResolver.loadAbc(abc);
@@ -564,9 +520,10 @@ module Shumway.AVM2.Runtime {
     public initializeShell(sysMode, appMode) {
       var compartment = this.compartment;
       compartment.AVM2.initialize(sysMode, appMode);
-      compartment.AVM2.instance.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/builtin/builtin.abc"));
-      compartment.AVM2.instance.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/shell/shell.abc"));
-      // compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/avmplus/avmplus.abc"));
+      compartment.AVM2.instance.systemDomain.executeAbc(compartment.grabAbc(homePath + "build/libs/builtin.abc"));
+      compartment.AVM2.instance.systemDomain.executeAbc(compartment.grabAbc(homePath + "build/libs/shell.abc"));
+      // compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath +
+      // "build/libs/avmplus.abc"));
       this.systemDomain = compartment.AVM2.instance.systemDomain;
       this.applicationDomain = compartment.AVM2.instance.applicationDomain;
     }

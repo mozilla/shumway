@@ -16,6 +16,7 @@
 // Class: NetMonitorEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class NetMonitorEvent extends flash.events.Event {
 
     static classInitializer: any = null;
@@ -27,7 +28,7 @@ module Shumway.AVM2.AS.flash.events {
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 netStream: flash.net.NetStream = null) {
       super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.NetMonitorEvent");
+      dummyConstructor("public flash.events.NetMonitorEvent");
     }
 
     // JS -> AS Bindings

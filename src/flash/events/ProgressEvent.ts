@@ -16,6 +16,7 @@
 // Class: ProgressEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class ProgressEvent extends flash.events.Event {
 
     static classInitializer: any = null;
@@ -27,11 +28,38 @@ module Shumway.AVM2.AS.flash.events {
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 bytesLoaded: number = 0, bytesTotal: number = 0) {
       super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.ProgressEvent");
+      dummyConstructor("public flash.events.ProgressEvent");
     }
 
     // JS -> AS Bindings
     static PROGRESS: string = "progress";
     static SOCKET_DATA: string = "socketData";
+
+    private _bytesLoaded: number;
+    private _bytesTotal: number;
+
+    public get bytesLoaded(): number {
+      return this._bytesLoaded;
+    }
+    public set bytesLoaded(value: number) {
+      this._bytesLoaded = value;
+    }
+    public get bytesTotal(): number {
+      return this._bytesTotal;
+    }
+
+    public set bytesTotal(value: number) {
+      this._bytesTotal = value;
+    }
+
+    public clone(): Event {
+      return new flash.events.ProgressEvent(this._type, this._bubbles, this._cancelable,
+                                            this._bytesLoaded, this._bytesTotal);
+    }
+
+    public toString(): string {
+      return this.formatToString('ProgressEvent', 'bubbles', 'cancelable', 'eventPhase',
+                                 'bytesLoaded', 'bytesTotal');
+    }
   }
 }

@@ -16,6 +16,7 @@
 // Class: MouseCursor
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class MouseCursor extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.ui {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.ui.MouseCursor");
+      dummyConstructor("public flash.ui.MouseCursor");
     }
     
     // JS -> AS Bindings
@@ -42,9 +43,40 @@ module Shumway.AVM2.AS.flash.ui {
     static BUTTON: string = "button";
     static HAND: string = "hand";
     static IBEAM: string = "ibeam";
-    
-    
-    // AS -> JS Bindings
+
+    static fromNumber(n: number): string {
+      switch (n) {
+        case 0:
+          return MouseCursor.AUTO;
+        case 1:
+          return MouseCursor.ARROW;
+        case 2:
+          return MouseCursor.BUTTON;
+        case 3:
+          return MouseCursor.HAND;
+        case 4:
+          return MouseCursor.IBEAM;
+        default:
+          return null;
+      }
+    }
+
+    static toNumber(value: string): number {
+      switch (value) {
+        case MouseCursor.AUTO:
+          return 0;
+        case MouseCursor.ARROW:
+          return 1;
+        case MouseCursor.BUTTON:
+          return 2;
+        case MouseCursor.HAND:
+          return 3;
+        case MouseCursor.IBEAM:
+          return 4;
+        default:
+          return -1;
+      }
+    }
     
   }
 }

@@ -16,6 +16,7 @@
 // Class: AudioDecoder
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class AudioDecoder extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.media {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.media.AudioDecoder");
+      dummyConstructor("public flash.media.AudioDecoder");
     }
     
     // JS -> AS Bindings

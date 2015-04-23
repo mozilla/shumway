@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <title>Empty shuobject demo</title>
+  <script src="../shuobject.js"></script>
+  <script>
+    // Create/embed empty SWF movie.
+    var emptySWF = shuobject.buildEmptySWF(9, 200, 100, 60, true, 0xFFFFFF);
+    shuobject.embedSWF(emptySWF, 'mainSWF', 200, 100, '9,0,10', null, {}, {}, {}, function(e) {
+      var shumwayObj = shuobject.getShumwayObject(e.ref);
+
+      var stage = shumwayObj.stage;
+      stage.addEventListener('added', function rootAdded(e) {
+        stage.removeEventListener('added', rootAdded, true);
+        initializeMovie(shumwayObj);
+      }, true);
+    });
+
+    function initializeMovie(shumwayObj) {
+      var stage = shumwayObj.stage;
+      var root = stage.getChildAt(0);
+      var flash = shumwayObj.flash;
+      var MovieClip = flash.display.MovieClip;
+
+      // Using graphics
+      var movieClip = new MovieClip();
+      movieClip.graphics.beginFill(0x00FF00);
+      movieClip.graphics.drawRect(-50, -30, 100, 60);
+      movieClip.graphics.endFill();
+      movieClip.x = 100;
+      movieClip.y = 50;
+      root.addChild(movieClip);
+
+      // Using events
+      root.addEventListener('enterFrame', function () {
+        movieClip.rotation = (movieClip.rotation + 1) % 360;
+      });
+    }
+  </script>
+</head>
+<body>
+  <h1>Empty shuobject demo</h1>
+
+  <div id="mainSWF">Empty flash will be loaded here</div>
+  <br>
+</body>
+</html>

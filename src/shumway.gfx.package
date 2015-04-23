@@ -1,5 +1,6 @@
 #!inline console.time("Load Shared Dependencies");
 
+build/version/version.js
 build/ts/base.js
 build/ts/tools.js
 

@@ -54,7 +54,6 @@ module Shumway.AVM2.Compiler.IR {
   import assert = Shumway.Debug.assert;
   import Multiname = Shumway.AVM2.ABC.Multiname;
   import unexpected = Shumway.Debug.unexpected;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
 
   export interface NodeVisitor {
     (node: Node): void;
@@ -149,7 +148,7 @@ module Shumway.AVM2.Compiler.IR {
           }
         }
         if (v instanceof Array) {
-          count += v.replace(oldInput, newInput);
+          count += (<any>v).replace(oldInput, newInput);
         }
       }
       return count;
@@ -460,7 +459,7 @@ module Shumway.AVM2.Compiler.IR {
 
   export class Operator {
     not: Operator;
-    static byName: Shumway.Map<Operator> = createEmptyObject();
+    static byName: Shumway.Map<Operator> = Object.create(null);
 
     constructor(public name: string, public evaluate: Function, public isBinary: boolean) {
       Operator.byName[name] = this;
@@ -637,6 +636,7 @@ module Shumway.AVM2.Compiler.IR {
   export function nameOf(node) {
     var useColors = false;
     var result;
+    var m = Shumway.StringUtilities;
     if (node instanceof Constant) {
       if (node.value instanceof Multiname) {
         return node.value.name;
@@ -645,16 +645,16 @@ module Shumway.AVM2.Compiler.IR {
     } else if (node instanceof Variable) {
       return node.name;
     } else if (node instanceof Phi) {
-      return result = "|" + node.id + "|", useColors ? IndentingWriter.PURPLE + result + IndentingWriter.ENDC : result;
+      return result = m.concat3("|", node.id, "|"), useColors ? m.concat3(IndentingWriter.PURPLE, result, IndentingWriter.ENDC) : result;
     } else if (node instanceof Control) {
-      return result = "{" + node.id + "}", useColors ? IndentingWriter.RED + result + IndentingWriter.ENDC : result;
+      return result = m.concat3("{", node.id, "}"), useColors ? m.concat3(IndentingWriter.RED, result, IndentingWriter.ENDC) : result;
     } else if (node instanceof Projection) {
       if (node.type === ProjectionType.STORE) {
-        return result = "[" + node.id + "->" + node.argument.id + "]", useColors ? IndentingWriter.YELLOW + result + IndentingWriter.ENDC : result;
+        return result = m.concat5("[", node.id, "->", node.argument.id, "]"), useColors ? m.concat3(IndentingWriter.YELLOW, result, IndentingWriter.ENDC) : result;
       }
-      return result = "(" + node.id + ")", useColors ? IndentingWriter.GREEN + result + IndentingWriter.ENDC : result;
+      return result = m.concat3("(", node.id, ")"), useColors ? m.concat3(IndentingWriter.GREEN, result, IndentingWriter.ENDC) : result;
     } else if (node instanceof Value) {
-      return result = "(" + node.id + ")", useColors ? IndentingWriter.GREEN + result + IndentingWriter.ENDC : result;
+      return result = m.concat3("(", node.id, ")"), useColors ? m.concat3(IndentingWriter.GREEN, result, IndentingWriter.ENDC) : result;
     } else if (node instanceof Node) {
       return node.id;
     }

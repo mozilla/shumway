@@ -15,9 +15,10 @@
  */
 
 package flash.display {
+[native(cls='AVM1MovieClass')]
 public class AVM1Movie extends DisplayObject {
-    public function AVM1Movie() {}
-    public function call(functionName:String) { notImplemented("call"); }
-    public function addCallback(functionName:String, closure:Function):void { notImplemented("addCallback"); }
-  }
+  public native function AVM1Movie();
+  public native function call(functionName:String): *;
+  public native function addCallback(functionName:String, closure:Function): void;
+}
 }

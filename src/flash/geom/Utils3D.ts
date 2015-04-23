@@ -16,6 +16,7 @@
 // Class: Utils3D
 module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Utils3D extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.geom {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.geom.Utils3D");
+      dummyConstructor("public flash.geom.Utils3D");
     }
     
     // JS -> AS Bindings

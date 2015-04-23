@@ -19,6 +19,11 @@
 
 ///<reference path='../htmlparser.ts' />
 ///<reference path='../TextContent.ts' />
+///<reference path='options.ts' />
+
+///<reference path='symbol.ts' />
+
+///<reference path='../rtmp/references.ts' />
 
 ///<reference path='geom/Matrix.ts' />
 ///<reference path='geom/Matrix3D.ts' />
@@ -123,6 +128,7 @@
 ///<reference path='display/Graphics.ts' />
 ///<reference path='display/Sprite.ts' />
 ///<reference path='display/MovieClip.ts' />
+///<reference path='display/MovieClipSoundStream.ts' />
 ///<reference path='display/Stage.ts' />
 
 ///<reference path='display/ActionScriptVersion.ts' />
@@ -181,7 +187,7 @@
 
 // ///<reference path='errors/EOFError.ts' />
 // ///<reference path='errors/IOError.ts' />
-// ///<reference path='errors/IllegalOperationError.ts' />
+///<reference path='errors/IllegalOperationError.ts' />
 // ///<reference path='errors/InvalidSWFError.ts' />
 // ///<reference path='errors/MemoryError.ts' />
 // ///<reference path='errors/ScriptTimeoutError.ts' />
@@ -235,8 +241,8 @@
 ///<reference path='media/SoundLoaderContext.ts' />
 ///<reference path='media/SoundMixer.ts' />
 ///<reference path='media/SoundTransform.ts' />
-// ///<reference path='media/StageVideo.ts' />
-// ///<reference path='media/StageVideoAvailability.ts' />
+///<reference path='media/StageVideo.ts' />
+///<reference path='media/StageVideoAvailability.ts' />
 ///<reference path='media/Video.ts' />
 // ///<reference path='media/VideoCodec.ts' />
 // ///<reference path='media/VideoStatus.ts' />
@@ -389,18 +395,15 @@
 ///<reference path='ui/Keyboard.ts' />
 // ///<reference path='ui/KeyboardType.ts' />
 ///<reference path='ui/Mouse.ts' />
-// ///<reference path='ui/MouseCursor.ts' />
+///<reference path='ui/MouseCursor.ts' />
 ///<reference path='ui/MouseCursorData.ts' />
 ///<reference path='ui/Multitouch.ts' />
 ///<reference path='ui/MultitouchInputMode.ts' />
 
-// ///<reference path='utils/CompressionAlgorithm.ts' />
 ///<reference path='utils/Endian.ts' />
 ///<reference path='utils/IDataInput2.ts' />
 ///<reference path='utils/IDataOutput2.ts' />
 ///<reference path='utils/IExternalizable.ts' />
-///<reference path='utils/ObjectInput.ts' />
-///<reference path='utils/ObjectOutput.ts' />
 ///<reference path='utils/Timer.ts' />
 ///<reference path='utils/SetIntervalTimer.ts' />
 
@@ -411,7 +414,5 @@
 ///<reference path='xml/XMLTag.ts' />
 
 ///<reference path='avm1.d.ts' />
-
-///<reference path='../player/timeline.ts' />
 
 ///<reference path='linker.ts' />

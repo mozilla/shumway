@@ -18,7 +18,6 @@ module Shumway.AVM2.Compiler.IR {
   import assert = Shumway.Debug.assert;
   import unexpected = Shumway.Debug.unexpected;
   import Multiname = Shumway.AVM2.ABC.Multiname;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import top = Shumway.ArrayUtilities.top;
   import bitCount = Shumway.IntegerUtilities.bitCount;
   import IndentingWriter = Shumway.IndentingWriter;
@@ -599,7 +598,7 @@ module Shumway.AVM2.Compiler.IR {
     }
 
     computeDominators(apply) {
-      release || assert (this.root.predecessors.length === 0, "Root node ", this.root, " must not have predecessors.");
+      release || assert (this.root.predecessors.length === 0, "Root node " + this.root + " must not have predecessors.");
 
       var dom = new Int32Array(this.blocks.length);
       for (var i = 0; i < dom.length; i++) {
@@ -935,11 +934,11 @@ module Shumway.AVM2.Compiler.IR {
           for (var j = 0; j < phis.length; j++) {
             var phi = phis[j];
             debug && writer.writeLn("Emitting moves for: " + phi);
-            var arguments = phi.args;
-            release || assert (predecessors.length === arguments.length);
+            var phiArguments = phi.args;
+            release || assert (predecessors.length === phiArguments.length);
             for (var k = 0; k < predecessors.length; k++) {
               var predecessor = predecessors[k];
-              var argument = arguments[k];
+              var argument = phiArguments[k];
               if (argument.abstract || isProjection(argument, ProjectionType.STORE)) {
                 continue;
               }
@@ -1058,7 +1057,7 @@ module Shumway.AVM2.Compiler.IR {
       for (var i = 0; i < roots.length; i++) {
         var root = roots[i];
         if (root instanceof Phi) {
-          var block = root.control.block;
+          var block = (<any>root.control).block;
           (block.phis || (block.phis = [])).push(root);
         }
         if (root.control) {
@@ -1084,7 +1083,7 @@ module Shumway.AVM2.Compiler.IR {
       }
 
       function append(node) {
-        release || assert (!isScheduled(node), "Already scheduled ", node);
+        release || assert (!isScheduled(node), "Already scheduled " + node);
         scheduled[node.id] = true;
         release || assert (node.control, node);
         if (shouldFloat(node)) {
@@ -1157,7 +1156,7 @@ module Shumway.AVM2.Compiler.IR {
         if (node === dfg.start || node instanceof Region) {
           return;
         }
-        release || assert (node.control, "Node is not scheduled: ", node);
+        release || assert (node.control, "Node is not scheduled: " + node);
       });
     }
 

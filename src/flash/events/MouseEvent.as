@@ -38,14 +38,6 @@ public class MouseEvent extends Event {
   public static const RIGHT_MOUSE_UP:String = "rightMouseUp";
   public static const CONTEXT_MENU:String = "contextMenu";
 
-  private var _relatedObject:InteractiveObject;
-  private var _ctrlKey:Boolean;
-  private var _altKey:Boolean;
-  private var _shiftKey:Boolean;
-  private var _buttonDown:Boolean;
-  private var _delta:int;
-  private var _isRelatedObjectInaccessible:Boolean;
-
   public function MouseEvent(type:String, bubbles:Boolean = true, cancelable:Boolean = false,
                              localX:Number = void 0, localY:Number = void 0,
                              relatedObject:InteractiveObject = null, ctrlKey:Boolean = false,
@@ -55,88 +47,51 @@ public class MouseEvent extends Event {
     super(type, bubbles, cancelable);
     this.localX = localX;
     this.localY = localY;
-    _relatedObject = relatedObject;
-    _ctrlKey = ctrlKey;
-    _altKey = altKey;
-    _shiftKey = shiftKey;
-    _buttonDown = buttonDown;
-    _delta = delta;
+    this.relatedObject = relatedObject;
+    this.ctrlKey = ctrlKey;
+    this.altKey = altKey;
+    this.shiftKey = shiftKey;
+    this.buttonDown = buttonDown;
+    this.delta = delta;
   }
   public native function get localX():Number;
   public native function set localX(value:Number):void;
+
   public native function get localY():Number;
   public native function set localY(value:Number):void;
 
-  public function get relatedObject():InteractiveObject {
-    return _relatedObject;
-  }
-  public function set relatedObject(value:InteractiveObject):void {
-    _relatedObject = value;
-  }
-  public function get ctrlKey():Boolean {
-    return _ctrlKey;
-  }
-  public function set ctrlKey(value:Boolean):void {
-    _ctrlKey = value;
-  }
-  public function get altKey():Boolean {
-    return _altKey;
-  }
-  public function set altKey(value:Boolean):void {
-    _altKey = value;
-  }
-  public function get shiftKey():Boolean {
-    return _shiftKey;
-  }
-  public function set shiftKey(value:Boolean):void {
-    _shiftKey = value;
-  }
-  public function get buttonDown():Boolean {
-    return _buttonDown;
-  }
-  public function set buttonDown(value:Boolean):void {
-    _buttonDown = value;
-  }
-  public function get delta():int {
-    return _delta;
-  }
-  public function set delta(value:int):void {
-    _delta = value;
-  }
-  public function get stageX():Number {
-    if (isNaN(localX + localY)) {
-      return Number.NaN;
-    }
-    return getStageX();
-  }
-  public function get stageY():Number {
-    if (isNaN(localX + localY)) {
-      return Number.NaN;
-    }
-    return getStageY();
-  }
-  public function get isRelatedObjectInaccessible():Boolean {
-    return _isRelatedObjectInaccessible;
-  }
-  public function set isRelatedObjectInaccessible(value:Boolean):void {
-    _isRelatedObjectInaccessible = value;
-  }
+  public native function get stageX():Number;
+  public native function get stageY():Number;
+
   public native function get movementX():Number;
   public native function set movementX(value:Number):void;
+
   public native function get movementY():Number;
   public native function set movementY(value:Number):void;
-  public override function clone():Event {
-    return new MouseEvent(type, bubbles, cancelable, localX, localY, relatedObject, ctrlKey,
-                          altKey, shiftKey, buttonDown, delta);
-  }
-  public override function toString():String {
-    return formatToString('MouseEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
-                          'localX', "localY", 'relatedObject', 'ctrlKey', 'altKey', 'shiftKey',
-                          'buttonDown', 'delta');
-  }
-  public native function updateAfterEvent():void;
 
-  private native function getStageX():Number;
-  private native function getStageY():Number;
+  public native function get delta():int;
+  public native function set delta(value:int):void;
+
+  public native function get ctrlKey():Boolean;
+  public native function set ctrlKey(value:Boolean):void;
+
+  public native function get altKey():Boolean;
+  public native function set altKey(value:Boolean):void;
+
+  public native function get shiftKey():Boolean;
+  public native function set shiftKey(value:Boolean):void;
+
+  public native function get buttonDown():Boolean;
+  public native function set buttonDown(value:Boolean):void;
+
+  public native function get relatedObject():InteractiveObject;
+  public native function set relatedObject(value:InteractiveObject):void;
+
+  public native function get isRelatedObjectInaccessible():Boolean;
+  public native function set isRelatedObjectInaccessible(value:Boolean):void;
+
+  public native override function clone():Event;
+  public native override function toString():String;
+  public native function updateAfterEvent():void;
 }
 }

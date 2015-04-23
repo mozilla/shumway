@@ -13,48 +13,38 @@
 # limitations under the License.
 
 UTILS_HOME = ../../utils
-CLOSURE ?= $(UTILS_HOME)/cc.jar
+CLOSURE ?= $(UTILS_HOME)/closure.jar
 BUILD_DIR = ../../build/mozcentral
 BUILD_EXTENSION_DIR = $(BUILD_DIR)/browser/extensions/shumway
-GENERIC_DIR = ../../build/bundle_nonopt
+BUNDLES_DIR = ../../build/bundles-cc
 EXTENSION_SRC = ../firefox
 
 # Just builds a ff extension
 
-VERSION_BASELINE=9c77cb929464c1bca343f4
-VERSION=0.8.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
-VERSION_SHA=`git log --format="%h" -n 1`
-
-build: ensureoutputdir build-bundle ../../build/playerglobal/playerglobal.abcs
+build: ensureoutputdir
 	# Coping extension files
-	echo "Creating mozcentral package verions: $(VERSION)"
+	echo "Creating mozcentral package"
 	mkdir -p $(BUILD_EXTENSION_DIR)
-	cp -R ../../LICENSE $(EXTENSION_SRC)/content $(BUILD_EXTENSION_DIR)/
+	cp -R ../../LICENSE $(EXTENSION_SRC)/chrome $(EXTENSION_SRC)/content $(BUILD_EXTENSION_DIR)/
+	cp ../../examples/inspector/debug/pingpong.js $(BUILD_EXTENSION_DIR)/chrome/
 	cp -R browser $(BUILD_DIR)/
+	mkdir -p $(BUILD_EXTENSION_DIR)/content/gfx/gl/shaders
+	cp ../../src/gfx/gl/shaders/combined.frag $(BUILD_EXTENSION_DIR)/content/gfx/gl/shaders/
+	cp ../../src/gfx/gl/shaders/combined.vert $(BUILD_EXTENSION_DIR)/content/gfx/gl/shaders/
 	# Coping JavaScript content files
 	mkdir -p $(BUILD_EXTENSION_DIR)/content/playerglobal
 	cp ../../build/playerglobal/playerglobal.json $(BUILD_EXTENSION_DIR)/content/playerglobal/
 	cp ../../build/playerglobal/playerglobal.abcs $(BUILD_EXTENSION_DIR)/content/playerglobal/
-	mkdir -p $(BUILD_EXTENSION_DIR)/content/avm2/generated/builtin
-	cp ../../src/avm2/generated/builtin/builtin.abc $(BUILD_EXTENSION_DIR)/content/avm2/generated/builtin/
-	mkdir -p $(BUILD_EXTENSION_DIR)/content/avm2/generated/avm1lib
-	cp ../../src/avm2/generated/avm1lib/avm1lib.abc $(BUILD_EXTENSION_DIR)/content/avm2/generated/avm1lib/
-	# Coping shumway.js files
-	cp $(GENERIC_DIR)/shumway*.js $(BUILD_EXTENSION_DIR)/content/
-	echo $(VERSION) > $(BUILD_EXTENSION_DIR)/content/version.txt
-	echo $(VERSION_SHA) >> $(BUILD_EXTENSION_DIR)/content/version.txt
-
-../../build/playerglobal/playerglobal.abcs:
-	make -C $(UTILS_HOME) build-playerglobal
-
-build-bundle:
-	$(MAKE) -C $(UTILS_HOME)/builder/ CLOSURE_BASIC_OPT= CLOSURE_ADV_OPT= BUILD_DIR=$(GENERIC_DIR)
+	mkdir -p $(BUILD_EXTENSION_DIR)/content/libs
+	cp ../../build/libs/builtin.abc $(BUILD_EXTENSION_DIR)/content/libs/
+	# Coping closure optimized shumway.js files
+	cp $(BUNDLES_DIR)/shumway*.js $(BUILD_EXTENSION_DIR)/content/
+	cp ../../build/version/version.txt $(BUILD_EXTENSION_DIR)/content/version.txt
 
 ensureoutputdir: clean
 	-mkdir -p $(BUILD_DIR)
 
 clean:
-	-rm -rf build
 	-rm -rf $(BUILD_DIR)
 
 PHONY: build clean ensureoutputdir

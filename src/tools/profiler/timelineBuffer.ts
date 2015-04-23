@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 module Shumway.Tools.Profiler {
-  import createEmptyObject = ObjectUtilities.createEmptyObject;
 
   export interface TimelineItemKind {
     id: number;
@@ -49,7 +48,7 @@ module Shumway.Tools.Profiler {
 
     constructor(name: string = "", startTime?: number) {
       this.name = name || "";
-      this._startTime = isNullOrUndefined(startTime) ? performance.now() : startTime;
+      this._startTime = isNullOrUndefined(startTime) ? jsGlobal.START_TIME : startTime;
     }
 
     getKind(kind: number): TimelineItemKind {
@@ -69,7 +68,7 @@ module Shumway.Tools.Profiler {
       this._stack = [];
       this._data = [];
       this._kinds = [];
-      this._kindNameMap = createEmptyObject();
+      this._kindNameMap = Object.create(null);
       this._marks = new Shumway.CircularBuffer(Int32Array, 20);
       this._times = new Shumway.CircularBuffer(Float64Array, 20);
     }

@@ -21,9 +21,6 @@ public function describeType(value):XML {
   return avmplus.describeType(value, FLASH10_FLAGS);
 }
 
-[native("FlashUtilScript::getAliasName")]
-public native function getAliasName(value):String;
-
 public function getQualifiedClassName(value):String {
   return avmplus.getQualifiedClassName(value);
 }

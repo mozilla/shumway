@@ -16,6 +16,7 @@
 // Class: OutputProgressEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class OutputProgressEvent extends flash.events.Event {
 
     static classInitializer: any = null;
@@ -27,7 +28,7 @@ module Shumway.AVM2.AS.flash.events {
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 bytesPending: number = 0, bytesTotal: number = 0) {
       super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.OutputProgressEvent");
+      dummyConstructor("public flash.events.OutputProgressEvent");
     }
 
     // JS -> AS Bindings

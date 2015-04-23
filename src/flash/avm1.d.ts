@@ -15,28 +15,36 @@
  */
 
 import ASClass = Shumway.AVM2.AS.ASClass;
-declare module Shumway.AVM2.AS.avm1lib {
-  export class AS2Globals extends ASClass {}
-  export class AS2Utils extends ASClass {}
-  export class AS2MovieClip extends ASClass {}
-  export class AS2BitmapData extends ASClass {}
-  export class AS2Button extends ASClass {}
-  export class AS2TextField extends ASClass {}
-  export class AS2MovieClipLoader extends ASClass {}
-}
-declare module Shumway.AVM1 {
-  export function getAS2Object(as3Object: any): any;
 
-  export class AS2ActionsData {
-    constructor(actionsBlock: Uint8Array, name: string);
+declare module Shumway.AVM1 {
+  import flash = Shumway.AVM2.AS.flash;
+
+  export class AVM1ActionsData {
   }
-  export class AS2Context {
-    static create(swfVersion: number): AS2Context;
-    addAsset(className: string, symbolProps);
-    executeActions(actionsData: AS2ActionsData, stage, scopeObj);
+  export class AVM1Context {
+    static create(loaderInfo: flash.display.LoaderInfo): AVM1Context;
+    addAsset(className: string, symbolId: number, symbolProps);
+    executeActions(actionsData: AVM1ActionsData, scopeObj);
     flushPendingScripts();
 
-    globals: Shumway.AVM2.AS.avm1lib.AS2Globals;
+    globals: Lib.AVM1Globals;
+    root: Lib.AVM1MovieClip;
   }
-  export class AS2Utils extends ASClass {}
+  export module Lib {
+    function getAVM1Object(obj, context: AVM1Context);
+    function initializeAVM1Object(as3Object, context: AVM1Context,
+                                  placeObjectTag: Shumway.SWF.PlaceObjectTag);
+    function installObjectMethods();
+    class AVM1Globals extends ASClass {
+      Key: typeof AVM1Key;
+      Mouse: typeof AVM1Mouse;
+    }
+    class AVM1MovieClip extends ASClass {}
+    class AVM1Key extends ASClass {
+      static _bind(stage: flash.display.Stage, context: AVM1Context);
+    }
+    class AVM1Mouse extends ASClass {
+      static _bind(stage: flash.display.Stage, context: AVM1Context);
+    }
+  }
 }

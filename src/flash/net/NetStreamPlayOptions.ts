@@ -16,6 +16,7 @@
 // Class: NetStreamPlayOptions
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NetStreamPlayOptions extends flash.events.EventDispatcher {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.net {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.net.NetStreamPlayOptions");
+      dummyConstructor("public flash.net.NetStreamPlayOptions");
     }
     
     // JS -> AS Bindings

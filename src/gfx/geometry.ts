@@ -134,8 +134,8 @@ module Shumway.GFX.Geometry {
       return new Point(this.x, this.y);
     }
 
-    toString () {
-      return "{x: " + this.x + ", y: " + this.y + "}";
+    toString (digits: number = 2) {
+      return "{x: " + this.x.toFixed(digits) + ", y: " + this.y.toFixed(digits) + "}";
     }
 
     inTriangle (a: Point, b: Point, c: Point) {
@@ -237,8 +237,8 @@ module Shumway.GFX.Geometry {
       return new Point3D(this.x, this.y, this.z);
     }
 
-    toString () {
-      return "{x: " + this.x + ", y: " + this.y + ", z: " + this.z + "}";
+    toString (digits: number = 2) {
+      return "{x: " + this.x.toFixed(digits) + ", y: " + this.y.toFixed(digits) + ", z: " + this.z.toFixed(digits) + "}";
     }
 
     static createEmpty(): Point3D {
@@ -255,15 +255,20 @@ module Shumway.GFX.Geometry {
   }
 
   export class Rectangle {
+    static allocationCount = 0;
+
     x: number;
     y: number;
     w: number;
     h: number;
 
-    private static _temporary = Rectangle.createEmpty();
+    private static _temporary = new Rectangle(0, 0, 0, 0);
+
+    private static _dirtyStack: Rectangle [] = [];
 
     constructor (x: number, y: number, w: number, h: number) {
       this.setElements(x, y, w, h);
+      Rectangle.allocationCount ++;
     }
 
     setElements (x: number, y: number, w: number, h: number) {
@@ -323,6 +328,8 @@ module Shumway.GFX.Geometry {
       if (this.isEmpty()) {
         this.set(other);
         return;
+      } else if (other.isEmpty()) {
+        return;
       }
       var x = this.x, y = this.y;
       if (this.x > other.x) {
@@ -350,6 +357,8 @@ module Shumway.GFX.Geometry {
     }
 
     setEmpty () {
+      this.x = 0;
+      this.y = 0;
       this.w = 0;
       this.h = 0;
     }
@@ -407,14 +416,22 @@ module Shumway.GFX.Geometry {
     }
 
     clone (): Rectangle {
-      return new Rectangle(this.x, this.y, this.w, this.h);
+      var rectangle: Rectangle = Rectangle.allocate();
+      rectangle.set(this);
+      return rectangle;
     }
 
-    copyFrom(source: Rectangle) {
-      this.x = source.x;
-      this.y = source.y;
-      this.w = source.w;
-      this.h = source.h;
+    static allocate(): Rectangle {
+      var dirtyStack = Rectangle._dirtyStack;
+      if (dirtyStack.length) {
+        return dirtyStack.pop();
+      } else {
+        return new Rectangle(12345, 67890, 12345, 67890);
+      }
+    }
+
+    free() {
+      Rectangle._dirtyStack.push(this);
     }
 
     /**
@@ -464,17 +481,19 @@ module Shumway.GFX.Geometry {
       return new Rectangle(0, 0, this.w, this.h);
     }
 
-    toString(): string {
+    toString(digits: number = 2): string {
       return "{" +
-        this.x + ", " +
-        this.y + ", " +
-        this.w + ", " +
-        this.h +
+        this.x.toFixed(digits) + ", " +
+        this.y.toFixed(digits) + ", " +
+        this.w.toFixed(digits) + ", " +
+        this.h.toFixed(digits) +
       "}";
     }
 
     static createEmpty(): Rectangle {
-      return new Rectangle(0, 0, 0, 0);
+      var rectangle = Rectangle.allocate();
+      rectangle.setEmpty();
+      return rectangle;
     }
 
     static createSquare(size: number): Rectangle {
@@ -485,7 +504,11 @@ module Shumway.GFX.Geometry {
      * Creates the maximum rectangle representable by signed 16 bit integers.
      */
     static createMaxI16() {
-      return new Rectangle(Numbers.MinI16, Numbers.MinI16, Numbers.MaxU16, Numbers.MaxU16)
+      return new Rectangle(Numbers.MinI16, Numbers.MinI16, Numbers.MaxU16, Numbers.MaxU16);
+    }
+
+    setMaxI16() {
+      this.setElements(Numbers.MinI16, Numbers.MinI16, Numbers.MaxU16, Numbers.MaxU16)
     }
 
     getCorners (points: Point[]) {
@@ -565,45 +588,128 @@ module Shumway.GFX.Geometry {
     }
   }
 
-  export class Matrix {
-    a: number;
-    b: number;
-    c: number;
-    d: number;
-    tx: number;
-    ty: number;
+  /**
+   * Used to write fast paths for common matrix types.
+   */
+  export enum MatrixType {
+    Unknown           = 0x0000,
+    Identity          = 0x0001,
+    Translation       = 0x0002
+  }
 
-    private static _svg: any = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  export class Matrix {
+    static allocationCount = 0;
+
+    private _data: Float64Array;
+    private _type: MatrixType;
+
+    private static _dirtyStack: Matrix [] = [];
+
+    public set a(a: number) {
+      this._data[0] = a;
+      this._type = MatrixType.Unknown;
+    }
+
+    public get a(): number {
+      return this._data[0];
+    }
+
+    public set b(b: number) {
+      this._data[1] = b;
+      this._type = MatrixType.Unknown;
+    }
+
+    public get b(): number {
+      return this._data[1];
+    }
+
+    public set c(c: number) {
+      this._data[2] = c;
+      this._type = MatrixType.Unknown;
+    }
+
+    public get c(): number {
+      return this._data[2];
+    }
+
+    public set d(d: number) {
+      this._data[3] = d;
+      this._type = MatrixType.Unknown;
+    }
+
+    public get d(): number {
+      return this._data[3];
+    }
+
+    public set tx(tx: number) {
+      this._data[4] = tx;
+      if (this._type === MatrixType.Identity) {
+        this._type = MatrixType.Translation;
+      }
+    }
+
+    public get tx(): number {
+      return this._data[4];
+    }
+
+    public set ty(ty: number) {
+      this._data[5] = ty;
+      if (this._type === MatrixType.Identity) {
+        this._type = MatrixType.Translation;
+      }
+    }
+
+    public get ty(): number {
+      return this._data[5];
+    }
+
+    private static _svg: SVGSVGElement;
+
 
     constructor (a: number, b: number, c: number, d: number, tx: number, ty: number) {
+      this._data = new Float64Array(6);
+      this._type = MatrixType.Unknown;
       this.setElements(a, b, c, d, tx, ty);
+      Matrix.allocationCount ++;
+    }
+
+    private static _createSVGMatrix(): SVGMatrix  {
+      if (!Matrix._svg) {
+        Matrix._svg = <any>document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      }
+      return Matrix._svg.createSVGMatrix();
     }
 
     setElements (a: number, b: number, c: number, d: number, tx: number, ty: number) {
-      this.a = a;
-      this.b = b;
-      this.c = c;
-      this.d = d;
-      this.tx = tx;
-      this.ty = ty;
+      var m = this._data;
+      m[0] = a;
+      m[1] = b;
+      m[2] = c;
+      m[3] = d;
+      m[4] = tx;
+      m[5] = ty;
+      this._type = MatrixType.Unknown;
     }
 
     set (other: Matrix) {
-      this.a = other.a;
-      this.b = other.b;
-      this.c = other.c;
-      this.d = other.d;
-      this.tx = other.tx;
-      this.ty = other.ty;
+      var m = this._data, n = other._data;
+      m[0] = n[0];
+      m[1] = n[1];
+      m[2] = n[2];
+      m[3] = n[3];
+      m[4] = n[4];
+      m[5] = n[5];
+      this._type = other._type;
     }
 
     /**
      * Whether the transformed query rectangle is empty after this transform is applied to it.
      */
     emptyArea(query: Rectangle): boolean {
+      var m = this._data;
       // TODO: Work out the details here.
-      if (this.a === 0 || this.d === 0) {
-         return true;
+      if (m[0] === 0 || m[3] === 0) {
+        return true;
       }
       return false;
     }
@@ -612,45 +718,64 @@ module Shumway.GFX.Geometry {
      * Whether the area of transformed query rectangle is infinite after this transform is applied to it.
      */
     infiniteArea(query: Rectangle): boolean {
+      var m = this._data;
       // TODO: Work out the details here.
-      if (Math.abs(this.a) === Infinity ||
-          Math.abs(this.d) === Infinity) {
+      if (Math.abs(m[0]) === Infinity ||
+          Math.abs(m[3]) === Infinity) {
         return true;
       }
       return false;
     }
 
     isEqual (other: Matrix) {
-      return this.a  === other.a  &&
-             this.b  === other.b  &&
-             this.c  === other.c  &&
-             this.d  === other.d  &&
-             this.tx === other.tx &&
-             this.ty === other.ty;
+      if (this._type === MatrixType.Identity && other._type === MatrixType.Identity) {
+        return true;
+      }
+      var m = this._data, n = other._data;
+      return m[0] === n[0] &&
+             m[1] === n[1] &&
+             m[2] === n[2] &&
+             m[3] === n[3] &&
+             m[4] === n[4] &&
+             m[5] === n[5];
     }
 
     clone (): Matrix {
-      return new Matrix(this.a, this.b, this.c, this.d, this.tx, this.ty);
+      var matrix = Matrix.allocate();
+      matrix.set(this);
+      return matrix;
+    }
+
+    static allocate(): Matrix {
+      var dirtyStack = Matrix._dirtyStack;
+      var matrix = null;
+      if (dirtyStack.length) {
+        return dirtyStack.pop();
+      } else {
+        return new Matrix(12345, 12345, 12345, 12345, 12345, 12345);
+      }
+    }
+
+    free() {
+      Matrix._dirtyStack.push(this);
     }
 
     transform (a: number, b: number, c: number, d: number, tx: number, ty: number): Matrix  {
-      var _a = this.a, _b = this.b, _c = this.c, _d = this.d, _tx = this.tx, _ty = this.ty;
-      this.a =  _a * a + _c * b;
-      this.b =  _b * a + _d * b;
-      this.c =  _a * c + _c * d;
-      this.d =  _b * c + _d * d;
-      this.tx = _a * tx + _c * ty + _tx;
-      this.ty = _b * tx + _d * ty + _ty;
+      var m = this._data;
+      var _a = m[0], _b = m[1], _c = m[2], _d = m[3], _tx = m[4], _ty = m[5];
+      m[0] = _a * a + _c * b;
+      m[1] = _b * a + _d * b;
+      m[2] = _a * c + _c * d;
+      m[3] = _b * c + _d * d;
+      m[4] = _a * tx + _c * ty + _tx;
+      m[5] = _b * tx + _d * ty + _ty;
+      this._type = MatrixType.Unknown;
       return this;
     }
 
     transformRectangle (rectangle: Rectangle, points: Point[]) {
-      var a = this.a;
-      var b = this.b;
-      var c = this.c;
-      var d = this.d;
-      var tx = this.tx;
-      var ty = this.ty;
+      release || assert(points.length === 4);
+      var m = this._data, a = m[0], b = m[1], c = m[2], d = m[3], tx = m[4], ty = m[5];
 
       var x = rectangle.x;
       var y = rectangle.y;
@@ -659,11 +784,11 @@ module Shumway.GFX.Geometry {
 
       /*
 
-      0---1
-      | / |
-      3---2
+       0---1
+       | / |
+       3---2
 
-      */
+       */
 
       points[0].x = a * x + c * y + tx;
       points[0].y = b * x + d * y + ty;
@@ -676,28 +801,37 @@ module Shumway.GFX.Geometry {
     }
 
     isTranslationOnly(): boolean {
-      if (this.a === 1 &&
-          this.b === 0 &&
-          this.c === 0 &&
-          this.d === 1) {
+      if (this._type === MatrixType.Translation) {
         return true;
-      } else if (epsilonEquals(this.a, 1) &&
-                 epsilonEquals(this.b, 0) &&
-                 epsilonEquals(this.c, 0) &&
-                 epsilonEquals(this.d, 1)) {
+      }
+      var m = this._data;
+      if (m[0] === 1 &&
+          m[1] === 0 &&
+          m[2] === 0 &&
+          m[3] === 1) {
+        this._type = MatrixType.Translation;
+        return true;
+      } else if (epsilonEquals(m[0], 1) &&
+        epsilonEquals(m[1], 0) &&
+        epsilonEquals(m[2], 0) &&
+        epsilonEquals(m[3], 1)) {
+        this._type = MatrixType.Translation;
         return true;
       }
       return false;
     }
 
     transformRectangleAABB (rectangle: Rectangle) {
-      var a  = this.a;
-      var b  = this.b;
-      var c  = this.c;
-      var d  = this.d;
-      var tx = this.tx;
-      var ty = this.ty;
+      var m = this._data;
+      if (this._type === MatrixType.Identity) {
+        return;
+      } else if (this._type === MatrixType.Translation) {
+        rectangle.x += m[4];
+        rectangle.y += m[5];
+        return;
+      }
 
+      var a = m[0], b = m[1], c = m[2], d = m[3], tx = m[4], ty = m[5];
       var x = rectangle.x;
       var y = rectangle.y;
       var w = rectangle.w;
@@ -742,12 +876,14 @@ module Shumway.GFX.Geometry {
     }
 
     scale (x: number, y: number): Matrix  {
-      this.a *= x;
-      this.b *= y;
-      this.c *= x;
-      this.d *= y;
-      this.tx *= x;
-      this.ty *= y;
+      var m = this._data;
+      m[0] *= x;
+      m[1] *= y;
+      m[2] *= x;
+      m[3] *= y;
+      m[4] *= x;
+      m[5] *= y;
+      this._type = MatrixType.Unknown;
       return this;
     }
 
@@ -759,164 +895,230 @@ module Shumway.GFX.Geometry {
     }
 
     rotate (angle: number): Matrix {
-      var a = this.a, b = this.b, c = this.c, d = this.d, tx = this.tx, ty = this.ty;
+      var m = this._data, a = m[0], b = m[1], c = m[2], d = m[3], tx = m[4], ty = m[5];
       var cos = Math.cos(angle);
       var sin = Math.sin(angle);
-      this.a  = cos * a  - sin * b;
-      this.b  = sin * a  + cos * b;
-      this.c  = cos * c  - sin * d;
-      this.d  = sin * c  + cos * d;
-      this.tx = cos * tx - sin * ty;
-      this.ty = sin * tx + cos * ty;
+      m[0] = cos * a  - sin * b;
+      m[1] = sin * a  + cos * b;
+      m[2] = cos * c  - sin * d;
+      m[3] = sin * c  + cos * d;
+      m[4] = cos * tx - sin * ty;
+      m[5] = sin * tx + cos * ty;
+      this._type = MatrixType.Unknown;
       return this;
     }
 
-    concat (other: Matrix) {
-      var a  = this.a * other.a;
-      var b  = 0.0;
-      var c  = 0.0;
-      var d  = this.d  * other.d;
-      var tx = this.tx * other.a + other.tx;
-      var ty = this.ty * other.d + other.ty;
-
-      if (this.b !== 0.0 || this.c !== 0.0 || other.b !== 0.0 || other.c !== 0.0) {
-        a  += this.b * other.c;
-        d  += this.c * other.b;
-        b  += this.a * other.b + this.b * other.d;
-        c  += this.c * other.a + this.d * other.c;
-        tx += this.ty * other.c;
-        ty += this.tx * other.b;
+    concat (other: Matrix): Matrix {
+      if (other._type === MatrixType.Identity) {
+        return this;
       }
 
-      this.a  = a;
-      this.b  = b;
-      this.c  = c;
-      this.d  = d;
-      this.tx = tx;
-      this.ty = ty;
+      var m = this._data, n = other._data;
+      var a  = m[0] * n[0];
+      var b  = 0.0;
+      var c  = 0.0;
+      var d  = m[3] * n[3];
+      var tx = m[4] * n[0] + n[4];
+      var ty = m[5] * n[3] + n[5];
+
+      if (m[1] !== 0.0 || m[2] !== 0.0 || n[1] !== 0.0 || n[2] !== 0.0) {
+        a  += m[1] * n[2];
+        d  += m[2] * n[1];
+        b  += m[0] * n[1] + m[1] * n[3];
+        c  += m[2] * n[0] + m[3] * n[2];
+        tx += m[5] * n[2];
+        ty += m[4] * n[1];
+      }
+
+      m[0] = a;
+      m[1] = b;
+      m[2] = c;
+      m[3] = d;
+      m[4] = tx;
+      m[5] = ty;
+
+      this._type = MatrixType.Unknown;
+      return this;
+    }
+
+    concatClone (other: Matrix): Matrix {
+      return this.clone().concat(other);
     }
 
     /**
      * this = other * this
      */
     public preMultiply(other: Matrix): void {
-      var a  = other.a * this.a;
+      var m = this._data, n = other._data;
+      if (other._type === MatrixType.Translation &&
+          (this._type & (MatrixType.Identity | MatrixType.Translation))) {
+        m[4] += n[4];
+        m[5] += n[5];
+        this._type = MatrixType.Translation;
+        return;
+      } else if (other._type === MatrixType.Identity) {
+        return;
+      }
+      var a  = n[0] * m[0];
       var b  = 0.0;
       var c  = 0.0;
-      var d  = other.d  * this.d;
-      var tx = other.tx * this.a + this.tx;
-      var ty = other.ty * this.d + this.ty;
+      var d  = n[3] * m[3];
+      var tx = n[4] * m[0] + m[4];
+      var ty = n[5] * m[3] + m[5];
 
-      if (other.b !== 0.0 || other.c !== 0.0 || this.b !== 0.0 || this.c !== 0.0) {
-        a  += other.b  * this.c;
-        d  += other.c  * this.b;
-        b  += other.a  * this.b + other.b * this.d;
-        c  += other.c  * this.a + other.d * this.c;
-        tx += other.ty * this.c;
-        ty += other.tx * this.b;
+      if (n[1] !== 0.0 || n[2] !== 0.0 || m[1] !== 0.0 || m[2] !== 0.0) {
+        a  += n[1] * m[2];
+        d  += n[2] * m[1];
+        b  += n[0] * m[1] + n[1] * m[3];
+        c  += n[2] * m[0] + n[3] * m[2];
+        tx += n[5] * m[2];
+        ty += n[4] * m[1];
       }
 
-      this.a  = a;
-      this.b  = b;
-      this.c  = c;
-      this.d  = d;
-      this.tx = tx;
-      this.ty = ty;
+      m[0] = a;
+      m[1] = b;
+      m[2] = c;
+      m[3] = d;
+      m[4] = tx;
+      m[5] = ty;
+      this._type = MatrixType.Unknown;
     }
 
     translate (x: number, y: number): Matrix {
-      this.tx += x;
-      this.ty += y;
+      var m = this._data;
+      m[4] += x;
+      m[5] += y;
+      if (this._type === MatrixType.Identity) {
+        this._type = MatrixType.Translation;
+      }
       return this;
     }
 
     setIdentity () {
-      this.a  = 1;
-      this.b  = 0;
-      this.c  = 0;
-      this.d  = 1;
-      this.tx = 0;
-      this.ty = 0;
+      var m = this._data;
+      m[0] = 1;
+      m[1] = 0;
+      m[2] = 0;
+      m[3] = 1;
+      m[4] = 0;
+      m[5] = 0;
+      this._type = MatrixType.Identity;
     }
 
     isIdentity (): boolean {
-      return this.a === 1 && this.b  === 0 && this.c  === 0 &&
-             this.d === 1 && this.tx === 0 && this.ty === 0;
+      if (this._type === MatrixType.Identity) {
+        return true;
+      }
+      var m = this._data;
+      return m[0] === 1 && m[1] === 0 && m[2] === 0 &&
+             m[3] === 1 && m[4] === 0 && m[5] === 0;
     }
 
     transformPoint (point: Point) {
+      if (this._type === MatrixType.Identity) {
+        return;
+      }
+      var m = this._data;
       var x = point.x;
       var y = point.y;
-      point.x = this.a * x + this.c * y + this.tx;
-      point.y = this.b * x + this.d * y + this.ty;
+      point.x = m[0] * x + m[2] * y + m[4];
+      point.y = m[1] * x + m[3] * y + m[5];
     }
 
     transformPoints (points: Point[]) {
+      if (this._type === MatrixType.Identity) {
+        return;
+      }
       for (var i = 0; i < points.length; i++) {
         this.transformPoint(points[i]);
       }
     }
 
     deltaTransformPoint (point: Point) {
+      if (this._type === MatrixType.Identity) {
+        return;
+      }
+      var m = this._data;
       var x = point.x;
       var y = point.y;
-      point.x = this.a * x + this.c * y;
-      point.y = this.b * x + this.d * y;
+      point.x = m[0] * x + m[2] * y;
+      point.y = m[1] * x + m[3] * y;
     }
 
     inverse (result: Matrix) {
-      var b  = this.b;
-      var c  = this.c;
-      var tx = this.tx;
-      var ty = this.ty;
+      var m = this._data, r = result._data;
+      if (this._type === MatrixType.Identity) {
+        result.setIdentity();
+        return;
+      } else if (this._type === MatrixType.Translation) {
+        r[0] = 1;
+        r[1] = 0;
+        r[2] = 0;
+        r[3] = 1;
+        r[4] = -m[4];
+        r[5] = -m[5];
+        result._type = MatrixType.Translation;
+        return;
+      }
+      var b  = m[1];
+      var c  = m[2];
+      var tx = m[4];
+      var ty = m[5];
       if (b === 0 && c === 0) {
-        var a = result.a = 1 / this.a;
-        var d = result.d = 1 / this.d;
-        result.b = 0;
-        result.c = 0;
-        result.tx = -a * tx;
-        result.ty = -d * ty;
+        var a = r[0] = 1 / m[0];
+        var d = r[3] = 1 / m[3];
+        r[1] = 0;
+        r[2] = 0;
+        r[4] = -a * tx;
+        r[5] = -d * ty;
       } else {
-        var a = this.a;
-        var d = this.d;
+        var a = m[0];
+        var d = m[3];
         var determinant = a * d - b * c;
         if (determinant === 0) {
           result.setIdentity();
           return;
         }
         determinant  = 1 / determinant;
-        result.a = d * determinant;
-        b = result.b = -b * determinant;
-        c = result.c = -c * determinant;
-        d = result.d =  a * determinant;
-        result.tx = -(result.a * tx + c * ty);
-        result.ty = -(b * tx + d * ty);
+        r[0] = d * determinant;
+        b = r[1] = -b * determinant;
+        c = r[2] = -c * determinant;
+        d = r[3] =  a * determinant;
+        r[4] = -(r[0] * tx + c * ty);
+        r[5] = -(b * tx + d * ty);
       }
+      result._type = MatrixType.Unknown;
       return;
     }
 
     getTranslateX(): number {
-      return this.tx;
+      return this._data[4];
     }
 
     getTranslateY(): number {
-      return this.tx;
+      return this._data[4];
     }
 
     getScaleX(): number {
-      if (this.a === 1 && this.b === 0) {
+      var m = this._data;
+      if (m[0] === 1 && m[1] === 0) {
         return 1;
       }
-      var result = Math.sqrt(this.a * this.a + this.b * this.b);
-      return this.a > 0 ? result : -result;
+      var result = Math.sqrt(m[0] * m[0] + m[1] * m[1]);
+      return m[0] > 0 ? result : -result;
     }
 
     getScaleY(): number {
-      if (this.c === 0 && this.d === 1) {
+      var m = this._data;
+      if (m[2] === 0 && m[3] === 1) {
         return 1;
       }
-      var result = Math.sqrt(this.c * this.c + this.d * this.d);
-      return this.d > 0 ? result : -result;
+      var result = Math.sqrt(m[2] * m[2] + m[3] * m[3]);
+      return m[3] > 0 ? result : -result;
+    }
+
+    getScale(): number {
+      return (this.getScaleX() + this.getScaleY()) / 2;
     }
 
     getAbsoluteScaleX(): number {
@@ -928,69 +1130,95 @@ module Shumway.GFX.Geometry {
     }
 
     getRotation(): number {
-      return Math.atan(this.b / this.a) * 180 / Math.PI;
+      var m = this._data;
+      return Math.atan(m[1] / m[0]) * 180 / Math.PI;
     }
 
     isScaleOrRotation(): boolean {
-      return Math.abs(this.a * this.c + this.b * this.d) < 0.01;
+      var m = this._data;
+      return Math.abs(m[0] * m[2] + m[1] * m[3]) < 0.01;
     }
 
-    toString (): string {
+    toString (digits: number = 2): string {
+      var m = this._data;
       return "{" +
-        this.a  + ", " +
-        this.b  + ", " +
-        this.c  + ", " +
-        this.d  + ", " +
-        this.tx + ", " +
-        this.ty + "}";
+        m[0].toFixed(digits) + ", " +
+        m[1].toFixed(digits) + ", " +
+        m[2].toFixed(digits) + ", " +
+        m[3].toFixed(digits) + ", " +
+        m[4].toFixed(digits) + ", " +
+        m[5].toFixed(digits) + "}";
     }
 
     public toWebGLMatrix(): Float32Array {
+      var m = this._data;
       return new Float32Array([
-        this.a, this.b, 0, this.c, this.d, 0, this.tx, this.ty, 1
+        m[0], m[1], 0, m[2], m[3], 0, m[4], m[5], 1
       ]);
     }
 
-    public toCSSTransform(): String {
+    public toCSSTransform(): string {
+      var m = this._data;
       return "matrix(" +
-        this.a  + ", " +
-        this.b  + ", " +
-        this.c  + ", " +
-        this.d  + ", " +
-        this.tx + ", " +
-        this.ty + ")";
+        m[0] + ", " +
+        m[1] + ", " +
+        m[2] + ", " +
+        m[3] + ", " +
+        m[4] + ", " +
+        m[5] + ")";
     }
 
-    public static createIdentity() {
-      return new Matrix(1, 0, 0, 1, 0, 0);
+    public static createIdentity(): Matrix {
+      var matrix = Matrix.allocate();
+      matrix.setIdentity();
+      return matrix;
     }
 
-    static multiply = function (dst, src) {
-      dst.transform(src.a, src.b, src.c, src.d, src.tx, src.ty);
+    static multiply = function (dst: Matrix, src: Matrix) {
+      var n = src._data;
+      dst.transform(n[0], n[1], n[2], n[3], n[4], n[5]);
     };
 
     public toSVGMatrix(): SVGMatrix {
-      var matrix: SVGMatrix = Matrix._svg.createSVGMatrix();
-      matrix.a = this.a;
-      matrix.b = this.b;
-      matrix.c = this.c;
-      matrix.d = this.d;
-      matrix.e = this.tx;
-      matrix.f = this.ty;
+      var m = this._data;
+      var matrix: SVGMatrix = Matrix._createSVGMatrix();
+      matrix.a = m[0];
+      matrix.b = m[1];
+      matrix.c = m[2];
+      matrix.d = m[3];
+      matrix.e = m[4];
+      matrix.f = m[5];
       return matrix;
     }
 
     public snap (): boolean {
+      var m = this._data;
       if (this.isTranslationOnly()) {
-        this.a = 1;
-        this.b = 0;
-        this.c = 0;
-        this.d = 1;
-        this.tx = Math.round(this.tx);
-        this.ty = Math.round(this.ty);
+        m[0] = 1;
+        m[1] = 0;
+        m[2] = 0;
+        m[3] = 1;
+        m[4] = Math.round(m[4]);
+        m[5] = Math.round(m[5]);
+        this._type = MatrixType.Translation;
         return true;
       }
       return false;
+    }
+
+    public static createIdentitySVGMatrix(): SVGMatrix {
+      return Matrix._createSVGMatrix();
+    }
+
+    public static createSVGMatrixFromArray(array: number []): SVGMatrix {
+      var matrix: SVGMatrix = Matrix._createSVGMatrix();
+      matrix.a = array[0];
+      matrix.b = array[1];
+      matrix.c = array[2];
+      matrix.d = array[3];
+      matrix.e = array[4];
+      matrix.f = array[5];
+      return matrix;
     }
   }
 
@@ -1682,7 +1910,7 @@ module Shumway.GFX.Geometry {
       var scale = pow2(level);
       // Since we use a single tile for dynamic sources, we've got to make sure that it fits in our surface caches ...
 
-      if (this._source.hasFlags(RenderableFlags.Dynamic)) {
+      if (this._source.hasFlags(NodeFlags.Dynamic)) {
         // .. so try a lower scale level until it fits.
         while (true) {
           scale = pow2(level);
@@ -1695,7 +1923,7 @@ module Shumway.GFX.Geometry {
       }
       // If the source is not scalable don't cache any tiles at a higher scale factor. However, it may still make
       // sense to cache at a lower scale factor in case we need to evict larger cached images.
-      if (!(this._source.hasFlags(RenderableFlags.Scalable))) {
+      if (!(this._source.hasFlags(NodeFlags.Scalable))) {
         level = clamp(level, -MIN_CACHE_LEVELS, 0);
       }
       var scale = pow2(level);
@@ -1705,8 +1933,8 @@ module Shumway.GFX.Geometry {
         var bounds = this._source.getBounds().getAbsoluteBounds();
         var scaledBounds = bounds.clone().scale(scale, scale);
         var tileW, tileH;
-        if (this._source.hasFlags(RenderableFlags.Dynamic) ||
-            !this._source.hasFlags(RenderableFlags.Tileable) || Math.max(scaledBounds.w, scaledBounds.h) <= this._minUntiledSize) {
+        if (this._source.hasFlags(NodeFlags.Dynamic) ||
+            !this._source.hasFlags(NodeFlags.Tileable) || Math.max(scaledBounds.w, scaledBounds.h) <= this._minUntiledSize) {
           tileW = scaledBounds.w;
           tileH = scaledBounds.h;
         } else {
@@ -1728,7 +1956,7 @@ module Shumway.GFX.Geometry {
       var source = this._source;
       for (var i = 0; i < tiles.length; i++) {
         var tile = tiles[i];
-        if (!tile.cachedSurfaceRegion || !tile.cachedSurfaceRegion.surface || (source.hasFlags(RenderableFlags.Dynamic | RenderableFlags.Dirty))) {
+        if (!tile.cachedSurfaceRegion || !tile.cachedSurfaceRegion.surface || (source.hasFlags(NodeFlags.Dynamic | NodeFlags.Dirty))) {
           if (!uncachedTiles) {
             uncachedTiles = [];
           }
@@ -1738,7 +1966,7 @@ module Shumway.GFX.Geometry {
       if (uncachedTiles) {
         this._cacheTiles(scratchContext, uncachedTiles, cacheImageCallback, scratchBounds);
       }
-      source.removeFlags(RenderableFlags.Dirty);
+      source.removeFlags(NodeFlags.Dirty);
       return tiles;
     }
 
@@ -1778,7 +2006,7 @@ module Shumway.GFX.Geometry {
       scratchContext.translate(-sourceBounds.x, -sourceBounds.y);
       profile && timelineBuffer && timelineBuffer.enter("renderTiles");
       traceLevel >= TraceLevel.Verbose && writer && writer.writeLn("Rendering Tiles: " + uncachedTileBounds);
-      this._source.render(scratchContext);
+      this._source.render(scratchContext, 0);
       scratchContext.restore();
       profile && timelineBuffer && timelineBuffer.leave("renderTiles");
 
@@ -1810,67 +2038,4 @@ module Shumway.GFX.Geometry {
     }
   }
 
-  export class MipMapLevel {
-    constructor (
-      public surfaceRegion: ISurfaceRegion,
-      public scale: number
-    ) {
-      // ...
-    }
-  }
-
-  export class MipMap {
-    private _source: Renderable;
-    private _size: number;
-    private _levels: MipMapLevel [];
-    private _surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator;
-    constructor (
-      source: Renderable,
-      surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator,
-      size: number
-    ) {
-      this._source = source;
-      this._levels = [];
-      this._surfaceRegionAllocator = surfaceRegionAllocator;
-      this._size = size;
-    }
-    public render(context: CanvasRenderingContext2D) {
-
-    }
-    public getLevel(matrix: Matrix): MipMapLevel {
-      var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());
-      var level = 0;
-      if (matrixScale !== 1) {
-        level = clamp(Math.round(Math.log(matrixScale) / Math.LN2), -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
-      }
-      if (!(this._source.hasFlags(RenderableFlags.Scalable))) {
-        level = clamp(level, -MIN_CACHE_LEVELS, 0);
-      }
-      var scale = pow2(level);
-      var levelIndex = MIN_CACHE_LEVELS + level;
-      var mipLevel = this._levels[levelIndex];
-
-      if (!mipLevel) {
-        var bounds = this._source.getBounds();
-        var scaledBounds = bounds.clone();
-        scaledBounds.scale(scale, scale);
-        scaledBounds.snap();
-        var surfaceRegion = this._surfaceRegionAllocator.allocate(scaledBounds.w, scaledBounds.h);
-        var region = surfaceRegion.region;
-        mipLevel = this._levels[levelIndex] = new MipMapLevel(surfaceRegion, scale);
-        // TODO: Should cast to <Canvas2D.Canvas2DSurface> but this is not available in gfx-base. We should probably
-        // move this code outside of geometry.
-        var surface = <any>(mipLevel.surfaceRegion.surface);
-        var context = surface.context;
-        context.save();
-        context.beginPath();
-        context.rect(region.x, region.y, region.w, region.h);
-        context.clip();
-        context.setTransform(scale, 0, 0, scale, region.x - scaledBounds.x, region.y - scaledBounds.y);
-        this._source.render(context);
-        context.restore();
-      }
-      return mipLevel;
-    }
-  }
 }

@@ -16,6 +16,7 @@
 // Class: AccelerometerEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class AccelerometerEvent extends flash.events.Event {
 
     static classInitializer: any = null;
@@ -28,7 +29,7 @@ module Shumway.AVM2.AS.flash.events {
                 timestamp: number = 0, accelerationX: number = 0, accelerationY: number = 0,
                 accelerationZ: number = 0) {
       super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.AccelerometerEvent");
+      dummyConstructor("public flash.events.AccelerometerEvent");
     }
 
     // JS -> AS Bindings

@@ -826,6 +826,9 @@ module Shumway.AVM2.Compiler.Looper {
                 save[bid] = (save[bid] || 0) + head.save[bid];
                 exit.set(bid);
               }
+              if (lookupSwitch) {
+                v.push(new Control.Break(undefined, lookupSwitch));
+              }
               break;
             }
 

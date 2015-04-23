@@ -1,3 +1,5 @@
 ref/
 tmp/
+fuzz/
+test_snapshots/
 *.log

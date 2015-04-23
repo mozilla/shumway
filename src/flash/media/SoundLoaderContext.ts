@@ -16,6 +16,7 @@
 // Class: SoundLoaderContext
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class SoundLoaderContext extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.media {
     constructor (bufferTime: number = 1000, checkPolicyFile: boolean = false) {
       bufferTime = +bufferTime; checkPolicyFile = !!checkPolicyFile;
       false && super();
-      notImplemented("Dummy Constructor: public flash.media.SoundLoaderContext");
+      dummyConstructor("public flash.media.SoundLoaderContext");
     }
     
     // JS -> AS Bindings

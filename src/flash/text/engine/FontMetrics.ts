@@ -16,6 +16,7 @@
 // Class: FontMetrics
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class FontMetrics extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.text.engine {
     constructor (emBox: flash.geom.Rectangle, strikethroughOffset: number, strikethroughThickness: number, underlineOffset: number, underlineThickness: number, subscriptOffset: number, subscriptScale: number, superscriptOffset: number, superscriptScale: number, lineGap: number = 0) {
       emBox = emBox; strikethroughOffset = +strikethroughOffset; strikethroughThickness = +strikethroughThickness; underlineOffset = +underlineOffset; underlineThickness = +underlineThickness; subscriptOffset = +subscriptOffset; subscriptScale = +subscriptScale; superscriptOffset = +superscriptOffset; superscriptScale = +superscriptScale; lineGap = +lineGap;
       false && super();
-      notImplemented("Dummy Constructor: public flash.text.engine.FontMetrics");
+      dummyConstructor("public flash.text.engine.FontMetrics");
     }
     
     // JS -> AS Bindings

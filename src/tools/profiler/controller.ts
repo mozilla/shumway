@@ -46,13 +46,11 @@ module Shumway.Tools.Profiler {
       this._tooltip = this._createTooltip();
     }
 
-    createProfile(buffers: TimelineBuffer [], activate: boolean = true): Profile {
-      var profile = new Profile(buffers);
+    createProfile(buffers: TimelineBuffer [], startTime: number): Profile {
+      var profile = new Profile(buffers, startTime);
       profile.createSnapshots();
       this._profiles.push(profile);
-      if (activate) {
-        this.activateProfile(profile);
-      }
+      this.activateProfile(profile);
       return profile;
     }
 

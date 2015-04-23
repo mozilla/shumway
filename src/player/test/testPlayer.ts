@@ -18,8 +18,11 @@ module Shumway.Player.Test {
   import Player = Shumway.Player.Player;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
-  export class TestPlayer extends Player {
+  import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
+
+  export class TestGFXService extends GFXServiceBase {
     private _worker;
+    private _fontOrImageRequests: PromiseWrapper<any>[];
 
     constructor() {
       super();
@@ -27,10 +30,10 @@ module Shumway.Player.Test {
       // TODO this is temporary worker to test postMessage tranfers
       this._worker = Shumway.Player.Test.FakeSyncWorker.instance;
       this._worker.addEventListener('message', this._onWorkerMessage.bind(this));
-      //this._worker.addEventListener('syncmessage', this._onWorkerMessage.bind(this));
+      this._fontOrImageRequests = [];
     }
 
-    public onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>, async: boolean = true): DataBuffer {
+    update(updates: DataBuffer, assets: any[]): void {
       var bytes = updates.getBytes();
       var message = {
         type: 'player',
@@ -38,24 +41,72 @@ module Shumway.Player.Test {
         assets: assets
       };
       var transferList = [bytes.buffer];
-      if (!async) {
-        var result = this._worker.postSyncMessage(message, transferList);
-        return DataBuffer.FromPlainObject(result);
-      }
       this._worker.postMessage(message, transferList);
-      return null;
     }
 
-    onExternalCommand(command) {
-      this._worker.postSyncMessage({
-        type: 'external',
-        command: command
+    updateAndGet(updates: DataBuffer, assets: any[]): any {
+      var bytes = updates.getBytes();
+      var message = {
+        type: 'player',
+        updates: bytes,
+        assets: assets
+      };
+      var transferList = [bytes.buffer];
+      var result = this._worker.postSyncMessage(message, transferList);
+      return DataBuffer.FromPlainObject(result);
+    }
+
+    frame(): void {
+      this._worker.postMessage({
+        type: 'frame'
       });
     }
 
-    onFrameProcessed() {
+    videoControl(id: number, eventType: VideoControlEvent, data: any): any {
+      return this._worker.postSyncMessage({
+        type: 'videoControl',
+        id: id,
+        eventType: eventType,
+        data: data
+      });
+    }
+
+    registerFont(syncId: number, data: any): Promise<any> {
+      var requestId = this._fontOrImageRequests.length;
+      var result = new PromiseWrapper<any>();
+      this._fontOrImageRequests[requestId] = result;
+      var message = {
+        type: 'registerFontOrImage',
+        syncId: syncId,
+        assetType: 'font',
+        data: data,
+        requestId: requestId
+      };
+      this._worker.postMessage(message);
+      return result.promise;
+    }
+
+    registerImage(syncId: number, symbolId: number, data: any): Promise<any> {
+      var requestId = this._fontOrImageRequests.length;
+      var result = new PromiseWrapper<any>();
+      this._fontOrImageRequests[requestId] = result;
+      var message = {
+        type: 'registerFontOrImage',
+        syncId: syncId,
+        symbolId: symbolId,
+        assetType: 'image',
+        data: data,
+        requestId: requestId
+      };
+      this._worker.postMessage(message);
+      return result.promise;
+    }
+
+    fscommand(command: string, args: string): void {
       this._worker.postMessage({
-        type: 'frame'
+        type: 'fscommand',
+        command: command,
+        args: args
       });
     }
 
@@ -67,11 +118,20 @@ module Shumway.Player.Test {
       switch (data.type) {
         case 'gfx':
           var updates = DataBuffer.FromArrayBuffer(e.data.updates.buffer);
-          this.processEventUpdates(updates);
+          this.processUpdates(updates, e.data.assets);
           break;
-        case 'externalCallback':
-          this.processExternalCallback(data.request);
+        case 'videoPlayback':
+          this.processVideoEvent(data.id, data.eventType, data.data);
           return;
+        case 'displayParameters':
+          this.processDisplayParameters(data.params);
+          break;
+        case 'registerFontOrImageResponse':
+          var request = this._fontOrImageRequests[data.requestId];
+          release || Debug.assert(request);
+          delete this._fontOrImageRequests[data.requestId];
+          request.resolve(data.result);
+          break;
       }
     }
   }

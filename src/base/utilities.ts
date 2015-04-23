@@ -15,8 +15,10 @@
  */
 
 ///<reference path='references.ts' />
-var jsGlobal = (function() { return this || (1, eval)('this'); })();
-var inBrowser = typeof console != "undefined";
+var jsGlobal = (function() { return this || (1, eval)('this//# sourceURL=jsGlobal-getter'); })();
+// Our polyfills for some DOM things make testing this slightly more onerous than it ought to be.
+var inBrowser = typeof window !=='undefined' && 'document' in window && 'plugins' in window.document;
+var inFirefox = typeof navigator !== 'undefined' && navigator.userAgent.indexOf('Firefox') >= 0;
 
 declare var putstr;
 // declare var print;
@@ -26,10 +28,18 @@ declare var putstr;
 // declare var document;
 // declare var getComputedStyle;
 
-/** @const */ var release: boolean = false;
+/** @const */ var release: boolean = true; // by default 'true' -- we are folding constants in closure compiler
 /** @const */ var profile: boolean = false;
 
 declare var dateNow: () => number;
+
+declare var dump: (message: string) => void;
+
+function dumpLine(line: string) {
+  if (!release && typeof dump !== "undefined") {
+    dump(line + "\n");
+  }
+}
 
 if (!jsGlobal.performance) {
   jsGlobal.performance = {};
@@ -39,17 +49,23 @@ if (!jsGlobal.performance.now) {
   jsGlobal.performance.now = typeof dateNow !== 'undefined' ? dateNow : Date.now;
 }
 
-function log(message?: any, ...optionalParams: any[]): void {
-  jsGlobal.print.apply(jsGlobal, arguments);
+function lazyInitializer(obj: any, propertyName: string, fn: ()=>any) {
+  Object.defineProperty(obj, propertyName, {
+    get: function () {
+      var value = fn();
+      Object.defineProperty(obj, propertyName, {
+        value: value,
+        configurable: true,
+        enumerable: true
+      });
+      return value;
+    },
+    configurable: true,
+    enumerable: true
+  });
 }
 
-function warn(message?: any, ...optionalParams: any[]): void {
-  if (inBrowser) {
-    console.warn.apply(console, arguments);
-  } else {
-    jsGlobal.print(Shumway.IndentingWriter.RED + message + Shumway.IndentingWriter.ENDC);
-  }
-}
+var START_TIME = performance.now();
 
 interface String {
   padRight(c: string, n: number): string;
@@ -96,6 +112,11 @@ declare var Uint8ClampedArray: {
   new (array: number[]): Uint8ClampedArray;
   new (buffer: ArrayBuffer, byteOffset?: number, length?: number): Uint8ClampedArray;
   BYTES_PER_ELEMENT: number;
+}
+
+declare module Shumway {
+  var version: string;
+  var build: string;
 }
 
 module Shumway {
@@ -165,12 +186,23 @@ module Shumway {
   export function isNumeric(value: any): boolean {
     if (typeof value === "number") {
       return true;
-    } else if (typeof value === "string") {
-      return isIndex(value) || isNumericString(value);
-    } else {
-      // Debug.notImplemented(typeof value);
-      return false;
     }
+    if (typeof value === "string") {
+      // |value| is rarely numeric (it's usually an identifier), and the
+      // isIndex()/isNumericString() pair is slow and expensive, so we do a
+      // quick check for obvious non-numericalness first. Just checking if the
+      // first char is a 7-bit identifier char catches most cases.
+      var c = value.charCodeAt(0);
+      if ((65 <= c && c <= 90) ||     // 'A'..'Z'
+          (97 <= c && c <= 122) ||    // 'a'..'z'
+          (c === 36) ||               // '$'
+          (c === 95)) {               // '_'
+        return false;
+      }
+      return isIndex(value) || isNumericString(value);
+    }
+    // Debug.notImplemented(typeof value);
+    return false;
   }
 
   /**
@@ -232,29 +264,22 @@ module Shumway {
   }
 
   export module Debug {
-    export function backtrace() {
-      try {
-        throw new Error();
-      } catch (e) {
-        return e.stack ? e.stack.split('\n').slice(2).join('\n') : '';
-      }
-    }
-
     export function error(message: string) {
-      if (!inBrowser) {
-        warn(message + "\n\nStack Trace:\n" + Debug.backtrace());
-      }
+      console.error(message);
       throw new Error(message);
     }
 
-    export function assert(condition: any, ...args) {
+    export function assert(condition: any, message: any = "assertion failed") {
       if (condition === "") {     // avoid inadvertent false positive
         condition = true;
       }
       if (!condition) {
-        var message = Array.prototype.slice.call(arguments);
-        message.shift();
-        Debug.error(message.join(""));
+        if (typeof console !== 'undefined' && 'assert' in console) {
+          console.assert(false, message);
+          throw new Error(message);
+        } else {
+          Debug.error(message.toString());
+        }
       }
     }
 
@@ -265,12 +290,12 @@ module Shumway {
 
     export function assertNotImplemented(condition: boolean, message: string) {
       if (!condition) {
-        Debug.error("NotImplemented: " + message);
+        Debug.error("notImplemented: " + message);
       }
     }
 
-    export function warning(message: string) {
-      release || warn(message);
+    export function warning(message: any, arg1?: any, arg2?: any/*...messages: any[]*/) {
+      release || console.warn.apply(console, arguments);
     }
 
     export function notUsed(message: string) {
@@ -278,12 +303,15 @@ module Shumway {
     }
 
     export function notImplemented(message: string) {
-      log("release: " + release);
       release || Debug.assert(false, "Not Implemented " + message);
     }
 
+    export function dummyConstructor(message: string) {
+      release || Debug.assert(false, "Dummy Constructor: " + message);
+    }
+
     export function abstractMethod(message: string) {
-      Debug.assert(false, "Abstract Method " + message);
+      release || Debug.assert(false, "Abstract Method " + message);
     }
 
     var somewhatImplementedCache = {};
@@ -300,8 +328,8 @@ module Shumway {
       Debug.assert(false, "Unexpected: " + message);
     }
 
-    export function untested(message?: any) {
-      Debug.warning("Congratulations, you've found a code path for which we haven't found a test case. Please submit the test case: " + message);
+    export function unexpectedCase(message?: any) {
+      Debug.assert(false, "Unexpected Case: " + message);
     }
   }
 
@@ -335,7 +363,7 @@ module Shumway {
       release || assert(array.length >= count);
       var start = array.length - count;
       var result = array.slice(start, this.length);
-      array.splice(start, count);
+      array.length = start;
       return result;
     }
 
@@ -375,6 +403,18 @@ module Shumway {
       return -1;
     }
 
+    export function equals<T>(a: T [], b: T []): boolean{
+      if (a.length !== b.length) {
+        return false;
+      }
+      for (var i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     export function pushUnique<T>(array: T [], value: T): number {
       for (var i = 0, j = array.length; i < j; i++) {
         if (array[i] === value) {
@@ -398,19 +438,36 @@ module Shumway {
       ArrayUtilities.pushMany(dst, src);
     }
 
+    export interface TypedArray {
+      buffer: ArrayBuffer;
+      length: number;
+      set: (array: TypedArray, offset?: number) => void;
+      subarray: (begin: number, end?: number) => TypedArray;
+    }
+
     /**
      * Makes sure that a typed array has the requested capacity. If required, it creates a new
      * instance of the array's class with a power-of-two capacity at least as large as required.
-     *
-     * Note: untyped because generics with constraints are pretty annoying.
      */
-    export function ensureTypedArrayCapacity(array: any, capacity: number): any {
+    export function ensureTypedArrayCapacity<T extends TypedArray>(array: T, capacity: number): T {
       if (array.length < capacity) {
         var oldArray = array;
-        array = new array.constructor(Shumway.IntegerUtilities.nearestPowerOfTwo(capacity));
+        array = new (<any>array).constructor(Shumway.IntegerUtilities.nearestPowerOfTwo(capacity));
         array.set(oldArray, 0);
       }
       return array;
+    }
+
+    export function memCopy<T extends TypedArray>(destination: T, source: T, doffset: number = 0,
+                                                  soffset: number = 0, length: number = 0) {
+      if (soffset > 0 || (length > 0 && length < source.length)) {
+        if (length <= 0) {
+          length = source.length - soffset;
+        }
+        destination.set(source.subarray(soffset, soffset + length), doffset);
+      } else {
+        destination.set(source, doffset);
+      }
     }
 
     export class ArrayWriter {
@@ -563,6 +620,13 @@ module Shumway {
         this._offset += size;
       }
     }
+
+    export interface IDataDecoder {
+      onData: (data: Uint8Array) => void;
+      onError: (e) => void;
+      push(data: Uint8Array);
+      close();
+    }
   }
 
   export class ArrayReader {
@@ -656,14 +720,6 @@ module Shumway {
       return !!(d && !!d.set);
     }
 
-    export function createObject(prototype: Object) {
-      return Object.create(prototype);
-    }
-
-    export function createEmptyObject() {
-      return Object.create(null);
-    }
-
     export function createMap<T>():Map<T> {
       return Object.create(null);
     }
@@ -691,10 +747,8 @@ module Shumway {
     }
 
     export function cloneObject(object: Object): Object {
-      var clone = ObjectUtilities.createEmptyObject();
-      for (var property in object) {
-        clone[property] = object[property];
-      }
+      var clone = Object.create(Object.getPrototypeOf(object));
+      copyOwnProperties(clone, object);
       return clone;
     }
 
@@ -712,15 +766,18 @@ module Shumway {
       }
     }
 
-    export function copyOwnPropertyDescriptors(object: Object, template: Object) {
+    export function copyOwnPropertyDescriptors(object: Object, template: Object, overwrite = true) {
       for (var property in template) {
         if (hasOwnProperty(template, property)) {
           var descriptor = Object.getOwnPropertyDescriptor(template, property);
+          if (!overwrite && hasOwnProperty(object, property)) {
+            continue
+          }
           release || Debug.assert (descriptor);
           try {
             Object.defineProperty(object, property, descriptor);
           } catch (e) {
-            // log("Can't define " + property);
+            // console.log("Can't define " + property);
           }
         }
       }
@@ -752,7 +809,7 @@ module Shumway {
         descriptor.set = value;
       }
       Object.defineProperty(obj, name, descriptor);
-  }
+    }
 
     export function defineNonEnumerableGetter(obj, name, getter) {
       Object.defineProperty(obj, name, { get: getter,
@@ -776,7 +833,7 @@ module Shumway {
       });
     }
 
-    export function defineNonEnumerableForwardingProperty(obj, name, otherName) {
+    export function defineNonEnumerableForwardingProperty(obj, name: string, otherName: string) {
       Object.defineProperty(obj, name, {
         get: FunctionUtilities.makeForwardingGetter(otherName),
         set: FunctionUtilities.makeForwardingSetter(otherName),
@@ -786,35 +843,66 @@ module Shumway {
       });
     }
 
-    export function defineNewNonEnumerableProperty(obj, name, value) {
+    export function defineNewNonEnumerableProperty(obj, name: string, value) {
       release || Debug.assert (!Object.prototype.hasOwnProperty.call(obj, name), "Property: " + name + " already exits.");
       ObjectUtilities.defineNonEnumerableProperty(obj, name, value);
+    }
+
+    /**
+     * Takes an object and a list of property names and creates an alias in the public namespace
+     * for each.
+     */
+    export function createPublicAliases(obj: any, names: string[]) {
+      var prop = {
+        value: null,
+        writable: true,
+        configurable: true,
+        enumerable: false
+      };
+      for (var i = 0; i < names.length; i++) {
+        var name = names[i];
+        prop.value = obj[name];
+        Object.defineProperty(obj, '$Bg' + name, prop);
+      }
     }
   }
 
   export module FunctionUtilities {
     export function makeForwardingGetter(target: string): () => any {
-      return <() => any> new Function("return this[\"" + target + "\"]");
+      return <() => any> new Function("return this[\"" + target + "\"]//# sourceURL=fwd-get-" +
+                                      target + ".as");
     }
 
     export function makeForwardingSetter(target: string): (any) => void {
-      return <(any) => void> new Function("value", "this[\"" + target + "\"] = value;");
+      return <(any) => void> new Function("value", "this[\"" + target + "\"] = value;" +
+                                                   "//# sourceURL=fwd-set-" + target + ".as");
     }
 
     /**
      * Attaches a property to the bound function so we can detect when if it
      * ever gets rebound.
      */
-    export function bindSafely(fn: Function, object: Object) {
-      release || Debug.assert (!fn.boundTo && object);
-      var f = fn.bind(object);
-      f.boundTo = object;
-      return f;
+    export function bindSafely(method: Function, receiver: Object) {
+      release || Debug.assert (!method.boundTo);
+      release || Debug.assert (receiver);
+      function methodClosure() {
+        return method.apply(receiver, arguments);
+      }
+      (<any>methodClosure).boundTo = receiver;
+      return methodClosure;
     }
   }
 
   export module StringUtilities {
     import assert = Shumway.Debug.assert;
+
+    export function repeatString(c: string, n: number): string {
+      var s = "";
+      for (var i = 0; i < n; i++) {
+        s += c;
+      }
+      return s;
+    }
 
     export function memorySizeToString(value: number) {
       value |= 0;
@@ -829,12 +917,18 @@ module Shumway {
       }
     }
 
+    /**
+     * Returns a reasonably sized description of the |value|, to be used for debugging purposes.
+     */
     export function toSafeString(value) {
       if (typeof value === "string") {
         return "\"" + value + "\"";
       }
       if (typeof value === "number" || typeof value === "boolean") {
         return String(value);
+      }
+      if (value instanceof Array) {
+        return "[] " + value.length;
       }
       return typeof value;
     }
@@ -964,7 +1058,8 @@ module Shumway {
         d = chunk & 63; // 63 = 2^6 - 1
 
         // Convert the raw binary segments to the appropriate ASCII encoding
-        base64 += encodings[a] + encodings[b] + encodings[c] + encodings[d];
+        base64 += concat4(encodings[a], encodings[b], encodings[c],
+                          encodings[d]);
       }
 
       // Deal with the remaining bytes and padding
@@ -976,7 +1071,7 @@ module Shumway {
         // Set the 4 least significant bits to zero
         b = (chunk & 3) << 4; // 3 = 2^2 - 1
 
-        base64 += encodings[a] + encodings[b] + '==';
+        base64 += concat3(encodings[a], encodings[b], '==');
       } else if (byteRemainder == 2) {
         chunk = (bytes[mainLength] << 8) | bytes[mainLength + 1];
 
@@ -986,7 +1081,7 @@ module Shumway {
         // Set the 2 least significant bits to zero
         c = (chunk & 15) << 2; // 15 = 2^4 - 1
 
-        base64 += encodings[a] + encodings[b] + encodings[c] + '=';
+        base64 += concat4(encodings[a], encodings[b], encodings[c], '=');
       }
       return base64;
     }
@@ -1033,9 +1128,7 @@ module Shumway {
       return _encoding[n];
     }
 
-    export function fromEncoding(s) {
-      var c = s.charCodeAt(0);
-      var e = 0;
+    export function fromEncoding(c) {
       if (c >= 65 && c <= 90) {
         return c - 65;
       } else if (c >= 97 && c <= 122) {
@@ -1051,11 +1144,11 @@ module Shumway {
     }
 
     export function variableLengthDecodeInt32(s) {
-      var l = StringUtilities.fromEncoding(s[0]);
+      var l = StringUtilities.fromEncoding(s.charCodeAt(0));
       var n = 0;
       for (var i = 0; i < l; i++) {
         var offset = ((l - i - 1) * 6);
-        n |= StringUtilities.fromEncoding(s[1 + i]) << offset;
+        n |= StringUtilities.fromEncoding(s.charCodeAt(1 + i)) << offset;
       }
       return n;
     }
@@ -1088,6 +1181,96 @@ module Shumway {
       return index === s.length ? -1 : index;
     }
 
+    var _concat3array = new Array(3);
+    var _concat4array = new Array(4);
+    var _concat5array = new Array(5);
+    var _concat6array = new Array(6);
+    var _concat7array = new Array(7);
+    var _concat8array = new Array(8);
+    var _concat9array = new Array(9);
+
+    /**
+     * The concatN() functions concatenate multiple strings in a way that
+     * avoids creating intermediate strings, unlike String.prototype.concat().
+     *
+     * Note that these functions don't have identical behaviour to using '+',
+     * because they will ignore any arguments that are |undefined| or |null|.
+     * This usually doesn't matter.
+     */
+
+    export function concat3(s0: any, s1: any, s2: any) {
+        _concat3array[0] = s0;
+        _concat3array[1] = s1;
+        _concat3array[2] = s2;
+        return _concat3array.join('');
+    }
+
+    export function concat4(s0: any, s1: any, s2: any, s3: any) {
+        _concat4array[0] = s0;
+        _concat4array[1] = s1;
+        _concat4array[2] = s2;
+        _concat4array[3] = s3;
+        return _concat4array.join('');
+    }
+
+    export function concat5(s0: any, s1: any, s2: any, s3: any, s4: any) {
+        _concat5array[0] = s0;
+        _concat5array[1] = s1;
+        _concat5array[2] = s2;
+        _concat5array[3] = s3;
+        _concat5array[4] = s4;
+        return _concat5array.join('');
+    }
+
+    export function concat6(s0: any, s1: any, s2: any, s3: any, s4: any,
+                            s5: any) {
+        _concat6array[0] = s0;
+        _concat6array[1] = s1;
+        _concat6array[2] = s2;
+        _concat6array[3] = s3;
+        _concat6array[4] = s4;
+        _concat6array[5] = s5;
+        return _concat6array.join('');
+    }
+
+    export function concat7(s0: any, s1: any, s2: any, s3: any, s4: any,
+                            s5: any, s6: any) {
+        _concat7array[0] = s0;
+        _concat7array[1] = s1;
+        _concat7array[2] = s2;
+        _concat7array[3] = s3;
+        _concat7array[4] = s4;
+        _concat7array[5] = s5;
+        _concat7array[6] = s6;
+        return _concat7array.join('');
+    }
+
+    export function concat8(s0: any, s1: any, s2: any, s3: any, s4: any,
+                            s5: any, s6: any, s7: any) {
+        _concat8array[0] = s0;
+        _concat8array[1] = s1;
+        _concat8array[2] = s2;
+        _concat8array[3] = s3;
+        _concat8array[4] = s4;
+        _concat8array[5] = s5;
+        _concat8array[6] = s6;
+        _concat8array[7] = s7;
+        return _concat8array.join('');
+    }
+
+    export function concat9(s0: any, s1: any, s2: any, s3: any, s4: any,
+                            s5: any, s6: any, s7: any, s8: any) {
+        _concat9array[0] = s0;
+        _concat9array[1] = s1;
+        _concat9array[2] = s2;
+        _concat9array[3] = s3;
+        _concat9array[4] = s4;
+        _concat9array[5] = s5;
+        _concat9array[6] = s6;
+        _concat9array[7] = s7;
+        _concat9array[8] = s8;
+        return _concat9array.join('');
+    }
   }
 
   export module HashUtilities {
@@ -1231,6 +1414,9 @@ module Shumway {
           enumerable: false,
           configurable: true
         });
+      },
+      delete: function(obj) {
+        delete obj[this.id];
       }
     };
     jsGlobal.WeakMap = WeakMap;
@@ -1238,20 +1424,19 @@ module Shumway {
 
   polyfillWeakMap();
 
-  declare var netscape;
-  declare var Components;
-
   export interface IReferenceCountable {
     _referenceCount: number;
     _addReference();
     _removeReference();
   }
 
+  var useReferenceCounting = true;
+
   export class WeakList<T extends IReferenceCountable> {
     private _map: WeakMap<T, T>;
     private _list: T [];
     constructor() {
-      if (typeof netscape !== "undefined" && netscape.security.PrivilegeManager) {
+      if (typeof ShumwayCom !== "undefined" && ShumwayCom.getWeakMapKeys) {
         this._map = new WeakMap<T, T>();
       } else {
         this._list = [];
@@ -1266,20 +1451,30 @@ module Shumway {
     }
     push(value: T) {
       if (this._map) {
+        release || Debug.assert(!this._map.has(value));
         this._map.set(value, null);
       } else {
+        release || Debug.assert(this._list.indexOf(value) === -1);
         this._list.push(value);
+      }
+    }
+    remove(value: T) {
+      if (this._map) {
+        release || Debug.assert(this._map.has(value));
+        this._map.delete(value);
+      } else {
+        release || Debug.assert(this._list.indexOf(value) > -1);
+        this._list[this._list.indexOf(value)] = null;
+        release || Debug.assert(this._list.indexOf(value) === -1);
       }
     }
     forEach(callback: (value: T) => void) {
       if (this._map) {
-        if (typeof netscape !== "undefined") {
-          netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
-        }
-        Components.utils.nondeterministicGetWeakMapKeys(this._map).forEach(function (value: T) {
-          //if (value._referenceCount !== 0) {
+        var keys: Array<T> = ShumwayCom.getWeakMapKeys(this._map);
+        keys.forEach(function (value: T) {
+          if (value._referenceCount !== 0) {
             callback(value);
-          //}
+          }
         });
         return;
       }
@@ -1287,21 +1482,34 @@ module Shumway {
       var zeroCount = 0;
       for (var i = 0; i < list.length; i++) {
         var value = list[i];
-        //if (value._referenceCount === 0) {
-        //  zeroCount++;
-        //} else {
+        if (!value) {
+          continue;
+        }
+        if (useReferenceCounting && value._referenceCount === 0) {
+          list[i] = null;
+          zeroCount++;
+        } else {
           callback(value);
-        //}
+        }
       }
-      //if (zeroCount > 16 && zeroCount > (list.length >> 1)) {
-      //  var newList = [];
-      //  for (var i = 0; i < list.length; i++) {
-      //    if (list[i]._referenceCount > 0) {
-      //      newList.push(list[i]);
-      //    }
-      //  }
-      //  this._list = newList;
-      //}
+      if (zeroCount > 16 && zeroCount > (list.length >> 2)) {
+        var newList = [];
+        for (var i = 0; i < list.length; i++) {
+          var value = list[i];
+          if (value && value._referenceCount > 0) {
+            newList.push(value);
+          }
+        }
+        this._list = newList;
+      }
+    }
+    get length(): number {
+      if (this._map) {
+        // TODO: Implement this.
+        return -1;
+      } else {
+        return this._list.length;
+      }
     }
   }
 
@@ -1332,6 +1540,17 @@ module Shumway {
       return Math.round(value);
     }
 
+    /**
+     * Rounds *.5 up on even occurrences, down on odd occurrences.
+     * See https://en.wikipedia.org/wiki/Rounding#Alternating_tie-breaking for details.
+     */
+    export function altTieBreakRound(value: number, even: boolean): number {
+      if (Math.abs(value % 1) === 0.5 && !even) {
+        return value | 0;
+      }
+      return Math.round(value);
+    }
+
     export function epsilonEquals(value: number, other: number): boolean {
       return Math.abs(value - other) < 0.0000001;
     }
@@ -1345,11 +1564,12 @@ module Shumway {
 
   export module IntegerUtilities {
     var sharedBuffer = new ArrayBuffer(8);
-    var i8 = new Int8Array(sharedBuffer);
-    var i32 = new Int32Array(sharedBuffer);
-    var f32 = new Float32Array(sharedBuffer);
-    var f64 = new Float64Array(sharedBuffer);
-    var nativeLittleEndian = new Int8Array(new Int32Array([1]).buffer)[0] === 1;
+    export var i8 = new Int8Array(sharedBuffer);
+    export var u8 = new Uint8Array(sharedBuffer);
+    export var i32 = new Int32Array(sharedBuffer);
+    export var f32 = new Float32Array(sharedBuffer);
+    export var f64 = new Float64Array(sharedBuffer);
+    export var nativeLittleEndian = new Int8Array(new Int32Array([1]).buffer)[0] === 1;
 
     /**
      * Convert a float into 32 bits.
@@ -1563,19 +1783,32 @@ module Shumway {
     }
   }
 
+  export enum LogLevel {
+    Error = 0x1,
+    Warn = 0x2,
+    Debug = 0x4,
+    Log = 0x8,
+    Info = 0x10,
+    All = 0x1f
+  }
+
   export class IndentingWriter {
     public static PURPLE = '\033[94m';
     public static YELLOW = '\033[93m';
     public static GREEN = '\033[92m';
     public static RED = '\033[91m';
+    public static BOLD_RED = '\033[1;91m';
     public static ENDC = '\033[0m';
-    private static _consoleOut = inBrowser ? console.info.bind(console) : print;
-    private static _consoleOutNoNewline = inBrowser ? console.info.bind(console) : putstr;
+
+    public static logLevel: LogLevel = LogLevel.All;
+
+    private static _consoleOut = console.info.bind(console);
+    private static _consoleOutNoNewline = console.info.bind(console);
 
     private _tab: string;
     private _padding: string;
     private _suppressOutput: boolean;
-    private _out: (s: string) => void;
+    private _out: (s: string, o?: any) => void;
     private _outNoNewline: (s: string) => void;
 
     constructor(suppressOutput: boolean = false, out?) {
@@ -1595,6 +1828,18 @@ module Shumway {
     writeLn(str: string = "") {
       if (!this._suppressOutput) {
         this._out(this._padding + str);
+      }
+    }
+
+    writeObject(str: string = "", object?: Object) {
+      if (!this._suppressOutput) {
+        this._out(this._padding + str, object);
+      }
+    }
+
+    writeTimeLn(str: string = "") {
+      if (!this._suppressOutput) {
+        this._out(this._padding + performance.now().toFixed(2) + " " + str);
       }
     }
 
@@ -1618,8 +1863,34 @@ module Shumway {
       }
     }
 
+    errorLn(str: string) {
+      if (IndentingWriter.logLevel & LogLevel.Error) {
+        this.boldRedLn(str);
+      }
+    }
+
+    warnLn(str: string) {
+      if (IndentingWriter.logLevel & LogLevel.Warn) {
+        this.yellowLn(str);
+      }
+    }
+
     debugLn(str: string) {
-      this.colorLn(IndentingWriter.PURPLE, str);
+      if (IndentingWriter.logLevel & LogLevel.Debug) {
+        this.purpleLn(str);
+      }
+    }
+
+    logLn(str: string) {
+      if (IndentingWriter.logLevel & LogLevel.Log) {
+        this.writeLn(str);
+      }
+    }
+
+    infoLn(str: string) {
+      if (IndentingWriter.logLevel & LogLevel.Info) {
+        this.writeLn(str);
+      }
     }
 
     yellowLn(str: string) {
@@ -1630,12 +1901,16 @@ module Shumway {
       this.colorLn(IndentingWriter.GREEN, str);
     }
 
+    boldRedLn(str: string) {
+      this.colorLn(IndentingWriter.BOLD_RED, str);
+    }
+
     redLn(str: string) {
       this.colorLn(IndentingWriter.RED, str);
     }
 
-    warnLn(str: string) {
-      this.yellowLn(str);
+    purpleLn(str: string) {
+      this.colorLn(IndentingWriter.PURPLE, str);
     }
 
     colorLn(color: string, str: string) {
@@ -1671,9 +1946,9 @@ module Shumway {
       this.indent();
     }
 
-    leave(str: string) {
+    leave(str?: string) {
       this.outdent();
-      if (!this._suppressOutput) {
+      if (!this._suppressOutput && str) {
         this._out(this._padding + str);
       }
     }
@@ -2367,6 +2642,43 @@ module Shumway {
       return ColorStyle._randomStyleCache[(ColorStyle._nextStyle ++) % ColorStyle._randomStyleCache.length];
     }
 
+    private static _gradient = [
+      "#FF0000",  // Red
+      "#FF1100",
+      "#FF2300",
+      "#FF3400",
+      "#FF4600",
+      "#FF5700",
+      "#FF6900",
+      "#FF7B00",
+      "#FF8C00",
+      "#FF9E00",
+      "#FFAF00",
+      "#FFC100",
+      "#FFD300",
+      "#FFE400",
+      "#FFF600",
+      "#F7FF00",
+      "#E5FF00",
+      "#D4FF00",
+      "#C2FF00",
+      "#B0FF00",
+      "#9FFF00",
+      "#8DFF00",
+      "#7CFF00",
+      "#6AFF00",
+      "#58FF00",
+      "#47FF00",
+      "#35FF00",
+      "#24FF00",
+      "#12FF00",
+      "#00FF00"   // Green
+    ];
+
+    static gradientColor(value) {
+      return ColorStyle._gradient[ColorStyle._gradient.length * NumberUtilities.clamp(value, 0, 1) | 0];
+    }
+
     static contrastStyle(rgb: string): string {
       // http://www.w3.org/TR/AERT#color-contrast
       var c = parseInt(rgb.substr(1), 16);
@@ -2434,10 +2746,11 @@ module Shumway {
     }
 
     unionInPlace (other: Bounds): void {
-      this.xMin = Math.min(this.xMin, other.xMin);
-      this.yMin = Math.min(this.yMin, other.yMin);
-      this.xMax = Math.max(this.xMax, other.xMax);
-      this.yMax = Math.max(this.yMax, other.yMax);
+      if (other.isEmpty()) {
+        return;
+      }
+      this.extendByPoint(other.xMin, other.yMin);
+      this.extendByPoint(other.xMax, other.yMax);
     }
 
     extendByPoint (x: number, y: number): void {
@@ -2577,11 +2890,12 @@ module Shumway {
              y < this.yMin !== y < this.yMax;
     }
 
-    unionWith (other: DebugBounds): void {
-      this._xMin = Math.min(this._xMin, other._xMin);
-      this._yMin = Math.min(this._yMin, other._yMin);
-      this._xMax = Math.max(this._xMax, other._xMax);
-      this._yMax = Math.max(this._yMax, other._yMax);
+    unionInPlace (other: DebugBounds): void {
+      if (other.isEmpty()) {
+        return;
+      }
+      this.extendByPoint(other.xMin, other.yMin);
+      this.extendByPoint(other.xMax, other.yMax);
     }
 
     extendByPoint (x: number, y: number): void {
@@ -2689,7 +3003,7 @@ module Shumway {
              "xMin: " + this._xMin + ", " +
              "xMin: " + this._yMin + ", " +
              "xMax: " + this._xMax + ", " +
-             "xMax: " + this._yMax +
+             "yMax: " + this._yMax +
              " }";
     }
 
@@ -2782,8 +3096,29 @@ module Shumway {
     }
 
     export function rgbaToCSSStyle(color: number): string {
-      return 'rgba(' + (color >> 24 & 0xff) + ',' + (color >> 16 & 0xff) + ',' +
-                  (color >> 8 & 0xff) + ',' + ((color & 0xff) / 0xff) + ')';
+      return Shumway.StringUtilities.concat9('rgba(', color >> 24 & 0xff, ',', color >> 16 & 0xff, ',', color >> 8 & 0xff, ',', (color & 0xff) / 0xff, ')');
+    }
+
+    export function cssStyleToRGBA(style: string) {
+      if (style[0] === "#") {
+        if (style.length === 7) {
+          var value = parseInt(style.substring(1), 16);
+          return (value << 8) | 0xff;
+        }
+      } else if (style[0] === "r") {
+        // We don't parse all types of rgba(....) color styles. We only handle the
+        // ones we generate ourselves.
+        var values = style.substring(5, style.length - 1).split(",");
+        var r = parseInt(values[0]);
+        var g = parseInt(values[1]);
+        var b = parseInt(values[2]);
+        var a = parseFloat(values[3]);
+        return (r & 0xff) << 24 |
+               (g & 0xff) << 16 |
+               (b & 0xff) << 8  |
+               ((a * 255) & 0xff);
+      }
+      return 0xff0000ff; // Red
     }
 
     export function hexToRGB(color: string): number {
@@ -2791,11 +3126,15 @@ module Shumway {
     }
 
     export function rgbToHex(color: number): string {
-      return '#' + ('000000' + color.toString(16)).slice(-6);
+      return '#' + ('000000' + (color >>> 0).toString(16)).slice(-6);
     }
 
     export function isValidHexColor(value: any): boolean {
       return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(value);
+    }
+
+    export function clampByte(value: number) {
+      return Math.max(0, Math.min(255, value));
     }
 
     /**
@@ -2856,35 +3195,23 @@ module Shumway {
       }
     }
 
-    export function tableLookupUnpremultiplyARGB(pARGB) {
+    export function tableLookupUnpremultiplyARGB(pARGB): number {
       pARGB = pARGB | 0;
       var a = (pARGB >> 24) & 0xff;
       if (a === 0) {
         return 0;
+      } else if (a === 0xff) {
+        return pARGB;
       }
       var b = (pARGB >>  0) & 0xff;
       var g = (pARGB >>  8) & 0xff;
       var r = (pARGB >> 16) & 0xff;
       var o = a << 8;
-      r = unpremultiplyTable[o + r];
-      g = unpremultiplyTable[o + g];
-      b = unpremultiplyTable[o + b];
+      var T = unpremultiplyTable;
+      r = T[o + r];
+      g = T[o + g];
+      b = T[o + b];
       return a << 24 | r << 16 | g << 8 | b;
-    }
-
-    var inverseSourceAlphaTable: Float64Array;
-
-    /**
-     * Computes all possible inverse source alpha values.
-     */
-    export function ensureInverseSourceAlphaTable() {
-      if (inverseSourceAlphaTable) {
-        return;
-      }
-      inverseSourceAlphaTable = new Float64Array(256);
-      for (var a = 0; a < 255; a++) {
-        inverseSourceAlphaTable[a] = 1 - a / 255;
-      }
     }
 
     /**
@@ -2899,25 +3226,160 @@ module Shumway {
      *
      * TODO: Not sure what to do about the dst.rgb which is
      * premultiplied by its alpah, but this appears to work.
+     *
+     * We use the "double blend trick" (http://stereopsis.com/doubleblend.html) to
+     * compute GA and BR without unpacking them.
      */
-    export function blendPremultipliedBGRA(tpBGRA, spBGRA) {
-      var ta = (tpBGRA >>  0) & 0xff;
-      var tr = (tpBGRA >>  8) & 0xff;
-      var tg = (tpBGRA >> 16) & 0xff;
-      var tb = (tpBGRA >> 24) & 0xff;
+    export function blendPremultipliedBGRA(tpBGRA: number, spBGRA: number) {
+      var sA  = spBGRA & 0xff;
+      var sGA = spBGRA      & 0x00ff00ff;
+      var sBR = spBGRA >> 8 & 0x00ff00ff;
+      var tGA = tpBGRA      & 0x00ff00ff;
+      var tBR = tpBGRA >> 8 & 0x00ff00ff;
+      var A  = 256 - sA;
+      tGA = Math.imul(tGA, A) >> 8;
+      tBR = Math.imul(tBR, A) >> 8;
+      return ((sBR + tBR & 0x00ff00ff) << 8) | (sGA + tGA & 0x00ff00ff);
+    }
 
-      var sa = (spBGRA >>  0) & 0xff;
-      var sr = (spBGRA >>  8) & 0xff;
-      var sg = (spBGRA >> 16) & 0xff;
-      var sb = (spBGRA >> 24) & 0xff;
+    import swap32 = IntegerUtilities.swap32;
+    export function convertImage(sourceFormat: ImageType, targetFormat: ImageType, source: Int32Array, target: Int32Array) {
+      if (source !== target) {
+        release || Debug.assert(source.buffer !== target.buffer, "Can't handle overlapping views.");
+      }
+      var length = source.length;
+      if (sourceFormat === targetFormat) {
+        if (source === target) {
+          return;
+        }
+        for (var i = 0; i < length; i++) {
+          target[i] = source[i];
+        }
+        return;
+      }
+      // enterTimeline("convertImage", ImageType[sourceFormat] + " to " + ImageType[targetFormat] + " (" + memorySizeToString(source.length));
+      if (sourceFormat === ImageType.PremultipliedAlphaARGB &&
+          targetFormat === ImageType.StraightAlphaRGBA) {
+        Shumway.ColorUtilities.ensureUnpremultiplyTable();
+        for (var i = 0; i < length; i++) {
+          var pBGRA = source[i];
+          var a = pBGRA & 0xff;
+          if (a === 0) {
+            target[i] = 0;
+          } else if (a === 0xff) {
+            target[i] = 0xff000000 | ((pBGRA >> 8) & 0x00ffffff);
+          } else {
+            var b = (pBGRA >> 24) & 0xff;
+            var g = (pBGRA >> 16) & 0xff;
+            var r = (pBGRA >>  8) & 0xff;
+            var o = a << 8;
+            var T = unpremultiplyTable;
+            r = T[o + r];
+            g = T[o + g];
+            b = T[o + b];
+            target[i] = a << 24 | b << 16 | g << 8 | r;
+          }
+        }
+      } else if (sourceFormat === ImageType.StraightAlphaARGB &&
+                 targetFormat === ImageType.StraightAlphaRGBA) {
+        for (var i = 0; i < length; i++) {
+          target[i] = swap32(source[i]);
+        }
+      } else if (sourceFormat === ImageType.StraightAlphaRGBA &&
+                 targetFormat === ImageType.PremultipliedAlphaARGB) {
+        for (var i = 0; i < length; i++) {
+          var uABGR = source[i];
+          var uARGB = (uABGR & 0xFF00FF00)  | // A_G_
+                      (uABGR >> 16) & 0xff  | // A_GB
+                      (uABGR & 0xff) << 16;   // ARGR
+          target[i] = swap32(premultiplyARGB(uARGB));
+        }
+      } else {
+        Debug.somewhatImplemented("Image Format Conversion: " + ImageType[sourceFormat] + " -> " + ImageType[targetFormat]);
+        // Copy the buffer over for now, we should at least get some image output.
+        for (var i = 0; i < length; i++) {
+          target[i] = source[i];
+        }
+      }
+      // leaveTimeline("convertImage");
+    }
+  }
 
-      // TODO: Clampling.
-      var inverseSourceAlpha = inverseSourceAlphaTable[sa];
-      var ta = sa + ta * inverseSourceAlpha;
-      var tr = sr + tr * inverseSourceAlpha;
-      var tg = sg + tg * inverseSourceAlpha;
-      var tb = sb + tb * inverseSourceAlpha;
-      return tb << 24 | tg << 16 | tr << 8 | ta;
+  /**
+   * Simple pool allocator for ArrayBuffers. This reduces memory usage in data structures
+   * that resize buffers.
+   */
+  export class ArrayBufferPool {
+    private _list: ArrayBuffer [];
+    private _maxSize: number;
+    private static _enabled = true;
+
+    /**
+     * Creates a pool that manages a pool of a |maxSize| number of array buffers.
+     */
+    constructor(maxSize: number = 32) {
+      this._list = [];
+      this._maxSize = maxSize;
+    }
+
+    /**
+     * Creates or reuses an existing array buffer that is at least the
+     * specified |length|.
+     */
+    public acquire(length: number): ArrayBuffer {
+      if (ArrayBufferPool._enabled) {
+        var list = this._list;
+        for (var i = 0; i < list.length; i++) {
+          var buffer = list[i];
+          if (buffer.byteLength >= length) {
+            list.splice(i, 1);
+            return buffer;
+          }
+        }
+      }
+      return new ArrayBuffer(length);
+    }
+
+    /**
+     * Releases an array buffer that is no longer needed back to the pool.
+     */
+    public release(buffer: ArrayBuffer) {
+      if (ArrayBufferPool._enabled) {
+        var list = this._list;
+        release || Debug.assert(ArrayUtilities.indexOf(list, buffer) < 0);
+        if (list.length === this._maxSize) {
+          list.shift();
+        }
+        list.push(buffer);
+      }
+    }
+
+    /**
+     * Resizes a Uint8Array to have the given length.
+     */
+    public ensureUint8ArrayLength(array: Uint8Array, length: number): Uint8Array {
+      if (array.length >= length) {
+        return array;
+      }
+      var newLength = Math.max(array.length + length, ((array.length * 3) >> 1) + 1);
+      var newArray = new Uint8Array(this.acquire(newLength), 0, newLength);
+      newArray.set(array);
+      this.release(array.buffer);
+      return newArray;
+    }
+
+    /**
+     * Resizes a Float64Array to have the given length.
+     */
+    public ensureFloat64ArrayLength(array: Float64Array, length: number): Float64Array {
+      if (array.length >= length) {
+        return array;
+      }
+      var newLength = Math.max(array.length + length, ((array.length * 3) >> 1) + 1);
+      var newArray = new Float64Array(this.acquire(newLength * Float64Array.BYTES_PER_ELEMENT), 0, newLength);
+      newArray.set(array);
+      this.release(array.buffer);
+      return newArray;
     }
   }
 
@@ -2964,12 +3426,54 @@ module Shumway {
 
   export interface IFileLoadingService {
     createSession(): FileLoadingSession;
-    setBaseUrl(url: string);
     resolveUrl(url: string): string;
+    navigateTo(url: string, target: string);
   }
 
   export module FileLoadingService {
     export var instance: IFileLoadingService;
+  }
+
+  export enum SystemResourceId {
+    BuiltinAbc = 0,
+    PlayerglobalAbcs = 1,
+    PlayerglobalManifest = 2,
+    ShellAbc = 3
+  }
+
+  export interface ISystemResourcesLoadingService {
+    load(id: SystemResourceId): Promise<any>;
+  }
+
+  export module SystemResourcesLoadingService {
+    export var instance: ISystemResourcesLoadingService;
+  }
+
+  export function registerCSSFont(id: number, buffer: ArrayBuffer, forceFontInit: boolean) {
+    if (!inBrowser) {
+      Debug.warning('Cannot register CSS font outside the browser');
+      return;
+    }
+    var head = document.head;
+    head.insertBefore(document.createElement('style'), head.firstChild);
+    var style = <CSSStyleSheet>document.styleSheets[0];
+    var rule = '@font-face{font-family:swffont' + id + ';src:url(data:font/opentype;base64,' +
+               Shumway.StringUtilities.base64ArrayBuffer(buffer) + ')' + '}';
+    style.insertRule(rule, style.cssRules.length);
+    // In at least Chrome, the browser only decodes a font once it's used in the page at all.
+    // Because it still does so asynchronously, we create a with some text using the font, take
+    // some measurement from it (which will turn out wrong because the font isn't yet available),
+    // and then remove the node again. Then, magic happens. After a bit of time for said magic to
+    // take hold, the font is available for actual use on canvas.
+    // TODO: remove the need for magic by implementing this in terms of the font loading API.
+    if (forceFontInit) {
+      var node = document.createElement('div');
+      node.style.fontFamily = 'swffont' + id;
+      node.innerHTML = 'hello';
+      document.body.appendChild(node);
+      var dummyHeight = node.clientHeight;
+      document.body.removeChild(node);
+    }
   }
 
   export interface IExternalInterfaceService {
@@ -2991,6 +3495,16 @@ module Shumway {
       eval(expression: string): any { },
       call(request: string): any { },
       getId(): string { return null; }
+    };
+  }
+
+  export interface IClipboardService {
+    setClipboard(data: string): void;
+  }
+
+  export module ClipboardService {
+    export var instance: IClipboardService = {
+      setClipboard(data: string) { Debug.notImplemented('setClipboard'); }
     };
   }
 
@@ -3079,10 +3593,46 @@ module Shumway {
     GIF
   }
 
+  export function getMIMETypeForImageType(type: ImageType): string {
+    switch (type) {
+      case ImageType.JPEG: return "image/jpeg";
+      case ImageType.PNG: return "image/png";
+      case ImageType.GIF: return "image/gif";
+      default: return "text/plain";
+    }
+  }
+
+  export module UI {
+
+    /*
+     * Converts a |MouseCursor| number to a CSS |cursor| property value.
+     */
+    export function toCSSCursor(mouseCursor:number) {
+      switch (mouseCursor) {
+        case 0: // MouseCursor.AUTO
+          return 'auto';
+        case 2: // MouseCursor.BUTTON
+          return 'pointer';
+        case 3: // MouseCursor.HAND
+          return 'grab';
+        case 4: // MouseCursor.IBEAM
+          return 'text';
+        case 1: // MouseCursor.ARROW
+        default:
+          return 'default';
+      }
+    }
+
+  }
+
   export class PromiseWrapper<T> {
     public promise: Promise<T>;
     public resolve: (result:T) => void;
     public reject: (reason) => void;
+
+    then(onFulfilled, onRejected) {
+      return this.promise.then(onFulfilled, onRejected);
+    }
 
     constructor() {
       this.promise = new Promise<T>(function (resolve, reject) {
@@ -3273,7 +3823,7 @@ module Shumway {
   }
 
   function createDeferredConstructionFunctions(): any {
-    var fn = function (resolve, reject) {
+    var fn: any = function (resolve, reject) {
       fn.resolve = resolve;
       fn.reject = reject;
     };

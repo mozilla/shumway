@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      background-color: #38441C;
+      font: 12px Consolas, "Liberation Mono", Courier, monospace;
+    }
+  </style>
+</head>
+<script> console.time("Load Shared Dependencies"); </script>
+<script src="../../../build/ts/base.js"></script>
+<script src="../../../build/ts/tools.js"></script>
+<script> console.timeEnd("Load Shared Dependencies"); </script>
+<script> console.time("Load GFX Dependencies"); </script>
+<script src="../../../build/ts/gfx-base.js"></script>
+<script src="../../../build/ts/gfx.js"></script>
+<script> console.timeEnd("Load GFX Dependencies"); </script>
+
+<script>
+  var release = false;
+  var Node = Shumway.GFX.Node;
+  var NodeVisitor = Shumway.GFX.NodeVisitor;
+  var Matrix = Shumway.GFX.Geometry.Matrix;
+  var Rectangle = Shumway.GFX.Geometry.Rectangle;
+  var Stage = Shumway.GFX.Stage;
+  var Shape = Shumway.GFX.Shape;
+  var Group = Shumway.GFX.Group;
+  var CustomRenderable = Shumway.GFX.CustomRenderable;
+  var Canvas2DRenderer = Shumway.GFX.Canvas2D.Canvas2DRenderer;
+  var Easel = Shumway.GFX.Easel;
+  var Backend = Shumway.GFX.Backend;
+  var BlendMode = Shumway.GFX.BlendMode;
+</script>
+
+<body>
+<script>
+
+  function makeCircle(w, h) {
+    var color = "rgba(" + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", 1)"
+    return new CustomRenderable(new Rectangle(0, 0, w, h), function (context) {
+      context.save();
+      context.fillStyle = color;
+      context.beginPath();
+      context.scale(0.9, 0.9);
+      context.arc(w / 2, h / 2, w / 2, 0, 2 * Math.PI);
+      context.fill();
+      context.restore();
+    });
+  }
+
+  function makeNode(depth, branch, w, h) {
+    if (depth === 0) {
+      return new Shape(makeCircle(w, h));
+    } else {
+      var group = new Group();
+      for (var i = 0; i < branch; i++) {
+        var node = makeNode(depth - 1, branch, w, h);
+        group.addChild(node);
+        var matrix = Matrix.createIdentity();
+        matrix.translate(Math.random() * 64, Math.random() * 64);
+        node.getTransform().setMatrix(matrix);
+        node.dx = (Math.random() - 0.5) * 3;
+        node.dy = (Math.random() - 0.5) * 3;
+      }
+      return group;
+    }
+  }
+
+  var easels = [];
+  var map = new Map();
+
+  var containers = [];
+  function createEasel(container) {
+    var easel = new Easel(container, Backend.Canvas2D);
+    easel.startRendering();
+    easels.push(easel);
+    map.set(container, easel);
+    var stage = easel.stage;
+    var world = easel.world;
+    var count = 10;
+    var depth = 1;
+    for (var i = 0; i < count; i++) {
+      world.addChild(makeNode(depth, 1, 16, 16));
+    }
+  }
+
+  function destroyEasel(container) {
+    var easel = map.get(container);
+    easel.stopRendering();
+    var i = easels.indexOf(easel);
+    easels.splice(i, 1);
+  }
+
+
+  var t = 0;
+  function tick() {
+    easels.forEach(function (easel) {
+      var stage = easel.stage;
+      var world = easel.world;
+      var halfH = stage.getBounds().h / 10;
+      var i = 0;
+      world.visit(Object.create(NodeVisitor.prototype, {
+        visitNode: {
+          value: function (node) {
+            if (node.dx !== undefined) {
+              i += 16;
+              var matrix = node.getTransform().getMatrix(true);
+              matrix.ty = halfH + Math.sin((performance.now() / 1000) * (i / 50)) * halfH;
+              matrix.tx = i;
+              t += 0.001;
+
+              node.getTransform().setMatrix(matrix);
+            }
+
+          }
+        }
+      }));
+    });
+  }
+
+  setInterval(tick, 1000 / 60);
+
+</script>
+</body>
+</html>
+

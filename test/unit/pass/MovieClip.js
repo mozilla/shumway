@@ -1,11 +1,12 @@
 (function timelineTests() {
   var assert = Shumway.Debug.assert;
   var LoaderInfo = flash.display.LoaderInfo;
+  var DisplayObject = flash.display.DisplayObject;
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
   var Stage = flash.display.Stage;
   var MovieClip = flash.display.MovieClip;
-  var SpriteSymbol = Shumway.Timeline.SpriteSymbol;
-  var FrameDelta = Shumway.Timeline.FrameDelta;
+  var SpriteSymbol = flash.display.SpriteSymbol;
+  var SWFFrame = Shumway.SWF.SWFFrame;
 
   var MC_NAME_SUFFIX = 0;
 
@@ -22,12 +23,14 @@
 
   function createMovieClipWithFrames(numFrames) {
     assert(typeof numFrames === 'number');
-    var loaderInfo = new LoaderInfo();
+    var loaderInfo = new LoaderInfo(LoaderInfo.CtorToken);
     var stage = new Stage();
+    DisplayObject._stage = stage;
     stage._stage = stage;
-    var symbol = new SpriteSymbol(0);
+    var symbol = new SpriteSymbol({id: 0});
+    symbol.loaderInfo = loaderInfo;
     symbol.numFrames = numFrames;
-    var frame = new FrameDelta(loaderInfo, []);
+    var frame = new SWFFrame();
     for (var i = 0; i < numFrames; i++) {
       symbol.frames.push(frame);
     }

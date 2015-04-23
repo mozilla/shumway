@@ -16,6 +16,7 @@
 // Class: GeolocationEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class GeolocationEvent extends flash.events.Event {
 
     static classInitializer: any = null;
@@ -29,7 +30,7 @@ module Shumway.AVM2.AS.flash.events {
                 hAccuracy: number = 0, vAccuracy: number = 0, speed: number = 0,
                 heading: number = 0, timestamp: number = 0) {
       super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.GeolocationEvent");
+      dummyConstructor("public flash.events.GeolocationEvent");
     }
 
     // JS -> AS Bindings

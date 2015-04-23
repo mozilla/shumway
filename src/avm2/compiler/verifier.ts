@@ -38,13 +38,13 @@ module Shumway.AVM2.Verifier {
   }
 
   export class TypeInformation {
-    type: Type;
-    baseClass: any;
-    object: any;
-    scopeDepth: number;
-    trait: Trait;
-    noCoercionNeeded: boolean;
-    noCallSuperNeeded: boolean;
+    type: Type = null;
+    baseClass: any = null;
+    object: any = null;
+    scopeDepth: number = -1;
+    trait: Trait = null;
+    noCoercionNeeded: boolean = false;
+    noCallSuperNeeded: boolean = false;
   }
 
   export class Type {
@@ -64,11 +64,13 @@ module Shumway.AVM2.Verifier {
     static Function: TraitsType;
     static XML: TraitsType;
     static XMLList: TraitsType;
+    static QName: TraitsType;
+    static Namespace: TraitsType;
     static Dictionary: TraitsType;
 
     static _cache = {
-      byQN: <Shumway.Map<Type>>Shumway.ObjectUtilities.createEmptyObject(),
-      byHash: <Shumway.Map<Type>>Shumway.ObjectUtilities.createEmptyObject()
+      byQN: <Shumway.Map<Type>>Object.create(null),
+      byHash: <Shumway.Map<Type>>Object.create(null)
     };
 
     static from(info: Info, domain: ApplicationDomain): Type {
@@ -130,12 +132,24 @@ module Shumway.AVM2.Verifier {
       Type.Function     = Type.fromSimpleName("Function", domain).instanceType();
       Type.XML          = Type.fromSimpleName("XML", domain).instanceType();
       Type.XMLList      = Type.fromSimpleName("XMLList", domain).instanceType();
+      Type.QName        = Type.fromSimpleName("QName", domain).instanceType();
+      Type.Namespace    = Type.fromSimpleName("Namespace", domain).instanceType();
       Type.Dictionary   = Type.fromSimpleName("flash.utils.Dictionary", domain).instanceType();
       Type._typesInitialized = true;
     }
 
     equals(other: Type): boolean {
       return this === other;
+    }
+
+    canBeXML() {
+      return this === Type.Any || this === Type.Object ||
+             this === Type.XML || this === Type.XMLList ||
+             this === Type.QName || this === Type.QName;
+    }
+
+    isStrictComparableWith(other: Type) {
+      return this === other && !this.canBeXML();
     }
 
     merge(other: Type): Type {
@@ -151,7 +165,7 @@ module Shumway.AVM2.Verifier {
     }
 
     super(): Type {
-      Shumway.Debug.abstractMethod("super");
+      release || Shumway.Debug.abstractMethod("super");
       return null;
     }
 
@@ -356,10 +370,7 @@ module Shumway.AVM2.Verifier {
     }
 
     equals(other: Type): boolean {
-      if (other.isTraitsType()) {
-        return this.info.traits === (<TraitsType>other).info.traits;
-      }
-      return false;
+      return other.isTraitsType() && this.info.traits === (<TraitsType>other).info.traits;
     }
 
     merge(other: Type): Type {
@@ -499,6 +510,7 @@ module Shumway.AVM2.Verifier {
     local: Type [];
     constructor() {
       this.id = State.id += 1;
+      this.originalId = this.id;
       this.stack = [];
       this.scope = [];
       this.local = [];
@@ -561,7 +573,7 @@ module Shumway.AVM2.Verifier {
       State._mergeArrays(this.scope, other.scope);
     }
     private static _mergeArrays(a: Type [], b: Type []) {
-      release || assert(a.length === b.length, "a: ", a, " b: ", b);
+      release || assert(a.length === b.length, "a: " + a + " b: " + b);
       for (var i = a.length - 1; i >= 0; i--) {
         release || assert((a[i] !== undefined) && (b[i] !== undefined));
         if (a[i] === b[i]) {
@@ -573,8 +585,8 @@ module Shumway.AVM2.Verifier {
   }
 
   class Verification {
-    writer = new IndentingWriter();
-    thisType: Type;
+    writer: IndentingWriter = null;
+    thisType: Type = null;
     returnType: Type;
     multinames: Multiname [];
     pushCount: number = 0;
@@ -586,7 +598,10 @@ module Shumway.AVM2.Verifier {
     ) {
       // ...
       Type.initializeTypes(domain);
-      this.writer = Shumway.AVM2.Verifier.traceLevel.value ? new IndentingWriter() : null;
+
+      if (Shumway.AVM2.Verifier.traceLevel.value) {
+        this.writer = new IndentingWriter();
+      }
       this.multinames = methodInfo.abc.constantPool.multinames;
       this.returnType = Type.Undefined;
     }
@@ -601,7 +616,6 @@ module Shumway.AVM2.Verifier {
     }
 
     private _prepareEntryState(): State {
-      var writer = this.writer;
       var entryState = new State();
       var methodInfo = this.methodInfo;
       this.thisType = methodInfo.holder ? Type.from(methodInfo.holder, this.domain) : Type.Any;
@@ -635,9 +649,6 @@ module Shumway.AVM2.Verifier {
       var writer = this.writer;
 
       var blocks: Bytecode [] = this.methodInfo.analysis.blocks;
-      blocks.forEach(function (x: Bytecode) {
-        x.verifierEntryState = x.verifierExitState = null;
-      });
 
       /**
        * To avoid revisiting the same block more than necessary while iterating to a fixed point,
@@ -668,7 +679,7 @@ module Shumway.AVM2.Verifier {
       while (!worklist.isEmpty()) {
 
         var block = worklist.pop();
-        var exitState = block.verifierExitState = block.verifierEntryState.clone();
+        var exitState = block.verifierEntryState.clone();
 
         this._verifyBlock(block, exitState);
 
@@ -701,7 +712,7 @@ module Shumway.AVM2.Verifier {
             return;
           }
 
-          successor.verifierEntryState = exitState.clone();
+          successor.verifierEntryState = exitState;
           worklist.push(successor);
           if (writer) {
             writer.writeLn("Added Block: " + successor.bid +
@@ -747,7 +758,7 @@ module Shumway.AVM2.Verifier {
       }
 
       function notImplementedBC() {
-        notImplemented(String(bc));
+        notImplemented('Bytecode not implemented in verifier: ' + bc);
       }
 
       function popMultiname(): Type {
@@ -863,12 +874,6 @@ module Shumway.AVM2.Verifier {
           var type = Type.from(resolved.script, self.domain);
           writer && writer.debugLn("findProperty(" + mn + ") -> " + type);
           return type;
-        }
-
-        if (mn.isConstantType()) {
-          if (mn.getConstantValue().name === "unsafeJSNative") {
-            return Type.Any;
-          }
         }
 
         writer && writer.warnLn("findProperty(" + mn + ")");
@@ -1342,7 +1347,9 @@ module Shumway.AVM2.Verifier {
           case OP.astypelate:
             type = pop();
             pop();
-            if (type.isTraitsType()) {
+            if (type === Type.Class) {
+              push(type)
+            } else if (type.isTraitsType()) {
               push(type.instanceType());
             } else {
               push(Type.Any);

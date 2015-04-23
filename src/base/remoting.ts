@@ -77,13 +77,19 @@ module Shumway.Remoting {
     UpdateBitmapData            = 102,
     UpdateTextContent           = 103,
     UpdateStage                 = 104,
+    UpdateNetStream             = 105,
+    RequestBitmapData           = 106,
 
-    RegisterFont                = 200,
-    DrawToBitmap                = 201,
+    DrawToBitmap                = 200,
 
     MouseEvent                  = 300,
     KeyboardEvent               = 301,
     FocusEvent                  = 302
+  }
+
+  export enum FilterType {
+    Blur,
+    DropShadow
   }
 
   /**
@@ -108,15 +114,61 @@ module Shumway.Remoting {
     All                    = 2
   }
 
+  export enum VideoPlaybackEvent {
+    Initialized = 0,
+    Metadata = 1,
+    PlayStart = 2,
+    PlayStop = 3,
+    BufferEmpty = 4,
+    BufferFull = 5,
+    Pause = 6,
+    Unpause = 7,
+    Seeking = 8,
+    Seeked = 9,
+    Progress = 10,
+    Error = 11,
+  }
+
+  export enum VideoControlEvent {
+    Init = 1,
+    Pause = 2,
+    Seek = 3,
+    GetTime = 4,
+    GetBufferLength = 5,
+    SetSoundLevels = 6,
+    GetBytesLoaded = 7,
+    GetBytesTotal = 8,
+    EnsurePlaying = 9,
+  }
+
+  export enum StageScaleMode {
+    ShowAll = 0,
+    ExactFit = 1,
+    NoBorder = 2,
+    NoScale = 4
+  }
+
+  export enum StageAlignFlags {
+    None     = 0,
+    Top      = 1,
+    Bottom   = 2,
+    Left     = 4,
+    Right    = 8,
+
+    TopLeft       = Top | Left,
+    BottomLeft    = Bottom | Left,
+    BottomRight   = Bottom | Right,
+    TopRight      = Top | Right
+  }
 
   export var MouseEventNames: string[] = [
     'click',
     'dblclick',
     'mousedown',
     'mousemove',
-    'mouseup'
-    //'mouseover',
-    //'mouseout'
+    'mouseup',
+    'mouseover',
+    'mouseout'
   ];
 
   export var KeyboardEventNames: string[] = [
@@ -136,5 +188,34 @@ module Shumway.Remoting {
     DocumentVisible,
     WindowBlur,
     WindowFocus
+  }
+
+  export interface DisplayParameters {
+    stageWidth: number;
+    stageHeight: number;
+    pixelRatio: number;
+    screenWidth: number;
+    screenHeight: number;
+  }
+
+  export interface IGFXServiceObserver {
+    displayParameters(displayParameters: DisplayParameters);
+    focusEvent(data: any);
+    keyboardEvent(data: any);
+    mouseEvent(data: any);
+    videoEvent(id: number, eventType: VideoPlaybackEvent, data: any);
+  }
+
+  export interface IGFXService {
+    addObserver(observer: IGFXServiceObserver);
+    removeObserver(observer: IGFXServiceObserver);
+
+    update(updates: DataBuffer, assets: Array<DataBuffer>): void;
+    updateAndGet(updates: DataBuffer, assets: Array<DataBuffer>): any;
+    frame(): void;
+    videoControl(id: number, eventType: VideoControlEvent, data: any): any;
+    registerFont(syncId: number, data: any): Promise<any>;
+    registerImage(syncId: number, symbolId: number, data: any): Promise<any>;
+    fscommand(command: string, args: string): void;
   }
 }

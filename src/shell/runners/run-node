@@ -1,0 +1,10 @@
+#!/bin/bash
+SWF_FILE=$(cd $(dirname $1); pwd)/$(basename $1)
+NODEJS=node
+MAINFILE=./src/shell/shell-node.js
+SAVED_DIR=$(pwd)
+SCRIPT_PATH=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )
+
+cd $SCRIPT_PATH
+$NODEJS $MAINFILE $RUN_SHUMWAY_FLAGS -x $SWF_FILE
+cd $SAVED_DIR

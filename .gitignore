@@ -1,12 +1,7 @@
 *~
 .DS_Store
 
-src/avm2/generated/builtin/builtin.h
-src/avm2/generated/builtin/builtin.cpp
-src/avm2/generated/shell/shell.h
-src/avm2/generated/shell/shell.cpp
-src/avm2/generated/avmplus/avmplus.h
-src/avm2/generated/avmplus/avmplus.cpp
+src/avm2/generated/
 
 src/avm2/bin/node_modules
 
@@ -16,14 +11,11 @@ src/avm2/utils/asc.jar
 src/avm2/utils/avmshell
 src/avm2/utils/js
 
-src/flash/playerglobal.js
-src/flash/playerglobal.abc
-src/flash/playerglobal-new.js
-src/flash/playerglobal-new.abc
+src/avm1/tests/
+
+src/flash/playerglobal*
+src/flash/classes/
 
 node_modules/
 
 build/
-src/flash/classes/*.abc
-src/flash/classes/*.cpp
-src/flash/classes/*.h

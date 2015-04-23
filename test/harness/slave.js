@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2013 Mozilla Foundation
  *
@@ -18,10 +16,8 @@
 
 var SHUMWAY_ROOT = "../../src/";
 
-var avm2Root = "../../src/avm2/";
-var builtinPath = avm2Root + "generated/builtin/builtin.abc";
-var shellAbcPath = avm2Root + "generated/shell/shell.abc";
-var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
+var builtinPath = "../../build/libs/builtin.abc";
+var shellAbcPath = "../../build/libs/shell.abc";
 
 // different playerglobals can be used here
 var playerglobalInfo = {
@@ -34,40 +30,49 @@ var easel, easelHost, player;
 function loadMovie(path, reportFrames) {
   path = combineUrl(document.location.href, path);
 
-  var movieReadyResolve;
-  var movieReady = new Promise(function (resolve) {
-    movieReadyResolve = resolve;
-  });
-  movieReady.then(function() { sendResponse(); });
-
-  var onFrameCallback = null;
-  if (reportFrames) {
-    var i = 0, frame = -1;
-    onFrameCallback = function () {
-      while (i < reportFrames.length && frame >= reportFrames[i]) {
+  var expectedFrameIndex = 0, currentFrame = -1;
+  function onFrameCallback() {
+    if (currentFrame < 0) {
+      sendResponse();
+    }
+    if (reportFrames) {
+      while (expectedFrameIndex < reportFrames.length &&
+        currentFrame >= reportFrames[expectedFrameIndex]) {
         var snapshot = getCanvasData();
-        movieReady.then(sendResponse.bind(null, {
-          index: i,
-          frame: frame,
+        sendResponse({
+          index: expectedFrameIndex,
+          frame: currentFrame,
           snapshot: snapshot
-        }));
-        i++;
+        });
+        expectedFrameIndex++;
       }
-      frame++;
+    }
+    currentFrame++;
+  }
+
+  function initEaselHostCallbacks() {
+    easelHost.processFrame = onFrameCallback;
+    easelHost.processFSCommand = function (command) {
+      if (command === 'quit') {
+        terminate();
+      }
     };
   }
 
-  function initialized() {
-    setTimeout(function () {
-      movieReadyResolve(); // startPromise
-      loaded(); // onParsed
-    }, 1000);
-
-    // terminate();
+  function terminate() {
+    ignoreAdanvances = true;
+    // cleaning up
+    if (advanceTimeout) { // invoke current timeout
+      clearTimeout(advanceTimeout);
+      advanceCallback();
+    }
+    // reports unreported frames
+    while (reportFrames && i < reportFrames.length) {
+      onFrameCallback();
+    }
   }
 
   easel = createEasel();
-
   if (TEST_MODE === 'iframe') {
     var flashParams = {
       url: path,
@@ -91,79 +96,48 @@ function loadMovie(path, reportFrames) {
       var playerWindow = playerElement.contentWindow;
       playerWindow.postMessage(data, '*');
 
-      easelHost = new Shumway.Player.Window.WindowEaselHost(easel, playerWindow, window);
-      easelHost.processFrame = onFrameCallback;
-      initialized();
+      easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWindow, window);
+      initEaselHostCallbacks();
     };
-    return;
+  } else {
+    // non-iframe mode
+    Shumway.dontSkipFramesOption.value = true;
+    Shumway.frameRateOption.value = 60; // turbo mode
+
+    var sysMode = Shumway.AVM2.Runtime.ExecutionMode.COMPILE; // .INTERPRET
+    var appMode = Shumway.AVM2.Runtime.ExecutionMode.COMPILE; // .INTERPRET
+
+    Shumway.FileLoadingService.instance = new Shumway.Player.BrowserFileLoadingService();
+    Shumway.FileLoadingService.instance.init(path);
+
+    Shumway.SystemResourcesLoadingService.instance =
+      new Shumway.Player.BrowserSystemResourcesLoadingService(builtinPath, playerglobalInfo);
+
+    Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal, sysMode, appMode).then(function (avm2) {
+      easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
+      initEaselHostCallbacks();
+
+      var gfxService = new Shumway.Player.Test.TestGFXService();
+      player = new Shumway.Player.Player(gfxService);
+      player.stageAlign = 'tl';
+      player.stageScale = 'noscale';
+      player.displayParameters = easel.getDisplayParameters();
+      player.load(path);
+
+    });
   }
-
-  function loaded() { movieReadyResolve(); }
-  function terminate() {
-    ignoreAdanvances = true;
-    // cleaning up
-    if (!movieReady.resolved) { // movieReady needs to be resolved
-      movieReadyResolve();
-    }
-    if (advanceTimeout) { // invoke current timeout
-      clearTimeout(advanceTimeout);
-      advanceCallback();
-    }
-    // reports unreported frames
-    while (reportFrames && i < reportFrames.length) {
-      onFrameCallback();
-    }
-  }
-
-
-  Shumway.dontSkipFramesOption.value = true;
-
-  var sysMode = Shumway.AVM2.Runtime.ExecutionMode.COMPILE; // .INTERPRET
-  var appMode = Shumway.AVM2.Runtime.ExecutionMode.COMPILE; // .INTERPRET
-
-  Shumway.FileLoadingService.instance.baseUrl = path;
-
-  Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
-
-    easelHost = new Shumway.Player.Test.TestEaselHost(easel);
-    easelHost.processFrame = onFrameCallback;
-
-    player = new Shumway.Player.Test.TestPlayer();
-    player.load(path);
-
-    initialized();
-  });
 }
 
 function createEasel() {
+  Shumway.GFX.hud.value = true;
   Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
-  var backend = Shumway.GFX.backend.value | 0;
-  var easel = new Shumway.GFX.Easel(document.getElementById("stageContainer"), backend, true);
+  var easel = new Shumway.GFX.Easel(document.getElementById("easelContainer"), true);
+  easel.startRendering();
   return easel;
 }
 
 Shumway.Telemetry.instance = {
   reportTelemetry: function (data) {}
-};
-
-Shumway.FileLoadingService.instance = {
-  createSession: function () {
-    return {
-      open: function (request) {
-        var self = this;
-        var base = Shumway.FileLoadingService.instance.baseUrl || '';
-        var path = combineUrl(base, request.url);
-        console.log('FileLoadingService: loading ' + path);
-        new Shumway.BinaryFileReader(path).readAsync(
-          function (data, progress) {
-            self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
-          },
-          function (e) { self.onerror(e); },
-          self.onopen,
-          self.onclose);
-      }
-    };
-  }
 };
 
 var traceMessages = '';
@@ -186,15 +160,9 @@ function getCanvas() {
 var tmpCanvas = document.createElement('canvas');
 
 function getCanvasData() {
-  var canvas = getCanvas();
-
-  var bounds = easel._stage._bounds;
-  tmpCanvas.width = bounds.w;
-  tmpCanvas.height = bounds.h;
-  var ctx = tmpCanvas.getContext('2d');
-  ctx.drawImage(canvas, 0, 0);
-
-  return tmpCanvas.toDataURL('image/png');
+  // flush rendering buffers
+  easel.render();
+  return easel.screenShot(null, true).dataURL;
 }
 
 var mouseOutside = true;

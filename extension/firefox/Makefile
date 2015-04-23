@@ -13,40 +13,39 @@
 # limitations under the License.
 
 UTILS_HOME = ../../utils
-CLOSURE ?= $(UTILS_HOME)/cc.jar
+CLOSURE ?= $(UTILS_HOME)/closure.jar
 BUILD_DIR = ../../build/firefox
-GENERIC_DIR = ../../build/bundles
+BUNDLES_DIR = ../../build/bundles-cc
 
 # Just builds a ff extension
 
-VERSION_BASELINE=9c77cb929464c1bca343f4
-VERSION=0.9.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
-VERSION_SHA=`git log --format="%h" -n 1`
+VERSION = `head -n 1 ../../build/version/version.txt`
 
 build: ensureoutputdir
-	# Coping extension files
-	echo "Creating extension verions: $(VERSION)"
-	cp -R ../../LICENSE content bootstrap.js $(BUILD_DIR)/
+	# Copying extension files
+	echo "Creating extension version: $(VERSION)"
+	cp -R ../../LICENSE content chrome bootstrap.js chrome.manifest icon.png icon64.png $(BUILD_DIR)/
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ install.rdf > $(BUILD_DIR)/install.rdf
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ update.rdf > $(BUILD_DIR)/update.rdf
-	# Coping JavaScript content files
+	cp ../../examples/inspector/debug/pingpong.js $(BUILD_DIR)/chrome/
+	# Copying WebGL shaders
+	mkdir -p $(BUILD_DIR)/content/gfx/gl/shaders
+	cp ../../src/gfx/gl/shaders/combined.frag $(BUILD_DIR)/content/gfx/gl/shaders/
+	cp ../../src/gfx/gl/shaders/combined.vert $(BUILD_DIR)/content/gfx/gl/shaders/
+	# Copying JavaScript content files
 	mkdir -p $(BUILD_DIR)/content/playerglobal
 	cp ../../build/playerglobal/playerglobal.json $(BUILD_DIR)/content/playerglobal/
 	cp ../../build/playerglobal/playerglobal.abcs $(BUILD_DIR)/content/playerglobal/
-	mkdir -p $(BUILD_DIR)/content/avm2/generated/builtin
-	cp ../../src/avm2/generated/builtin/builtin.abc $(BUILD_DIR)/content/avm2/generated/builtin/
-	mkdir -p $(BUILD_DIR)/content/avm2/generated/avm1lib
-	cp ../../src/avm2/generated/avm1lib/avm1lib.abc $(BUILD_DIR)/content/avm2/generated/avm1lib/
-	# Coping shumway.js files
-	cp $(GENERIC_DIR)/shumway*.js $(BUILD_DIR)/content/
-	echo $(VERSION) > $(BUILD_DIR)/content/version.txt
-	echo $(VERSION_SHA) >> $(BUILD_DIR)/content/version.txt
+	# Coping ABC and Relooper files
+	mkdir -p $(BUILD_DIR)/content/libs
+	cp ../../build/libs/builtin.abc $(BUILD_DIR)/content/libs/
+	cp ../../build/libs/relooper.js $(BUILD_DIR)/content/libs/
+	# Copying closure optimized shumway.js files
+	cp $(BUNDLES_DIR)/shumway*.js $(BUILD_DIR)/content/
+	cp ../../build/version/version.txt $(BUILD_DIR)/content/version.txt
 	echo "extension" >> $(BUILD_DIR)/content/version.txt
 	# Packaging XPI file
 	cd $(BUILD_DIR); zip -r shumway.xpi *
-
-../../build/playerglobal/playerglobal.abcs:
-	make -C $(UTILS_HOME) build-playerglobal
 
 ensureoutputdir: clean
 	-mkdir -p $(BUILD_DIR)

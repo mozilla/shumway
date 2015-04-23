@@ -16,6 +16,7 @@
 // Class: FullScreenEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class FullScreenEvent extends flash.events.ActivityEvent {
 
     static classInitializer: any = null;
@@ -27,7 +28,7 @@ module Shumway.AVM2.AS.flash.events {
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 fullScreen: boolean = false, interactive: boolean = false) {
       super(undefined, undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.FullScreenEvent");
+      dummyConstructor("public flash.events.FullScreenEvent");
     }
 
     // JS -> AS Bindings

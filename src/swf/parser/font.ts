@@ -40,7 +40,65 @@ module Shumway.SWF.Parser {
     return toString16(val >> 16) + toString16(val);
   }
 
-  export function defineFont(tag, dictionary) {
+  /**
+   * Heuristic to detect if DefineFont2 was scaled as Font3: scanning all
+   * x and y coordinates of the glyphs and if their bounding box dimensions
+   * greater than 5000 (that's more than enough for normal TrueType font),
+   * then the font coordinates were scaled by 20.
+   */
+  function isScaledFont2(glyphs) {
+    var xMin = 0, yMin = 0, xMax = 0, yMax = 0;
+    for (var i = 0; i < glyphs.length; i++) {
+      var glyph = glyphs[i];
+      if (!glyph) {
+        continue;
+      }
+      var records = glyph.records;
+      var record;
+      var x = 0;
+      var y = 0;
+
+      for (var j = 0; j < records.length; j++) {
+        record = records[j];
+        if (record.type) {
+          if (record.isStraight) {
+            x += (record.deltaX || 0);
+            y += -(record.deltaY || 0);
+          } else {
+            x += record.controlDeltaX;
+            y += -record.controlDeltaY;
+            x += record.anchorDeltaX;
+            y += -record.anchorDeltaY;
+          }
+        } else {
+          if (record.eos) {
+            break;
+          }
+          if (record.move) {
+            x = record.moveX;
+            y = -record.moveY;
+          }
+        }
+
+        if (xMin > x) {
+          xMin = x;
+        }
+        if (yMin > y) {
+          yMin = y;
+        }
+        if (xMax < x) {
+          xMax = x;
+        }
+        if (yMax < y) {
+          yMax = y;
+        }
+      }
+    }
+    var maxDimension = Math.max(xMax - xMin, yMax - yMin);
+    return maxDimension > 5000;
+  }
+
+  export function defineFont(tag) {
     var uniqueName = 'swf-font-' + tag.id;
     var fontName = tag.name || uniqueName;
 
@@ -52,11 +110,12 @@ module Shumway.SWF.Parser {
       italic: tag.italic === 1,
       codes: null,
       metrics: null,
-      data: null
+      data: tag.data,
+      originalSize: false
     };
 
     var glyphs = tag.glyphs;
-    var glyphCount = tag.glyphCount = glyphs.length;
+    var glyphCount = glyphs ? tag.glyphCount = glyphs.length : 0;
 
     if (!glyphCount) {
       return font;
@@ -70,6 +129,7 @@ module Shumway.SWF.Parser {
     var originalCode;
     var generateAdvancement = !('advance' in tag);
     var correction = 0;
+    var isFont2 = (tag.code === 48);
     var isFont3 = (tag.code === 75);
 
     if (generateAdvancement) {
@@ -81,7 +141,7 @@ module Shumway.SWF.Parser {
     if (tag.codes) {
       for (var i = 0; i < tag.codes.length; i++) {
         var code = tag.codes[i];
-        if (code < 32) {
+        if (code < 32 || code in glyphIndex) {
           maxCode++;
           if (maxCode == 8232) {
             maxCode = 8240;
@@ -89,27 +149,22 @@ module Shumway.SWF.Parser {
           code = maxCode;
         }
         codes.push(code);
-      }
-    }
-
-    originalCode = codes.concat();
-
-    if (tag.codes) {
-      for (var i = 0, code; i < codes.length; i++) {
-        code = codes[i];
         glyphIndex[code] = i;
       }
+
+      originalCode = codes.concat();
+
       codes.sort(function (a, b) {
         return a - b;
       });
       var i = 0;
       var code;
       var indices;
-      while (code = codes[i++]) {
+      while ((code = codes[i++]) !== undefined) {
         var start = code;
         var end = start;
         indices = [i - 1];
-        while ((code = codes[i]) && end + 1 === code) {
+        while (((code = codes[i]) !== undefined) && end + 1 === code) {
           ++end;
           indices.push(i);
           ++i;
@@ -126,9 +181,15 @@ module Shumway.SWF.Parser {
         indices.push(i);
       }
       ranges.push([UAC_OFFSET, UAC_OFFSET + glyphCount - 1, indices]);
+      originalCode = codes.concat();
     }
 
     var resolution = tag.resolution || 1;
+    if (isFont2 && isScaledFont2(glyphs)) {
+      // some DefineFont2 without layout using DefineFont3 resolution, why?
+      resolution = 20;
+      font.originalSize = true;
+    }
     var ascent = Math.ceil(tag.ascent / resolution) || 1024;
     var descent = -Math.ceil(tag.descent / resolution) || 0;
     var leading = (tag.leading / resolution) || 0;
@@ -191,7 +252,7 @@ module Shumway.SWF.Parser {
     var i = 0;
     var code;
     var rawData = {};
-    while (code = codes[i++]) {
+    while ((code = codes[i++]) !== undefined) {
       var glyph = glyphs[glyphIndex[code]];
       var records = glyph.records;
       var x = 0;
@@ -274,7 +335,7 @@ module Shumway.SWF.Parser {
     }
 
     i = 0;
-    while (code = codes[i++]) {
+    while ((code = codes[i++]) !== undefined) {
       var glyph = glyphs[glyphIndex[code]];
       var records = glyph.records;
       segments = rawData[code];
@@ -286,9 +347,9 @@ module Shumway.SWF.Parser {
       var yCoordinates = '';
       var x = 0;
       var y = 0;
-      var xMin = 1024;
+      var xMin = 0;
       var xMax = -1024;
-      var yMin = 1024;
+      var yMin = 0;
       var yMax = -1024;
 
       var myFlags = '';
@@ -514,7 +575,7 @@ module Shumway.SWF.Parser {
     }
     tables['hmtx'] = hmtx;
 
-    if (tag.kerning) {
+    if (tag.kerning && tag.kerning.length) {
       var kerning = tag.kerning;
       var nPairs = kerning.length;
       var searchRange = maxPower2(nPairs) * 2;
@@ -550,7 +611,7 @@ module Shumway.SWF.Parser {
       toString16(maxContours) +
       '\x00\x00' + // maxCompositePoints
       '\x00\x00' + // maxCompositeContours
-      '\x00\x00' + // maxZones
+      '\x00\x01' + // maxZones
       '\x00\x00' + // maxTwilightPoints
       '\x00\x00' + // maxStorage
       '\x00\x00' + // maxFunctionDefs
@@ -651,7 +712,7 @@ module Shumway.SWF.Parser {
       dataBuffer[i] = otf.charCodeAt(i) & 0xff;
     }
 
-    font.codes = codes;
+    font.codes = originalCode;
     font.metrics = metrics;
     font.data = dataBuffer;
 

@@ -1,4 +1,3 @@
-/* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
    java -jar utils/asc.jar -import playerglobal.abc -swf NetClasses,100,100,2 test/swfs/flash_net_classes.as

@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2014 Mozilla Foundation
  *
@@ -119,7 +117,7 @@ var build_dir = path.join(shumwayRoot, 'build/compileabc');
 ensureDir(build_dir);
 
 var playerglobalPath = path.join(shumwayRoot, 'build/playerglobal/playerglobal-single.abc');
-var builtinPath = path.join(shumwayRoot, 'src/avm2/generated/builtin/builtin.abc');
+var builtinPath = path.join(shumwayRoot, 'build/libs/builtin.abc');
 var ascjar = path.join(shumwayRoot, 'utils/asc.jar');
 
 if (!outputPath) {

@@ -16,6 +16,7 @@
 // Class: DateTimeFormatter
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class DateTimeFormatter extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.globalization {
     constructor (requestedLocaleIDName: string, dateStyle: string = "long", timeStyle: string = "long") {
       requestedLocaleIDName = asCoerceString(requestedLocaleIDName); dateStyle = asCoerceString(dateStyle); timeStyle = asCoerceString(timeStyle);
       false && super();
-      notImplemented("Dummy Constructor: public flash.globalization.DateTimeFormatter");
+      dummyConstructor("public flash.globalization.DateTimeFormatter");
     }
     
     // JS -> AS Bindings

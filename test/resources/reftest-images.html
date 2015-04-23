@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <title></title>
+  <style>
+    body { font-family: sans-serif; }
+    h1 {
+      color: blue;
+    }
+    div.configs {
+      display: flex;
+      flex-direction: row;
+    }
+    div.config {
+      border: 1px solid gray;
+      margin: 6px;
+      padding: 10px;
+      width: 300px;
+    }
+  </style>
+  <script>
+    function loadManifest(path) {
+      return new Promise(function (resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', path);
+        xhr.responseType = 'json';
+        xhr.onload = function () {
+          resolve(xhr.response);
+        };
+        xhr.onerror = function () {
+          reject(xhr.error);
+        };
+        xhr.send(null);
+      });
+    }
+
+    function displayImage(id, url, div) {
+      var a = document.createElement('a');
+      a.href = url;
+      a.title = id;
+      var img = document.createElement('img');
+      img.src = url;
+      img.width = 96;
+      a.appendChild(img);
+      div.appendChild(a);
+    }
+
+    function displayConfigImage(name, baseUrl, count, div) {
+      var header = document.createElement('h2');
+      header.textContent = name;
+      div.appendChild(header);
+
+      var images = document.createElement('div');
+      images.className = 'images';
+      div.appendChild(images);
+
+      var promise = Promise.resolve(undefined);
+      for (var i = 1; i <= count; i++) {
+        var imageUrl = baseUrl + '/' + i + '.png';
+        displayImage(i, imageUrl, images);
+      }
+      return promise;
+    }
+
+    function displayTest(test) {
+      var header = document.createElement('h1');
+      header.textContent = test.id;
+      document.body.appendChild(header);
+
+      var configsDiv = document.createElement('div');
+      configsDiv.className = 'configs';
+      document.body.appendChild(configsDiv);
+
+      var promise = Promise.resolve(undefined);
+      refsConfigs.forEach(function (config) {
+        var configDiv = document.createElement('div');
+        configDiv.className = 'config';
+        configsDiv.appendChild(configDiv);
+
+        var base = refsBase + '/' + config + '/' + test.id;
+        promise = promise.then(displayConfigImage.bind(null, config, base, test.framesCount, configDiv));
+      });
+      return promise;
+    }
+
+    // Parse query string to extract some parameters (it can fail for some input)
+    var query = document.location.href.replace(/^[^?]*(\?([^#]*))?(#.*)?/, '$2');
+    var queryParams = query ? JSON.parse('{' + query.split('&').map(function (a) {
+      return a.split('=').map(decodeURIComponent).map(JSON.stringify).join(': ');
+    }).join(',') + '}') : {};
+
+    var platform = navigator.userAgent.indexOf('Mac OS') >= 0 ? 'darwin' :
+            navigator.userAgent.indexOf('Windows NT') >= 0 ? 'win32' : 'linux';
+
+    var refsBase = '../ref/' + (queryParams.platform || platform);
+    var refsConfigs;
+
+    loadManifest('./browser_manifests/browser_manifest.json').then(function (browsers) {
+      refsConfigs = browsers.map(function (b) { return b.name; });
+      if (queryParams.browsers) {
+        refsConfigs = queryParams.browsers.split(',');
+      }
+      return loadManifest('../test_manifest.json');
+    }).then(function (manifest) {
+      return manifest.filter(function (test) {
+        return test.type === 'eq';
+      }).map(function (test) {
+        return {id: test.id, framesCount: test.frames.length };
+      });
+    }).then(function (data) {
+      var promise = Promise.resolve(undefined);
+      data.forEach(function (test) {
+        promise = promise.then(displayTest.bind(null, test));
+      });
+      return promise;
+    });
+  </script>
+</head>
+<body>
+
+</body>
+</html>

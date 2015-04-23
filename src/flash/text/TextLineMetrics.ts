@@ -16,17 +16,18 @@
 // Class: TextLineMetrics
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class TextLineMetrics extends ASNative {
 
     static classInitializer: any = null;
     static initializer: any = null;
     static classSymbols: string [] = null;
-    static instanceSymbolså: string [] = null; // ["x", "width", "height", "ascent", "descent", "leading"];
+    static instanceSymbols: string [] = null; // ["x", "width", "height", "ascent", "descent", "leading"];
 
     constructor(x: number, width: number, height: number, ascent: number, descent: number,
                 leading: number) {
       false && super();
-      notImplemented("Dummy Constructor: public flash.text.TextLineMetrics");
+      dummyConstructor("public flash.text.TextLineMetrics");
       x = +x;
       width = +width;
       height = +height;

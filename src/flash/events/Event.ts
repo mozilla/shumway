@@ -29,7 +29,7 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
 
     static classSymbols: string [] = null;
-    static instanceSymbols: string [] = ["clone!"];
+    static instanceSymbols: string [] = null;
 
     static getInstance(type: string, bubbles: boolean = false, cancelable: boolean = false): Event {
       var instance = Event._instances[type];
@@ -74,7 +74,7 @@ module Shumway.AVM2.AS.flash.events {
     }
 
 
-    constructor(type: string, bubbles: boolean = false, cancelable: boolean = false) {
+    constructor(type: string, bubbles: boolean, cancelable: boolean) {
       false && super();
       this._type = asCoerceString(type);
       this._bubbles = !!bubbles;
@@ -129,12 +129,14 @@ module Shumway.AVM2.AS.flash.events {
     static TEXTURE_READY: string = "textureReady";
     static VIDEO_FRAME: string = "videoFrame";
     static SUSPEND: string = "suspend";
+
+    static AVM1_INIT: string = "initialize";
+    static AVM1_CONSTRUCT: string = "construct";
+    static AVM1_LOAD: string = "load";
+
 //    static CHANNEL_MESSAGE: string = "channelMessage";
 //    static CHANNEL_STATE: string = "channelState";
 //    static WORKER_STATE: string = "workerState";
-
-    formatToString: (className: string) => string;
-    clone: () => flash.events.Event;
 
     // AS -> JS Bindings
 
@@ -199,6 +201,27 @@ module Shumway.AVM2.AS.flash.events {
 
     isBroadcastEvent(): boolean {
       return !!this._isBroadcastEvent;
+    }
+
+    clone(): Event {
+      return new Event(this._type, this._bubbles, this._cancelable);
+    }
+
+    toString(): string {
+      return this.formatToString('Event', 'type', 'bubbles', 'cancelable', 'eventPhase');
+    }
+
+    formatToString(className: string, ...args: string[]): string {
+      var str = '[' + className;
+      for (var i: number = 0; i < args.length; i++) {
+        var field = args[i];
+        var value: Object = this.asGetPublicProperty(field);
+        if (typeof value === 'string') {
+          value = '"' + value + '"';
+        }
+        str += ' ' + field + '=' + value;
+      }
+      return str + ']';
     }
   }
 }

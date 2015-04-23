@@ -20,6 +20,7 @@ module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
+  import checkParameterType = Shumway.AVM2.Runtime.checkParameterType;
   import clamp = Shumway.NumberUtilities.clamp;
   import Multiname = Shumway.AVM2.ABC.Multiname;
 
@@ -73,6 +74,8 @@ module Shumway.AVM2.AS.flash.display {
      * Calls the constructors of new children placed by timeline commands.
      */
     _constructChildren(): void {
+      release || counter.count("DisplayObjectContainer::_constructChildren");
+
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
@@ -80,25 +83,42 @@ module Shumway.AVM2.AS.flash.display {
           continue;
         }
         child.class.instanceConstructorNoInitialize.call(child);
+        child._removeReference();
         if (child._name) {
           this[Multiname.getPublicQualifiedName(child._name)] = child;
           //child._addReference();
         }
         child._setFlags(DisplayObjectFlags.Constructed);
 
-        //if (!loader._isAvm2Enabled) {
-        //  this._initAvm1Bindings(instance, name, displayListItem.events,
-        //    's' + props.symbolId + 'c');
-        //  instance._dispatchEvent("init");
-        //  instance._dispatchEvent("construct");
-        //  instance._needLoadEvent = true;
-        //} else {
-        //  instance._dispatchEvent("load");
-        //}
+        if (child._symbol && child._symbol.isAVM1Object) {
+          try {
+            child.dispatchEvent(events.Event.getInstance(events.Event.AVM1_INIT));
+          } catch (e) {
+            console.warn('caught error under DisplayObjectContainer AVM1_INIT event: ', e);
+          }
+          try {
+            child.dispatchEvent(events.Event.getInstance(events.Event.AVM1_CONSTRUCT));
+          } catch (e) {
+            console.warn('caught error under DisplayObjectContainer AVM1_CONSTRUCT event: ', e);
+          }
+          child._setFlags(DisplayObjectFlags.NeedsLoadEvent);
+          if (child._hasAnyFlags(DisplayObjectFlags.HasFrameScriptPending |
+                                 DisplayObjectFlags.ContainsFrameScriptPendingChildren)) {
+            this._setFlags(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
+          }
+        }
 
-        child.dispatchEvent(events.Event.getInstance(events.Event.ADDED, true));
+        try {
+          child.dispatchEvent(events.Event.getInstance(events.Event.ADDED, true));
+        } catch (e) {
+          console.warn('caught error under DisplayObject ADDED event: ', e);
+        }
         if (child.stage) {
-          child.dispatchEvent(events.Event.getInstance(events.Event.ADDED_TO_STAGE));
+          try {
+            child.dispatchEvent(events.Event.getInstance(events.Event.ADDED_TO_STAGE));
+          } catch (e) {
+            console.warn('caught error under DisplayObject ADDED_TO_STAGE event: ', e);
+          }
         }
       }
     }
@@ -109,7 +129,7 @@ module Shumway.AVM2.AS.flash.display {
         var children = this._children;
         for (var i = 0; i < children.length; i++) {
           var child = children[i];
-          if (DisplayObjectContainer.isType(child)) {
+          if (DisplayObjectContainer.isType(child) || AVM1Movie.isType(child)) {
             (<DisplayObjectContainer>child)._enqueueFrameScripts();
           }
         }
@@ -117,6 +137,10 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get numChildren(): number {
+      return this._getNumChildren();
+    }
+    // `get numChildren` is overridden in `Stage` and has to be able to call this.
+    _getNumChildren(): number {
       return this._children.length;
     }
 
@@ -126,10 +150,18 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get tabChildren(): boolean {
+      return this._getTabChildren();
+    }
+    // `get tabChildren` is overridden in `Stage` and has to be able to call this.
+    _getTabChildren(): boolean {
       return this._tabChildren;
     }
 
     set tabChildren(enable: boolean) {
+      this._setTabChildren(enable);
+    }
+    // `set tabChildren` is overridden in `Stage` and has to be able to call this.
+    _setTabChildren(enable: boolean) {
       enable = !!enable;
 
       var old = this._tabChildren;
@@ -140,18 +172,34 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get mouseChildren(): boolean {
+      return this._getMouseChildren();
+    }
+    // `get mouseChildren` is overridden in `Stage` and has to be able to call this.
+    _getMouseChildren(): boolean {
       return this._mouseChildren;
     }
 
     set mouseChildren(enable: boolean) {
+      this._setMouseChildren(enable);
+    }
+    // `set mouseChildren` is overridden in `Stage` and has to be able to call this.
+    _setMouseChildren(enable: boolean) {
       this._mouseChildren = !!enable;
     }
 
     addChild(child: DisplayObject): DisplayObject {
+      checkParameterType(child, "child", flash.display.DisplayObject);
       return this.addChildAt(child, this._children.length);
     }
 
+    /**
+     * Adds a child at a given index. The index must be within the range [0 ... children.length]. Note that this
+     * is different than the range setChildIndex expects.
+     */
     addChildAt(child: DisplayObject, index: number /*int*/): DisplayObject {
+      checkParameterType(child, "child", flash.display.DisplayObject);
+      release || counter.count("DisplayObjectContainer::addChildAt");
+
       index = index | 0;
 
       release || assert (child._hasFlags(DisplayObjectFlags.Constructed), "Child is not fully constructed.");
@@ -167,12 +215,17 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       if (child._parent === this) {
-        this.setChildIndex(child, index);
+        this.setChildIndex(child, clamp(index, 0, children.length - 1));
         return child;
       }
 
+      // TODO: check what happens if a listener for REMOVE throws an error. Does the element get
+      // reparented nevertheless?
       if (child._parent) {
-        child._parent.removeChild(child);
+        // Loader overrides removeChildAt to throw an exception. We still want to use it, so we
+        // always call the original version here.
+        DisplayObjectContainer.prototype.removeChildAt.call(child._parent,
+                                                            child._parent.getChildIndex(child));
         // The children list could have been mutated as a result of |removeChild|.
         index = clamp(index, 0, children.length);
       }
@@ -183,14 +236,14 @@ module Shumway.AVM2.AS.flash.display {
       child._setParent(this, -1);
       child._index = index;
       child._invalidatePosition();
+      this._invalidateChildren();
+      child._addReference();
       child.dispatchEvent(events.Event.getInstance(events.Event.ADDED, true));
       // ADDED event handlers may remove the child from the stage, in such cases
       // we should not dispatch the ADDED_TO_STAGE event.
       if (child.stage) {
         child._propagateEvent(events.Event.getInstance(events.Event.ADDED_TO_STAGE));
       }
-      this._invalidateChildren();
-      child._addReference();
       return child;
     }
 
@@ -198,8 +251,13 @@ module Shumway.AVM2.AS.flash.display {
      * Adds a timeline object to this container. The new child is added after the last object that
      * exists at a smaller depth, or before the first object that exists at a greater depth. If no
      * other timeline object is found, the new child is added to the front(top) of all other children.
+     *
+     * Note that this differs from `addChildAt` in that the depth isn't an index in the `children`
+     * array, and doesn't have to be in the dense range [0..children.length].
      */
-    addChildAtDepth(child: flash.display.DisplayObject, depth: number /*int*/) {
+    addTimelineObjectAtDepth(child: flash.display.DisplayObject, depth: number /*int*/) {
+      release || counter.count("DisplayObjectContainer::addTimelineObjectAtDepth");
+
       depth = depth | 0;
 
       var children = this._children;
@@ -207,7 +265,7 @@ module Shumway.AVM2.AS.flash.display {
       var index = maxIndex + 1;
       for (var i = maxIndex; i >= 0; i--) {
         var current = children[i];
-        if (current._depth) {
+        if (current._depth > -1) {
           if (current._depth < depth) {
             index = i + 1;
             break;
@@ -231,10 +289,13 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     removeChild(child: DisplayObject): DisplayObject {
+      checkParameterType(child, "child", flash.display.DisplayObject);
       return this.removeChildAt(this.getChildIndex(child));
     }
 
     removeChildAt(index: number): DisplayObject {
+      release || counter.count("DisplayObjectContainer::removeChildAt");
+
       index = index | 0;
 
       var children = this._children;
@@ -265,20 +326,27 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     getChildIndex(child: DisplayObject): number /*int*/ {
+      checkParameterType(child, "child", flash.display.DisplayObject);
       if (child._parent !== this) {
         throwError('ArgumentError', Errors.NotAChildError);
       }
       return child._index;
     }
 
+    /**
+     * Sets the index of a child. The index must be within the range [0 ... children.length - 1].
+     */
     setChildIndex(child: DisplayObject, index: number /*int*/): void {
       index = index | 0;
-
+      checkParameterType(child, "child", flash.display.DisplayObject);
       var children = this._children;
-      if (index < 0 || index > children.length) {
+      if (index < 0 || index >= children.length) {
         throwError('RangeError', Errors.ParamRangeError);
       }
-      child._depth = -1;
+      if (child._parent !== this) {
+        throwError('ArgumentError', Errors.NotAChildError);
+      }
+      child._setDepth(-1);
       var currentIndex = this.getChildIndex(child);
       if (children.length === 1 || currentIndex === index) {
         return;
@@ -305,8 +373,8 @@ module Shumway.AVM2.AS.flash.display {
         throwError('RangeError', Errors.ParamRangeError);
       }
 
-      var child = children[index];
-      if (!child._hasFlags(DisplayObjectFlags.Constructed)) {
+      var child = this._lookupChildByIndex(index);
+      if (!child) {
         return null;
       }
 
@@ -317,7 +385,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Returns the timeline object that exists at the specified depth.
      */
-    getChildAtDepth(depth: number /*int*/): flash.display.DisplayObject {
+    getTimelineObjectAtDepth(depth: number /*int*/): flash.display.DisplayObject {
       depth = depth | 0;
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
@@ -360,6 +428,32 @@ module Shumway.AVM2.AS.flash.display {
     getChildByName(name: string): DisplayObject {
       name = asCoerceString(name);
 
+      var child = this._lookupChildByName(name);
+      if (child) {
+        child._addReference();
+        return child;
+      }
+
+      return null;
+    }
+
+    /**
+     * Returns the child display object instance that exists at given index without creating a
+     * reference nor taking ownership.
+     */
+    _lookupChildByIndex(index: number): DisplayObject {
+      var child = this._children[index];
+      if (child && child._hasFlags(DisplayObjectFlags.Constructed)) {
+        return child;
+      }
+      return null;
+    }
+
+    /**
+     * Returns the child display object that exists with given name without creating a reference
+     * nor taking ownership.
+     */
+    _lookupChildByName(name: string): DisplayObject {
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
@@ -367,7 +461,6 @@ module Shumway.AVM2.AS.flash.display {
           continue;
         }
         if (child.name === name) {
-          child._addReference();
           return child;
         }
       }
@@ -376,25 +469,154 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Gets the objects under the specified point by walking the children of this display list. If a child's
-     * bounds doesn't include the given point then we skip it and all of its children.
+     * Override of DisplayObject#_containsPoint that takes children into consideration.
+     */
+    _containsPoint(globalX: number, globalY: number, localX: number, localY: number,
+                   testingType: HitTestingType, objects: DisplayObject[]): HitTestingResult {
+      return this._containsPointImpl(globalX, globalY, localX, localY, testingType, objects, false);
+    }
+
+    _containsPointImpl(globalX: number, globalY: number, localX: number, localY: number,
+                               testingType: HitTestingType, objects: DisplayObject[],
+                               skipBoundsCheck: boolean): HitTestingResult {
+      var result: HitTestingResult;
+      if (!skipBoundsCheck) {
+        result = this._boundsAndMaskContainPoint(globalX, globalY, localX, localY, testingType);
+        // Same as in the DisplayObject base case, we're done if we don't have a hit or are only
+        // looking for bounds + mask checks.
+        if (result === HitTestingResult.None || testingType < HitTestingType.HitTestShape) {
+          return result;
+        }
+      }
+
+      var anyChildHit = false;
+      var children = this._getUnclippedChildren(testingType, globalX, globalY);
+      for (var i = children ? children.length : 0; i--; ) {
+        var child = children[i];
+        if (child._maskedObject) {
+          continue;
+        }
+        result = child._containsGlobalPoint(globalX, globalY, testingType, objects);
+        if (result !== HitTestingResult.Shape) {
+          continue;
+        }
+        // For hit testing, a single match suffices.
+        if (testingType < HitTestingType.Mouse) {
+          return result;
+        }
+        anyChildHit = true;
+        if (testingType >= HitTestingType.ObjectsUnderPoint) {
+          continue;
+        }
+        release || assert(testingType === HitTestingType.Mouse);
+        release || assert(objects.length <= 1);
+        // If this object itself is mouse-disabled, we have to ensure that no nested object is
+        // returned as a result.
+        if (!this._mouseEnabled) {
+          objects.length = 0;
+          return result;
+        }
+        // If this container disables mouseChildren, any matched child establish the container as
+        // the match.
+        if (!this._mouseChildren) {
+          objects[0] = this;
+        }
+        if (objects.length !== 0) {
+          release || assert(InteractiveObject.isType(objects[0]));
+          return HitTestingResult.Shape;
+        }
+      }
+      // We need to always test the container itself for getObjectsUnderPoint or when looking for a drop target.
+      // Otherwise, it's only required if no child (interactive or not) was hit.
+      if (anyChildHit && testingType < HitTestingType.ObjectsUnderPoint) {
+        if (testingType === HitTestingType.Mouse && objects.length === 0) {
+          objects[0] = this;
+        }
+        return HitTestingResult.Shape;
+      }
+      var selfHit = this._containsPointDirectly(localX, localY, globalX, globalY);
+      if (selfHit) {
+        if (testingType === HitTestingType.Drop) {
+          // For Drop, replace previous hit with current one.
+          objects[0] = this;
+        } else if (testingType === HitTestingType.ObjectsUnderPoint || objects && this._mouseEnabled) {
+          objects.push(this);
+        }
+      }
+      return anyChildHit || selfHit ? HitTestingResult.Shape : HitTestingResult.None;
+    }
+
+    private _getUnclippedChildren(testingType, globalX, globalY) {
+      // Clipping masks complicate hit testing: for mouse target finding, where performance is
+      // most important, we want to test highest children first, then go down. OTOH, we want to
+      // test clipping masks before the elements they clip, potentially saving costly tests against
+      // lots of elements. However, clipping masks affect siblings with higher child indices, so
+      // by going top-to-bottom, we discover them after the clipped content. To get around that,
+      // we iterate over the children once and detect any clipping masks. If we find at least one,
+      // we copy all the non-clipped elements into a new array, over which we then iterate without
+      // having to test clipping.
+      // Note: if speed is an issue, we could set a flag on containers that have at least one
+      // clipping mask and do this step only if that flag is set.
+      var children = this._children;
+      if (!children) {
+        return null;
+      }
+      var unclippedChildren: DisplayObject[]; // Lazily created.
+      for (var i = 0; children && i < children.length; i++) {
+        var child = children[i];
+        if (child._clipDepth !== -1) {
+          if (!unclippedChildren) {
+            unclippedChildren = children.slice(0, i);
+          }
+          // Clipping masks are simply ignored for HitTestPoint purposes.
+          if (testingType === HitTestingType.HitTestShape) {
+            continue;
+          }
+          release || assert(testingType >= HitTestingType.Mouse);
+          // If the point isn't contained in the clipping mask, we can skip all the clipped objects.
+          // We pass HitTestShape here because we never want to collect hit objects, which the
+          // higher testing types would attempt to do.
+          var containsPoint = child._containsGlobalPoint(globalX, globalY,
+                                                         HitTestingType.HitTestShape, null);
+          if (!containsPoint) {
+            i = this.getClipDepthIndex(child._clipDepth);
+          }
+          continue;
+        }
+        if (unclippedChildren) {
+          unclippedChildren.push(child);
+        }
+      }
+      return unclippedChildren || children;
+    }
+
+    /**
+     * Override of DisplayObject#_getChildBounds that union all childrens's
+     * bounds into the bounds.
+     */
+    _getChildBounds(bounds: Bounds, includeStrokes: boolean) {
+      var children = this._children;
+      for (var i = 0; i < children.length; i++) {
+        bounds.unionInPlace(children[i]._getTransformedBounds(this, includeStrokes));
+      }
+    }
+
+    /**
+     * Returns an array of all leaf objects under the given point in global coordinates.
+     * A leaf node in this context is an object that itself contains visual content, so it can be
+     * any of Shape, Sprite, MovieClip, Bitmap, Video, and TextField.
+     * Note that, while the Flash documentation makes it sound like it doesn't, the result also
+     * contains the receiver object if that matches the criteria above.
      */
     getObjectsUnderPoint(globalPoint: flash.geom.Point): DisplayObject [] {
-      var objectsUnderPoint: DisplayObject [] = [];
-      this.visit(function (displayObject: DisplayObject): VisitorFlags {
-        if (displayObject.hitTestPoint(globalPoint.x, globalPoint.y, false, true)) {
-          // Only include the objects whose shape is under the specified point.
-          if (displayObject.hitTestPoint(globalPoint.x, globalPoint.y, true, true)) {
-            objectsUnderPoint.push(displayObject);
-            displayObject._addReference();
-          }
-        } else {
-          // TODO: Exclude inaccessible objects, not sure what these are.
-          return VisitorFlags.Skip;
-        }
-        return VisitorFlags.Continue;
-      }, VisitorFlags.None);
-      return objectsUnderPoint;
+      release || counter.count("DisplayObjectContainer::getObjectsUnderPoint");
+
+      var globalX = globalPoint.x * 20 | 0;
+      var globalY = globalPoint.y * 20 | 0;
+      var objects = [];
+      this._containsGlobalPoint(globalX, globalY, HitTestingType.ObjectsUnderPoint, objects);
+      // getObjectsUnderPoint returns results in exactly the opposite order we collect them in.
+      return objects.reverse();
     }
 
     areInaccessibleObjectsUnderPoint(point: flash.geom.Point): boolean {
@@ -403,6 +625,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     contains(child: DisplayObject): boolean {
+      checkParameterType(child, "child", flash.display.DisplayObject);
       return this._isAncestor(child);
     }
 
@@ -415,12 +638,12 @@ module Shumway.AVM2.AS.flash.display {
         throwError('RangeError', Errors.ParamRangeError);
       }
 
-      if (index1 === index2) {
-        return;
-      }
-
+      // Always call _swapChildrenAt to make sure _setDepth(-1) is called on both children.
       this._swapChildrenAt(index1, index2);
-      this._invalidateChildren();
+
+      if (index1 !== index2) {
+        this._invalidateChildren();
+      }
     }
 
     private _swapChildrenAt(index1: number, index2: number) {
@@ -428,14 +651,17 @@ module Shumway.AVM2.AS.flash.display {
       var child1 = children[index1];
       var child2 = children[index2];
       children[index2] = child1;
-      child1._depth = -1;
+      child1._setDepth(-1);
       child1._index = index2;
       children[index1] = child2;
-      child2._depth = -1;
+      child2._setDepth(-1);
       child2._index = index1;
     }
 
     swapChildren(child1: DisplayObject, child2: DisplayObject): void {
+      // Flash prints out 'child' for both non-null |child1| and |child2|.
+      checkParameterType(child1, "child", flash.display.DisplayObject);
+      checkParameterType(child2, "child", flash.display.DisplayObject);
       this.swapChildrenAt(this.getChildIndex(child1), this.getChildIndex(child2));
     }
 

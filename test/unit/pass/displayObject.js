@@ -1,6 +1,6 @@
 function displayTests() {
   function log(message) {
-    info(message);
+    //info(message);
   }
 
   var Random = Shumway.Random;
@@ -22,7 +22,9 @@ function displayTests() {
   var TextField = flash.text.TextField;
   var Video = flash.media.Video;
   var Bitmap = flash.display.Bitmap;
+  var Loader = flash.display.Loader;
   var Stage = flash.display.Stage;
+  var AccessibilityProperties = flash.accessibility.AccessibilityProperties;
 
   var identity = new Matrix();
   var scaleBy5 = new Matrix();
@@ -151,6 +153,29 @@ function displayTests() {
     eqFloat(s.height, 141.4, "Should also affect the height: " + s.height);
   });
 
+  function matrixToString(m) {
+    return "a=" + m.a.toFixed(4) +
+      ", b=" + m.b.toFixed(4) +
+      ", c=" + m.c.toFixed(4) +
+      ", d=" + m.d.toFixed(4) +
+      ", tx=" + m.tx.toFixed(4) +
+      ", ty=" + m.ty.toFixed(4);
+  }
+
+  unitTests.push(function skew() {
+    var s = new Shape();
+    s.transform.matrix = new Matrix(1, 0, -0.70709228515625, 0.70709228515625, 150, 150);
+
+    s.rotation = 45;
+    eq(matrixToString(s.transform.matrix), "a=0.7071, b=0.7071, c=-1.0000, d=0.0000, tx=150.0000, ty=150.0000");
+
+    s.scaleX = 0.5;
+    eq(matrixToString(s.transform.matrix), "a=0.3536, b=0.3536, c=-1.0000, d=0.0000, tx=150.0000, ty=150.0000");
+
+    s.rotation = 90;
+    eq(matrixToString(s.transform.matrix), "a=0.0000, b=0.5000, c=-0.7071, d=-0.7071, tx=150.0000, ty=150.0000");
+  });
+
   unitTests.push(function widthAppliedToRotatedObject() {
     var s = new Shape();
     s.x = 200;
@@ -253,8 +278,7 @@ function displayTests() {
       s.width = 10;
     }
     eq(s.width, 10, "Width should converge on 10");
-    // TODO: height mustn't really converge on 10: it stabilizes at 10.5 in Flash.
-    eq(s.height, 10, "Height should converge on 10");
+    eq(s.height, 10.05, "Height should converge on 10.05");
   });
 
   unitTests.push(function globalToLocalAndBack() {
@@ -336,13 +360,13 @@ function displayTests() {
     // eq(s.transform.matrix, null, "Make sure matrix is not null when no Z value is set.");
   });
 
-  unitTests.push(function () {
+  unitTests.push(function widthSettingOnNonParentedObject() {
     var s = new Shape();
     s._getContentBounds = function () {
       return new Bounds(0, 0, 100 * 20, 100 * 20);
     }
     s.width = 50;
-    eq(s.width, 50, "Setting the width when the object is not added to a parent.");
+    eq(s.width, 50, "Width is applied correctly when the object is not added to a parent.");
   });
 
   function canHaveGraphics() {
@@ -364,18 +388,90 @@ function displayTests() {
   }
   unitTests.push(canHaveGraphics);
 
-  unitTests.push(function () {
+  unitTests.push(function hitTestMaskedObject() {
+    var stage = new Stage();
     var s1 = new Sprite();
+    stage.addChild(s1);
     s1.graphics.beginFill(0xff0000);
     s1.graphics.drawRect(0, 0, 200, 100);
     var s2 = new Sprite();
+    stage.addChild(s2);
     s2.graphics.beginFill(0x00ff00);
-    s2.graphics.drawRect(100, 0, 100, 200);
+    s2.graphics.drawRect(0, 0, 200, 100);
+    s2.x = 100;
     eq(s1.hitTestPoint(50, 50, true), true);
     s1.mask = s2;
     eq(s1.hitTestPoint(50, 50, true), false);
     eq(s1.hitTestPoint(150, 50, true), true);
   });
 
+  unitTests.push(function accessibilityPropertiesAccessor() {
+    var a = new DisplayObject();
+    eq(a.accessibilityProperties, null);
+    var b = new AccessibilityProperties();
+    a.accessibilityProperties = b;
+    eq(a.accessibilityProperties, b);
+  });
+
+  unitTests.push(function alphaAccessor() {
+    var a = new DisplayObject();
+    eq(a.alpha, 1);
+    a.alpha = 0.5;
+    eq(a.alpha, 0.5);
+    eq(a.transform.colorTransform.alphaMultiplier, 0.5);
+    a.alpha = 0.3;
+    eq(a.alpha, 0.296875);
+    eq(a.transform.colorTransform.alphaMultiplier, 0.296875);
+  });
+
+  unitTests.push(function defaultNames() {
+    DisplayObject._instanceID = 1;
+    eq(new Stage().name, null);
+    eq(new DisplayObject().name, 'instance1');
+    eq(new Sprite().name, 'instance2');
+    eq(new Shape().name, 'instance3');
+    eq(new MovieClip().name, 'instance4');
+    eq(new SimpleButton().name, 'instance5');
+    eq(new TextField().name, 'instance6');
+    eq(new Bitmap().name, 'instance7');
+    eq(new Loader().name, 'instance8');
+  });
+
+
+  unitTests.push(function precision() {
+    var s = 0;
+    var a = new Sprite();
+    a.graphics.drawRect(0, 0, 100, 100);
+    var pass = true;
+    for (var i = 0; i < 1000; i++) {
+      a.scaleX = s;
+      a.scaleY = s;
+      if (a.x !== Math.round(s / 20) * 20) {
+        pass = false;
+      }
+      if (a.y !== Math.round(s / 20) * 20) {
+        pass = false;
+      }
+      if (a.width !== Math.round(s * 100 * 20) / 20) {
+        pass = false;
+      }
+      if (a.height !== Math.round(s * 100 * 20) / 20) {
+        pass = false;
+      }
+      s += 0.0001;
+    }
+    check(pass);
+    // TODO: Check rounding behaviour of x and y.
+  });
+
+  unitTests.push(function name() {
+    var o = new DisplayObject();
+    try {
+      o.name = null;
+    } catch (e) {
+      exceptionMessage = e.toString();
+    }
+    eq(exceptionMessage, 'TypeError: Error #2007: Parameter name must be non-null.');
+  });
 }
 displayTests();

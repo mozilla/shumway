@@ -1,6 +1,0 @@
-PASS: flash.ui::ContextMenu/get builtInItems ()
-FAIL: flash.ui::ContextMenu/get clipboardItems ()
-FAIL: flash.ui::ContextMenu/get clipboardMenu ()
-PASS: flash.ui::ContextMenu/get customItems ()
-FAIL: flash.ui::ContextMenu$/get isSupported ()
-PASS: flash.ui::ContextMenu/hideBuiltInItems ()

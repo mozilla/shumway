@@ -16,6 +16,7 @@
 // Class: LoaderContext
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class LoaderContext extends ASNative {
     
@@ -29,12 +30,14 @@ module Shumway.AVM2.AS.flash.system {
     static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["checkPolicyFile", "applicationDomain", "securityDomain", "allowCodeImport", "requestedContentParent", "parameters", "imageDecodingPolicy"];
+    static instanceSymbols: string [] = ["checkPolicyFile!", "applicationDomain!", "securityDomain!", "allowCodeImport!", "requestedContentParent!", "parameters!", "imageDecodingPolicy!"];
     
     constructor (checkPolicyFile: boolean = false, applicationDomain: flash.system.ApplicationDomain = null, securityDomain: flash.system.SecurityDomain = null) {
-      checkPolicyFile = !!checkPolicyFile; applicationDomain = applicationDomain; securityDomain = securityDomain;
       false && super();
-      notImplemented("Dummy Constructor: public flash.system.LoaderContext");
+      this.checkPolicyFile = checkPolicyFile;
+      this.applicationDomain = applicationDomain;
+      this.securityDomain = securityDomain;
+      this.imageDecodingPolicy = flash.system.ImageDecodingPolicy.ON_DEMAND;
     }
     
     // JS -> AS Bindings

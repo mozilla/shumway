@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2013 Mozilla Foundation
  *
@@ -82,16 +80,16 @@ module Shumway.SWF.Parser {
     var val = $bytes[$stream.pos++];
     if (!(val & 0x080))
       return val;
-    val |= $bytes[$stream.pos++] << 7;
+    val = (val & 0x7f) | $bytes[$stream.pos++] << 7;
     if (!(val & 0x4000))
       return val;
-    val |= $bytes[$stream.pos++] << 14;
+    val = (val & 0x3fff) | $bytes[$stream.pos++] << 14;
     if (!(val & 0x200000))
       return val;
-    val |= $bytes[$stream.pos++] << 21;
+    val = (val & 0x1FFFFF) | $bytes[$stream.pos++] << 21;
     if (!(val & 0x10000000))
       return val;
-    return val | ($bytes[$stream.pos++] << 28);
+    return (val & 0xFFFFFFF) | ($bytes[$stream.pos++] << 28);
   }
 
   export function readBool($bytes, $stream) {
@@ -130,40 +128,23 @@ module Shumway.SWF.Parser {
   }
 
   export function readString($bytes, $stream, length) {
-    var codes = [];
+    var codes: Uint8Array;
     var pos = $stream.pos;
-    if (length) {
-      codes = slice.call($bytes, pos, pos += length);
+    if (length > -1) {
+      codes = $bytes.subarray(pos, pos += length);
     } else {
       length = 0;
-      for (var code; (code = $bytes[pos++]); length++)
-        codes[length] = code;
+      for (var i = pos; $bytes[i]; i++) {
+        length++;
+      }
+      codes = $bytes.subarray(pos, pos += length);
+      pos++;
     }
     $stream.pos = pos;
-    var numChunks = length / 65536;
-    var str = '';
-    for (var i = 0; i < numChunks; ++i) {
-      var begin = i * 65536;
-      var end = begin + 65536;
-      var chunk = codes.slice(begin, end);
-      str += fromCharCode.apply(null, chunk);
-    }
+    var str = Shumway.StringUtilities.utf8encode(codes);
     if (str.indexOf('\0') >= 0) {
       str = str.split('\0').join('');
     }
-    return decodeURIComponent(escape(str));
-  }
-
-  export function readBinary($bytes, $stream, size, temporaryUsage: boolean): Uint8Array {
-    if (!size) {
-      size = $stream.end - $stream.pos;
-    }
-    var subArray = $bytes.subarray($stream.pos, $stream.pos = ($stream.pos + size));
-    if (temporaryUsage) {
-      return subArray;
-    }
-    var result = new Uint8Array(size);
-    result.set(subArray);
-    return result;
+    return str;
   }
 }

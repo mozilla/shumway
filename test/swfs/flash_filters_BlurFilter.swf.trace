@@ -1,9 +1,0 @@
-PASS: flash.filters::BlurFilter/get blurX (): 4
-PASS: flash.filters::BlurFilter/get blurY (): 4
-PASS: flash.filters::BlurFilter/get quality (): 1
-PASS: flash.filters::BlurFilter/set blurX ()
-PASS: flash.filters::BlurFilter/get blurX ()
-PASS: flash.filters::BlurFilter/set blurY ()
-PASS: flash.filters::BlurFilter/get blurY ()
-PASS: flash.filters::BlurFilter/set quality ()
-PASS: flash.filters::BlurFilter/get quality ()

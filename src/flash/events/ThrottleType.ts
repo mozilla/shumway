@@ -16,6 +16,7 @@
 // Class: ThrottleType
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class ThrottleType extends ASNative {
 
     static classInitializer: any = null;
@@ -26,7 +27,7 @@ module Shumway.AVM2.AS.flash.events {
     
     constructor () {
       super();
-      notImplemented("Dummy Constructor: public flash.events.ThrottleType");
+      dummyConstructor("public flash.events.ThrottleType");
     }
     
     // JS -> AS Bindings

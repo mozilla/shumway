@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2013 Mozilla Foundation
  *
@@ -24,9 +22,7 @@ var appCompiler = avm2Options.register(new Option("appCompiler", "appCompiler", 
 //Shumway.AVM2.Runtime.enableVerifier.value = true;
 release = true;
 
-var avm2Root = SHUMWAY_ROOT + "avm2/";
-var builtinPath = avm2Root + "generated/builtin/builtin.abc";
-var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
+var builtinPath = WEB_ROOT + "../build/libs/builtin.abc";
 
 var playerglobalInfo = {
   abcs: WEB_ROOT + "../build/playerglobal/playerglobal.abcs",

@@ -1,4 +1,3 @@
-/* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
    java -jar utils/asc.jar -import playerglobal.abc -swf URLRequestTest,100,100 test/swfs/flash_net_URLRequest.as

@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import assert = Shumway.Debug.assert;
   import throwError = Shumway.AVM2.Runtime.throwError;
   export class Bitmap extends flash.display.DisplayObject {
     
@@ -24,7 +25,7 @@ module Shumway.AVM2.AS.flash.display {
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Shumway.Timeline.BitmapSymbol) {
+    static initializer: any = function (symbol: flash.display.BitmapSymbol) {
       var self: Bitmap = this;
 
       self._bitmapData = null;
@@ -113,6 +114,14 @@ module Shumway.AVM2.AS.flash.display {
         return this._bitmapData._getContentBounds();
       }
       return new Bounds(0, 0, 0, 0);
+    }
+
+    _containsPointDirectly(localX: number, localY: number,
+                           globalX: number, globalY: number): boolean {
+      // If this override is reached, the content bounds have already been checked, which is all
+      // we need to do.
+      release || assert(this._getContentBounds().contains(localX, localY));
+      return true;
     }
   }
 }

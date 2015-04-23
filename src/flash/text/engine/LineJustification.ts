@@ -16,6 +16,7 @@
 // Class: LineJustification
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class LineJustification extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.text.engine {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.text.engine.LineJustification");
+      dummyConstructor("public flash.text.engine.LineJustification");
     }
     
     // JS -> AS Bindings

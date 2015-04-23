@@ -24,9 +24,11 @@ module Shumway.Tools.Profiler {
     private _windowEnd: number;
     private _maxDepth: number;
 
-    constructor(buffers?: TimelineBuffer []) {
+    constructor(buffers: TimelineBuffer [], startTime: number) {
       this._buffers = buffers || [];
       this._snapshots = [];
+      this._startTime = startTime;
+      this._windowStart = startTime;
       this._maxDepth = 0;
     }
 
@@ -81,7 +83,6 @@ module Shumway.Tools.Profiler {
     }
 
     createSnapshots() {
-      var startTime = Number.MAX_VALUE;
       var endTime = Number.MIN_VALUE;
       var maxDepth = 0;
       this._snapshots = [];
@@ -89,9 +90,6 @@ module Shumway.Tools.Profiler {
         var buffer = this._buffers.shift();
         var snapshot = buffer.createSnapshot();
         if (snapshot) {
-          if (startTime > snapshot.startTime) {
-            startTime = snapshot.startTime;
-          }
           if (endTime < snapshot.endTime) {
             endTime = snapshot.endTime;
           }
@@ -101,9 +99,7 @@ module Shumway.Tools.Profiler {
           this._snapshots.push(snapshot);
         }
       }
-      this._startTime = startTime;
       this._endTime = endTime;
-      this._windowStart = startTime;
       this._windowEnd = endTime;
       this._maxDepth = maxDepth;
     }

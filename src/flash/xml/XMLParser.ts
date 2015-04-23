@@ -16,12 +16,13 @@
 // Class: XMLParser
 module Shumway.AVM2.AS.flash.xml {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class XMLParser extends ASNative {
     static initializer: any = null;
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: packageInternal flash.xml.XMLParser");
+      dummyConstructor("packageInternal flash.xml.XMLParser");
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings

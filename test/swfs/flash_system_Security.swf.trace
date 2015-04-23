@@ -1,6 +1,0 @@
-sandboxType=remote
-PASS: flash.system::Security/get sandboxType ()
-allowDomain=function Function() {}
-PASS: flash.system::Security/allowDomain ()
-allowInsecureDomain=function Function() {}
-PASS: flash.system::Security/allowInsecureDomain ()

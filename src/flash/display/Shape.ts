@@ -15,19 +15,19 @@
  */
 // Class: Shape
 module Shumway.AVM2.AS.flash.display {
-  import notImplemented = Shumway.Debug.notImplemented;
+  import warning = Shumway.Debug.warning;
 
   export class Shape extends flash.display.DisplayObject {
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // [];
 
     static classInitializer: any = null;
-    static initializer: any = function (symbol: Shumway.Timeline.ShapeSymbol) {
+    static initializer: any = function (symbol: ShapeSymbol) {
       var self: Shape = this;
       self._graphics = null;
       if (symbol) {
         this._setStaticContentFromSymbol(symbol);
-        // TODO: Assert that the computed bounds of the graphics object in fact
+        // TODO: Check what do do if the computed bounds of the graphics object don't
         // match those given by the symbol.
       }
     };
@@ -47,6 +47,49 @@ module Shumway.AVM2.AS.flash.display {
 
     get graphics(): flash.display.Graphics {
       return this._ensureGraphics();
+    }
+
+    _containsPointDirectly(localX: number, localY: number,
+                           globalX: number, globalY: number): boolean {
+      var graphics = this._getGraphics();
+      return !!graphics && graphics._containsPoint(localX, localY, true, 0);
+    }
+  }
+
+  export class ShapeSymbol extends Timeline.DisplaySymbol {
+    graphics: flash.display.Graphics = null;
+
+    constructor(data: Timeline.SymbolData, symbolClass: Shumway.AVM2.AS.ASClass) {
+      super(data, symbolClass, false);
+    }
+
+    static FromData(data: Timeline.SymbolData, loaderInfo: flash.display.LoaderInfo): ShapeSymbol {
+      var symbol = new ShapeSymbol(data, flash.display.Shape);
+      symbol._setBoundsFromData(data);
+      symbol.graphics = flash.display.Graphics.FromData(data);
+      symbol.processRequires((<any>data).require, loaderInfo);
+      return symbol;
+    }
+
+    processRequires(dependencies: any[], loaderInfo: flash.display.LoaderInfo): void {
+      if (!dependencies) {
+        return;
+      }
+      var textures = this.graphics.getUsedTextures();
+      for (var i = 0; i < dependencies.length; i++) {
+        var symbol = <flash.display.BitmapSymbol>loaderInfo.getSymbolById(dependencies[i]);
+        if (!symbol) {
+          if (dependencies[i] !== 65535) {
+            // Id 65535 is somehow used invalidly in lots of embedded shapes created by the
+            // authoring tool, so don't warn about that.
+            warning("Bitmap symbol " + dependencies[i] + " required by shape, but not defined.");
+          }
+          textures.push(null);
+          // TODO: handle null-textures from invalid SWFs correctly.
+          continue;
+        }
+        textures.push(symbol.getSharedInstance());
+      }
     }
   }
 }

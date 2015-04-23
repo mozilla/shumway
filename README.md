@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/mozilla/shumway.svg?branch=nat)](https://travis-ci.org/mozilla/shumway)
+[![Build Status](https://travis-ci.org/mozilla/shumway.svg?branch=master)](https://travis-ci.org/mozilla/shumway)
 
 # Shumway
 
@@ -22,12 +22,14 @@ For an online demo, visit:
 
 ### Extension
 
-The Firefox extension is availble at http://mozilla.github.io/shumway/extension/firefox/shumway.xpi
+Install the Firefox extension: http://mozilla.github.io/shumway/extension/firefox/shumway.xpi
 
 This development extension should be quite stable but still might break from time to time.
 Also, note that the development extension is updated on every merge and by default Firefox will
 auto-update extensions on a daily basis (you can change this through the 
 `extensions.update.interval` option in `about:config`, time is in seconds).
+
+To build the Firefox extension: use `grunt firefox`.
 
 ## Contributing
 

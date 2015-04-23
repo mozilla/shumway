@@ -30,635 +30,735 @@ module Shumway.AVM2.AS.flash.text {
     static DEVICE_FONT_METRICS_WIN: Object;
     static DEVICE_FONT_METRICS_LINUX: Object;
     static DEVICE_FONT_METRICS_MAC: Object;
+    static DEVICE_FONT_METRICS_BUILTIN: Object;
+
+    static DEFAULT_FONT_SANS = 'Arial';
+    static DEFAULT_FONT_SERIF = 'Times New Roman';
+    static DEFAULT_FONT_TYPEWRITER = 'Courier New';
 
     static classInitializer: any = function () {
       Font._fonts = [];
       Font._fontsBySymbolId = Shumway.ObjectUtilities.createMap<Font>();
       Font._fontsByName = Shumway.ObjectUtilities.createMap<Font>();
 
+      // Measurements taken on a freshly installed Windows 7 (Ultimate).
       Font.DEVICE_FONT_METRICS_WIN = {
-        "serif": [1, 0.25, 0],
-        "sans-serif": [1, 0.25, 0],
-        "monospace": [1, 0.25, 0],
-        "birch std": [0.9167, 0.25, 0],
-        "blackoak std": [1, 0.3333, 0],
-        "chaparral pro": [0.8333, 0.3333, 0],
-        "chaparral pro light": [0.8333, 0.3333, 0],
-        "charlemagne std": [0.9167, 0.25, 0],
-        "cooper std black": [0.9167, 0.25, 0],
-        "giddyup std": [0.8333, 0.3333, 0],
-        "hobo std": [1.0833, 0.3333, 0],
-        "kozuka gothic pro b": [1, 0.4167, 0],
-        "kozuka gothic pro el": [1.0833, 0.25, 0],
-        "kozuka gothic pro h": [1, 0.4167, 0],
-        "kozuka gothic pro l": [1, 0.3333, 0],
-        "kozuka gothic pro m": [1.0833, 0.3333, 0],
-        "kozuka gothic pro r": [1, 0.3333, 0],
-        "kozuka mincho pro b": [1.0833, 0.25, 0],
-        "kozuka mincho pro el": [1.0833, 0.25, 0],
-        "kozuka mincho pro h": [1.1667, 0.25, 0],
-        "kozuka mincho pro l": [1.0833, 0.25, 0],
-        "kozuka mincho pro m": [1.0833, 0.25, 0],
-        "kozuka mincho pro r": [1.0833, 0.25, 0],
-        "mesquite std": [0.9167, 0.25, 0],
-        "minion pro cond": [1, 0.3333, 0],
-        "minion pro med": [1, 0.3333, 0],
-        "minion pro smbd": [1, 0.3333, 0],
-        "myriad arabic": [1, 0.4167, 0],
-        "nueva std": [0.75, 0.25, 0],
-        "nueva std cond": [0.75, 0.25, 0],
-        "ocr a std": [0.8333, 0.25, 0],
-        "orator std": [1.0833, 0.25, 0],
-        "poplar std": [0.9167, 0.25, 0],
-        "prestige elite std": [0.9167, 0.25, 0],
-        "rosewood std regular": [0.8333, 0.3333, 0],
-        "stencil std": [1, 0.3333, 0],
-        "trajan pro": [1, 0.25, 0],
-        "kozuka gothic pr6n b": [1.4167, 0.4167, 0],
-        "kozuka gothic pr6n el": [1.4167, 0.3333, 0],
-        "kozuka gothic pr6n h": [1.4167, 0.4167, 0],
-        "kozuka gothic pr6n l": [1.4167, 0.3333, 0],
-        "kozuka gothic pr6n m": [1.5, 0.3333, 0],
-        "kozuka gothic pr6n r": [1.4167, 0.3333, 0],
-        "kozuka mincho pr6n b": [1.3333, 0.3333, 0],
-        "kozuka mincho pr6n el": [1.3333, 0.3333, 0],
-        "kozuka mincho pr6n h": [1.4167, 0.3333, 0],
-        "kozuka mincho pr6n l": [1.3333, 0.3333, 0],
-        "kozuka mincho pr6n m": [1.3333, 0.3333, 0],
-        "kozuka mincho pr6n r": [1.3333, 0.3333, 0],
-        "letter gothic std": [1, 0.25, 0],
-        "minion pro": [1, 0.3333, 0],
-        "myriad hebrew": [0.8333, 0.3333, 0],
-        "myriad pro": [0.9167, 0.25, 0],
-        "myriad pro cond": [0.9167, 0.25, 0],
-        "myriad pro light": [1, 0.25, 0],
-        "marlett": [1, 0, 0],
-        "arial": [1, 0.25, 0],
-        "arabic transparent": [1, 0.25, 0],
-        "arial baltic": [1, 0.25, 0],
-        "arial ce": [1, 0.25, 0],
-        "arial cyr": [1, 0.25, 0],
-        "arial greek": [1, 0.25, 0],
-        "arial tur": [1, 0.25, 0],
-        "batang": [0.8333, 0.1667, 0],
-        "batangche": [0.8333, 0.1667, 0],
-        "gungsuh": [0.8333, 0.1667, 0],
-        "gungsuhche": [0.8333, 0.1667, 0],
-        "courier new": [1, 0.25, 0],
-        "courier new baltic": [1, 0.25, 0],
-        "courier new ce": [1, 0.25, 0],
-        "courier new cyr": [1, 0.25, 0],
-        "courier new greek": [1, 0.25, 0],
-        "courier new tur": [1, 0.25, 0],
-        "daunpenh": [0.6667, 0.6667, 0],
-        "dokchampa": [1.4167, 0.5833, 0],
-        "estrangelo edessa": [0.75, 0.3333, 0],
-        "euphemia": [1.0833, 0.3333, 0],
-        "gautami": [1.1667, 0.8333, 0],
-        "vani": [1.0833, 0.75, 0],
-        "gulim": [0.8333, 0.1667, 0],
-        "gulimche": [0.8333, 0.1667, 0],
-        "dotum": [0.8333, 0.1667, 0],
-        "dotumche": [0.8333, 0.1667, 0],
-        "impact": [1.0833, 0.25, 0],
-        "iskoola pota": [1, 0.3333, 0],
-        "kalinga": [1.0833, 0.5, 0],
-        "kartika": [1, 0.4167, 0],
-        "khmer ui": [1.0833, 0.3333, 0],
-        "lao ui": [1, 0.25, 0],
-        "latha": [1.0833, 0.4167, 0],
-        "lucida console": [0.75, 0.25, 0],
-        "malgun gothic": [1, 0.25, 0],
-        "mangal": [1.0833, 0.3333, 0],
-        "meiryo": [1.0833, 0.4167, 0],
-        "meiryo ui": [1, 0.25, 0],
-        "microsoft himalaya": [0.5833, 0.4167, 0],
-        "microsoft jhenghei": [1, 0.3333, 0],
-        "microsoft yahei": [1.0833, 0.3333, 0],
-        "mingliu": [0.8333, 0.1667, 0],
-        "pmingliu": [0.8333, 0.1667, 0],
-        "mingliu_hkscs": [0.8333, 0.1667, 0],
-        "mingliu-extb": [0.8333, 0.1667, 0],
-        "pmingliu-extb": [0.8333, 0.1667, 0],
-        "mingliu_hkscs-extb": [0.8333, 0.1667, 0],
-        "mongolian baiti": [0.8333, 0.25, 0],
-        "ms gothic": [0.8333, 0.1667, 0],
-        "ms pgothic": [0.8333, 0.1667, 0],
-        "ms ui gothic": [0.8333, 0.1667, 0],
-        "ms mincho": [0.8333, 0.1667, 0],
-        "ms pmincho": [0.8333, 0.1667, 0],
-        "mv boli": [1.1667, 0.25, 0],
-        "microsoft new tai lue": [1, 0.4167, 0],
-        "nyala": [0.9167, 0.3333, 0],
-        "microsoft phagspa": [1.0833, 0.25, 0],
-        "plantagenet cherokee": [1, 0.4167, 0],
-        "raavi": [1.0833, 0.6667, 0],
-        "segoe script": [1.0833, 0.5, 0],
-        "segoe ui": [1, 0.25, 0],
-        "segoe ui semibold": [1, 0.25, 0],
-        "segoe ui light": [1, 0.25, 0],
-        "segoe ui symbol": [1, 0.25, 0],
-        "shruti": [1.0833, 0.5, 0],
-        "simsun": [0.8333, 0.1667, 0],
-        "nsimsun": [0.8333, 0.1667, 0],
-        "simsun-extb": [0.8333, 0.1667, 0],
-        "sylfaen": [1, 0.3333, 0],
-        "microsoft tai le": [1, 0.3333, 0],
-        "times new roman": [1, 0.25, 0],
-        "times new roman baltic": [1, 0.25, 0],
-        "times new roman ce": [1, 0.25, 0],
-        "times new roman cyr": [1, 0.25, 0],
-        "times new roman greek": [1, 0.25, 0],
-        "times new roman tur": [1, 0.25, 0],
-        "tunga": [1.0833, 0.75, 0],
-        "vrinda": [1, 0.4167, 0],
-        "shonar bangla": [0.8333, 0.5, 0],
-        "microsoft yi baiti": [0.8333, 0.1667, 0],
-        "tahoma": [1, 0.1667, 0],
-        "microsoft sans serif": [1.0833, 0.1667, 0],
-        "angsana new": [0.9167, 0.4167, 0],
-        "aparajita": [0.75, 0.4167, 0],
-        "cordia new": [0.9167, 0.5, 0],
-        "ebrima": [1.0833, 0.5, 0],
-        "gisha": [0.9167, 0.25, 0],
-        "kokila": [0.8333, 0.3333, 0],
-        "leelawadee": [0.9167, 0.25, 0],
-        "microsoft uighur": [1.0833, 0.5, 0],
-        "moolboran": [0.6667, 0.6667, 0],
-        "symbol": [1, 0.25, 0],
-        "utsaah": [0.8333, 0.4167, 0],
-        "vijaya": [1.0833, 0.25, 0],
-        "wingdings": [0.9167, 0.25, 0],
-        "andalus": [1.3333, 0.4167, 0],
-        "arabic typesetting": [0.8333, 0.5, 0],
-        "simplified arabic": [1.3333, 0.5, 0],
-        "simplified arabic fixed": [1, 0.4167, 0],
-        "sakkal majalla": [0.9167, 0.5, 0],
-        "traditional arabic": [1.3333, 0.5, 0],
-        "aharoni": [0.75, 0.25, 0],
-        "david": [0.75, 0.25, 0],
-        "frankruehl": [0.75, 0.25, 0],
-        "fangsong": [0.8333, 0.1667, 0],
-        "simhei": [0.8333, 0.1667, 0],
-        "kaiti": [0.8333, 0.1667, 0],
-        "browallia new": [0.8333, 0.4167, 0],
-        "lucida sans unicode": [1.0833, 0.25, 0],
-        "arial black": [1.0833, 0.3333, 0],
-        "calibri": [0.9167, 0.25, 0],
-        "cambria": [0.9167, 0.25, 0],
-        "cambria math": [3.0833, 2.5, 0],
-        "candara": [0.9167, 0.25, 0],
-        "comic sans ms": [1.0833, 0.3333, 0],
-        "consolas": [0.9167, 0.25, 0],
-        "constantia": [0.9167, 0.25, 0],
-        "corbel": [0.9167, 0.25, 0],
-        "franklin gothic medium": [1, 0.3333, 0],
-        "gabriola": [1.1667, 0.6667, 0],
-        "georgia": [1, 0.25, 0],
-        "palatino linotype": [1.0833, 0.3333, 0],
-        "segoe print": [1.25, 0.5, 0],
-        "trebuchet ms": [1.0833, 0.4167, 0],
-        "verdana": [1, 0.1667, 0],
-        "webdings": [1.0833, 0.5, 0],
-        "lucida bright": [0.9167, 0.25, 0],
-        "lucida sans": [0.9167, 0.25, 0],
-        "lucida sans typewriter": [0.9167, 0.25, 0],
-        "gentium basic": [0.8333, 0.25, 0],
-        "dejavu serif condensed": [0.9167, 0.25, 0],
-        "arimo": [1, 0.25, 0],
-        "dejavu sans condensed": [0.9167, 0.25, 0],
-        "dejavu sans": [0.9167, 0.25, 0],
-        "dejavu sans light": [0.9167, 0.25, 0],
-        "opensymbol": [0.8333, 0.1667, 0],
-        "gentium book basic": [0.8333, 0.25, 0],
-        "dejavu sans mono": [0.9167, 0.25, 0],
-        "dejavu serif": [0.9167, 0.25, 0],
-        "calibri light": [0.9167, 0.25, 0]
+        "Arial": [1, 0.25, 0],
+        "Arial Baltic": [1, 0.25, 0],
+        "Arial Black": [1.0833, 0.3333, 0],
+        "Arial CE": [1, 0.25, 0],
+        "Arial CYR": [1, 0.25, 0],
+        "Arial Greek": [1, 0.25, 0],
+        "Arial TUR": [1, 0.25, 0],
+        "Comic Sans MS": [1.0833, 0.3333, 0],
+        "Courier New": [1, 0.25, 0],
+        "Courier New Baltic": [1, 0.25, 0],
+        "Courier New CE": [1, 0.25, 0],
+        "Courier New CYR": [1, 0.25, 0],
+        "Courier New Greek": [1, 0.25, 0],
+        "Courier New TUR": [1, 0.25, 0],
+        "Estrangelo Edessa": [0.75, 0.3333, 0],
+        "Franklin Gothic Medium": [1, 0.3333, 0],
+        "Gautami": [0.9167, 0.8333, 0],
+        "Georgia": [1, 0.25, 0],
+        "Impact": [1.0833, 0.25, 0],
+        "Latha": [1.0833, 0.25, 0],
+        "Lucida Console": [0.75, 0.25, 0],
+        "Lucida Sans Unicode": [1.0833, 0.25, 0],
+        "Mangal": [1.0833, 0.25, 0],
+        "Marlett": [1, 0, 0],
+        "Microsoft Sans Serif": [1.0833, 0.1667, 0],
+        "MV Boli": [0.9167, 0.25, 0],
+        "Palatino Linotype": [1.0833, 0.3333, 0],
+        "Raavi": [1.0833, 0.6667, 0],
+        "Shruti": [1, 0.5, 0],
+        "Sylfaen": [1, 0.3333, 0],
+        "Symbol": [1, 0.25, 0],
+        "Tahoma": [1, 0.1667, 0],
+        "Times New Roman": [1, 0.25, 0],
+        "Times New Roman Baltic": [1, 0.25, 0],
+        "Times New Roman CE": [1, 0.25, 0],
+        "Times New Roman CYR": [1, 0.25, 0],
+        "Times New Roman Greek": [1, 0.25, 0],
+        "Times New Roman TUR": [1, 0.25, 0],
+        "Trebuchet MS": [1.0833, 0.4167, 0],
+        "Tunga": [1, 0.75, 0],
+        "Verdana": [1, 0.1667, 0],
+        "Webdings": [1.0833, 0.5, 0],
+        "Wingdings": [0.9167, 0.25, 0]
       };
+      // Measurements taken on a freshly installed Mac OS X 10.10 (Yosemite).
       Font.DEVICE_FONT_METRICS_MAC = {
-        "al bayan plain": [1, 0.5, 0],
-        "al bayan bold": [1, 0.5833, 0],
-        "american typewriter": [0.9167, 0.25, 0],
-        "american typewriter bold": [0.9167, 0.25, 0],
-        "american typewriter condensed": [0.9167, 0.25, 0],
-        "american typewriter condensed bold": [0.9167, 0.25, 0],
-        "american typewriter condensed light": [0.8333, 0.25, 0],
-        "american typewriter light": [0.9167, 0.25, 0],
-        "andale mono": [0.9167, 0.25, 0],
-        "apple symbols": [0.6667, 0.25, 0],
-        "arial bold italic": [0.9167, 0.25, 0],
-        "arial bold": [0.9167, 0.25, 0],
-        "arial italic": [0.9167, 0.25, 0],
-        "arial hebrew": [0.75, 0.3333, 0],
-        "arial hebrew bold": [0.75, 0.3333, 0],
-        "arial": [0.9167, 0.25, 0],
-        "arial narrow": [0.9167, 0.25, 0],
-        "arial narrow bold": [0.9167, 0.25, 0],
-        "arial narrow bold italic": [0.9167, 0.25, 0],
-        "arial narrow italic": [0.9167, 0.25, 0],
-        "arial rounded mt bold": [0.9167, 0.25, 0],
-        "arial unicode ms": [1.0833, 0.25, 0],
-        "avenir black": [1, 0.3333, 0],
-        "avenir black oblique": [1, 0.3333, 0],
-        "avenir book": [1, 0.3333, 0],
-        "avenir book oblique": [1, 0.3333, 0],
-        "avenir heavy": [1, 0.3333, 0],
-        "avenir heavy oblique": [1, 0.3333, 0],
-        "avenir light": [1, 0.3333, 0],
-        "avenir light oblique": [1, 0.3333, 0],
-        "avenir medium": [1, 0.3333, 0],
-        "avenir medium oblique": [1, 0.3333, 0],
-        "avenir oblique": [1, 0.3333, 0],
-        "avenir roman": [1, 0.3333, 0],
-        "avenir next bold": [1, 0.3333, 0],
-        "avenir next bold italic": [1, 0.3333, 0],
-        "avenir next demi bold": [1, 0.3333, 0],
-        "avenir next demi bold italic": [1, 0.3333, 0],
-        "avenir next heavy": [1, 0.3333, 0],
-        "avenir next heavy italic": [1, 0.3333, 0],
-        "avenir next italic": [1, 0.3333, 0],
-        "avenir next medium": [1, 0.3333, 0],
-        "avenir next medium italic": [1, 0.3333, 0],
-        "avenir next regular": [1, 0.3333, 0],
-        "avenir next ultra light": [1, 0.3333, 0],
-        "avenir next ultra light italic": [1, 0.3333, 0],
-        "avenir next condensed bold": [1, 0.3333, 0],
-        "avenir next condensed bold italic": [1, 0.3333, 0],
-        "avenir next condensed demi bold": [1, 0.3333, 0],
-        "avenir next condensed demi bold italic": [1, 0.3333, 0],
-        "avenir next condensed heavy": [1, 0.3333, 0],
-        "avenir next condensed heavy italic": [1, 0.3333, 0],
-        "avenir next condensed italic": [1, 0.3333, 0],
-        "avenir next condensed medium": [1, 0.3333, 0],
-        "avenir next condensed medium italic": [1, 0.3333, 0],
-        "avenir next condensed regular": [1, 0.3333, 0],
-        "avenir next condensed ultra light": [1, 0.3333, 0],
-        "avenir next condensed ultra light italic": [1, 0.3333, 0],
-        "ayuthaya": [1.0833, 0.3333, 0],
-        "baghdad": [0.9167, 0.4167, 0],
-        "bangla mn": [0.9167, 0.6667, 0],
-        "bangla mn bold": [0.9167, 0.6667, 0],
-        "bangla sangam mn": [0.9167, 0.4167, 0],
-        "bangla sangam mn bold": [0.9167, 0.4167, 0],
-        "baskerville": [0.9167, 0.25, 0],
-        "baskerville bold": [0.9167, 0.25, 0],
-        "baskerville bold italic": [0.9167, 0.25, 0],
-        "baskerville italic": [0.9167, 0.25, 0],
-        "baskerville semibold": [0.9167, 0.25, 0],
-        "baskerville semibold italic": [0.9167, 0.25, 0],
-        "big caslon medium": [0.9167, 0.25, 0],
-        "brush script mt italic": [0.9167, 0.3333, 0],
-        "chalkboard": [1, 0.25, 0],
-        "chalkboard bold": [1, 0.25, 0],
-        "chalkboard se bold": [1.1667, 0.25, 0],
-        "chalkboard se light": [1.1667, 0.25, 0],
-        "chalkboard se regular": [1.1667, 0.25, 0],
-        "chalkduster": [1, 0.25, 0],
-        "charcoal cy": [1, 0.25, 0],
-        "cochin": [0.9167, 0.25, 0],
-        "cochin bold": [0.9167, 0.25, 0],
-        "cochin bold italic": [0.9167, 0.25, 0],
-        "cochin italic": [0.9167, 0.25, 0],
-        "comic sans ms": [1.0833, 0.25, 0],
-        "comic sans ms bold": [1.0833, 0.25, 0],
-        "copperplate": [0.75, 0.25, 0],
-        "copperplate bold": [0.75, 0.25, 0],
-        "copperplate light": [0.75, 0.25, 0],
-        "corsiva hebrew": [0.6667, 0.3333, 0],
-        "corsiva hebrew bold": [0.6667, 0.3333, 0],
-        "courier": [0.75, 0.25, 0],
-        "courier bold": [0.75, 0.25, 0],
-        "courier bold oblique": [0.75, 0.25, 0],
-        "courier oblique": [0.75, 0.25, 0],
-        "courier new bold italic": [0.8333, 0.3333, 0],
-        "courier new bold": [0.8333, 0.3333, 0],
-        "courier new italic": [0.8333, 0.3333, 0],
-        "courier new": [0.8333, 0.3333, 0],
-        "biaukai": [0.8333, 0.1667, 0],
-        "damascus": [0.5833, 0.4167, 0],
-        "damascus bold": [0.5833, 0.4167, 0],
-        "decotype naskh": [1.1667, 0.6667, 0],
-        "devanagari mt": [0.9167, 0.6667, 0],
-        "devanagari mt bold": [0.9167, 0.6667, 0],
-        "devanagari sangam mn": [0.9167, 0.4167, 0],
-        "devanagari sangam mn bold": [0.9167, 0.4167, 0],
-        "didot": [0.9167, 0.3333, 0],
-        "didot bold": [1, 0.3333, 0],
-        "didot italic": [0.9167, 0.25, 0],
-        "euphemia ucas": [1.0833, 0.25, 0],
-        "euphemia ucas bold": [1.0833, 0.25, 0],
-        "euphemia ucas italic": [1.0833, 0.25, 0],
-        "futura condensed extrabold": [1, 0.25, 0],
-        "futura condensed medium": [1, 0.25, 0],
-        "futura medium": [1, 0.25, 0],
-        "futura medium italic": [1, 0.25, 0],
-        "gb18030 bitmap": [1, 0.6667, 0],
-        "geeza pro": [0.9167, 0.3333, 0],
-        "geeza pro bold": [0.9167, 0.3333, 0],
-        "geneva": [1, 0.25, 0],
-        "geneva cy": [1, 0.25, 0],
-        "georgia": [0.9167, 0.25, 0],
-        "georgia bold": [0.9167, 0.25, 0],
-        "georgia bold italic": [0.9167, 0.25, 0],
-        "georgia italic": [0.9167, 0.25, 0],
-        "gill sans": [0.9167, 0.25, 0],
-        "gill sans bold": [0.9167, 0.25, 0],
-        "gill sans bold italic": [0.9167, 0.25, 0],
-        "gill sans italic": [0.9167, 0.25, 0],
-        "gill sans light": [0.9167, 0.25, 0],
-        "gill sans light italic": [0.9167, 0.25, 0],
-        "gujarati mt": [0.9167, 0.6667, 0],
-        "gujarati mt bold": [0.9167, 0.6667, 0],
-        "gujarati sangam mn": [0.8333, 0.4167, 0],
-        "gujarati sangam mn bold": [0.8333, 0.4167, 0],
-        "gurmukhi mn": [0.9167, 0.25, 0],
-        "gurmukhi mn bold": [0.9167, 0.25, 0],
-        "gurmukhi sangam mn": [0.9167, 0.3333, 0],
-        "gurmukhi sangam mn bold": [0.9167, 0.3333, 0],
-        "helvetica": [0.75, 0.25, 0],
-        "helvetica bold": [0.75, 0.25, 0],
-        "helvetica bold oblique": [0.75, 0.25, 0],
-        "helvetica light": [0.75, 0.25, 0],
-        "helvetica light oblique": [0.75, 0.25, 0],
-        "helvetica oblique": [0.75, 0.25, 0],
-        "helvetica neue": [0.9167, 0.25, 0],
-        "helvetica neue bold": [1, 0.25, 0],
-        "helvetica neue bold italic": [1, 0.25, 0],
-        "helvetica neue condensed black": [1, 0.25, 0],
-        "helvetica neue condensed bold": [1, 0.25, 0],
-        "helvetica neue italic": [0.9167, 0.25, 0],
-        "helvetica neue light": [1, 0.25, 0],
-        "helvetica neue light italic": [0.9167, 0.25, 0],
-        "helvetica neue medium": [1, 0.25, 0],
-        "helvetica neue ultralight": [0.9167, 0.25, 0],
-        "helvetica neue ultralight italic": [0.9167, 0.25, 0],
-        "herculanum": [0.8333, 0.1667, 0],
-        "hiragino kaku gothic pro w3": [0.9167, 0.0833, 0],
-        "hiragino kaku gothic pro w6": [0.9167, 0.0833, 0],
-        "hiragino kaku gothic pron w3": [0.9167, 0.0833, 0],
-        "hiragino kaku gothic pron w6": [0.9167, 0.0833, 0],
-        "hiragino kaku gothic std w8": [0.9167, 0.0833, 0],
-        "hiragino kaku gothic stdn w8": [0.9167, 0.0833, 0],
-        "hiragino maru gothic pro w4": [0.9167, 0.0833, 0],
-        "hiragino maru gothic pron w4": [0.9167, 0.0833, 0],
-        "hiragino mincho pro w3": [0.9167, 0.0833, 0],
-        "hiragino mincho pro w6": [0.9167, 0.0833, 0],
-        "hiragino mincho pron w3": [0.9167, 0.0833, 0],
-        "hiragino mincho pron w6": [0.9167, 0.0833, 0],
-        "hiragino sans gb w3": [0.9167, 0.0833, 0],
-        "hiragino sans gb w6": [0.9167, 0.0833, 0],
-        "hoefler text black": [0.75, 0.25, 0],
-        "hoefler text black italic": [0.75, 0.25, 0],
-        "hoefler text italic": [0.75, 0.25, 0],
-        "hoefler text ornaments": [0.8333, 0.1667, 0],
-        "hoefler text": [0.75, 0.25, 0],
-        "impact": [1, 0.25, 0],
-        "inaimathi": [0.8333, 0.4167, 0],
-        "headlinea regular": [0.8333, 0.1667, 0],
-        "pilgi regular": [0.8333, 0.25, 0],
-        "gungseo regular": [0.8333, 0.25, 0],
-        "pcmyungjo regular": [0.8333, 0.25, 0],
-        "kailasa regular": [1.0833, 0.5833, 0],
-        "kannada mn": [0.9167, 0.25, 0],
-        "kannada mn bold": [0.9167, 0.25, 0],
-        "kannada sangam mn": [1, 0.5833, 0],
-        "kannada sangam mn bold": [1, 0.5833, 0],
-        "kefa bold": [0.9167, 0.25, 0],
-        "kefa regular": [0.9167, 0.25, 0],
-        "khmer mn": [1, 0.6667, 0],
-        "khmer mn bold": [1, 0.6667, 0],
-        "khmer sangam mn": [1.0833, 0.6667, 0],
-        "kokonor regular": [1.0833, 0.5833, 0],
-        "krungthep": [1, 0.25, 0],
-        "kufistandardgk": [0.9167, 0.5, 0],
-        "lao mn": [0.9167, 0.4167, 0],
-        "lao mn bold": [0.9167, 0.4167, 0],
-        "lao sangam mn": [1, 0.3333, 0],
-        "apple ligothic medium": [0.8333, 0.1667, 0],
-        "lihei pro": [0.8333, 0.1667, 0],
-        "lisong pro": [0.8333, 0.1667, 0],
-        "lucida grande": [1, 0.25, 0],
-        "lucida grande bold": [1, 0.25, 0],
-        "malayalam mn": [1, 0.4167, 0],
-        "malayalam mn bold": [1, 0.4167, 0],
-        "malayalam sangam mn": [0.8333, 0.4167, 0],
-        "malayalam sangam mn bold": [0.8333, 0.4167, 0],
-        "marion bold": [0.6667, 0.3333, 0],
-        "marion italic": [0.6667, 0.3333, 0],
-        "marion regular": [0.6667, 0.3333, 0],
-        "marker felt thin": [0.8333, 0.25, 0],
-        "marker felt wide": [0.9167, 0.25, 0],
-        "menlo bold": [0.9167, 0.25, 0],
-        "menlo bold italic": [0.9167, 0.25, 0],
-        "menlo italic": [0.9167, 0.25, 0],
-        "menlo regular": [0.9167, 0.25, 0],
-        "microsoft sans serif": [0.9167, 0.25, 0],
-        "monaco": [1, 0.25, 0],
-        "gurmukhi mt": [0.8333, 0.4167, 0],
-        "mshtakan": [0.9167, 0.25, 0],
-        "mshtakan bold": [0.9167, 0.25, 0],
-        "mshtakan boldoblique": [0.9167, 0.25, 0],
-        "mshtakan oblique": [0.9167, 0.25, 0],
-        "myanmar mn": [1, 0.4167, 0],
-        "myanmar mn bold": [1, 0.4167, 0],
-        "myanmar sangam mn": [0.9167, 0.4167, 0],
-        "nadeem": [0.9167, 0.4167, 0],
-        "nanum brush script": [0.9167, 0.25, 0],
-        "nanumgothic": [0.9167, 0.25, 0],
-        "nanumgothic bold": [0.9167, 0.25, 0],
-        "nanumgothic extrabold": [0.9167, 0.25, 0],
-        "nanummyeongjo": [0.9167, 0.25, 0],
-        "nanummyeongjo bold": [0.9167, 0.25, 0],
-        "nanummyeongjo extrabold": [0.9167, 0.25, 0],
-        "nanum pen script": [0.9167, 0.25, 0],
-        "optima bold": [0.9167, 0.25, 0],
-        "optima bold italic": [0.9167, 0.25, 0],
-        "optima extrablack": [1, 0.25, 0],
-        "optima italic": [0.9167, 0.25, 0],
-        "optima regular": [0.9167, 0.25, 0],
-        "oriya mn": [0.9167, 0.25, 0],
-        "oriya mn bold": [0.9167, 0.25, 0],
-        "oriya sangam mn": [0.8333, 0.4167, 0],
-        "oriya sangam mn bold": [0.8333, 0.4167, 0],
-        "osaka": [1, 0.25, 0],
-        "osaka-mono": [0.8333, 0.1667, 0],
-        "palatino bold": [0.8333, 0.25, 0],
-        "palatino bold italic": [0.8333, 0.25, 0],
-        "palatino italic": [0.8333, 0.25, 0],
-        "palatino": [0.8333, 0.25, 0],
-        "papyrus": [0.9167, 0.5833, 0],
-        "papyrus condensed": [0.9167, 0.5833, 0],
-        "plantagenet cherokee": [0.6667, 0.25, 0],
-        "raanana": [0.75, 0.25, 0],
-        "raanana bold": [0.75, 0.25, 0],
-        "hei regular": [0.8333, 0.1667, 0],
-        "kai regular": [0.8333, 0.1667, 0],
-        "stfangsong": [0.8333, 0.1667, 0],
-        "stheiti": [0.8333, 0.1667, 0],
-        "heiti sc light": [0.8333, 0.1667, 0],
-        "heiti sc medium": [0.8333, 0.1667, 0],
-        "heiti tc light": [0.8333, 0.1667, 0],
-        "heiti tc medium": [0.8333, 0.1667, 0],
-        "stkaiti": [0.8333, 0.1667, 0],
-        "kaiti sc black": [1.0833, 0.3333, 0],
-        "kaiti sc bold": [1.0833, 0.3333, 0],
-        "kaiti sc regular": [1.0833, 0.3333, 0],
-        "stsong": [0.8333, 0.1667, 0],
-        "songti sc black": [1.0833, 0.3333, 0],
-        "songti sc bold": [1.0833, 0.3333, 0],
-        "songti sc light": [1.0833, 0.3333, 0],
-        "songti sc regular": [1.0833, 0.3333, 0],
-        "stxihei": [0.8333, 0.1667, 0],
-        "sathu": [0.9167, 0.3333, 0],
-        "silom": [1, 0.3333, 0],
-        "sinhala mn": [0.9167, 0.25, 0],
-        "sinhala mn bold": [0.9167, 0.25, 0],
-        "sinhala sangam mn": [1.1667, 0.3333, 0],
-        "sinhala sangam mn bold": [1.1667, 0.3333, 0],
-        "skia regular": [0.75, 0.25, 0],
-        "symbol": [0.6667, 0.3333, 0],
-        "tahoma negreta": [1, 0.1667, 0],
-        "tamil mn": [0.9167, 0.25, 0],
-        "tamil mn bold": [0.9167, 0.25, 0],
-        "tamil sangam mn": [0.75, 0.25, 0],
-        "tamil sangam mn bold": [0.75, 0.25, 0],
-        "telugu mn": [0.9167, 0.25, 0],
-        "telugu mn bold": [0.9167, 0.25, 0],
-        "telugu sangam mn": [1, 0.5833, 0],
-        "telugu sangam mn bold": [1, 0.5833, 0],
-        "thonburi": [1.0833, 0.25, 0],
-        "thonburi bold": [1.0833, 0.25, 0],
-        "times bold": [0.75, 0.25, 0],
-        "times bold italic": [0.75, 0.25, 0],
-        "times italic": [0.75, 0.25, 0],
-        "times roman": [0.75, 0.25, 0],
-        "times new roman bold italic": [0.9167, 0.25, 0],
-        "times new roman bold": [0.9167, 0.25, 0],
-        "times new roman italic": [0.9167, 0.25, 0],
-        "times new roman": [0.9167, 0.25, 0],
-        "trebuchet ms bold italic": [0.9167, 0.25, 0],
-        "trebuchet ms": [0.9167, 0.25, 0],
-        "trebuchet ms bold": [0.9167, 0.25, 0],
-        "trebuchet ms italic": [0.9167, 0.25, 0],
-        "verdana": [1, 0.25, 0],
-        "verdana bold": [1, 0.25, 0],
-        "verdana bold italic": [1, 0.25, 0],
-        "verdana italic": [1, 0.25, 0],
-        "webdings": [0.8333, 0.1667, 0],
-        "wingdings 2": [0.8333, 0.25, 0],
-        "wingdings 3": [0.9167, 0.25, 0],
-        "yuppy sc regular": [1.0833, 0.3333, 0],
-        "yuppy tc regular": [1.0833, 0.3333, 0],
-        "zapf dingbats": [0.8333, 0.1667, 0],
-        "zapfino": [1.9167, 1.5, 0]
+        "Al Bayan Bold": [1, 0.5833, 0],
+        "Al Bayan Plain": [1, 0.5, 0],
+        "Al Nile": [0.8333, 0.5, 0],
+        "Al Nile Bold": [0.8333, 0.5, 0],
+        "Al Tarikh Regular": [0.5833, 0.4167, 0],
+        "American Typewriter": [0.9167, 0.25, 0],
+        "American Typewriter Bold": [0.9167, 0.25, 0],
+        "American Typewriter Condensed": [0.9167, 0.25, 0],
+        "American Typewriter Condensed Bold": [0.9167, 0.25, 0],
+        "American Typewriter Condensed Light": [0.8333, 0.25, 0],
+        "American Typewriter Light": [0.9167, 0.25, 0],
+        "Andale Mono": [0.9167, 0.25, 0],
+        "Apple Braille": [0.75, 0.25, 0],
+        "Apple Braille Outline 6 Dot": [0.75, 0.25, 0],
+        "Apple Braille Outline 8 Dot": [0.75, 0.25, 0],
+        "Apple Braille Pinpoint 6 Dot": [0.75, 0.25, 0],
+        "Apple Braille Pinpoint 8 Dot": [0.75, 0.25, 0],
+        "Apple Chancery": [1.0833, 0.5, 0],
+        "Apple Color Emoji": [1.25, 0.4167, 0],
+        "Apple SD Gothic Neo Bold": [0.9167, 0.3333, 0],
+        "Apple SD Gothic Neo Heavy": [0.9167, 0.3333, 0],
+        "Apple SD Gothic Neo Light": [0.9167, 0.3333, 0],
+        "Apple SD Gothic Neo Medium": [0.9167, 0.3333, 0],
+        "Apple SD Gothic Neo Regular": [0.9167, 0.3333, 0],
+        "Apple SD Gothic Neo SemiBold": [0.9167, 0.3333, 0],
+        "Apple SD Gothic Neo Thin": [0.9167, 0.3333, 0],
+        "Apple SD Gothic Neo UltraLight": [0.9167, 0.3333, 0],
+        "Apple SD GothicNeo ExtraBold": [0.9167, 0.3333, 0],
+        "Apple Symbols": [0.6667, 0.25, 0],
+        "AppleGothic Regular": [0.9167, 0.3333, 0],
+        "AppleMyungjo Regular": [0.8333, 0.3333, 0],
+        "Arial": [0.9167, 0.25, 0],
+        "Arial Black": [1.0833, 0.3333, 0],
+        "Arial Bold": [0.9167, 0.25, 0],
+        "Arial Bold Italic": [0.9167, 0.25, 0],
+        "Arial Hebrew": [0.75, 0.3333, 0],
+        "Arial Hebrew Bold": [0.75, 0.3333, 0],
+        "Arial Hebrew Light": [0.75, 0.3333, 0],
+        "Arial Hebrew Scholar": [0.75, 0.3333, 0],
+        "Arial Hebrew Scholar Bold": [0.75, 0.3333, 0],
+        "Arial Hebrew Scholar Light": [0.75, 0.3333, 0],
+        "Arial Italic": [0.9167, 0.25, 0],
+        "Arial Narrow": [0.9167, 0.25, 0],
+        "Arial Narrow Bold": [0.9167, 0.25, 0],
+        "Arial Narrow Bold Italic": [0.9167, 0.25, 0],
+        "Arial Narrow Italic": [0.9167, 0.25, 0],
+        "Arial Rounded MT Bold": [0.9167, 0.25, 0],
+        "Arial Unicode MS": [1.0833, 0.25, 0],
+        "Athelas Bold": [0.9167, 0.25, 0],
+        "Athelas Bold Italic": [0.9167, 0.25, 0],
+        "Athelas Italic": [0.9167, 0.25, 0],
+        "Athelas Regular": [0.9167, 0.25, 0],
+        "Avenir Black": [1, 0.3333, 0],
+        "Avenir Black Oblique": [1, 0.3333, 0],
+        "Avenir Book": [1, 0.3333, 0],
+        "Avenir Book Oblique": [1, 0.3333, 0],
+        "Avenir Heavy": [1, 0.3333, 0],
+        "Avenir Heavy Oblique": [1, 0.3333, 0],
+        "Avenir Light": [1, 0.3333, 0],
+        "Avenir Light Oblique": [1, 0.3333, 0],
+        "Avenir Medium": [1, 0.3333, 0],
+        "Avenir Medium Oblique": [1, 0.3333, 0],
+        "Avenir Next Bold": [1, 0.3333, 0],
+        "Avenir Next Bold Italic": [1, 0.3333, 0],
+        "Avenir Next Condensed Bold": [1, 0.3333, 0],
+        "Avenir Next Condensed Bold Italic": [1, 0.3333, 0],
+        "Avenir Next Condensed Demi Bold": [1, 0.3333, 0],
+        "Avenir Next Condensed Demi Bold Italic": [1, 0.3333, 0],
+        "Avenir Next Condensed Heavy": [1, 0.3333, 0],
+        "Avenir Next Condensed Heavy Italic": [1, 0.3333, 0],
+        "Avenir Next Condensed Italic": [1, 0.3333, 0],
+        "Avenir Next Condensed Medium": [1, 0.3333, 0],
+        "Avenir Next Condensed Medium Italic": [1, 0.3333, 0],
+        "Avenir Next Condensed Regular": [1, 0.3333, 0],
+        "Avenir Next Condensed Ultra Light": [1, 0.3333, 0],
+        "Avenir Next Condensed Ultra Light Italic": [1, 0.3333, 0],
+        "Avenir Next Demi Bold": [1, 0.3333, 0],
+        "Avenir Next Demi Bold Italic": [1, 0.3333, 0],
+        "Avenir Next Heavy": [1, 0.3333, 0],
+        "Avenir Next Heavy Italic": [1, 0.3333, 0],
+        "Avenir Next Italic": [1, 0.3333, 0],
+        "Avenir Next Medium": [1, 0.3333, 0],
+        "Avenir Next Medium Italic": [1, 0.3333, 0],
+        "Avenir Next Regular": [1, 0.3333, 0],
+        "Avenir Next Ultra Light": [1, 0.3333, 0],
+        "Avenir Next Ultra Light Italic": [1, 0.3333, 0],
+        "Avenir Oblique": [1, 0.3333, 0],
+        "Avenir Roman": [1, 0.3333, 0],
+        "Ayuthaya": [1.0833, 0.3333, 0],
+        "Baghdad Regular": [0.9167, 0.4167, 0],
+        "Bangla MN": [1.0833, 0.75, 0],
+        "Bangla MN Bold": [1.0833, 0.75, 0],
+        "Bangla Sangam MN": [0.9167, 0.4167, 0],
+        "Bangla Sangam MN Bold": [0.9167, 0.4167, 0],
+        "Baoli SC Regular": [1.0833, 0.3333, 0],
+        "Baskerville": [0.9167, 0.25, 0],
+        "Baskerville Bold": [0.9167, 0.25, 0],
+        "Baskerville Bold Italic": [0.9167, 0.25, 0],
+        "Baskerville Italic": [0.9167, 0.25, 0],
+        "Baskerville SemiBold": [0.9167, 0.25, 0],
+        "Baskerville SemiBold Italic": [0.9167, 0.25, 0],
+        "Beirut Regular": [0.75, 0.25, 0],
+        "Big Caslon Medium": [0.9167, 0.25, 0],
+        "Bodoni 72 Bold": [0.9167, 0.25, 0],
+        "Bodoni 72 Book": [0.9167, 0.25, 0],
+        "Bodoni 72 Book Italic": [0.9167, 0.3333, 0],
+        "Bodoni 72 Oldstyle Bold": [0.9167, 0.25, 0],
+        "Bodoni 72 Oldstyle Book": [0.9167, 0.25, 0],
+        "Bodoni 72 Oldstyle Book Italic": [0.9167, 0.3333, 0],
+        "Bodoni 72 Smallcaps Book": [0.9167, 0.25, 0],
+        "Bodoni Ornaments": [0.8333, 0.1667, 0],
+        "Bradley Hand Bold": [0.8333, 0.4167, 0],
+        "Brush Script MT Italic": [0.9167, 0.3333, 0],
+        "Chalkboard": [1, 0.25, 0],
+        "Chalkboard Bold": [1, 0.25, 0],
+        "Chalkboard SE Bold": [1.1667, 0.25, 0],
+        "Chalkboard SE Light": [1.1667, 0.25, 0],
+        "Chalkboard SE Regular": [1.1667, 0.25, 0],
+        "Chalkduster": [1, 0.25, 0],
+        "Charter Black": [1, 0.25, 0],
+        "Charter Black Italic": [1, 0.25, 0],
+        "Charter Bold": [1, 0.25, 0],
+        "Charter Bold Italic": [1, 0.25, 0],
+        "Charter Italic": [1, 0.25, 0],
+        "Charter Roman": [1, 0.25, 0],
+        "Cochin": [0.9167, 0.25, 0],
+        "Cochin Bold": [0.9167, 0.25, 0],
+        "Cochin Bold Italic": [0.9167, 0.25, 0],
+        "Cochin Italic": [0.9167, 0.25, 0],
+        "Comic Sans MS": [1.0833, 0.25, 0],
+        "Comic Sans MS Bold": [1.0833, 0.25, 0],
+        "Copperplate": [0.75, 0.25, 0],
+        "Copperplate Bold": [0.75, 0.25, 0],
+        "Copperplate Light": [0.75, 0.25, 0],
+        "Corsiva Hebrew": [0.6667, 0.3333, 0],
+        "Corsiva Hebrew Bold": [0.6667, 0.3333, 0],
+        "Courier": [0.75, 0.25, 0],
+        "Courier Bold": [0.75, 0.25, 0],
+        "Courier Bold Oblique": [0.75, 0.25, 0],
+        "Courier New": [0.8333, 0.3333, 0],
+        "Courier New Bold": [0.8333, 0.3333, 0],
+        "Courier New Bold Italic": [0.8333, 0.3333, 0],
+        "Courier New Italic": [0.8333, 0.3333, 0],
+        "Courier Oblique": [0.75, 0.25, 0],
+        "Damascus Bold": [0.5833, 0.4167, 0],
+        "Damascus Light": [0.5833, 0.4167, 0],
+        "Damascus Medium": [0.5833, 0.4167, 0],
+        "Damascus Regular": [0.5833, 0.4167, 0],
+        "Damascus Semi Bold": [0.5833, 0.4167, 0],
+        "DecoType Naskh Regular": [1.1667, 0.6667, 0],
+        "Devanagari MT": [0.9167, 0.6667, 0],
+        "Devanagari MT Bold": [0.9167, 0.6667, 0],
+        "Devanagari Sangam MN": [0.9167, 0.4167, 0],
+        "Devanagari Sangam MN Bold": [0.9167, 0.4167, 0],
+        "Didot": [0.9167, 0.3333, 0],
+        "Didot Bold": [1, 0.3333, 0],
+        "Didot Italic": [0.9167, 0.25, 0],
+        "DIN Alternate Bold": [0.9167, 0.25, 0],
+        "DIN Condensed Bold": [0.75, 0.25, 0],
+        "Diwan Kufi Regular": [1.4167, 0.5, 0],
+        "Diwan Thuluth Regular": [1, 0.6667, 0],
+        "Euphemia UCAS": [1.0833, 0.25, 0],
+        "Euphemia UCAS Bold": [1.0833, 0.25, 0],
+        "Euphemia UCAS Italic": [1.0833, 0.25, 0],
+        "Farah Regular": [0.75, 0.25, 0],
+        "Farisi Regular": [1.0833, 1, 0],
+        "Futura Condensed ExtraBold": [1, 0.25, 0],
+        "Futura Condensed Medium": [1, 0.25, 0],
+        "Futura Medium": [1, 0.25, 0],
+        "Futura Medium Italic": [1, 0.25, 0],
+        "GB18030 Bitmap": [1.1667, 0.1667, 0],
+        "Geeza Pro Bold": [0.9167, 0.3333, 0],
+        "Geeza Pro Regular": [0.9167, 0.3333, 0],
+        "Geneva": [1, 0.25, 0],
+        "Georgia": [0.9167, 0.25, 0],
+        "Georgia Bold": [0.9167, 0.25, 0],
+        "Georgia Bold Italic": [0.9167, 0.25, 0],
+        "Georgia Italic": [0.9167, 0.25, 0],
+        "Gill Sans": [0.9167, 0.25, 0],
+        "Gill Sans Bold": [0.9167, 0.25, 0],
+        "Gill Sans Bold Italic": [0.9167, 0.25, 0],
+        "Gill Sans Italic": [0.9167, 0.25, 0],
+        "Gill Sans Light": [0.9167, 0.25, 0],
+        "Gill Sans Light Italic": [0.9167, 0.25, 0],
+        "Gill Sans SemiBold": [0.9167, 0.25, 0],
+        "Gill Sans SemiBold Italic": [0.9167, 0.25, 0],
+        "Gill Sans UltraBold": [1, 0.25, 0],
+        "Gujarati MT": [0.9167, 0.6667, 0],
+        "Gujarati MT Bold": [0.9167, 0.6667, 0],
+        "Gujarati Sangam MN": [0.8333, 0.4167, 0],
+        "Gujarati Sangam MN Bold": [0.8333, 0.4167, 0],
+        "GungSeo Regular": [0.8333, 0.25, 0],
+        "Gurmukhi MN": [0.9167, 0.25, 0],
+        "Gurmukhi MN Bold": [0.9167, 0.25, 0],
+        "Gurmukhi MT": [0.8333, 0.4167, 0],
+        "Gurmukhi Sangam MN": [0.9167, 0.3333, 0],
+        "Gurmukhi Sangam MN Bold": [0.9167, 0.3333, 0],
+        "Hannotate SC Bold": [1.0833, 0.3333, 0],
+        "Hannotate SC Regular": [1.0833, 0.3333, 0],
+        "Hannotate TC Bold": [1.0833, 0.3333, 0],
+        "Hannotate TC Regular": [1.0833, 0.3333, 0],
+        "HanziPen SC Bold": [1.0833, 0.3333, 0],
+        "HanziPen SC Regular": [1.0833, 0.3333, 0],
+        "HanziPen TC Bold": [1.0833, 0.3333, 0],
+        "HanziPen TC Regular": [1.0833, 0.3333, 0],
+        "HeadLineA Regular": [0.8333, 0.1667, 0],
+        "Heiti SC Light": [0.8333, 0.1667, 0],
+        "Heiti SC Medium": [0.8333, 0.1667, 0],
+        "Heiti TC Light": [0.8333, 0.1667, 0],
+        "Heiti TC Medium": [0.8333, 0.1667, 0],
+        "Helvetica": [0.75, 0.25, 0],
+        "Helvetica Bold": [0.75, 0.25, 0],
+        "Helvetica Bold Oblique": [0.75, 0.25, 0],
+        "Helvetica Light": [0.75, 0.25, 0],
+        "Helvetica Light Oblique": [0.75, 0.25, 0],
+        "Helvetica Neue": [0.9167, 0.25, 0],
+        "Helvetica Neue Bold": [1, 0.25, 0],
+        "Helvetica Neue Bold Italic": [1, 0.25, 0],
+        "Helvetica Neue Condensed Black": [1, 0.25, 0],
+        "Helvetica Neue Condensed Bold": [1, 0.25, 0],
+        "Helvetica Neue Italic": [0.9167, 0.25, 0],
+        "Helvetica Neue Light": [1, 0.25, 0],
+        "Helvetica Neue Light Italic": [0.9167, 0.25, 0],
+        "Helvetica Neue Medium": [1, 0.25, 0],
+        "Helvetica Neue Medium Italic": [1, 0.25, 0],
+        "Helvetica Neue Thin": [1, 0.25, 0],
+        "Helvetica Neue Thin Italic": [1, 0.25, 0],
+        "Helvetica Neue UltraLight": [0.9167, 0.25, 0],
+        "Helvetica Neue UltraLight Italic": [0.9167, 0.25, 0],
+        "Helvetica Oblique": [0.75, 0.25, 0],
+        "Herculanum": [0.8333, 0.1667, 0],
+        "Hiragino Kaku Gothic Pro W3": [0.9167, 0.0833, 0],
+        "Hiragino Kaku Gothic Pro W6": [0.9167, 0.0833, 0],
+        "Hiragino Kaku Gothic ProN W3": [0.9167, 0.0833, 0],
+        "Hiragino Kaku Gothic ProN W6": [0.9167, 0.0833, 0],
+        "Hiragino Kaku Gothic Std W8": [0.9167, 0.0833, 0],
+        "Hiragino Kaku Gothic StdN W8": [0.9167, 0.0833, 0],
+        "Hiragino Maru Gothic Pro W4": [0.9167, 0.0833, 0],
+        "Hiragino Maru Gothic ProN W4": [0.9167, 0.0833, 0],
+        "Hiragino Mincho Pro W3": [0.9167, 0.0833, 0],
+        "Hiragino Mincho Pro W6": [0.9167, 0.0833, 0],
+        "Hiragino Mincho ProN W3": [0.9167, 0.0833, 0],
+        "Hiragino Mincho ProN W6": [0.9167, 0.0833, 0],
+        "Hiragino Sans GB W3": [0.9167, 0.0833, 0],
+        "Hiragino Sans GB W6": [0.9167, 0.0833, 0],
+        "Hoefler Text": [0.75, 0.25, 0],
+        "Hoefler Text Black": [0.75, 0.25, 0],
+        "Hoefler Text Black Italic": [0.75, 0.25, 0],
+        "Hoefler Text Italic": [0.75, 0.25, 0],
+        "Hoefler Text Ornaments": [0.8333, 0.1667, 0],
+        "Impact": [1, 0.25, 0],
+        "InaiMathi": [0.8333, 0.4167, 0],
+        "Iowan Old Style Black": [1, 0.3333, 0],
+        "Iowan Old Style Black Italic": [1, 0.3333, 0],
+        "Iowan Old Style Bold": [1, 0.3333, 0],
+        "Iowan Old Style Bold Italic": [1, 0.3333, 0],
+        "Iowan Old Style Italic": [1, 0.3333, 0],
+        "Iowan Old Style Roman": [1, 0.3333, 0],
+        "Iowan Old Style Titling": [1, 0.3333, 0],
+        "ITF Devanagari Bold": [1.0833, 0.3333, 0],
+        "ITF Devanagari Book": [1.0833, 0.3333, 0],
+        "ITF Devanagari Demi": [1.0833, 0.3333, 0],
+        "ITF Devanagari Light": [1.0833, 0.3333, 0],
+        "ITF Devanagari Medium": [1.0833, 0.3333, 0],
+        "Kailasa Regular": [1.0833, 0.5833, 0],
+        "Kaiti SC Black": [1.0833, 0.3333, 0],
+        "Kaiti SC Bold": [1.0833, 0.3333, 0],
+        "Kaiti SC Regular": [1.0833, 0.3333, 0],
+        "Kaiti TC Bold": [1.0833, 0.3333, 0],
+        "Kaiti TC Regular": [1.0833, 0.3333, 0],
+        "Kannada MN": [0.9167, 0.25, 0],
+        "Kannada MN Bold": [0.9167, 0.25, 0],
+        "Kannada Sangam MN": [1, 0.5833, 0],
+        "Kannada Sangam MN Bold": [1, 0.5833, 0],
+        "Kefa Bold": [0.9167, 0.25, 0],
+        "Kefa Regular": [0.9167, 0.25, 0],
+        "Khmer MN": [1, 0.8333, 0],
+        "Khmer MN Bold": [1, 0.8333, 0],
+        "Khmer Sangam MN": [1.0833, 0.8333, 0],
+        "Kohinoor Devanagari Bold": [1.0833, 0.3333, 0],
+        "Kohinoor Devanagari Book": [1.0833, 0.3333, 0],
+        "Kohinoor Devanagari Demi": [1.0833, 0.3333, 0],
+        "Kohinoor Devanagari Light": [1.0833, 0.3333, 0],
+        "Kohinoor Devanagari Medium": [1.0833, 0.3333, 0],
+        "Kokonor Regular": [1.0833, 0.5833, 0],
+        "Krungthep": [1, 0.25, 0],
+        "KufiStandardGK Regular": [0.9167, 0.5, 0],
+        "Lantinghei SC Demibold": [1, 0.3333, 0],
+        "Lantinghei SC Extralight": [1, 0.3333, 0],
+        "Lantinghei SC Heavy": [1, 0.3333, 0],
+        "Lantinghei TC Demibold": [1, 0.3333, 0],
+        "Lantinghei TC Extralight": [1, 0.3333, 0],
+        "Lantinghei TC Heavy": [1, 0.3333, 0],
+        "Lao MN": [0.9167, 0.4167, 0],
+        "Lao MN Bold": [0.9167, 0.4167, 0],
+        "Lao Sangam MN": [1, 0.3333, 0],
+        "Libian SC Regular": [1.0833, 0.3333, 0],
+        "LiHei Pro": [0.8333, 0.1667, 0],
+        "LiSong Pro": [0.8333, 0.1667, 0],
+        "Lucida Grande": [1, 0.25, 0],
+        "Lucida Grande Bold": [1, 0.25, 0],
+        "Luminari": [1, 0.3333, 0],
+        "Malayalam MN": [1, 0.4167, 0],
+        "Malayalam MN Bold": [1, 0.4167, 0],
+        "Malayalam Sangam MN": [0.8333, 0.4167, 0],
+        "Malayalam Sangam MN Bold": [0.8333, 0.4167, 0],
+        "Marion Bold": [0.6667, 0.3333, 0],
+        "Marion Italic": [0.6667, 0.3333, 0],
+        "Marion Regular": [0.6667, 0.3333, 0],
+        "Marker Felt Thin": [0.8333, 0.25, 0],
+        "Marker Felt Wide": [0.9167, 0.25, 0],
+        "Menlo Bold": [0.9167, 0.25, 0],
+        "Menlo Bold Italic": [0.9167, 0.25, 0],
+        "Menlo Italic": [0.9167, 0.25, 0],
+        "Menlo Regular": [0.9167, 0.25, 0],
+        "Microsoft Sans Serif": [0.9167, 0.25, 0],
+        "Mishafi Gold Regular": [0.75, 0.6667, 0],
+        "Mishafi Regular": [0.75, 0.6667, 0],
+        "Monaco": [1, 0.25, 0],
+        "Mshtakan": [0.9167, 0.25, 0],
+        "Mshtakan Bold": [0.9167, 0.25, 0],
+        "Mshtakan BoldOblique": [0.9167, 0.25, 0],
+        "Mshtakan Oblique": [0.9167, 0.25, 0],
+        "Muna Black": [0.75, 0.3333, 0],
+        "Muna Bold": [0.75, 0.3333, 0],
+        "Muna Regular": [0.75, 0.3333, 0],
+        "Myanmar MN": [1, 0.4167, 0],
+        "Myanmar MN Bold": [1, 0.4167, 0],
+        "Myanmar Sangam MN": [0.9167, 0.4167, 0],
+        "Nadeem Regular": [0.9167, 0.4167, 0],
+        "Nanum Brush Script": [0.9167, 0.25, 0],
+        "Nanum Pen Script": [0.9167, 0.25, 0],
+        "NanumGothic": [0.9167, 0.25, 0],
+        "NanumGothic Bold": [0.9167, 0.25, 0],
+        "NanumGothic ExtraBold": [0.9167, 0.25, 0],
+        "NanumMyeongjo": [0.9167, 0.25, 0],
+        "NanumMyeongjo Bold": [0.9167, 0.25, 0],
+        "NanumMyeongjo ExtraBold": [0.9167, 0.25, 0],
+        "New Peninim MT": [0.75, 0.3333, 0],
+        "New Peninim MT Bold": [0.75, 0.3333, 0],
+        "New Peninim MT Bold Inclined": [0.75, 0.3333, 0],
+        "New Peninim MT Inclined": [0.75, 0.3333, 0],
+        "Noteworthy Bold": [1.25, 0.3333, 0],
+        "Noteworthy Light": [1.25, 0.3333, 0],
+        "Optima Bold": [0.9167, 0.25, 0],
+        "Optima Bold Italic": [0.9167, 0.25, 0],
+        "Optima ExtraBlack": [1, 0.25, 0],
+        "Optima Italic": [0.9167, 0.25, 0],
+        "Optima Regular": [0.9167, 0.25, 0],
+        "Oriya MN": [0.9167, 0.25, 0],
+        "Oriya MN Bold": [0.9167, 0.25, 0],
+        "Oriya Sangam MN": [0.8333, 0.4167, 0],
+        "Oriya Sangam MN Bold": [0.8333, 0.4167, 0],
+        "Osaka": [1, 0.25, 0],
+        "Osaka-Mono": [0.8333, 0.1667, 0],
+        "Palatino": [0.8333, 0.25, 0],
+        "Palatino Bold": [0.8333, 0.25, 0],
+        "Palatino Bold Italic": [0.8333, 0.25, 0],
+        "Palatino Italic": [0.8333, 0.25, 0],
+        "Papyrus": [0.9167, 0.5833, 0],
+        "Papyrus Condensed": [0.9167, 0.5833, 0],
+        "PCMyungjo Regular": [0.8333, 0.25, 0],
+        "Phosphate Inline": [0.9167, 0.25, 0],
+        "Phosphate Solid": [0.9167, 0.25, 0],
+        "PilGi Regular": [0.8333, 0.25, 0],
+        "Plantagenet Cherokee": [0.6667, 0.25, 0],
+        "PT Mono": [0.9167, 0.25, 0],
+        "PT Mono Bold": [0.9167, 0.25, 0],
+        "PT Sans": [0.9167, 0.25, 0],
+        "PT Sans Bold": [0.9167, 0.25, 0],
+        "PT Sans Bold Italic": [0.9167, 0.25, 0],
+        "PT Sans Caption": [0.9167, 0.25, 0],
+        "PT Sans Caption Bold": [0.9167, 0.25, 0],
+        "PT Sans Italic": [0.9167, 0.25, 0],
+        "PT Sans Narrow": [0.9167, 0.25, 0],
+        "PT Sans Narrow Bold": [0.9167, 0.25, 0],
+        "PT Serif": [1, 0.25, 0],
+        "PT Serif Bold": [1, 0.25, 0],
+        "PT Serif Bold Italic": [1, 0.25, 0],
+        "PT Serif Caption": [1, 0.25, 0],
+        "PT Serif Caption Italic": [1, 0.25, 0],
+        "PT Serif Italic": [1, 0.25, 0],
+        "Raanana": [0.75, 0.25, 0],
+        "Raanana Bold": [0.75, 0.25, 0],
+        "Sana Regular": [0.75, 0.25, 0],
+        "Sathu": [0.9167, 0.3333, 0],
+        "Savoye LET Plain CC.:1.0": [1.0833, 0.75, 0],
+        "Savoye LET Plain:1.0": [0.6667, 0.5, 0],
+        "Seravek": [0.9167, 0.3333, 0],
+        "Seravek Bold": [0.9167, 0.3333, 0],
+        "Seravek Bold Italic": [0.9167, 0.3333, 0],
+        "Seravek ExtraLight": [0.9167, 0.3333, 0],
+        "Seravek ExtraLight Italic": [0.9167, 0.3333, 0],
+        "Seravek Italic": [0.9167, 0.3333, 0],
+        "Seravek Light": [0.9167, 0.3333, 0],
+        "Seravek Light Italic": [0.9167, 0.3333, 0],
+        "Seravek Medium": [0.9167, 0.3333, 0],
+        "Seravek Medium Italic": [0.9167, 0.3333, 0],
+        "Shree Devanagari 714": [0.9167, 0.4167, 0],
+        "Shree Devanagari 714 Bold": [0.9167, 0.4167, 0],
+        "Shree Devanagari 714 Bold Italic": [0.9167, 0.4167, 0],
+        "Shree Devanagari 714 Italic": [0.9167, 0.4167, 0],
+        "SignPainter-HouseScript": [0.6667, 0.1667, 0],
+        "Silom": [1, 0.3333, 0],
+        "Sinhala MN": [0.9167, 0.25, 0],
+        "Sinhala MN Bold": [0.9167, 0.25, 0],
+        "Sinhala Sangam MN": [1.1667, 0.3333, 0],
+        "Sinhala Sangam MN Bold": [1.1667, 0.3333, 0],
+        "Skia Black": [0.75, 0.25, 0],
+        "Skia Black Condensed": [0.75, 0.25, 0],
+        "Skia Black Extended": [0.75, 0.25, 0],
+        "Skia Bold": [0.75, 0.25, 0],
+        "Skia Condensed": [0.75, 0.25, 0],
+        "Skia Extended": [0.75, 0.25, 0],
+        "Skia Light": [0.75, 0.25, 0],
+        "Skia Light Condensed": [0.75, 0.25, 0],
+        "Skia Light Extended": [0.75, 0.25, 0],
+        "Skia Regular": [0.75, 0.25, 0],
+        "Snell Roundhand": [0.9167, 0.3333, 0],
+        "Snell Roundhand Black": [0.9167, 0.3333, 0],
+        "Snell Roundhand Bold": [0.9167, 0.3333, 0],
+        "Songti SC Black": [1.0833, 0.3333, 0],
+        "Songti SC Bold": [1.0833, 0.3333, 0],
+        "Songti SC Light": [1.0833, 0.3333, 0],
+        "Songti SC Regular": [1.0833, 0.3333, 0],
+        "Songti TC Bold": [1.0833, 0.3333, 0],
+        "Songti TC Light": [1.0833, 0.3333, 0],
+        "Songti TC Regular": [1.0833, 0.3333, 0],
+        "STFangsong": [0.8333, 0.1667, 0],
+        "STHeiti": [0.8333, 0.1667, 0],
+        "STIXGeneral-Bold": [1.0833, 0.4167, 0],
+        "STIXGeneral-BoldItalic": [1.0833, 0.4167, 0],
+        "STIXGeneral-Italic": [1.0833, 0.4167, 0],
+        "STIXGeneral-Regular": [1.0833, 0.4167, 0],
+        "STIXIntegralsD-Bold": [2.1667, 0.4167, 0],
+        "STIXIntegralsD-Regular": [2.1667, 0.4167, 0],
+        "STIXIntegralsSm-Bold": [1.0833, 0.4167, 0],
+        "STIXIntegralsSm-Regular": [1.0833, 0.4167, 0],
+        "STIXIntegralsUp-Bold": [1.0833, 0.4167, 0],
+        "STIXIntegralsUp-Regular": [1.0833, 0.4167, 0],
+        "STIXIntegralsUpD-Bold": [2.1667, 0.4167, 0],
+        "STIXIntegralsUpD-Regular": [2.1667, 0.4167, 0],
+        "STIXIntegralsUpSm-Bold": [1.0833, 0.4167, 0],
+        "STIXIntegralsUpSm-Regular": [1.0833, 0.4167, 0],
+        "STIXNonUnicode-Bold": [1.4167, 0.5833, 0],
+        "STIXNonUnicode-BoldItalic": [1.4167, 0.5833, 0],
+        "STIXNonUnicode-Italic": [1.4167, 0.5833, 0],
+        "STIXNonUnicode-Regular": [1.4167, 0.5833, 0],
+        "STIXSizeFiveSym-Regular": [1, 0.4167, 0],
+        "STIXSizeFourSym-Bold": [2.5833, 0.5, 0],
+        "STIXSizeFourSym-Regular": [2.5833, 0.5, 0],
+        "STIXSizeOneSym-Bold": [1.5833, 0.3333, 0],
+        "STIXSizeOneSym-Regular": [1.5833, 0.3333, 0],
+        "STIXSizeThreeSym-Bold": [2.5833, 0.5, 0],
+        "STIXSizeThreeSym-Regular": [2.5833, 0.5, 0],
+        "STIXSizeTwoSym-Bold": [2.0833, 0.4167, 0],
+        "STIXSizeTwoSym-Regular": [2.0833, 0.4167, 0],
+        "STIXVariants-Bold": [1.0833, 0.4167, 0],
+        "STIXVariants-Regular": [1.0833, 0.4167, 0],
+        "STKaiti": [0.8333, 0.1667, 0],
+        "STSong": [0.8333, 0.1667, 0],
+        "STXihei": [0.8333, 0.1667, 0],
+        "Sukhumvit Set Bold": [1.0833, 0.5, 0],
+        "Sukhumvit Set Light": [1.0833, 0.5, 0],
+        "Sukhumvit Set Medium": [1.0833, 0.5, 0],
+        "Sukhumvit Set Semi Bold": [1.0833, 0.5, 0],
+        "Sukhumvit Set Text": [1.0833, 0.5, 0],
+        "Sukhumvit Set Thin": [1.0833, 0.5, 0],
+        "Superclarendon Black": [1, 0.25, 0],
+        "Superclarendon Black Italic": [1, 0.25, 0],
+        "Superclarendon Bold": [1, 0.25, 0],
+        "Superclarendon Bold Italic": [1, 0.25, 0],
+        "Superclarendon Italic": [1, 0.25, 0],
+        "Superclarendon Light": [1, 0.25, 0],
+        "Superclarendon Light Italic": [1, 0.25, 0],
+        "Superclarendon Regular": [1, 0.25, 0],
+        "Symbol": [0.6667, 0.3333, 0],
+        "System Font Bold": [1, 0.25, 0],
+        "System Font Bold Italic": [1, 0.25, 0],
+        "System Font Heavy": [1, 0.25, 0],
+        "System Font Italic": [1, 0.25, 0],
+        "System Font Light": [1, 0.25, 0],
+        "System Font Medium Italic P4": [1, 0.25, 0],
+        "System Font Medium P4": [1, 0.25, 0],
+        "System Font Regular": [1, 0.25, 0],
+        "System Font Thin": [1, 0.25, 0],
+        "System Font UltraLight": [1, 0.25, 0],
+        "Tahoma": [1, 0.1667, 0],
+        "Tahoma Negreta": [1, 0.1667, 0],
+        "Tamil MN": [0.9167, 0.25, 0],
+        "Tamil MN Bold": [0.9167, 0.25, 0],
+        "Tamil Sangam MN": [0.75, 0.25, 0],
+        "Tamil Sangam MN Bold": [0.75, 0.25, 0],
+        "Telugu MN": [0.9167, 0.25, 0],
+        "Telugu MN Bold": [0.9167, 0.25, 0],
+        "Telugu Sangam MN": [1, 0.5833, 0],
+        "Telugu Sangam MN Bold": [1, 0.5833, 0],
+        "Thonburi": [1.0833, 0.25, 0],
+        "Thonburi Bold": [1.0833, 0.25, 0],
+        "Thonburi Light": [1.0833, 0.25, 0],
+        "Times Bold": [0.75, 0.25, 0],
+        "Times Bold Italic": [0.75, 0.25, 0],
+        "Times Italic": [0.75, 0.25, 0],
+        "Times New Roman": [0.9167, 0.25, 0],
+        "Times New Roman Bold": [0.9167, 0.25, 0],
+        "Times New Roman Bold Italic": [0.9167, 0.25, 0],
+        "Times New Roman Italic": [0.9167, 0.25, 0],
+        "Times Roman": [0.75, 0.25, 0],
+        "Trattatello": [1.1667, 0.6667, 0],
+        "Trebuchet MS": [0.9167, 0.25, 0],
+        "Trebuchet MS Bold": [0.9167, 0.25, 0],
+        "Trebuchet MS Bold Italic": [0.9167, 0.25, 0],
+        "Trebuchet MS Italic": [0.9167, 0.25, 0],
+        "Verdana": [1, 0.25, 0],
+        "Verdana Bold": [1, 0.25, 0],
+        "Verdana Bold Italic": [1, 0.25, 0],
+        "Verdana Italic": [1, 0.25, 0],
+        "Waseem Light": [0.9167, 0.5833, 0],
+        "Waseem Regular": [0.9167, 0.5833, 0],
+        "Wawati SC Regular": [1.0833, 0.3333, 0],
+        "Wawati TC Regular": [1.0833, 0.3333, 0],
+        "Webdings": [0.8333, 0.1667, 0],
+        "Weibei SC Bold": [1.0833, 0.3333, 0],
+        "Weibei TC Bold": [1.0833, 0.3333, 0],
+        "Wingdings": [0.9167, 0.25, 0],
+        "Wingdings 2": [0.8333, 0.25, 0],
+        "Wingdings 3": [0.9167, 0.25, 0],
+        "Xingkai SC Bold": [1.0833, 0.3333, 0],
+        "Xingkai SC Light": [1.0833, 0.3333, 0],
+        "Yuanti SC Bold": [1.0833, 0.3333, 0],
+        "Yuanti SC Light": [1.0833, 0.3333, 0],
+        "Yuanti SC Regular": [1.0833, 0.3333, 0],
+        "YuGothic Bold": [0.9167, 0.0833, 0],
+        "YuGothic Medium": [0.9167, 0.0833, 0],
+        "YuMincho Demibold": [0.9167, 0.0833, 0],
+        "YuMincho Medium": [0.9167, 0.0833, 0],
+        "Yuppy SC Regular": [1.0833, 0.3333, 0],
+        "Yuppy TC Regular": [1.0833, 0.3333, 0],
+        "Zapf Dingbats": [0.8333, 0.1667, 0],
+        "Zapfino": [1.9167, 1.5, 0]
+      };
+      // Measurements taken on a freshly installed Ubuntu Linux 12.04.5 (Precise Pangolin).
+      Font.DEVICE_FONT_METRICS_LINUX = {
+        "KacstFarsi": [1.0417, 0.5208, 0],
+        "Meera": [0.651, 0.4557, 0],
+        "FreeMono": [0.7812, 0.1953, 0],
+        "Loma": [1.1719, 0.4557, 0],
+        "Century Schoolbook L": [0.9766, 0.3255, 0],
+        "KacstTitleL": [1.0417, 0.5208, 0],
+        "Garuda": [1.3021, 0.5859, 0],
+        "Rekha": [1.1068, 0.2604, 0],
+        "Purisa": [1.1068, 0.5208, 0],
+        "DejaVu Sans Mono": [0.9115, 0.2604, 0],
+        "Vemana2000": [0.9115, 0.8464, 0],
+        "KacstOffice": [1.0417, 0.5208, 0],
+        "Umpush": [1.237, 0.651, 0],
+        "OpenSymbol": [0.7812, 0.1953, 0],
+        "Sawasdee": [1.1068, 0.4557, 0],
+        "URW Palladio L": [0.9766, 0.3255, 0],
+        "FreeSerif": [0.9115, 0.3255, 0],
+        "KacstDigital": [1.0417, 0.5208, 0],
+        "Ubuntu Condensed": [0.9115, 0.1953, 0],
+        "mry_KacstQurn": [1.4323, 0.7161, 0],
+        "URW Gothic L": [0.9766, 0.2604, 0],
+        "Dingbats": [0.8464, 0.1953, 0],
+        "URW Chancery L": [0.9766, 0.3255, 0],
+        "Phetsarath OT": [1.1068, 0.5208, 0],
+        "Tlwg Typist": [0.9115, 0.3906, 0],
+        "KacstLetter": [1.0417, 0.5208, 0],
+        "utkal": [1.1719, 0.651, 0],
+        "Norasi": [1.237, 0.5208, 0],
+        "KacstOne": [1.237, 0.651, 0],
+        "Liberation Sans Narrow": [0.9115, 0.2604, 0],
+        "Symbol": [1.0417, 0.3255, 0],
+        "NanumMyeongjo": [0.9115, 0.2604, 0],
+        "Untitled1": [0.651, 0.5859, 0],
+        "Lohit Gujarati": [0.9115, 0.3906, 0],
+        "Liberation Mono": [0.8464, 0.3255, 0],
+        "KacstArt": [1.0417, 0.5208, 0],
+        "Mallige": [0.9766, 0.651, 0],
+        "Bitstream Charter": [0.9766, 0.2604, 0],
+        "NanumGothic": [0.9115, 0.2604, 0],
+        "Liberation Serif": [0.9115, 0.2604, 0],
+        "Ubuntu": [0.9115, 0.1953, 0],
+        "Courier 10 Pitch": [0.8464, 0.3255, 0],
+        "Nimbus Sans L": [0.9766, 0.3255, 0],
+        "TakaoPGothic": [0.9115, 0.1953, 0],
+        "WenQuanYi Micro Hei Mono": [0.9766, 0.2604, 0],
+        "DejaVu Sans": [0.9115, 0.2604, 0],
+        "Kedage": [0.9766, 0.651, 0],
+        "Kinnari": [1.3021, 0.5208, 0],
+        "TlwgMono": [0.8464, 0.3906, 0],
+        "Standard Symbols L": [1.0417, 0.3255, 0],
+        "Lohit Punjabi": [1.1719, 0.651, 0],
+        "Nimbus Mono L": [0.8464, 0.3255, 0],
+        "Rachana": [0.651, 0.5859, 0],
+        "Waree": [1.237, 0.4557, 0],
+        "KacstPoster": [1.0417, 0.5208, 0],
+        "Khmer OS": [1.3021, 0.7161, 0],
+        "FreeSans": [0.9766, 0.3255, 0],
+        "gargi": [0.9115, 0.3255, 0],
+        "Nimbus Roman No9 L": [0.9115, 0.3255, 0],
+        "DejaVu Serif": [0.9115, 0.2604, 0],
+        "WenQuanYi Micro Hei": [0.9766, 0.2604, 0],
+        "Ubuntu Light": [0.9115, 0.1953, 0],
+        "TlwgTypewriter": [0.9115, 0.3906, 0],
+        "KacstPen": [1.0417, 0.5208, 0],
+        "Tlwg Typo": [0.9115, 0.3906, 0],
+        "Mukti Narrow": [1.237, 0.4557, 0],
+        "Ubuntu Mono": [0.8464, 0.1953, 0],
+        "Lohit Bengali": [0.9766, 0.4557, 0],
+        "Liberation Sans": [0.9115, 0.2604, 0],
+        "KacstDecorative": [1.1068, 0.5208, 0],
+        "Khmer OS System": [1.237, 0.5859, 0],
+        "Saab": [0.9766, 0.651, 0],
+        "KacstTitle": [1.0417, 0.5208, 0],
+        "Mukti Narrow Bold": [1.237, 0.4557, 0],
+        "Lohit Hindi": [0.9766, 0.5208, 0],
+        "KacstQurn": [1.0417, 0.5208, 0],
+        "URW Bookman L": [0.9766, 0.3255, 0],
+        "KacstNaskh": [1.0417, 0.5208, 0],
+        "KacstScreen": [1.0417, 0.5208, 0],
+        "Pothana2000": [0.9115, 0.8464, 0],
+        "Lohit Tamil": [0.8464, 0.3906, 0],
+        "KacstBook": [1.0417, 0.5208, 0],
+        "Sans": [0.9115, 0.2604, 0],
+        "Times": [0.9115, 0.3255, 0],
+        "Monospace": [0.9115, 0.2604, 0]
       };
 
-      Font.DEVICE_FONT_METRICS_LINUX = {
-        "kacstfarsi": [1.0831, 0.5215, 0],
-        "meera": [0.682, 0.4413, 0],
-        "freemono": [0.8023, 0.2006, 0],
-        "undotum": [1.0029, 0.2808, 0],
-        "loma": [1.1634, 0.4814, 0],
-        "century schoolbook l": [1.0029, 0.3209, 0],
-        "kacsttitlel": [1.0831, 0.5215, 0],
-        "undinaru": [1.0029, 0.2407, 0],
-        "ungungseo": [1.0029, 0.2808, 0],
-        "garuda": [1.3238, 0.6017, 0],
-        "rekha": [1.1232, 0.2808, 0],
-        "purisa": [1.1232, 0.5215, 0],
-        "dejavu sans mono": [0.9628, 0.2407, 0],
-        "vemana2000": [0.8825, 0.8424, 0],
-        "kacstoffice": [1.0831, 0.5215, 0],
-        "umpush": [1.2837, 0.682, 0],
-        "opensymbol": [0.8023, 0.2006, 0],
-        "sawasdee": [1.1232, 0.4413, 0],
-        "urw palladio l": [1.0029, 0.3209, 0],
-        "freeserif": [0.9227, 0.3209, 0],
-        "kacstdigital": [1.0831, 0.5215, 0],
-        "ubuntu condensed": [0.9628, 0.2006, 0],
-        "unpilgi": [1.0029, 0.4413, 0],
-        "mry_kacstqurn": [1.4442, 0.7221, 0],
-        "urw gothic l": [1.0029, 0.2407, 0],
-        "dingbats": [0.8424, 0.1605, 0],
-        "urw chancery l": [1.0029, 0.3209, 0],
-        "phetsarath ot": [1.0831, 0.5215, 0],
-        "tlwg typist": [0.8825, 0.4012, 0],
-        "kacstletter": [1.0831, 0.5215, 0],
-        "utkal": [1.2035, 0.6418, 0],
-        "dejavu sans light": [0.9628, 0.2407, 0],
-        "norasi": [1.2436, 0.5215, 0],
-        "dejavu serif condensed": [0.9628, 0.2407, 0],
-        "kacstone": [1.2436, 0.6418, 0],
-        "liberation sans narrow": [0.9628, 0.2407, 0],
-        "symbol": [1.043, 0.3209, 0],
-        "nanummyeongjo": [0.9227, 0.2407, 0],
-        "untitled1": [0.682, 0.5616, 0],
-        "lohit gujarati": [0.9628, 0.4012, 0],
-        "liberation mono": [0.8424, 0.3209, 0],
-        "kacstart": [1.0831, 0.5215, 0],
-        "mallige": [1.0029, 0.682, 0],
-        "bitstream charter": [1.0029, 0.2407, 0],
-        "nanumgothic": [0.9227, 0.2407, 0],
-        "liberation serif": [0.9227, 0.2407, 0],
-        "dejavu sans condensed": [0.9628, 0.2407, 0],
-        "ubuntu": [0.9628, 0.2006, 0],
-        "courier 10 pitch": [0.8825, 0.3209, 0],
-        "nimbus sans l": [0.9628, 0.3209, 0],
-        "takaopgothic": [0.8825, 0.2006, 0],
-        "wenquanyi micro hei mono": [0.9628, 0.2407, 0],
-        "dejavu sans": [0.9628, 0.2407, 0],
-        "kedage": [1.0029, 0.682, 0],
-        "kinnari": [1.3238, 0.5215, 0],
-        "tlwgmono": [0.8825, 0.4012, 0],
-        "standard symbols l": [1.043, 0.3209, 0],
-        "lohit punjabi": [1.2035, 0.682, 0],
-        "nimbus mono l": [0.8424, 0.2808, 0],
-        "rachana": [0.682, 0.5616, 0],
-        "waree": [1.2436, 0.4413, 0],
-        "kacstposter": [1.0831, 0.5215, 0],
-        "khmer os": [1.2837, 0.7622, 0],
-        "freesans": [1.0029, 0.3209, 0],
-        "gargi": [0.9628, 0.2808, 0],
-        "nimbus roman no9 l": [0.9628, 0.3209, 0],
-        "dejavu serif": [0.9628, 0.2407, 0],
-        "wenquanyi micro hei": [0.9628, 0.2407, 0],
-        "ubuntu light": [0.9628, 0.2006, 0],
-        "tlwgtypewriter": [0.9227, 0.4012, 0],
-        "kacstpen": [1.0831, 0.5215, 0],
-        "tlwg typo": [0.8825, 0.4012, 0],
-        "mukti narrow": [1.2837, 0.4413, 0],
-        "ubuntu mono": [0.8424, 0.2006, 0],
-        "lohit bengali": [1.0029, 0.4413, 0],
-        "liberation sans": [0.9227, 0.2407, 0],
-        "unbatang": [1.0029, 0.2808, 0],
-        "kacstdecorative": [1.1232, 0.5215, 0],
-        "khmer os system": [1.2436, 0.6017, 0],
-        "saab": [1.0029, 0.682, 0],
-        "kacsttitle": [1.0831, 0.5215, 0],
-        "mukti narrow bold": [1.2837, 0.4413, 0],
-        "lohit hindi": [1.0029, 0.5215, 0],
-        "kacstqurn": [1.0831, 0.5215, 0],
-        "urw bookman l": [0.9628, 0.2808, 0],
-        "kacstnaskh": [1.0831, 0.5215, 0],
-        "kacstscreen": [1.0831, 0.5215, 0],
-        "pothana2000": [0.8825, 0.8424, 0],
-        "ungraphic": [1.0029, 0.2808, 0],
-        "lohit tamil": [0.8825, 0.361, 0],
-        "kacstbook": [1.0831, 0.5215, 0]
+      Font.DEVICE_FONT_METRICS_BUILTIN = {
+        "_sans": [0.9, 0.22, 0.08],
+        "_serif": [0.88, 0.26, 0.08],
+        "_typewriter": [0.86, 0.24, 0.08]
       };
-      Font.DEVICE_FONT_METRICS_MAC.__proto__ = Font.DEVICE_FONT_METRICS_WIN;
-      Font.DEVICE_FONT_METRICS_LINUX.__proto__ = Font.DEVICE_FONT_METRICS_MAC;
+
+      Font.DEVICE_FONT_METRICS_WIN.__proto__ = Font.DEVICE_FONT_METRICS_BUILTIN;
+      Font.DEVICE_FONT_METRICS_MAC.__proto__ = Font.DEVICE_FONT_METRICS_BUILTIN;
+      Font.DEVICE_FONT_METRICS_LINUX.__proto__ = Font.DEVICE_FONT_METRICS_BUILTIN;
+
+      var userAgent = self.navigator.userAgent;
+      if (userAgent.indexOf("Windows") > -1) {
+        Font._deviceFontMetrics = Font.DEVICE_FONT_METRICS_WIN;
+      } else if (/(Macintosh|iPad|iPhone|iPod|Android)/.test(userAgent)) {
+        Font._deviceFontMetrics = this.DEVICE_FONT_METRICS_MAC;
+        Font.DEFAULT_FONT_SANS = 'Helvetica';
+        Font.DEFAULT_FONT_SERIF = 'Times Roman';
+        Font.DEFAULT_FONT_TYPEWRITER = 'Courier';
+      } else {
+        Font._deviceFontMetrics = this.DEVICE_FONT_METRICS_LINUX;
+        Font.DEFAULT_FONT_SANS = 'Sans';
+        Font.DEFAULT_FONT_SERIF = 'Times';
+        Font.DEFAULT_FONT_TYPEWRITER = 'Monospace';
+      }
+
+      var metrics = Font._deviceFontMetrics;
+      for (var fontName in metrics) {
+        metrics[fontName.toLowerCase()] = metrics[fontName];
+      }
     };
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
-    static initializer: any = function (symbol: Shumway.Timeline.FontSymbol) {
+    static initializer: any = function (symbol: FontSymbol) {
       var self: Font = this;
 
-      self._id = flash.display.DisplayObject.getNextSyncID();
 
       self._fontName = null;
+      self._fontFamily = null;
       self._fontStyle = null;
       self._fontType = null;
 
@@ -667,60 +767,68 @@ module Shumway.AVM2.AS.flash.text {
       self.leading = 0;
       self.advances = null;
 
-      if (symbol) {
-        self._symbol = symbol;
-        self._fontName = symbol.name;
-        if (symbol.bold) {
-          if (symbol.italic) {
-            self._fontStyle = FontStyle.BOLD_ITALIC;
-          } else {
-            self._fontStyle = FontStyle.BOLD;
-          }
-        } else if (symbol.italic) {
-          self._fontStyle = FontStyle.ITALIC;
+      if (!symbol) {
+        self._id = flash.display.DisplayObject.getNextSyncID();
+        return;
+      }
+      self._symbol = symbol;
+      release || Debug.assert(symbol.syncId);
+      self._id = symbol.syncId;
+      self._fontName = symbol.name;
+      self._fontFamily = Font.resolveFontName(symbol.name);
+      if (symbol.bold) {
+        if (symbol.italic) {
+          self._fontStyle = FontStyle.BOLD_ITALIC;
         } else {
-          self._fontStyle = FontStyle.REGULAR;
+          self._fontStyle = FontStyle.BOLD;
         }
+      } else if (symbol.italic) {
+        self._fontStyle = FontStyle.ITALIC;
+      } else {
+        self._fontStyle = FontStyle.REGULAR;
+      }
 
-        var metrics = symbol.metrics;
-        if (metrics) {
-          self.ascent = metrics.ascent;
-          self.descent = metrics.descent;
-          self.leading = metrics.leading;
-          self.advances = metrics.advances;
+      var metrics = symbol.metrics;
+      if (metrics) {
+        self.ascent = metrics.ascent;
+        self.descent = metrics.descent;
+        self.leading = metrics.leading;
+        self.advances = metrics.advances;
+      }
+
+      // Font symbols without any glyphs describe device fonts.
+      self._fontType = metrics ? FontType.EMBEDDED : FontType.DEVICE;
+
+      var fontProp = Object.getOwnPropertyDescriptor(Font._fontsBySymbolId, symbol.syncId + '');
+      // Define mapping or replace lazy getter with value.
+      if (!fontProp || !fontProp.value) {
+        // Keeping resolverProp.configurable === true, some old movies might
+        // have fonts with non-unique names.
+        var resolverProp = {
+          value: self,
+          configurable: true
+        };
+        Object.defineProperty(Font._fontsBySymbolId, symbol.syncId + '', resolverProp);
+        Object.defineProperty(Font._fontsByName, symbol.name.toLowerCase() + self._fontStyle, resolverProp);
+        if (self._fontType === FontType.EMBEDDED) {
+          Object.defineProperty(Font._fontsByName, 'swffont' + symbol.syncId + self._fontStyle, resolverProp);
         }
-
-        // Font symbols without any glyphs describe device fonts.
-        self._fontType = symbol.data ? FontType.EMBEDDED : FontType.DEVICE;
-        Font._fontsBySymbolId[symbol.id] = self;
-        Font._fontsByName[symbol.name.toLowerCase()] = self;
-        Font._fontsByName['swffont' + symbol.id] = self;
       }
     };
 
     private static _deviceFontMetrics: Object;
 
-    private static _getFontMetrics(name: string) {
-      if (!this._deviceFontMetrics) {
-        var userAgent = self.navigator.userAgent;
-        if (userAgent.indexOf("Windows") > -1) {
-          this._deviceFontMetrics = Font.DEVICE_FONT_METRICS_WIN;
-        } else if (/(Macintosh|iPad|iPhone|iPod|Android)/.test(userAgent)) {
-          this._deviceFontMetrics = this.DEVICE_FONT_METRICS_MAC;
-        } else {
-          this._deviceFontMetrics = this.DEVICE_FONT_METRICS_LINUX;
-        }
-      }
-      return this._deviceFontMetrics[Font.resolveFontName(name)];
+    private static _getFontMetrics(name: string, style: string) {
+      return this._deviceFontMetrics[name + style] || this._deviceFontMetrics[name];
     }
 
     static resolveFontName(name: string) {
       if (name === '_sans') {
-        return 'sans-serif';
+        return Font.DEFAULT_FONT_SANS;
       } else if (name === '_serif') {
-        return 'serif';
+        return Font.DEFAULT_FONT_SERIF;
       } else if (name === '_typewriter') {
-        return 'monospace';
+        return Font.DEFAULT_FONT_TYPEWRITER;
       }
       return name;
     }
@@ -733,38 +841,53 @@ module Shumway.AVM2.AS.flash.text {
       return this._fontsBySymbolId[id];
     }
 
-    static getByName(name: string): Font {
-      name = name.toLowerCase();
-      var font = this._fontsByName[name];
+    static getByNameAndStyle(name: string, style: string): Font {
+      var key: string;
+      var font: Font;
+
+      // The name argument can be a string specifying a list of comma-delimited font names in which
+      // case the first available font should be used.
+      var names = name.split(',');
+      for (var i = 0; i < names.length && !font; i++) {
+        key = names[i].toLowerCase() + style;
+        font = this._fontsByName[key];
+      }
+
       if (!font) {
         var font = new Font();
-        font._fontName = name;
-        font._fontStyle = FontStyle.REGULAR;
+        font._fontName = names[0];
+        font._fontFamily = Font.resolveFontName(names[0].toLowerCase());
+        font._fontStyle = style;
         font._fontType = FontType.DEVICE;
-        this._fontsByName[name] = font;
+        this._fontsByName[key] = font;
       }
       if (font._fontType === FontType.DEVICE) {
-        var metrics = Font._getFontMetrics(name);
-        if (metrics) {
-          font.ascent = metrics[0];
-          font.descent = metrics[1];
-          font.leading = metrics[2];
+        var metrics = Font._getFontMetrics(font._fontName, font._fontStyle);
+        if (!metrics) {
+          Shumway.Debug.warning(
+            'Font metrics for "' + font._fontName + '" unknown. Fallback to default.');
+          metrics = Font._getFontMetrics(Font.DEFAULT_FONT_SANS, font._fontStyle);
+          font._fontFamily = Font.DEFAULT_FONT_SANS;
         }
+        font.ascent = metrics[0];
+        font.descent = metrics[1];
+        font.leading = metrics[2];
       }
       return font;
     }
 
     static getDefaultFont(): Font {
-      return Font.getByName('times roman');
+      return Font.getByNameAndStyle(Font.DEFAULT_FONT_SANS, FontStyle.REGULAR);
     }
 
     // JS -> AS Bindings
     private _fontName: string;
+    _fontFamily: string;
     private _fontStyle: string;
     private _fontType: string;
 
     _id: number;
-    _symbol: Shumway.Timeline.FontSymbol;
+    _symbol: FontSymbol;
 
     ascent: number;
     descent: number;
@@ -780,6 +903,37 @@ module Shumway.AVM2.AS.flash.text {
 
     static registerFont(font: ASClass): void {
       somewhatImplemented('Font.registerFont');
+    }
+
+    /**
+     * Registers an embedded font as available in the system.
+     *
+     * Firefox decodes fonts synchronously, allowing us to do the decoding upon first actual use.
+     * All we need to do here is let the system know about the family name and ID, so that both
+     * TextFields/Labels referring to the font's symbol ID as well as HTML text specifying a font
+     * face can resolve the font.
+     *
+     * For all other browsers, the decoding has been triggered by the Loader at this point.
+     */
+    static registerEmbeddedFont(fontMapping: {name: string; style: string; id: number},
+                                loaderInfo: flash.display.LoaderInfo): void {
+      var syncId = flash.display.DisplayObject.getNextSyncID();
+      var resolverProp = {
+        get: Font.resolveEmbeddedFont.bind(Font, loaderInfo, fontMapping.id, syncId),
+        configurable: true
+      };
+      Object.defineProperty(Font._fontsByName, fontMapping.name.toLowerCase() + fontMapping.style,
+                            resolverProp);
+      Object.defineProperty(Font._fontsByName, 'swffont' + syncId + fontMapping.style,
+                            resolverProp);
+      Object.defineProperty(Font._fontsBySymbolId, syncId + '', resolverProp);
+    }
+
+    static resolveEmbeddedFont(loaderInfo: flash.display.LoaderInfo, id: number, syncId: number) {
+      // Force font resolution and installation in _fontsByName and _fontsBySymbolId.
+      var symbol = <FontSymbol>loaderInfo.getSymbolById(id);
+      symbol.syncId = syncId;
+      return Font._fontsBySymbolId[id];
     }
 
     get fontName(): string {
@@ -798,6 +952,45 @@ module Shumway.AVM2.AS.flash.text {
       str = asCoerceString(str);
       somewhatImplemented('Font#hasGlyphs');
       return true;
+    }
+  }
+
+  export class FontSymbol extends Timeline.Symbol implements Timeline.EagerlyResolvedSymbol {
+    name: string;
+    bold: boolean;
+    italic: boolean;
+    codes: number[];
+    originalSize: boolean;
+    metrics: any;
+    syncId: number;
+
+    constructor(data: Timeline.SymbolData) {
+      super(data, Font);
+    }
+
+    static FromData(data: any): FontSymbol {
+      var symbol = new FontSymbol(data);
+      // Immediately mark glyph-less fonts as ready.
+      symbol.ready = !data.metrics;
+      symbol.name = data.name;
+      // No need to keep the original data baggage around.
+      symbol.data = {id: data.id};
+      symbol.bold = data.bold;
+      symbol.italic = data.italic;
+      symbol.originalSize = data.originalSize;
+      symbol.codes = data.codes;
+      symbol.metrics = data.metrics;
+      symbol.syncId = flash.display.DisplayObject.getNextSyncID();
+      return symbol;
+    }
+
+    get resolveAssetCallback() {
+      return this._unboundResolveAssetCallback.bind(this);
+    }
+
+    private _unboundResolveAssetCallback(data: any) {
+      release || Debug.assert(!this.ready);
+      this.ready = true;
     }
   }
 }

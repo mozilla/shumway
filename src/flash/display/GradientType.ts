@@ -16,6 +16,7 @@
 // Class: GradientType
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class GradientType extends ASNative {
     
     static classInitializer: any = null;
@@ -25,7 +26,7 @@ module Shumway.AVM2.AS.flash.display {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.GradientType");
+      dummyConstructor("public flash.display.GradientType");
     }
     
     // JS -> AS Bindings

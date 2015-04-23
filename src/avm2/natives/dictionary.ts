@@ -19,7 +19,6 @@ module Shumway.AVM2.AS {
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import Namespace = Shumway.AVM2.ABC.Namespace;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
@@ -41,6 +40,10 @@ module Shumway.AVM2.AS {
      * string keys when enumerating.
      */
     export class Dictionary extends ASNative {
+      static classInitializer: any = function() {
+        var proto: any = Dictionary.prototype;
+        ObjectUtilities.defineNonEnumerableProperty(proto, '$BgtoJSON', proto.toJSON);
+      }
 
       public static isTraitsOrDynamicPrototype(value): boolean {
         return value === Dictionary.traitsPrototype || value === Dictionary.dynamicPrototype;
@@ -56,6 +59,12 @@ module Shumway.AVM2.AS {
 
       constructor (weakKeys: boolean = false) {
         false && super();
+        this.weakKeys = !!weakKeys;
+        this.map = new WeakMap();
+        if (!weakKeys) {
+          this.keys = [];
+        }
+        this.primitiveMap = Object.create(null);
       }
 
       static makePrimitiveKey(key) {
@@ -66,13 +75,8 @@ module Shumway.AVM2.AS {
         return undefined;
       }
 
-      private init(weakKeys: boolean): void {
-        this.weakKeys = !!weakKeys;
-        this.map = new WeakMap();
-        if (!weakKeys) {
-          this.keys = [];
-        }
-        this.primitiveMap = createEmptyObject();
+      toJSON() {
+        return "Dictionary";
       }
 
       public asGetNumericProperty(name: number) {
@@ -89,7 +93,7 @@ module Shumway.AVM2.AS {
         }
         var key = Dictionary.makePrimitiveKey(name);
         if (key !== undefined) {
-          return this.primitiveMap[key];
+          return this.primitiveMap[<any>key];
         }
         return this.map.get(Object(name));
       }
@@ -100,7 +104,7 @@ module Shumway.AVM2.AS {
         }
         var key = Dictionary.makePrimitiveKey(name);
         if (key !== undefined) {
-          this.primitiveMap[key] = value;
+          this.primitiveMap[<any>key] = value;
           return;
         }
         this.map.set(Object(name), value);
@@ -120,7 +124,7 @@ module Shumway.AVM2.AS {
         }
         var key = Dictionary.makePrimitiveKey(name);
         if (key !== undefined) {
-          return key in this.primitiveMap;
+          return <any>key in this.primitiveMap;
         }
         return this.map.has(Object(name));
       }
@@ -131,7 +135,7 @@ module Shumway.AVM2.AS {
         }
         var key = Dictionary.makePrimitiveKey(name);
         if (key !== undefined) {
-          delete this.primitiveMap[key];
+          delete this.primitiveMap[<any>key];
         }
         this.map.delete(Object(name));
         var i;

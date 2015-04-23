@@ -1,0 +1,17 @@
+echo "This script generates 10 random SWFs and copies them along with the trace output to the test/swfs/fuzz folder. You must next change the test/fuzz/test_manifest_fuzz file."
+echo "Make sure the debugger player is the default application for .SWF files."
+
+if [ ! -d "test/swfs" ]; then
+  echo "Run from the Shumway root, e.g. $ bash utils/generateFuzzTests"
+  exit 1
+fi
+
+for i in `seq 10`; do
+  mkdir -p test/swfs/fuzz
+  js build/ts/shell.js --fuzz "A" | swfmill xml2swf stdin > tmp.swf
+  newFile=$(cat tmp.swf | shasum -a 256 | awk '{print $1}')
+  echo "Generating" test/swfs/fuzz/$newFile.swf
+  mv tmp.swf test/swfs/fuzz/$newFile.swf
+  open -W test/swfs/fuzz/$newFile.swf
+  cp ~/Library/Preferences/Macromedia/Flash\ Player/Logs/flashlog.txt test/swfs/fuzz/$newFile.swf.trace
+done

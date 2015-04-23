@@ -26,7 +26,7 @@ module Shumway.AVM2.AS.flash.display {
     static classInitializer: any = null;
 
     static classSymbols: string [] = null; // [];
-    static instanceSymbols: string [] = null; // ["name", "mask", "visible", "x", "y", "z", "scaleX", "scaleY", "scaleZ", "rotation", "rotationX", "rotationY", "rotationZ", "alpha", "cacheAsBitmap", "opaqueBackground", "scrollRect", "filters", "blendMode", "transform", "accessibilityProperties", "scale9Grid", "tabEnabled", "tabIndex", "focusRect", "mouseEnabled", "accessibilityImplementation", "width", "width", "height", "height", "textSnapshot", "mouseChildren", "mouseChildren", "numChildren", "tabChildren", "tabChildren", "contextMenu", "constructor", "constructor", "addChild", "addChildAt", "setChildIndex", "addEventListener", "hasEventListener", "willTrigger", "dispatchEvent"];
+    static instanceSymbols: string [] = null;
     static initializer: any = null;
 
     constructor () {
@@ -48,7 +48,7 @@ module Shumway.AVM2.AS.flash.display {
       this._displayState = null;
       this._fullScreenSourceRect = null;
       this._mouseLock = false;
-      this._stageVideos = null; // TODO
+      this._stageVideos = new GenericVector(0, true, ASObject);
       this._stage3Ds = null; // TODO
       this._colorARGB = 0xFFFFFFFF;
       this._fullScreenWidth = 0;
@@ -61,6 +61,8 @@ module Shumway.AVM2.AS.flash.display {
       this._displayContextInfo = null;
 
       this._timeout = -1;
+      this._stageContainerWidth = -1;
+      this._stageContainerHeight = -1;
 
       /**
        * Indicates if a Render event was requested by calling the |invalid| function.
@@ -101,11 +103,18 @@ module Shumway.AVM2.AS.flash.display {
 
     private _timeout: number;
 
+    private _stageContainerWidth: number;
+    private _stageContainerHeight: number;
+
     /**
      * The |invalidate| function was called on the stage. This flag indicates that
      * the |RENDER| event gets fired right before the stage is rendered.
      */
     private _invalidated: boolean;
+
+    setRoot(root: MovieClip) {
+      this.addTimelineObjectAtDepth(root, 0);
+    }
 
     get frameRate(): number {
       return this._frameRate;
@@ -139,19 +148,76 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get stageWidth(): number /*int*/ {
-      return (this._stageWidth / 20) | 0;
+      if (this.scaleMode !== StageScaleMode.NO_SCALE) {
+        return this._stageWidth / 20 | 0;
+      }
+      release || assert (this._stageContainerWidth >= 0);
+      return this._stageContainerWidth;
     }
 
     set stageWidth(value: number /*int*/) {
+      // While the setter doesn't change the stored value, it still coerces the `value` parameter.
+      // This is script-visible if the value is something like `{valueOf: function(){throw 1}}`.
+      value = value | 0;
+    }
+
+    _setInitialName() {
+      this._name = null;
+    }
+
+    /**
+     * Non-AS3-available setter. In AS3, the `stageWidth` setter is silently ignored.
+     */
+    setStageWidth(value: number) {
+      release || assert ((value | 0) === value);
       this._stageWidth = (value * 20) | 0;
     }
 
     get stageHeight(): number /*int*/ {
-      return (this._stageHeight / 20) | 0;
+      if (this.scaleMode !== StageScaleMode.NO_SCALE) {
+        return this._stageHeight / 20 | 0;
+      }
+      release || assert (this._stageContainerHeight >= 0);
+      return this._stageContainerHeight;
     }
 
     set stageHeight(value: number /*int*/) {
+      // While the setter doesn't change the stored value, it still coerces the `value` parameter.
+      // This is script-visible if the value is something like `{valueOf: function(){throw 1}}`.
+      value = value | 0;
+    }
+
+    /**
+     * Non-AS3-available setter. In AS3, the `stageHeight` setter is silently ignored.
+     */
+    setStageHeight(value: number) {
+      release || assert ((value | 0) === value);
       this._stageHeight = (value * 20) | 0;
+    }
+
+    /**
+     * Almost the same as color setter, except it preserves alpha channel.
+     * @param value
+     */
+    setStageColor(value: number) {
+      this._colorARGB = value;
+    }
+
+    /**
+     * Non-AS3-available setter. Notifies the stage that the dimensions of the stage container have changed.
+     */
+    setStageContainerSize(width: number, height: number, pixelRatio: number) {
+      // Flash doesn't fire a resize event if the pixel ratio has changed, but it needs to be set if
+      // a resize event gets dispatched as a result of a size change.
+      this._contentsScaleFactor = pixelRatio;
+      var sizeHasChanged = this._stageContainerWidth !== width || this._stageContainerHeight !== height;
+      if (sizeHasChanged) {
+        this._stageContainerWidth = width;
+        this._stageContainerHeight = height;
+        if (this.scaleMode === StageScaleMode.NO_SCALE) {
+          this.dispatchEvent(flash.events.Event.getInstance(flash.events.Event.RESIZE));
+        }
+      }
     }
 
     get showDefaultContextMenu(): boolean {
@@ -210,8 +276,12 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set displayState(value: string) {
-      //this._displayState = asCoerceString(value);
-      notImplemented("public flash.display.Stage::set displayState"); return;
+      value = asCoerceString(value);
+      // TODO: This should only be allowed if the embedding page allows full screen mode.
+      if (flash.display.StageDisplayState.toNumber(value) < 0) {
+        value = flash.display.StageDisplayState.NORMAL;
+      }
+      this._displayState = value;
     }
 
     get fullScreenSourceRect(): flash.geom.Rectangle {
@@ -233,8 +303,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get stageVideos(): any {
-      notImplemented("public flash.display.Stage::get stageVideos"); return;
-      // return this._stageVideos;
+      somewhatImplemented("public flash.display.Stage::get stageVideos");
+      return this._stageVideos;
     }
     get stage3Ds(): ASVector<any> {
       notImplemented("public flash.display.Stage::get stage3Ds"); return;
@@ -251,7 +321,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set alpha(alpha: number) {
-      throwError("Error", Errors.InvalidStageMethodError);
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
 
     get alpha(): number {
@@ -290,31 +360,93 @@ module Shumway.AVM2.AS.flash.display {
       return this._displayContextInfo;
     }
 
-    /*
     removeChildAt(index: number): flash.display.DisplayObject {
-      index = index | 0;
-      notImplemented("public flash.display.Stage::removeChildAt"); return;
+      this.requireOwnerPermissions();
+      return super.removeChildAt(index);
     }
-    */
 
     swapChildrenAt(index1: number /*int*/, index2: number /*int*/): void {
-      index1 = index1 | 0; index2 = index2 | 0;
-      notImplemented("public flash.display.Stage::swapChildrenAt"); return;
+      this.requireOwnerPermissions();
+      super.swapChildrenAt(index1, index2);
+    }
+
+    get width(): number {
+      this.requireOwnerPermissions();
+      return this._getWidth();
+    }
+    set width(value: number) {
+      this.requireOwnerPermissions();
+      this._setWidth(value);
+    }
+    get height(): number {
+      this.requireOwnerPermissions();
+      return this._getHeight();
+    }
+    set height(value: number) {
+      this.requireOwnerPermissions();
+      this._setHeight(value);
+    }
+    get mouseChildren(): boolean {
+      this.requireOwnerPermissions();
+      return this._getMouseChildren();
+    }
+    set mouseChildren(value: boolean) {
+      this.requireOwnerPermissions();
+      this._setMouseChildren(value);
+    }
+    get numChildren(): number {
+      this.requireOwnerPermissions();
+      return this._getNumChildren();
+    }
+    get tabChildren(): boolean {
+      this.requireOwnerPermissions();
+      return this._getTabChildren();
+    }
+    set tabChildren(value: boolean) {
+      this.requireOwnerPermissions();
+      this._setTabChildren(value);
+    }
+    addChild(child: DisplayObject): DisplayObject {
+      this.requireOwnerPermissions();
+      return super.addChild(child);
+    }
+    addChildAt(child: DisplayObject, index: number): DisplayObject {
+      this.requireOwnerPermissions();
+      return super.addChildAt(child, index);
+    }
+    setChildIndex(child: DisplayObject, index: number): void {
+      this.requireOwnerPermissions();
+      super.setChildIndex(child, index);
+    }
+    addEventListener(type: string, listener: (event: events.Event) => void,
+                     useCapture: boolean, priority: number, useWeakReference: boolean): void
+    {
+      this.requireOwnerPermissions();
+      super.addEventListener(type, listener, useCapture, priority, useWeakReference);
+    }
+    hasEventListener(type: string): boolean {
+      this.requireOwnerPermissions();
+      return super.hasEventListener(type);
+    }
+    willTrigger(type: string): boolean {
+      this.requireOwnerPermissions();
+      return super.willTrigger(type);
+    }
+
+    dispatchEvent(event: events.Event): boolean {
+      this.requireOwnerPermissions();
+      return super.dispatchEvent(event);
     }
 
     invalidate(): void {
       this._invalidated = true;
     }
 
-    isInvalidated(): boolean {
-      return this._invalidated;
-    }
-
     isFocusInaccessible(): boolean {
       notImplemented("public flash.display.Stage::isFocusInaccessible"); return;
     }
     requireOwnerPermissions(): void {
-      somewhatImplemented("public flash.display.Stage::requireOwnerPermissions"); return;
+      // TODO: implement requireOwnerPermissions
     }
 
     render(): void {
@@ -325,24 +457,171 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidated = false;
     }
 
-    /**
-     * Gets the objects under the current mouse position. The main difference to DisplayObjectObjectContainer's
-     * getObjectsUnderPoint is that it reroutes the hit test to a Button's hitTestState or a Sprite's
-     * hitArea, if specified.
-     */
-    getObjectsUnderMouse(globalPoint: flash.geom.Point): flash.display.DisplayObject [] {
-      var objectsUnderPoint: flash.display.DisplayObject [] = [];
-      this.visit(function (displayObject: flash.display.DisplayObject): VisitorFlags {
-        var isUnderMouse = false;
-        if (!Sprite.isType(displayObject) || !(<Sprite>displayObject).hitArea) {
-          isUnderMouse = displayObject._isUnderMouse(globalPoint.x * 20, globalPoint.y * 20);
-        }
-        if (isUnderMouse) {
-          objectsUnderPoint.push(displayObject);
-        }
-        return VisitorFlags.Continue;
-      }, VisitorFlags.None);
-      return objectsUnderPoint;
+    get name(): string {
+      return this._name;
+    }
+    set name(value: string) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get mask(): DisplayObject {
+      return this._mask;
+    }
+    set mask(value: DisplayObject) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get visible(): boolean {
+      return this._hasFlags(DisplayObjectFlags.Visible);
+    }
+    set visible(value: boolean) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get x(): number {
+      return this._getX();
+    }
+    set x(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get y(): number {
+      return this._getY();
+    }
+    set y(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get z(): number {
+      return this._z;
+    }
+    set z(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get scaleX(): number {
+      return Math.abs(this._scaleX);
+    }
+    set scaleX(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get scaleY(): number {
+      return this._scaleY;
+    }
+    set scaleY(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get scaleZ(): number {
+      return this._scaleZ;
+    }
+    set scaleZ(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get rotation(): number {
+      return this._rotation;
+    }
+    set rotation(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get rotationX(): number {
+      return this._rotationX;
+    }
+    set rotationX(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get rotationY(): number {
+      return this._rotationX;
+    }
+    set rotationY(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get rotationZ(): number {
+      return this._rotationX;
+    }
+    set rotationZ(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get cacheAsBitmap(): boolean {
+      return this._getCacheAsBitmap();
+    }
+    set cacheAsBitmap(value: boolean) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get opaqueBackground(): any {
+      return this._opaqueBackground;
+    }
+    set opaqueBackground(value: any) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get scrollRect(): flash.geom.Rectangle {
+      return this._getScrollRect();
+    }
+    set scrollRect(value: geom.Rectangle) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get filters(): flash.filters.BitmapFilter [] {
+      return this._getFilters();
+    }
+    set filters(value: flash.filters.BitmapFilter[]) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get blendMode(): string {
+      return this._blendMode;
+    }
+    set blendMode(value: string) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get transform(): flash.geom.Transform {
+      return this._getTransform();
+    }
+    set transform(value: geom.Transform) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get accessibilityProperties(): flash.accessibility.AccessibilityProperties {
+      return this._accessibilityProperties;
+    }
+    set accessibilityProperties(value: accessibility.AccessibilityProperties) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get scale9Grid(): flash.geom.Rectangle {
+      return this._getScale9Grid();
+    }
+    set scale9Grid(value: geom.Rectangle) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get tabEnabled(): boolean {
+      return this._tabEnabled;
+    }
+    set tabEnabled(value: boolean) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get tabIndex(): number /*int*/ {
+      return this._tabIndex;
+    }
+    set tabIndex(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get focusRect(): any {
+      return this._focusRect;
+    }
+    set focusRect(value: any) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get mouseEnabled(): boolean {
+      return this._mouseEnabled;
+    }
+    set mouseEnabled(value: boolean) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get accessibilityImplementation(): flash.accessibility.AccessibilityImplementation {
+      return this._accessibilityImplementation;
+    }
+    set accessibilityImplementation(value: accessibility.AccessibilityImplementation) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get textSnapshot(): text.TextSnapshot {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      return null;
+    }
+    get contextMenu(): flash.ui.ContextMenu {
+      return this._contextMenu;
+    }
+    set contextMenu(value: ui.ContextMenu) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
   }
 }

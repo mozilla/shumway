@@ -24,33 +24,18 @@ public class ProgressEvent extends Event {
                                 bytesLoaded: Number = 0, bytesTotal: Number = 0)
   {
     super(type, bubbles, cancelable);
-    _bytesLoaded = bytesLoaded;
-    _bytesTotal = bytesTotal;
+    this.bytesLoaded = bytesLoaded;
+    this.bytesTotal = bytesTotal;
   }
 
-  private var _bytesLoaded: Number;
-  public function get bytesLoaded(): Number {
-    return _bytesLoaded;
-  }
-  public function set bytesLoaded(value: Number): void {
-    _bytesLoaded = value;
-  }
-  private var _bytesTotal: Number;
-  public function get bytesTotal(): Number {
-    return _bytesTotal;
-  }
+  public native function get bytesLoaded(): Number;
+  public native function set bytesLoaded(value: Number): void;
 
-  public function set bytesTotal(value: Number): void {
-    _bytesTotal = value;
-  }
+  public native function get bytesTotal(): Number;
+  public native function set bytesTotal(value: Number): void;
 
-  public override function clone(): Event {
-    return new ProgressEvent(type, bubbles, cancelable, bytesLoaded, bytesTotal);
-  }
+  public native override function clone(): Event;
 
-  public override function toString(): String {
-    return formatToString('ProgressEvent', 'bubbles', 'cancelable', 'eventPhase', 'bytesLoaded',
-                          'bytesTotal');
-  }
+  public native override function toString(): String;
 }
 }

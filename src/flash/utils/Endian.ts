@@ -16,6 +16,7 @@
 // Class: Endian
 module Shumway.AVM2.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Endian extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.utils {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.utils.Endian");
+      dummyConstructor("public flash.utils.Endian");
     }
     
     // JS -> AS Bindings

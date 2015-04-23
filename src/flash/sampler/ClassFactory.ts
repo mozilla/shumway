@@ -16,6 +16,7 @@
 // Class: ClassFactory
 module Shumway.AVM2.AS.flash.sampler {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ClassFactory extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.sampler {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: packageInternal flash.sampler.ClassFactory");
+      dummyConstructor("packageInternal flash.sampler.ClassFactory");
     }
     
     // JS -> AS Bindings

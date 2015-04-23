@@ -16,8 +16,8 @@
 // Class: ExternalInterface
 module Shumway.AVM2.AS.flash.external {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import Telemetry = Shumway.Telemetry;
   import forEachPublicProperty = Shumway.AVM2.Runtime.forEachPublicProperty;
   import ExternalInterfaceService = Shumway.ExternalInterfaceService;
@@ -38,7 +38,7 @@ module Shumway.AVM2.AS.flash.external {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.external.ExternalInterface");
+      dummyConstructor("public flash.external.ExternalInterface");
     }
     
     // JS -> AS Bindings
@@ -52,7 +52,7 @@ module Shumway.AVM2.AS.flash.external {
     // static call: (functionName: string) => any;
 
     private static initialized: boolean = false;
-    private static registeredCallbacks: Shumway.Map<(request: string, args: any []) => any> = createEmptyObject();
+    private static registeredCallbacks: Shumway.Map<(request: string, args: any []) => any> = Object.create(null);
 
     private static _getAvailable(): boolean {
       return ExternalInterfaceService.instance.enabled;
@@ -72,7 +72,7 @@ module Shumway.AVM2.AS.flash.external {
       if (!callback) {
         return;
       }
-      return callback(functionName, args);
+      return callback(functionName, ASJSON.transformJSValueToAS(args, true));
     }
 
     static _getPropNames(obj: ASObject): any [] {

@@ -16,6 +16,7 @@
 // Class: NumberParseResult
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NumberParseResult extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.globalization {
     constructor (value: number = NaN, startIndex: number /*int*/ = 2147483647, endIndex: number /*int*/ = 2147483647) {
       value = +value; startIndex = startIndex | 0; endIndex = endIndex | 0;
       false && super();
-      notImplemented("Dummy Constructor: public flash.globalization.NumberParseResult");
+      dummyConstructor("public flash.globalization.NumberParseResult");
     }
     
     // JS -> AS Bindings

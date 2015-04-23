@@ -16,12 +16,13 @@
 // Class: StageCapture
 module Shumway.AVM2.AS.flash.automation {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class StageCapture extends flash.events.EventDispatcher {
     static initializer: any = null;
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.automation.StageCapture");
+      dummyConstructor("public flash.automation.StageCapture");
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings

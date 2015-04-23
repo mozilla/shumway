@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS {
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   export module flash.system {
@@ -24,19 +25,19 @@ module Shumway.AVM2.AS {
       constructor () {
         false && super();
       }
-      get enabled(): boolean {
-        notImplemented("public flash.system.IME::get enabled"); return;
+      static get enabled(): boolean {
+        notImplemented("public flash.system.IME::static get enabled"); return;
       }
-      set enabled(enabled: boolean) {
+      static set enabled(enabled: boolean) {
         enabled = !!enabled;
-        notImplemented("public flash.system.IME::set enabled"); return;
+        notImplemented("public flash.system.IME::static set enabled"); return;
       }
-      get conversionMode(): string {
-        notImplemented("public flash.system.IME::get conversionMode"); return;
+      static get conversionMode(): string {
+        notImplemented("public flash.system.IME::static get conversionMode"); return;
       }
-      set conversionMode(mode: string) {
+      static set conversionMode(mode: string) {
         mode = asCoerceString(mode);
-        notImplemented("public flash.system.IME::set conversionMode"); return;
+        notImplemented("public flash.system.IME::static set conversionMode"); return;
       }
       static setCompositionString(composition: string): void {
         composition = asCoerceString(composition);
@@ -52,46 +53,49 @@ module Shumway.AVM2.AS {
       static compositionAbandoned(): void {
         notImplemented("public flash.system.IME::static compositionAbandoned"); return;
       }
-      static _checkSupported(): boolean {
-        notImplemented("public flash.system.IME::static _checkSupported"); return;
+      static get isSupported(): boolean {
+        somewhatImplemented("public flash.system.IME::static get isSupported");
+        return false;
       }
     }
 
     export class System extends ASNative {
+      private static _useCodePage: boolean = false;
+
       static get ime(): flash.system.IME {
         notImplemented("public flash.system.System::get ime"); return;
       }
 
       static setClipboard(string: string): void {
         string = asCoerceString(string);
-        notImplemented("public flash.system.System::static setClipboard"); return;
+        if (ClipboardService.instance === null) {
+          console.warn('setClipboard is only available in the Firefox extension');
+          return;
+        }
+        ClipboardService.instance.setClipboard(string);
       }
 
       static get totalMemoryNumber(): number {
-        // notImplemented("public flash.system.System::get totalMemoryNumber"); return;
+        somewhatImplemented("public flash.system.System::get totalMemoryNumber");
         return 1024 * 1024 * 2;
       }
 
       static get freeMemory(): number {
-        // notImplemented("public flash.system.System::get freeMemory"); return;
+        somewhatImplemented("public flash.system.System::get freeMemory");
         return 1024 * 1024;
       }
 
       static get privateMemory(): number {
-        notImplemented("public flash.system.System::get privateMemory"); return;
-      }
-
-      static get processCPUUsage(): number {
-        notImplemented("public flash.system.System::get processCPUUsage"); return;
+        somewhatImplemented("public flash.system.System::get privateMemory");
+        return 1024*1024;
       }
 
       static get useCodePage(): boolean {
-        notImplemented("public flash.system.System::get useCodePage"); return;
+        return System._useCodePage;
       }
 
       static set useCodePage(value: boolean) {
-        value = !!value;
-        notImplemented("public flash.system.System::set useCodePage"); return;
+        System._useCodePage = !!value;
       }
 
       static get vmVersion(): string {
@@ -99,30 +103,27 @@ module Shumway.AVM2.AS {
       }
 
       static pause(): void {
-        notImplemented("public flash.system.System::static pause"); return;
+        // Debugging-only function we can just ignore.
       }
 
       static resume(): void {
-        notImplemented("public flash.system.System::static resume"); return;
+        // Debugging-only function we can just ignore.
       }
 
       static exit(code: number /*uint*/): void {
-        code = code >>> 0;
-        notImplemented("public flash.system.System::static exit"); return;
+        // Debugging-only function we can just ignore.
       }
 
       static gc(): void {
-        notImplemented("public flash.system.System::static gc"); return;
+        // Debugging-only function we can just ignore.
       }
 
       static pauseForGCIfCollectionImminent(imminence: number = 0.75): void {
-        imminence = +imminence;
-        notImplemented("public flash.system.System::static pauseForGCIfCollectionImminent"); return;
+        // Not gonna happen, probably ever.
       }
 
       static disposeXML(node: ASXML): void {
-        node = node;
-        notImplemented("public flash.system.System::static disposeXML"); return;
+        // We have a cycle collector, so we can ignore this. \o/
       }
 
       static get swfVersion(): number {

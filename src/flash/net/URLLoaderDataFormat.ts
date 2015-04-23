@@ -16,6 +16,7 @@
 // Class: URLLoaderDataFormat
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class URLLoaderDataFormat extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.net {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.net.URLLoaderDataFormat");
+      dummyConstructor("public flash.net.URLLoaderDataFormat");
     }
     
     // JS -> AS Bindings

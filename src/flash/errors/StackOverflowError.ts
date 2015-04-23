@@ -16,6 +16,7 @@
 // Class: StackOverflowError
 module Shumway.AVM2.AS.flash.errors {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class StackOverflowError extends ASError {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.errors {
     constructor (message: string = "", id: number /*int*/ = 0) {
       message = asCoerceString(message); id = id | 0;
       false && super(undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.errors.StackOverflowError");
+      dummyConstructor("public flash.errors.StackOverflowError");
     }
     
     // JS -> AS Bindings

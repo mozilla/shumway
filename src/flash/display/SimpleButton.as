@@ -19,23 +19,8 @@ import flash.media.SoundTransform;
 
 [native(cls='SimpleButtonClass')]
 public class SimpleButton extends InteractiveObject {
-  public function SimpleButton(upState:DisplayObject = null, overState:DisplayObject = null,
-                               downState:DisplayObject = null, hitTestState:DisplayObject = null)
-  {
-    if (upState) {
-      this.upState = upState;
-    }
-    if (overState) {
-      this.overState = overState;
-    }
-    if (downState) {
-      this.downState = downState;
-    }
-    if (hitTestState) {
-      this.hitTestState = hitTestState;
-    }
-    _updateButton();
-  }
+  public native function SimpleButton(upState:DisplayObject = null, overState:DisplayObject = null,
+                               downState:DisplayObject = null, hitTestState:DisplayObject = null);
   public native function get useHandCursor():Boolean;
   public native function set useHandCursor(value:Boolean):void;
   public native function get enabled():Boolean;
@@ -52,6 +37,5 @@ public class SimpleButton extends InteractiveObject {
   public native function set hitTestState(value:DisplayObject):void;
   public native function get soundTransform():SoundTransform;
   public native function set soundTransform(sndTransform:SoundTransform):void;
-  private native function _updateButton():void;
 }
 }

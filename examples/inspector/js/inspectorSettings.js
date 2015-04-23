@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2013 Mozilla Foundation
  *
@@ -16,20 +14,35 @@
  * limitations under the License.
  */
 
+Shumway.Settings.shumwayOptions.setSettings(loadSettingsFromStorage(Shumway.Settings.ROOT));
+
+
 var LC_KEY_INSPECTOR_SETTINGS = "Inspector Options";
 
-var state = Shumway.Settings.load(LC_KEY_INSPECTOR_SETTINGS);
+var state = loadSettingsFromStorage(LC_KEY_INSPECTOR_SETTINGS);
 
 var stateDefaults = {
   folderOpen: true,
   debugPanelId: "settingsContainer",
-  profileStartup: true,
+  profileStartup: false,
   profileStartupDuration: 10000,
   logToConsole: false,
-  logToDebugPanel: true,
+  logToDebugPanel: false,
   logAssets: false,
+  overlayFlash: false,
+  useIFramePlayer: false,
+  fileReadChunkSize: 0,
   mute: false,
-  release: false
+  release: true,
+  salign: 'tl',
+  scale: 'noscale',
+  width: -1,
+  height: -1,
+  loaderURL: '',
+  remoteEnabled: false,
+  remoteSWF: '',
+  remoteAutoReload: true,
+  recordingLimit: 0
 };
 
 for (var option in stateDefaults) {
@@ -46,12 +59,47 @@ function setRelease(release) {
 setRelease(state.release);
 
 if (state.profileStartup && state.profileStartupDuration > 0) {
-  profiler.start(state.profileStartupDuration);
+  profiler.start(performance.now(), state.profileStartupDuration, false);
+}
+
+function loadSettingsFromStorage(key) {
+  try {
+    var lsValue = window.localStorage[key];
+    if (lsValue) {
+      return JSON.parse(lsValue);
+    }
+  } catch (e) {}
+  return {};
+}
+
+function saveSettingsToStorage(key, settings) {
+  try {
+    var lsValue = JSON.stringify(settings);
+    window.localStorage[key] = lsValue;
+  } catch (e) {
+  }
 }
 
 function saveInspectorState() {
-  Shumway.Settings.save(state, LC_KEY_INSPECTOR_SETTINGS);
+  saveSettingsToStorage(LC_KEY_INSPECTOR_SETTINGS, state);
 }
+
+function resizeEaselContainer() {
+  var easelContainer = document.getElementById('easelContainer');
+  var width = state.width, height = state.height;
+  if (width < 0) {
+    easelContainer.style.width = '';
+  } else {
+    easelContainer.style.width = width + 'px';
+  }
+  if (height < 0) {
+    easelContainer.style.height = '';
+  } else {
+    easelContainer.style.height = height + 'px';
+  }
+}
+
+resizeEaselContainer();
 
 var GUI = (function () {
   var Option = Shumway.Options.Option;
@@ -59,6 +107,8 @@ var GUI = (function () {
 
   var gui = new dat.GUI({ autoPlace: false, width: 300 });
   gui.add({ "Reset Options": resetOptions }, "Reset Options");
+  gui.add({ "Stage Scale Test": stageScaleTest }, "Stage Scale Test");
+  gui.add({ "Take Screen Shot": screenShot }, "Take Screen Shot");
 
   var inspectorOptions = gui.addFolder("Inspector Options");
   inspectorOptions.add(state, "release").onChange(saveInspectorOption);
@@ -67,10 +117,39 @@ var GUI = (function () {
   inspectorOptions.add(state, "logAssets").onChange(saveInspectorOption);
   inspectorOptions.add(state, "profileStartup").onChange(saveInspectorOption);
   inspectorOptions.add(state, "profileStartupDuration").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "overlayFlash").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "useIFramePlayer").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "fileReadChunkSize").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "scale").options({
+    "ShowAll": 'showall',
+    "ExactFit": 'exactfit',
+    "NoBorder": 'noborder',
+    "NoScale": 'noscale'
+  }).onChange(saveInspectorOption);
+  inspectorOptions.add(state, "salign").options({
+    "None": '',
+    "Top": 't',
+    "Left": 'l',
+    "Bottom": 'b',
+    "Right": 'r',
+    "Top Left": 'tl',
+    "Bottom Left": 'bl',
+    "Bottom Right": 'br',
+    "Top Right": 'tr'
+  }).onChange(saveInspectorOption);
+  inspectorOptions.add(state, "width", -1, 4096, 1).onChange(saveInspectorOption);
+  inspectorOptions.add(state, "height", -1, 4096, 1).onChange(saveInspectorOption);
+  inspectorOptions.add(state, "loaderURL").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "remoteEnabled").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "remoteSWF").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "remoteAutoReload").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "recordingLimit").onChange(saveInspectorOption);
   //inspectorOptions.add(state, "mute").onChange(saveInspectorOption);
   if (state.folderOpen) {
     inspectorOptions.open();
   }
+
+  gui.add({ "Save Recording": saveRecording }, "Save Recording");
 
   gui.domElement.addEventListener("click", function(e) {
     if (e.target.nodeName.toLowerCase() == "li" && e.target.classList.contains("title")) {
@@ -79,7 +158,7 @@ var GUI = (function () {
                                        Shumway.Settings.shumwayOptions);
       if (option) {
         option.open = isOpen;
-        Shumway.Settings.save();
+        saveSettingsToStorage(Shumway.Settings.ROOT, Shumway.Settings.getSettings());
         notifyOptionsChanged();
       } else {
         if (e.target.textContent === "Inspector Options") {
@@ -95,6 +174,56 @@ var GUI = (function () {
     delete window.localStorage[LC_KEY_INSPECTOR_SETTINGS];
   }
 
+  function stageScaleTest() {
+    var ticks = 2000;
+    var s = 0;
+    var easelContainer = document.getElementById('easelContainer');
+    function tick() {
+      s += 0.01;
+      if (ticks > 1500) {
+        var w = 512 * (Math.abs(Math.sin(s)));
+        var h = w;
+      } else if (ticks > 1000) {
+        var w = 512 * (Math.abs(Math.sin(s)));
+        var h = 200;
+      } else if (ticks > 500) {
+        var w = 200;
+        var h = 512 * (Math.abs(Math.sin(s)));
+      } else {
+        var w = Math.random() * 1024 | 0;
+        var h = Math.random() * 1024 | 0;
+      }
+      easelContainer.style.width = w + 'px';
+      easelContainer.style.height = h + 'px';
+      if (ticks --) {
+        setTimeout(tick, 16);
+      }
+    }
+    tick();
+  }
+
+  function screenShot() {
+    var screenShot = currentEasel.screenShot(undefined, true);
+    var w = window.open(screenShot.dataURL, 'screenShot', 'height=' + screenShot.w + ', width=' + screenShot.h);
+    w.document.title = 'Shumway Screen Shot';
+  }
+
+  function saveRecording() {
+    if (!easelHost.recorder) {
+      return;
+    }
+
+    var blob = easelHost.recorder.getRecording();
+
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.target = '_parent';
+    a.download = 'movie.swfm';
+    document.body.appendChild(a);
+    a.click();
+    a.parentNode.removeChild(a);
+  }
+
   function notifyOptionsChanged() {
     var event = document.createEvent('CustomEvent');
     event.initCustomEvent('shumwayOptionsChanged', false, false, null);
@@ -104,6 +233,13 @@ var GUI = (function () {
   function saveInspectorOption(value) {
     if (this.property === "release") {
       setRelease(value);
+    }
+    if (this.property === 'overlayFlash') {
+      ensureFlashOverlay();
+      flashOverlay.style.display = value ? 'inline-block' : 'none';
+    }
+    if (this.property === 'width' || this.property === 'height') {
+      resizeEaselContainer();
     }
     state[this.property] = value;
     saveInspectorState();
@@ -161,7 +297,7 @@ var GUI = (function () {
         }
         ctrl.name(option.longName);
         ctrl.onChange(function() {
-          Shumway.Settings.save();
+          saveSettingsToStorage(Shumway.Settings.ROOT, Shumway.Settings.getSettings());
           notifyOptionsChanged();
         });
         addTooltip(ctrl, option.description);
@@ -199,13 +335,15 @@ function syncGFXOptions(options) {
   options.sourceBlendFactor = GFX.sourceBlendFactor.value;
   options.destinationBlendFactor = GFX.destinationBlendFactor.value;
 
-  options.cull = GFX.cull.value;
-  options.compositeMask = GFX.compositeMask.value;
+  options.masking = GFX.masking.value;
   options.disableSurfaceUploads = GFX.disableSurfaceUploads.value;
 
   options.snapToDevicePixels = GFX.snapToDevicePixels.value;
   options.imageSmoothing = GFX.imageSmoothing.value;
   options.blending = GFX.blending.value;
+  options.debugLayers = GFX.debugLayers.value;
+
+  options.filters = GFX.filters.value;
   options.cacheShapes = GFX.cacheShapes.value;
   options.cacheShapesMaxSize = GFX.cacheShapesMaxSize.value;
   options.cacheShapesThreshold = GFX.cacheShapesThreshold.value;

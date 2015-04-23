@@ -15,7 +15,7 @@
  */
 // Class: HTTPStatusEvent
 module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class HTTPStatusEvent extends flash.events.Event {
 
     static classInitializer: any = null;
@@ -27,11 +27,46 @@ module Shumway.AVM2.AS.flash.events {
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 status: number /*int*/ = 0) {
       super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.HTTPStatusEvent");
+      dummyConstructor("public flash.events.HTTPStatusEvent");
     }
 
     // JS -> AS Bindings
     static HTTP_STATUS: string = "httpStatus";
     static HTTP_RESPONSE_STATUS: string = "httpResponseStatus";
+
+    private _status: number;
+    private _responseURL: string;
+    private _responseHeaders: any[];
+
+    _setStatus(value: number): void {
+      this._status = value;
+    }
+    get status(): number {
+      return this._status;
+    }
+    get responseURL(): string {
+      return this._responseURL;
+    }
+    set responseURL(value: string) {
+      this._responseURL = value;
+    }
+    get responseHeaders(): any[] {
+      return this._responseHeaders;
+    }
+    set responseHeaders(value: any[]) {
+      this._responseHeaders = value;
+    }
+
+    clone(): Event {
+      var event = new events.HTTPStatusEvent(this.type, this.bubbles, this.cancelable, this.status);
+      event.responseURL = this.responseURL;
+      event.responseHeaders = this.responseHeaders;
+      return event;
+    }
+
+    toString(): string {
+      return this.formatToString('HTTPStatusEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
+                                 'status', 'responseURL', 'responseHeaders');
+    }
   }
 }

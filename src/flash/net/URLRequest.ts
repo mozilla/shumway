@@ -16,8 +16,8 @@
 // Class: URLRequest
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
   import throwError = Shumway.AVM2.Runtime.throwError;
 
   export class URLRequest extends ASNative {
@@ -32,7 +32,7 @@ module Shumway.AVM2.AS.flash.net {
       this._data = null;
       this._digest = null;
       this._contentType = 'application/x-www-form-urlencoded';
-      this._requestHeaders = null;
+      this._requestHeaders = [];
       this._checkPolicyFile = true;
     };
     
@@ -43,9 +43,8 @@ module Shumway.AVM2.AS.flash.net {
     static bindings: string [] = null;
     
     constructor (url: string = null) {
-      url = asCoerceString(url);
       false && super();
-      notImplemented("Dummy Constructor: public flash.net.URLRequest");
+      this._url = asCoerceString(url);
     }
 
     _checkPolicyFile: boolean;
@@ -115,7 +114,7 @@ module Shumway.AVM2.AS.flash.net {
       obj.checkPolicyFile = this._checkPolicyFile;
       if (this._data) {
         obj.mimeType = this._contentType;
-        if (ByteArray.isType(this._data)) {
+        if (flash.utils.ByteArray.isType(this._data)) {
           obj.data = <ASObject><any>
             new Uint8Array((<any> this._data)._buffer, 0, (<any> this._data).length);
         } else {

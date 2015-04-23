@@ -16,6 +16,7 @@
 // Class: TransformGestureEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class TransformGestureEvent extends flash.events.GestureEvent {
 
     static classInitializer: any = null;
@@ -30,7 +31,7 @@ module Shumway.AVM2.AS.flash.events {
                 ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false) {
       super(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
             undefined);
-      notImplemented("Dummy Constructor: public flash.events.TransformGestureEvent");
+      dummyConstructor("public flash.events.TransformGestureEvent");
     }
 
     // JS -> AS Bindings

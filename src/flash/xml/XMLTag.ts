@@ -16,12 +16,13 @@
 // Class: XMLTag
 module Shumway.AVM2.AS.flash.xml {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class XMLTag extends ASNative {
     static initializer: any = null;
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: packageInternal flash.xml.XMLTag");
+      dummyConstructor("packageInternal flash.xml.XMLTag");
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings

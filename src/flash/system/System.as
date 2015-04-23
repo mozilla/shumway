@@ -21,7 +21,6 @@ public final class System {
   public static native function get totalMemoryNumber():Number;
   public static native function get freeMemory():Number;
   public static native function get privateMemory():Number;
-  public static native function get processCPUUsage():Number;
   public static native function get useCodePage():Boolean;
   public static native function set useCodePage(value:Boolean):void;
   public static native function get vmVersion():String;

@@ -16,6 +16,7 @@
 // Class: NetGroupReplicationStrategy
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NetGroupReplicationStrategy extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.net {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.net.NetGroupReplicationStrategy");
+      dummyConstructor("public flash.net.NetGroupReplicationStrategy");
     }
     
     // JS -> AS Bindings

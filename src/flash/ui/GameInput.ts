@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.flash.ui {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import throwError = Shumway.AVM2.Runtime.throwError;
   export class GameInput extends flash.events.EventDispatcher {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.ui {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.ui.GameInput");
+      dummyConstructor("public flash.ui.GameInput");
     }
     
     // JS -> AS Bindings

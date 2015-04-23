@@ -15,6 +15,7 @@
  */
 
 package flash.events {
+[native(cls='IOErrorEventClass')]
 public class IOErrorEvent extends ErrorEvent {
   public static const IO_ERROR:String = "ioError";
   public static const NETWORK_ERROR:String = "networkError";
@@ -25,11 +26,8 @@ public class IOErrorEvent extends ErrorEvent {
   {
     super(type, bubbles, cancelable, text, id);
   }
-  public override function clone():Event {
-    return new IOErrorEvent(type, bubbles, cancelable, text, errorID);
-  }
-  public override function toString():String {
-    return formatToString('IOErrorEvent', 'type', 'bubbles', 'cancelable', 'eventPhase', 'text');
-  }
+
+  public override native function clone():Event;
+  public override native function toString():String;
 }
 }

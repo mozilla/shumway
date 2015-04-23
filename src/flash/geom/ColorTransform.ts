@@ -22,17 +22,9 @@ module Shumway.AVM2.AS.flash.geom {
   import clampS8U8 = Shumway.IntegerUtilities.clampS8U8;
 
   export class ColorTransform extends ASNative {
-    
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["redMultiplier", "greenMultiplier", "blueMultiplier", "alphaMultiplier", "redOffset", "greenOffset", "blueOffset", "alphaOffset", "color", "color", "concat", "toString"];
     
     constructor (redMultiplier: number = 1, greenMultiplier: number = 1, blueMultiplier: number = 1, alphaMultiplier: number = 1, redOffset: number = 0, greenOffset: number = 0, blueOffset: number = 0, alphaOffset: number = 0) {
@@ -47,18 +39,10 @@ module Shumway.AVM2.AS.flash.geom {
       this.alphaOffset = +alphaOffset;
     }
 
-    public static FromCXForm(cxform: any): ColorTransform {
-      return new ColorTransform(
-        cxform.redMultiplier / 256,
-        cxform.greenMultiplier / 256,
-        cxform.blueMultiplier / 256,
-        cxform.alphaMultiplier / 256,
-        cxform.redOffset,
-        cxform.greenOffset,
-        cxform.blueOffset,
-        cxform.alphaOffset
-      );
-    }
+    public static FROZEN_IDENTITY_COLOR_TRANSFORM: ColorTransform = Object.freeze(new ColorTransform());
+
+    // Must only be used in cases where the members are fully initialized and then directly used.
+    public static TEMP_COLOR_TRANSFORM: ColorTransform = new ColorTransform();
 
     public redMultiplier: number;
     public greenMultiplier: number;
@@ -186,6 +170,17 @@ module Shumway.AVM2.AS.flash.geom {
       this.greenOffset = sourceColorTransform.greenOffset;
       this.blueOffset = sourceColorTransform.blueOffset;
       this.alphaOffset = sourceColorTransform.alphaOffset;
+    }
+
+    public copyFromUntyped(object: any) {
+      this.redMultiplier = object.redMultiplier / 256;
+      this.greenMultiplier = object.greenMultiplier / 256;
+      this.blueMultiplier = object.blueMultiplier / 256;
+      this.alphaMultiplier = object.alphaMultiplier / 256;
+      this.redOffset = object.redOffset;
+      this.greenOffset = object.greenOffset;
+      this.blueOffset = object.blueOffset;
+      this.alphaOffset = object.alphaOffset;
     }
 
     public setTo(redMultiplier: number, greenMultiplier: number, blueMultiplier: number, alphaMultiplier: number, redOffset: number, greenOffset: number, blueOffset: number, alphaOffset: number): void {

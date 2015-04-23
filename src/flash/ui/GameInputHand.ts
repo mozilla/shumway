@@ -16,6 +16,7 @@
 // Class: GameInputHand
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GameInputHand extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.ui {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.ui.GameInputHand");
+      dummyConstructor("public flash.ui.GameInputHand");
     }
     
     // JS -> AS Bindings

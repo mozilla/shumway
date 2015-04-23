@@ -1,4 +1,3 @@
-/* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
    java -jar utils/asc.jar -import playerglobal.abc -swf ZeroClipboardTest,600,600 test/swfs/ZeroClipboardTest.as

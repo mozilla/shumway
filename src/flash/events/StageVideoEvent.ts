@@ -16,6 +16,7 @@
 // Class: StageVideoEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class StageVideoEvent extends flash.events.Event {
 
     static classInitializer: any = null;
@@ -27,7 +28,7 @@ module Shumway.AVM2.AS.flash.events {
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 status: string = null, colorSpace: string = null) {
       super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.StageVideoEvent");
+      dummyConstructor("public flash.events.StageVideoEvent");
     }
 
     // JS -> AS Bindings

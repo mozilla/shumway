@@ -32,7 +32,7 @@ module Shumway.AVM2.AS {
    * Creates a self patching getter that lazily constructs the class and memoizes
    * to the class's instance constructor.
    */
-  function makeStub(container, classSimpleName, shortName) {
+  function makeStub(container, classSimpleName: string, shortName: string) {
     Object.defineProperty(container, shortName, {
       get: function () {
         release || assert (Shumway.AVM2.Runtime.AVM2.instance, "AVM2 needs to be initialized.");
@@ -50,7 +50,6 @@ module Shumway.AVM2.AS {
 
   declare var escape;
   declare var unescape;
-  declare var AMFUtils;
 
   /* tslint:disable */
   jsGlobal["flash"] = Shumway.AVM2.AS.flash;
@@ -75,10 +74,11 @@ module Shumway.AVM2.AS {
       M("flash.display.Graphics", "GraphicsClass", flash.display.Graphics),
       M("flash.display.SimpleButton", "SimpleButtonClass", flash.display.SimpleButton),
       M("flash.display.MorphShape", "MorphShapeClass", flash.display.MorphShape),
-      M("flash.display.NativeMenu", "MenuClass", flash.display.NativeMenu),
-      M("flash.display.NativeMenuItem", "MenuItemClass", flash.display.NativeMenuItem),
+      M("flash.display.NativeMenu", "NativeMenuClass", flash.display.NativeMenu),
+      M("flash.display.NativeMenuItem", "NativeMenuItemClass", flash.display.NativeMenuItem),
       M("flash.display.FrameLabel", "FrameLabelClass", flash.display.FrameLabel),
       M("flash.display.Scene", "SceneClass", flash.display.Scene),
+      M("flash.display.AVM1Movie", "AVM1MovieClass", flash.display.AVM1Movie),
 //    M("flash.display.Shader", "ShaderClass", flash.display.Shader),
 //    M("flash.display.ShaderData", "ShaderDataClass", flash.display.ShaderData),
 
@@ -109,21 +109,25 @@ module Shumway.AVM2.AS {
 
       M("flash.events.EventDispatcher", "EventDispatcherClass", flash.events.EventDispatcher),
       M("flash.events.Event", "EventClass", flash.events.Event),
-      M("flash.events.IOErrorEvent"),
+      M("flash.events.ErrorEvent", "ErrorEventClass", flash.events.ErrorEvent),
+      M("flash.events.IOErrorEvent", "IOErrorEventClass", flash.events.IOErrorEvent),
       M("flash.events.KeyboardEvent", "KeyboardEventClass", flash.events.KeyboardEvent),
       M("flash.events.MouseEvent", "MouseEventClass", flash.events.MouseEvent),
       M("flash.events.GestureEvent", "GestureEventClass", flash.events.GestureEvent),
       M("flash.events.TextEvent", "TextEventClass", flash.events.TextEvent),
       M("flash.events.TimerEvent", "TimerEventClass", flash.events.TimerEvent),
       M("flash.events.ProgressEvent", "ProgressEventClass", flash.events.ProgressEvent),
-      M("flash.events.NetStatusEvent"),
-      M("flash.events.HTTPStatusEvent"),
+      M("flash.events.NetStatusEvent", "NetStatusEventClass", flash.events.NetStatusEvent),
+      M("flash.events.HTTPStatusEvent", "HTTPStatusEventClass", flash.events.HTTPStatusEvent),
+      M("flash.events.UncaughtErrorEvents", "UncaughtErrorEventsClass", flash.events.UncaughtErrorEvents),
 
       M("flash.external.ExternalInterface", "ExternalInterfaceClass",
         flash.external.ExternalInterface),
 
       M("flash.ui.ContextMenu", "ContextMenuClass", flash.ui.ContextMenu),
       M("flash.ui.ContextMenuItem", "ContextMenuItemClass", flash.ui.ContextMenuItem),
+      M("flash.ui.ContextMenuBuiltInItems", "ContextMenuBuiltInItemsClass", flash.ui.ContextMenuBuiltInItems),
+      M("flash.ui.ContextMenuClipboardItems", "ContextMenuClipboardItemsClass", flash.ui.ContextMenuClipboardItems),
       M("flash.ui.Keyboard", "KeyboardClass", flash.ui.Keyboard),
       M("flash.ui.Mouse", "MouseClass", flash.ui.Mouse),
       M("flash.ui.MouseCursorData", "MouseCursorDataClass", flash.ui.MouseCursorData),
@@ -161,6 +165,7 @@ module Shumway.AVM2.AS {
       M("flash.media.SoundMixer", "SoundMixerClass", flash.media.SoundMixer),
       M("flash.media.SoundTransform", "SoundTransformClass", flash.media.SoundTransform),
       M("flash.media.Video", "VideoClass", flash.media.Video),
+      M("flash.media.StageVideo", "StageVideoClass", flash.media.StageVideo),
       M("flash.media.ID3Info", "ID3InfoClass", flash.media.ID3Info),
       M("flash.media.Microphone", "MicrophoneClass", flash.media.Microphone),
 
@@ -185,27 +190,12 @@ module Shumway.AVM2.AS {
       M("flash.system.SecurityDomain", "SecurityDomainClass", flash.system.SecurityDomain),
       M("flash.system.ApplicationDomain", "ApplicationDomainClass", flash.system.ApplicationDomain),
       M("flash.system.JPEGLoaderContext", "JPEGLoaderContextClass", flash.system.JPEGLoaderContext),
+      M("flash.system.LoaderContext", "LoaderContextClass", flash.system.LoaderContext),
 
       M("flash.accessibility.Accessibility", "AccessibilityClass",
         flash.accessibility.Accessibility),
       M("flash.utils.Timer", "TimerClass", flash.utils.Timer),
       M("flash.utils.ByteArray", "ByteArrayClass", flash.utils.ByteArray),
-
-      M("avm1lib.AS2Utils", "AS2Utils", Shumway.AVM1.AS2Utils),
-      M("avm1lib.AS2Broadcaster"),
-      M("avm1lib.AS2Key"),
-      M("avm1lib.AS2Mouse"),
-      M("avm1lib.AS2MovieClip", "AS2MovieClip", Shumway.AVM2.AS.avm1lib.AS2MovieClip),
-      M("avm1lib.AS2BitmapData", "AS2BitmapData", Shumway.AVM2.AS.avm1lib.AS2BitmapData),
-      M("avm1lib.AS2Button", "AS2Button", Shumway.AVM2.AS.avm1lib.AS2Button),
-      M("avm1lib.AS2Sound"),
-      M("avm1lib.AS2TextField", "AS2TextField", Shumway.AVM2.AS.avm1lib.AS2TextField),
-      M("avm1lib.AS2Stage"),
-      M("avm1lib.AS2System"),
-      M("avm1lib.AS2Color"),
-      M("avm1lib.AS2Globals", "AS2Globals", Shumway.AVM2.AS.avm1lib.AS2Globals),
-      M("avm1lib.AS2MovieClipLoader", "AS2MovieClipLoader",
-        Shumway.AVM2.AS.avm1lib.AS2MovieClipLoader),
     ];
 
     symbols.forEach(function (s) {
@@ -225,77 +215,82 @@ module Shumway.AVM2.AS {
     registerNativeFunction('FlashUtilScript::getDefinitionByName',
                            Shumway.AVM2.AS.Natives.getDefinitionByName);
 
-    var start = Date.now();
-    registerNativeFunction('FlashUtilScript::getTimer', function getTimer() {
-      return Date.now() - start;
-    });
+    registerNativeFunction('FlashUtilScript::getTimer', FlashUtilScript_getTimer);
 
     registerNativeFunction('FlashUtilScript::escapeMultiByte', escape);
     registerNativeFunction('FlashUtilScript::unescapeMultiByte', unescape);
 
-    registerNativeFunction('FlashNetScript::navigateToURL',
-                           function navigateToURL(request, window_) {
-                             if (request === null || request === undefined) {
-                               throwError('TypeError', Errors.NullPointerError, 'request');
-                             }
-                             var RequestClass = Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass("flash.net.URLRequest");
-                             if (!RequestClass.isInstanceOf(request)) {
-                               throwError('TypeError', Errors.CheckTypeFailedError, request,
-                                          'flash.net.URLRequest');
-                             }
-                             var url = request.url;
-                             if (/^fscommand:/i.test(url)) {
-                               var fscommand = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain.getProperty(
-                                 Multiname.fromSimpleName('flash.system.fscommand'), true, true);
-                               fscommand.call(null, url.substring('fscommand:'.length), window_);
-                               return;
-                             }
-                             // TODO handle other methods than GET
-                             var targetWindow = window_ || '_parent'; // using parent as default target
-                             window.open(FileLoadingService.instance.resolveUrl(url), targetWindow);
-                           });
+    registerNativeFunction('FlashNetScript::navigateToURL', FlashNetScript_navigateToURL);
+    registerNativeFunction('FlashNetScript::sendToURL', FlashNetScript_sendToURL);
 
-    registerNativeFunction('FlashNetScript::sendToURL', function sendToURL(request) {
-      if (request === null || request === undefined) {
-        throwError('TypeError', Errors.NullPointerError, 'request');
-      }
-      var RequestClass = Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass("flash.net.URLRequest");
-      if (!RequestClass.isInstanceOf(request)) {
-        throwError('TypeError', Errors.CheckTypeFailedError, request,
-                   'flash.net.URLRequest');
-      }
-      var session = FileLoadingService.instance.createSession();
-      session.onprogress = function () {
-        // ...
-      };
-      session.open(request);
-    });
+    registerNativeFunction('Toplevel::registerClassAlias', Toplevel_registerClassAlias);
+    registerNativeFunction('Toplevel::getClassByAlias', Toplevel_getClassByAlias);
+  }
 
-    registerNativeFunction('Toplevel::registerClassAlias',
-                           function registerClassAlias(aliasName, classObject) {
-                             if (!aliasName) {
-                               throwError('TypeError', Errors.NullPointerError, 'aliasName');
-                             }
-                             if (!classObject) {
-                               throwError('TypeError', Errors.NullPointerError, 'classObject');
-                             }
+  export function FlashUtilScript_getTimer() {
+    return Date.now() - flash.display.Loader.runtimeStartTime;
+  }
 
-                             AMFUtils.aliasesCache.classes.set(classObject, aliasName);
-                             AMFUtils.aliasesCache.names[aliasName] = classObject;
-                           });
+  export function FlashNetScript_navigateToURL(request, window_) {
+    if (request === null || request === undefined) {
+      throwError('TypeError', Errors.NullPointerError, 'request');
+    }
+    var RequestClass = Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass("flash.net.URLRequest");
+    if (!RequestClass.isInstanceOf(request)) {
+      throwError('TypeError', Errors.CheckTypeFailedError, request,
+        'flash.net.URLRequest');
+    }
+    var url = request.url;
+    if (isNullOrUndefined(url)) {
+      throwError('TypeError', Errors.NullPointerError, 'url');
+    }
+    if (/^fscommand:/i.test(url)) {
+      var fscommand = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain.getProperty(
+        Multiname.fromSimpleName('flash.system.fscommand'), true, true);
+      fscommand.call(null, url.substring('fscommand:'.length), window_);
+      return;
+    }
+    // TODO handle other methods than GET
+    FileLoadingService.instance.navigateTo(url, window_);
+  }
 
-    registerNativeFunction('Toplevel::getClassByAlias', function getClassByAlias(aliasName) {
-      if (!aliasName) {
-        throwError('TypeError', Errors.NullPointerError, 'aliasName');
-      }
+  function FlashNetScript_sendToURL(request) {
+    if (request === null || request === undefined) {
+      throwError('TypeError', Errors.NullPointerError, 'request');
+    }
+    var RequestClass = Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass("flash.net.URLRequest");
+    if (!RequestClass.isInstanceOf(request)) {
+      throwError('TypeError', Errors.CheckTypeFailedError, request,
+        'flash.net.URLRequest');
+    }
+    var session = FileLoadingService.instance.createSession();
+    session.onprogress = function () {
+      // ...
+    };
+    session.open(request);
+  }
 
-      var classObject = AMFUtils.aliasesCache.names[aliasName];
-      if (!classObject) {
-        throwError('ReferenceError', Errors.ClassNotFoundError, aliasName);
-      }
-      return classObject;
-    });
+  function Toplevel_registerClassAlias(aliasName, classObject) {
+    if (!aliasName) {
+      throwError('TypeError', Errors.NullPointerError, 'aliasName');
+    }
+    if (!classObject) {
+      throwError('TypeError', Errors.NullPointerError, 'classObject');
+    }
 
-    registerNativeFunction('isFinite', isFinite);
+    aliasesCache.classes.set(classObject, aliasName);
+    aliasesCache.names[aliasName] = classObject;
+  }
+
+  function Toplevel_getClassByAlias(aliasName) {
+    if (!aliasName) {
+      throwError('TypeError', Errors.NullPointerError, 'aliasName');
+    }
+
+    var classObject = aliasesCache.names[aliasName];
+    if (!classObject) {
+      throwError('ReferenceError', Errors.ClassNotFoundError, aliasName);
+    }
+    return classObject;
   }
 }

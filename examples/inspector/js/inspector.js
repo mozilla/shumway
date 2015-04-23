@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2013 Mozilla Foundation
  *
@@ -32,15 +30,6 @@ var avm2Options = shumwayOptions.register(new Shumway.Options.OptionSet("AVM2"))
 var sysCompiler = avm2Options.register(new Shumway.Options.Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter (requires restart)"));
 var appCompiler = avm2Options.register(new Shumway.Options.Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter (requires restart)"));
 
-var asyncLoading = getQueryVariable("async") === "true";
-asyncLoading = true;
-var simpleMode = getQueryVariable("simpleMode") === "true";
-var pauseExecution = getQueryVariable("paused") === "true";
-var remoteFile = getQueryVariable("rfile");
-var yt = getQueryVariable('yt');
-
-//var swfController = new SWFController(timeline, pauseExecution);
-
 function timeAllocation(C, count) {
   var s = Date.now();
   for (var i = 0; i < count; i++) {
@@ -50,10 +39,8 @@ function timeAllocation(C, count) {
 }
 
 
-var avm2Root = "../../src/avm2/";
-var builtinPath = avm2Root + "generated/builtin/builtin.abc";
-var shellAbcPath = avm2Root + "generated/shell/shell.abc";
-var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
+var builtinPath = "../../build/libs/builtin.abc";
+var shellAbcPath = "../../build/libs/shell.abc";
 
 // different playerglobals can be used here
 var playerglobalInfo = {
@@ -79,25 +66,32 @@ function parseQueryString(qs) {
   return obj;
 }
 
+var queryVariables = parseQueryString(window.location.search);
+
+var startPromise = configureMocks(queryVariables);
+
+var asyncLoading = true; // queryVariables['async'] === "true";
+var simpleMode = queryVariables['simpleMode'] === "true";
+
 /**
- * You can also specify a remote file as a query string parameters, ?rfile=... to load it automatically
- * when the page loads.
+ * Files can either be specified via the GET param `rfile`, or by manually selecting a local file.
  */
-showOpenFileButton(true);
-if (remoteFile) {
-  showOpenFileButton(false);
-  setTimeout(function () {
-    executeFile(remoteFile, null, parseQueryString(window.location.search));
+if (queryVariables['rfile'] && !startPromise) {
+  startPromise = Promise.resolve({
+    url: queryVariables['rfile'],
+    args: parseQueryString(queryVariables['flashvars'])
   });
+} else {
+  if (state.remoteEnabled) {
+    initRemoteDebugging();
+  }
 }
-if (yt) {
-  requestYT(yt).then(function (config) {
-    showOpenFileButton(false);
+if (startPromise) {
+  startPromise.then(function (config) {
     executeFile(config.url, null, config.args);
   });
-}
-if (remoteFile) {
-  configureMocks(remoteFile);
+} else {
+  showOpenFileButton(true);
 }
 
 if (simpleMode) {
@@ -112,47 +106,93 @@ function showOpenFileButton(show) {
   document.getElementById('debugInfoToolbarTabs').classList.toggle('active', !show);
 }
 
+var flashOverlay;
+var currentSWFUrl;
+var currentPlayer;
+
 var easelHost;
 function runIFramePlayer(data) {
-  data.type = 'runSwf';
-  data.settings = Shumway.Settings.getSettings();
-  var playerWorkerIFrame = document.getElementById('playerWorker');
+  var container = document.createElement('div');
+  container.setAttribute('style', 'position:absolute; top:0; left: 0; width: 9; height:9');
+  document.body.appendChild(container);
+
+  var playerWorkerIFrame = document.createElement('iframe');
+  playerWorkerIFrame.id = 'playerWorker';
+  playerWorkerIFrame.width = 3;
+  playerWorkerIFrame.height = 3;
+  playerWorkerIFrame.src = "inspector.player.html";
   playerWorkerIFrame.addEventListener('load', function () {
+    var easel = createEasel();
+
+    data.type = 'runSwf';
+    data.settings = Shumway.Settings.getSettings();
+    data.release = state.release;
+    data.displayParameters = easel.getDisplayParameters();
+
     var playerWorker = playerWorkerIFrame.contentWindow;
     playerWorker.postMessage(data, '*');
 
-    var easel = createEasel();
-    easelHost = new Shumway.Player.Window.WindowEaselHost(easel, playerWorker, window);
+    easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWorker, window);
   });
+  container.appendChild(playerWorkerIFrame);
 }
 
-function executeFile(file, buffer, movieParams) {
+function executeFile(file, buffer, movieParams, remoteDebugging) {
   var filename = file.split('?')[0].split('#')[0];
 
-  var isFramePlayerEnabled = !!document.getElementById('playerWorker');
-  if (isFramePlayerEnabled && filename.endsWith(".swf")) {
-    var swfURL = Shumway.FileLoadingService.instance.setBaseUrl(file);
-    var loaderURL = getQueryVariable("loaderURL") || swfURL;
-    runIFramePlayer({sysMode: sysMode, appMode: appMode, loaderURL: loaderURL,
-      movieParams: movieParams, file: file, asyncLoading: asyncLoading});
+  file = new URL(file, document.location.href).href;
+
+  var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
+  var sysMode = sysCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  var appMode = appCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+
+  if (state.useIFramePlayer && filename.endsWith(".swf")) {
+    runIFramePlayer({sysMode: sysMode, appMode: appMode,
+      movieParams: movieParams, file: file, asyncLoading: asyncLoading,
+      stageAlign: state.salign, stageScale: state.scale,
+      fileReadChunkSize: state.fileReadChunkSize, loaderURL: state.loaderURL,
+      remoteDebugging: !!remoteDebugging});
+    return;
+  }
+
+  if (file.endsWith(".swfm")) {
+    var easel = createEasel();
+
+    document.addEventListener('shumwayOptionsChanged', function () {
+      syncGFXOptions(easel.options);
+      easel.stage.invalidate();
+    });
+    syncGFXOptions(easel.options);
+
+    easelHost = new Shumway.GFX.Test.PlaybackEaselHost(easel);
+    easelHost.playUrl(file);
     return;
   }
 
   var BinaryFileReader = Shumway.BinaryFileReader;
-  var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
+
+  if (remoteDebugging) {
+    Shumway.ClipboardService.instance = new Shumway.Player.ShumwayComClipboardService();
+    Shumway.ExternalInterfaceService.instance = new Shumway.Player.ShumwayComExternalInterface();
+    Shumway.FileLoadingService.instance = new Shumway.Player.ShumwayComFileLoadingService();
+    Shumway.FileLoadingService.instance.init(file);
+  } else {
+    Shumway.FileLoadingService.instance = new Shumway.Player.BrowserFileLoadingService();
+    Shumway.FileLoadingService.instance.init(file, state.fileReadChunkSize);
+  }
 
   // All execution paths must now load AVM2.
   if (!appCompiler.value) {
     showMessage("Running in the Interpreter");
   }
-  var sysMode = sysCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-  var appMode = appCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+
+  Shumway.SystemResourcesLoadingService.instance =
+    new Shumway.Player.BrowserSystemResourcesLoadingService(builtinPath, playerglobalInfo, shellAbcPath);
 
   if (filename.endsWith(".abc")) {
-    libraryScripts = {};
-    Shumway.createAVM2(builtinPath, shellAbcPath, null, sysMode, appMode, function (avm2) {
+    Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Shell, sysMode, appMode).then(function (avm2) {
       function runAbc(file, buffer) {
-        avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
+        avm2.applicationDomain.executeAbc(new Shumway.AVM2.ABC.AbcFile(new Uint8Array(buffer), file));
       }
       if (!buffer) {
         new BinaryFileReader(file).readAll(null, function(buffer) {
@@ -163,46 +203,38 @@ function executeFile(file, buffer, movieParams) {
       }
     });
   } else if (filename.endsWith(".swf")) {
-    Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
+    Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal, sysMode, appMode).then(function (avm2) {
       function runSWF(file, buffer) {
         var swfURL = Shumway.FileLoadingService.instance.resolveUrl(file);
-        var loaderURL = getQueryVariable("loaderURL") || swfURL;
 
         var easel = createEasel();
 
         document.addEventListener('shumwayOptionsChanged', function () {
           syncGFXOptions(easel.options);
-          easel.stage.invalidatePaint();
+          easel.stage.invalidate();
         });
         syncGFXOptions(easel.options);
-        var player = new Shumway.Player.Test.TestPlayer();
-        easelHost = new Shumway.Player.Test.TestEaselHost(easel);
-        player.load(file);
+        var gfxService = new Shumway.Player.Test.TestGFXService();
+        var player = new Shumway.Player.Player(gfxService);
+        player.movieParams = movieParams;
+        player.stageAlign = state.salign;
+        player.stageScale = state.scale;
+        player.displayParameters = easel.getDisplayParameters();
+        player.loaderUrl = state.loaderURL;
 
-        // embedding.loader
+        var useRecorder = state.recordingLimit > 0;
+        easelHost = useRecorder ?
+          new Shumway.GFX.Test.RecordingEaselHost(easel, state.recordingLimit) :
+          new Shumway.GFX.Test.TestEaselHost(easel);
 
-//        SWF.embed(buffer || file, document, document.getElementById('stage'), {
-//          onComplete: swfController.completeCallback.bind(swfController),
-//          onBeforeFrame: swfController.beforeFrameCallback.bind(swfController),
-//          onAfterFrame: swfController.afterFrameCallback.bind(swfController),
-//          onStageInitialized: swfController.stageInitializedCallback.bind(swfController),
-//          url: swfURL,
-//          loaderURL: loaderURL,
-//          movieParams: movieParams || {},
-//        });
+        player.load(file, buffer);
 
-//        SWF.embed(buffer || file, document, document.getElementById('stage'), {
-//          onComplete: swfController.completeCallback.bind(swfController),
-//          onBeforeFrame: swfController.beforeFrameCallback.bind(swfController),
-//          onAfterFrame: swfController.afterFrameCallback.bind(swfController),
-//          onStageInitialized: swfController.stageInitializedCallback.bind(swfController),
-//          url: swfURL,
-//          loaderURL: loaderURL,
-//          movieParams: movieParams || {},
-//        });
-
+        currentSWFUrl = swfURL;
+        currentPlayer = player;
+        if (state.overlayFlash) {
+          ensureFlashOverlay();
+        }
       }
-      file = Shumway.FileLoadingService.instance.setBaseUrl(file);
       if (!buffer && asyncLoading) {
         runSWF(file);
       } else if (!buffer) {
@@ -217,85 +249,51 @@ function executeFile(file, buffer, movieParams) {
       }
     });
   } else if (filename.endsWith(".js") || filename.endsWith("/")) {
-    Shumway.createAVM2(builtinPath, playerglobalInfo, null, sysMode, appMode, function (avm2) {
+    Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal, sysMode, appMode).then(function (avm2) {
       executeUnitTests(file, avm2);
     });
   }
 }
 
-(function setStageSize() {
-  var stageSize = getQueryVariable("size");
-  if (stageSize && /^\d+x\d+$/.test(stageSize)) {
-    var dims = stageSize.split('x');
-    var stage = document.getElementById('stage');
-    stage.style.width = dims[0] + "px";
-    stage.style.height = dims[1] + "px";
+function ensureFlashOverlay() {
+  if (flashOverlay) {
+    return;
   }
-})();
+  flashOverlay = document.createElement("div");
+  flashOverlay.id = 'flashContainer';
+  flashOverlay.innerHTML =  '<object type="application/x-shockwave-flash" data="' + currentSWFUrl +
+                            '" width="100" height="100"><param name="quality" value="high" />' +
+                            '<param name="play" value="true" />' +
+                            '<param name="loop" value="true" />' +
+                            '<param name="wmode" value="opaque" />' +
+                            '<param name="scale" value="' + state.scale + '" />' +
+                            '<param name="menu" value="true" />' +
+                            '<param name="devicefont" value="false" />' +
+                            '<param name="salign" value="' + state.salign + '" />' +
+                            '<param name="allowScriptAccess" value="sameDomain" />' +
+                            '<param name="shumwaymode" value="off" />' +
+                            '</object>';
+  document.getElementById("easelContainer").appendChild(flashOverlay);
+
+  maybeSetFlashOverlayDimensions();
+}
+function maybeSetFlashOverlayDimensions() {
+  var canvas = document.getElementById("easelContainer").getElementsByTagName('canvas')[0];
+  if (!canvas || !flashOverlay) {
+    return;
+  }
+  flashOverlay.children[0].width = canvas.offsetWidth;
+  flashOverlay.children[0].height = canvas.offsetHeight;
+  if (state.overlayFlash) {
+    flashOverlay.style.display = 'inline-block';
+  }
+}
+window.addEventListener('resize', function () {
+  setTimeout(maybeSetFlashOverlayDimensions, 0);
+}, false);
 
 Shumway.Telemetry.instance = {
   reportTelemetry: function (data) { }
-};
-
-Shumway.FileLoadingService.instance = {
-  createSession: function () {
-    return {
-      open: function (request) {
-        if (request.url.indexOf('http://s.youtube.com/stream_204') === 0) {
-          // No reason to send error report yet, let's keep it this way for now.
-          // 204 means no response, so no data will be expected.
-          console.error('YT_CALLBACK: ' + request.url);
-          this.onopen && this.onopen();
-          this.onclose && this.onclose();
-          return;
-        }
-
-        var self = this;
-        var path = Shumway.FileLoadingService.instance.resolveUrl(request.url);
-        console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
-        new Shumway.BinaryFileReader(path, request.method, request.mimeType, request.data).readAsync(
-          function (data, progress) {
-            self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
-          },
-          function (e) { self.onerror(e); },
-          self.onopen,
-          self.onclose,
-          self.onhttpstatus);
-      }
-    };
-  },
-  setBaseUrl: function (url) {
-    var baseUrl;
-    if (typeof URL !== 'undefined') {
-      baseUrl = new URL(url, document.location.href).href;
-    } else {
-      var a = document.createElement('a');
-      a.href = url || '#';
-      a.setAttribute('style', 'display: none;');
-      document.body.appendChild(a);
-      baseUrl = a.href;
-      document.body.removeChild(a);
-    }
-    Shumway.FileLoadingService.instance.baseUrl = baseUrl;
-    return baseUrl;
-  },
-  resolveUrl: function (url) {
-    var base = Shumway.FileLoadingService.instance.baseUrl || '';
-    if (typeof URL !== 'undefined') {
-      return new URL(url, base).href;
-    }
-
-    if (url.indexOf('://') >= 0) {
-      return url;
-    }
-
-    base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
-    if (url.indexOf('/') === 0) {
-      var m = /^[^:]+:\/\/[^\/]+/.exec(base);
-      if (m) base = m[0];
-    }
-    return base + url;
-  }
 };
 
 // toggle info panels (debug info, display list, settings, none)
@@ -343,18 +341,24 @@ HTMLCanvasElement.prototype.getContext = function getContext(contextId, args) {
 
 var Stage = Shumway.GFX.Stage;
 var Easel = Shumway.GFX.Easel;
-var Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
-var _easel;
+var Canvas2DRenderer = Shumway.GFX.Canvas2DRenderer;
+var currentEasel;
 
 function createEasel() {
   Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
-  var backend = Shumway.GFX.backend.value | 0;
-  _easel = new Easel(document.getElementById("stageContainer"), backend);
-  return _easel;
+  currentEasel = new Easel(document.getElementById("easelContainer"));
+  currentEasel.startRendering();
+  return currentEasel;
 }
 
 function registerScratchCanvas(scratchCanvas) {
   document.getElementById("scratchCanvasContainer").appendChild(scratchCanvas);
+}
+
+var currentStage = null;
+
+function registerInspectorStage(stage) {
+  currentStage = stage;
 }
 
 function registerInspectorAsset(id, symbolId, asset) {
@@ -363,39 +367,51 @@ function registerInspectorAsset(id, symbolId, asset) {
   }
   var li = document.createElement("li");
   var div = document.createElement("div");
-  var bounds = asset.getBounds();
-  var details = asset.constructor.name + ": " + id + " (" + symbolId + "), bounds: " + bounds;
-  var canvas = null;
-  var renderTime = 0;
-  if (asset instanceof Shumway.GFX.RenderableBitmap) {
-    canvas = asset._canvas;
-  } else {
-    canvas = document.createElement("canvas");
-    canvas.width = bounds.w;
-    canvas.height = bounds.h;
-    var context = canvas.getContext("2d");
-    context.translate(-bounds.x, -bounds.y);
-    // Draw axis if not at origin.
-    if (bounds.x !== 0 || bounds.y !== 0) {
-      context.beginPath();
-      context.lineWidth = 2;
-      context.strokeStyle = "white";
-      context.moveTo(-4, 0); context.lineTo(4, 0);
-      context.moveTo( 0,-4); context.lineTo(0, 4);
-      context.stroke();
+
+  function refreshAsset(renderable) {
+    var bounds = renderable.getBounds();
+    var details = renderable.constructor.name + ": " + id + " (" + symbolId + "), bounds: " + bounds;
+    var canvas = null;
+    var renderTime = 0;
+    if (renderable instanceof Shumway.GFX.RenderableVideo) {
+      if (!renderable.isRegistered) {
+        renderable.isRegistered = true;
+        div.appendChild(renderable._video);
+      }
+      return;
     }
-    var start = performance.now();
-    asset.render(context);
-    renderTime = (performance.now() - start)
+    if (renderable instanceof Shumway.GFX.RenderableBitmap) {
+      canvas = renderable.renderSource;
+    } else {
+      canvas = document.createElement("canvas");
+      canvas.width = bounds.w;
+      canvas.height = bounds.h;
+      var context = canvas.getContext("2d");
+      context.translate(-bounds.x, -bounds.y);
+      // Draw axis if not at origin.
+      if (bounds.x !== 0 || bounds.y !== 0) {
+        context.beginPath();
+        context.lineWidth = 2;
+        context.strokeStyle = "white";
+        context.moveTo(-4, 0); context.lineTo(4, 0);
+        context.moveTo( 0,-4); context.lineTo(0, 4);
+        context.stroke();
+      }
+      var start = performance.now();
+      renderable.render(context);
+      renderTime = (performance.now() - start);
+    }
+    if (renderable instanceof Shumway.GFX.RenderableText) {
+      details += ", text: " + renderable._plainText;
+    }
+    if (renderTime) {
+      details += " (" + renderTime.toFixed(3) + " ms)";
+    }
+    div.innerHTML = details + "<br>";
+    div.appendChild(canvas);
   }
-  if (asset instanceof Shumway.GFX.RenderableText) {
-    details += ", text: " + asset._plainText;
-  }
-  if (renderTime) {
-    details += " (" + renderTime.toFixed(3) + " ms)";
-  }
-  div.innerHTML = details
+  refreshAsset(asset);
+  asset.addInvalidateEventListener(refreshAsset);
   li.appendChild(div);
-  li.appendChild(canvas);
   document.getElementById("assetList").appendChild(li);
 }

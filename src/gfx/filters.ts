@@ -19,6 +19,7 @@ module Shumway.GFX {
   import Point = Geometry.Point;
   import Matrix = Geometry.Matrix;
   import DirtyRegion = Geometry.DirtyRegion;
+  import clampByte = Shumway.ColorUtilities.clampByte;
 
   import assert = Shumway.Debug.assert;
 
@@ -93,108 +94,105 @@ module Shumway.GFX {
     }
   }
 
-  export class ColorMatrix {
-    private _m: Float32Array;
+  export enum ColorMatrixType {
+    Unknown            = 0x0000,
+    Identity           = 0x0001
+  }
 
-    constructor (m: any) {
-      release || assert (m.length === 20);
-      this._m = new Float32Array(m);
+  export class ColorMatrix {
+    private _data: Float32Array;
+    private _type: ColorMatrixType;
+
+    constructor (data: any) {
+      release || assert (data.length === 20);
+      this._data = new Float32Array(data);
+      this._type = ColorMatrixType.Unknown;
     }
 
     public clone(): ColorMatrix {
-      return new ColorMatrix(this._m);
+      var colorMatrix = new ColorMatrix(this._data);
+      colorMatrix._type = this._type;
+      return colorMatrix;
     }
 
     public set(other: ColorMatrix) {
-      this._m.set(other._m);
+      this._data.set(other._data);
+      this._type = other._type;
     }
 
     public toWebGLMatrix(): Float32Array {
-      return new Float32Array(this._m);
+      return new Float32Array(this._data);
     }
 
     public asWebGLMatrix(): Float32Array {
-      return this._m.subarray(0, 16);
+      return this._data.subarray(0, 16);
     }
 
     public asWebGLVector(): Float32Array {
-      return this._m.subarray(16, 20);
-    }
-
-    public getColorMatrix(): Float32Array {
-      var t: Float32Array = new Float32Array(20);
-      var m: Float32Array = this._m;
-      t[0] = m[0];
-      t[1] = m[4];
-      t[2] = m[8];
-      t[3] = m[12];
-      t[4] = m[16] * 255;
-      t[5] = m[1];
-      t[6] = m[5];
-      t[7] = m[9];
-      t[8] = m[13];
-      t[9] = m[17] * 255;
-      t[10] = m[2];
-      t[11] = m[6];
-      t[12] = m[10];
-      t[13] = m[14];
-      t[14] = m[18] * 255;
-      t[15] = m[3];
-      t[16] = m[7];
-      t[17] = m[11];
-      t[18] = m[15];
-      t[19] = m[19] * 255;
-      return t;
-    }
-
-    public getColorTransform(): Float32Array {
-      var t: Float32Array = new Float32Array(8);
-      var m: Float32Array = this._m;
-      t[0] = m[0];
-      t[1] = m[5];
-      t[2] = m[10];
-      t[3] = m[15];
-      t[4] = m[16] * 255;
-      t[5] = m[17] * 255;
-      t[6] = m[18] * 255;
-      t[7] = m[19] * 255;
-      return t;
+      return this._data.subarray(16, 20);
     }
 
     public isIdentity(): boolean {
-      var m: Float32Array = this._m;
-      return (
-        m[0]  == 1 && m[1]  == 0 && m[2]  == 0 && m[3]  == 0 &&
-        m[4]  == 0 && m[5]  == 1 && m[6]  == 0 && m[7]  == 0 &&
-        m[8]  == 0 && m[9]  == 0 && m[10] == 1 && m[11] == 0 &&
-        m[12] == 0 && m[13] == 0 && m[14] == 0 && m[15] == 1 &&
-        m[16] == 0 && m[17] == 0 && m[18] == 0 && m[19] == 0
-      );
+      if (this._type & ColorMatrixType.Identity) {
+        return true;
+      }
+      var m = this._data;
+      return m[0]  == 1 && m[1]  == 0 && m[2]  == 0 && m[3]  == 0 &&
+             m[4]  == 0 && m[5]  == 1 && m[6]  == 0 && m[7]  == 0 &&
+             m[8]  == 0 && m[9]  == 0 && m[10] == 1 && m[11] == 0 &&
+             m[12] == 0 && m[13] == 0 && m[14] == 0 && m[15] == 1 &&
+             m[16] == 0 && m[17] == 0 && m[18] == 0 && m[19] == 0;
     }
 
     public static createIdentity(): ColorMatrix {
-      return new ColorMatrix ([
+      var colorMatrix = new ColorMatrix ([
         1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 1, 0,
         0, 0, 0, 1,
         0, 0, 0, 0
       ]);
+      colorMatrix._type = ColorMatrixType.Identity;
+      return colorMatrix;
     }
 
-    public static fromMultipliersAndOffsets(redMultiplier: number, greenMultiplier: number, blueMultiplier: number, alphaMultiplier: number,
-                                            redOffset: number, greenOffset: number, blueOffset: number, alphaOffset: number): ColorMatrix {
-      return new ColorMatrix ([
-        redMultiplier, 0, 0, 0,
-        0, greenMultiplier, 0, 0,
-        0, 0, blueMultiplier, 0,
-        0, 0, 0, alphaMultiplier,
-        redOffset, greenOffset, blueOffset, alphaOffset
-      ]);
+    public setMultipliersAndOffsets(redMultiplier: number, greenMultiplier: number, blueMultiplier: number, alphaMultiplier: number,
+                                    redOffset: number, greenOffset: number, blueOffset: number, alphaOffset: number) {
+      var m: Float32Array = this._data;
+      for (var i = 0; i < m.length; i++) {
+        m[i] = 0;
+      }
+      m[0] = redMultiplier;
+      m[5] = greenMultiplier;
+      m[10] = blueMultiplier;
+      m[15] = alphaMultiplier;
+      m[16] = redOffset / 255;
+      m[17] = greenOffset / 255;
+      m[18] = blueOffset / 255;
+      m[19] = alphaOffset / 255;
+      this._type = ColorMatrixType.Unknown;
+    }
+
+    public transformRGBA(rgba: number) {
+      var r = (rgba >> 24) & 0xff;
+      var g = (rgba >> 16) & 0xff;
+      var b = (rgba >>  8) & 0xff;
+      var a = rgba & 0xff;
+
+      var m: Float32Array = this._data;
+      var R = clampByte(r * m[0]  + g * m[1]  + b * m[2]  + a * m[3]  + m[16] * 255);
+      var G = clampByte(r * m[4]  + g * m[5]  + b * m[6]  + a * m[7]  + m[17] * 255);
+      var B = clampByte(r * m[8]  + g * m[9]  + b * m[10] + a * m[11] + m[18] * 255);
+      var A = clampByte(r * m[12] + g * m[13] + b * m[14] + a * m[15] + m[19] * 255);
+
+      return R << 24 | G << 16 | B << 8 | A;
     }
 
     public multiply(other: ColorMatrix) {
-      var a = this._m, b = other._m;
+      if (other._type & ColorMatrixType.Identity) {
+        return;
+      }
+      var a = this._data, b = other._data;
       var a00 = a[0 * 4 + 0];
       var a01 = a[0 * 4 + 1];
       var a02 = a[0 * 4 + 2];
@@ -258,18 +256,30 @@ module Shumway.GFX {
       a[4 * 4 + 1] = a01 * b40 + a11 * b41 + a21 * b42 + a31 * b43 + a41;
       a[4 * 4 + 2] = a02 * b40 + a12 * b41 + a22 * b42 + a32 * b43 + a42;
       a[4 * 4 + 3] = a03 * b40 + a13 * b41 + a23 * b42 + a33 * b43 + a43;
+      this._type = ColorMatrixType.Unknown;
     }
 
     public get alphaMultiplier(): number {
-      return this._m[15];
+      return this._data[15];
+    }
+
+    public hasOnlyAlphaMultiplier(): boolean {
+      var m = this._data;
+      return m[0]  == 1 && m[1]  == 0 && m[2]  == 0 && m[3]  == 0 &&
+             m[4]  == 0 && m[5]  == 1 && m[6]  == 0 && m[7]  == 0 &&
+             m[8]  == 0 && m[9]  == 0 && m[10] == 1 && m[11] == 0 &&
+             m[12] == 0 && m[13] == 0 && m[14] == 0 && m[16] == 0 &&
+             m[17] == 0 && m[18] == 0 && m[19] == 0;
     }
 
     public equals(other: ColorMatrix): boolean {
       if (!other) {
         return false;
+      } else if (this._type === other._type && this._type === ColorMatrixType.Identity) {
+        return true;
       }
-      var a = this._m;
-      var b = other._m;
+      var a = this._data;
+      var b = other._data;
       for (var i = 0; i < 20; i++) {
         if (Math.abs(a[i] - b[i]) > 0.001) {
           return false;
@@ -278,5 +288,12 @@ module Shumway.GFX {
       return true;
     }
 
+    public toSVGFilterMatrix(): string {
+      var m = this._data;
+      return [m[0], m[4], m[8],  m[12], m[16],
+              m[1], m[5], m[9],  m[13], m[17],
+              m[2], m[6], m[10], m[14], m[18],
+              m[3], m[7], m[11], m[15], m[19]].join(" ");
+    }
   }
 }

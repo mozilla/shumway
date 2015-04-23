@@ -16,6 +16,7 @@
 // Class: Capabilities
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import toKeyValueArray = Shumway.ObjectUtilities.toKeyValueArray;
@@ -38,7 +39,7 @@ module Shumway.AVM2.AS.flash.system {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.system.Capabilities");
+      dummyConstructor("public flash.system.Capabilities");
     }
     
     // JS -> AS Bindings
@@ -68,7 +69,7 @@ module Shumway.AVM2.AS.flash.system {
     private static _version: string = 'SHUMWAY 10,0,0,0';
     // static _screenColor: string;
     // static _pixelAspectRatio: number;
-    // static _screenDPI: number;
+    private static _screenDPI: number = 96; // Using standard CSS DPI for now.
     // static _touchscreenType: string;
     // static _hasIME: boolean;
     // static _hasTLS: boolean;
@@ -181,17 +182,21 @@ module Shumway.AVM2.AS.flash.system {
     static get version(): string {
       return Capabilities._version;
     }
+
+    /**
+     * This can be "color", "gray" or "bw" for black and white. I don't know when you'd have anything
+     * other than "color".
+     */
     static get screenColor(): string {
-      notImplemented("public flash.system.Capabilities::get screenColor"); return;
-      // return Capabilities._screenColor;
+      return "color";
     }
     static get pixelAspectRatio(): number {
       notImplemented("public flash.system.Capabilities::get pixelAspectRatio"); return;
       // return Capabilities._pixelAspectRatio;
     }
     static get screenDPI(): number {
-      notImplemented("public flash.system.Capabilities::get screenDPI"); return;
-      // return Capabilities._screenDPI;
+      somewhatImplemented("public flash.system.Capabilities::get screenDPI");
+      return Capabilities._screenDPI;
     }
     static get screenResolutionX(): number {
       somewhatImplemented("public flash.system.Capabilities::get screenResolutionX");

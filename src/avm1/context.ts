@@ -16,31 +16,74 @@
 
 module Shumway.AVM1 {
   import assert = Shumway.Debug.assert;
-  import avm1lib =  Shumway.AVM2.AS.avm1lib;
 
-  export class AS2ActionsData {
+  import AVM1MovieClip = Lib.AVM1MovieClip;
+  import AVM1Globals = Lib.AVM1Globals;
+
+  export class AVM1ActionsData {
     public ir; // will cache compiled representation
-    constructor(public bytes: Uint8Array, public id: string) {
+    constructor(public bytes: Uint8Array, public id: string, public parent: AVM1ActionsData = null) {
       release || assert(bytes instanceof Uint8Array);
     }
   }
 
-  export class AS2Context {
-    public static instance: AS2Context = null;
-    public stage;
-    public classes;
-    public globals: avm1lib.AS2Globals;
-    constructor() {}
+  export interface AVM1ExportedSymbol {
+    symbolId: number;
+    symbolProps;
+    theClass;
+  }
 
-    public static create: (swfVersion: number) => AS2Context;
+  export interface IAVM1RuntimeUtils {
+    hasProperty(obj, name);
+    getProperty(obj, name);
+    setProperty(obj, name, value);
+  }
+
+  export interface IAVM1EventPropertyObserver {
+    onEventPropertyModified(name: string);
+  }
+
+  export class ActionsDataFactory {
+    private _cache: WeakMap<Uint8Array, AVM1ActionsData> = new WeakMap<Uint8Array, AVM1ActionsData>();
+    public createActionsData(bytes: Uint8Array, id: string, parent: AVM1ActionsData = null): AVM1ActionsData {
+      var actionsData = this._cache.get(bytes);
+      if (!actionsData) {
+        actionsData = new AVM1ActionsData(bytes, id, parent);
+        this._cache.set(bytes, actionsData);
+      }
+      release || assert(actionsData.bytes === bytes && actionsData.id === id && actionsData.parent === parent);
+      return actionsData;
+    }
+  }
+
+  export class AVM1Context {
+    public static instance: AVM1Context = null;
+    public root: AVM1MovieClip;
+    public loaderInfo: Shumway.AVM2.AS.flash.display.LoaderInfo;
+    public globals: AVM1Globals;
+    public actionsDataFactory: ActionsDataFactory;
+    constructor() {
+      this.root = null;
+      this.globals = null;
+      this.actionsDataFactory = new ActionsDataFactory();
+    }
+
+    public utils: IAVM1RuntimeUtils;
+
+    public static create: (loaderInfo: Shumway.AVM2.AS.flash.display.LoaderInfo) => AVM1Context;
 
     public flushPendingScripts() {}
-    public addAsset(className: string, symbolProps) {}
-    public getAsset(className: string): any {}
+    public addAsset(className: string, symbolId: number, symbolProps) {}
+    public registerClass(className: string, theClass) {}
+    public getAsset(className: string): AVM1ExportedSymbol { return undefined; }
     public resolveTarget(target): any {}
     public resolveLevel(level: number): any {}
     public addToPendingScripts(fn) {}
 
-    public executeActions(actionsData: AS2ActionsData, stage, scopeObj) {}
+    public registerEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver) {}
+    public unregisterEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver) {}
+
+    public enterContext(fn: Function, defaultTarget): void {}
+    public executeActions(actionsData: AVM1ActionsData, scopeObj): void {}
   }
 }

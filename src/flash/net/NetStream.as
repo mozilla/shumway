@@ -24,9 +24,7 @@ import flash.utils.ByteArray;
 
 [native(cls="NetStreamClass")]
 public class NetStream extends EventDispatcher {
-  public function NetStream(connection:NetConnection, peerID:String = "connectToFMS") {
-    ctor(connection, peerID);
-  }
+  public native function NetStream(connection:NetConnection, peerID:String = "connectToFMS");
   public static const DIRECT_CONNECTIONS:String = "directConnections";
   public static const CONNECT_TO_FMS:String = "connectToFMS";
   public native function dispose():void;
@@ -65,13 +63,11 @@ public class NetStream extends EventDispatcher {
   public function set backBufferTime(backBufferTime:Number):void {
     notImplemented("backBufferTime");
   }
-  public function get inBufferSeek():Boolean {
-    notImplemented("inBufferSeek");
-    return false;
-  }
-  public function set inBufferSeek(value:Boolean):void {
-    notImplemented("inBufferSeek");
-  }
+
+  public native function get inBufferSeek():Boolean;
+
+  public native function set inBufferSeek(value:Boolean):void;
+
   public function get backBufferLength():Number {
     notImplemented("backBufferLength");
     return -1;
@@ -107,7 +103,7 @@ public class NetStream extends EventDispatcher {
   public function seek(offset:Number):void {
     call(this, 'seek', null, offset * 1000);
   }
-  public native function play():void;
+  public native function play(... arguments):void;
   public native function play2(param:NetStreamPlayOptions):void;
   public native function get info():NetStreamInfo;
   public native function get multicastInfo():NetStreamMulticastInfo;
@@ -192,7 +188,6 @@ public class NetStream extends EventDispatcher {
   public native function get videoStreamSettings():VideoStreamSettings;
   public native function set videoStreamSettings(settings:VideoStreamSettings):void;
 
-  private native function ctor(connection:NetConnection, peerID:String):void;
   private function call(... args):void {
     invokeWithArgsArray(202, args);
   }

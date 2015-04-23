@@ -1,5 +1,6 @@
 (function displayTests() {
   var easel = createEasel();
+  easel.startRendering();
 
   var Grid = Shumway.GFX.Grid;
   var Shape = Shumway.GFX.Shape;

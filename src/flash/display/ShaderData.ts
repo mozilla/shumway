@@ -16,6 +16,7 @@
 // Class: ShaderData
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ShaderData extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.display {
     constructor (byteCode: flash.utils.ByteArray) {
       byteCode = byteCode;
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.ShaderData");
+      dummyConstructor("public flash.display.ShaderData");
     }
     
     // JS -> AS Bindings

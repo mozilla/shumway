@@ -16,7 +16,9 @@
 // Class: Mouse
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+  import assert = Shumway.Debug.assert;
 
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import InteractiveObject = flash.display.InteractiveObject;
@@ -33,39 +35,16 @@ module Shumway.AVM2.AS.flash.ui {
     /**
      * Finds the interactive object on which the event is dispatched.
      */
-    private _findTarget(point: flash.geom.Point): InteractiveObject {
-      var objects = this.stage.getObjectsUnderMouse(point);
-      var target: InteractiveObject;
-      var i = objects.length;
-      while (i--) {
-        var object = objects[i];
-        if (!flash.display.InteractiveObject.isType(object)) {
-          var j = i;
-          while (j--) {
-            var sibling = objects[j];
-            if (sibling._parent === object._parent && InteractiveObject.isType(sibling)) {
-              object = sibling;
-              i = j;
-              break;
-            }
-          }
-        }
-        target = object.findFurthestInteractiveAncestorOrSelf();
-        if (!target) {
-          continue;
-        }
-        if (target.mouseEnabled) {
-          break;
-        }
-        if (flash.display.Sprite.isType(target)) {
-          var hitTarget = (<flash.display.Sprite>target)._hitTarget;
-          if (hitTarget && hitTarget.mouseEnabled) {
-            target = hitTarget;
-            break;
-          }
-        }
+    private _findTarget(point: flash.geom.Point, testingType: flash.display.HitTestingType): flash.display.DisplayObject {
+      var globalX = point.x * 20 | 0;
+      var globalY = point.y * 20 | 0;
+      var objects = [];
+      this.stage._containsGlobalPoint(globalX, globalY, testingType, objects);
+      release || assert(objects.length < 2);
+      if (objects.length) {
+        return objects[0];
       }
-      return target;
+      return objects.length ? objects[0] : null;
     }
 
     /**
@@ -90,31 +69,42 @@ module Shumway.AVM2.AS.flash.ui {
       target.dispatchEvent(event);
     }
 
-    public handleMouseEvent(data: MouseEventAndPointData) {
+    /**
+     * Handles the mouse event and returns the target on which the event was dispatched.
+     */
+    public handleMouseEvent(data: MouseEventAndPointData): InteractiveObject {
       var stage = this.stage;
       if (!stage) {
-        return;
+        return stage;
       }
 
       var globalPoint = data.point;
       flash.ui.Mouse.updateCurrentPosition(globalPoint);
-      var currentTarget = this.currentTarget;
 
-      if (globalPoint.x < 0 || globalPoint.x > stage.stageWidth ||
-          globalPoint.y < 0 || globalPoint.y > stage.stageHeight) {
-        if (currentTarget) {
-          this._dispatchMouseEvent(stage, events.MouseEvent.MOUSE_LEAVE, data);
+      var currentTarget = this.currentTarget;
+      var target: InteractiveObject = null;
+
+      var type = flash.events.MouseEvent.typeFromDOMType(data.type);
+
+      if (globalPoint.x >= 0 && globalPoint.x < stage.stageWidth &&
+          globalPoint.y >= 0 && globalPoint.y < stage.stageHeight) {
+        target = <InteractiveObject>this._findTarget(globalPoint, flash.display.HitTestingType.Mouse) || this.stage;
+      } else {
+        if (!currentTarget) {
+          return stage;
         }
-        this.currentTarget = null;
-        return;
+        this._dispatchMouseEvent(stage, events.MouseEvent.MOUSE_LEAVE, data);
+        if (type !== events.MouseEvent.MOUSE_MOVE) {
+          return stage;
+        }
       }
 
-      var target = this._findTarget(globalPoint) || stage;
-      var type = flash.events.MouseEvent.typeFromDOMType(data.type);
+      if (flash.ui.Mouse.draggableObject) {
+        var dropTarget = this._findTarget(globalPoint, flash.display.HitTestingType.Drop);
+        flash.ui.Mouse.draggableObject._updateDragState(dropTarget);
+      }
+
       switch (type) {
-        //case events.MouseEvent.MOUSE_OVER:
-        //case events.MouseEvent.MOUSE_OUT:
-        //  return;
         case events.MouseEvent.MOUSE_DOWN:
           if (data.buttons & MouseButtonFlags.Left) {
             data.buttons = MouseButtonFlags.Left;
@@ -161,17 +151,20 @@ module Shumway.AVM2.AS.flash.ui {
           if (target === currentTarget) {
             break;
           }
-          var commonAncestor = target.findNearestCommonAncestor(currentTarget);
+          var commonAncestor = target ? target.findNearestCommonAncestor(currentTarget) : stage;
           if (currentTarget && currentTarget !== stage) {
             currentTarget._mouseOver = false;
             // TODO: Support track as menu.
             currentTarget._mouseDown = false;
             this._dispatchMouseEvent(currentTarget, events.MouseEvent.MOUSE_OUT, data, target);
             var nodeLeft = currentTarget;
-            while (nodeLeft !== commonAncestor) {
+            while (nodeLeft && nodeLeft !== commonAncestor) {
               this._dispatchMouseEvent(nodeLeft, events.MouseEvent.ROLL_OUT, data, target);
               nodeLeft = nodeLeft.parent;
             }
+          }
+          if (!target) {
+            return stage;
           }
           if (target === stage) {
             break;
@@ -183,10 +176,11 @@ module Shumway.AVM2.AS.flash.ui {
           }
           target._mouseOver = true;
           this._dispatchMouseEvent(target, events.MouseEvent.MOUSE_OVER, data, currentTarget);
-          return;
+          return target;
       }
       // TODO: handle MOUSE_WHEEL and MOUSE_RELEASE_OUTSIDE
       this._dispatchMouseEvent(target, type, data);
+      return target;
     }
   }
 
@@ -211,6 +205,8 @@ module Shumway.AVM2.AS.flash.ui {
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
       this._currentPosition = new flash.geom.Point();
+      this._cursor = MouseCursor.AUTO;
+      this.draggableObject = null;
     };
     
     // Called whenever an instance of the class is initialized.
@@ -224,32 +220,31 @@ module Shumway.AVM2.AS.flash.ui {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.ui.Mouse");
     }
     
     // JS -> AS Bindings
     
     
     // AS -> JS Bindings
-    // static _supportsCursor: boolean;
-    // static _cursor: string;
-    // static _supportsNativeCursor: boolean;
-    get supportsCursor(): boolean {
-      notImplemented("public flash.ui.Mouse::get supportsCursor"); return;
-      // return this._supportsCursor;
+    //static _supportsCursor: boolean;
+    static _cursor: string;
+    //static _supportsNativeCursor: boolean;
+
+    static get supportsCursor(): boolean {
+      return true;
     }
-    get cursor(): string {
-      notImplemented("public flash.ui.Mouse::get cursor"); return;
-      // return this._cursor;
+    static get cursor(): string {
+      return this._cursor;
     }
-    set cursor(value: string) {
+    static set cursor(value: string) {
       value = asCoerceString(value);
-      notImplemented("public flash.ui.Mouse::set cursor"); return;
-      // this._cursor = value;
+      if (MouseCursor.toNumber(value) < 0) {
+        throwError("ArgumentError", Errors.InvalidParamError, "cursor");
+      }
+      this._cursor = value;
     }
-    get supportsNativeCursor(): boolean {
-      notImplemented("public flash.ui.Mouse::get supportsNativeCursor"); return;
-      // return this._supportsNativeCursor;
+    static get supportsNativeCursor(): boolean {
+      return true;
     }
     static hide(): void {
       somewhatImplemented("public flash.ui.Mouse::static hide"); return;
@@ -274,5 +269,7 @@ module Shumway.AVM2.AS.flash.ui {
     public static updateCurrentPosition(value: flash.geom.Point) {
       this._currentPosition.copyFrom(value);
     }
+
+    static draggableObject: flash.display.Sprite;
   }
 }

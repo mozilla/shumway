@@ -1,8 +1,13 @@
 html {
+  width: 100%;
   height: 100%;
 }
 
 body {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
   background-color: #14171a;
 }
 
@@ -19,7 +24,7 @@ body.simple {
 body.simple > div {
   display: none;
 }
-body.simple #stageContainer {
+body.simple #easelContainer {
   display: block;
 }
 
@@ -36,7 +41,7 @@ body.simple #stageContainer {
   right: 0;
   left: 0;
   width: auto;
-  height: 332px;
+  height: 450px;
   overflow: hidden;
   background-color: #000;
 }
@@ -122,13 +127,23 @@ body.simple #stageContainer {
   display: inline-block;
 }
 
-#stageContainer {
+#easelContainer {
   position: absolute;
   top: 32px;
   bottom: 32px;
   left: 0px;
   right: 0px;
   display: inline-block;
+  overflow: visible;
+}
+
+#flashContainer {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  display: none;
+  mix-blend-mode: difference;
+  opacity: 0.8;
 }
 
 #panelContainer {
@@ -363,20 +378,20 @@ body.hideDebugInfoPanels #profilerContainer {
 
 @media only screen and (max-width: 2560px) {
   #panelContainer { width: 450px; }
-  #stageContainer { right: 450px; }
+  #easelContainer { right: 450px; }
 }
 
 @media only screen and (max-width: 1280px) {
   #panelContainer { width: 350px; }
-  #stageContainer { right: 350px; }
+  #easelContainer { right: 350px; }
 }
 
 @media only screen and (max-width: 1024px) {
   #panelContainer { width: 250px; }
-  #stageContainer { right: 250px; }
+  #easelContainer { right: 250px; }
 }
 
 @media only screen and (max-width: 512px) {
   #panelContainer { display: none !important; }
-  #stageContainer { right: 0; }
+  #easelContainer { right: 0; }
 }

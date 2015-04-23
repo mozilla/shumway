@@ -16,6 +16,7 @@
 // Class: VideoStreamSettings
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class VideoStreamSettings extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.media {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.media.VideoStreamSettings");
+      dummyConstructor("public flash.media.VideoStreamSettings");
     }
     
     // JS -> AS Bindings

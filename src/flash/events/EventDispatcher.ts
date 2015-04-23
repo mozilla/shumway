@@ -16,11 +16,11 @@
 // Class: EventDispatcher
 module Shumway.AVM2.AS.flash.events {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import isFunction = Shumway.isFunction;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import assert = Shumway.Debug.assert;
+  import traceEventsOption = Shumway.AVM2.AS.traceEventsOption;
 
   class EventListenerEntry {
     constructor(public listener: EventHandler, public useCapture: boolean, public priority: number) {
@@ -132,7 +132,7 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     reset() {
-      this._queues = Shumway.ObjectUtilities.createEmptyObject();
+      this._queues = Object.create(null);
     }
 
     add(type: string, target: EventDispatcher) {
@@ -160,14 +160,21 @@ module Shumway.AVM2.AS.flash.events {
       if (!queue) {
         return;
       }
-      //timeline && timeline.enter(Shumway.Timeline.FramePhase[framePhase]);
+      if (!release && traceEventsOption.value) {
+        console.log('Broadcast event of type ' + event._type + ' to ' + queue.length +
+                    ' listeners');
+      }
       var nullCount = 0;
       for (var i = 0; i < queue.length; i++) {
         var target = queue[i];
         if (target === null) {
           nullCount++;
         } else {
-          target.dispatchEvent(event);
+          try {
+            target.dispatchEvent(event);
+          } catch (e) {
+            console.warn('caught error under broadcast event ' + event.type + ': ', e);
+          }
         }
       }
 
@@ -181,7 +188,6 @@ module Shumway.AVM2.AS.flash.events {
         }
         this._queues[event.type] = compactedQueue;
       }
-      //timeline && timeline.leave(Shumway.Timeline.FramePhase[framePhase]);
     }
 
     getQueueLength(type: string) {
@@ -232,6 +238,11 @@ module Shumway.AVM2.AS.flash.events {
       this._target = target || this;
     }
 
+    toString(): string {
+      /* tslint:disable */
+      return ASObject.dynamicPrototype['$BgtoString'].call(this);
+    }
+
     /**
      * Don't lazily construct listener lists if all we're doing is looking for listener types that
      * don't exist yet.
@@ -249,9 +260,9 @@ module Shumway.AVM2.AS.flash.events {
      */
     private _getListeners(useCapture: boolean): Shumway.Map<EventListenerList> {
       if (useCapture) {
-        return this._captureListeners || (this._captureListeners = createEmptyObject());
+        return this._captureListeners || (this._captureListeners = Object.create(null));
       }
-      return this._targetOrBubblingListeners || (this._targetOrBubblingListeners = createEmptyObject());
+      return this._targetOrBubblingListeners || (this._targetOrBubblingListeners = Object.create(null));
     }
 
     addEventListener(type: string, listener: EventHandler, useCapture: boolean = false,
@@ -322,6 +333,13 @@ module Shumway.AVM2.AS.flash.events {
       return !!(this._captureListeners && this._captureListeners[type]);
     }
 
+    /**
+     * Faster internal version of |hasEventListener| that doesn't do any argument checking.
+     */
+    private _hasEventListener(type: string): boolean {
+      return this._hasTargetOrBubblingEventListener(type) || this._hasCaptureEventListener(type);
+    }
+
     hasEventListener(type: string): boolean {
       if (arguments.length !== 1) {
         throwError("ArgumentError", Errors.WrongArgumentCountError,
@@ -331,7 +349,7 @@ module Shumway.AVM2.AS.flash.events {
         throwError("TypeError", Errors.NullPointerError, "type");
       }
       type = asCoerceString(type);
-      return this._hasTargetOrBubblingEventListener(type) || this._hasCaptureEventListener(type);
+      return this._hasEventListener(type);
     }
 
     willTrigger(type: string): boolean {
@@ -343,13 +361,13 @@ module Shumway.AVM2.AS.flash.events {
         throwError("TypeError", Errors.NullPointerError, "type");
       }
       type = asCoerceString(type);
-      if (this.hasEventListener(type)) {
+      if (this._hasEventListener(type)) {
         return true;
       }
       if (flash.display.DisplayObject.isType(this)) {
         var node: flash.display.DisplayObject = (<flash.display.DisplayObject>this)._parent;
         do {
-          if (node.hasEventListener(type)) {
+          if (node._hasEventListener(type)) {
             return true;
           }
         } while ((node = node._parent));
@@ -357,14 +375,47 @@ module Shumway.AVM2.AS.flash.events {
       return false;
     }
 
+    /**
+     * Check to see if we can skip event dispatching in case there are no event listeners
+     * for this |event|.
+     */
+    private _skipDispatchEvent(event: Event): boolean {
+      if (this._hasEventListener(event.type)) {
+        return false;
+      }
+      // Broadcast events don't have capturing or bubbling phases so it's a simple check.
+      if (event.isBroadcastEvent()) {
+        return true;
+      } else if (event._bubbles && flash.display.DisplayObject.isType(this)) {
+        // Check to see if there are any event listeners on the path to the root.
+        for (var node = (<flash.display.DisplayObject>this)._parent; node; node = node._parent) {
+          if (node._hasEventListener(event.type)) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+
     public dispatchEvent(event: Event): boolean {
       if (arguments.length !== 1) {
         throwError("ArgumentError", Errors.WrongArgumentCountError,
-                   "flash.events::EventDispatcher/hasEventListener()", 1, arguments.length);
+                   "flash.events::EventDispatcher/dispatchEvent()", 1, arguments.length);
       }
+      if (this._skipDispatchEvent(event)) {
+        return true;
+      }
+
+      if (!release && traceEventsOption.value) {
+        console.log('Dispatch event of type ' + event._type);
+      }
+
+      release || counter.count("EventDispatcher::dispatchEvent");
 
       var type = event._type;
       var target = this._target;
+
+      release || counter.count("EventDispatcher::dispatchEvent(" + type + ")");
 
       /**
        * 1. Capturing Phase
@@ -377,7 +428,7 @@ module Shumway.AVM2.AS.flash.events {
 
         // Gather all parent display objects that have event listeners for this event type.
         while (node) {
-          if (node.hasEventListener(type)) {
+          if (node._hasEventListener(type)) {
             ancestors.push(node);
           }
           node = node._parent;
@@ -401,8 +452,8 @@ module Shumway.AVM2.AS.flash.events {
       if (keepPropagating) {
         var list = this._getListenersForType(false, type);
         if (list) {
-          keepPropagating = EventDispatcher.callListeners(this._getListeners(false)[type], event,
-                                                          target, target, EventPhase.AT_TARGET);
+          keepPropagating = EventDispatcher.callListeners(list, event, target, target,
+                                                          EventPhase.AT_TARGET);
         }
       }
 
@@ -435,7 +486,7 @@ module Shumway.AVM2.AS.flash.events {
        * all listener callbacks but not when bubbling.
        */
       if (event._target) {
-        event = event.clone();
+        event = event.asCallPublicProperty('clone', null);
       }
       var snapshot = list.snapshot();
       for (var i = 0; i < snapshot.length; i++) {

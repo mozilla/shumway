@@ -16,6 +16,7 @@
 // Class: NetGroupInfo
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NetGroupInfo extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.net {
     constructor (postingSendDataBytesPerSecond: number, postingSendControlBytesPerSecond: number, postingReceiveDataBytesPerSecond: number, postingReceiveControlBytesPerSecond: number, routingSendBytesPerSecond: number, routingReceiveBytesPerSecond: number, objectReplicationSendBytesPerSecond: number, objectReplicationReceiveBytesPerSecond: number) {
       postingSendDataBytesPerSecond = +postingSendDataBytesPerSecond; postingSendControlBytesPerSecond = +postingSendControlBytesPerSecond; postingReceiveDataBytesPerSecond = +postingReceiveDataBytesPerSecond; postingReceiveControlBytesPerSecond = +postingReceiveControlBytesPerSecond; routingSendBytesPerSecond = +routingSendBytesPerSecond; routingReceiveBytesPerSecond = +routingReceiveBytesPerSecond; objectReplicationSendBytesPerSecond = +objectReplicationSendBytesPerSecond; objectReplicationReceiveBytesPerSecond = +objectReplicationReceiveBytesPerSecond;
       false && super();
-      notImplemented("Dummy Constructor: public flash.net.NetGroupInfo");
+      dummyConstructor("public flash.net.NetGroupInfo");
     }
     
     // JS -> AS Bindings

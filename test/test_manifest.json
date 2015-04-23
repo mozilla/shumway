@@ -1,26 +1,278 @@
 [
-    {  "id": "events",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/events/dispatch.swf",
-         "swfs/events/priority.swf",
-         "swfs/events/propagation.swf"
-       ],
-       "type": "stas"
+    {  "id": "acid-bitmapData-copyPixels",
+       "frames": [1],
+       "swf": "swfs/acid/acid-bitmapData-copyPixels.swf",
+       "type": "eq"
     },
-    {  "id": "basic",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/add.swf",
-         "swfs/encoding1.swf",
-         "swfs/fscommand1.swf",
-         "swfs/local2global.swf",
-         "swfs/movieinfo1.swf",
-         "swfs/stream1.swf",
-         "swfs/stroke1.swf",
-         "swfs/targetPath1.swf"
-       ],
-       "type": "stas"
+    {  "id": "acid-image",
+       "frames": [10],
+       "swf": "swfs/acid/acid-image.swf",
+       "type": "eq"
+    },
+    { "id": "acid-filter",
+      "frames": [1],
+      "swf": "swfs/acid/acid-filter.swf",
+      "type": "eq"
+    },
+    {  "id": "acid",
+      "frames": [10],
+      "swf": "swfs/acid/acid.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-bitmap-draw",
+      "frames": [1],
+      "swf": "swfs/acid/acid-bitmap-draw.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-bitmap-fill-2",
+      "frames": [1],
+      "swf": "swfs/acid/acid-bitmap-fill-2.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-bitmap-fill",
+      "frames": [1],
+      "swf": "swfs/acid/acid-bitmap-fill.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-bitmapData-draw",
+      "frames": [1],
+      "swf": "swfs/acid/acid-bitmapData-draw.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-bitmaps",
+      "frames": [5, 10],
+      "swf": "swfs/acid/acid-bitmaps.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-chars",
+      "frames": [1],
+      "swf": "swfs/acid/acid-chars.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-child",
+      "frames": [5, 10],
+      "swf": "swfs/acid/acid-child.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-clip",
+      "frames": [1],
+      "swf": "swfs/acid/acid-clip.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-clip-2",
+      "frames": [1],
+      "swf": "swfs/acid/acid-clip-2.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-clip-3",
+      "frames": [3, 10],
+      "swf": "swfs/acid/acid-clip-3.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-color-0",
+      "frames": [1],
+      "swf": "swfs/acid/acid-color-0.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-color-2",
+      "frames": [1],
+      "swf": "swfs/acid/acid-color-2.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-color",
+      "frames": [1, 10],
+      "swf": "swfs/acid/acid-color.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-gradient-0",
+      "frames": [1],
+      "swf": "swfs/acid/acid-gradient-0.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-gradient-1",
+      "frames": [1],
+      "swf": "swfs/acid/acid-gradient-1.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-gradient-2",
+      "frames": [1],
+      "swf": "swfs/acid/acid-gradient-2.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-gradient",
+      "frames": [1],
+      "swf": "swfs/acid/acid-gradient.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-large",
+      "frames": [20],
+      "swf": "swfs/acid/acid-large.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-mask",
+      "frames": [5, 10],
+      "swf": "swfs/acid/acid-mask.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-scale",
+      "frames": [1],
+      "swf": "swfs/acid/acid-scale.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-shapes-testing",
+      "frames": [1],
+      "swf": "swfs/acid/acid-shapes-testing.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-shapes",
+      "frames": [1],
+      "swf": "swfs/acid/acid-shapes.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-small",
+      "frames": [1, 5],
+      "swf": "swfs/acid/acid-small.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-stroke-0",
+      "frames": [1],
+      "swf": "swfs/acid/acid-stroke-0.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-text-2",
+      "frames": [1],
+      "swf": "swfs/acid/acid-text-2.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-text-3",
+      "frames": [1],
+      "swf": "swfs/acid/acid-text-3.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-text-6",
+      "frames": [1, 20],
+      "swf": "swfs/acid/acid-text-6.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-text-escape",
+      "frames": [1],
+      "swf": "swfs/acid/acid-text-escape.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-text-x",
+      "frames": [1],
+      "swf": "swfs/acid/acid-text-x.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-text",
+      "frames": [1],
+      "swf": "swfs/acid/acid-text.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-textfield",
+      "frames": [1],
+      "swf": "swfs/acid/acid-textfield.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-textfield-stas",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/acid/acid-textfield.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "acid-textfield-scroll",
+      "frames": [1],
+      "swf": "swfs/acid/acid-textfield-scroll.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-textfield-scroll-stas",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/acid/acid-textfield-scroll.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "acid-morph",
+      "frames": [1, 15, 30],
+      "swf": "swfs/acid/acid-morph.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-morph-stas",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/acid/acid-morph.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "getObjectsUnderPoint",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/getobjectsunderpoint.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "timeline",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/timeline/events/timeline_events_fp10.swf",
+        "swfs/timeline/events/timeline_events_fp9.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "timeline_as2",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/timeline/timeline_as2_1.swf",
+        "swfs/timeline/timeline_as2_2.swf",
+        "swfs/timeline/timeline_as2_3.swf",
+        "swfs/timeline/timeline_as2_4.swf",
+        "swfs/avm1timeline1.swf",
+        "swfs/avm1timeline2.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "timeline_name",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/timeline/timeline_name_0.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "timeline_scene",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/timeline/scene/EncodedU32.swf",
+        "swfs/timeline/scene/Scene_1_MainTimeline.swf",
+        "swfs/timeline/scene/Scene_2_MovieClipTimeline.swf",
+        "swfs/timeline/scene/Scene_3_GotoAndStop_LabelScene.swf",
+        "swfs/timeline/scene/Scene_4_GotoAndStop_FrameScene.swf",
+        "swfs/timeline/scene/Scene_5_GotoAndPlay_LabelScene.swf",
+        "swfs/timeline/scene/Scene_6_GotoAndPlay_FrameScene.swf",
+        "swfs/timeline/scene/Scene_7_NextPrevScene.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "avm1basic",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/lookup/avm1-childlookup.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "flash_net_URLRequest trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/flash_net_URLRequest.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "avm1 loadVariables trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/loadvariables/loadvariables.swf"
+      ],
+      "type": "stas"
     },
     {  "id": "button",
        "stas": "swfs/button.stas",
@@ -30,12 +282,40 @@
        ],
        "type": "stas"
     },
+    {  "id": "avm1-nested-button",
+       "stas": "swfs/avm1/nested-button/nested-button-click.stas",
+       "filenames": [
+         "swfs/avm1/nested-button/nested-button-click.swf"
+       ],
+       "type": "stas"
+    },
+    {  "id": "avm1-mouse-transparency",
+       "stas": "swfs/avm1/mouse-transparency/mouse-transparency.stas",
+       "filenames": [
+         "swfs/avm1/mouse-transparency/mouse-transparency.swf"
+       ],
+       "type": "stas"
+    },
+    {  "id": "avm1-rollover",
+      "stas": "swfs/avm1/rollover/avm1-rollover.stas",
+      "filenames": [
+        "swfs/avm1/rollover/avm1-rollover.swf"
+      ],
+      "type": "stas"
+    },
     {  "id": "ZeroClipboardTest",
        "stas": "swfs/ZeroClipboardTest.stas",
        "filenames": [
          "swfs/ZeroClipboardTest.swf"
        ],
        "type": "stas"
+    },
+    {  "id": "flash_net_SharedObject trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/flash_net_SharedObject.swf"
+      ],
+      "type": "stas"
     },
     {  "id": "button-ref",
        "frames": [1],
@@ -47,25 +327,42 @@
        "swf": "/examples/as3_tiger/tiger.swf",
        "type": "eq"
     },
+    {  "id": "image-loading",
+      "frames": [60],
+      "swf": "/examples/image-loading/image-loading.swf",
+      "type": "eq"
+    },
     {  "id": "bitmap-ref",
-      "frames": [1],
+      "frames": [20],
       "swf": "swfs/bitmapbuttons.swf",
       "type": "eq"
     },
     {  "id": "flex-bitmap-ref",
-      "frames": [0],
+      "frames": [1],
       "swf": "/examples/bitmap/flex-bitmap/flexbitmap.swf",
       "type": "eq"
     },
     {  "id": "non-smoothed-bitmap-ref",
-      "frames": [0],
+      "frames": [1],
       "swf": "/examples/bitmap/non-smoothed-bitmap/nonsmoothedbitmap.swf",
       "type": "eq"
+    },
+    {  "id": "getpixel-from-embedded",
+      "stas": "swfs/trace.stas",
+      "filenames": ["swfs/bitmapdata/getpixel-from-embedded.swf"],
+      "type": "stas"
     },
     {  "id": "pac-ref",
        "frames": [1, 5, 10],
        "swf": "/examples/pac/pac.swf",
        "type": "eq"
+    },
+    {  "id": "3_joystick",
+       "stas": "swfs/3_joystick.stas",
+       "filenames": [
+         "swfs/3_joystick.swf"
+       ],
+       "type": "stas"
     },
     {  "id": "race-ref",
        "frames": [20, 30],
@@ -77,220 +374,25 @@
        "swf": "swfs/gradient.swf",
        "type": "eq"
     },
-    {  "id": "timeline",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/timeline/events/timeline_events_fp9.swf",
-         "swfs/timeline/events/timeline_events_fp10.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "timeline_as2",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/timeline/timeline_as2_1.swf",
-         "swfs/timeline/timeline_as2_2.swf",
-         "swfs/timeline/timeline_as2_3.swf"
-       ],
-       "type": "stas"
-    },
     {  "id": "box2d-ref",
        "frames": [50, 100],
        "swf": "/examples/Box2DFlashAS3/demo.swf",
        "type": "eq"
-    },
-    {  "id": "avm1timeline",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/avm1timeline1.swf",
-         "swfs/avm1timeline2.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_utils_ByteArray",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_utils_ByteArray.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_utils_Timer",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_utils_Timer.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_display_Stage trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_display_Stage.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_display_DisplayObject trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_display_DisplayObject.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_display_DisplayObjectContainer trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_display_DisplayObjectContainer.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_display_Graphics trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_display_Graphics.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_system_System trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_system_System.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_system_Security trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_system_Security.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_system_SecurityDomain trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_system_SecurityDomain.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_system_Capabilities trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_system_Capabilities.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_net_SharedObject trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_net_SharedObject.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_net_URLRequest trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_net_URLRequest.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_display_Shape trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_display_Shape.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_filters_BlurFilter trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_filters_BlurFilter.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_filters_DropShadowFilter trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_filters_DropShadowFilter.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_filters_GlowFilter trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_filters_GlowFilter.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_geom_Matrix3D trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_geom_Matrix3D.swf"
-       ],
-       "type": "stas"
     },
     {  "id": "flash_geom_ColorTransform",
        "frames": [1],
        "swf": "swfs/flash_geom_ColorTransform.swf",
        "type": "eq"
     },
-    {  "id": "flash_text_TextField trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_text_TextField.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_net_classes trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_net_classes.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_ui_ContextMenu trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_ui_ContextMenu.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "zombo trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/ZombotronTest.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "3_joystick",
-       "stas": "swfs/3_joystick.stas",
-       "filenames": [
-         "swfs/3_joystick.swf"
-       ],
-       "type": "stas"
-    },
     {  "id": "MaskTest",
        "frames": [1],
        "swf": "swfs/MaskTest.swf",
        "type": "eq"
     },
-    {  "id": "timeline_scene",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/timeline/scene/Scene_1_MainTimeline.swf",
-         "swfs/timeline/scene/Scene_2_MovieClipTimeline.swf",
-         "swfs/timeline/scene/Scene_3_GotoAndStop_LabelScene.swf",
-         "swfs/timeline/scene/Scene_4_GotoAndStop_FrameScene.swf",
-         "swfs/timeline/scene/Scene_5_GotoAndPlay_LabelScene.swf",
-         "swfs/timeline/scene/Scene_6_GotoAndPlay_FrameScene.swf",
-         "swfs/timeline/scene/Scene_7_NextPrevScene.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "blendmode_trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/blendmode/blendmode_1.swf",
-         "swfs/blendmode/blendmode_2.swf"
-       ],
-       "type": "stas"
+    {  "id": "MaskTest-2",
+       "frames": [1],
+       "swf": "swfs/MaskTest-2.swf",
+       "type": "eq"
     },
     {  "id": "graphics-fills-ref",
       "frames": [1],
@@ -302,35 +404,63 @@
       "swf": "/examples/graphics/various-strokes.swf",
       "type": "eq"
     },
-    {  "id": "graphics-bounding-boxes-ref",
-      "frames": [1],
-      "swf": "/examples/graphics/bounding-boxes.swf",
-      "type": "eq"
-    },
     {  "id": "textfield-align-ref",
       "frames": [1],
       "swf": "/examples/textfield/align.swf",
       "type": "eq"
     },
-    {  "id": "avm1 setInterval trace",
+    {  "id": "stylesheet-basics",
+      "frames": [1],
+      "swf": "swfs/stylesheet.swf",
+      "type": "eq"
+    },
+    {  "id": "text-bind-ref",
+      "frames": [3],
+      "swf": "swfs/avm1/text-bind/text-bind-1.swf",
+      "type": "eq"
+    },
+    {  "id": "as3-loader",
       "stas": "swfs/trace.stas",
       "filenames": [
-        "swfs/avm1/setinterval/setinterval.swf"
+        "swfs/as3-loader/LoaderTest.swf",
+        "swfs/as3-loader/LoaderLoadBytesTest.swf",
+        "swfs/as3-loader/LoaderLoadBytesTest2.swf",
+        "swfs/as3-loader/loaderinfo/loaded-content-properties.swf"
       ],
       "type": "stas"
     },
-    {  "id": "avm1 setTimeout trace",
+    {  "id": "defineFont2-test",
+       "frames": [60],
+       "swf": "swfs/food.swf",
+       "type": "eq"
+    },
+    {  "id": "hit-test",
       "stas": "swfs/trace.stas",
       "filenames": [
-        "swfs/avm1/settimeout/settimeout.swf"
+        "swfs/hitTestStyleChange.swf"
       ],
       "type": "stas"
     },
-    {  "id": "avm1 loadVariables trace",
-      "stas": "swfs/trace.stas",
+    {  "id": "hit-test-masked",
+       "stas": "swfs/hittesting/mask-hit-test.stas",
       "filenames": [
-        "swfs/avm1/loadvariables/loadvariables.swf"
+        "swfs/hittesting/mask-hit-test.swf"
       ],
       "type": "stas"
+    },
+    {  "id": "captions",
+      "frames": [1],
+      "swf": "swfs/captions.swf",
+      "type": "eq"
+    },
+    {  "id": "hard-wrap",
+      "frames": [1],
+      "swf": "swfs/hardwrap.swf",
+      "type": "eq"
+    },
+    {  "id": "clipping",
+      "frames": [1],
+      "swf": "swfs/clipping.swf",
+      "type": "eq"
     }
 ]

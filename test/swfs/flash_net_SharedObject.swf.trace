@@ -1,3 +1,4 @@
-PASS: flash.net::SharedObject$/set defaultObjectEncoding ()
-PASS: flash.net::SharedObject$/getLocal ()
-PASS: flash.net::SharedObject/get data ()
+stored value of `x`: 10
+stored data's size: 9
+stored value of `x` after clear: undefined
+stored data's size after clear: 0

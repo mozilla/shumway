@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2014 Mozilla Foundation
  *
@@ -25,23 +23,31 @@ module Shumway {
   export var playerOptions = shumwayOptions.register(new OptionSet("Player Options"));
 
   export var frameEnabledOption = playerOptions.register (
-    new Shumway.Options.Option("", "Enable Frame Execution", "boolean", true, "Enable frame execution.")
+    new Shumway.Options.Option("enableFrames", "Enable Frame Execution", "boolean", true, "Enable frame execution.")
   );
 
   export var timerEnabledOption = playerOptions.register (
-    new Shumway.Options.Option("", "Enable Timers", "boolean", true, "Enable timer events.")
+    new Shumway.Options.Option("enableTimers", "Enable Timers", "boolean", true, "Enable timer events.")
   );
 
   export var pumpEnabledOption = playerOptions.register (
-    new Shumway.Options.Option("", "Enable Pump", "boolean", true, "Enable display tree serialization.")
+    new Shumway.Options.Option("enablePump", "Enable Pump", "boolean", true, "Enable display tree serialization.")
   );
 
   export var pumpRateOption = playerOptions.register (
-    new Shumway.Options.Option("", "Pump Rate", "number", 80, "Number of times / second that the display list is synchronized.", {range: { min: 1, max: 120, step: 1 }})
+    new Shumway.Options.Option("pumpRate", "Pump Rate", "number", 60, "Number of times / second that the display list is synchronized.", {range: { min: 1, max: 120, step: 1 }})
   );
 
   export var frameRateOption = playerOptions.register (
-    new Shumway.Options.Option("", "Frame Rate", "number", 60, "Override a movie's frame rate, set to -1 to use the movies default frame rate.", {range: { min: 1, max: 120, step: 1 }})
+    new Shumway.Options.Option("frameRate", "Frame Rate", "number", -1, "Override a movie's frame rate, set to -1 to use the movies default frame rate.", {range: { min: -1, max: 120, step: 1 }})
+  );
+
+  export var tracePlayerOption = playerOptions.register (
+    new Shumway.Options.Option("tp", "Trace Player", "number", 0, "Trace player every n frames.", {range: { min: 0, max: 512, step: 1 }})
+  );
+
+  export var traceMouseEventOption = playerOptions.register (
+    new Shumway.Options.Option("tme", "Trace Mouse Events", "boolean", false, "Trace mouse events.")
   );
 
   export var frameRateMultiplierOption = playerOptions.register (
@@ -66,9 +72,5 @@ module Shumway {
 
   export var playSymbolCountOption = playerOptions.register (
     new Shumway.Options.Option("", "Play Symbol Count", "number", -1, "Select symbol count.", {range: { min: 0, max: 20000, step: 1 }})
-  );
-
-  export var stageScaleOption = playerOptions.register (
-    new Shumway.Options.Option("", "Stage Scale", "number", 1, "Scales the symbols.", {range: { min: 0.1, max: 16, step: 0.01 }})
   );
 }

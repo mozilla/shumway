@@ -70,33 +70,6 @@ module Shumway.AVM2.AS.flash.text {
     private _underline: Object;
     private _url: string;
 
-    as2GetTextExtent(text: string, width: number/* optional */) {
-      if (!TextFormat.measureTextField) {
-        TextFormat.measureTextField = new flash.text.TextField();
-        TextFormat.measureTextField._multiline = true;
-      }
-      var measureTextField = TextFormat.measureTextField;
-      if (!isNaN(width) && width > 0) {
-        measureTextField.width = width + 4;
-        measureTextField._wordWrap = true;
-      } else {
-        measureTextField._wordWrap = false;
-      }
-      measureTextField.defaultTextFormat = this;
-      measureTextField.text = text;
-      var result: any = {};
-      var textWidth: number = measureTextField.textWidth;
-      var textHeight: number = measureTextField.textHeight;
-      result.asSetPublicProperty('width', textWidth);
-      result.asSetPublicProperty('height', textHeight);
-      result.asSetPublicProperty('textFieldWidth', textWidth + 4);
-      result.asSetPublicProperty('textFieldHeight', textHeight + 4);
-      var metrics: TextLineMetrics = measureTextField.getLineMetrics(0);
-      result.asSetPublicProperty('ascent', metrics.ascent);
-      result.asSetPublicProperty('descent', metrics.descent);
-      return result;
-    }
-
     // AS -> JS Bindings
     get align(): string {
       return this._align;
@@ -139,7 +112,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set color(value: Object) {
-      this._color = +value | 0;
+      this._color = value != null ? +value | 0 : null;
     }
 
     get display(): string {
@@ -156,6 +129,18 @@ module Shumway.AVM2.AS.flash.text {
 
     set font(value: string) {
       this._font = asCoerceString(value);
+    }
+
+    get style(): string {
+      if (this._bold && this._italic) {
+        return FontStyle.BOLD_ITALIC;
+      } else if (this._bold) {
+        return FontStyle.BOLD;
+      } else if (this._italic) {
+        return FontStyle.ITALIC;
+      } else {
+        return FontStyle.REGULAR;
+      }
     }
 
     get indent(): Object {
@@ -325,6 +310,213 @@ module Shumway.AVM2.AS.flash.text {
              this._target === other._target &&
              this._underline === other._underline &&
              this._url === other._url;
+    }
+
+    public merge(other: TextFormat) {
+      if (other._align !== null) {
+        this._align = other._align;
+      }
+      if (other._blockIndent !== null) {
+        this._blockIndent = other._blockIndent;
+      }
+      if (other._bold !== null) {
+        this._bold = other._bold;
+      }
+      if (other._bullet !== null) {
+        this._bullet = other._bullet;
+      }
+      if (other._color !== null) {
+        this._color = other._color;
+      }
+      if (other._display !== null) {
+        this._display = other._display;
+      }
+      if (other._font) {
+        this._font = other._font;
+      }
+      if (other._indent !== null) {
+        this._indent = other._indent;
+      }
+      if (other._italic !== null) {
+        this._italic = other._italic;
+      }
+      if (other._kerning !== null) {
+        this._kerning = other._kerning;
+      }
+      if (other._leading !== null) {
+        this._leading = other._leading;
+      }
+      if (other._leftMargin !== null) {
+        this._leftMargin = other._leftMargin;
+      }
+      if (other._letterSpacing !== null) {
+        this._letterSpacing = other._letterSpacing;
+      }
+      if (other._rightMargin !== null) {
+        this._rightMargin = other._rightMargin;
+      }
+      if (other._size !== null) {
+        this._size = other._size;
+      }
+      if (other._tabStops !== null) {
+        this._tabStops = other._tabStops;
+      }
+      if (other._target) {
+        this._target = other._target;
+      }
+      if (other._underline !== null) {
+        this._underline = other._underline;
+      }
+      if (other._url) {
+        this._url = other._url;
+      }
+    }
+
+    public intersect(other: TextFormat) {
+      if (other._align !== this._align) {
+        this._align = null;
+      }
+      if (other._blockIndent !== this._blockIndent) {
+        this._blockIndent = null;
+      }
+      if (other._bold !== this._bold) {
+        this._bold = null;
+      }
+      if (other._bullet !== this._bullet) {
+        this._bullet = null;
+      }
+      if (other._color !== this._color) {
+        this._color = null;
+      }
+      if (other._display !== this._display) {
+        this._display = null;
+      }
+      if (other._font !== this._font) {
+        this._font = null;
+      }
+      if (other._indent !== this._indent) {
+        this._indent = null;
+      }
+      if (other._italic !== this._italic) {
+        this._italic = null;
+      }
+      if (other._kerning !== this._kerning) {
+        this._kerning = null;
+      }
+      if (other._leading !== this._leading) {
+        this._leading = null;
+      }
+      if (other._leftMargin !== this._leftMargin) {
+        this._leftMargin = null;
+      }
+      if (other._letterSpacing !== this._letterSpacing) {
+        this._letterSpacing = null;
+      }
+      if (other._rightMargin !== this._rightMargin) {
+        this._rightMargin = null;
+      }
+      if (other._size !== this._size) {
+        this._size = null;
+      }
+      if (other._tabStops !== this._tabStops) {
+        this._tabStops = null;
+      }
+      if (other._target !== this._target) {
+        this._target = null;
+      }
+      if (other._underline !== this._underline) {
+        this._underline = null;
+      }
+      if (other._url !== this._url) {
+        this._url = null;
+      }
+    }
+
+    public transform(formatObject: Style) {
+      var v = formatObject.textAlign;
+      if (v) {
+        this.align = v;
+      }
+      v = formatObject.fontWeight;
+      if (v === "bold") {
+        this.bold = true;
+      } else if (v === "normal") {
+        this.bold = false;
+      }
+      v = formatObject.color;
+      if (v) {
+        // When parsing colors, whitespace is trimmed away, and all numbers are accepted, as long
+        // as they make up the full string after the "#", without any non-numeric pre- or suffix.
+        // This implementation is somewhat atrocious, but it should be reasonably fast and works.
+        var colorStr = asCoerceString(v).trim().toLowerCase();
+        if (colorStr[0] === '#') {
+          var numericPart = colorStr.substr(1);
+          while (numericPart[0] === '0') {
+            numericPart = numericPart.substr(1);
+          }
+          var colorVal = parseInt(numericPart, 16);
+          if (colorVal.toString(16) === numericPart) {
+            this.color = colorVal;
+          }
+        }
+      }
+      v = formatObject.display;
+      if (v) {
+        this.display = v;
+      }
+      v = formatObject.fontFamily;
+      if (v) {
+        // TODO: Sanitize fontFamily string.
+        this.font = v.replace('sans-serif', '_sans').replace('serif', '_serif');
+      }
+      v = formatObject.textIndent;
+      if (v) {
+        this.indent = parseInt(v);
+      }
+      v = formatObject.fontStyle;
+      if (v === "italic") {
+        this.italic = true;
+      } else if (v === "normal") {
+        this.italic = false;
+      }
+      v = formatObject.kerning;
+      if (v === "true") {
+        this.kerning = 1;
+      } else if (v === "false") {
+        this.kerning = 0;
+      } else {
+        this.kerning = parseInt(v);
+      }
+      v = formatObject.leading;
+      if (v) {
+        this.leading = parseInt(v);
+      }
+      v = formatObject.marginLeft;
+      if (v) {
+        this.leftMargin = parseInt(v);
+      }
+      v = formatObject.letterSpacing;
+      if (v) {
+        this.letterSpacing = parseFloat(v);
+      }
+      v = formatObject.marginRight;
+      if (v) {
+        this.rightMargin = parseInt(v);
+      }
+      v = formatObject.fontSize;
+      if (v) {
+        var size = parseInt(v);
+        if (size > 0) {
+          this.size = size;
+        }
+      }
+      v = formatObject.textDecoration;
+      if (v === "none") {
+        this.underline = false;
+      } else if (v === "underline") {
+        this.underline = true;
+      }
+      return this;
     }
   }
 }

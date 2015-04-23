@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      background-color: #1a2633;
+      font: 12px Consolas, "Liberation Mono", Courier, monospace;
+    }
+
+    iframe {
+      border: 0px;
+      margin: 0px;
+      // display: block;
+    }
+
+    #host {
+      // display: none; // Can't set this to none, otherwise RAF doesn't fire.
+    }
+  </style>
+</head>
+  <body onload="onLoad()">
+    <iframe id="host" src="host.html" width="1" height="1"></iframe>
+
+    <div id="children">
+
+    </div>
+    <script>
+      var hostWindow;
+      var childrenContainer;
+
+      function appendEasel() {
+        var childFrame = document.createElement("iframe");
+        childFrame.width = 128;
+        childFrame.height = 64;
+        childFrame.src = "child.html";
+        childFrame.onload = (function (frame) {
+          return function () {
+            var container = frame.contentWindow.document.getElementById("container");
+            hostWindow.createEasel(container);
+          }
+        })(childFrame);
+        childrenContainer.appendChild(childFrame);
+      }
+
+      function removeEasel() {
+        var frame = childrenContainer.firstElementChild;
+        var container = frame.contentWindow.document.getElementById("container");
+        hostWindow.destroyEasel(container);
+        childrenContainer.removeChild(childrenContainer.firstChild);
+      }
+
+      function onLoad() {
+        hostWindow = document.getElementById("host").contentWindow;
+        childrenContainer = document.getElementById("children");
+
+        for (var i = 0; i < 30; i ++) {
+          appendEasel();
+        }
+
+        setInterval(function () {
+          for (var i = 0; i < 1; i++) {
+            removeEasel();
+            appendEasel();
+          }
+        }, 1000);
+      }
+    </script>
+  </body>
+</html>

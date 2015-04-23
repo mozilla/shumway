@@ -30,13 +30,10 @@ module Shumway.AVM2.Runtime {
   import createMap = Shumway.ObjectUtilities.createMap;
   import cloneObject = Shumway.ObjectUtilities.cloneObject;
   import copyProperties = Shumway.ObjectUtilities.copyProperties;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
-  import bindSafely = Shumway.FunctionUtilities.bindSafely;
   import assert = Shumway.Debug.assert;
 
   import defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
-  import defineReadOnlyProperty = Shumway.ObjectUtilities.defineReadOnlyProperty;
   import defineNonEnumerableGetter = Shumway.ObjectUtilities.defineNonEnumerableGetter;
   import makeForwardingGetter = Shumway.FunctionUtilities.makeForwardingGetter;
   import makeForwardingSetter = Shumway.FunctionUtilities.makeForwardingSetter;
@@ -146,7 +143,7 @@ module Shumway.AVM2.Runtime {
         release || assert(!hasOwnProperty(object, VM_OPEN_METHODS), "Already has VM_OPEN_METHODS.");
 
         defineNonEnumerableProperty(object, VM_SLOTS, new SlotInfoMap());
-        defineNonEnumerableProperty(object, VM_BINDINGS, []);
+        defineNonEnumerableProperty(object, VM_BINDINGS, Object.create(null));
         defineNonEnumerableProperty(object, VM_OPEN_METHODS, createMap<Function>());
 
         defineNonEnumerableProperty(object, "bindings", this);
@@ -156,7 +153,7 @@ module Shumway.AVM2.Runtime {
       traitsWriter && traitsWriter.greenLn("Applying Traits" + (append ? " (Append)" : ""));
 
       for (var key in this.map) {
-        var binding = this.map[key];
+        var binding: Binding = this.map[key];
         var trait = binding.trait;
         var qn = Multiname.getQualifiedName(trait.name);
         if (trait.isSlot() || trait.isConst() || trait.isClass()) {
@@ -165,17 +162,18 @@ module Shumway.AVM2.Runtime {
             if (trait.hasDefaultValue) {
               defaultValue = trait.value;
             } else if (trait.typeName) {
-              defaultValue = domain.findClassInfo(trait.typeName).defaultValue;
+              var classInfo = domain.findClassInfo(trait.typeName);
+              if (classInfo) {
+                defaultValue = classInfo.defaultValue;
+              }
             }
           }
           if (key !== qn) {
             traitsWriter && traitsWriter.yellowLn("Binding Trait: " + key + " -> " + qn);
             defineNonEnumerableGetter(object, key, makeForwardingGetter(qn));
-            pushUnique(object.asBindings, key);
           } else {
             traitsWriter && traitsWriter.greenLn("Applying Trait " + trait.kindName() + ": " + trait);
             defineNonEnumerableProperty(object, qn, defaultValue);
-            pushUnique(object.asBindings, qn);
             var slotInfo = new SlotInfo(
               qn,
               trait.isConst(),
@@ -194,15 +192,9 @@ module Shumway.AVM2.Runtime {
           } else {
             traitsWriter && traitsWriter.greenLn("Applying Trait " + trait.kindName() + ": " + trait);
           }
-          pushUnique(object.asBindings, key);
-          enterTimeline("applyMethodTrait");
-          if (this instanceof ScriptBindings) {
-            applyNonMemoizedMethodTrait(key, trait, object, binding.scope, binding.natives);
-          } else {
-            applyMemoizedMethodTrait(key, trait, object, binding.scope, binding.natives);
-          }
-          leaveTimeline();
+          applyMethodTrait(key, object, binding, !(this instanceof ScriptBindings));
         }
+        object.asBindings[key] = true;
       }
     }
   }
@@ -316,7 +308,7 @@ module Shumway.AVM2.Runtime {
       this.natives = natives;
       this.parent = parent;
       this.instanceInfo = instanceInfo;
-      this.implementedInterfaces = parent ? cloneObject(parent.implementedInterfaces) : createEmptyObject();
+      this.implementedInterfaces = parent ? cloneObject(parent.implementedInterfaces) : Object.create(null);
       if (parent) {
         this.slots = parent.slots.slice();
         this.nextSlotId = parent.nextSlotId;
@@ -397,7 +389,7 @@ module Shumway.AVM2.Runtime {
           map[key] = binding;
           if (trait.isProtected()) {
             // Inherit protected trait also in the local protected namespace.
-            protectedName = Multiname.getQualifiedName(new Multiname([ii.protectedNs], trait.name.getName()));
+            protectedName = Multiname.getQualifiedName(new Multiname([ii.protectedNs], trait.name.getName(), 0));
             protectedKey = Binding.getKey(protectedName, trait);
             map[protectedKey] = binding;
           }
@@ -409,13 +401,13 @@ module Shumway.AVM2.Runtime {
         var oldBinding = object[key];
         if (oldBinding) {
           var oldTrait = oldBinding.trait;
-          release || assert (!oldTrait.isFinal(), "Cannot redefine a final trait: ", trait);
+          release || assert (!oldTrait.isFinal(), "Cannot redefine a final trait: " + trait);
           // TODO: Object.as has a trait named length, we need to remove this since
           // it doesn't appear in Tamarin.
           release || assert (trait.isOverride() || trait.name.getName() === "length",
-            "Overriding a trait that is not marked for override: ", trait);
+            "Overriding a trait that is not marked for override: " + trait);
         } else {
-          release || assert (!trait.isOverride(), "Trait marked override must override another trait: ", trait);
+          release || assert (!trait.isOverride(), "Trait marked override must override another trait: " + trait);
         }
         object[key] = binding;
       }
@@ -439,8 +431,9 @@ module Shumway.AVM2.Runtime {
         if (trait.isProtected()) {
           // Overwrite protected traits.
           ib = this.parent;
-          while (ib) {
-            protectedName = Multiname.getQualifiedName(new Multiname([ib.instanceInfo.protectedNs], trait.name.getName()));
+          while (ib && ib.instanceInfo.protectedNs) {
+            protectedName = Multiname.getQualifiedName(new Multiname([ib.instanceInfo.protectedNs],
+                                                                     trait.name.getName(), 0));
             protectedKey = Binding.getKey(protectedName, trait);
             overwriteProtectedBinding(map, protectedKey, binding);
             ib = ib.parent;

@@ -15,7 +15,6 @@
  */
 // Class: UncaughtErrorEvents
 module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
   export class UncaughtErrorEvents extends flash.events.EventDispatcher {
 
     static classInitializer: any = null;
@@ -25,8 +24,8 @@ module Shumway.AVM2.AS.flash.events {
     static instanceSymbols: string [] = null;
 
     constructor() {
-      super(undefined);
-      notImplemented("Dummy Constructor: public flash.events.UncaughtErrorEvents");
+      false && super();
+      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
     }
   }
 }

@@ -16,6 +16,7 @@
 // Class: DisplacementMapFilterMode
 module Shumway.AVM2.AS.flash.filters {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class DisplacementMapFilterMode extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.filters {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.filters.DisplacementMapFilterMode");
+      dummyConstructor("public flash.filters.DisplacementMapFilterMode");
     }
     
     // JS -> AS Bindings

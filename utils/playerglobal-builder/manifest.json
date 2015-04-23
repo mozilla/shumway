@@ -231,7 +231,6 @@
       "flash.geom:Point",
       "flash.display:LoaderInfo",
       "flash.geom:Rectangle",
-      "flash.display:Shader",
       "flash.geom:Vector3D",
       "flash.display:DisplayObjectContainer",
       "flash.display:Stage",
@@ -314,8 +313,6 @@
       "flash.display:GraphicsPath",
       "flash.display:GraphicsSolidFill",
       "flash.display:IGraphicsFill",
-      "flash.display:Shader",
-      "flash.display:GraphicsShaderFill",
       "flash.display:BitmapData",
       "flash.display:GraphicsTrianglePath",
       "flash.display:IGraphicsPath",
@@ -407,21 +404,6 @@
     ],
     "files": [
       "flash/display/GraphicsPathWinding.as"
-    ]
-  },
-  {
-    "name": "flash/display/GraphicsShaderFill",
-    "defs": [
-      "flash.display:GraphicsShaderFill"
-    ],
-    "files": [
-      "flash/display/GraphicsShaderFill.as"
-    ],
-    "refs": [
-      "flash.display:IGraphicsData",
-      "flash.display:IGraphicsFill",
-      "flash.geom:Matrix",
-      "flash.display:Shader"
     ]
   },
   {
@@ -720,79 +702,6 @@
     ],
     "files": [
       "flash/display/Scene.as"
-    ]
-  },
-  {
-    "name": "flash/display/Shader",
-    "defs": [
-      "flash.display:Shader"
-    ],
-    "files": [
-      "flash/display/Shader.as"
-    ],
-    "refs": [
-      "flash.display:ShaderData"
-    ]
-  },
-  {
-    "name": "flash/display/ShaderData",
-    "defs": [
-      "flash.display:ShaderData"
-    ],
-    "files": [
-      "flash/display/ShaderData.as"
-    ]
-  },
-  {
-    "name": "flash/display/ShaderInput",
-    "defs": [
-      "flash.display:ShaderInput"
-    ],
-    "files": [
-      "flash/display/ShaderInput.as"
-    ]
-  },
-  {
-    "name": "flash/display/ShaderJob",
-    "defs": [
-      "flash.display:ShaderJob"
-    ],
-    "files": [
-      "flash/display/ShaderJob.as"
-    ],
-    "inherits": [
-      "flash.events:EventDispatcher"
-    ],
-    "refs": [
-      "flash.display:Shader",
-      "flash.events:ShaderEvent"
-    ]
-  },
-  {
-    "name": "flash/display/ShaderParameter",
-    "defs": [
-      "flash.display:ShaderParameter"
-    ],
-    "files": [
-      "flash/display/ShaderParameter.as"
-    ]
-  },
-  {
-    "name": "flash/display/ShaderParameterType",
-    "defs": [
-      "flash.display:ShaderParameterType"
-    ],
-    "files": [
-      "flash/display/ShaderParameterType.as"
-    ]
-  },
-  {
-    "name": "flash/display/ShaderPrecision",
-    "defs": [
-      "flash.display:ShaderPrecision"
-    ],
-    "files": [
-      "flash/display/ShaderPrecision.as"
     ]
   },
   {
@@ -1358,21 +1267,6 @@
     ]
   },
   {
-    "name": "flash/events/ShaderEvent",
-    "defs": [
-      "flash.events:ShaderEvent"
-    ],
-    "files": [
-      "flash/events/ShaderEvent.as"
-    ],
-    "inherits": [
-      "flash.events:Event"
-    ],
-    "refs": [
-      "flash.display:BitmapData"
-    ]
-  },
-  {
     "name": "flash/events/SoftKeyboardEvent",
     "defs": [
       "flash.events:SoftKeyboardEvent"
@@ -1823,22 +1717,6 @@
     ],
     "inherits": [
       "flash.filters:BitmapFilter"
-    ]
-  },
-  {
-    "name": "flash/filters/ShaderFilter",
-    "defs": [
-      "flash.filters:ShaderFilter"
-    ],
-    "files": [
-      "flash/filters/ShaderFilter.as"
-    ],
-    "inherits": [
-      "flash.filters:BitmapFilter"
-    ],
-    "refs": [
-      "flash.geom:Rectangle",
-      "flash.display:Shader"
     ]
   },
   {
@@ -2865,12 +2743,12 @@
     ]
   },
   {
-    "name": "flash/display3d/Context3D",
+    "name": "flash/display3D/Context3D",
     "defs": [
       "flash.display3D:Context3D"
     ],
     "files": [
-      "flash/display3d/Context3D.as"
+      "flash/display3D/Context3D.as"
     ],
     "inherits": [
       "flash.events:EventDispatcher"
@@ -2888,129 +2766,129 @@
     ]
   },
   {
-    "name": "flash/display3d/Context3DBlendFactor",
+    "name": "flash/display3D/Context3DBlendFactor",
     "defs": [
       "flash.display3D:Context3DBlendFactor"
     ],
     "files": [
-      "flash/display3d/Context3DBlendFactor.as"
+      "flash/display3D/Context3DBlendFactor.as"
     ]
   },
   {
-    "name": "flash/display3d/Context3DClearMask",
+    "name": "flash/display3D/Context3DClearMask",
     "defs": [
       "flash.display3D:Context3DClearMask"
     ],
     "files": [
-      "flash/display3d/Context3DClearMask.as"
+      "flash/display3D/Context3DClearMask.as"
     ]
   },
   {
-    "name": "flash/display3d/Context3DProfile",
+    "name": "flash/display3D/Context3DProfile",
     "defs": [
       "flash.display3D:Context3DProfile"
     ],
     "files": [
-      "flash/display3d/Context3DProfile.as"
+      "flash/display3D/Context3DProfile.as"
     ]
   },
   {
-    "name": "flash/display3d/Context3DProgramType",
+    "name": "flash/display3D/Context3DProgramType",
     "defs": [
       "flash.display3D:Context3DProgramType"
     ],
     "files": [
-      "flash/display3d/Context3DProgramType.as"
+      "flash/display3D/Context3DProgramType.as"
     ]
   },
   {
-    "name": "flash/display3d/Context3DRenderMode",
+    "name": "flash/display3D/Context3DRenderMode",
     "defs": [
       "flash.display3D:Context3DRenderMode"
     ],
     "files": [
-      "flash/display3d/Context3DRenderMode.as"
+      "flash/display3D/Context3DRenderMode.as"
     ]
   },
   {
-    "name": "flash/display3d/Context3DCompareMode",
+    "name": "flash/display3D/Context3DCompareMode",
     "defs": [
       "flash.display3D:Context3DCompareMode"
     ],
     "files": [
-      "flash/display3d/Context3DCompareMode.as"
+      "flash/display3D/Context3DCompareMode.as"
     ]
   },
   {
-    "name": "flash/display3d/Context3DStencilAction",
+    "name": "flash/display3D/Context3DStencilAction",
     "defs": [
       "flash.display3D:Context3DStencilAction"
     ],
     "files": [
-      "flash/display3d/Context3DStencilAction.as"
+      "flash/display3D/Context3DStencilAction.as"
     ]
   },
   {
-    "name": "flash/display3d/Context3DTextureFormat",
+    "name": "flash/display3D/Context3DTextureFormat",
     "defs": [
       "flash.display3D:Context3DTextureFormat"
     ],
     "files": [
-      "flash/display3d/Context3DTextureFormat.as"
+      "flash/display3D/Context3DTextureFormat.as"
     ]
   },
   {
-    "name": "flash/display3d/Context3DTriangleFace",
+    "name": "flash/display3D/Context3DTriangleFace",
     "defs": [
       "flash.display3D:Context3DTriangleFace"
     ],
     "files": [
-      "flash/display3d/Context3DTriangleFace.as"
+      "flash/display3D/Context3DTriangleFace.as"
     ]
   },
   {
-    "name": "flash/display3d/Context3DVertexBufferFormat",
+    "name": "flash/display3D/Context3DVertexBufferFormat",
     "defs": [
       "flash.display3D:Context3DVertexBufferFormat"
     ],
     "files": [
-      "flash/display3d/Context3DVertexBufferFormat.as"
+      "flash/display3D/Context3DVertexBufferFormat.as"
     ]
   },
   {
-    "name": "flash/display3d/IndexBuffer3D",
+    "name": "flash/display3D/IndexBuffer3D",
     "defs": [
       "flash.display3D:IndexBuffer3D"
     ],
     "files": [
-      "flash/display3d/IndexBuffer3D.as"
+      "flash/display3D/IndexBuffer3D.as"
     ]
   },
   {
-    "name": "flash/display3d/Program3D",
+    "name": "flash/display3D/Program3D",
     "defs": [
       "flash.display3D:Program3D"
     ],
     "files": [
-      "flash/display3d/Program3D.as"
+      "flash/display3D/Program3D.as"
     ]
   },
   {
-    "name": "flash/display3d/VertexBuffer3D",
+    "name": "flash/display3D/VertexBuffer3D",
     "defs": [
       "flash.display3D:VertexBuffer3D"
     ],
     "files": [
-      "flash/display3d/VertexBuffer3D.as"
+      "flash/display3D/VertexBuffer3D.as"
     ]
   },
   {
-    "name": "flash/display3d/textures/CubeTexture",
+    "name": "flash/display3D/textures/CubeTexture",
     "defs": [
       "flash.display3D.textures:CubeTexture"
     ],
     "files": [
-      "flash/display3d/textures/CubeTexture.as"
+      "flash/display3D/textures/CubeTexture.as"
     ],
     "inherits": [
       "flash.display3D.textures:TextureBase"
@@ -3020,12 +2898,12 @@
     ]
   },
   {
-    "name": "flash/display3d/textures/Texture",
+    "name": "flash/display3D/textures/Texture",
     "defs": [
       "flash.display3D.textures:Texture"
     ],
     "files": [
-      "flash/display3d/textures/Texture.as"
+      "flash/display3D/textures/Texture.as"
     ],
     "inherits": [
       "flash.display3D.textures:TextureBase"
@@ -3035,12 +2913,12 @@
     ]
   },
   {
-    "name": "flash/display3d/textures/TextureBase",
+    "name": "flash/display3D/textures/TextureBase",
     "defs": [
       "flash.display3D.textures:TextureBase"
     ],
     "files": [
-      "flash/display3d/textures/TextureBase.as"
+      "flash/display3D/textures/TextureBase.as"
     ],
     "inherits": [
       "flash.events:EventDispatcher"
@@ -4170,24 +4048,6 @@
     ],
     "files": [
       "flash/utils/IExternalizable.as"
-    ]
-  },
-  {
-    "name": "flash/utils/ObjectInput",
-    "defs": [
-      "flash.utils:ObjectInput"
-    ],
-    "files": [
-      "flash/utils/ObjectInput.as"
-    ]
-  },
-  {
-    "name": "flash/utils/ObjectOutput",
-    "defs": [
-      "flash.utils:ObjectOutput"
-    ],
-    "files": [
-      "flash/utils/ObjectOutput.as"
     ]
   },
   {

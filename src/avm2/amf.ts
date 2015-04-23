@@ -18,6 +18,7 @@ module Shumway.AVM2 {
   import Multiname = Shumway.AVM2.ABC.Multiname;
   import ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
   import forEachPublicProperty = Shumway.AVM2.Runtime.forEachPublicProperty;
+  import construct = Shumway.AVM2.Runtime.construct;
 
   export enum AMF0Marker {
     NUMBER = 0x00,
@@ -27,7 +28,7 @@ module Shumway.AVM2 {
     NULL = 0x05,
     UNDEFINED = 0x06,
     REFERENCE = 0x07,
-    ECMA_ARRAY = 0x0,
+    ECMA_ARRAY = 0x08,
     OBJECT_END = 0x09,
     STRICT_ARRAY = 0x0A,
     DATE = 0x0B,
@@ -345,7 +346,7 @@ module Shumway.AVM2 {
           (caches.traitsCache || (caches.traitsCache = [])).push(traits);
         }
 
-        var obj = objectClass ? objectClass.createInstance() : {};
+        var obj = objectClass ? construct(objectClass, []) : {};
         (caches.objectsCache || (caches.objectsCache = [])).push(obj);
         for (var i = 0; i < traits.members.length; i++) {
           var value = readAmf3Data(ba, caches);
@@ -510,7 +511,8 @@ module Shumway.AVM2 {
     }
   }
 
-  var aliasesCache = {
+  // Also used in linker.ts for registering/retrieving class aliases.
+  export var aliasesCache = {
     classes: new WeakMap(),
     names: Object.create(null)
   };

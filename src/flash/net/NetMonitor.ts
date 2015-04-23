@@ -16,6 +16,7 @@
 // Class: NetMonitor
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NetMonitor extends flash.events.EventDispatcher {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.net {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.net.NetMonitor");
+      dummyConstructor("public flash.net.NetMonitor");
     }
     
     // JS -> AS Bindings

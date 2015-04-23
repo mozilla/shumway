@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.flash.display {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Stage3D extends flash.events.EventDispatcher {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.display {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.display.Stage3D");
+      dummyConstructor("public flash.display.Stage3D");
     }
     
     // JS -> AS Bindings

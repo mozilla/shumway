@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <style>
+    body {
+      color: white;
+      font: 12px Consolas, "Liberation Mono", Courier, monospace;
+    }
+
+    #container {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 100px;
+      overflow: hidden;
+      background-color: "red";
+    }
+
+    #other {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0px;
+      height: 100px;
+      overflow: scroll;
+      background-color: "red";
+    }
+  </style>
+</head>
+
+<script> console.time("Load Shared Dependencies"); </script>
+<script src="../../build/ts/base.js"></script>
+<script src="../../build/ts/tools.js"></script>
+<script> console.timeEnd("Load Shared Dependencies"); </script>
+<script> console.time("Load GFX Dependencies"); </script>
+<script src="../../build/ts/gfx-base.js"></script>
+<script src="../../build/ts/gfx.js"></script>
+<script> console.timeEnd("Load GFX Dependencies"); </script>
+<script>
+  var release = false;
+  var Node = Shumway.GFX.Node;
+  var NodeVisitor = Shumway.GFX.NodeVisitor;
+  var Matrix = Shumway.GFX.Geometry.Matrix;
+  var Rectangle = Shumway.GFX.Geometry.Rectangle;
+  var Stage = Shumway.GFX.Stage;
+  var Shape = Shumway.GFX.Shape;
+  var Group = Shumway.GFX.Group;
+  var CustomRenderable = Shumway.GFX.CustomRenderable;
+  var Canvas2DRenderer = Shumway.GFX.Canvas2D.Canvas2DRenderer;
+  var Easel = Shumway.GFX.Easel;
+  var Backend = Shumway.GFX.Backend;
+  var BlendMode = Shumway.GFX.BlendMode;
+</script>
+<body style="background-color: #333333;">
+  <div id="container" ></div>
+  <div id="other" >
+    <button onclick="test()">Do</button>
+    <button onclick="test2()">Shapes</button>
+    <button onclick="test3()">Change Stage</button>
+    <button onclick="garbage()">Garbage</button>
+    <button onclick='toggle("cacheShapes")'>Cache Shapes</button>
+    <button onclick='toggle("imageSmoothing")'>Image Smoothing</button>
+    <button onclick='toggle("snapToDevicePixels")'>Snap Pixels</button>
+    <div id="log"></div>
+    <div id="scratch"></div>
+  </div>
+
+    <script>
+    var logElement = document.getElementById("log");
+    var scratchElement = document.getElementById("scratch");
+
+
+    function log(s) {
+      logElement.innerHTML += s + "<br>"
+    }
+
+    function dumpLine(line) {
+      if (typeof dump !== "undefined") {
+        dump(line + "\n");
+      }
+    }
+
+    function toggle(s) {
+      easel.toggleOption(s);
+    }
+
+    var container = document.getElementById("container");
+
+    var easel = new Easel(container, Backend.Canvas2D);
+    easel.startRendering();
+    var stage = easel.stage;
+    var world = easel.world;
+
+
+
+    var lastTick = performance.now();
+    function tick() {
+      world.visit(Object.create(NodeVisitor.prototype, {
+        visitNode: {
+          value: function (node) {
+            if (node.dx !== undefined) {
+              node.getTransform().x += node.dx;
+              node.getTransform().y += node.dy;
+            }
+          }
+        }
+      }));
+      var thisTick = performance.now();
+      if (typeof dump !== "undefined") {
+        var elapsed = (thisTick - lastTick);
+        dumpLine("elapsedTime: " + Shumway.StringUtilities.repeatString("=", elapsed | 0) + " " + (elapsed).toFixed(2));
+        dumpLine("Matrix: " + Matrix.allocationCount + ", " + "Rectangle: " + Rectangle.allocationCount);
+        Matrix.allocationCount = Rectangle.allocationCount = 0;
+      }
+      lastTick = thisTick;
+      requestAnimationFrame(tick);
+    }
+
+    tick();
+
+    function makeCircle(w, h) {
+      var color = "rgba(" + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", 1)"
+      return new CustomRenderable(new Rectangle(0, 0, w, h), function (context) {
+        context.save();
+        context.fillStyle = color;
+        context.beginPath();
+          context.scale(0.9, 0.9);
+          context.arc(w / 2, h / 2, w / 2, 0, 2 * Math.PI);
+        context.fill();
+        context.restore();
+      });
+    }
+
+    function makeRenderable2(w, h) {
+      var color = "rgba(" + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", 1)"
+      return new CustomRenderable(new Rectangle(0, 0, w, h), function (context) {
+        context.fillStyle = color;
+        context.fillRect(0, 0, w, h);
+      });
+    }
+
+    function makeNode(depth, branch, w, h) {
+      if (depth === 0) {
+        return new Shape(makeCircle(w, h));
+      } else {
+        var group = new Group();
+        for (var i = 0; i < branch; i++) {
+          var node = makeNode(depth - 1, branch, w, h);
+          group.addChild(node);
+          node.getTransform().x = Math.random() * 64;
+          node.getTransform().y = Math.random() * 64;
+
+//          node.dx = (Math.random() - 0.5) * 3;
+//          node.dy = (Math.random() - 0.5) * 3;
+
+          // node.getLayer().blendMode = BlendMode.Normal;
+          // node.getLayer().mask = new Shape(makeRenderable2(32, 32));
+
+//          node.getLayer().mask._parent = node.getLayer(); // HACK
+        }
+        return group;
+      }
+    }
+
+    function test() {
+      var count = 10;
+      var depth = 11;
+      for (var i = 0; i < count; i++) {
+        world.addChild(makeNode(depth, 2, 2, 2));
+      }
+      log("Next Node ID: " + Node._nextId);
+    }
+
+    // test();
+
+    function test2() {
+      var count = 10;
+      var depth = 1;
+      for (var i = 0; i < count; i++) {
+        var node = makeNode(depth, 4, 64, 64);
+        world.addChild(node);
+      }
+      log("Next Node ID: " + Node._nextId);
+    }
+
+
+    function test2() {
+      var video = new Shumway.GFX.RenderableVideo("http://vjs.zencdn.net/v/oceans.mp4", new Rectangle(0, 0, 512, 512), 0, {
+        sendVideoPlaybackEvent: function () { }
+      });
+      video._video.muted = true;
+      video._video.play();
+
+      world.addChild(new Shape(video));
+
+      for (var i = 0; i < 10; i++) {
+        var s = Math.random() * 64;
+        var a = new Shape(makeCircle(s, s));
+        var t = a.getTransform();
+        t.x = Math.random() * 512;
+        t.y = Math.random() * 512;
+        t.dx = Math.random() - 0.5;
+        t.dy = Math.random() - 0.5;
+        world.addChild(a);
+      }
+
+      log("Next Node ID: " + Node._nextId);
+    }
+
+    function garbage() {
+      setInterval(function () {
+        for (var i = 0; i < 10000; i++) {
+          new Array(1024);
+        }
+      });
+    }
+
+    function registerScratchCanvas(canvas) {
+      // scratchElement.appendChild(canvas);
+    }
+
+    function test3() {
+      stage.setBounds(new Rectangle(0, 0, Math.random() * 512, Math.random() * 512));
+      log("Next Node ID: " + Node._nextId);
+    }
+  </script>
+</body>
+</html>

@@ -16,6 +16,7 @@
 // Class: PressAndTapGestureEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class PressAndTapGestureEvent extends flash.events.GestureEvent {
 
     static classInitializer: any = null;
@@ -30,7 +31,7 @@ module Shumway.AVM2.AS.flash.events {
                 shiftKey: boolean = false) {
       super(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
             undefined);
-      notImplemented("Dummy Constructor: public flash.events.PressAndTapGestureEvent");
+      dummyConstructor("public flash.events.PressAndTapGestureEvent");
     }
 
     // JS -> AS Bindings

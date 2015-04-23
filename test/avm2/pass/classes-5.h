@@ -1,0 +1,14 @@
+const int abcclass_XYZ_A = 0;
+const int abcclass_XYZ_B = 1;
+const int abcclass_XYZ_C = 2;
+const int XYZ_D_XYZ_d = 13;
+const int XYZ_D_XYZ_d = 15;
+const int abcclass_XYZ_D = 3;
+const int XYZ_E_XYZ_e = 17;
+const int XYZ_E_XYZ_e = 19;
+const int abcclass_XYZ_E = 4;
+extern const int classes-5_abc_length;
+extern const int classes-5_abc_method_count;
+extern const int classes-5_abc_class_count;
+extern const int classes-5_abc_script_count;
+extern const unsigned char classes-5_abc_data[];

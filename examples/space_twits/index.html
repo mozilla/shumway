@@ -3,28 +3,28 @@
 <head>
 <link href='http://fonts.googleapis.com/css?family=Bangers' rel='stylesheet' type='text/css'>
 <link href='twits.css' rel='stylesheet' type='text/css'>
-<script src="../../iframe/viewer.js"></script>
-<script>
-var SHUMWAY_ROOT = "../../src/";
-</script>
-<script src="../../src/shumway.js"></script>
+<!-- run `grunt build closure-bundles shuobject-package`
+<script src="../../build/shuobject/shuobject.js"></script> -->
+<script src="../../shuobject.js"></script>
 <script src="./twits.js"></script>
+<script>
+shuobject.embedSWF('twits.swf', 'mainSWF', 400, 366, '9,0,10', null, {}, {}, {}, function(e) {
+    var shumwayObj = shuobject.getShumwayObject(e.ref);
+    // Waiting for main SWF to be loaded.
+    var stage = shumwayObj.stage;
+    stage.addEventListener('added', function rootAdded(e) {
+        stage.removeEventListener('added', rootAdded, true);
+        playTwits(shumwayObj);
+    }, true);
+});
+</script>
 </head>
 
 <body>
 <div id="title">Space Twits</div>
 
 <div id="game">
-    <div id="viewer" style="width:400px; height:366px;"></div>
-    <script>
-      var compilerSettings = {sysCompiler: true, appCompiler: true, verifier: true};
-      Shumway.FileLoadingService.instance.setBaseUrl(document.location.href);
-
-      movieUrl = 'twits.swf';
-      movieParams = {};
-      objectParams = {};
-      parseSwf(movieUrl, movieParams, objectParams, compilerSettings);
-    </script>
+    <div id="mainSWF" style="width:400px; height:366px;"></div>
 </div>
 
 <div id="credits">

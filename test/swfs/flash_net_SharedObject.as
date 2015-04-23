@@ -1,4 +1,3 @@
-/* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
    java -jar utils/asc.jar -import playerglobal.abc -swf SharedObject,100,100,2 test/swfs/flash_net_SharedObject.as
@@ -60,11 +59,12 @@ class TestObject extends Sprite {
         case 1:
             (function () {
                 sharedObject.data.x = 10;
-                var result = SharedObject.defaultObjectEncoding === ObjectEncoding.AMF0 ? "PASS" : "FAIL";
-                trace(result + ": flash.net::SharedObject$/set defaultObjectEncoding ()");
-                var result = sharedObject.data.x === 10 ? "PASS" : "FAIL";
-                trace(result + ": flash.net::SharedObject$/getLocal ()");
-                trace(result + ": flash.net::SharedObject/get data ()");
+                sharedObject.flush();
+                trace('stored value of `x`: ' + sharedObject.data.x);
+                trace('stored data\'s size: ' + sharedObject.size);
+                sharedObject.clear();
+                trace('stored value of `x` after clear: ' + sharedObject.data.x);
+                trace('stored data\'s size after clear: ' + sharedObject.size);
             })();
             break;
         case 2:
