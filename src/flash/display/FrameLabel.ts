@@ -14,33 +14,19 @@
  * limitations under the License.
  */
 // Class: FrameLabel
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class FrameLabel extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
+
     constructor (name: string, frame: number /*int*/) {
-      false && super(undefined);
-      this._name = asCoerceString(name);
+      super();
+      this._name = axCoerceString(name);
       this._frame = frame | 0;
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
     
     private _name: string;
     private _frame: number /*int*/;
@@ -53,7 +39,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     clone() {
-      return new FrameLabel(this._name, this._frame);
+      return new this.sec.flash.display.FrameLabel(this._name, this._frame);
     }
   }
 }

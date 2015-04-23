@@ -14,37 +14,30 @@
  * limitations under the License.
  */
 
-import ASClass = Shumway.AVM2.AS.ASClass;
+import ASClass = Shumway.AVMX.AS.ASClass;
 
 declare module Shumway.AVM1 {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
 
   export class AVM1ActionsData {
   }
   export class AVM1Context {
     static create(loaderInfo: flash.display.LoaderInfo): AVM1Context;
-    addAsset(className: string, symbolId: number, symbolProps);
-    executeActions(actionsData: AVM1ActionsData, scopeObj);
-    flushPendingScripts();
-
-    globals: Lib.AVM1Globals;
-    root: Lib.AVM1MovieClip;
+    addAsset(className: string, symbolId: number, symbolProps): void;
+    executeActions(actionsData: AVM1ActionsData, scopeObj): void;
+    flushPendingScripts(): void;
+    setStage(stage: flash.display.Stage): void;
+    setRoot(stage: flash.display.DisplayObject, parameters: any): void;
+  }
+  export class AVM1Object {
   }
   export module Lib {
-    function getAVM1Object(obj, context: AVM1Context);
-    function initializeAVM1Object(as3Object, context: AVM1Context,
-                                  placeObjectTag: Shumway.SWF.PlaceObjectTag);
-    function installObjectMethods();
-    class AVM1Globals extends ASClass {
-      Key: typeof AVM1Key;
-      Mouse: typeof AVM1Mouse;
-    }
-    class AVM1MovieClip extends ASClass {}
-    class AVM1Key extends ASClass {
-      static _bind(stage: flash.display.Stage, context: AVM1Context);
-    }
-    class AVM1Mouse extends ASClass {
-      static _bind(stage: flash.display.Stage, context: AVM1Context);
+    function getAVM1Object(as3Object:flash.display.DisplayObject, context: AVM1Context): AVM1Object;
+    function initializeAVM1Object(as3Object: flash.display.DisplayObject, context: AVM1Context,
+                                  placeObjectTag: Shumway.SWF.PlaceObjectTag): void;
+    class AVM1MovieClip extends AVM1Object {
+      addFrameActionBlocks(frameIndex: number, frameData: any): void;
+      addFrameScript(frameIndex: number, actionsBlock: Uint8Array): void;
     }
   }
 }

@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 // Class: TimerEvent
-module Shumway.AVM2.AS.flash.events {
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
+module Shumway.AVMX.AS.flash.events {
   export class TimerEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
     constructor(type: string, bubbles?: boolean, cancelable?: boolean) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.TimerEvent");
+      super(type, bubbles, cancelable);
     }
 
     // JS -> AS Bindings
@@ -34,7 +31,8 @@ module Shumway.AVM2.AS.flash.events {
     static TIMER_COMPLETE: string = "timerComplete";
 
     clone(): Event {
-      return new events.TimerEvent(this.type, this.bubbles, this.cancelable);
+      return new this.sec.flash.events.TimerEvent(this.type, this.bubbles,
+                                                             this.cancelable);
     }
 
     toString(): string {
@@ -42,7 +40,7 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     updateAfterEvent(): void {
-      Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'].requestRendering();
+      this.sec.player.requestRendering();
     }
   }
 }

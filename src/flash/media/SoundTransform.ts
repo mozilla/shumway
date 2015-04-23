@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: SoundTransform
-module Shumway.AVM2.AS.flash.media {
+module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  export class SoundTransform extends ASNative {
+  export class SoundTransform extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,9 @@ module Shumway.AVM2.AS.flash.media {
     static instanceSymbols: string [] = null; // [];
     
     constructor (vol: number = 1, panning: number = 0) {
-      vol = +vol; panning = +panning;
-      false && super();
-      dummyConstructor("public flash.media.SoundTransform");
+      super();
+      this.volume = +vol;
+      this.pan = +panning;
     }
 
     private _volume: number;

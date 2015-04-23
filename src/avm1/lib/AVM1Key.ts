@@ -17,42 +17,52 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
   import assert = Shumway.Debug.assert;
+  import ASObject = Shumway.AVMX.AS.ASObject;
 
-  export class AVM1Key {
+  export class AVM1Key extends AVM1Object {
     public static DOWN: number = 40;
     public static LEFT: number = 37;
     public static RIGHT: number = 39;
     public static UP: number = 38;
 
-    private static _keyStates: any[] = [];
-    private static _lastKeyCode: number = 0;
+    private static _keyStates: any[];
+    private static _lastKeyCode: number;
 
-    public static createAVM1Class(): typeof AVM1Key {
-      return wrapAVM1Class(AVM1Key,
+    public static createAVM1Class(context: AVM1Context): AVM1Object {
+      var wrapped = wrapAVM1NativeClass(context, false, AVM1Key,
         ['DOWN', 'LEFT', 'RIGHT', 'UP', 'isDown'],
         []);
+      return wrapped;
     }
 
-    public static _bind(stage: flash.display.Stage, context: AVM1Context) {
+    static alInitStatic(context: AVM1Context): void {
+      this._keyStates = [];
+      this._lastKeyCode = 0;
+    }
+
+    public static bindStage(context: AVM1Context, cls: AVM1Object, stage: flash.display.Stage): void {
       stage.addEventListener('keyDown', function (e: flash.events.KeyboardEvent) {
-        var keyCode = e.asGetPublicProperty('keyCode');
-        AVM1Key._lastKeyCode = keyCode;
-        AVM1Key._keyStates[keyCode] = 1;
-        context.globals.Key.asCallPublicProperty('broadcastMessage', ['onKeyDown']);
+        var keyCode = e.axGetPublicProperty('keyCode');
+        var staticState: typeof AVM1Key = context.getStaticState(AVM1Key);
+        staticState._lastKeyCode = keyCode;
+        staticState._keyStates[keyCode] = 1;
+        alCallProperty(cls, 'broadcastMessage', ['onKeyDown']);
       }, false);
 
       stage.addEventListener('keyUp', function (e: flash.events.KeyboardEvent) {
-        var keyCode = e.asGetPublicProperty('keyCode');
-        AVM1Key._lastKeyCode = keyCode;
-        delete AVM1Key._keyStates[keyCode];
-        context.globals.Key.asCallPublicProperty('broadcastMessage', ['onKeyUp']);
+        var keyCode = e.axGetPublicProperty('keyCode');
+        var staticState: typeof AVM1Key = context.getStaticState(AVM1Key);
+        staticState._lastKeyCode = keyCode;
+        delete staticState._keyStates[keyCode];
+        alCallProperty(cls, 'broadcastMessage', ['onKeyUp']);
       }, false);
     }
 
-    public static isDown(code) {
-      return !!AVM1Key._keyStates[code];
+    public static isDown(context: AVM1Context, code) {
+      var staticState: typeof AVM1Key = context.getStaticState(AVM1Key);
+      return !!staticState._keyStates[code];
     }
 
   }

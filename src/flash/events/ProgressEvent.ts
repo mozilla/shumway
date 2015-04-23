@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 // Class: ProgressEvent
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class ProgressEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 bytesLoaded: number = 0, bytesTotal: number = 0) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.ProgressEvent");
+      super(type, bubbles, cancelable);
+      this._bytesLoaded = bytesLoaded;
+      this._bytesTotal = bytesTotal;
     }
 
     // JS -> AS Bindings
@@ -53,8 +52,9 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     public clone(): Event {
-      return new flash.events.ProgressEvent(this._type, this._bubbles, this._cancelable,
-                                            this._bytesLoaded, this._bytesTotal);
+      return new this.sec.flash.events.ProgressEvent(this._type, this._bubbles,
+                                                                this._cancelable, this._bytesLoaded,
+                                                                this._bytesTotal);
     }
 
     public toString(): string {

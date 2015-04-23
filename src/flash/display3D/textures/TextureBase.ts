@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 // Class: TextureBase
-module Shumway.AVM2.AS.flash.display3D.textures {
+module Shumway.AVMX.AS.flash.display3D.textures {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class TextureBase extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -33,15 +29,9 @@ module Shumway.AVM2.AS.flash.display3D.textures {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.display3D.textures.TextureBase");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
+
     dispose(): void {
       notImplemented("public flash.display3D.textures.TextureBase::dispose"); return;
     }

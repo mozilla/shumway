@@ -14,39 +14,21 @@
  * limitations under the License.
  */
 // Class: Microphone
-module Shumway.AVM2.AS.flash.media {
+module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class Microphone extends flash.events.EventDispatcher {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
+
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.media.Microphone");
+      super();
     }
     
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    // static _names: any [];
-    // static _isSupported: boolean;
-    static get names(): any [] {
+    static get names(): ASArray {
       somewhatImplemented("public flash.media.Microphone::get names");
-      return [];
+      return this.sec.createArrayUnsafe([]);
       // return this._names;
     }
     static get isSupported(): boolean {
@@ -93,7 +75,7 @@ module Shumway.AVM2.AS.flash.media {
       // return this._codec;
     }
     set codec(codec: string) {
-      codec = asCoerceString(codec);
+      codec = axCoerceString(codec);
       notImplemented("public flash.media.Microphone::set codec"); return;
       // this._codec = codec;
     }

@@ -15,14 +15,5 @@
  */
 
 package flash.system {
-
-[native(cls='FSCommandClass')]
-internal final class FSCommand {
-  public static native function _fscommand(command:String, args:String):void;
-  public function FSCommand() {}
-}
-
-public function fscommand(command:String, args:String = ''):void {
-  FSCommand._fscommand(command, args);
-}
+  public native function fscommand(command:String, args:String = ''):void;
 }

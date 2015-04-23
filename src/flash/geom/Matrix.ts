@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 // Class: Matrix
-module Shumway.AVM2.AS.flash.geom {
+module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import Bounds = Shumway.Bounds;
 
@@ -45,14 +45,27 @@ module Shumway.AVM2.AS.flash.geom {
     }
   }
 
-  export class Matrix extends ASNative {
-    static classInitializer: any = null;
-    static initializer: any = null;
-    static classSymbols: string [] = null; // [];
-    static instanceSymbols: string [] = null; // ["a", "b", "c", "d", "tx", "ty", "concat", "invert", "identity", "createBox", "createGradientBox", "rotate", "translate", "scale", "deltaTransformPoint", "transformPoint", "copyFrom", "setTo", "copyRowTo", "copyColumnTo", "copyRowFrom", "copyColumnFrom", "clone", "toString"];
+  export class Matrix extends ASObject {
 
-    constructor (a: number = 1, b: number = 0, c: number = 0, d: number = 1, tx: number = 0, ty: number = 0) {
-      false && super();
+    static axClass: typeof Matrix;
+
+    static classInitializer() {
+      this.FROZEN_IDENTITY_MATRIX = Object.freeze(this.axConstruct([]));
+      this.TEMP_MATRIX = this.axConstruct([]);
+    }
+    static classSymbols: string [] = null; // [];
+    static instanceSymbols: string [] = null; // ["a", "b", "c", "d", "tx", "ty", "concat",
+                                              // "invert", "identity", "createBox",
+                                              // "createGradientBox", "rotate", "translate",
+                                              // "scale", "deltaTransformPoint", "transformPoint",
+                                              // "copyFrom", "setTo", "copyRowTo", "copyColumnTo",
+                                              // "copyRowFrom", "copyColumnFrom", "clone",
+                                              // "toString"];
+
+    constructor(a: number = 1, b: number = 0, c: number = 0, d: number = 1, tx: number = 0,
+                ty: number = 0)
+    {
+      super();
       var m = this._data = new Float64Array(6);
       m[0] = a;
       m[1] = b;
@@ -63,23 +76,26 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public static FromUntyped(object: any): Matrix {
-      return new flash.geom.Matrix(object.a, object.b, object.c, object.d, object.tx, object.ty);
+      return new this.sec.flash.geom.Matrix(object.a, object.b, object.c, object.d,
+                                            object.tx, object.ty);
     }
 
     // Keep in sync with writeExternal below!
     public static FromDataBuffer(input: DataBuffer) {
-      return new flash.geom.Matrix(input.readFloat(), input.readFloat(), input.readFloat(),
-                                   input.readFloat(), input.readFloat(), input.readFloat());
+      return new this.sec.flash.geom.Matrix(input.readFloat(), input.readFloat(),
+                                            input.readFloat(), input.readFloat(),
+                                            input.readFloat(), input.readFloat());
     }
 
-    public static FROZEN_IDENTITY_MATRIX: Matrix = Object.freeze(new Matrix());
+    public static FROZEN_IDENTITY_MATRIX: Matrix;
 
     // Must only be used in cases where the members are fully initialized and then directly used.
-    public static TEMP_MATRIX: Matrix = new Matrix();
+    public static TEMP_MATRIX: Matrix;
 
-    // Matrix data is stored in a typed array, this has proven to be about 60% faster in Firefox and
-    // about the same speed in Chrome. At some point we may want to pool all these matrix objects, or
-    // share one large array buffer for matrix data.
+    // Matrix data is stored in a typed array, this has proven to be about 60% faster in Firefox
+    // and
+    // about the same speed in Chrome. At some point we may want to pool all these matrix objects,
+    // or share one large array buffer for matrix data.
     _data: Float64Array;
     
     public set a(a: number) {
@@ -306,7 +322,9 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public deltaTransformPoint(point: Point): Point {
-      return new Point(this._data[0] * point.x + this._data[2] * point.y, this._data[1] * point.x + this._data[3] * point.y);
+      var x = this._data[0] * point.x + this._data[2] * point.y;
+      var y = this._data[1] * point.x + this._data[3] * point.y;
+      return new this.sec.flash.geom.Point(x, y);
     }
 
     public transformX(x: number, y: number): number {
@@ -321,7 +339,8 @@ module Shumway.AVM2.AS.flash.geom {
 
     public transformPoint(point: Point): Point {
       var m = this._data;
-      return new Point(m[0] * point.x + m[2] * point.y + m[4], m[1] * point.x + m[3] * point.y + m[5]);
+      return new this.sec.flash.geom.Point(m[0] * point.x + m[2] * point.y + m[4],
+                                           m[1] * point.x + m[3] * point.y + m[5]);
     }
 
     public transformPointInPlace(point): Point {
@@ -455,6 +474,15 @@ module Shumway.AVM2.AS.flash.geom {
       return this;
     }
 
+    public toSerializedScaleInPlace(): Matrix {
+      var m = this._data;
+      m[0] *= 819.2;
+      m[1] *= 819.2;
+      m[2] *= 819.2;
+      m[3] *= 819.2;
+      return this;
+    }
+
     public copyRowTo(row: number, vector3D: Vector3D): void {
       var m = this._data;
       row = row >>> 0;
@@ -548,7 +576,7 @@ module Shumway.AVM2.AS.flash.geom {
 
     public clone(): Matrix {
       var m = this._data;
-      return new flash.geom.Matrix(m[0], m[1], m[2], m[3], m[4], m[5]);
+      return new this.sec.flash.geom.Matrix(m[0], m[1], m[2], m[3], m[4], m[5]);
     }
 
     public equals(other: Matrix): boolean {

@@ -283,7 +283,7 @@ module Shumway.GFX {
     private _isRendering: boolean = false;
     private _rAF: number = undefined;
 
-    private _eventListeners: Shumway.Map<any []> = Object.create(null);
+    private _eventListeners: Shumway.MapObject<any []> = Object.create(null);
     private _fps: FPS;
     private _fullScreen: boolean = false;
 

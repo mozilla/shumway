@@ -1182,12 +1182,18 @@ module Shumway.GFX.Geometry {
     public toSVGMatrix(): SVGMatrix {
       var m = this._data;
       var matrix: SVGMatrix = Matrix._createSVGMatrix();
-      matrix.a = m[0];
-      matrix.b = m[1];
-      matrix.c = m[2];
-      matrix.d = m[3];
-      matrix.e = m[4];
-      matrix.f = m[5];
+      try {
+        matrix.a = m[0];
+        matrix.b = m[1];
+        matrix.c = m[2];
+        matrix.d = m[3];
+        matrix.e = m[4];
+        matrix.f = m[5];
+      } catch (e) {
+        // The setters on SVGMatrix throw if the assigned value is `NaN`, which we sometimes
+        // produce. In that case, just fall back to an identity matrix for now.
+        return Matrix._createSVGMatrix();
+      }
       return matrix;
     }
 

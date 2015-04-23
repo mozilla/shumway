@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 // Class: NetStatusEvent
-module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
+module Shumway.AVMX.AS.flash.events {
   export class NetStatusEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 info: Object = null) {
-      false && super(undefined, undefined, undefined);
+      super(type, bubbles, cancelable);
+      this._info = info;
     }
 
     private _info: Object;
@@ -43,7 +42,8 @@ module Shumway.AVM2.AS.flash.events {
     public static NET_STATUS: string = "netStatus";
 
     clone(): Event {
-      return new flash.events.NetStatusEvent(this.type, this.bubbles, this.cancelable, this.info);
+      return new this.sec.flash.events.NetStatusEvent(this.type, this.bubbles,
+                                                                 this.cancelable, this.info);
     }
 
     toString(): string {

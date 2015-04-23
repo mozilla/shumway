@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 // Class: Clipboard
-module Shumway.AVM2.AS.flash.desktop {
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+module Shumway.AVMX.AS.flash.desktop {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Clipboard extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class Clipboard extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -34,8 +30,7 @@ module Shumway.AVM2.AS.flash.desktop {
     static instanceSymbols: string [] = null; // ["setData", "setDataHandler", "getData", "hasFormat"];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.desktop.Clipboard");
+      super();
     }
     
     // JS -> AS Bindings
@@ -61,7 +56,7 @@ module Shumway.AVM2.AS.flash.desktop {
       notImplemented("public flash.desktop.Clipboard::clear"); return;
     }
     clearData(format: string): void {
-      format = asCoerceString(format);
+      format = axCoerceString(format);
       notImplemented("public flash.desktop.Clipboard::clearData"); return;
     }
   }

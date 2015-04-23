@@ -14,29 +14,26 @@
  * limitations under the License.
  */
 // Class: StageCapture
-module Shumway.AVM2.AS.flash.automation {
+module Shumway.AVMX.AS.flash.automation {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class StageCapture extends flash.events.EventDispatcher {
-    static initializer: any = null;
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.automation.StageCapture");
+      super();
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings
     // Instance JS -> AS Bindings
     // Instance AS -> JS Bindings
     capture(type: string): void {
-      type = asCoerceString(type);
+      type = axCoerceString(type);
       notImplemented("public flash.automation.StageCapture::capture"); return;
     }
     cancel(): void {
       notImplemented("public flash.automation.StageCapture::cancel"); return;
     }
     set fileNameBase(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.automation.StageCapture::set fileNameBase"); return;
     }
     get fileNameBase(): string {
@@ -53,7 +50,7 @@ module Shumway.AVM2.AS.flash.automation {
       notImplemented("public flash.automation.StageCapture::captureBitmapData"); return;
     }
     set captureSource(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.automation.StageCapture::set captureSource"); return;
     }
     get captureSource(): string {

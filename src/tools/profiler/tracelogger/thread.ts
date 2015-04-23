@@ -35,7 +35,7 @@ module Shumway.Tools.Profiler.TraceLogger {
   export class Thread {
 
     private _data: DataView;
-    private _text: Shumway.Map<string>;
+    private _text: Shumway.MapObject<string>;
     private _buffer: TimelineBuffer;
 
     private static ITEM_SIZE = 8 + 8 + 4 + 4;

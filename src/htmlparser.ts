@@ -66,7 +66,7 @@ module Shumway {
     var index, chars, match, stack = [], last = html;
 
     function top(){
-      return this[ this.length - 1 ];
+      return stack[ stack.length - 1 ];
     }
 
     while ( html ) {

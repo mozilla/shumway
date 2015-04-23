@@ -117,10 +117,14 @@ module Shumway.GFX.Test {
         case MovieRecordType.Frame:
           this.processFrame();
           break;
-        case MovieRecordType.FontOrImage:
-          data = this._parser.parseFontOrImage();
-          this.processRegisterFontOrImage(data.syncId, data.symbolId, data.assetType, data.data,
-            function () {});
+        case MovieRecordType.Font:
+          data = this._parser.parseFont();
+          this.processRegisterFont(data.syncId, data.data, function () {});
+          break;
+        case MovieRecordType.Image:
+          data = this._parser.parseImage();
+          this.processRegisterImage(data.syncId, data.symbolId, data.imageType, data.data,
+                                    function () {});
           break;
         case MovieRecordType.FSCommand:
           data = this._parser.parseFSCommand();

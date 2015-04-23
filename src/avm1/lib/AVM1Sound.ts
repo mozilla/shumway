@@ -17,15 +17,17 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
+  import ASObject = Shumway.AVMX.AS.ASObject;
 
-  export class AVM1Sound extends AVM1NativeObject {
-    static createAVM1Class(): typeof AVM1Sound {
-      return wrapAVM1Class(AVM1Sound,
+  export class AVM1Sound extends AVM1Object {
+    static createAVM1Class(context: AVM1Context): AVM1Object {
+      return wrapAVM1NativeClass(context, true, AVM1Sound,
         [],
-        ['attachSound', 'duration', 'getBytesLoaded', 'getBytesTotal',
+        ['attachSound', 'duration#', 'getBytesLoaded', 'getBytesTotal',
          'getPan', 'setPan', 'getTransform', 'setTransform', 'getVolume', 'setVolume',
-         'start', 'stop']);
+         'start', 'stop'],
+        null, AVM1Sound.prototype.avm1Constructor);
     }
 
     private _target: IAVM1SymbolBase;
@@ -33,23 +35,21 @@ module Shumway.AVM1.Lib {
     private _channel: flash.media.SoundChannel;
     private _linkageID: string;
 
-    public constructor(target_mc) {
-      super();
-      this._target = AVM1Utils.resolveTarget(target_mc);
+    public avm1Constructor(target_mc) {
+      this._target = AVM1Utils.resolveTarget(this.context, target_mc);
       this._sound = null;
       this._channel = null;
       this._linkageID = null;
     }
 
     public attachSound(id: string): void {
-      var symbol = this.context.getAsset(id);
+      var symbol = (<any>this).context.getAsset(id);
       if (!symbol) {
         return;
       }
 
       var props: flash.media.SoundSymbol = Object.create(symbol.symbolProps);
-      var sound: flash.media.Sound = flash.media.Sound.initializeFrom(props);
-      flash.media.Sound.instanceConstructorNoInitialize.call(sound);
+      var sound: flash.media.Sound = Shumway.AVMX.AS.constructClassFromSymbol(props, this.context.sec.flash.media.Sound.axClass);
       this._linkageID = id;
       this._sound = sound;
     }
@@ -58,14 +58,16 @@ module Shumway.AVM1.Lib {
     public getBytesLoaded(): number { return 0; }
     public getBytesTotal(): number { return 0; }
 
+    public getDuration(): number { return 0; }
+
     public getPan(): number {
-      var transform = this._channel && this._channel.soundTransform;
-      return transform ? transform.asGetPublicProperty('pan') * 100 : 0;
+      var transform: ASObject = this._channel && this._channel.soundTransform;
+      return transform ? transform.axGetPublicProperty('pan') * 100 : 0;
     }
     public setPan(value: number): void {
-      var transform = this._channel && this._channel.soundTransform;
+      var transform: ASObject = this._channel && this._channel.soundTransform;
       if (transform) {
-        transform.asSetPublicProperty('pan', value / 100);
+        transform.axSetPublicProperty('pan', value / 100);
         this._channel.soundTransform = transform;
       }
     }
@@ -74,13 +76,13 @@ module Shumway.AVM1.Lib {
     public setTransform(transformObject: any): void {}
 
     public getVolume(): number {
-      var transform = this._channel && this._channel.soundTransform;
-      return transform ? transform.asGetPublicProperty('volume') * 100 : 0;
+      var transform: ASObject = this._channel && this._channel.soundTransform;
+      return transform ? transform.axGetPublicProperty('volume') * 100 : 0;
     }
     public setVolume(value: number): void {
-      var transform = this._channel && this._channel.soundTransform;
+      var transform: ASObject = this._channel && this._channel.soundTransform;
       if (transform) {
-        transform.asSetPublicProperty('volume', value / 100);
+        transform.axSetPublicProperty('volume', value / 100);
         this._channel.soundTransform = transform;
       }
     }

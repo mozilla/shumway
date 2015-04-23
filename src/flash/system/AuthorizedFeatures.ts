@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 // Class: AuthorizedFeatures
-module Shumway.AVM2.AS.flash.system {
+module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class AuthorizedFeatures extends ASNative {
+  export class AuthorizedFeatures extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,15 +28,9 @@ module Shumway.AVM2.AS.flash.system {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.system.AuthorizedFeatures");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
+
     createApplicationInstaller(strings: ASXML, icon: flash.utils.ByteArray): flash.system.ApplicationInstaller {
       strings = strings; icon = icon;
       notImplemented("public flash.system.AuthorizedFeatures::createApplicationInstaller"); return;
@@ -51,7 +40,7 @@ module Shumway.AVM2.AS.flash.system {
       notImplemented("public flash.system.AuthorizedFeatures::enableDiskCache"); return;
     }
     isFeatureEnabled(feature: string, data: string = null): boolean {
-      feature = asCoerceString(feature); data = asCoerceString(data);
+      feature = axCoerceString(feature); data = axCoerceString(data);
       notImplemented("public flash.system.AuthorizedFeatures::isFeatureEnabled"); return;
     }
     isNegativeToken(): boolean {

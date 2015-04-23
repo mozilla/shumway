@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 // Class: XMLNodeType
-module Shumway.AVM2.AS.flash.xml {
+module Shumway.AVMX.AS.flash.xml {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class XMLNodeType extends ASNative {
-    static initializer: any = null;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class XMLNodeType extends ASObject {
     constructor () {
-      false && super();
-      dummyConstructor("public flash.xml.XMLNodeType");
+      super();
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings

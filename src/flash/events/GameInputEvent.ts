@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 // Class: GameInputEvent
-module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
+module Shumway.AVMX.AS.flash.events {
   export class GameInputEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
+    device: flash.ui.GameInputDevice;
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 device: flash.ui.GameInputDevice = null) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.GameInputEvent");
+      super(type, bubbles, cancelable);
+      // TODO: coerce
+      this.device = device;
     }
 
     // JS -> AS Bindings

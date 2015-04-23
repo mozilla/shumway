@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 // Class: SecurityErrorEvent
-module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
+module Shumway.AVMX.AS.flash.events {
   export class SecurityErrorEvent extends flash.events.ErrorEvent {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 text: string = "", id: number /*int*/ = 0) {
-      super(undefined, undefined, undefined, undefined, undefined);
-      dummyConstructor("public flash.events.SecurityErrorEvent");
+      super(type, bubbles, cancelable, text, id);
     }
 
     // JS -> AS Bindings

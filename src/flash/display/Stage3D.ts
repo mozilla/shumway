@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 // Class: Stage3D
-module Shumway.AVM2.AS.flash.display {
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+module Shumway.AVMX.AS.flash.display {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class Stage3D extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -34,8 +30,7 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.display.Stage3D");
+      super();
     }
     
     // JS -> AS Bindings
@@ -79,7 +74,7 @@ module Shumway.AVM2.AS.flash.display {
       // this._visible = value;
     }
     requestContext3D(context3DRenderMode: string = "auto", profile: string = "baseline"): void {
-      context3DRenderMode = asCoerceString(context3DRenderMode); profile = asCoerceString(profile);
+      context3DRenderMode = axCoerceString(context3DRenderMode); profile = axCoerceString(profile);
       notImplemented("public flash.display.Stage3D::requestContext3D"); return;
     }
   }

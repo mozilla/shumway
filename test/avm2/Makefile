@@ -14,8 +14,9 @@
 
 SOURCES = fail/*.as pass/*.as
 BUILTIN_ABC = ../../src/avm2/generated/builtin/builtin.abc
+ASC = ../../utils/asc.jar
 
 all:
 	for file in $(SOURCES) ; do  \
-	  java -jar $(ASC) -d -md -import $(BUILTIN_ABC) $$file; \
+	  java -jar $(ASC) -md -import $(BUILTIN_ABC) $$file; \
 	done

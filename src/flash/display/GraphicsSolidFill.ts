@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 // Class: GraphicsSolidFill
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class GraphicsSolidFill extends ASNative implements IGraphicsFill, IGraphicsData {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class GraphicsSolidFill extends ASObject implements IGraphicsFill, IGraphicsData {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -32,7 +29,7 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = null; // ["color", "alpha"];
     
     constructor (color: number /*uint*/ = 0, alpha: number = 1) {
-      false && super();
+      super();
       this.color = color >>> 0;
       this.alpha = +alpha;
     }

@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 // Class: H264Level
-module Shumway.AVM2.AS.flash.media {
+module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class H264Level extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class H264Level extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -33,8 +29,7 @@ module Shumway.AVM2.AS.flash.media {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.media.H264Level");
+      super();
     }
     
     // JS -> AS Bindings

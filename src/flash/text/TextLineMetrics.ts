@@ -14,26 +14,22 @@
  * limitations under the License.
  */
 // Class: TextLineMetrics
-module Shumway.AVM2.AS.flash.text {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  export class TextLineMetrics extends ASNative {
+module Shumway.AVMX.AS.flash.text {
+  export class TextLineMetrics extends ASObject {
 
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null; // ["x", "width", "height", "ascent", "descent", "leading"];
 
     constructor(x: number, width: number, height: number, ascent: number, descent: number,
                 leading: number) {
-      false && super();
-      dummyConstructor("public flash.text.TextLineMetrics");
-      x = +x;
-      width = +width;
-      height = +height;
-      ascent = +ascent;
-      descent = +descent;
-      leading = +leading;
+      super();
+      this.x = +x;
+      this.width = +width;
+      this.height = +height;
+      this.ascent = +ascent;
+      this.descent = +descent;
+      this.leading = +leading;
     }
 
     // JS -> AS Bindings

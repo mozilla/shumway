@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 // Class: UncaughtErrorEvents
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
   export class UncaughtErrorEvents extends flash.events.EventDispatcher {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
     constructor() {
-      false && super();
-      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      super();
     }
   }
 }

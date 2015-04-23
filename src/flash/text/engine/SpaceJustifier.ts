@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: SpaceJustifier
-module Shumway.AVM2.AS.flash.text.engine {
+module Shumway.AVMX.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class SpaceJustifier extends flash.text.engine.TextJustifier {
     
     // Called whenever the class is initialized.
@@ -33,8 +33,8 @@ module Shumway.AVM2.AS.flash.text.engine {
     static instanceSymbols: string [] = null; // ["clone"];
     
     constructor (locale: string = "en", lineJustification: string = "unjustified", letterSpacing: boolean = false) {
-      locale = asCoerceString(locale); lineJustification = asCoerceString(lineJustification); letterSpacing = !!letterSpacing;
-      false && super(undefined, undefined);
+      locale = axCoerceString(locale); lineJustification = axCoerceString(lineJustification); letterSpacing = !!letterSpacing;
+      super(undefined, undefined);
       dummyConstructor("public flash.text.engine.SpaceJustifier");
     }
     

@@ -14,40 +14,42 @@
  * limitations under the License.
  */
 // Class: NetConnection
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import wrapJSObject = Shumway.AVM2.Runtime.wrapJSObject;
   import Telemetry = Shumway.Telemetry;
-  import events = Shumway.AVM2.AS.flash.events;
 
   export class NetConnection extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = ["close", "addHeader", "call"];
-    
+
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.net.NetConnection");
+      super();
+      this._uri = null;
+      this._connected = false;
+      this._client = null;
+      this._proxyType = 'none';
+      this._objectEncoding = NetConnection.defaultObjectEncoding;
+      this._usingTLS = false;
+      this._protocol = null;
+
+      Telemetry.instance.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.NETCONNECTION_FEATURE});
     }
     
     // JS -> AS Bindings
-    
-    close: () => void;
-    addHeader: (operation: string, mustUnderstand?: boolean, param?: ASObject) => void;
-    call: (command: string, responder: flash.net.Responder) => void;
-    
+
+    close() {
+      this.invoke(1);
+    }
+    addHeader(operation: string, mustUnderstand:Boolean = false, param:Object = null):void {
+      this._invoke(3, [axCoerceString(operation), !!mustUnderstand, param]);
+    }
+    call(command: string, responder:Responder /* more args can be provided */):void {
+      arguments[0] = axCoerceString(command);
+      this._invoke(2, <any>arguments);
+    }
+
     // AS -> JS Bindings
     static _defaultObjectEncoding: number /*uint*/ = 3 /* AMF3 */;
     static get defaultObjectEncoding(): number /*uint*/ {
@@ -83,29 +85,27 @@ module Shumway.AVM2.AS.flash.net {
       return this._uri;
     }
     connect(command: string): void {
-      command = asCoerceString(command);
+      command = axCoerceString(command);
 
       somewhatImplemented("public flash.net.NetConnection::connect");
       this._uri = command;
+      var netStatusEventCtor = this.sec.flash.events.NetStatusEvent;
       if (!command) {
         this._connected = true;
-        this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
-          false, false,
-          wrapJSObject({ level : 'status', code : 'NetConnection.Connect.Success'})));
+        this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS, false, false,
+          this.sec.createObjectFromJS({ level : 'status', code : 'NetConnection.Connect.Success'})));
       } else {
         var parsedURL = RtmpJs.parseConnectionString(command);
         if (!parsedURL || !parsedURL.host ||
             (parsedURL.protocol !== 'rtmp' && parsedURL.protocol !== 'rtmpt' && parsedURL.protocol !== 'rtmps')) {
-          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
-            false, false,
-            wrapJSObject({ level : 'status', code : 'NetConnection.Connect.Failed'})));
+          this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS, false, false,
+            this.sec.createObjectFromJS({ level : 'status', code : 'NetConnection.Connect.Failed'})));
           return;
         }
 
-        var service: display.IRootElementService =
-          Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+        var service: display.IRootElementService = this.sec.player;
 
-        var rtmpProps = wrapJSObject({
+        var rtmpProps = this.sec.createObjectFromJS({
           app: parsedURL.app,
           flashver: flash.system.Capabilities.version,
           swfUrl: service.swfUrl,
@@ -137,9 +137,9 @@ module Shumway.AVM2.AS.flash.net {
         };
         rtmpConnection.onconnected = function (e) {
           this._connected = true;
-          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+          this.dispatchEvent(new this.sec.flash.events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false,
-            wrapJSObject({ level : 'status', code : 'NetConnection.Connect.Success'})));
+            this.sec.createObjectFromJS({ level : 'status', code : 'NetConnection.Connect.Success'})));
         }.bind(this);
         rtmpConnection.onstreamcreated = function (e) {
           console.log('#streamcreated: ' + e.streamId);
@@ -173,7 +173,7 @@ module Shumway.AVM2.AS.flash.net {
       return this._proxyType;
     }
     set proxyType(ptype: string) {
-      ptype = asCoerceString(ptype);
+      ptype = axCoerceString(ptype);
       somewhatImplemented("public flash.net.NetConnection::set proxyType");
       this._proxyType = ptype;
     }
@@ -212,33 +212,19 @@ module Shumway.AVM2.AS.flash.net {
       notImplemented("public flash.net.NetConnection::get farNonce"); return;
       // return this._farNonce;
     }
-    get unconnectedPeerStreams(): any [] {
+    get unconnectedPeerStreams(): ASArray {
       notImplemented("public flash.net.NetConnection::get unconnectedPeerStreams"); return;
       // return this._unconnectedPeerStreams;
-    }
-    ctor(): void {
-      this._uri = null;
-      this._connected = false;
-      this._client = null;
-      this._proxyType = 'none';
-      this._objectEncoding = NetConnection.defaultObjectEncoding;
-      this._usingTLS = false;
-      this._protocol = null;
-
-      Telemetry.instance.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.NETCONNECTION_FEATURE});
     }
     invoke(index: number /*uint*/): any {
       index = index >>> 0;
       return this._invoke(index, Array.prototype.slice.call(arguments, 1));
     }
-    invokeWithArgsArray(index: number /*uint*/, p_arguments: any []): any {
-      index = index >>> 0; p_arguments = p_arguments;
-      return this._invoke.call(this, index, p_arguments);
-    }
     private _invoke(index: number, args: any[]): any {
       var simulated = false;
       var result;
       switch (index) {
+        case 1: // close
         case 2: // call, e.g. with ('createStream', <Responder>)
           simulated = true;
           break;

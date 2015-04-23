@@ -14,84 +14,84 @@
  * limitations under the License.
  */
 // Class: ApplicationDomain
-module Shumway.AVM2.AS.flash.system {
+module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import AVM2 = Shumway.AVM2.Runtime.AVM2;
-  import ExecutionMode = Shumway.AVM2.Runtime.ExecutionMode;
-  import RuntimeApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
-  import Multiname = Shumway.AVM2.ABC.Multiname;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  import AXApplicationDomain = Shumway.AVMX.AXApplicationDomain;
 
-  export class ApplicationDomain extends ASNative {
-    static classInitializer: any = null;
-    static initializer: any = null;
-    static classSymbols: string [] = null; // [];
-    static instanceSymbols: string [] = null; // [];
+  export class ApplicationDomain extends ASObject {
 
-    private _runtimeDomain: RuntimeApplicationDomain;
+    axDomain: AXApplicationDomain;
 
-    constructor (parentDomainOrRuntimeDomain: any = null) {
-      false && super();
-      if (parentDomainOrRuntimeDomain instanceof RuntimeApplicationDomain) {
-        this._runtimeDomain = parentDomainOrRuntimeDomain;
+    constructor (parentDomainOrAXDomain: any = null) {
+      super();
+      release || Debug.assert(!(this instanceof ApplicationDomain));
+      if (parentDomainOrAXDomain instanceof AXApplicationDomain) {
+        this.axDomain = parentDomainOrAXDomain;
         return;
       }
-      var parentRuntimeDomain: RuntimeApplicationDomain;
-      if (parentDomainOrRuntimeDomain) {
-        parentRuntimeDomain = parentDomainOrRuntimeDomain._runtimeDomain;
+      var parentRuntimeDomain: AXApplicationDomain = null;
+      if (this.sec.flash.system.ApplicationDomain.axIsType(parentDomainOrAXDomain)) {
+        parentRuntimeDomain = (<ApplicationDomain>parentDomainOrAXDomain).axDomain;
       } else {
-        parentRuntimeDomain = AVM2.currentDomain().system;
+        parentRuntimeDomain = this.sec.application;
       }
-      this._runtimeDomain = new RuntimeApplicationDomain(parentRuntimeDomain.vm, parentRuntimeDomain, ExecutionMode.COMPILE, false);
+      this.axDomain = new AXApplicationDomain(this.sec, parentRuntimeDomain);
     }
-    
-    // JS -> AS Bindings
 
-    // AS -> JS Bindings
-    // static _currentDomain: flash.system.ApplicationDomain;
-    // static _MIN_DOMAIN_MEMORY_LENGTH: number /*uint*/;
+    // This must return a new object each time.
     static get currentDomain(): flash.system.ApplicationDomain {
-      return new ApplicationDomain(AVM2.currentDomain());
+      var currentABC = getCurrentABC();
+      var app = currentABC ? currentABC.env.app : this.sec.application;
+      return new this.sec.flash.system.ApplicationDomain(app);
     }
+
     static get MIN_DOMAIN_MEMORY_LENGTH(): number /*uint*/ {
       notImplemented("public flash.system.ApplicationDomain::get MIN_DOMAIN_MEMORY_LENGTH"); return;
       // return this._MIN_DOMAIN_MEMORY_LENGTH;
     }
-    
-    // _parentDomain: flash.system.ApplicationDomain;
-    // _domainMemory: flash.utils.ByteArray;
+
     get parentDomain(): flash.system.ApplicationDomain {
-      if (this._runtimeDomain.base) {
-        return new ApplicationDomain(this._runtimeDomain.base);
-      }
-      return null;
+      var currentABC = getCurrentABC();
+      var app = currentABC ? currentABC.env.app : this.sec.application;
+      release || Debug.assert(app.parent !== undefined);
+      return new this.sec.flash.system.ApplicationDomain(app.parent);
     }
+
     get domainMemory(): flash.utils.ByteArray {
       notImplemented("public flash.system.ApplicationDomain::get domainMemory"); return;
       // return this._domainMemory;
     }
+
     set domainMemory(mem: flash.utils.ByteArray) {
       mem = mem;
       notImplemented("public flash.system.ApplicationDomain::set domainMemory"); return;
       // this._domainMemory = mem;
     }
+
     getDefinition(name: string): Object {
-      name = asCoerceString(name);
-      if (name) {
-        var simpleName = name.replace("::", ".");
-        return this._runtimeDomain.getProperty(Multiname.fromSimpleName(simpleName), true, true);
+      var definition = this.getDefinitionImpl(name);
+      if (!definition) {
+        this.sec.throwError('ReferenceError', Errors.UndefinedVarError, name);
       }
-      return null;
+      return definition;
     }
+
     hasDefinition(name: string): boolean {
-      name = asCoerceString(name);
-      if (name) {
-        var simpleName = name.replace("::", ".");
-        return !!this._runtimeDomain.findDomainProperty(Multiname.fromSimpleName(simpleName), false, false);
-      }
-      return false;
+      return !!this.getDefinitionImpl(name);
     }
-    getQualifiedDefinitionNames(): ASVector<any> {
+
+    private getDefinitionImpl(name) {
+      name = axCoerceString(name);
+      if (!name) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'definitionName');
+      }
+      var simpleName = name.replace("::", ".");
+      var mn = Multiname.FromFQNString(simpleName, NamespaceType.Public);
+      return this.axDomain.getProperty(mn, false, false);
+    }
+
+    getQualifiedDefinitionNames(): GenericVector {
       notImplemented("public flash.system.ApplicationDomain::getQualifiedDefinitionNames"); return;
     }
   }

@@ -15,10 +15,9 @@
  */
 
 // Class: Graphics
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import throwError = Shumway.AVM2.Runtime.throwError;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import clamp = Shumway.NumberUtilities.clamp;
   import Bounds = Shumway.Bounds;
   import assert = Shumway.Debug.assert;
@@ -336,16 +335,12 @@ module Shumway.AVM2.AS.flash.display {
   }
   // end of GFX geometry.ts
 
-  export class Graphics extends ASNative implements Shumway.Remoting.IRemotable {
+  export class Graphics extends ASObject implements Shumway.Remoting.IRemotable {
 
     static classInitializer: any = null;
-    static initializer: any = null;
-
-    static classSymbols: string [] = null;
-    static instanceSymbols: string [] = null;
 
     constructor () {
-      false && super();
+      super();
       this._id = flash.display.DisplayObject.getNextSyncID();
       this._graphicsData = new ShapeData();
       this._textures = [];
@@ -359,8 +354,8 @@ module Shumway.AVM2.AS.flash.display {
       this._isDirty = true;
     }
 
-    static FromData(data: any): Graphics {
-      var graphics: Graphics = new flash.display.Graphics();
+    static FromData(data: any, loaderInfo: LoaderInfo): Graphics {
+      var graphics: Graphics = new loaderInfo.sec.flash.display.Graphics();
       graphics._graphicsData = ShapeData.FromPlainObject(data.shape);
       if (data.lineBounds) {
         graphics._lineBounds.copyFrom(data.lineBounds);
@@ -480,7 +475,7 @@ module Shumway.AVM2.AS.flash.display {
       this._graphicsData.beginFill((color << 8) | alpha);
     }
 
-    beginGradientFill(type: string, colors: number[], alphas: number[], ratios: number[],
+    beginGradientFill(type: string, colors: ASArray, alphas: ASArray, ratios: ASArray,
                       matrix: flash.geom.Matrix = null, spreadMethod: string = "pad",
                       interpolationMethod: string = "rgb", focalPointRatio: number = 0): void
     {
@@ -511,9 +506,9 @@ module Shumway.AVM2.AS.flash.display {
       color = color >>> 0 & 0xffffff;
       alpha = Math.round(clamp(+alpha, -1, 1) * 0xff);
       pixelHinting = !!pixelHinting;
-      scaleMode = asCoerceString(scaleMode);
-      caps = asCoerceString(caps);
-      joints = asCoerceString(joints);
+      scaleMode = axCoerceString(scaleMode);
+      caps = axCoerceString(caps);
+      joints = axCoerceString(joints);
       miterLimit = clamp(+miterLimit | 0, 0, 0xff);
 
       // Flash stops drawing strokes whenever a thickness is supplied that can't be coerced to a
@@ -527,19 +522,19 @@ module Shumway.AVM2.AS.flash.display {
       this._setStrokeWidth(thickness);
 
       // If `scaleMode` is invalid, "normal" is used.
-      var lineScaleMode = LineScaleMode.toNumber(asCoerceString(scaleMode));
+      var lineScaleMode = LineScaleMode.toNumber(axCoerceString(scaleMode));
       if (lineScaleMode < 0) {
         lineScaleMode = LineScaleMode.toNumber(LineScaleMode.NORMAL);
       }
 
       // If `caps` is invalid, "normal" is used.
-      var capsStyle = CapsStyle.toNumber(asCoerceString(caps));
+      var capsStyle = CapsStyle.toNumber(axCoerceString(caps));
       if (capsStyle < 0) {
         capsStyle = CapsStyle.toNumber(CapsStyle.ROUND);
       }
 
       // If `joints` is invalid, "normal" is used.
-      var jointStyle = JointStyle.toNumber(asCoerceString(joints));
+      var jointStyle = JointStyle.toNumber(axCoerceString(joints));
       if (jointStyle < 0) {
         jointStyle = JointStyle.toNumber(JointStyle.ROUND);
       }
@@ -548,7 +543,7 @@ module Shumway.AVM2.AS.flash.display {
                                    lineScaleMode, capsStyle, jointStyle, miterLimit);
     }
 
-    lineGradientStyle(type: string, colors: any [], alphas: any [], ratios: any [],
+    lineGradientStyle(type: string, colors: ASArray, alphas: ASArray, ratios: ASArray,
                       matrix: flash.geom.Matrix = null, spreadMethod: string = "pad",
                       interpolationMethod: string = "rgb", focalPointRatio: number = 0): void
     {
@@ -828,25 +823,25 @@ module Shumway.AVM2.AS.flash.display {
 //      //shader = shader; matrix = matrix;
 //      notImplemented("public flash.display.Graphics::lineShaderStyle"); return;
 //    }
-    drawPath(commands: ASVector<any>, data: ASVector<any>, winding: string = "evenOdd"): void {
+    drawPath(commands: GenericVector, data: GenericVector, winding: string = "evenOdd"): void {
       commands = commands;
       data = data;
-      winding = asCoerceString(winding);
+      winding = axCoerceString(winding);
       notImplemented("public flash.display.Graphics::drawPath");
       return;
     }
 
-    drawTriangles(vertices: ASVector<any>, indices: ASVector<any> = null,
-                  uvtData: ASVector<any> = null, culling: string = "none"): void {
+    drawTriangles(vertices: GenericVector, indices: GenericVector = null,
+                  uvtData: GenericVector = null, culling: string = "none"): void {
       vertices = vertices;
       indices = indices;
       uvtData = uvtData;
-      culling = asCoerceString(culling);
+      culling = axCoerceString(culling);
       notImplemented("public flash.display.Graphics::drawTriangles");
       return;
     }
 
-    drawGraphicsData(graphicsData: ASVector<any>): void {
+    drawGraphicsData(graphicsData: GenericVector): void {
       graphicsData = graphicsData;
       notImplemented("public flash.display.Graphics::drawGraphicsData");
       return;
@@ -1260,14 +1255,17 @@ module Shumway.AVM2.AS.flash.display {
                               skipWrite: boolean): void
     {
       if (isNullOrUndefined(bitmap)) {
-        throwError('TypeError', Errors.NullPointerError, 'bitmap');
-      } else if (!(flash.display.BitmapData.isType(bitmap))) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'bitmap', 'flash.display.BitmapData');
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'bitmap');
+      }
+      if (!(this.sec.flash.display.BitmapData.axIsType(bitmap))) {
+        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, 'bitmap',
+                                       'flash.display.BitmapData');
       }
       if (isNullOrUndefined(matrix)) {
-        matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
-      } else if (!(flash.geom.Matrix.isType(matrix))) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'matrix', 'flash.geom.Matrix');
+        matrix = this.sec.flash.geom.Matrix.axClass.FROZEN_IDENTITY_MATRIX;
+      } else if (!(this.sec.flash.geom.Matrix.axIsType(matrix))) {
+        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, 'matrix',
+                                       'flash.geom.Matrix');
       }
       repeat = !!repeat;
       smooth = !!smooth;
@@ -1290,39 +1288,43 @@ module Shumway.AVM2.AS.flash.display {
      * case, it only does arguments checks so the right exceptions are thrown.
      */
     private _writeGradientStyle(pathCommand: PathCommand, type: string,
-                                colors: number[], alphas: number[], ratios: number[],
+                                colors_: ASArray, alphas_: ASArray, ratios_: ASArray,
                                 matrix: geom.Matrix, spreadMethod: string,
                                 interpolationMethod: string, focalPointRatio: number,
                                 skipWrite: boolean): void
     {
       if (isNullOrUndefined(type)) {
-        throwError('TypeError', Errors.NullPointerError, 'type');
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'type');
       }
-      var gradientType = GradientType.toNumber(asCoerceString(type));
+      var gradientType = GradientType.toNumber(axCoerceString(type));
       if (gradientType < 0) {
-        throwError("ArgumentError", Errors.InvalidEnumError, "type");
+        this.sec.throwError("ArgumentError", Errors.InvalidEnumError, "type");
       }
 
-      if (isNullOrUndefined(colors)) {
-        throwError('TypeError', Errors.NullPointerError, 'colors');
+      if (isNullOrUndefined(colors_)) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'colors');
       }
-      if (!(colors instanceof Array)) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'colors', 'Array');
+      var arrayClass = this.sec.AXArray;
+      if (!arrayClass.axIsInstanceOf(colors_)) {
+        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, 'colors', 'Array');
       }
+      var colors: number[] = colors_.value;
 
-      if (!(alphas instanceof Array)) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'alphas', 'Array');
+      if (isNullOrUndefined(alphas_)) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'alphas');
       }
-      if (isNullOrUndefined(alphas)) {
-        throwError('TypeError', Errors.NullPointerError, 'alphas');
+      if (!arrayClass.axIsInstanceOf(alphas_)) {
+        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, 'alphas', 'Array');
       }
+      var alphas: number[] = alphas_.value;
 
-      if (!(ratios instanceof Array)) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'ratios', 'Array');
+      if (isNullOrUndefined(ratios_)) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'ratios');
       }
-      if (isNullOrUndefined(ratios)) {
-        throwError('TypeError', Errors.NullPointerError, 'ratios');
+      if (!arrayClass.axIsInstanceOf(ratios_)) {
+        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, 'ratios', 'Array');
       }
+      var ratios: number[] = ratios_.value;
 
       var colorsRGBA: number[] = [];
       var coercedRatios: number[] = [];
@@ -1346,9 +1348,10 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       if (isNullOrUndefined(matrix)) {
-        matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
-      } else if (!(flash.geom.Matrix.isType(matrix))) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'matrix', 'flash.geom.Matrix');
+        matrix = this.sec.flash.geom.Matrix.axClass.FROZEN_IDENTITY_MATRIX;
+      } else if (!(this.sec.flash.geom.Matrix.axIsType(matrix))) {
+        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, 'matrix',
+                                       'flash.geom.Matrix');
       }
 
       if (skipWrite) {
@@ -1356,20 +1359,26 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       // If `spreadMethod` is invalid, "pad" is used.
-      var spread = SpreadMethod.toNumber(asCoerceString(spreadMethod));
+      var spread = SpreadMethod.toNumber(axCoerceString(spreadMethod));
       if (spread < 0) {
         spread = SpreadMethod.toNumber(SpreadMethod.PAD);
       }
 
       // If `interpolationMethod` is invalid, "rgb" is used.
-      var interpolation = InterpolationMethod.toNumber(asCoerceString(interpolationMethod));
+      var interpolation = InterpolationMethod.toNumber(axCoerceString(interpolationMethod));
       if (interpolation < 0) {
         interpolation = InterpolationMethod.toNumber(InterpolationMethod.RGB);
       }
+
+      // Matrix has to be transformed to ShapeMatrix because the scaling is totally different.
+      var scaledMatrix = {
+        a: matrix.a * 819.2, b: matrix.b * 819.2, c: matrix.c * 819.2,
+        d: matrix.d * 819.2, tx: matrix.tx, ty: matrix.ty
+      };
       // Focal point is scaled by 0xff, divided by 2, rounded and stored as a signed short.
       focalPointRatio = clamp(+focalPointRatio, -1, 1) / 2 * 0xff | 0;
       this._graphicsData.beginGradient(pathCommand, colorsRGBA, coercedRatios, gradientType,
-                                       matrix, spread, interpolation, focalPointRatio);
+                                       scaledMatrix, spread, interpolation, focalPointRatio);
     }
 
     private _extendBoundsByPoint(x: number, y: number): void {

@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: CurrencyFormatter
-module Shumway.AVM2.AS.flash.globalization {
+module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class CurrencyFormatter extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class CurrencyFormatter extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,8 @@ module Shumway.AVM2.AS.flash.globalization {
     static instanceSymbols: string [] = null; // ["format"];
     
     constructor (requestedLocaleIDName: string) {
-      requestedLocaleIDName = asCoerceString(requestedLocaleIDName);
-      false && super();
-      dummyConstructor("public flash.globalization.CurrencyFormatter");
+      requestedLocaleIDName = axCoerceString(requestedLocaleIDName);
+      super();
     }
     
     // JS -> AS Bindings
@@ -106,7 +101,7 @@ module Shumway.AVM2.AS.flash.globalization {
       // return this._groupingPattern;
     }
     set groupingPattern(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.globalization.CurrencyFormatter::set groupingPattern"); return;
       // this._groupingPattern = value;
     }
@@ -124,7 +119,7 @@ module Shumway.AVM2.AS.flash.globalization {
       // return this._decimalSeparator;
     }
     set decimalSeparator(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.globalization.CurrencyFormatter::set decimalSeparator"); return;
       // this._decimalSeparator = value;
     }
@@ -133,7 +128,7 @@ module Shumway.AVM2.AS.flash.globalization {
       // return this._groupingSeparator;
     }
     set groupingSeparator(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.globalization.CurrencyFormatter::set groupingSeparator"); return;
       // this._groupingSeparator = value;
     }
@@ -142,7 +137,7 @@ module Shumway.AVM2.AS.flash.globalization {
       // return this._negativeSymbol;
     }
     set negativeSymbol(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.globalization.CurrencyFormatter::set negativeSymbol"); return;
       // this._negativeSymbol = value;
     }
@@ -183,19 +178,19 @@ module Shumway.AVM2.AS.flash.globalization {
       // this._trailingZeros = value;
     }
     setCurrency(currencyISOCode: string, currencySymbol: string): void {
-      currencyISOCode = asCoerceString(currencyISOCode); currencySymbol = asCoerceString(currencySymbol);
+      currencyISOCode = axCoerceString(currencyISOCode); currencySymbol = axCoerceString(currencySymbol);
       notImplemented("public flash.globalization.CurrencyFormatter::setCurrency"); return;
     }
     formattingWithCurrencySymbolIsSafe(requestedISOCode: string): boolean {
-      requestedISOCode = asCoerceString(requestedISOCode);
+      requestedISOCode = axCoerceString(requestedISOCode);
       notImplemented("public flash.globalization.CurrencyFormatter::formattingWithCurrencySymbolIsSafe"); return;
     }
     parse(inputString: string): flash.globalization.CurrencyParseResult {
-      inputString = asCoerceString(inputString);
+      inputString = axCoerceString(inputString);
       notImplemented("public flash.globalization.CurrencyFormatter::parse"); return;
     }
     ctor(requestedLocaleIDName: string): void {
-      requestedLocaleIDName = asCoerceString(requestedLocaleIDName);
+      requestedLocaleIDName = axCoerceString(requestedLocaleIDName);
       notImplemented("public flash.globalization.CurrencyFormatter::ctor"); return;
     }
     formatImplementation(value: number, withCurrencySymbol: boolean): string {

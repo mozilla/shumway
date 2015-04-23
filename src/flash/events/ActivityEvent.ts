@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 // Class: ActivityEvent
-module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
+module Shumway.AVMX.AS.flash.events {
   export class ActivityEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
+    activating: boolean;
+
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 activating: boolean = false) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.ActivityEvent");
+      super(type, bubbles, cancelable);
+      this.activating = !!activating;
     }
 
     // JS -> AS Bindings

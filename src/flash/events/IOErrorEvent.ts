@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 // Class: IOErrorEvent
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
   export class IOErrorEvent extends flash.events.ErrorEvent {
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
@@ -34,9 +33,10 @@ module Shumway.AVM2.AS.flash.events {
     static VERIFY_ERROR: string = "verifyError";
 
     clone(): Event {
-      var event = new IOErrorEvent(this.type, this.bubbles, this.cancelable, this.text,
-                                   this.errorID);
-      this.copyNativeData(event);
+      var event = new this.sec.flash.events.IOErrorEvent(this.type, this.bubbles,
+                                                                    this.cancelable, this.text,
+                                                                    this.errorID);
+      //this.copyNativeData(event);
       return event;
     }
 

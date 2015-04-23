@@ -118,7 +118,7 @@ module Shumway.Unit {
     if (a.a !== b.a || a.b !== b.b ||
         a.c !== b.c || a.d !== b.d ||
         a.tx !== b.tx || a.ty !== b.ty) {
-      return fail("FAIL" + test + " matices differ." + failedLocation());
+      return fail("FAIL" + test + " matrices differ." + failedLocation());
     }
     writer.debugLn("PASS" + test);
   }
@@ -188,9 +188,9 @@ module Shumway.Unit {
     var s = 0;
     var elapsedTimes = [];
     for (var i = 0; i < iterations; i++) {
-      var iterationStart = dateNow();
+      var iterationStart = Date.now();
       s += fn();
-      elapsedTimes.push(dateNow() - iterationStart);
+      elapsedTimes.push(Date.now() - iterationStart);
     }
     var elapsed: number = (<any>new Date() - <any>start);
     // Let's not make the test too short, or too long.

@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 // Class: AsyncErrorEvent
-module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
+module Shumway.AVMX.AS.flash.events {
   export class AsyncErrorEvent extends flash.events.ErrorEvent {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
+    error: ASError;
+
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 text: string = "", error: ASError = null) {
-      super(undefined, undefined, undefined, undefined, undefined);
-      dummyConstructor("public flash.events.AsyncErrorEvent");
+      super(type, bubbles, cancelable, text);
+      this.error = error;
     }
 
     // JS -> AS Bindings

@@ -14,24 +14,91 @@
  * limitations under the License.
  */
 
-module Shumway.AVM2.AS {
-  /**
-   * Check arguments and throw the appropriate errors.
-   */
-  var checkArguments = true;
-
+module Shumway.AVMX.AS {
   import assert = Shumway.Debug.assert;
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
-  import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
-  import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
-  import asCheckVectorGetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
-  import asCheckVectorSetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
 
-  export class GenericVector extends ASVector<Object> {
+  export class BaseVector extends ASObject {
+    axGetProperty(mn: Multiname): any {
+      var nm = mn.name;
+      nm = typeof nm === 'number' ? nm : axCoerceName(nm);
+      if ((<any>nm | 0) === nm || isNumeric(nm)) {
+        release || assert(mn.isRuntimeName());
+        return this.axGetNumericProperty(typeof nm === 'number' ? nm : nm | 0);
+      }
+      return super.axGetProperty(mn);
+    }
+
+    axSetProperty(mn: Multiname, value: any, bc: Bytecode) {
+      release || checkValue(value);
+      var nm = mn.name;
+      nm = typeof nm === 'number' ? nm : axCoerceName(nm);
+      if ((<any>nm | 0) === nm || isNumeric(nm)) {
+        release || assert(mn.isRuntimeName());
+        this.axSetNumericProperty(typeof nm === 'number' ? nm : nm | 0, value);
+        return;
+      }
+      super.axSetProperty(mn, value, bc);
+    }
+
+    axGetPublicProperty(nm: any): any {
+      nm = typeof nm === 'number' ? nm : axCoerceName(nm);
+      if ((<any>nm | 0) === nm || isNumeric(nm)) {
+        return this.axGetNumericProperty(typeof nm === 'number' ? nm : nm | 0);
+      }
+      return this['$Bg' + nm];
+    }
+
+    axSetPublicProperty(nm: any, value: any) {
+      release || checkValue(value);
+      nm = typeof nm === 'number' ? nm : axCoerceName(nm);
+      if ((<any>nm | 0) === nm || isNumeric(nm)) {
+        this.axSetNumericProperty(typeof nm === 'number' ? nm : nm | 0, value);
+        return;
+      }
+      this['$Bg' + nm] = value;
+    }
+
+    axNextName(index: number): any {
+      return index - 1;
+    }
+
+    /**
+     * Throws exceptions for the cases where Flash does, and returns false if the callback
+     * is null or undefined. In that case, the calling function returns its default value.
+     */
+    checkVectorMethodArgs(callback: AXCallable, thisObject: any): boolean {
+      if (isNullOrUndefined(callback)) {
+        return false;
+      }
+      var sec = this.sec;
+      if (!axIsCallable(callback)) {
+        sec.throwError("TypeError", Errors.CheckTypeFailedError, callback, 'Function');
+      }
+      if ((<any>callback).axClass === sec.AXMethodClosure &&
+          !isNullOrUndefined(thisObject)) {
+        sec.throwError("TypeError", Errors.ArrayFilterNonNullObjectError);
+      }
+      return true;
+    }
+  }
+
+  export class Vector extends ASObject {
+    static axIsType(x: AXObject) {
+      return this.dPrototype.isPrototypeOf(x) ||
+             this.sec.Int32Vector.axClass.dPrototype.isPrototypeOf(x) ||
+             this.sec.Uint32Vector.axClass.dPrototype.isPrototypeOf(x) ||
+             this.sec.Float64Vector.axClass.dPrototype.isPrototypeOf(x) ||
+             this.sec.ObjectVector.axClass.dPrototype.isPrototypeOf(x);
+    }
+  }
+
+  export class GenericVector extends BaseVector {
+
+    static axClass: typeof GenericVector;
 
     static CASEINSENSITIVE = 1;
     static DESCENDING = 2;
@@ -39,42 +106,73 @@ module Shumway.AVM2.AS {
     static RETURNINDEXEDARRAY = 8;
     static NUMERIC = 16;
 
-    public static instanceConstructor: any = GenericVector;
-    public static staticNatives: any [] = [GenericVector];
-    public static instanceNatives: any [] = [GenericVector.prototype];
+    static classInitializer() {
+      var proto: any = this.dPrototype;
+      var tProto: any = this.tPrototype;
 
-    static classInitializer: any = function() {
-      var proto: any = GenericVector.prototype;
-      defineNonEnumerableProperty(proto, '$Bgjoin', proto.join);
+      // Fix up MOP handlers to not apply to the dynamic prototype, which is a plain object.
+      tProto.axGetProperty = proto.axGetProperty;
+      tProto.axGetNumericProperty = proto.axGetNumericProperty;
+      tProto.axSetProperty = proto.axSetProperty;
+      tProto.axSetNumericProperty = proto.axSetNumericProperty;
+      tProto.axHasPropertyInternal = proto.axHasPropertyInternal;
+      tProto.axNextName = proto.axNextName;
+      tProto.axNextNameIndex = proto.axNextNameIndex;
+      tProto.axNextValue = proto.axNextValue;
+
+      proto.axGetProperty = ASObject.prototype.axGetProperty;
+      proto.axGetNumericProperty = ASObject.prototype.axGetNumericProperty;
+      proto.axSetProperty = ASObject.prototype.axSetProperty;
+      proto.axSetNumericProperty = ASObject.prototype.axSetNumericProperty;
+      proto.axHasPropertyInternal = ASObject.prototype.axHasPropertyInternal;
+      proto.axNextName = ASObject.prototype.axNextName;
+      proto.axNextNameIndex = ASObject.prototype.axNextNameIndex;
+      proto.axNextValue = ASObject.prototype.axNextValue;
+
+      var asProto: any = GenericVector.prototype;
+      defineNonEnumerableProperty(proto, '$Bgjoin', asProto.join);
       // Same as join, see VectorImpl.as in Tamarin repository.
-      defineNonEnumerableProperty(proto, '$BgtoString', proto.join);
-      defineNonEnumerableProperty(proto, '$BgtoLocaleString', proto.toLocaleString);
+      defineNonEnumerableProperty(proto, '$BgtoString', asProto.join);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleString', asProto.toLocaleString);
 
-      defineNonEnumerableProperty(proto, '$Bgpop', proto.pop);
-      defineNonEnumerableProperty(proto, '$Bgpush', proto.push);
+      defineNonEnumerableProperty(proto, '$Bgpop', asProto.pop);
+      defineNonEnumerableProperty(proto, '$Bgpush', asProto.push);
 
-      defineNonEnumerableProperty(proto, '$Bgreverse', proto.reverse);
-      defineNonEnumerableProperty(proto, '$Bgconcat', proto.concat);
-      defineNonEnumerableProperty(proto, '$Bgsplice', proto.splice);
-      defineNonEnumerableProperty(proto, '$Bgslice', proto.slice);
+      defineNonEnumerableProperty(proto, '$Bgreverse', asProto.reverse);
+      defineNonEnumerableProperty(proto, '$Bgconcat', asProto.concat);
+      defineNonEnumerableProperty(proto, '$Bgsplice', asProto.splice);
+      defineNonEnumerableProperty(proto, '$Bgslice', asProto.slice);
 
-      defineNonEnumerableProperty(proto, '$Bgshift', proto.shift);
-      defineNonEnumerableProperty(proto, '$Bgunshift', proto.unshift);
+      defineNonEnumerableProperty(proto, '$Bgshift', asProto.shift);
+      defineNonEnumerableProperty(proto, '$Bgunshift', asProto.unshift);
 
-      defineNonEnumerableProperty(proto, '$BgindexOf', proto.indexOf);
-      defineNonEnumerableProperty(proto, '$BglastIndexOf', proto.lastIndexOf);
+      defineNonEnumerableProperty(proto, '$BgindexOf', asProto.indexOf);
+      defineNonEnumerableProperty(proto, '$BglastIndexOf', asProto.lastIndexOf);
 
-      defineNonEnumerableProperty(proto, '$BgforEach', proto.forEach);
-      defineNonEnumerableProperty(proto, '$Bgmap', proto.map);
-      defineNonEnumerableProperty(proto, '$Bgfilter', proto.filter);
-      defineNonEnumerableProperty(proto, '$Bgsome', proto.some);
-      defineNonEnumerableProperty(proto, '$Bgevery', proto.every);
+      defineNonEnumerableProperty(proto, '$BgforEach', asProto.forEach);
+      defineNonEnumerableProperty(proto, '$Bgmap', asProto.map);
+      defineNonEnumerableProperty(proto, '$Bgfilter', asProto.filter);
+      defineNonEnumerableProperty(proto, '$Bgsome', asProto.some);
+      defineNonEnumerableProperty(proto, '$Bgevery', asProto.every);
 
-      defineNonEnumerableProperty(proto, '$Bgsort', proto.sort);
+      defineNonEnumerableProperty(proto, '$Bgsort', asProto.sort);
+      defineNonEnumerableProperty(proto, 'checkVectorMethodArgs', asProto.checkVectorMethodArgs);
     }
 
-    newThisType(): GenericVector {
-      return new GenericVector();
+    static axApply(self: GenericVector, args: any[]) {
+      var object = args[0];
+      if (self.axClass.axIsType(object)) {
+        return object;
+      }
+      var length = object.axGetPublicProperty("length");
+      if (length !== undefined) {
+        var v = self.axClass.axConstruct([length, false]);
+        for (var i = 0; i < length; i++) {
+          v.axSetNumericProperty(i, object.axGetPublicProperty(i));
+        }
+        return v;
+      }
+      Shumway.Debug.unexpected();
     }
 
     static defaultCompareFunction(a, b) {
@@ -102,50 +200,20 @@ module Shumway.AVM2.AS {
       return result;
     }
 
+    axClass: AXClass;
+
+    static type: AXClass;
+    static defaultValue: any = null;
+
     private _fixed: boolean;
     private _buffer: any [];
-    private _type: ASClass;
-    private _defaultValue: any;
 
-    constructor (length: number /*uint*/ = 0, fixed: boolean = false, type: ASClass = ASObject) {
-      false && super();
+    constructor (length: number /*uint*/ = 0, fixed: boolean = false) {
+      super();
       length = length >>> 0; fixed = !!fixed;
       this._fixed = !!fixed;
       this._buffer = new Array(length);
-      this._type = type;
-      this._defaultValue = type ? type.defaultValue : null;
-      this._fill(0, length, this._defaultValue);
-    }
-
-    /**
-     * TODO: Need to really debug this, very tricky.
-     */
-    public static applyType(type: ASClass): ASClass {
-      function parameterizedVectorConstructor(length: number /*uint*/, fixed: boolean) {
-        Function.prototype.call.call(GenericVector.instanceConstructor, this, length, fixed, type);
-      };
-
-      function parameterizedVectorCallableConstructor(object) {
-        if (object instanceof Int32Vector) {
-          return object;
-        }
-        var length = object.asGetProperty(undefined, "length");
-        if (length !== undefined) {
-          var v = new parameterizedVectorConstructor(length, false);
-          for (var i = 0; i < length; i++) {
-            v.asSetNumericProperty(i, object.asGetPublicProperty(i));
-          }
-          return v;
-        }
-        Shumway.Debug.unexpected();
-      }
-
-      var parameterizedVector = <any>parameterizedVectorConstructor;
-      parameterizedVector.prototype = GenericVector.prototype;
-      parameterizedVector.instanceConstructor = parameterizedVector;
-      parameterizedVector.callableConstructor = parameterizedVectorCallableConstructor;
-      parameterizedVector.__proto__ = GenericVector;
-      return <any>parameterizedVector;
+      this._fill(0, length, this.axClass.defaultValue);
     }
 
     private _fill(index: number, length: number, value: any) {
@@ -158,66 +226,76 @@ module Shumway.AVM2.AS {
      * Can't use Array.prototype.toString because it doesn't print |null|s the same way as AS3.
      */
     toString() {
-      var str = "";
+      var result = [];
       for (var i = 0; i < this._buffer.length; i++) {
-        str += this._buffer[i];
-        if (i < this._buffer.length - 1) {
-          str += ",";
-        }
+        var entry = this._buffer[i];
+        result.push(entry === null ? 'null' : (entry + ''));
       }
-      return str;
+      return result.join(',');
     }
 
     toLocaleString() {
-      var str = "";
+      var result = [];
       for (var i = 0; i < this._buffer.length; i++) {
-        str += this._buffer[i].asCallPublicProperty('toLocaleString');
-        if (i < this._buffer.length - 1) {
-          str += ",";
+        var entry = this._buffer[i];
+        if (entry && typeof entry === 'object') {
+          result.push(entry.$BgtoLocaleString());
+        } else {
+          result.push(entry + '');
         }
       }
-      return str;
+      return result.join(',');
     }
 
     sort(sortBehavior?: any) {
       if (arguments.length === 0) {
-        return this._buffer.sort();
+        this._buffer.sort();
+        return this;
       }
-      if (sortBehavior instanceof Function) {
-        return this._buffer.sort(<(a: any, b: any) => number>sortBehavior);
-      } else {
-        var options = sortBehavior|0;
-        release || assertNotImplemented (!(options & Int32Vector.UNIQUESORT), "UNIQUESORT");
-        release || assertNotImplemented (!(options & Int32Vector.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
-        if (options && GenericVector.NUMERIC) {
-          if (options & GenericVector.DESCENDING) {
-            return this._buffer.sort((a, b) => asCoerceNumber(b) - asCoerceNumber(a));
-          }
-          return this._buffer.sort((a, b) => asCoerceNumber(a) - asCoerceNumber(b));
-        }
-        if (options && GenericVector.CASEINSENSITIVE) {
-          if (options & GenericVector.DESCENDING) {
-            return this._buffer.sort((a, b) => <any>asCoerceString(b).toLowerCase() -
-                                               <any>asCoerceString(a).toLowerCase());
-          }
-          return this._buffer.sort((a, b) => <any>asCoerceString(a).toLowerCase() -
-                                             <any>asCoerceString(b).toLowerCase());
-        }
+      if (this.sec.AXFunction.axIsType(sortBehavior)) {
+        this._buffer.sort(<(a: any, b: any) => number>sortBehavior.value);
+        return this;
+      }
+      var options = sortBehavior|0;
+      release || assertNotImplemented (!(options & Int32Vector.UNIQUESORT), "UNIQUESORT");
+      release || assertNotImplemented (!(options & Int32Vector.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
+      if (options & GenericVector.NUMERIC) {
         if (options & GenericVector.DESCENDING) {
-          return this._buffer.sort((a, b) => b - a);
+          this._buffer.sort((a, b) => axCoerceNumber(b) - axCoerceNumber(a));
+          return this;
         }
-        return this._buffer.sort();
+        this._buffer.sort((a, b) => axCoerceNumber(a) - axCoerceNumber(b));
+        return this;
       }
+      if (options & GenericVector.CASEINSENSITIVE) {
+        if (options & GenericVector.DESCENDING) {
+          this._buffer.sort((a, b) => <any>axCoerceString(b).toLowerCase() -
+                                      <any>axCoerceString(a).toLowerCase());
+          return this;
+        }
+        this._buffer.sort((a, b) => <any>axCoerceString(a).toLowerCase() -
+                                    <any>axCoerceString(b).toLowerCase());
+        return this;
+      }
+      if (options & GenericVector.DESCENDING) {
+        this._buffer.sort((a, b) => b - a);
+        return this;
+      }
+      this._buffer.sort();
+      return this;
     }
 
     /**
-     * Executes a |callback| function with three arguments: element, index, the vector itself as well
-     * as passing the |thisObject| as |this| for each of the elements in the vector. If any of the
-     * callbacks return |false| the function terminates, otherwise it returns |true|.
+     * Executes a |callback| function with three arguments: element, index, the vector itself as
+     * well as passing the |thisObject| as |this| for each of the elements in the vector. If any of
+     * the callbacks return |false| the function terminates, otherwise it returns |true|.
      */
-    every(callback: Function, thisObject: Object) {
+    every(callback: AXCallable, thisObject: Object) {
+      if (!this.checkVectorMethodArgs(callback, thisObject)) {
+        return true;
+      }
       for (var i = 0; i < this._buffer.length; i++) {
-        if (!callback.call(thisObject, this.asGetNumericProperty(i), i, this)) {
+        if (!callback.axCall(thisObject, this.axGetNumericProperty(i), i, this)) {
           return false;
         }
       }
@@ -226,27 +304,39 @@ module Shumway.AVM2.AS {
 
     /**
      * Filters the elements for which the |callback| method returns |true|. The |callback| function
-     * is called with three arguments: element, index, the vector itself as well as passing the |thisObject|
-     * as |this| for each of the elements in the vector.
+     * is called with three arguments: element, index, the vector itself as well as passing the
+     * |thisObject| as |this| for each of the elements in the vector.
      */
     filter(callback, thisObject) {
-      var v = new GenericVector(0, false, this._type);
+      var v = <GenericVector><any>this.axClass.axConstruct([0, false]);
+      if (!this.checkVectorMethodArgs(callback, thisObject)) {
+        return v;
+      }
       for (var i = 0; i < this._buffer.length; i++) {
-        if (callback.call(thisObject, this.asGetNumericProperty(i), i, this)) {
-          v.push(this.asGetNumericProperty(i));
+        if (callback.call(thisObject, this.axGetNumericProperty(i), i, this)) {
+          v.push(this.axGetNumericProperty(i));
         }
       }
       return v;
     }
 
-    some(callback, thisObject) {
-      if (arguments.length !== 2) {
-        throwError("ArgumentError", Errors.WrongArgumentCountError);
-      } else if (!isFunction(callback)) {
-        throwError("ArgumentError", Errors.CheckTypeFailedError);
+    map(callback, thisObject) {
+      var v = <GenericVector><any>this.axClass.axConstruct([this.length, false]);
+      if (!this.checkVectorMethodArgs(callback, thisObject)) {
+        return v;
       }
       for (var i = 0; i < this._buffer.length; i++) {
-        if (callback.call(thisObject, this.asGetNumericProperty(i), i, this)) {
+        v.push(this._coerce(callback.call(thisObject, this.axGetNumericProperty(i), i, this)));
+      }
+      return v;
+    }
+
+    some(callback, thisObject) {
+      if (!this.checkVectorMethodArgs(callback, thisObject)) {
+        return false;
+      }
+      for (var i = 0; i < this._buffer.length; i++) {
+        if (callback.call(thisObject, this.axGetNumericProperty(i), i, this)) {
           return true;
         }
       }
@@ -254,11 +344,11 @@ module Shumway.AVM2.AS {
     }
 
     forEach(callback, thisObject) {
-      if (!isFunction(callback)) {
-        throwError("ArgumentError", Errors.CheckTypeFailedError);
+      if (!this.checkVectorMethodArgs(callback, thisObject)) {
+        return;
       }
       for (var i = 0; i < this._buffer.length; i++) {
-        callback.call(thisObject, this.asGetNumericProperty(i), i, this);
+        callback.call(thisObject, this.axGetNumericProperty(i), i, this);
       }
     }
 
@@ -283,17 +373,6 @@ module Shumway.AVM2.AS {
       return this._buffer.lastIndexOf(searchElement, fromIndex);
     }
 
-    map(callback, thisObject) {
-      if (!isFunction(callback)) {
-        throwError("ArgumentError", Errors.CheckTypeFailedError);
-      }
-      var v = new GenericVector(0, false, this._type);
-      for (var i = 0; i < this._buffer.length; i++) {
-        v.push(callback.call(thisObject, this.asGetNumericProperty(i), i, this));
-      }
-      return v;
-    }
-
     push(arg1?, arg2?, arg3?, arg4?, arg5?, arg6?, arg7?, arg8?/*...rest*/) {
       this._checkFixed();
       for (var i = 0; i < arguments.length; i++) {
@@ -315,7 +394,10 @@ module Shumway.AVM2.AS {
       for (var i = 0; i < arguments.length; i++) {
         buffers.push(this._coerce(arguments[i])._buffer);
       }
-      return this._buffer.concat.apply(this._buffer, buffers);
+      var buffer = this._buffer.concat.apply(this._buffer, buffers);
+      var result = (<any>this).axClass.axConstruct([]);
+      result._buffer = buffer;
+      return result;
     }
 
     reverse() {
@@ -324,12 +406,7 @@ module Shumway.AVM2.AS {
     }
 
     _coerce(v) {
-      if (this._type) {
-        return this._type.coerce(v);
-      } else if (v === undefined) {
-        return null;
-      }
-      return v;
+      return (<any>this.axClass).type.axCoerce(v);
     }
 
     shift() {
@@ -355,7 +432,7 @@ module Shumway.AVM2.AS {
       var length = buffer.length;
       var first = Math.min(Math.max(start, 0), length);
       var last = Math.min(Math.max(end, first), length);
-      var result = new GenericVector(last - first, this.fixed, this._type);
+      var result = <GenericVector><any>this.axClass.axConstruct([last - first, this.fixed]);
       result._buffer = buffer.slice(first, last);
       return result;
     }
@@ -374,7 +451,7 @@ module Shumway.AVM2.AS {
       for (var i = 2; i < insertCount + 2; i++) {
         items[i] = this._coerce(arguments[i]);
       }
-      var result = new GenericVector(deleteCount, this.fixed, this._type);
+      var result =<GenericVector><any>this.axClass.axConstruct([deleteCount, this.fixed]);
       result._buffer = buffer.splice.apply(buffer, items);
       return result;
     }
@@ -387,7 +464,7 @@ module Shumway.AVM2.AS {
       value = value >>> 0;
       if (value > this._buffer.length) {
         for (var i = this._buffer.length; i < value; i++) {
-          this._buffer[i] = this._defaultValue;
+          this._buffer[i] = this.axClass.defaultValue;
         }
       } else {
         this._buffer.length = value;
@@ -405,46 +482,53 @@ module Shumway.AVM2.AS {
 
     _checkFixed() {
       if (this._fixed) {
-        throwError("RangeError", Errors.VectorFixedError);
+        this.sec.throwError("RangeError", Errors.VectorFixedError);
       }
     }
 
-    asNextName(index: number): any {
-      return index - 1;
+    axGetNumericProperty(nm: number) {
+      release || assert(isNumeric(nm));
+      var idx = nm | 0;
+      if (idx < 0 || idx >= this._buffer.length || idx != nm) {
+        this.sec.throwError("RangeError", Errors.OutOfRangeError, nm,
+                                       this._buffer.length);
+      }
+      return this._buffer[idx];
+    }
+    axSetNumericProperty(nm: number, v: any) {
+      release || assert(isNumeric(nm));
+      var length = this._buffer.length;
+      var idx = nm | 0;
+      if (idx < 0 || idx > length || idx != nm || (idx === length && this._fixed)) {
+        this.sec.throwError("RangeError", Errors.OutOfRangeError, nm, length);
+      }
+      this._buffer[idx] = this._coerce(v);
     }
 
-    asNextValue(index: number): any {
+    axHasPropertyInternal(mn: Multiname): boolean {
+      // Optimization for the common case of indexed element accesses.
+      if ((<any>mn.name | 0) === mn.name) {
+        release || assert(mn.isRuntimeName());
+        return mn.name >= 0 && mn.name < this._buffer.length;
+      }
+      var name = axCoerceName(mn.name);
+      if (mn.isRuntimeName() && isIndex(name)) {
+        var index = <any>name >>> 0;
+        return index >= 0 && index < this._buffer.length;
+      }
+      return this.axResolveMultiname(mn) in this;
+    }
+
+    axNextValue(index: number): any {
       return this._buffer[index - 1];
     }
 
-    asNextNameIndex(index: number): number {
+    axNextNameIndex(index: number): number {
       var nextNameIndex = index + 1;
       if (nextNameIndex <= this._buffer.length) {
         return nextNameIndex;
       }
       return 0;
-    }
-
-    asHasProperty(namespaces, name, flags) {
-      if (GenericVector.prototype === this || !isNumeric(name)) {
-        return Object.prototype.asHasProperty.call(this, namespaces, name, flags);
-      }
-      var index = toNumber(name);
-      return index >= 0 && index < this._buffer.length;
-    }
-
-    asGetNumericProperty(i) {
-      checkArguments && asCheckVectorGetNumericProperty(i, this._buffer.length);
-      return this._buffer[i];
-    }
-
-    asSetNumericProperty(i, v) {
-      checkArguments && asCheckVectorSetNumericProperty(i, this._buffer.length, this._fixed);
-      this._buffer[i] = this._coerce(v);
-    }
-
-    asHasNext2(hasNext2Info: HasNext2Info) {
-      hasNext2Info.index = this.asNextNameIndex(hasNext2Info.index)
     }
   }
 }

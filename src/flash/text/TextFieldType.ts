@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 // Class: TextFieldType
-module Shumway.AVM2.AS.flash.text {
-  export class TextFieldType extends ASNative {
+module Shumway.AVMX.AS.flash.text {
+  export class TextFieldType extends ASObject {
 
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: TabStop
-module Shumway.AVM2.AS.flash.text.engine {
+module Shumway.AVMX.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class TabStop extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class TabStop extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -33,8 +33,8 @@ module Shumway.AVM2.AS.flash.text.engine {
     static instanceSymbols: string [] = null; // [];
     
     constructor (alignment: string = "start", position: number = 0, decimalAlignmentToken: string = "") {
-      alignment = asCoerceString(alignment); position = +position; decimalAlignmentToken = asCoerceString(decimalAlignmentToken);
-      false && super();
+      alignment = axCoerceString(alignment); position = +position; decimalAlignmentToken = axCoerceString(decimalAlignmentToken);
+      super();
       dummyConstructor("public flash.text.engine.TabStop");
     }
     
@@ -51,7 +51,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._alignment;
     }
     set alignment(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.text.engine.TabStop::set alignment"); return;
       // this._alignment = value;
     }
@@ -69,7 +69,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._decimalAlignmentToken;
     }
     set decimalAlignmentToken(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.text.engine.TabStop::set decimalAlignmentToken"); return;
       // this._decimalAlignmentToken = value;
     }

@@ -14,21 +14,32 @@
  * limitations under the License.
  */
 // Class: ColorTransform
-module Shumway.AVM2.AS.flash.geom {
+module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   import toS16 = Shumway.IntegerUtilities.toS16;
   import clampS8U8 = Shumway.IntegerUtilities.clampS8U8;
 
-  export class ColorTransform extends ASNative {
-    static classInitializer: any = null;
-    static initializer: any = null;
+  export class ColorTransform extends ASObject {
+
+    static axClass: typeof ColorTransform;
+
+    static classInitializer() {
+      this.FROZEN_IDENTITY_COLOR_TRANSFORM = Object.freeze(this.axConstruct([]));
+      this.TEMP_COLOR_TRANSFORM = this.axConstruct([]);
+    }
     static classSymbols: string [] = null; // [];
-    static instanceSymbols: string [] = null; // ["redMultiplier", "greenMultiplier", "blueMultiplier", "alphaMultiplier", "redOffset", "greenOffset", "blueOffset", "alphaOffset", "color", "color", "concat", "toString"];
+    static instanceSymbols: string [] = null; // ["redMultiplier", "greenMultiplier",
+                                              // "blueMultiplier", "alphaMultiplier", "redOffset",
+                                              // "greenOffset", "blueOffset", "alphaOffset",
+                                              // "color", "color", "concat", "toString"];
     
-    constructor (redMultiplier: number = 1, greenMultiplier: number = 1, blueMultiplier: number = 1, alphaMultiplier: number = 1, redOffset: number = 0, greenOffset: number = 0, blueOffset: number = 0, alphaOffset: number = 0) {
-      false && super();
+    constructor(redMultiplier: number = 1, greenMultiplier: number = 1, blueMultiplier: number = 1,
+                alphaMultiplier: number = 1, redOffset: number = 0, greenOffset: number = 0,
+                blueOffset: number = 0, alphaOffset: number = 0)
+    {
+      super();
       this.redMultiplier = +redMultiplier;
       this.greenMultiplier = +greenMultiplier;
       this.blueMultiplier = +blueMultiplier;
@@ -39,10 +50,10 @@ module Shumway.AVM2.AS.flash.geom {
       this.alphaOffset = +alphaOffset;
     }
 
-    public static FROZEN_IDENTITY_COLOR_TRANSFORM: ColorTransform = Object.freeze(new ColorTransform());
+    public static FROZEN_IDENTITY_COLOR_TRANSFORM: ColorTransform;
 
     // Must only be used in cases where the members are fully initialized and then directly used.
-    public static TEMP_COLOR_TRANSFORM: ColorTransform = new ColorTransform();
+    public static TEMP_COLOR_TRANSFORM: ColorTransform;
 
     public redMultiplier: number;
     public greenMultiplier: number;
@@ -183,7 +194,9 @@ module Shumway.AVM2.AS.flash.geom {
       this.alphaOffset = object.alphaOffset;
     }
 
-    public setTo(redMultiplier: number, greenMultiplier: number, blueMultiplier: number, alphaMultiplier: number, redOffset: number, greenOffset: number, blueOffset: number, alphaOffset: number): void {
+    public setTo(redMultiplier: number, greenMultiplier: number, blueMultiplier: number,
+                 alphaMultiplier: number, redOffset: number, greenOffset: number,
+                 blueOffset: number, alphaOffset: number): void {
       this.redMultiplier = redMultiplier;
       this.greenMultiplier = greenMultiplier;
       this.blueMultiplier = blueMultiplier;
@@ -195,7 +208,7 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public clone(): ColorTransform {
-      return new ColorTransform(
+      return new this.sec.flash.geom.ColorTransform(
         this.redMultiplier,
         this.greenMultiplier,
         this.blueMultiplier,

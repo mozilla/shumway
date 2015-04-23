@@ -17,21 +17,95 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
 
-  export class AVM1System {
-    static createAVM1Class():typeof AVM1System {
-      return wrapAVM1Class(AVM1System,
-        ['capabilities', 'security'],
+  var capabilitiesProperties = [
+    'avHardwareDisable', 'hasAccessibility', 'hasAudio', 'hasAudioEncoder',
+    'hasEmbeddedVideo', 'hasIME', 'hasMP3', 'hasPrinting', 'hasScreenBroadcast',
+    'hasScreenPlayback', 'hasStreamingAudio', 'hasStreamingVideo',
+    'hasVideoEncoder', 'isDebugger', 'language', 'localFileReadDisable',
+    'manufacturer', 'os', 'pixelAspectRatio', 'playerType', 'screenColor',
+    'screenDPI', 'screenResolutionX', 'screenResolutionY', 'serverString',
+    'version'
+  ];
+
+  class AVM1Capabilities extends AVM1Object {
+    constructor(context: AVM1Context) {
+      super(context);
+      this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
+      var as3Capabilities = context.sec.flash.system.Capabilities.axClass;
+      capabilitiesProperties.forEach((name) => {
+        this.alSetOwnProperty(name, {
+          flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.DONT_ENUM,
+          get: { alCall: function () { return as3Capabilities.axGetPublicProperty(name); }}
+        })
+      }, this);
+    }
+  }
+
+  class AVM1Security extends AVM1Object {
+    constructor(context: AVM1Context) {
+      super(context);
+      this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
+      alDefineObjectProperties(this, {
+        sandboxType: {
+          get: this.getSandboxType
+        },
+        allowDomain: {
+          value: this.allowDomain
+        },
+        allowInsecureDomain: {
+          value: this.allowInsecureDomain
+        },
+        loadPolicyFile: {
+          value: this.loadPolicyFile
+        }
+      });
+    }
+
+    getSandboxType(): string {
+      return this.context.sec.flash.system.Security.axClass.sandboxType;
+    }
+
+    allowDomain(domain: string): void {
+      domain = alCoerceString(this.context, domain);
+      this.context.sec.flash.system.Security.axClass.allowDomain(domain);
+    }
+
+    allowInsecureDomain(domain: string): void {
+      domain = alCoerceString(this.context, domain);
+      this.context.sec.flash.system.Security.axClass.allowInsecureDomain(domain);
+    }
+
+    loadPolicyFile(url: string): void {
+      url = alCoerceString(this.context, url);
+      this.context.sec.flash.system.Security.axClass.loadPolicyFile(url);
+    }
+  }
+
+  export class AVM1System extends AVM1Object {
+    static _capabilities: AVM1Object;
+    static _security: AVM1Object;
+
+    static alInitStatic(context: AVM1Context): void  {
+      this._capabilities = new AVM1Capabilities(context);
+      this._security = new AVM1Security(context);
+    }
+
+    static createAVM1Class(context: AVM1Context): AVM1Object {
+      return wrapAVM1NativeClass(context, false, AVM1System,
+        ['capabilities#', 'security#'],
         []);
     }
 
-    public static get capabilities() {
-      return flash.system.Capabilities;
+    public static getCapabilities(context: AVM1Context) {
+      var staticState: typeof AVM1System = context.getStaticState(AVM1System);
+      return staticState._capabilities;
     }
 
-    public static get security() {
-      return flash.system.Security;
+    public static getSecurity(context: AVM1Context) {
+      var staticState: typeof AVM1System = context.getStaticState(AVM1System);
+      return staticState._security;
     }
   }
 }

@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 // Class: XMLTag
-module Shumway.AVM2.AS.flash.xml {
+module Shumway.AVMX.AS.flash.xml {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class XMLTag extends ASNative {
-    static initializer: any = null;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class XMLTag extends ASObject {
     constructor () {
-      false && super();
-      dummyConstructor("packageInternal flash.xml.XMLTag");
+      super();
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings
@@ -46,7 +43,7 @@ module Shumway.AVM2.AS.flash.xml {
       notImplemented("packageInternal flash.xml.XMLTag::get value"); return;
     }
     set value(v: string) {
-      v = asCoerceString(v);
+      v = axCoerceString(v);
       notImplemented("packageInternal flash.xml.XMLTag::set value"); return;
     }
     get attrs(): ASObject {

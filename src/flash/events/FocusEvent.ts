@@ -14,22 +14,26 @@
  * limitations under the License.
  */
 // Class: FocusEvent
-module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
+module Shumway.AVMX.AS.flash.events {
   export class FocusEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
+    relatedObject: flash.display.InteractiveObject;
+    shiftKey: boolean;
+    keyCode: number;
+
     constructor(type: string, bubbles: boolean = true, cancelable: boolean = false,
                 relatedObject: flash.display.InteractiveObject = null, shiftKey: boolean = false,
                 keyCode: number /*uint*/ = 0) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.FocusEvent");
+      super(type, bubbles, cancelable);
+      // TODO: coerce
+      this.relatedObject = relatedObject;
+      this.shiftKey = !!shiftKey;
+      this.keyCode = keyCode >>> 0;
     }
 
     // JS -> AS Bindings

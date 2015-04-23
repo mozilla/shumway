@@ -14,35 +14,34 @@
  * limitations under the License.
  */
 // Class: GraphicsTrianglePath
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class GraphicsTrianglePath extends ASNative implements IGraphicsPath, IGraphicsData {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class GraphicsTrianglePath extends ASObject implements IGraphicsPath, IGraphicsData {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["indices", "vertices", "uvtData", "_culling", "culling", "culling"];
     
-    constructor (vertices: ASVector<number> = null, indices: ASVector<number /*int*/> = null, uvtData: ASVector<number> = null, culling: string = "none") {
-      vertices = vertices; indices = indices; uvtData = uvtData; culling = asCoerceString(culling);
-      false && super();
-      dummyConstructor("public flash.display.GraphicsTrianglePath");
+    constructor (vertices: Float64Vector = null, indices: Int32Vector = null, uvtData: Float64Vector = null, culling: string = "none") {
+      super();
+      // TODO: coerce to vector types
+      this.vertices = vertices;
+      this.indices = indices;
+      this.uvtData = uvtData;
+      this.culling = axCoerceString(culling);
     }
     
     // JS -> AS Bindings
     
-    indices: ASVector<number /*int*/>;
-    vertices: ASVector<number>;
-    uvtData: ASVector<number>;
+    indices: Int32Vector;
+    vertices: Float64Vector;
+    uvtData: Float64Vector;
     _culling: string;
     culling: string;
     
