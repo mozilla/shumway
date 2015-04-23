@@ -223,6 +223,8 @@ module Shumway.AVMX.AS {
   M("flash.media.Microphone", flash.media.Microphone);
 
   M("flash.net.FileFilter", flash.net.FileFilter);
+  M("flash.net.FileReference", flash.net.FileReference);
+  M("flash.net.FileReferenceList", flash.net.FileReferenceList);
   M("flash.net.NetConnection", flash.net.NetConnection);
   M("flash.net.NetStream", flash.net.NetStream);
   M("flash.net.NetStreamInfo", flash.net.NetStreamInfo);
