@@ -117,7 +117,7 @@ module Shumway.Remoting.Player {
       this.output.writeInt(flash.display.StageScaleMode.toNumber(stage.scaleMode));
       this.output.writeInt(flash.display.StageDisplayState.toNumber(stage.displayState));
 
-      var cursor = flash.ui.Mouse.cursor;
+      var cursor = stage.sec.flash.ui.Mouse.axClass.cursor;
       if (currentMouseTarget) {
         this.output.writeInt(currentMouseTarget._id);
         if (cursor === MouseCursor.AUTO) {
