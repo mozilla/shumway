@@ -14,45 +14,27 @@
  * limitations under the License.
  */
 // Class: Camera
-module Shumway.AVM2.AS.flash.media {
+module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class Camera extends flash.events.EventDispatcher {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
+
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.media.Camera");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    // static _names: any [];
-    // static _isSupported: boolean;
-    get names(): any [] {
+
+    static get names(): ASArray {
       notImplemented("public flash.media.Camera::get names"); return;
       // return this._names;
     }
-    get isSupported(): boolean {
+    static get isSupported(): boolean {
       notImplemented("public flash.media.Camera::get isSupported"); return;
       // return this._isSupported;
     }
     static getCamera(name: string = null): flash.media.Camera {
-      name = asCoerceString(name);
+      name = axCoerceString(name);
       notImplemented("public flash.media.Camera::static getCamera"); return;
     }
     static _scanHardware(): void {
@@ -166,7 +148,7 @@ module Shumway.AVM2.AS.flash.media {
       rect = rect; destination = destination;
       notImplemented("public flash.media.Camera::copyToByteArray"); return;
     }
-    copyToVector(rect: flash.geom.Rectangle, destination: ASVector<any>): void {
+    copyToVector(rect: flash.geom.Rectangle, destination: Float64Vector): void {
       rect = rect; destination = destination;
       notImplemented("public flash.media.Camera::copyToVector"); return;
     }

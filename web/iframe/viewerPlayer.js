@@ -93,8 +93,8 @@ function runSwfPlayer(flashParams) {
       var movieParams = flashParams.movieParams;
       var objectParams = flashParams.objectParams;
 
-      var gfxService = new Shumway.Player.Window.WindowGFXService(window, window.parent);
-      player = new Shumway.Player.Player(gfxService);
+      var gfxService = new Shumway.Player.Window.WindowGFXService(securityDomain, window, window.parent);
+      player = new Shumway.Player.Player(securityDomain, gfxService);
       player.defaultStageColor = flashParams.bgcolor;
       player.movieParams = movieParams;
       player.stageAlign = (objectParams && (objectParams.salign || objectParams.align)) || '';

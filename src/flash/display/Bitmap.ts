@@ -14,39 +14,37 @@
  * limitations under the License.
  */
 // Class: Bitmap
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import assert = Shumway.Debug.assert;
-  import throwError = Shumway.AVM2.Runtime.throwError;
+
   export class Bitmap extends flash.display.DisplayObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: flash.display.BitmapSymbol) {
-      var self: Bitmap = this;
 
-      self._bitmapData = null;
-      self._pixelSnapping = null;
-      self._smoothing = null;
-
-      if (symbol) {
-        var symbolClass = symbol.symbolClass;
-        // If the symbol class inherits from Bitmap, we are already within its initializer.
-        // Make sure to create a BitmapData instance here to avoid recursively calling the
-        // initializer again.
-        if (symbolClass.isSubtypeOf(flash.display.Bitmap)) {
-          symbolClass = flash.display.BitmapData;
-        }
-        // TODO: I don't think BitmapData symbol objects can change, so they don't need back
-        // references to this Bitmap.
-        self._bitmapData = symbolClass.initializeFrom(symbol);
-        self._setFillAndLineBoundsFromWidthAndHeight(symbol.width * 20 | 0, symbol.height * 20 | 0);
+    _symbol: BitmapSymbol;
+    applySymbol() {
+      release || assert(this._symbol);
+      this._initializeFields();
+      var symbol = this._symbol;
+      var symbolClass = symbol.symbolClass;
+      // If the symbol class inherits from Bitmap, we are already within its initializer.
+      // Make sure to create a BitmapData instance here to avoid recursively calling the
+      // initializer again.
+      var bitmapClass = this.sec.flash.display.Bitmap.axClass;
+      if (bitmapClass.dPrototype.isPrototypeOf((<any>symbolClass).dPrototype)) {
+        symbolClass = this.sec.flash.display.BitmapData.axClass;
       }
-    };
-    
+      // TODO: I don't think BitmapData symbol objects can change, so they don't need back
+      // references to this Bitmap.
+      this._bitmapData = constructClassFromSymbol(symbol, symbolClass);
+      this._pixelSnapping = null;
+      this._smoothing = null;
+      this._setFillAndLineBoundsFromWidthAndHeight(symbol.width * 20 | 0, symbol.height * 20 | 0);
+    }
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -54,15 +52,15 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = null; // [];
     
     constructor (bitmapData: flash.display.BitmapData = null, pixelSnapping: string = "auto", smoothing: boolean = false) {
-      false && super();
-      DisplayObject.instanceConstructorNoInitialize.call(this);
-      if (this._symbol) {
-        this._bitmapData.class.instanceConstructorNoInitialize.call(this._bitmapData);
-      } else {
-        this.bitmapData = bitmapData;
+      if (this._symbol && !this._fieldsInitialized) {
+        this.applySymbol();
       }
-      this._pixelSnapping = asCoerceString(pixelSnapping);
-      this._smoothing = !!smoothing;
+      super();
+      if (!this._symbol) {
+        this.bitmapData = bitmapData;
+        this._pixelSnapping = axCoerceString(pixelSnapping);
+        this._smoothing = !!smoothing;
+      }
     }
 
     _pixelSnapping: string;
@@ -75,9 +73,9 @@ module Shumway.AVM2.AS.flash.display {
 
     set pixelSnapping(value: string) {
       if (PixelSnapping.toNumber(value) < 0) {
-        throwError("ArgumentError", Errors.InvalidEnumError, "pixelSnapping");
+        this.sec.throwError("ArgumentError", Errors.InvalidEnumError, "pixelSnapping");
       }
-      this._pixelSnapping = asCoerceString(value);
+      this._pixelSnapping = axCoerceString(value);
     }
 
     get smoothing(): boolean {

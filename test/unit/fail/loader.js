@@ -60,7 +60,7 @@
     l.contentLoaderInfo.addEventListener(Event.INIT, function (event) {
       check(l.content, "We should have some content here.");
       check(l.content.root === l.content, "This should be the root.");
-      check(DisplayObject.isType(l.content));
+      check(DisplayObject.axIsType(l.content));
       s.setStageWidth(l.contentLoaderInfo.width);
       s.setStageHeight(l.contentLoaderInfo.height);
       s.frameRate = l.contentLoaderInfo.frameRate;

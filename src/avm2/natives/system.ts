@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-module Shumway.AVM2.AS {
+module Shumway.AVMX.AS {
+
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
 
   export module flash.system {
-    export class IME extends ASNative /* flash.events.EventDispatcher */ {
+    export class IME extends ASObject /* flash.events.EventDispatcher */ {
       constructor () {
-        false && super();
+        super();
       }
       static get enabled(): boolean {
         notImplemented("public flash.system.IME::static get enabled"); return;
@@ -36,11 +37,11 @@ module Shumway.AVM2.AS {
         notImplemented("public flash.system.IME::static get conversionMode"); return;
       }
       static set conversionMode(mode: string) {
-        mode = asCoerceString(mode);
+        mode = axCoerceString(mode);
         notImplemented("public flash.system.IME::static set conversionMode"); return;
       }
       static setCompositionString(composition: string): void {
-        composition = asCoerceString(composition);
+        composition = axCoerceString(composition);
         notImplemented("public flash.system.IME::static setCompositionString"); return;
       }
       static doConversion(): void {
@@ -59,15 +60,19 @@ module Shumway.AVM2.AS {
       }
     }
 
-    export class System extends ASNative {
+    export class System extends ASObject {
       private static _useCodePage: boolean = false;
+
+      static classInitializer() {
+        defineNonEnumerableProperty(this, '$Bgargv', this.sec.createArray([]));
+      }
 
       static get ime(): flash.system.IME {
         notImplemented("public flash.system.System::get ime"); return;
       }
 
       static setClipboard(string: string): void {
-        string = asCoerceString(string);
+        string = axCoerceString(string);
         if (ClipboardService.instance === null) {
           console.warn('setClipboard is only available in the Firefox extension');
           return;
@@ -145,3 +150,6 @@ module Shumway.AVM2.AS {
     export var OriginalSystem = System;
   }
 }
+
+// Do this here temporarily until we find a nicer place.
+Shumway.AVMX.AS.initializeBuiltins();

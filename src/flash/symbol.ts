@@ -22,13 +22,14 @@ module Shumway.Timeline {
   import abstractMethod = Shumway.Debug.abstractMethod;
   import Bounds = Shumway.Bounds;
   import ColorUtilities = Shumway.ColorUtilities;
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
 
   import ActionScriptVersion = flash.display.ActionScriptVersion;
 
   export interface IAssetResolver {
-    registerFont(symbol: Timeline.EagerlyResolvedSymbol, data: any): void;
-    registerImage(symbol: Timeline.EagerlyResolvedSymbol, data: any): void;
+    registerFont(symbol: Timeline.EagerlyResolvedSymbol, data: Uint8Array): void;
+    registerImage(symbol: Timeline.EagerlyResolvedSymbol, imageType: ImageType,
+                  data: Uint8Array): void;
   }
 
   export interface EagerlyResolvedSymbol {
@@ -39,7 +40,7 @@ module Shumway.Timeline {
     resolveAssetCallback: (data: any) => void;
   }
 
-  export interface SymbolData {id: number; className: string}
+  export interface SymbolData {id: number; className: string; env: {app: AVMX.AXApplicationDomain}}
   /**
    * TODO document
    */
@@ -49,16 +50,22 @@ module Shumway.Timeline {
     data: any;
     isAVM1Object: boolean;
     avm1Context: Shumway.AVM1.AVM1Context;
-    symbolClass: Shumway.AVM2.AS.ASClass;
+    symbolClass: ASClass;
 
-    constructor(data: SymbolData, symbolDefaultClass: Shumway.AVM2.AS.ASClass) {
+    constructor(data: SymbolData, symbolDefaultClass: ASClass) {
       release || assert (isInteger(data.id));
       this.data = data;
       if (data.className) {
-        var appDomain = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain;
+        var app = data.env.app;
         try {
-          var symbolClass = appDomain.getClass(data.className);
-          this.symbolClass = symbolClass;
+          var symbolClass = app.getClass(AVMX.Multiname.FromFQNString(data.className,
+                                                                      AVMX.NamespaceType.Public));
+          this.symbolClass = <ASClass><any>symbolClass;
+          // The symbolClass should have received a lazy symbol resolver in Loader#_applyLoadUpdate.
+          release || assert(symbolClass.tPrototype.hasOwnProperty('_symbol'));
+          // Replace it by this symbol without triggering the resolver and causing an infinite
+          // recursion.
+          Object.defineProperty(symbolClass.tPrototype, '_symbol', {value: this});
         } catch (e) {
           warning ("Symbol " + data.id + " bound to non-existing class " + data.className);
           this.symbolClass = symbolDefaultClass;
@@ -80,7 +87,7 @@ module Shumway.Timeline {
     scale9Grid: Bounds;
     dynamic: boolean;
 
-    constructor(data: SymbolData, symbolClass: Shumway.AVM2.AS.ASClass, dynamic: boolean) {
+    constructor(data: SymbolData, symbolClass: ASClass, dynamic: boolean) {
       super(data, symbolClass);
       this.dynamic = dynamic;
     }
@@ -98,12 +105,12 @@ module Shumway.Timeline {
     buffer: Uint8Array;
     byteLength: number;
 
-    constructor(data: SymbolData) {
-      super(data, flash.utils.ByteArray);
+    constructor(data: SymbolData, sec: ISecurityDomain) {
+      super(data, sec.flash.utils.ByteArray.axClass);
     }
 
-    static FromData(data: any): BinarySymbol {
-      var symbol = new BinarySymbol(data);
+    static FromData(data: any, loaderInfo: flash.display.LoaderInfo): BinarySymbol {
+      var symbol = new BinarySymbol(data, loaderInfo.app.sec);
       symbol.buffer = data.data;
       symbol.byteLength = data.data.byteLength;
       return symbol;

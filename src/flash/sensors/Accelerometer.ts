@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 // Class: Accelerometer
-module Shumway.AVM2.AS.flash.sensors {
+module Shumway.AVMX.AS.flash.sensors {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Accelerometer extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +28,7 @@ module Shumway.AVM2.AS.flash.sensors {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.sensors.Accelerometer");
+      super();
     }
     
     // JS -> AS Bindings

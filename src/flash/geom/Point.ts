@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 // Class: Point
-module Shumway.AVM2.AS.flash.geom {
+module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Point extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class Point extends ASObject {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
 
     // List of static symbols to link.
     static classSymbols: string [] = null; // ["interpolate", "distance", "polar"];
@@ -32,7 +29,7 @@ module Shumway.AVM2.AS.flash.geom {
     static instanceSymbols: string [] = null; // ["x", "y", "length", "clone", "offset", "equals", "subtract", "add", "normalize", "copyFrom", "setTo", "toString"];
 
     constructor(x: number = 0, y: number = 0) {
-      false && super();
+      super();
       this.x = +x;
       this.y = +y;
     }
@@ -67,7 +64,7 @@ module Shumway.AVM2.AS.flash.geom {
 
     public static interpolate(p1: Point, p2: Point, f: number): Point {
       var f1: number = 1 - f;
-      return new Point(p1.x * f + p2.x * f1, p1.y * f + p2.y * f1);
+      return new this.sec.flash.geom.Point(p1.x * f + p2.x * f1, p1.y * f + p2.y * f1);
     }
 
     public static distance(p1: Point, p2: Point): number {
@@ -79,11 +76,12 @@ module Shumway.AVM2.AS.flash.geom {
     public static polar(length: number, angle: number): Point {
       length = +length;
       angle = +angle;
-      return new Point(length * Math.cos(angle), length * Math.sin(angle));
+      return new this.sec.flash.geom.Point(length * Math.cos(angle),
+                                                      length * Math.sin(angle));
     }
 
     public clone(): Point {
-      return new Point(this.x, this.y);
+      return new this.sec.flash.geom.Point(this.x, this.y);
     }
 
     public offset(dx: number, dy: number): void {
@@ -96,11 +94,11 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public subtract(v: Point): Point {
-      return new Point(this.x - v.x, this.y - v.y);
+      return new this.sec.flash.geom.Point(this.x - v.x, this.y - v.y);
     }
 
     public add(v: Point): Point {
-      return new Point(this.x + v.x, this.y + v.y);
+      return new this.sec.flash.geom.Point(this.x + v.x, this.y + v.y);
     }
 
     public normalize(thickness: number): void {

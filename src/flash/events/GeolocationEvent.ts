@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 // Class: GeolocationEvent
-module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
+module Shumway.AVMX.AS.flash.events {
   export class GeolocationEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
@@ -29,8 +26,7 @@ module Shumway.AVM2.AS.flash.events {
                 latitude: number = 0, longitude: number = 0, altitude: number = 0,
                 hAccuracy: number = 0, vAccuracy: number = 0, speed: number = 0,
                 heading: number = 0, timestamp: number = 0) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.GeolocationEvent");
+      super(type, bubbles, cancelable);
     }
 
     // JS -> AS Bindings

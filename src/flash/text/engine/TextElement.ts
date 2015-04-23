@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: TextElement
-module Shumway.AVM2.AS.flash.text.engine {
+module Shumway.AVMX.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class TextElement extends flash.text.engine.ContentElement {
     
     // Called whenever the class is initialized.
@@ -33,8 +33,8 @@ module Shumway.AVM2.AS.flash.text.engine {
     static instanceSymbols: string [] = null; // [];
     
     constructor (text: string = null, elementFormat: flash.text.engine.ElementFormat = null, eventMirror: flash.events.EventDispatcher = null, textRotation: string = "rotate0") {
-      text = asCoerceString(text); elementFormat = elementFormat; eventMirror = eventMirror; textRotation = asCoerceString(textRotation);
-      false && super(undefined, undefined, undefined);
+      text = axCoerceString(text); elementFormat = elementFormat; eventMirror = eventMirror; textRotation = axCoerceString(textRotation);
+      super(undefined, undefined, undefined);
       dummyConstructor("public flash.text.engine.TextElement");
     }
     
@@ -45,12 +45,12 @@ module Shumway.AVM2.AS.flash.text.engine {
     
     // _text: string;
     set text(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.text.engine.TextElement::set text"); return;
       // this._text = value;
     }
     replaceText(beginIndex: number /*int*/, endIndex: number /*int*/, newText: string): void {
-      beginIndex = beginIndex | 0; endIndex = endIndex | 0; newText = asCoerceString(newText);
+      beginIndex = beginIndex | 0; endIndex = endIndex | 0; newText = axCoerceString(newText);
       notImplemented("public flash.text.engine.TextElement::replaceText"); return;
     }
   }

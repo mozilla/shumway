@@ -14,28 +14,22 @@
  * limitations under the License.
  */
 // Class: ColorMatrixFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
   export class ColorMatrixFilter extends flash.filters.BitmapFilter {
 
-    // Called whenever the class is initialized.
+    static axClass: typeof ColorMatrixFilter;
+
     static classInitializer: any = null;
 
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null;
-
-    public static FromUntyped(obj: any) {
-      return new ColorMatrixFilter(obj.matrix);
+    public static FromUntyped(obj: {matrix: number[]}) {
+      var filter = Object.create(this.sec.flash.filters.ColorMatrixFilter.axClass.tPrototype);
+      filter._matrix = obj.matrix;
+      return filter;
     }
 
-    constructor (matrix: any [] = null) {
-      false && super();
+    constructor (matrix: ASArray = null) {
+      super();
       if (matrix) {
         this.matrix = matrix;
       } else {
@@ -57,34 +51,30 @@ module Shumway.AVM2.AS.flash.filters {
       }
     }
 
-    // JS -> AS Bindings
+    private _matrix: number[];
 
-    // AS -> JS Bindings
-
-    private _matrix: number [];
-
-    get matrix(): any [] {
-      return this._matrix.concat();
+    get matrix(): ASArray {
+      return this.sec.createArrayUnsafe(this._matrix.concat());
     }
-    set matrix(value: any []) {
-      if (!isNullOrUndefined(value)) {
-        var matrix = [
-          0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0
-        ];
-        for (var i = 0, n = Math.min(value.length, 20); i < n; i++) {
-          matrix[i] = toNumber(value[i]);
-        }
-        this._matrix = matrix;
-      } else {
-        Runtime.throwError("TypeError", Errors.NullPointerError, "matrix");
+    set matrix(value_: ASArray) {
+      if (isNullOrUndefined(value_)) {
+        this.sec.throwError("TypeError", Errors.NullPointerError, "matrix");
       }
+      var matrix = [
+        0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0
+      ];
+      var value = value_.value;
+      for (var i = 0, n = Math.min(value.length, 20); i < n; i++) {
+        matrix[i] = toNumber(value[i]);
+      }
+      this._matrix = matrix;
     }
 
     clone(): BitmapFilter {
-      return new ColorMatrixFilter(this.matrix);
+      return new this.sec.flash.filters.ColorMatrixFilter(this.matrix);
     }
   }
 }

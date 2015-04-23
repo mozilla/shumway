@@ -14,60 +14,38 @@
  * limitations under the License.
  */
 
-module Shumway.AVM2.AS {
+module Shumway.AVMX.AS {
   import assert = Shumway.Debug.assert;
-  import assertNotImplemented = Shumway.Debug.assertNotImplemented;
-  import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import Namespace = Shumway.AVM2.ABC.Namespace;
-  import throwError = Shumway.AVM2.Runtime.throwError;
-  import clamp = Shumway.NumberUtilities.clamp;
-  import asCheckVectorGetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
-  import asCheckVectorSetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
 
   export module flash.utils {
-    var _asGetProperty = Object.prototype.asGetProperty;
-    var _asSetProperty = Object.prototype.asSetProperty;
-    var _asCallProperty = Object.prototype.asCallProperty;
-    var _asHasProperty = Object.prototype.asHasProperty;
-    var _asHasOwnProperty = Object.prototype.asHasOwnProperty;
-    var _asHasTraitProperty = Object.prototype.asHasTraitProperty;
-    var _asDeleteProperty = Object.prototype.asDeleteProperty;
-    var _asGetEnumerableKeys = Object.prototype.asGetEnumerableKeys;
-
     /**
      * TODO: We need a more robust Dictionary implementation that doesn't only give you back
      * string keys when enumerating.
      */
-    export class Dictionary extends ASNative {
+    export class Dictionary extends ASObject {
       static classInitializer: any = function() {
-        var proto: any = Dictionary.prototype;
-        ObjectUtilities.defineNonEnumerableProperty(proto, '$BgtoJSON', proto.toJSON);
+        var proto: any = this.dPrototype;
+        var asProto: any = Dictionary.prototype;
+        addPrototypeFunctionAlias(proto, '$BgtoJSON', asProto.toJSON);
       }
-
-      public static isTraitsOrDynamicPrototype(value): boolean {
-        return value === Dictionary.traitsPrototype || value === Dictionary.dynamicPrototype;
-      }
-
-      public static protocol: IProtocol = Dictionary.prototype;
-
 
       private map: WeakMap<any, any>;
       private keys: any [];
       private weakKeys: boolean;
       private primitiveMap: Object;
 
-      constructor (weakKeys: boolean = false) {
-        false && super();
-        this.weakKeys = !!weakKeys;
+      constructor(weakKeys: boolean = false) {
+        super();
         this.map = new WeakMap();
+        this.keys = null;
+        this.weakKeys = !!weakKeys;
         if (!weakKeys) {
           this.keys = [];
         }
         this.primitiveMap = Object.create(null);
       }
 
-      static makePrimitiveKey(key) {
+      static makePrimitiveKey(key: any) {
         if (typeof key === "string" || typeof key === "number") {
           return key;
         }
@@ -79,75 +57,79 @@ module Shumway.AVM2.AS {
         return "Dictionary";
       }
 
-      public asGetNumericProperty(name: number) {
-        return this.asGetProperty(null, name, 0);
-      }
-
-      public asSetNumericProperty(name: number, value) {
-        this.asSetProperty(null, name, 0, value);
-      }
-
-      public asGetProperty(namespaces: Namespace [], name: any, flags: number) {
-        if (Dictionary.isTraitsOrDynamicPrototype(this)) {
-          return _asGetProperty.call(this, namespaces, name, flags);
+      public axGetProperty(mn: Multiname): any {
+        if (<any>this === this.axClass.dPrototype) {
+          return super.axGetProperty(mn);
         }
-        var key = Dictionary.makePrimitiveKey(name);
+        var key = Dictionary.makePrimitiveKey(mn.name);
         if (key !== undefined) {
           return this.primitiveMap[<any>key];
         }
-        return this.map.get(Object(name));
+        return this.map.get(Object(mn.name));
       }
 
-      public asSetProperty(namespaces: Namespace [], name: any, flags: number, value: any) {
-        if (Dictionary.isTraitsOrDynamicPrototype(this)) {
-          return _asSetProperty.call(this, namespaces, name, flags, value);
+      public axSetProperty(mn: Multiname, value: any, bc: Bytecode) {
+        if (<any>this === this.axClass.dPrototype) {
+          super.axSetProperty(mn, value, bc);
+          return;
         }
-        var key = Dictionary.makePrimitiveKey(name);
+        var key = Dictionary.makePrimitiveKey(mn.name);
         if (key !== undefined) {
           this.primitiveMap[<any>key] = value;
           return;
         }
-        this.map.set(Object(name), value);
-        if (!this.weakKeys && this.keys.indexOf(name) < 0) {
-          this.keys.push(name);
+        this.map.set(Object(mn.name), value);
+        if (!this.weakKeys && this.keys.indexOf(mn.name) < 0) {
+          this.keys.push(mn.name);
         }
       }
 
       // TODO: Not implemented yet.
-      // public asCallProperty(namesp aces: Namespace [], name: any, flags: number, isLex: boolean, args: any []) {
-      //   notImplemented("asCallProperty");
+      // public axCallProperty(mn: Multiname, args: any []) {
+      //   notImplemented("axCallProperty");
       // }
 
-      public asHasProperty(namespaces: Namespace [], name: any, flags: number) {
-        if (Dictionary.isTraitsOrDynamicPrototype(this)) {
-          return _asHasProperty.call(this, namespaces, name, flags);
+      public axHasPropertyInternal(mn: Multiname) {
+        if (<any>this === this.axClass.dPrototype) {
+          return super.axHasProperty(mn);
         }
-        var key = Dictionary.makePrimitiveKey(name);
+        var key = Dictionary.makePrimitiveKey(mn.name);
         if (key !== undefined) {
           return <any>key in this.primitiveMap;
         }
-        return this.map.has(Object(name));
+        return this.map.has(Object(mn.name));
       }
 
-      public asDeleteProperty(namespaces: Namespace [], name: any, flags: number) {
-        if (Dictionary.isTraitsOrDynamicPrototype(this)) {
-          return _asDeleteProperty.call(this, namespaces, name, flags);
+      public axDeleteProperty(mn: Multiname) {
+        if (<any>this === this.axClass.dPrototype) {
+          return super.axDeleteProperty(mn);
         }
-        var key = Dictionary.makePrimitiveKey(name);
+        var key = Dictionary.makePrimitiveKey(mn.name);
         if (key !== undefined) {
           delete this.primitiveMap[<any>key];
         }
-        this.map.delete(Object(name));
+        this.map.delete(Object(mn.name));
         var i;
-        if (!this.weakKeys && (i = this.keys.indexOf(name)) >= 0) {
+        if (!this.weakKeys && (i = this.keys.indexOf(mn.name)) >= 0) {
           this.keys.splice(i, 1);
         }
         return true;
       }
 
-      public asGetEnumerableKeys() {
-        if (Dictionary.isTraitsOrDynamicPrototype(this)) {
-          return _asGetEnumerableKeys.call(this);
+      axGetPublicProperty(nm: any): any {
+        if (<any>this === this.axClass.dPrototype) {
+          return super.axGetPublicProperty(nm);
+        }
+        var key = Dictionary.makePrimitiveKey(nm);
+        if (key !== undefined) {
+          return this.primitiveMap[<any>key];
+        }
+        return this.map.get(Object(nm));
+      }
+
+      public axGetEnumerableKeys(): any [] {
+        if (<any>this === this.axClass.dPrototype) {
+          return super.axGetEnumerableKeys();
         }
         var primitiveMapKeys = [];
         for (var k in this.primitiveMap) {
@@ -157,10 +139,11 @@ module Shumway.AVM2.AS {
           // TODO implement workaround for flashx.textLayout.external.WeakRef
           return primitiveMapKeys; // assuming all weak ref objects are gone
         }
-        return primitiveMapKeys.concat(this.keys);
+        if (this.keys) {
+          return primitiveMapKeys.concat(this.keys);
+        }
+        return primitiveMapKeys.slice();
       }
     }
-
-    export var OriginalDictionary = Dictionary;
   }
 }

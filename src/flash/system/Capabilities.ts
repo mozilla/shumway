@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 // Class: Capabilities
-module Shumway.AVM2.AS.flash.system {
+module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import toKeyValueArray = Shumway.ObjectUtilities.toKeyValueArray;
 
   declare var window;
 
-  export class Capabilities extends ASNative {
+  export class Capabilities extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -38,14 +34,9 @@ module Shumway.AVM2.AS.flash.system {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.system.Capabilities");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
+
     // static _isEmbeddedInAcrobat: boolean;
     // static _hasEmbeddedVideo: boolean;
     // static _hasAudio: boolean;
@@ -235,7 +226,7 @@ module Shumway.AVM2.AS.flash.system {
       // return Capabilities.__internal;
     }
     static hasMultiChannelAudio(type: string): boolean {
-      type = asCoerceString(type);
+      type = axCoerceString(type);
       notImplemented("public flash.system.Capabilities::static hasMultiChannelAudio"); return;
     }
     

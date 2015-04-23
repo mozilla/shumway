@@ -83,8 +83,7 @@ module Shumway.GFX {
 
     public addRenderableParent(renderable: Renderable) {
       release || assert(renderable);
-      var index = indexOf(this._renderableParents, renderable);
-      release || assert(index < 0);
+      release || assert(this._renderableParents.indexOf(renderable) === -1);
       this._renderableParents.push(renderable);
     }
 
@@ -506,7 +505,7 @@ module Shumway.GFX {
         if (imageConvertOption.value) {
           enterTimeline("ColorUtilities.convertImage");
           var pixels = new Int32Array(buffer);
-          var out = new Int32Array(imageData.data.buffer);
+          var out = new Int32Array((<any>imageData.data).buffer);
           ColorUtilities.convertImage (type, ImageType.StraightAlphaRGBA, pixels, out);
           leaveTimeline("ColorUtilities.convertImage");
         }
@@ -523,7 +522,7 @@ module Shumway.GFX {
      * Writes the image data into the given |output| data buffer.
      */
     public readImageData(output: DataBuffer) {
-      output.writeRawBytes(this.imageData.data);
+      output.writeRawBytes((<any>this.imageData).data);
     }
 
     constructor(source: any /* HTMLImageElement | HTMLCanvasElement */, bounds: Rectangle) {
@@ -1292,6 +1291,11 @@ module Shumway.GFX {
       }
 
       return lines;
+    }
+
+    toString() {
+      return 'TextLine {x: ' + this.x + ', y: ' + this.y + ', width: ' + this.width +
+             ', height: ' + (this.ascent + this.descent + this.leading) + '}';
     }
   }
 

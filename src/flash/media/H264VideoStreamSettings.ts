@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: H264VideoStreamSettings
-module Shumway.AVM2.AS.flash.media {
+module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class H264VideoStreamSettings extends flash.media.VideoStreamSettings {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +29,7 @@ module Shumway.AVM2.AS.flash.media {
     static instanceSymbols: string [] = null; // ["_profile", "_level", "codec", "profile", "level", "setProfileLevel"];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.media.H264VideoStreamSettings");
+      super();
     }
     
     // JS -> AS Bindings

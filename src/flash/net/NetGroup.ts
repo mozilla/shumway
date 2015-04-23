@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: NetGroup
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class NetGroup extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,8 @@ module Shumway.AVM2.AS.flash.net {
     static instanceSymbols: string [] = null; // ["close", "replicationStrategy", "replicationStrategy", "addHaveObjects", "removeHaveObjects", "addWantObjects", "removeWantObjects", "writeRequestedObject", "denyRequestedObject", "estimatedMemberCount", "neighborCount", "receiveMode", "receiveMode", "post", "sendToNearest", "sendToNeighbor", "sendToAllNeighbors", "addNeighbor", "addMemberHint"];
     
     constructor (connection: flash.net.NetConnection, groupspec: string) {
-      connection = connection; groupspec = asCoerceString(groupspec);
-      false && super(undefined);
-      dummyConstructor("public flash.net.NetGroup");
+      super();
+      connection = connection; groupspec = axCoerceString(groupspec);
     }
     
     // JS -> AS Bindings
@@ -72,7 +67,7 @@ module Shumway.AVM2.AS.flash.net {
       // return this._info;
     }
     convertPeerIDToGroupAddress(peerID: string): string {
-      peerID = asCoerceString(peerID);
+      peerID = axCoerceString(peerID);
       notImplemented("public flash.net.NetGroup::convertPeerIDToGroupAddress"); return;
     }
     get localCoverageFrom(): string {

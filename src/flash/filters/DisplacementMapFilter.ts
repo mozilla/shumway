@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 // Class: DisplacementMapFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   export class DisplacementMapFilter extends flash.filters.BitmapFilter {
 
+    static axClass: typeof DisplacementMapFilter;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
 
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -34,7 +33,7 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     public static FromUntyped(obj: any) {
-      return new DisplacementMapFilter(
+      return new this.sec.flash.filters.DisplacementMapFilter(
         obj.mapBitmap,
         obj.mapPoint,
         obj.componentX,
@@ -48,7 +47,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     constructor (mapBitmap: flash.display.BitmapData = null, mapPoint: flash.geom.Point = null, componentX: number /*uint*/ = 0, componentY: number /*uint*/ = 0, scaleX: number = 0, scaleY: number = 0, mode: string = "wrap", color: number /*uint*/ = 0, alpha: number = 0) {
-      false && super();
+      super();
       this.mapBitmap = mapBitmap;
       this.mapPoint = mapPoint;
       this.componentX = componentX;
@@ -129,7 +128,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
     set mode(value: string) {
       somewhatImplemented("public flash.filters.DisplacementMapFilter::set mode");
-      this._mode = asCoerceString(value);
+      this._mode = axCoerceString(value);
     }
 
     get color(): number /*uint*/ {
@@ -149,7 +148,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return new DisplacementMapFilter(
+      return new this.sec.flash.filters.DisplacementMapFilter(
         this._mapBitmap,
         this._mapPoint,
         this._componentX,

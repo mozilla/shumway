@@ -14,17 +14,11 @@
  * limitations under the License.
  */
 // Class: MouseCursor
-module Shumway.AVM2.AS.flash.ui {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class MouseCursor extends ASNative {
+module Shumway.AVMX.AS.flash.ui {
+  export class MouseCursor extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -33,8 +27,7 @@ module Shumway.AVM2.AS.flash.ui {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.ui.MouseCursor");
+      super();
     }
     
     // JS -> AS Bindings

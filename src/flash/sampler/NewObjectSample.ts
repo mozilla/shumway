@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 // Class: NewObjectSample
-module Shumway.AVM2.AS.flash.sampler {
+module Shumway.AVMX.AS.flash.sampler {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NewObjectSample extends flash.sampler.Sample {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +28,7 @@ module Shumway.AVM2.AS.flash.sampler {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.sampler.NewObjectSample");
+      super();
     }
     
     // JS -> AS Bindings

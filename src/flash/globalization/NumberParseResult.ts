@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: NumberParseResult
-module Shumway.AVM2.AS.flash.globalization {
+module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class NumberParseResult extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class NumberParseResult extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,8 @@ module Shumway.AVM2.AS.flash.globalization {
     static instanceSymbols: string [] = null; // [];
     
     constructor (value: number = NaN, startIndex: number /*int*/ = 2147483647, endIndex: number /*int*/ = 2147483647) {
+      super();
       value = +value; startIndex = startIndex | 0; endIndex = endIndex | 0;
-      false && super();
-      dummyConstructor("public flash.globalization.NumberParseResult");
     }
     
     // JS -> AS Bindings

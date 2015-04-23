@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 // Class: InteractiveObject
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import DisplayObject = flash.display.DisplayObject;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   import events = flash.events;
 
@@ -26,21 +25,7 @@ module Shumway.AVM2.AS.flash.display {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function () {
-      var self: InteractiveObject = this;
-      self._tabEnabled = false;
-      self._tabIndex = -1;
-      self._focusRect = null;
-      self._mouseEnabled = true;
-      self._doubleClickEnabled = false;
-      self._accessibilityImplementation = null;
-      self._softKeyboardInputAreaOfInterest = null;
-      self._needsSoftKeyboard = false;
-      self._contextMenu = null;
-    };
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -48,8 +33,23 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      DisplayObject.instanceConstructorNoInitialize.call(this);
+      super();
+      if (!this._fieldsInitialized) {
+        this._initializeFields();
+      }
+    }
+
+    protected _initializeFields() {
+      super._initializeFields();
+      this._tabEnabled = false;
+      this._tabIndex = -1;
+      this._focusRect = null;
+      this._mouseEnabled = true;
+      this._doubleClickEnabled = false;
+      this._accessibilityImplementation = null;
+      this._softKeyboardInputAreaOfInterest = null;
+      this._needsSoftKeyboard = false;
+      this._contextMenu = null;
     }
     
     // JS -> AS Bindings
@@ -76,7 +76,7 @@ module Shumway.AVM2.AS.flash.display {
       var old = this._tabEnabled;
       this._tabEnabled = enabled;
       if (old !== enabled) {
-        this.dispatchEvent(events.Event.getInstance(events.Event.TAB_ENABLED_CHANGE, true));
+        this.dispatchEvent(this.sec.flash.events.Event.axClass.getInstance(events.Event.TAB_ENABLED_CHANGE, true));
       }
     }
 
@@ -89,7 +89,7 @@ module Shumway.AVM2.AS.flash.display {
       var old = this._tabIndex;
       this._tabIndex = index;
       if (old !== index) {
-        this.dispatchEvent(events.Event.getInstance(events.Event.TAB_INDEX_CHANGE, true));
+        this.dispatchEvent(this.sec.flash.events.Event.axClass.getInstance(events.Event.TAB_INDEX_CHANGE, true));
       }
     }
 

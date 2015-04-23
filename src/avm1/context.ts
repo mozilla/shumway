@@ -34,9 +34,10 @@ module Shumway.AVM1 {
   }
 
   export interface IAVM1RuntimeUtils {
-    hasProperty(obj, name);
-    getProperty(obj, name);
-    setProperty(obj, name, value);
+    hasProperty(obj, name): boolean;
+    getProperty(obj, name): any;
+    setProperty(obj, name, value): void;
+    warn(msg: string): void;
   }
 
   export interface IAVM1EventPropertyObserver {
@@ -56,34 +57,161 @@ module Shumway.AVM1 {
     }
   }
 
-  export class AVM1Context {
-    public static instance: AVM1Context = null;
+  export class AVM1Context implements IAVM1Context {
     public root: AVM1MovieClip;
-    public loaderInfo: Shumway.AVM2.AS.flash.display.LoaderInfo;
+    public loaderInfo: Shumway.AVMX.AS.flash.display.LoaderInfo;
+    public sec: ISecurityDomain;
     public globals: AVM1Globals;
+    public builtins: IAVM1Builtins;
+    public isPropertyCaseSensitive: boolean;
     public actionsDataFactory: ActionsDataFactory;
-    constructor() {
+    public swfVersion: number;
+
+    private eventObservers: MapObject<IAVM1EventPropertyObserver[]>;
+    private assets: MapObject<number>;
+    private assetsSymbols: Array<any>;
+    private assetsClasses: Array<any>;
+    private staticStates: WeakMap<typeof AVM1Object, any>;
+
+    constructor(swfVersion: number) {
+      this.swfVersion = swfVersion;
       this.root = null;
       this.globals = null;
       this.actionsDataFactory = new ActionsDataFactory();
+      this.isPropertyCaseSensitive = swfVersion > 6;
+
+      this.builtins = <any>{};
+      Shumway.AVM1.Natives.installBuiltins(this);
+
+      this.eventObservers = Object.create(null);
+      this.assets = {};
+      this.assetsSymbols = [];
+      this.assetsClasses = [];
+      this.staticStates = new WeakMap<typeof AVM1Object, any>();
     }
 
     public utils: IAVM1RuntimeUtils;
 
-    public static create: (loaderInfo: Shumway.AVM2.AS.flash.display.LoaderInfo) => AVM1Context;
+    public static create: (loaderInfo: Shumway.AVMX.AS.flash.display.LoaderInfo) => AVM1Context;
 
     public flushPendingScripts() {}
-    public addAsset(className: string, symbolId: number, symbolProps) {}
-    public registerClass(className: string, theClass) {}
-    public getAsset(className: string): AVM1ExportedSymbol { return undefined; }
     public resolveTarget(target): any {}
     public resolveLevel(level: number): any {}
-    public addToPendingScripts(fn) {}
+    public addToPendingScripts(fn, defaultTarget) {}
+    public checkTimeout() {}
 
-    public registerEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver) {}
-    public unregisterEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver) {}
-
-    public enterContext(fn: Function, defaultTarget): void {}
     public executeActions(actionsData: AVM1ActionsData, scopeObj): void {}
+    public executeFunction(fn: AVM1Function, thisArg, args: any): any {}
+
+    private _getEventPropertyObservers(propertyName: string, create: boolean): IAVM1EventPropertyObserver[] {
+      if (!this.isPropertyCaseSensitive) {
+        propertyName = propertyName.toLowerCase();
+      }
+      var observers = this.eventObservers[propertyName];
+      if (observers) {
+        return observers;
+      }
+      if (create) {
+        observers = [];
+        this.eventObservers[propertyName] = observers;
+        return observers;
+      }
+      return null;
+    }
+    public registerEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver): void {
+      var observers = this._getEventPropertyObservers(propertyName, true);
+      observers.push(observer);
+    }
+    public unregisterEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver): void {
+      var observers = this._getEventPropertyObservers(propertyName, false);
+      if (!observers) {
+        return;
+      }
+      var j = observers.indexOf(observer);
+      if (j < 0) {
+        return;
+      }
+      observers.splice(j, 1);
+    }
+    public broadcastEventPropertyChange(propertyName: string): void {
+      var observers = this._getEventPropertyObservers(propertyName, false);
+      if (!observers) {
+        return;
+      }
+      observers.forEach((observer: IAVM1EventPropertyObserver) => observer.onEventPropertyModified(propertyName));
+    }
+
+    public addAsset(className: string, symbolId: number, symbolProps): void {
+      release || Debug.assert(typeof className === 'string' && !isNaN(symbolId));
+      this.assets[className.toLowerCase()] = symbolId;
+      this.assetsSymbols[symbolId] = symbolProps;
+    }
+    public registerClass(className: string, theClass: AVM1Object): void {
+      className = alCoerceString(this, className);
+      if (className === null) {
+        this.utils.warn('Cannot register class for symbol: className is missing');
+        return null;
+      }
+      var symbolId = this.assets[className.toLowerCase()];
+      if (symbolId === undefined) {
+        this.utils.warn('Cannot register ' + className + ' class for symbol');
+        return;
+      }
+      this.assetsClasses[symbolId] = theClass;
+    }
+    public getAsset(className: string) : AVM1ExportedSymbol {
+      className = alCoerceString(this, className);
+      if (className === null) {
+        return undefined;
+      }
+      var symbolId = this.assets[className.toLowerCase()];
+      if (symbolId === undefined) {
+        return undefined;
+      }
+      var symbol = this.assetsSymbols[symbolId];
+      if (!symbol) {
+        symbol = this.loaderInfo.getSymbolById(symbolId);
+        if (!symbol) {
+          Debug.warning("Symbol " + symbolId + " is not defined.");
+          return undefined;
+        }
+        this.assetsSymbols[symbolId] = symbol;
+      }
+      return {
+        symbolId: symbolId,
+        symbolProps: symbol,
+        theClass: this.assetsClasses[symbolId]
+      };
+    }
+
+    public setStage(stage: Shumway.AVMX.AS.flash.display.Stage): void {
+      Lib.AVM1Key.bindStage(this, this.globals.Key, stage);
+      Lib.AVM1Mouse.bindStage(this, this.globals.Mouse, stage);
+      Lib.AVM1Stage.bindStage(this, this.globals.Stage, stage);
+    }
+
+    public setRoot(root: Shumway.AVMX.AS.flash.display.DisplayObject, parameters: any): any {
+      var as2Object = <AVM1MovieClip>Lib.getAVM1Object(root, this);
+      this.root = as2Object;
+      // transfer parameters
+      for (var paramName in parameters) {
+        if (!as2Object.alHasProperty(paramName)) {
+          as2Object.alPut(paramName, parameters[paramName]);
+        }
+      }
+    }
+
+    public getStaticState(cls: typeof AVM1Object): any {
+      var state = this.staticStates.get(cls);
+      if (!state) {
+        state = Object.create(null);
+        var initStatic: Function = (<any>cls).alInitStatic;
+        if (initStatic) {
+          initStatic.call(state, this);
+        }
+        this.staticStates.set(cls, state);
+      }
+      return state;
+    }
   }
 }

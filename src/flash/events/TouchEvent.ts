@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 // Class: TouchEvent
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class TouchEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
@@ -31,8 +29,7 @@ module Shumway.AVM2.AS.flash.events {
                 sizeY: number = NaN, pressure: number = NaN,
                 relatedObject: flash.display.InteractiveObject = null, ctrlKey: boolean = false,
                 altKey: boolean = false, shiftKey: boolean = false) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.TouchEvent");
+      super(type, bubbles, cancelable);
     }
 
     // JS -> AS Bindings
@@ -150,10 +147,13 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     clone(): Event {
-      return new events.TouchEvent(this.type, this.bubbles, this.cancelable, this.touchPointID,
-                                   this.isPrimaryTouchPoint, this.localX, this.localY, this.sizeX,
-                                   this.sizeY, this.pressure, this.relatedObject, this.ctrlKey,
-                                   this.altKey, this.shiftKey);
+      return new this.sec.flash.events.TouchEvent(this.type, this.bubbles,
+                                                             this.cancelable, this.touchPointID,
+                                                             this.isPrimaryTouchPoint, this.localX,
+                                                             this.localY, this.sizeX, this.sizeY,
+                                                             this.pressure, this.relatedObject,
+                                                             this.ctrlKey, this.altKey,
+                                                             this.shiftKey);
     }
     toString(): string {
       return this.formatToString('TouchEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
@@ -163,7 +163,7 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     updateAfterEvent(): void {
-      Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'].requestRendering();
+      this.sec.player.requestRendering();
     }
   }
 }

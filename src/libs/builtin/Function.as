@@ -52,4 +52,7 @@ final class MethodClosure extends Function
 
   override public native function get prototype();
   override public native function set prototype(p);
+
+  AS3 override native function call(thisArg=void 0, ...args)
+  AS3 override native function apply(thisArg=void 0, argArray=void 0)
 }

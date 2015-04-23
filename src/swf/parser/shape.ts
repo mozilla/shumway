@@ -366,8 +366,12 @@ module Shumway.SWF.Parser {
                        style.type !== FillType.NonsmoothedClippedBitmap;
         shapeStyle.repeat = style.type !== FillType.ClippedBitmap &&
                        style.type !== FillType.NonsmoothedClippedBitmap;
-        shapeStyle.bitmapIndex = dependencies.length;
-        dependencies.push(style.bitmapId);
+        var index = dependencies.indexOf(style.bitmapId);
+        if (index === -1) {
+          index = dependencies.length;
+          dependencies.push(style.bitmapId);
+        }
+        shapeStyle.bitmapIndex = index;
         scale = 0.05;
         break;
       default:

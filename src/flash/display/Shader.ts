@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: Shader
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Shader extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class Shader extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,9 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = null; // ["byteCode"];
     
     constructor (code: flash.utils.ByteArray = null) {
-      code = code;
-      false && super();
-      dummyConstructor("public flash.display.Shader");
+      super();
+      // TODO: coerce
+      this.code = code;
     }
     
     // JS -> AS Bindings
@@ -61,7 +57,7 @@ module Shumway.AVM2.AS.flash.display {
       // return this._precisionHint;
     }
     set precisionHint(p: string) {
-      p = asCoerceString(p);
+      p = axCoerceString(p);
       notImplemented("public flash.display.Shader::set precisionHint"); return;
       // this._precisionHint = p;
     }

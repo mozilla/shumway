@@ -17,6 +17,7 @@
 /// <reference path='../../build/ts/avm2.d.ts' />
 /// <reference path='../../build/ts/swf.d.ts' />
 
+///<reference path='module.ts' />
 ///<reference path='../htmlparser.ts' />
 ///<reference path='../TextContent.ts' />
 ///<reference path='options.ts' />
@@ -250,8 +251,8 @@
 
 // ///<reference path='net/DynamicPropertyOutput.ts' />
 ///<reference path='net/FileFilter.ts' />
-// ///<reference path='net/FileReference.ts' />
-// ///<reference path='net/FileReferenceList.ts' />
+///<reference path='net/FileReference.ts' />
+///<reference path='net/FileReferenceList.ts' />
 // ///<reference path='net/GroupSpecifier.ts' />
 // ///<reference path='net/IDynamicPropertyOutput.ts' />
 // ///<reference path='net/IDynamicPropertyWriter.ts' />
@@ -415,4 +416,5 @@
 
 ///<reference path='avm1.d.ts' />
 
-///<reference path='linker.ts' />
+// ///<reference path='linker.ts' />
+///<reference path='link.ts' />

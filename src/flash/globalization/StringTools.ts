@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: StringTools
-module Shumway.AVM2.AS.flash.globalization {
+module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class StringTools extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class StringTools extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,8 @@ module Shumway.AVM2.AS.flash.globalization {
     static instanceSymbols: string [] = null; // [];
     
     constructor (requestedLocaleIDName: string) {
-      requestedLocaleIDName = asCoerceString(requestedLocaleIDName);
-      false && super();
-      dummyConstructor("public flash.globalization.StringTools");
+      super();
+      requestedLocaleIDName = axCoerceString(requestedLocaleIDName);
     }
     
     // JS -> AS Bindings
@@ -62,15 +57,15 @@ module Shumway.AVM2.AS.flash.globalization {
       // return this._actualLocaleIDName;
     }
     toLowerCase(s: string): string {
-      s = asCoerceString(s);
+      s = axCoerceString(s);
       notImplemented("public flash.globalization.StringTools::toLowerCase"); return;
     }
     toUpperCase(s: string): string {
-      s = asCoerceString(s);
+      s = axCoerceString(s);
       notImplemented("public flash.globalization.StringTools::toUpperCase"); return;
     }
     ctor(requestedLocaleIDName: string): void {
-      requestedLocaleIDName = asCoerceString(requestedLocaleIDName);
+      requestedLocaleIDName = axCoerceString(requestedLocaleIDName);
       notImplemented("public flash.globalization.StringTools::ctor"); return;
     }
   }

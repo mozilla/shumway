@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 // Class: MouseCursorData
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class MouseCursorData extends ASNative {
+  export class MouseCursorData extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -33,23 +28,17 @@ module Shumway.AVM2.AS.flash.ui {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.ui.MouseCursorData");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
+
     // _data: ASVector<any>;
     // _hotSpot: flash.geom.Point;
     // _frameRate: number;
-    get data(): ASVector<any> {
+    get data(): GenericVector {
       notImplemented("public flash.ui.MouseCursorData::get data"); return;
       // return this._data;
     }
-    set data(data: ASVector<any>) {
+    set data(data: GenericVector) {
       data = data;
       notImplemented("public flash.ui.MouseCursorData::set data"); return;
       // this._data = data;

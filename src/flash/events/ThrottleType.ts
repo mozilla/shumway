@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 // Class: ThrottleType
-module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  export class ThrottleType extends ASNative {
+module Shumway.AVMX.AS.flash.events {
+  export class ThrottleType extends ASObject {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
     
     constructor () {
       super();
-      dummyConstructor("public flash.events.ThrottleType");
     }
     
     // JS -> AS Bindings

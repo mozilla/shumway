@@ -27,6 +27,7 @@ module Shumway {
   mimetypesForHeaders[ImageTypeMagicHeaderBytes.GIF] = 'image/gif';
 
   export class ImageFile {
+    env: any;
     data: Uint8Array;
     bytesLoaded: number;
     image: any; // Image
@@ -35,7 +36,8 @@ module Shumway {
     width: number;
     height: number;
 
-    constructor(header: Uint8Array, fileLength: number) {
+    constructor(header: Uint8Array, fileLength: number, env: any) {
+      this.env = env;
       this.bytesLoaded = header.length;
       if (header.length === fileLength) {
         this.data = header;

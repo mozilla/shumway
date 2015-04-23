@@ -432,10 +432,11 @@ module Shumway {
       copy.coordinates = new Int32Array(this.coordinates);
       copy.coordinatesPosition = this.coordinatesPosition;
       copy.styles = new DataBuffer(this.styles.length);
-      copy.styles.writeRawBytes(this.styles.bytes);
+      copy.styles.writeRawBytes(this.styles.bytes.subarray(0, this.styles.length));
       if (this.morphStyles) {
         copy.morphStyles = new DataBuffer(this.morphStyles.length);
-        copy.morphStyles.writeRawBytes(this.morphStyles.bytes);
+        copy.morphStyles.writeRawBytes(
+          this.morphStyles.bytes.subarray(0, this.morphStyles.length));
       }
       copy.hasFills = this.hasFills;
       copy.hasLines = this.hasLines;

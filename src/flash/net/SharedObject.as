@@ -27,46 +27,18 @@ public class SharedObject extends EventDispatcher {
   public static native function get defaultObjectEncoding():uint;
   public static native function set defaultObjectEncoding(version:uint):void;
   public native function get data():Object;
-  public function connect(myConnection:NetConnection, params:String = null):void {
-    notImplemented("connect");
-  }
-  public function close():void {
-    invoke(3);
-  }
-  public function flush(minDiskSpace:int = 0):String {
-    var result = invoke(2, minDiskSpace);
-    if (result === true) {
-      return SharedObjectFlushStatus.FLUSHED;
-    }
-    notImplemented("flush");
-    return "";
-  }
-  public function get size():uint {
-    return invoke(4);
-  }
-  public function set fps(updatesPerSecond:Number):void {
-    notImplemented("fps");
-  }
-  public function send():void {
-    notImplemented("send");
-  }
-  public function clear():void {
-    invoke(6);
-  }
+  public native function connect(myConnection:NetConnection, params:String = null):void;
+  public native function close():void;
+  public native function flush(minDiskSpace:int = 0):String;
+  public native function get size():uint;
+  public native function set fps(updatesPerSecond:Number):void;
+  public native function send():void;
+  public native function clear():void;
   public native function get objectEncoding():uint;
   public native function set objectEncoding(version:uint):void;
   public native function get client():Object;
   public native function set client(object:Object):void;
   public native function setDirty(propertyName:String):void;
-  public function setProperty(propertyName:String, value:Object = null):void {
-    if (data[propertyName] === value) {
-      return;
-    }
-    data[propertyName] = value;
-    setDirty(propertyName);
-  }
-
-  private native function invoke(index:uint, ... args):*;
-  private native function invokeWithArgsArray(index:uint, args:Array):*;
+  public native function setProperty(propertyName:String, value:Object = null):void;
 }
 }

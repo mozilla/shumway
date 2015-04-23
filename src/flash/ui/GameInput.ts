@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 // Class: GameInput
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import throwError = Shumway.AVM2.Runtime.throwError;
   export class GameInput extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -34,8 +28,7 @@ module Shumway.AVM2.AS.flash.ui {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.ui.GameInput");
+      super(undefined);
     }
     
     // JS -> AS Bindings
@@ -57,7 +50,7 @@ module Shumway.AVM2.AS.flash.ui {
       index = index | 0;
 
       somewhatImplemented("public flash.ui.GameInput::static getDeviceAt");
-      throwError("RangeError", Errors.ParamRangeError, "index");
+      this.sec.throwError("RangeError", Errors.ParamRangeError, "index");
       return null;
     }
     

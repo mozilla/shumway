@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: Keyboard
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   /**
    * Dispatches AS3 keyboard events to the focus event dispatcher.
@@ -54,7 +54,7 @@ module Shumway.AVM2.AS.flash.ui {
 
       if (this.target) {
         var isKeyUp = event.type === 'keyup';
-        this.target.dispatchEvent(new flash.events.KeyboardEvent (
+        this.target.dispatchEvent(new this.target.sec.flash.events.KeyboardEvent (
           isKeyUp ? 'keyUp' : 'keyDown',
           true,
           false,
@@ -79,13 +79,10 @@ module Shumway.AVM2.AS.flash.ui {
     shiftKey: boolean;
   }
 
-  export class Keyboard extends ASNative {
+  export class Keyboard extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -94,10 +91,8 @@ module Shumway.AVM2.AS.flash.ui {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.ui.Keyboard");
+      super();
     }
-
 
     // JS -> AS Bindings
     static KEYNAME_UPARROW: string = "Up";

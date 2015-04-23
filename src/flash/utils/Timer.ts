@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 // Class: Timer
-module Shumway.AVM2.AS.flash.utils {
+module Shumway.AVMX.AS.flash.utils {
 
   import enterTimeline = Shumway.AVM2.enterTimeline;
   import leaveTimeline = Shumway.AVM2.leaveTimeline;
 
   export class Timer extends flash.events.EventDispatcher {
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null;
 
@@ -32,8 +31,7 @@ module Shumway.AVM2.AS.flash.utils {
     public static dispatchingEnabled = true;
 
     constructor (delay: number, repeatCount: number /*int = 0 */) {
-      false && super(undefined);
-      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      super();
       this._delay = +delay;
       this._repeatCount = repeatCount | 0;
       this._iteration = 0;
@@ -54,7 +52,7 @@ module Shumway.AVM2.AS.flash.utils {
     set delay(value: number) {
       value = +value;
       if (value < 0 || !isFinite(value)) {
-        throwError('RangeError', Errors.DelayRangeError);
+        this.sec.throwError('RangeError', Errors.DelayRangeError);
       }
       this._delay = value;
 
@@ -100,7 +98,7 @@ module Shumway.AVM2.AS.flash.utils {
       if (flash.utils.Timer.dispatchingEnabled) {
         enterTimeline("Timer.Timer");
         try {
-          this.dispatchEvent(new events.TimerEvent("timer", true, false));
+          this.dispatchEvent(new this.sec.flash.events.TimerEvent("timer", true, false));
         } catch (e) {
           console.warn('caught error under Timer TIMER event: ', e);
         }
@@ -110,8 +108,8 @@ module Shumway.AVM2.AS.flash.utils {
         this.stop();
         enterTimeline("Timer.TimerComplete");
         try {
-          this.dispatchEvent(new events.TimerEvent(events.TimerEvent.TIMER_COMPLETE, false,
-                                                   false));
+          this.dispatchEvent(new this.sec.flash.events.TimerEvent(events.TimerEvent.TIMER_COMPLETE,
+                                                                             false, false));
         } catch (e) {
           console.warn('caught error under Timer COMPLETE event: ', e);
         }

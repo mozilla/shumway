@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: ShaderParameter
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class ShaderParameter extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class ShaderParameter extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +29,7 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.display.ShaderParameter");
+      super();
     }
     
     // JS -> AS Bindings
@@ -45,11 +40,11 @@ module Shumway.AVM2.AS.flash.display {
     // _value: any [];
     // _type: string;
     // _index: number /*int*/;
-    get value(): any [] {
+    get value(): ASArray {
       notImplemented("public flash.display.ShaderParameter::get value"); return;
       // return this._value;
     }
-    set value(v: any []) {
+    set value(v: ASArray) {
       v = v;
       notImplemented("public flash.display.ShaderParameter::set value"); return;
       // this._value = v;

@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 // Class: ErrorEvent
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
   export class ErrorEvent extends flash.events.TextEvent {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
@@ -43,7 +42,8 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     clone(): Event {
-      return new ErrorEvent(this.type, this.bubbles, this.cancelable, this.text, this.errorID);
+      return new this.sec.flash.events.ErrorEvent(this.type, this.bubbles,
+                                                             this.cancelable, this.text, this.errorID);
     }
 
     toString(): string {

@@ -1,7 +1,7 @@
 {
   "rules": {
     "class-name": true,
-    "curly": true,
+    "curly": false,
     "eofline": true,
     "forin": false,
     "label-position": true,
@@ -22,7 +22,7 @@
     "no-duplicate-variable": false,
     "no-empty": true,
     "no-eval": true,
-    "no-string-literal": true,
+    "no-string-literal": false,
     "no-switch-case-fall-through": false,
     "no-trailing-comma": true,
     "no-trailing-whitespace": false,
@@ -31,7 +31,6 @@
     "no-unreachable": true,
     "no-use-before-declare": false,
     "one-line": [true,
-        "check-open-brace",
         "check-catch",
         "check-else",
         "check-whitespace"
@@ -39,9 +38,9 @@
     "quotemark": [false, "double"],
     "radix": false,
     "semicolon": true,
-    "triple-equals": [true, "allow-null-check"],
+    "triple-equals": [false, "allow-null-check"],
     "variable-name": false,
-    "whitespace": [true,
+    "whitespace": [false,
         "check-branch",
         "check-decl",
         "check-operator",

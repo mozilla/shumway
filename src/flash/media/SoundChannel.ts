@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 // Class: SoundChannel
-module Shumway.AVM2.AS.flash.media {
+module Shumway.AVMX.AS.flash.media {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import error = Shumway.Debug.error;
 
@@ -162,34 +161,28 @@ module Shumway.AVM2.AS.flash.media {
 
   export class SoundChannel extends flash.events.EventDispatcher implements ISoundSource {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
+
+    _symbol: SoundChannel;
     
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: SoundChannel) {
+    constructor () {
+      super();
+
       this._element = null;
       this._position = 0;
       this._leftPeak = 0;
       this._rightPeak = 0;
       this._pcmData = null;
-      this._soundTransform = new flash.media.SoundTransform();
+      this._soundTransform = new this.sec.flash.media.SoundTransform();
       this._playing = false;
+      this._element = null;
+    }
 
-      //this._element = symbol._element || null;
-      //if (this._element) {
-      //  this._registerWithSoundMixer();
-      //}
-    };
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
-    constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.media.SoundChannel");
+    static initializeFromAudioElement(sec: ISecurityDomain, element: HTMLAudioElement): SoundChannel {
+      var channel = new sec.flash.media.SoundChannel();
+      channel._element = element;
+      SoundMixer._registerSoundSource(channel);
+      return channel;
     }
 
     _element;
@@ -216,7 +209,8 @@ module Shumway.AVM2.AS.flash.media {
     set soundTransform(sndTransform: flash.media.SoundTransform) {
       somewhatImplemented("public flash.media.SoundChannel::set soundTransform");
       this._soundTransform = isNullOrUndefined(sndTransform) ?
-        new flash.media.SoundTransform() : sndTransform;
+                             new this.sec.flash.media.SoundTransform() :
+                             sndTransform;
       SoundMixer._updateSoundSource(this);
     }
     get leftPeak(): number {
@@ -286,7 +280,8 @@ module Shumway.AVM2.AS.flash.media {
 
         self._element = null;
         self._playing = false;
-        self.dispatchEvent(new flash.events.Event("soundComplete", false, false));
+        self.dispatchEvent(new self.sec.flash.events.Event("soundComplete", false,
+                                                                      false));
       });
       this._element = element;
       this._playing = true;
@@ -312,7 +307,8 @@ module Shumway.AVM2.AS.flash.media {
 
           self._audioChannel.stop();
           self._playing = false;
-          self.dispatchEvent(new flash.events.Event("soundComplete", false, false));
+          self.dispatchEvent(new self.sec.flash.events.Event("soundComplete", false,
+                                                                        false));
           return;
         }
 

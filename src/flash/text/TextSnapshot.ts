@@ -14,41 +14,25 @@
  * limitations under the License.
  */
 // Class: TextSnapshot
-module Shumway.AVM2.AS.flash.text {
+module Shumway.AVMX.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class TextSnapshot extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class TextSnapshot extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
+
     constructor () {
-      false && super();
-      dummyConstructor("public flash.text.TextSnapshot");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
+
     // _charCount: number /*int*/;
     get charCount(): number /*int*/ {
       notImplemented("public flash.text.TextSnapshot::get charCount"); return;
       // return this._charCount;
     }
     findText(beginIndex: number /*int*/, textToFind: string, caseSensitive: boolean): number /*int*/ {
-      beginIndex = beginIndex | 0; textToFind = asCoerceString(textToFind); caseSensitive = !!caseSensitive;
+      beginIndex = beginIndex | 0; textToFind = axCoerceString(textToFind); caseSensitive = !!caseSensitive;
       notImplemented("public flash.text.TextSnapshot::findText"); return;
     }
     getSelected(beginIndex: number /*int*/, endIndex: number /*int*/): boolean {
@@ -63,7 +47,7 @@ module Shumway.AVM2.AS.flash.text {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0; includeLineEndings = !!includeLineEndings;
       notImplemented("public flash.text.TextSnapshot::getText"); return;
     }
-    getTextRunInfo(beginIndex: number /*int*/, endIndex: number /*int*/): any [] {
+    getTextRunInfo(beginIndex: number /*int*/, endIndex: number /*int*/): ASArray {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0;
       notImplemented("public flash.text.TextSnapshot::getTextRunInfo"); return;
     }

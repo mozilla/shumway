@@ -90,6 +90,11 @@ this.document = {
         return {};
       }
     }
+  },
+  location: {
+    href: {
+      resource: ""//shumway/build/ts/shell.js"
+    }
   }
 };
 
@@ -174,4 +179,20 @@ this.XMLHttpRequest.prototype = {
 this.window.screen = {
   width: 1024,
   height: 1024
+};
+
+/**
+ * sessionStorage polyfill.
+ */
+var sessionStorageObject = {};
+this.window.sessionStorage = {
+  getItem: function (key: string): string {
+    return sessionStorageObject[key];
+  },
+  setItem(key: string, value: string): void {
+    sessionStorageObject[key] = value;
+  },
+  removeItem(key: string): void {
+    delete sessionStorageObject[key];
+  }
 };

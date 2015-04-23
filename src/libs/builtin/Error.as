@@ -37,19 +37,6 @@
 
 package
 {
-  [native(cls="ErrorClass")]
-  public dynamic class Error
-  {
-    public native function Error(message = "", id = 0);
-
-    public native function getStackTrace():String;
-    public native static function getErrorMessage(index:int):String;
-
-    // avm+ specific utility method
-    public native static function throwError(type:Class, index:uint, ... rest);
-
-    public native function get errorID() : int;
-  }
 
   [native(cls="DefinitionErrorClass")]
   public dynamic class DefinitionError extends Error

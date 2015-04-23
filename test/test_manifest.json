@@ -462,5 +462,10 @@
       "frames": [1],
       "swf": "swfs/clipping.swf",
       "type": "eq"
+    },
+    {  "id": "avm1-duplicate-movieclip",
+      "frames": [1],
+      "swf": "swfs/avm1/duplicateMovieClip/duplicateMovieClip.swf",
+      "type": "eq"
     }
 ]

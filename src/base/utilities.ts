@@ -31,8 +31,6 @@ declare var putstr;
 /** @const */ var release: boolean = true; // by default 'true' -- we are folding constants in closure compiler
 /** @const */ var profile: boolean = false;
 
-declare var dateNow: () => number;
-
 declare var dump: (message: string) => void;
 
 function dumpLine(line: string) {
@@ -46,7 +44,9 @@ if (!jsGlobal.performance) {
 }
 
 if (!jsGlobal.performance.now) {
-  jsGlobal.performance.now = typeof dateNow !== 'undefined' ? dateNow : Date.now;
+  jsGlobal.performance.now = function () {
+    return Date.now();
+  };
 }
 
 function lazyInitializer(obj: any, propertyName: string, fn: ()=>any) {
@@ -112,7 +112,7 @@ declare var Uint8ClampedArray: {
   new (array: number[]): Uint8ClampedArray;
   new (buffer: ArrayBuffer, byteOffset?: number, length?: number): Uint8ClampedArray;
   BYTES_PER_ELEMENT: number;
-}
+};
 
 declare module Shumway {
   var version: string;
@@ -201,7 +201,6 @@ module Shumway {
       }
       return isIndex(value) || isNumericString(value);
     }
-    // Debug.notImplemented(typeof value);
     return false;
   }
 
@@ -337,7 +336,7 @@ module Shumway {
     return performance.now();
   }
 
-  export interface Map<T> {
+  export interface MapObject<T> {
     [name: string]: T
   }
 
@@ -382,11 +381,11 @@ module Shumway {
     }
 
     export function top(array: any []) {
-      return array.length && array[array.length - 1]
+      return array.length && array[array.length - 1];
     }
 
     export function last(array: any []) {
-      return array.length && array[array.length - 1]
+      return array.length && array[array.length - 1];
     }
 
     export function peek(array: any []) {
@@ -403,7 +402,7 @@ module Shumway {
       return -1;
     }
 
-    export function equals<T>(a: T [], b: T []): boolean{
+    export function equals<T>(a: T [], b: T []): boolean {
       if (a.length !== b.length) {
         return false;
       }
@@ -720,12 +719,12 @@ module Shumway {
       return !!(d && !!d.set);
     }
 
-    export function createMap<T>():Map<T> {
+    export function createMap<T>():MapObject<T> {
       return Object.create(null);
     }
 
-    export function createArrayMap<T>():Map<T> {
-      return <Map<T>><any>[];
+    export function createArrayMap<T>():MapObject<T> {
+      return <MapObject<T>><any>[];
     }
 
     export function defineReadOnlyProperty(object: Object, name: string, value: any) {
@@ -737,7 +736,7 @@ module Shumway {
       });
     }
 
-    export function getOwnPropertyDescriptors(object: Object): Map<PropertyDescriptor> {
+    export function getOwnPropertyDescriptors(object: Object): MapObject<PropertyDescriptor> {
       var o = ObjectUtilities.createMap<PropertyDescriptor>();
       var properties = Object.getOwnPropertyNames(object);
       for (var i = 0; i < properties.length; i++) {
@@ -766,20 +765,36 @@ module Shumway {
       }
     }
 
-    export function copyOwnPropertyDescriptors(object: Object, template: Object, overwrite = true) {
+    export function copyOwnPropertyDescriptors(object: Object,
+                                               template: Object,
+                                               filter: (name: string) => boolean = null,
+                                               overwrite = true,
+                                               makeWritable = false) {
       for (var property in template) {
-        if (hasOwnProperty(template, property)) {
+        if (hasOwnProperty(template, property) && (!filter || filter(property))) {
           var descriptor = Object.getOwnPropertyDescriptor(template, property);
           if (!overwrite && hasOwnProperty(object, property)) {
-            continue
+            continue;
           }
           release || Debug.assert (descriptor);
           try {
+            if (makeWritable && descriptor.writable === false) {
+              descriptor.writable = true;
+            }
             Object.defineProperty(object, property, descriptor);
           } catch (e) {
-            // console.log("Can't define " + property);
+            Debug.assert("Can't define: " + property);
           }
         }
+      }
+    }
+
+    export function copyPropertiesByList(object: Object,
+                                         template: Object,
+                                         propertyList: string []) {
+      for (var i = 0; i < propertyList.length; i++) {
+        var property = propertyList[i];
+        object[property] = template[property];
       }
     }
 
@@ -1364,6 +1379,10 @@ module Shumway {
       }
       return (b << 16) | a;
     }
+
+    export function mixHash(a: number, b: number) {
+      return (((31 * a) | 0) + b) | 0;
+    }
   }
 
   /**
@@ -1375,6 +1394,11 @@ module Shumway {
     public static seed(seed: number) {
       Random._state[0] = seed;
       Random._state[1] = seed;
+    }
+
+    public static reset() {
+      Random._state[0] = 0xDEAD;
+      Random._state[1] = 0xBEEF;
     }
 
     public static next(): number {
@@ -1680,6 +1704,11 @@ module Shumway {
       return (i + x) & ~x; // Round up to multiple of power of two.
     }
 
+    export function toHEX(i: number) {
+      var i = (i < 0 ? 0xFFFFFFFF + i + 1 : i);
+      return "0x" + ("00000000" + i.toString(16)).substr(-8);
+    }
+
     /**
      * Polyfill imul.
      */
@@ -1692,7 +1721,7 @@ module Shumway {
         // the shift by 0 fixes the sign on the high part
         // the final |0 converts the unsigned value into a signed value
         return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
-      }
+      };
     }
 
     /**
@@ -1706,7 +1735,7 @@ module Shumway {
         i |= (i >> 8);
         i |= (i >> 16);
         return 32 - IntegerUtilities.ones(i);
-      }
+      };
     }
   }
 
@@ -1811,6 +1840,14 @@ module Shumway {
     private _out: (s: string, o?: any) => void;
     private _outNoNewline: (s: string) => void;
 
+    get suppressOutput() {
+      return this._suppressOutput;
+    }
+
+    set suppressOutput(val: boolean) {
+      this._suppressOutput = val;
+    }
+
     constructor(suppressOutput: boolean = false, out?) {
       this._tab = "  ";
       this._padding = "";
@@ -1844,7 +1881,7 @@ module Shumway {
     }
 
     writeComment(str: string) {
-      var lines = str.split("\n");
+      var lines = (str || '').split("\n");
       if (lines.length === 1) {
         this.writeLn("// " + lines[0]);
       } else {
@@ -1857,7 +1894,7 @@ module Shumway {
     }
 
     writeLns(str: string) {
-      var lines = str.split("\n");
+      var lines = (str || '').split("\n");
       for (var i = 0; i < lines.length; i++) {
         this.writeLn(lines[i]);
       }
@@ -1928,7 +1965,7 @@ module Shumway {
     }
 
     colorLns(color: string, str: string) {
-      var lines = str.split("\n");
+      var lines = (str || '').split("\n");
       for (var i = 0; i < lines.length; i++) {
         this.colorLn(color, lines[i]);
       }
@@ -2570,7 +2607,7 @@ module Shumway {
       var type = (shouldUseSingleWord ? <any>Uint32BitSet : <any>Uint32ArrayBitSet);
       return function () {
         return new type(length);
-      }
+      };
     }
   }
 
@@ -3001,7 +3038,7 @@ module Shumway {
     toString(): string {
       return "{ " +
              "xMin: " + this._xMin + ", " +
-             "xMin: " + this._yMin + ", " +
+             "yMin: " + this._yMin + ", " +
              "xMax: " + this._xMax + ", " +
              "yMax: " + this._yMax +
              " }";
@@ -3041,7 +3078,7 @@ module Shumway {
       return Color.FromARGB(ColorUtilities.RGBAToARGB(rgba));
     }
     public toRGBA() {
-      return (this.r * 255) << 24 | (this.g * 255) << 16 | (this.b * 255) << 8 | (this.a * 255)
+      return (this.r * 255) << 24 | (this.g * 255) << 16 | (this.b * 255) << 8 | (this.a * 255);
     }
     public toCSSStyle() {
       return ColorUtilities.rgbaToCSSStyle(this.toRGBA());
@@ -3422,6 +3459,7 @@ module Shumway {
     onhttpstatus?: (location: string, httpStatus: number, httpHeaders: any) => void;
     onerror?: (e) => void;
     open(request: FileLoadingRequest);
+    close: () => void;
   }
 
   export interface IFileLoadingService {
@@ -3449,7 +3487,7 @@ module Shumway {
     export var instance: ISystemResourcesLoadingService;
   }
 
-  export function registerCSSFont(id: number, buffer: ArrayBuffer, forceFontInit: boolean) {
+  export function registerCSSFont(id: number, data: Uint8Array, forceFontInit: boolean) {
     if (!inBrowser) {
       Debug.warning('Cannot register CSS font outside the browser');
       return;
@@ -3458,7 +3496,7 @@ module Shumway {
     head.insertBefore(document.createElement('style'), head.firstChild);
     var style = <CSSStyleSheet>document.styleSheets[0];
     var rule = '@font-face{font-family:swffont' + id + ';src:url(data:font/opentype;base64,' +
-               Shumway.StringUtilities.base64ArrayBuffer(buffer) + ')' + '}';
+               Shumway.StringUtilities.base64ArrayBuffer(data.buffer) + ')' + '}';
     style.insertRule(rule, style.cssRules.length);
     // In at least Chrome, the browser only decodes a font once it's used in the page at all.
     // Because it still does so asynchronously, we create a with some text using the font, take
@@ -3489,11 +3527,21 @@ module Shumway {
   export module ExternalInterfaceService {
     export var instance: IExternalInterfaceService = {
       enabled: false,
-      initJS(callback: (functionName: string, args: any[]) => any) { },
-      registerCallback(functionName: string) { },
-      unregisterCallback(functionName: string) { },
-      eval(expression: string): any { },
-      call(request: string): any { },
+      initJS(callback: (functionName: string, args: any[]) => any) {
+        // ...
+      },
+      registerCallback(functionName: string) {
+        // ...
+      },
+      unregisterCallback(functionName: string) {
+        // ...
+      },
+      eval(expression: string): any {
+        // ...
+      },
+      call(request: string): any {
+        // ...
+      },
       getId(): string { return null; }
     };
   }

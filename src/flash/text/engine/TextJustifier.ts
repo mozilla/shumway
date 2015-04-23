@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: TextJustifier
-module Shumway.AVM2.AS.flash.text.engine {
+module Shumway.AVMX.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class TextJustifier extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class TextJustifier extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -33,8 +33,8 @@ module Shumway.AVM2.AS.flash.text.engine {
     static instanceSymbols: string [] = null; // ["clone"];
     
     constructor (locale: string, lineJustification: string) {
-      locale = asCoerceString(locale); lineJustification = asCoerceString(lineJustification);
-      false && super();
+      locale = axCoerceString(locale); lineJustification = axCoerceString(lineJustification);
+      super();
       dummyConstructor("public flash.text.engine.TextJustifier");
     }
     
@@ -56,12 +56,12 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._lineJustification;
     }
     set lineJustification(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.text.engine.TextJustifier::set lineJustification"); return;
       // this._lineJustification = value;
     }
     setLocale(value: string): void {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.text.engine.TextJustifier::setLocale"); return;
     }
   }

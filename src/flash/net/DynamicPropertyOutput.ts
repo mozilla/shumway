@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: DynamicPropertyOutput
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class DynamicPropertyOutput extends ASNative implements IDynamicPropertyOutput {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class DynamicPropertyOutput extends ASObject implements IDynamicPropertyOutput {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +29,7 @@ module Shumway.AVM2.AS.flash.net {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("packageInternal flash.net.DynamicPropertyOutput");
+      super();
     }
     
     // JS -> AS Bindings
@@ -43,7 +38,7 @@ module Shumway.AVM2.AS.flash.net {
     // AS -> JS Bindings
     
     writeDynamicProperty(name: string, value: any): void {
-      name = asCoerceString(name);
+      name = axCoerceString(name);
       notImplemented("packageInternal flash.net.DynamicPropertyOutput::writeDynamicProperty"); return;
     }
   }

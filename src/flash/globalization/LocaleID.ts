@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: LocaleID
-module Shumway.AVM2.AS.flash.globalization {
+module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class LocaleID extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class LocaleID extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,8 @@ module Shumway.AVM2.AS.flash.globalization {
     static instanceSymbols: string [] = null; // [];
     
     constructor (name: string) {
-      name = asCoerceString(name);
-      false && super();
-      dummyConstructor("public flash.globalization.LocaleID");
+      super();
+      name = axCoerceString(name);
     }
     
     // JS -> AS Bindings
@@ -44,7 +39,7 @@ module Shumway.AVM2.AS.flash.globalization {
     
     // AS -> JS Bindings
     static determinePreferredLocales(want: ASVector<any>, have: ASVector<any>, keyword: string = "userinterface"): ASVector<any> {
-      want = want; have = have; keyword = asCoerceString(keyword);
+      want = want; have = have; keyword = axCoerceString(keyword);
       notImplemented("public flash.globalization.LocaleID::static determinePreferredLocales"); return;
     }
     
@@ -77,7 +72,7 @@ module Shumway.AVM2.AS.flash.globalization {
       notImplemented("public flash.globalization.LocaleID::isRightToLeft"); return;
     }
     ctor(name: string): void {
-      name = asCoerceString(name);
+      name = axCoerceString(name);
       notImplemented("public flash.globalization.LocaleID::ctor"); return;
     }
   }

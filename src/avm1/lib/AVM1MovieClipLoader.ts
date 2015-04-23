@@ -17,28 +17,26 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
 
-  export class AVM1MovieClipLoader {
-    static createAVM1Class():typeof AVM1MovieClipLoader {
-      return wrapAVM1Class(AVM1MovieClipLoader,
+  export class AVM1MovieClipLoader extends AVM1Object {
+    static createAVM1Class(context: AVM1Context): AVM1Object {
+      return wrapAVM1NativeClass(context, true, AVM1MovieClipLoader,
         [],
-        ['loadClip', 'unloadClip', 'getProgress']);
-    }
-
-    public initAVM1ObjectInstance(context: AVM1Context) {
+        ['loadClip', 'unloadClip', 'getProgress'],
+        null, AVM1MovieClipLoader.prototype.avm1Constructor);
     }
 
     private _loader: flash.display.Loader;
     private _target: IAVM1SymbolBase;
 
-    constructor() {
-      this._loader = new flash.display.Loader();
+    public avm1Constructor() {
+      this._loader = new this.context.sec.flash.display.Loader();
     }
 
     public loadClip(url: string, target):Boolean {
       this._target = typeof target === 'number' ?
-        AVM1Utils.resolveLevel(target) : AVM1Utils.resolveTarget(target);
+        AVM1Utils.resolveLevel(this.context, target) : AVM1Utils.resolveTarget(this.context, target);
 
       (<flash.display.DisplayObjectContainer>this._target.as3Object).addChild(this._loader);
 
@@ -48,14 +46,14 @@ module Shumway.AVM1.Lib {
       this._loader.contentLoaderInfo.addEventListener(flash.events.Event.COMPLETE, this.completeHandler.bind(this));
       this._loader.contentLoaderInfo.addEventListener(flash.events.Event.INIT, this.initHandler.bind(this));
 
-      this._loader.load(new flash.net.URLRequest(url));
+      this._loader.load(new this.context.sec.flash.net.URLRequest(url));
       // TODO: find out under which conditions we should return false here
       return true;
     }
 
     public unloadClip(target):Boolean {
       var nativeTarget: IAVM1SymbolBase = typeof target === 'number' ?
-        AVM1Utils.resolveLevel(target) : AVM1Utils.resolveTarget(target);
+        AVM1Utils.resolveLevel(this.context, target) : AVM1Utils.resolveTarget(this.context, target);
 
       (<flash.display.DisplayObjectContainer>nativeTarget.as3Object).removeChild(this._loader);
       // TODO: find out under which conditions unloading a clip can fail

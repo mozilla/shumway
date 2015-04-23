@@ -7,7 +7,7 @@ var defaultManifestFile = './test/test_manifest_trace.json';
 var traceFile = './test/trace.log';
 var diffRefDataFile = './test/refdata~';
 var diffTestDataFile = './test/testdata~';
-var runDuration = 1000;
+var runTicksCount = 30; // max microtask queue iterations per test
 
 var GREEN = '\033[92m';
 var RED = '\033[91m';
@@ -15,6 +15,7 @@ var ENDC = '\033[0m';
 
 var PASS_PREFIX = GREEN + "PASS: " + ENDC;
 var FAIL_PREFIX = RED + "FAIL: " + ENDC;
+var SKIP_PREFIX = "SKIP: ";
 var manifestFile = null;
 
 var ignoredOutput = [
@@ -38,7 +39,7 @@ function filterOutput(output) {
 
 function runSwf(path, callback) {
   var child = spawn(jsPath,
-    [shellPath, '-x', path, '--duration', runDuration, '--porcelain'],
+    [shellPath, '-x', path, '--count', runTicksCount, '--porcelain'],
     {
       stdio: ['ignore', 'pipe', 'pipe']
     });
@@ -142,6 +143,10 @@ function main() {
     console.log('Using manifest at ' + manifestFile + '...');
     var basePath = manifestFile.substring(0, manifestFile.lastIndexOf('/') + 1);
     JSON.parse(fs.readFileSync(manifestFile).toString()).forEach(function (group) {
+      if (group.type && group.type !== 'stas') {
+        console.log(SKIP_PREFIX + group.id + ' | non-stas test');
+        return;
+      }
       Array.prototype.push.apply(tests, group.filenames.map(function (filename) {
         return {
           id: group.id,
@@ -164,7 +169,7 @@ function main() {
   }
 
   if (tests.length === 0) {
-    console.log('No tests found.')
+    console.log('No tests found.');
     process.exit(1);
   }
 

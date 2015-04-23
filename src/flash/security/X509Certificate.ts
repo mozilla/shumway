@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 // Class: X509Certificate
-module Shumway.AVM2.AS.flash.security {
+module Shumway.AVMX.AS.flash.security {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class X509Certificate extends ASNative {
+  export class X509Certificate extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,15 +28,9 @@ module Shumway.AVM2.AS.flash.security {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.security.X509Certificate");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
+
     // _version: number /*uint*/;
     // _serialNumber: string;
     // _signatureAlgorithmOID: string;

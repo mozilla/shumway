@@ -18,7 +18,7 @@
     var c = new DisplayObjectContainer();
 
     var addedEventWasTriggered = false;
-    s.addEventListener(Event.ADDED, function () {
+    s.addEventListener('added', function () {
       addedEventWasTriggered = true;
     });
     c.addChild(s);
@@ -33,7 +33,7 @@
     var c = new DisplayObjectContainer();
 
     var addedToStageEventWasTriggered = false;
-    s.addEventListener(Event.ADDED_TO_STAGE, function () {
+    s.addEventListener('addedToStage', function () {
       addedToStageEventWasTriggered = true;
     });
     c.addChild(s);
@@ -48,7 +48,7 @@
     var s = new Shape();
     var c = new DisplayObjectContainer();
     var r = "";
-    s.addEventListener(Event.ADDED_TO_STAGE, function () {
+    s.addEventListener('addedToStage', function () {
       r += "A";
     });
     c.addChild(s);
@@ -63,10 +63,10 @@
     var s = new Shape();
     var c = new DisplayObjectContainer();
     var r = "";
-    s.addEventListener(Event.ADDED_TO_STAGE, function () {
+    s.addEventListener('addedToStage', function () {
       r += "A";
     });
-    s.addEventListener(Event.REMOVED_FROM_STAGE, function () {
+    s.addEventListener('removedFromStage', function () {
       r += "R";
     });
     c.addChild(s);
@@ -83,10 +83,10 @@
     var stage = new Stage();
     var s = new Shape();
     var r = "";
-    s.addEventListener(Event.ADDED_TO_STAGE, function () {
+    s.addEventListener('addedToStage', function () {
       r += "A";
     });
-    s.addEventListener(Event.REMOVED_FROM_STAGE, function () {
+    s.addEventListener('removedFromStage', function () {
       r += "R";
     });
     var c = new DisplayObjectContainer();
@@ -106,10 +106,10 @@
     var stage = new Stage();
     var s = new Shape();
     var r = "";
-    s.addEventListener(Event.ADDED_TO_STAGE, function () {
+    s.addEventListener('addedToStage', function () {
       r += "A";
     });
-    s.addEventListener(Event.REMOVED_FROM_STAGE, function () {
+    s.addEventListener('removedFromStage', function () {
       r += "R";
     });
     var c = new DisplayObjectContainer();
@@ -126,10 +126,10 @@
     var c2 = new DisplayObjectContainer();
     var r = "";
 
-    s.addEventListener(Event.ADDED, function () {
+    s.addEventListener('added', function () {
       c2.addChild(s);
     });
-    s.addEventListener(Event.ADDED_TO_STAGE, function () {
+    s.addEventListener('addedToStage', function () {
       r += "A";
     });
 
@@ -244,18 +244,18 @@
     container.addChild(square2);
 
     var pt = new Point(10, 20);
-    var objects = container.getObjectsUnderPoint(pt);
+    var objects = container.getObjectsUnderPoint(pt).value;
     eq(objects.length, 1);
 
     pt = new Point(35, 20);
-    objects = container.getObjectsUnderPoint(pt);
+    objects = container.getObjectsUnderPoint(pt).value;
     eq(objects.length, 2);
 
     eq(objects[0], square1);
     eq(objects[1], square2);
 
     container.swapChildrenAt(0, 1);
-    objects = container.getObjectsUnderPoint(pt);
+    objects = container.getObjectsUnderPoint(pt).value;
     eq(objects.length, 2);
 
     eq(objects[0], square2);

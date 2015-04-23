@@ -37,9 +37,11 @@
      symbols.
   5. `LoaderInfo#getSymbolById` creates a `{Font,Bitmap}Symbol` instance, which gets a `syncID` and
      a `resolveAssetPromise` and a `ready` flag set to `false`.
-  6. `LoaderInfo#getSymbolById` invokes `Timeline.IAssetResolver#registerFontOrImage`. The singleton
-     implementation of `IAssetResolver` is the active instance of `Player`.
-  7. `Player#registerFontOrImage` send sync message to GFX side requesting decoding of asset.
+  6. `LoaderInfo#getSymbolById` invokes `Timeline.IAssetResolver#registerFont` or
+     `Timeline.IAssetResolver#registerImage`. The singleton implementation of `IAssetResolver` is
+     the active instance of `Player`.
+  7. `Player#registerFont` or `Player#registerImage` send sync message to GFX side requesting
+     decoding of asset.
   8. `GFXChannelDeserializerContext#register{Font,Image}` is called, which triggers the actual
      decoding and, in the image case, registration of the asset.
   9.
@@ -96,9 +98,11 @@ module Shumway {
   }
 
   export class FileLoader {
+    _url: string;
     _file: any; // {SWFFile|ImageFile}
 
     private _listener: ILoadListener;
+    private _env: any;
     private _loadingServiceSession: FileLoadingSession;
     private _delayedUpdatesPromise: Promise<any>;
     private _lastDelayedUpdate: LoadProgressUpdate;
@@ -106,10 +110,12 @@ module Shumway {
     private _queuedInitialData: Uint8Array;
 
 
-    constructor(listener: ILoadListener) {
+    constructor(listener: ILoadListener, env: any) {
       release || assert(listener);
       this._file = null;
+      this._url = '';
       this._listener = listener;
+      this._env = env;
       this._loadingServiceSession = null;
       this._delayedUpdatesPromise = null;
       this._bytesLoaded = 0;
@@ -117,6 +123,7 @@ module Shumway {
 
     // TODO: strongly type
     loadFile(request: any) {
+      this._url = request.url;
       SWF.enterTimeline('Load file', request.url);
       this._bytesLoaded = 0;
       var session = this._loadingServiceSession = FileLoadingService.instance.createSession();
@@ -159,7 +166,7 @@ module Shumway {
       var eagerlyParsedSymbolsCount = 0;
       var previousFramesLoaded = 0;
       if (!file) {
-        file = this._file = createFileInstanceForHeader(data, progressInfo.bytesTotal);
+        file = this._file = createFileInstanceForHeader(data, progressInfo.bytesTotal, this._env);
         this._listener.onLoadOpen(file);
       } else {
         if (file instanceof SWFFile) {
@@ -191,7 +198,7 @@ module Shumway {
 
         this.processSWFFileUpdate(file, eagerlyParsedSymbolsCount, previousFramesLoaded);
       }
-      if (file.bytesLoaded !== file.bytesTotal) {
+      if (!file || file.bytesLoaded !== file.bytesTotal) {
         Debug.warning("Not Implemented: processing loadClose when loading was aborted");
       } else {
         SWF.leaveTimeline();
@@ -249,16 +256,16 @@ module Shumway {
     }
   }
 
-  function createFileInstanceForHeader(header: Uint8Array, fileLength: number): any {
+  function createFileInstanceForHeader(header: Uint8Array, fileLength: number, env: any): any {
     var magic = (header[0] << 16) | (header[1] << 8) | header[2];
 
     if ((magic & 0xffff) === FileTypeMagicHeaderBytes.SWF) {
-      return new SWFFile(header, fileLength);
+      return new SWFFile(header, fileLength, env);
     }
 
     if (magic === FileTypeMagicHeaderBytes.JPG || magic === FileTypeMagicHeaderBytes.PNG ||
         magic === FileTypeMagicHeaderBytes.GIF) {
-      return new ImageFile(header, fileLength);
+      return new ImageFile(header, fileLength, env);
     }
 
     // TODO: throw instead of returning null? Perhaps?

@@ -28,10 +28,6 @@ public class HTTPStatusEvent extends Event {
   }
   private native function _setStatus(value:int): void;
   public native function get status():int;
-  public native function get responseURL():String;
-  public native function set responseURL(value:String):void;
-  public native function get responseHeaders():Array;
-  public native function set responseHeaders(value:Array):void;
 
   public override native function clone():Event;
   public override native function toString():String;

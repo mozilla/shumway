@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 // Class: NetFilterEvent
-module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
+module Shumway.AVMX.AS.flash.events {
   export class NetFilterEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
+    header: flash.utils.ByteArray;
+    data: flash.utils.ByteArray;
+
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 header: flash.utils.ByteArray = null, data: flash.utils.ByteArray = null) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.NetFilterEvent");
+      super(type, bubbles, cancelable);
+      // TODO: coerce
+      this.header = header;
+      this.data = data;
     }
   }
 }

@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 // Class: GraphicsStroke
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class GraphicsStroke extends ASNative implements IGraphicsStroke, IGraphicsData {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class GraphicsStroke extends ASObject implements IGraphicsStroke, IGraphicsData {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -32,12 +29,12 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = null; // ["thickness", "pixelHinting", "miterLimit", "fill", "_scaleMode", "_caps", "_joints", "scaleMode", "scaleMode", "caps", "caps", "joints", "joints"];
     
     constructor (thickness: number = NaN, pixelHinting: boolean = false, scaleMode: string = "normal", caps: string = "none", joints: string = "round", miterLimit: number = 3, fill: flash.display.IGraphicsFill = null) {
-      false && super();
+      super();
       this.thickness = +thickness;
       this.pixelHinting = !!pixelHinting;
-      this.scaleMode = asCoerceString(scaleMode);
-      this.caps = asCoerceString(caps);
-      this.joints = asCoerceString(joints);
+      this.scaleMode = axCoerceString(scaleMode);
+      this.caps = axCoerceString(caps);
+      this.joints = axCoerceString(joints);
       this.miterLimit = +miterLimit;
       this.fill = fill;
     }

@@ -162,6 +162,9 @@ module Shumway.Player {
             self.onopen,
             self.onclose,
             self.onhttpstatus);
+        },
+        close: function () {
+          // TODO abort BinaryFileReader
         }
       };
     }

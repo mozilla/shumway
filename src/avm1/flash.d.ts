@@ -14,9 +14,74 @@
  * limitations under the License.
  */
 
-declare module Shumway.AVM2.AS.flash {
+import flashPackage = Shumway.AVMX.AS.flash;
+interface ISecurityDomain {
+  flash?: {
+    display: {
+      EventDispatcher: typeof flashPackage.events.EventDispatcher;
+      DisplayObject: typeof flashPackage.display.DisplayObject;
+      DisplayObjectContainer: typeof flashPackage.display.DisplayObjectContainer;
+      AVM1Movie: typeof flashPackage.display.AVM1Movie;
+      Stage: typeof flashPackage.display.Stage;
+      Loader: typeof flashPackage.display.Loader;
+      LoaderInfo: typeof flashPackage.display.LoaderInfo;
+      MovieClip: typeof flashPackage.display.MovieClip;
+      Graphics: typeof flashPackage.display.Graphics;
+      Bitmap: typeof flashPackage.display.Bitmap;
+      BitmapData: typeof flashPackage.display.BitmapData;
+      SimpleButton: typeof flashPackage.display.SimpleButton;
+    };
+    events: {
+      EventDispatcher: typeof flashPackage.events.EventDispatcher;
+      Event: typeof flashPackage.events.Event;
+      KeyboardEvent: typeof flashPackage.events.KeyboardEvent;
+      MouseEvent: typeof flashPackage.events.MouseEvent;
+      ProgressEvent: typeof flashPackage.events.ProgressEvent;
+    };
+    external: {
+      ExternalInterface: typeof flashPackage.external.ExternalInterface;
+    };
+    text: {
+      TextField: typeof flashPackage.text.TextField;
+      TextFormat: typeof flashPackage.text.TextFormat;
+    };
+    geom: {
+      Point: typeof flashPackage.geom.Point;
+      Rectangle: typeof flashPackage.geom.Rectangle;
+      Matrix: typeof flashPackage.geom.Matrix;
+      ColorTransform: typeof flashPackage.geom.ColorTransform;
+      Transform: typeof flashPackage.geom.Transform;
+    }
+    net: {
+      URLRequest: typeof flashPackage.net.URLRequest;
+      URLLoader: typeof flashPackage.net.URLLoader;
+      SharedObject: typeof flashPackage.net.SharedObject;
+    }
+    system: {
+      Capabilities: typeof flashPackage.system.Capabilities;
+      Security: typeof flashPackage.system.Security;
+      fscommand: typeof flashPackage.system.fscommand;
+    }
+    ui: {
+      ContextMenu: typeof flashPackage.ui.ContextMenu;
+      ContextMenuItem: typeof flashPackage.ui.ContextMenuItem;
+    }
+    utils: {
+      ByteArray: typeof flashPackage.utils.ByteArray;
+    }
+    media: {
+      Sound: typeof flashPackage.media.Sound;
+      SoundChannel: typeof flashPackage.media.SoundChannel;
+      SoundTransform: typeof flashPackage.media.SoundTransform;
+    }
+  }
+}
+
+declare module Shumway.AVMX.AS.flash {
   module display {
     class DisplayObject extends events.EventDispatcher {
+      static axClass: typeof DisplayObject;
+
       stage: Stage;
       parent: DisplayObjectContainer;
       _parent: DisplayObject; // TODO remove
@@ -44,7 +109,7 @@ declare module Shumway.AVM2.AS.flash {
       pixelBounds: geom.Rectangle;
       enabled: boolean;
       visible: boolean;
-      opaqueBackground: boolean;
+      opaqueBackground;
       useHandCursor: boolean;
       buttonMode: boolean;
       _mouseOver: boolean;
@@ -84,9 +149,11 @@ declare module Shumway.AVM2.AS.flash {
       addTimelineObjectAtDepth(child, depth: number);
       swapChildren: Function;
       _lookupChildByIndex(index: number): DisplayObject;
-      _lookupChildByName(name: string): DisplayObject;
+      _lookupChildByName(name: string, options: LookupChildOptions): DisplayObject;
     }
     class MovieClip extends DisplayObjectContainer {
+      static axClass: typeof MovieClip;
+
       _as2SymbolClass;
       _name: string;
       numChildren: number;
@@ -98,7 +165,7 @@ declare module Shumway.AVM2.AS.flash {
       _getAbsFrameNumber(frame: string, sceneName: string): number;
       callFrame(frame: number): void;
     }
-    class Graphics extends ASNative {
+    class Graphics extends ASObject {
       beginFill: Function;
       beginBitmapFill: Function;
       clear();
@@ -109,6 +176,7 @@ declare module Shumway.AVM2.AS.flash {
       lineTo: Function;
       moveTo: Function;
       beginGradientFill: Function;
+      copyFrom: Function;
     }
     class Loader extends DisplayObject {
       url: string;
@@ -127,11 +195,22 @@ declare module Shumway.AVM2.AS.flash {
       getSymbolById(id: number): any;
     }
     class AVM1Movie extends DisplayObject {}
-    class BitmapData extends ASNative {}
+    class BitmapData extends ASObject {
+      static axClass: typeof BitmapData;
+
+      width: number;
+      height: number;
+      transparent: boolean;
+      constructor(width: number, height: number, trasparent: boolean, fillColor: number);
+      clone();
+      compare(otherBitmapData: BitmapData): boolean;
+    }
     class Bitmap extends DisplayObject {
       constructor();
     }
     class SimpleButton extends DisplayObject {
+      static axClass: typeof SimpleButton;
+
       _symbol: ButtonSymbol;
     }
 
@@ -145,7 +224,7 @@ declare module Shumway.AVM2.AS.flash {
       stageHeight: number;
     }
 
-    class DisplaySymbol {
+    class DisplaySymbol extends Timeline.Symbol {
       id: number;
     }
     class BitmapSymbol extends DisplaySymbol {}
@@ -156,16 +235,22 @@ declare module Shumway.AVM2.AS.flash {
       avm1Name: string;
       avm1SymbolClass;
     }
+
+    enum LookupChildOptions {
+      DEFAULT = 0,
+      IGNORE_CASE = 1,
+      INCLUDE_NOT_INITIALIZED = 2
+    }
   }
   module events {
-    class EventDispatcher extends ASNative {
+    class EventDispatcher extends ASObject {
       public addEventListener(type: string, listener: (event: Event) => void, useCapture?: boolean,
                               priority?: number, useWeakReference?: boolean): void;
       public removeEventListener(type: string, listener: (event: Event) => void,
                                  useCapture?: boolean): void;
     }
 
-    class Event extends ASNative  {
+    class Event extends ASObject  {
       static COMPLETE: string;
       static OPEN: string;
       static INIT: string;
@@ -187,49 +272,113 @@ declare module Shumway.AVM2.AS.flash {
   }
   module external {
     class ExternalInterface {
+      static axClass: typeof ExternalInterface;
+
       static available: boolean;
       static addCallback(methodName: string, callback: Function);
       static call: Function;
     }
   }
   module geom {
-    class ColorTransform extends ASNative {}
-    class Matrix extends ASNative {}
-    class Point extends ASNative {
+    class ColorTransform extends ASObject {
+      static axClass: typeof ColorTransform;
+
+      color: number;
+      redMultiplier: number;
+      greenMultiplier: number;
+      blueMultiplier: number;
+      alphaMultiplier: number;
+      redOffset: number;
+      greenOffset: number;
+      blueOffset: number;
+      alphaOffset: number;
+      constructor(redMultiplier: number, greenMultiplier: number, blueMultiplier: number, alphaMultiplier: number,
+                  redOffset: number, greenOffset: number, blueOffset: number, alphaOffset: number);
+      public concat(second: ColorTransform): void;
+    }
+    class Matrix extends ASObject {
+      static axClass: typeof Matrix;
+
+      a: number;
+      b: number;
+      c: number;
+      d: number;
+      tx: number;
+      ty: number;
+      constructor(a: number, b: number, c: number, d: number, tx: number, ty: number);
+      concat(other: Matrix): void;
+      createBox(scaleX: number, scaleY: number, rotation: number, tx: number, ty: number): void;
+      createGradientBox(width: number, height: number, rotation: number, tx: number, ty: number): void;
+      deltaTransformPoint(point: Point): Point;
+      invert(): void;
+      rotate(angle: number): void;
+      scale(sx: number, sy: number): void;
+      transformPoint(point: Point): Point;
+      translate(tx: number, ty: number): void;
+    }
+    class Point extends ASObject {
+      static axClass: typeof Point;
+
       public x: number;
       public y: number;
+      public length: number;
       constructor(x: number, y: number);
+
+      static interpolate(p1: Point, p2: Point, f: number): Point;
+      static distance(p1: Point, p2: Point): number;
+      static polar(length: number, angle: number): Point;
+      offset(dx: number, dy: number): void;
+      equals(toCompare: Point): boolean;
+      subtract(v: Point): Point;
+      add(v: Point): Point;
+      normalize(thickness: number): void;
     }
-    class Rectangle extends ASNative {
+    class Rectangle extends ASObject {
+      static axClass: typeof Rectangle;
+
       public x: number;
       public y: number;
       public width: number;
       public height: number;
+      public size: Point;
       constructor(x: number, y: number, width: number, height: number);
+      public inflate(dx: number, dy: number);
+      public inflatePoint(point: Point): void;
+      public offset(dx: number, dy: number): void;
+      public offsetPoint(point: Point): void;
+      public contains(x: number, y: number): boolean;
+      public containsPoint(point: Point): boolean;
+      public containsRect(rect: Rectangle): boolean;
+      public intersection(toIntersect: Rectangle): Rectangle;
+      public intersects(toIntersect: Rectangle): boolean;
+      public union(toUnion: Rectangle): Rectangle;
+      public equals(toCompare: Rectangle): boolean;
+      public isEmpty(): boolean;
     }
-    class Transform extends ASNative {
+    class Transform extends ASObject {
       matrix: Matrix;
       concatenatedMatrix: Matrix;
       colorTransform: ColorTransform;
       concatenatedColorTransform: ColorTransform;
+      pixelBounds: flash.geom.Rectangle;
     }
   }
   module media {
     class SoundMixer {
       static stopAll(): void;
     }
-    class Sound extends ASNative {
+    class Sound extends ASObject {
       play(startTime: number, loops: number, sndTransform?: flash.media.SoundTransform): SoundChannel;
     }
-    class SoundChannel extends ASNative {
+    class SoundChannel extends ASObject {
       soundTransform: SoundTransform;
       stop();
     }
-    class SoundTransform extends ASNative  {}
+    class SoundTransform extends ASObject  {}
     class SoundSymbol {}
   }
   module net {
-    class URLRequest extends ASNative {
+    class URLRequest extends ASObject {
       constructor(url: string);
       method: string;
     }
@@ -239,19 +388,35 @@ declare module Shumway.AVM2.AS.flash {
       constructor(request?: URLRequest);
       _ignoreDecodeErrors: boolean;
     }
-    class SharedObject extends ASNative {}
+    class SharedObject extends ASObject {
+      static axClass: typeof SharedObject;
+      size: number;
+      fps: number;
+      clear(): void;
+      flush(minDiskSpace?: number /*int*/): string;
+      static getLocal(name: string, localPath: string, secure: boolean): SharedObject;
+    }
   }
   module system {
-    class Capabilities {
+    class Capabilities extends ASObject {
+      static axClass: typeof Capabilities;
+
       static version: string;
     }
-    class Security {}
-    class FSCommand {
-      static _fscommand(command: string, args?: string): void;
+    class Security extends ASObject {
+      static axClass: typeof Security;
+
+      static sandboxType: string;
+      static allowDomain(domain: string): void;
+      static allowInsecureDomain(domain: string): void;
+      static loadPolicyFile(url: string): void;
     }
+    var fscommand: { axCall: (thisArg, sec: ISecurityDomain, command: string, args?: string) => any };
   }
   module text {
     class TextField extends flash.display.DisplayObject {
+      static axClass: typeof TextField;
+
       getLineMetrics(index: number);
 
       _name: string; // TODO remove
@@ -266,8 +431,8 @@ declare module Shumway.AVM2.AS.flash {
       bottomScrollV;
       condenseWhite: boolean;
       embedFonts: boolean;
-      getTextFormat: Function;
-      setTextFormat: Function;
+      getTextFormat: (beginIndex: number, endIndex: number) => TextFormat;
+      setTextFormat: (tf: TextFormat, beginIndex: number, endIndex: number) => void;
       scrollH: number;
       scrollV: number;
       htmlText: string;
@@ -286,7 +451,7 @@ declare module Shumway.AVM2.AS.flash {
       defaultTextFormat: TextFormat;
       _symbol: TextSymbol;
     }
-    class TextFormat extends ASNative {
+    class TextFormat extends ASObject {
       constructor(...args);
     }
     class TextSymbol extends display.DisplaySymbol {
@@ -294,12 +459,16 @@ declare module Shumway.AVM2.AS.flash {
     }
   }
   module ui {
-    class ContextMenu extends ASNative {}
-    class ContextMenuItem extends ASNative {}
+    class ContextMenu extends ASObject {
+      static axClass: typeof ContextMenu;
+    }
+    class ContextMenuItem extends ASObject {
+      static axClass: typeof ContextMenuItem;
+    }
   }
   module utils {
     function getTimer(): Timer;
-    class Timer extends ASNative {}
+    class Timer extends ASObject {}
     class SetIntervalTimer extends Timer {
       constructor(closure: Function, delay: number, repeat: boolean, ... args);
       reference: number;
@@ -308,9 +477,10 @@ declare module Shumway.AVM2.AS.flash {
   }
 }
 
-declare module Shumway.AVM2.AS {
+declare module Shumway.AVMX.AS {
   function FlashUtilScript_getTimer();
   function FlashNetScript_navigateToURL(request, window_);
+  function constructClassFromSymbol(symbol: Timeline.Symbol, axClass: ASClass);
 }
 
 declare module Shumway.Timeline {
@@ -320,4 +490,5 @@ declare module Shumway.Timeline {
       actionsData: Uint8Array;
       actionsBlock: AVM1.AVM1ActionsData;
     }
+    class Symbol { }
 }

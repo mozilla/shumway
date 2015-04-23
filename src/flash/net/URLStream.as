@@ -21,8 +21,7 @@ import flash.utils.IDataInput;
 
 [native(cls='URLStreamClass')]
 public class URLStream extends EventDispatcher implements IDataInput {
-  public function URLStream() {
-  }
+  public native function URLStream();
   public native function get connected(): Boolean;
   public native function get bytesAvailable(): uint;
   public native function get objectEncoding(): uint;

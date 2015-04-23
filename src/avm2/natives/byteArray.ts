@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-module Shumway.AVM2.AS {
+module Shumway.AVMX.AS {
   import notImplemented = Shumway.Debug.notImplemented;
   import unexpected = Shumway.Debug.unexpected;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import Namespace = Shumway.AVM2.ABC.Namespace;
-  import Multiname = Shumway.AVM2.ABC.Multiname;
 
   import utf8decode = Shumway.StringUtilities.utf8decode;
   import utf8encode = Shumway.StringUtilities.utf8encode;
@@ -33,7 +30,7 @@ module Shumway.AVM2.AS {
   import assert = Shumway.Debug.assert;
 
   export module flash.net {
-    export class ObjectEncoding extends ASNative {
+    export class ObjectEncoding extends ASObject {
       public static AMF0 = 0;
       public static AMF3 = 3;
       public static DEFAULT = ObjectEncoding.AMF3;
@@ -49,13 +46,6 @@ module Shumway.AVM2.AS {
   }
 
   export module flash.utils {
-    var _asGetProperty = Object.prototype.asGetProperty;
-    var _asSetProperty = Object.prototype.asSetProperty;
-    var _asCallProperty = Object.prototype.asCallProperty;
-    var _asHasProperty = Object.prototype.asHasProperty;
-    var _asHasOwnProperty = Object.prototype.asHasOwnProperty;
-    var _asHasTraitProperty = Object.prototype.asHasTraitProperty;
-    var _asDeleteProperty = Object.prototype.asDeleteProperty;
 
     export interface IDataInput {
       readBytes: (bytes: flash.utils.ByteArray, offset?: number /*uint*/, length?: number /*uint*/) => void;
@@ -94,21 +84,28 @@ module Shumway.AVM2.AS {
       endian: string;
     }
 
-    export class ByteArray extends ASNative implements IDataInput, IDataOutput {
+    export class ByteArray extends ASObject implements IDataInput, IDataOutput {
 
-      public static instanceConstructor: any = DataBuffer;
-      public static staticNatives: any [] = [DataBuffer];
+      static axClass: typeof ByteArray;
+
+      public static classNatives: any [] = [DataBuffer];
       public static instanceNatives: any [] = [DataBuffer.prototype];
-      public static callableConstructor: any = null;
 
-      static classInitializer: any = function() {
+      static classInitializer() {
         var proto: any = DataBuffer.prototype;
         ObjectUtilities.defineNonEnumerableProperty(proto, '$BgtoJSON', proto.toJSON);
       }
 
-      static initializer = function (source: any) {
-        var self: ByteArray = this;
+      _symbol: {
+        buffer: Uint8Array;
+        byteLength: number;
+      };
 
+      constructor(source?: any) {
+        super();
+        if (this._symbol) {
+          source = this._symbol;
+        }
         var buffer: ArrayBuffer;
         var length = 0;
         if (source) {
@@ -133,17 +130,15 @@ module Shumway.AVM2.AS {
         } else {
           buffer = new ArrayBuffer(ByteArray.INITIAL_SIZE);
         }
-        self._buffer = buffer;
-        self._length = length;
-        self._position = 0;
-        self._resetViews();
-        self._objectEncoding = ByteArray.defaultObjectEncoding;
-        self._littleEndian = false; // AS3 is bigEndian by default.
-        self._bitBuffer = 0;
-        self._bitLength = 0;
+        this._buffer = buffer;
+        this._length = length;
+        this._position = 0;
+        this._resetViews();
+        this._objectEncoding = ByteArray.defaultObjectEncoding;
+        this._littleEndian = false; // AS3 is bigEndian by default.
+        this._bitBuffer = 0;
+        this._bitLength = 0;
       }
-
-      static protocol: IProtocol = ByteArray.prototype;
 
       /* The initial size of the backing, in bytes. Doubled every OOM. */
       private static INITIAL_SIZE = 128;
@@ -157,10 +152,6 @@ module Shumway.AVM2.AS {
       static set defaultObjectEncoding(version: number /*uint*/) {
         version = version >>> 0;
         this._defaultObjectEncoding = version;
-      }
-
-      constructor() {
-        false && super();
       }
 
       toJSON() {
@@ -181,8 +172,9 @@ module Shumway.AVM2.AS {
       asGetNumericProperty: (name: number) => number;
       asSetNumericProperty: (name: number, value: number) => void;
 
-//      readBytes: (bytes: flash.utils.ByteArray, offset: number, length: number) => void = DataBuffer.prototype.readByte;
-//      writeBytes: (bytes: flash.utils.ByteArray, offset: number, length: number) => void = DataBuffer.prototype.writeBytes;
+//      readBytes: (bytes: flash.utils.ByteArray, offset: number, length: number) => void =
+// DataBuffer.prototype.readByte; writeBytes: (bytes: flash.utils.ByteArray, offset: number,
+// length: number) => void = DataBuffer.prototype.writeBytes;
 
       readBytes: (bytes: flash.utils.ByteArray, offset?: number /*uint*/, length?: number /*uint*/) => void;
       readBoolean: () => boolean;
@@ -238,33 +230,52 @@ module Shumway.AVM2.AS {
       writeRawBytes: (bytes: Uint8Array) => void;
       position: number;
       length: number;
-    }
 
-    ByteArray.prototype.asGetNumericProperty = DataBuffer.prototype.getValue;
-    ByteArray.prototype.asSetNumericProperty = DataBuffer.prototype.setValue;
-
-    export var OriginalByteArray = ByteArray;
-
-    export class CompressionAlgorithm extends ASNative {
-
-      static classInitializer: any = function() {
-        ObjectUtilities.defineNonEnumerableProperty(this, '$BgZLIB', CompressionAlgorithm.ZLIB);
-        ObjectUtilities.defineNonEnumerableProperty(this, '$BgDEFLATE',
-                                                    CompressionAlgorithm.DEFLATE);
-        ObjectUtilities.defineNonEnumerableProperty(this, '$BgLZMA', CompressionAlgorithm.LZMA);
+      axGetPublicProperty(nm: any): any {
+        if (typeof nm === 'number' || isNumeric(nm = axCoerceName(nm))) {
+          return this.axGetNumericProperty(nm);
+        }
+        return this['$Bg' + nm];
       }
 
-      static initializer: any = null;
-      static classSymbols: string [] = null; // [];
-      static instanceSymbols: string [] = null; // [];
-
-      constructor () {
-        false && super();
+      axGetNumericProperty(nm: number) {
+        release || assert(typeof nm === 'number');
+        return (<any>this).getValue(nm);
       }
 
-      static ZLIB: string = "zlib";
-      static DEFLATE: string = "deflate";
-      static LZMA: string = "lzma";
+      axSetPublicProperty(nm: any, value: any) {
+        release || checkValue(value);
+        if (typeof nm === 'number' || isNumeric(nm = axCoerceName(nm))) {
+          this.axSetNumericProperty(nm, value);
+          return;
+        }
+        this['$Bg' + nm] = value;
+      }
+
+      axSetNumericProperty(nm: number, value: any) {
+        release || assert(typeof nm === 'number');
+        (<any>this).setValue(nm, value);
+      }
+
+      axGetProperty(mn: Multiname): any {
+        var name = mn.name;
+        if (typeof name === 'number' || isNumeric(name = axCoerceName(name))) {
+          release || assert(mn.isRuntimeName());
+          return (<any>this).getValue(+name);
+        }
+        return super.axGetProperty(mn);
+      }
+
+      axSetProperty(mn: Multiname, value: any, bc: Bytecode): void {
+        release || checkValue(value);
+        var name = mn.name;
+        if (typeof name === 'number' || isNumeric(name = axCoerceName(name))) {
+          release || assert(mn.isRuntimeName());
+          (<any>this).setValue(+name, value);
+          return;
+        }
+        super.axSetProperty(mn, value, bc);
+      }
     }
   }
 }

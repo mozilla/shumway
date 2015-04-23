@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 // Class: Video
-module Shumway.AVM2.AS.flash.media {
+module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import assert = Shumway.Debug.assert;
   export class Video extends flash.display.DisplayObject {
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
     
     constructor (width: number /*int*/ = 320, height: number /*int*/ = 240) {
-      false && super();
-      flash.display.DisplayObject.instanceConstructorNoInitialize.call(this);
+      super();
       width |= 0;
       height |= 0;
       width = width || 320;

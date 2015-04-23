@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 // Class: TextFieldAutoSize
-module Shumway.AVM2.AS.flash.text {
-  export class TextFieldAutoSize extends ASNative {
+module Shumway.AVMX.AS.flash.text {
+  export class TextFieldAutoSize extends ASObject {
 
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 

@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 // Class: Stage
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import assert = Shumway.Debug.assert;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import throwError = Shumway.AVM2.Runtime.throwError;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   export class Stage extends flash.display.DisplayObjectContainer {
 
@@ -27,11 +26,9 @@ module Shumway.AVM2.AS.flash.display {
 
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null;
-    static initializer: any = null;
 
     constructor () {
-      false && super();
-      DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
+      super();
       this._root = this;
       this._stage = this;
       this._frameRate = 24;
@@ -48,13 +45,14 @@ module Shumway.AVM2.AS.flash.display {
       this._displayState = null;
       this._fullScreenSourceRect = null;
       this._mouseLock = false;
-      this._stageVideos = new GenericVector(0, true, ASObject);
+      var objectVectorClass = this.sec.getVectorClass(this.sec.AXObject);
+      this._stageVideos = <any>objectVectorClass.axConstruct([0, true]);
       this._stage3Ds = null; // TODO
       this._colorARGB = 0xFFFFFFFF;
       this._fullScreenWidth = 0;
       this._fullScreenHeight = 0;
       this._wmodeGPU = false;
-      this._softKeyboardRect = new flash.geom.Rectangle();
+      this._softKeyboardRect = new this.sec.flash.geom.Rectangle();
       this._allowsFullScreen = false;
       this._allowsFullScreenInteractive = false;
       this._contentsScaleFactor = 1;
@@ -89,8 +87,8 @@ module Shumway.AVM2.AS.flash.display {
     private _displayState: string;
     private _fullScreenSourceRect: flash.geom.Rectangle;
     private _mouseLock: boolean;
-    private _stageVideos: ASVector<any>;
-    private _stage3Ds: ASVector<any>;
+    private _stageVideos: GenericVector;
+    private _stage3Ds: GenericVector;
     private _colorARGB: number /*uint*/;
     private _fullScreenWidth: number /*uint*/;
     private _fullScreenHeight: number /*uint*/;
@@ -129,9 +127,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set scaleMode(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       if (flash.display.StageScaleMode.toNumber(value) < 0) {
-        throwError("ArgumentError", Errors.InvalidEnumError, "scaleMode");
+        this.sec.throwError("ArgumentError", Errors.InvalidEnumError, "scaleMode");
       }
       this._scaleMode = value;
     }
@@ -141,7 +139,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set align(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       var n = flash.display.StageAlign.toNumber(value);
       release || assert (n >= 0);
       this._align = flash.display.StageAlign.fromNumber(n);
@@ -215,7 +213,7 @@ module Shumway.AVM2.AS.flash.display {
         this._stageContainerWidth = width;
         this._stageContainerHeight = height;
         if (this.scaleMode === StageScaleMode.NO_SCALE) {
-          this.dispatchEvent(flash.events.Event.getInstance(flash.events.Event.RESIZE));
+          this.dispatchEvent(this.sec.flash.events.Event.axClass.getInstance(flash.events.Event.RESIZE));
         }
       }
     }
@@ -241,7 +239,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set colorCorrection(value: string) {
-      //this._colorCorrection = asCoerceString(value);
+      //this._colorCorrection = axCoerceString(value);
       notImplemented("public flash.display.Stage::set colorCorrection"); return;
     }
 
@@ -264,7 +262,7 @@ module Shumway.AVM2.AS.flash.display {
     set quality(value: string)  {
       // TODO: The *linear versions return just *, stripping the "linear" part
       // Value is compared case-insensitively, and has default handling, so '' is ok.
-      value = (asCoerceString(value) || '').toLowerCase();
+      value = (axCoerceString(value) || '').toLowerCase();
       if (flash.display.StageQuality.toNumber(value) < 0) {
         value = flash.display.StageQuality.HIGH;
       }
@@ -276,7 +274,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set displayState(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       // TODO: This should only be allowed if the embedding page allows full screen mode.
       if (flash.display.StageDisplayState.toNumber(value) < 0) {
         value = flash.display.StageDisplayState.NORMAL;
@@ -306,7 +304,7 @@ module Shumway.AVM2.AS.flash.display {
       somewhatImplemented("public flash.display.Stage::get stageVideos");
       return this._stageVideos;
     }
-    get stage3Ds(): ASVector<any> {
+    get stage3Ds(): GenericVector {
       notImplemented("public flash.display.Stage::get stage3Ds"); return;
       // return this._stage3Ds;
     }
@@ -321,7 +319,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set alpha(alpha: number) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
 
     get alpha(): number {
@@ -461,167 +459,167 @@ module Shumway.AVM2.AS.flash.display {
       return this._name;
     }
     set name(value: string) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get mask(): DisplayObject {
       return this._mask;
     }
     set mask(value: DisplayObject) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get visible(): boolean {
       return this._hasFlags(DisplayObjectFlags.Visible);
     }
     set visible(value: boolean) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get x(): number {
       return this._getX();
     }
     set x(value: number) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get y(): number {
       return this._getY();
     }
     set y(value: number) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get z(): number {
       return this._z;
     }
     set z(value: number) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get scaleX(): number {
       return Math.abs(this._scaleX);
     }
     set scaleX(value: number) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get scaleY(): number {
       return this._scaleY;
     }
     set scaleY(value: number) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get scaleZ(): number {
       return this._scaleZ;
     }
     set scaleZ(value: number) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get rotation(): number {
       return this._rotation;
     }
     set rotation(value: number) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get rotationX(): number {
       return this._rotationX;
     }
     set rotationX(value: number) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get rotationY(): number {
       return this._rotationX;
     }
     set rotationY(value: number) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get rotationZ(): number {
       return this._rotationX;
     }
     set rotationZ(value: number) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get cacheAsBitmap(): boolean {
       return this._getCacheAsBitmap();
     }
     set cacheAsBitmap(value: boolean) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get opaqueBackground(): any {
       return this._opaqueBackground;
     }
     set opaqueBackground(value: any) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get scrollRect(): flash.geom.Rectangle {
       return this._getScrollRect();
     }
     set scrollRect(value: geom.Rectangle) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
-    get filters(): flash.filters.BitmapFilter [] {
+    get filters() {
       return this._getFilters();
     }
-    set filters(value: flash.filters.BitmapFilter[]) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    set filters(value: ASArray) {
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get blendMode(): string {
       return this._blendMode;
     }
     set blendMode(value: string) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get transform(): flash.geom.Transform {
       return this._getTransform();
     }
     set transform(value: geom.Transform) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get accessibilityProperties(): flash.accessibility.AccessibilityProperties {
       return this._accessibilityProperties;
     }
     set accessibilityProperties(value: accessibility.AccessibilityProperties) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get scale9Grid(): flash.geom.Rectangle {
       return this._getScale9Grid();
     }
     set scale9Grid(value: geom.Rectangle) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get tabEnabled(): boolean {
       return this._tabEnabled;
     }
     set tabEnabled(value: boolean) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get tabIndex(): number /*int*/ {
       return this._tabIndex;
     }
     set tabIndex(value: number) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get focusRect(): any {
       return this._focusRect;
     }
     set focusRect(value: any) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get mouseEnabled(): boolean {
       return this._mouseEnabled;
     }
     set mouseEnabled(value: boolean) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get accessibilityImplementation(): flash.accessibility.AccessibilityImplementation {
       return this._accessibilityImplementation;
     }
     set accessibilityImplementation(value: accessibility.AccessibilityImplementation) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get textSnapshot(): text.TextSnapshot {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
       return null;
     }
     get contextMenu(): flash.ui.ContextMenu {
       return this._contextMenu;
     }
     set contextMenu(value: ui.ContextMenu) {
-      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      this.sec.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
   }
 }

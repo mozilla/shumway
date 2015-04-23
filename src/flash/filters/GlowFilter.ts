@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 // Class: GlowFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
   import assert = Shumway.Debug.assert;
   import Rectangle = flash.geom.Rectangle;
 
   export class GlowFilter extends flash.filters.BitmapFilter {
 
+    static axClass: typeof GlowFilter;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
 
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -39,7 +38,7 @@ module Shumway.AVM2.AS.flash.filters {
       release || assert(obj.colors && obj.colors.length === 1, "colors must be Array of length 1");
       var color: number = obj.colors[0] >>> 8;
       var alpha: number = (obj.colors[0] & 0xff) / 0xff;
-      return new GlowFilter(
+      return new this.sec.flash.filters.GlowFilter(
         color,
         alpha,
         obj.blurX,
@@ -51,8 +50,11 @@ module Shumway.AVM2.AS.flash.filters {
       );
     }
 
-    constructor (color: number /*uint*/ = 16711680, alpha: number = 1, blurX: number = 6, blurY: number = 6, strength: number = 2, quality: number /*int*/ = 1, inner: boolean = false, knockout: boolean = false) {
-      false && super();
+    constructor(color: number /*uint*/ = 16711680, alpha: number = 1, blurX: number = 6,
+                blurY: number = 6, strength: number = 2, quality: number /*int*/ = 1,
+                inner: boolean = false, knockout: boolean = false)
+    {
+      super();
       this.color = color;
       this.alpha = alpha;
       this.blurX = blurX;
@@ -137,7 +139,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return new GlowFilter(
+      return new this.sec.flash.filters.GlowFilter(
         this._color,
         this._alpha,
         this._blurX,

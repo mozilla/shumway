@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 // Class: ContextMenuClipboardItems
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  export class ContextMenuClipboardItems extends ASNative {
+  export class ContextMenuClipboardItems extends ASObject {
     
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null;
     
     constructor () {
-      false && super();
+      super();
 
       this._cut = true;
       this._copy = true;
@@ -81,7 +80,7 @@ module Shumway.AVM2.AS.flash.ui {
       this._selectAll = !!val;
     }
     clone(): ContextMenuClipboardItems {
-      var items = new ui.ContextMenuClipboardItems();
+      var items = new this.sec.flash.ui.ContextMenuClipboardItems();
       items._cut = this._cut;
       items._copy = this._copy;
       items._paste = this._paste;
