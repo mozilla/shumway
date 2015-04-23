@@ -16,8 +16,8 @@
 
 module.exports = function(grunt) {
 
-  var VERSION_BASELINE = '8c92f57b7811f5ce54';
-  var VERSION_BASE = '0.10.';
+  var VERSION_BASELINE = '2bbdb5ce0db7796b';
+  var VERSION_BASE = '0.11.';
 
   // require it at the top and pass in the grunt instance
   require('time-grunt')(grunt);
