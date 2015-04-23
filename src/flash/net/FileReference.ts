@@ -26,7 +26,7 @@ module Shumway.AVMX.AS.flash.net {
     }
     
     load: () => void;
-    save: (data: any, defaultFileName: string = null) => void;
+    save: (data: any, defaultFileName?: string) => void;
 
     // _creationDate: ASDate;
     // _creator: string;

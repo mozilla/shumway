@@ -251,8 +251,8 @@
 
 // ///<reference path='net/DynamicPropertyOutput.ts' />
 ///<reference path='net/FileFilter.ts' />
-// ///<reference path='net/FileReference.ts' />
-// ///<reference path='net/FileReferenceList.ts' />
+///<reference path='net/FileReference.ts' />
+///<reference path='net/FileReferenceList.ts' />
 // ///<reference path='net/GroupSpecifier.ts' />
 // ///<reference path='net/IDynamicPropertyOutput.ts' />
 // ///<reference path='net/IDynamicPropertyWriter.ts' />
