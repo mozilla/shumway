@@ -719,9 +719,22 @@ module Shumway.AVMX.AS.flash.text {
 
     getLineOffset(lineIndex: number /*int*/): number /*int*/ {
       lineIndex = lineIndex | 0;
-      notImplemented("public flash.text.TextField::getLineOffset"); return;
+      var lines = this._textContent.plainText.split('\r');
+      if (lineIndex < 0 || lineIndex >= lines.length) {
+        this.sec.throwError('RangeError', Errors.ParamRangeError);
+      }
+      var offset = 0;
+      for (var i = 0; i < lineIndex; i++) {
+        offset += lines[i].length + 1; // Length + `\r`
+      }
+      // TODO:  I've tried modifying the width of the text field so that lines wrap, but this doesn't seem
+      // to have any effect on how line offsets are computed. I'm leaving in the |somewhatImplemented| call
+      // since this is not fully tested.
+      release || somewhatImplemented("public flash.text.TextField::getLineOffset");
+      return offset;
     }
     getLineText(lineIndex: number /*int*/): string {
+      lineIndex = lineIndex | 0;
       var lines = this._textContent.plainText.split('\r');
       if (lineIndex < 0 || lineIndex >= lines.length) {
         this.sec.throwError('RangeError', Errors.ParamRangeError);
