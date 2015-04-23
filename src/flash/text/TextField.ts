@@ -722,7 +722,7 @@ module Shumway.AVMX.AS.flash.text {
       notImplemented("public flash.text.TextField::getLineOffset"); return;
     }
     getLineText(lineIndex: number /*int*/): string {
-      var lines = this._textContent.plainText.split('\n');
+      var lines = this._textContent.plainText.split('\r');
       if (lineIndex < 0 || lineIndex >= lines.length) {
         this.sec.throwError('RangeError', Errors.ParamRangeError);
       }

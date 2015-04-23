@@ -338,7 +338,7 @@ module Shumway {
     }
 
     set plainText(value: string) {
-      this._plainText = value;
+      this._plainText = value.replace(/\n/g, '\r');
       this.textRuns.length = 0;
       if (value) {
         var textRun = new this.sec.flash.text.TextRun(0, value.length, this.defaultTextFormat);
