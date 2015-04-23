@@ -190,6 +190,7 @@ module Shumway.Shell {
   var verboseOption: Option;
   var profileOption: Option;
   var releaseOption: Option;
+  var deterministicOption: Option;
   var executeOption: Option;
   var freshSecurityDomainOption: Option;
   var printABCFileNameOption: Option;
@@ -219,6 +220,7 @@ module Shumway.Shell {
     verboseOption = shellOptions.register(new Option("v", "verbose", "boolean", false, "Verbose"));
     profileOption = shellOptions.register(new Option("o", "profile", "boolean", false, "Profile"));
     releaseOption = shellOptions.register(new Option("r", "release", "boolean", false, "Release mode"));
+    deterministicOption = shellOptions.register(new Option("det", "deterministic", "boolean", false, "Deterministic execution, with rigged timers and random generator"));
     if (!disableBundleSelection) {
       usePlayerClosureBundleOption = shellOptions.register(new Option('b', "closure-bundle", "boolean", false, "Use bundled and closure compiled source file for the player."));
       usePlayerBundleOption = shellOptions.register(new Option('', "bundle", "boolean", false, "Use bundled source file for the player."));
@@ -415,8 +417,10 @@ module Shumway.Shell {
     }
     function runSWF(file: any) {
       microTaskQueue.clear();
-      Shumway.Random.reset();
-      Shumway.Shell.installTimeWarper();
+      if (deterministicOption) {
+        Shumway.Random.reset();
+        Shumway.Shell.installTimeWarper();
+      }
 
       var sec = createSecurityDomain(builtinABCPath, null, null);
       var player = new Shumway.Player.Player(sec, new ShellGFXServer());
