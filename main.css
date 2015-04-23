@@ -1,0 +1,26 @@
+html, body { height:100%; background-color: #333333; }
+
+body {
+    margin:0;
+    padding:0;
+    font-size: 13px;
+    line-height: 20px;
+    color: #ffffff;
+    font-family: "Open Sans", sans-serif;
+    letter-spacing: 1px;
+}
+#container {
+    margin: 0 auto;
+    width: 800px;
+}
+h1 { font-size: 3.8em; color: #d56331; margin-bottom: 3px; }
+h1 .small { font-size: 0.4em; }
+h1 a { text-decoration: none }
+h2 { font-size: 1.5em; color: #d56331; }
+h3 { text-align: center; color: #d56331; }
+a { color: #43a0d5; }
+.description { font-size: 1.2em; line-height: 1.4em; margin-bottom: 30px; margin-top: 30px; }
+.download { float: right; }
+pre { background: #000; color: #fff; padding: 15px;}
+hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
+.footer { text-align:center; padding-top:30px; font-style: italic; }

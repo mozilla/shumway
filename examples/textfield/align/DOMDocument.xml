@@ -1,0 +1,343 @@
+<DOMDocument xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://ns.adobe.com/xfl/2008/" currentTimeline="1" xflVersion="2.2" creatorInfo="Adobe Flash Professional CS6" platform="Macintosh" versionInfo="Saved by Adobe Flash Macintosh 12.0 build 537" majorVersion="12" buildNumber="537" nextSceneIdentifier="2" playOptionsPlayLoop="false" playOptionsPlayPages="false" playOptionsPlayFrameActions="false">
+     <timelines>
+          <DOMTimeline name="Scene 1">
+               <layers>
+                    <DOMLayer name="Layer 1" color="#4FFF4F">
+                         <frames>
+                              <DOMFrame index="0" keyMode="9728">
+                                   <Actionscript>
+                                        <script><![CDATA[import flash.text.TextFieldAutoSize;
+
+/**/left_left.autoSize = TextFieldAutoSize.LEFT;
+center_left.autoSize = TextFieldAutoSize.LEFT;
+right_left.autoSize = TextFieldAutoSize.LEFT;
+
+left_center.autoSize = TextFieldAutoSize.CENTER;
+center_center.autoSize = TextFieldAutoSize.CENTER;
+right_center.autoSize = TextFieldAutoSize.CENTER;
+
+left_right.autoSize = TextFieldAutoSize.RIGHT;
+center_right.autoSize = TextFieldAutoSize.RIGHT;
+right_right.autoSize = TextFieldAutoSize.RIGHT;
+/**/
+mixed_left.autoSize = TextFieldAutoSize.LEFT;
+mixed_center.autoSize = TextFieldAutoSize.CENTER;
+mixed_right.autoSize = TextFieldAutoSize.RIGHT;]]></script>
+                                   </Actionscript>
+                                   <elements/>
+                              </DOMFrame>
+                         </frames>
+                    </DOMLayer>
+                    <DOMLayer name="Layer 2" color="#9933CC" visible="false" layerType="guide">
+                         <frames>
+                              <DOMFrame index="0" keyMode="9728">
+                                   <elements>
+                                        <DOMShape>
+                                             <strokes>
+                                                  <StrokeStyle index="1">
+                                                       <SolidStroke scaleMode="normal" weight="0.05" solidStyle="hairline">
+                                                            <fill>
+                                                                 <SolidColor color="#FF0000"/>
+                                                            </fill>
+                                                       </SolidStroke>
+                                                  </StrokeStyle>
+                                             </strokes>
+                                             <edges>
+                                                  <Edge strokeStyle="1" edges="!5640 0S4|5640 4000!4820 0|4820 4000!4000 0|4000 4000!3640 0|3640 4000!2000 0|2000 4000!0 0|0 4000!5539 -180|5539 4000!3380 -220|3380 4000!2240 -40|2240 4000!1620 -260|1620 4000!560 -100|560 4000"/>
+                                             </edges>
+                                        </DOMShape>
+                                   </elements>
+                              </DOMFrame>
+                         </frames>
+                    </DOMLayer>
+                    <DOMLayer name="Layer 3" color="#FF800A" current="true" isSelected="true">
+                         <frames>
+                              <DOMFrame index="0" keyMode="9728">
+                                   <elements>
+                                        <DOMDynamicText name="mixed_none" fontRenderingMode="device" width="96" height="84" border="true" renderAsHTML="true" lineType="multiline">
+                                             <matrix>
+                                                  <Matrix tx="2" ty="222"/>
+                                             </matrix>
+                                             <textRuns>
+                                                  <DOMTextRun>
+                                                       <characters>left&#xD;</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                                  <DOMTextRun>
+                                                       <characters>center&#xD;</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs alignment="center" aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                                  <DOMTextRun>
+                                                       <characters>right</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs alignment="right" aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                             </textRuns>
+                                        </DOMDynamicText>
+                                        <DOMDynamicText name="mixed_left" fontRenderingMode="device" width="96" height="84" border="true" renderAsHTML="true" lineType="multiline">
+                                             <matrix>
+                                                  <Matrix tx="112" ty="222"/>
+                                             </matrix>
+                                             <textRuns>
+                                                  <DOMTextRun>
+                                                       <characters>left&#xD;</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                                  <DOMTextRun>
+                                                       <characters>center&#xD;</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs alignment="center" aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                                  <DOMTextRun>
+                                                       <characters>right</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs alignment="right" aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                             </textRuns>
+                                        </DOMDynamicText>
+                                        <DOMDynamicText name="mixed_center" fontRenderingMode="device" width="96" height="84" border="true" renderAsHTML="true" lineType="multiline">
+                                             <matrix>
+                                                  <Matrix tx="222" ty="222"/>
+                                             </matrix>
+                                             <textRuns>
+                                                  <DOMTextRun>
+                                                       <characters>left&#xD;</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                                  <DOMTextRun>
+                                                       <characters>center&#xD;</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs alignment="center" aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                                  <DOMTextRun>
+                                                       <characters>right</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs alignment="right" aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                             </textRuns>
+                                        </DOMDynamicText>
+                                        <DOMDynamicText name="mixed_right" fontRenderingMode="device" width="96" height="84" border="true" renderAsHTML="true" lineType="multiline">
+                                             <matrix>
+                                                  <Matrix tx="332" ty="222"/>
+                                             </matrix>
+                                             <textRuns>
+                                                  <DOMTextRun>
+                                                       <characters>left&#xD;</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                                  <DOMTextRun>
+                                                       <characters>center&#xD;</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs alignment="center" aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                                  <DOMTextRun>
+                                                       <characters>right</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs alignment="right" aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                             </textRuns>
+                                        </DOMDynamicText>
+                                        <DOMDynamicText name="right_none" fontRenderingMode="device" width="95.95" height="26.7" border="true">
+                                             <matrix>
+                                                  <Matrix tx="222" ty="2"/>
+                                             </matrix>
+                                             <textRuns>
+                                                  <DOMTextRun>
+                                                       <characters>right</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs alignment="right" aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                             </textRuns>
+                                        </DOMDynamicText>
+                                        <DOMDynamicText name="center_none" fontRenderingMode="device" width="96" height="26.7" border="true">
+                                             <matrix>
+                                                  <Matrix tx="112" ty="2"/>
+                                             </matrix>
+                                             <textRuns>
+                                                  <DOMTextRun>
+                                                       <characters>center</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs alignment="center" aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                             </textRuns>
+                                        </DOMDynamicText>
+                                        <DOMDynamicText name="left_none" fontRenderingMode="device" width="96" height="26.7" border="true">
+                                             <matrix>
+                                                  <Matrix tx="2" ty="2"/>
+                                             </matrix>
+                                             <textRuns>
+                                                  <DOMTextRun>
+                                                       <characters>left</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                             </textRuns>
+                                        </DOMDynamicText>
+                                        <DOMDynamicText name="right_left" fontRenderingMode="device" width="95.95" height="26.7" border="true">
+                                             <matrix>
+                                                  <Matrix tx="222" ty="52"/>
+                                             </matrix>
+                                             <textRuns>
+                                                  <DOMTextRun>
+                                                       <characters>right</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs alignment="right" aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                             </textRuns>
+                                        </DOMDynamicText>
+                                        <DOMDynamicText name="center_left" fontRenderingMode="device" width="96" height="26.7" border="true">
+                                             <matrix>
+                                                  <Matrix tx="112" ty="52"/>
+                                             </matrix>
+                                             <textRuns>
+                                                  <DOMTextRun>
+                                                       <characters>center</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs alignment="center" aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                             </textRuns>
+                                        </DOMDynamicText>
+                                        <DOMDynamicText name="left_left" fontRenderingMode="device" width="96" height="26.7" border="true">
+                                             <matrix>
+                                                  <Matrix tx="2" ty="52"/>
+                                             </matrix>
+                                             <textRuns>
+                                                  <DOMTextRun>
+                                                       <characters>left</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                             </textRuns>
+                                        </DOMDynamicText>
+                                        <DOMDynamicText name="right_center" fontRenderingMode="device" width="95.95" height="26.7" border="true">
+                                             <matrix>
+                                                  <Matrix tx="222" ty="102"/>
+                                             </matrix>
+                                             <textRuns>
+                                                  <DOMTextRun>
+                                                       <characters>right</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs alignment="right" aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                             </textRuns>
+                                        </DOMDynamicText>
+                                        <DOMDynamicText name="center_center" fontRenderingMode="device" width="96" height="26.7" border="true">
+                                             <matrix>
+                                                  <Matrix tx="112" ty="102"/>
+                                             </matrix>
+                                             <textRuns>
+                                                  <DOMTextRun>
+                                                       <characters>center</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs alignment="center" aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                             </textRuns>
+                                        </DOMDynamicText>
+                                        <DOMDynamicText name="left_center" fontRenderingMode="device" width="96" height="26.7" border="true">
+                                             <matrix>
+                                                  <Matrix tx="2" ty="102"/>
+                                             </matrix>
+                                             <textRuns>
+                                                  <DOMTextRun>
+                                                       <characters>left</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                             </textRuns>
+                                        </DOMDynamicText>
+                                        <DOMDynamicText name="right_right" fontRenderingMode="device" width="95.95" height="26.7" border="true">
+                                             <matrix>
+                                                  <Matrix tx="222" ty="152"/>
+                                             </matrix>
+                                             <textRuns>
+                                                  <DOMTextRun>
+                                                       <characters>right</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs alignment="right" aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                             </textRuns>
+                                        </DOMDynamicText>
+                                        <DOMDynamicText name="center_right" fontRenderingMode="device" width="96" height="26.7" border="true">
+                                             <matrix>
+                                                  <Matrix tx="112" ty="152"/>
+                                             </matrix>
+                                             <textRuns>
+                                                  <DOMTextRun>
+                                                       <characters>center</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs alignment="center" aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                             </textRuns>
+                                        </DOMDynamicText>
+                                        <DOMDynamicText name="left_right" fontRenderingMode="device" width="96" height="26.7" border="true">
+                                             <matrix>
+                                                  <Matrix tx="2" ty="152"/>
+                                             </matrix>
+                                             <textRuns>
+                                                  <DOMTextRun>
+                                                       <characters>left</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs aliasText="false" autoKern="false" size="20" bitmapSize="400" face="_sans" fillColor="#003366"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                             </textRuns>
+                                        </DOMDynamicText>
+                                   </elements>
+                              </DOMFrame>
+                         </frames>
+                    </DOMLayer>
+               </layers>
+          </DOMTimeline>
+     </timelines>
+     <PrinterSettings platform="macintosh"/>
+     <publishHistory>
+          <PublishItem publishSize="1559" publishTime="1379417567"/>
+          <PublishItem publishSize="1558" publishTime="1379417469"/>
+          <PublishItem publishSize="1553" publishTime="1379417428"/>
+          <PublishItem publishSize="1675" publishTime="1379416193"/>
+          <PublishItem publishSize="1675" publishTime="1379416141"/>
+          <PublishItem publishSize="1675" publishTime="1379416015"/>
+          <PublishItem publishSize="1651" publishTime="1379415870"/>
+          <PublishItem publishSize="1675" publishTime="1379415857"/>
+          <PublishItem publishSize="1676" publishTime="1379414995"/>
+          <PublishItem publishSize="1676" publishTime="1379414913"/>
+          <PublishItem publishSize="842" publishTime="1379377447"/>
+          <PublishItem publishSize="835" publishTime="1379377435"/>
+          <PublishItem publishSize="1546" publishTime="1379377103"/>
+          <PublishItem publishSize="1414" publishTime="1379376938"/>
+          <PublishItem publishSize="1414" publishTime="1379376896"/>
+          <PublishItem publishSize="1418" publishTime="1379376828"/>
+          <PublishItem publishSize="1417" publishTime="1379376782"/>
+          <PublishItem publishSize="1291" publishTime="1379376709"/>
+          <PublishItem publishSize="814" publishTime="1379376600"/>
+          <PublishItem publishSize="656" publishTime="1379376099"/>
+     </publishHistory>
+</DOMDocument>

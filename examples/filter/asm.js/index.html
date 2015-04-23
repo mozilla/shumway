@@ -1,0 +1,129 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Filters Demo</title>
+    <style type="text/css">
+      html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+      canvas { display: block; }
+    </style>
+  </head>
+  <body>
+
+    <div id="canvasContainer">
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <script src="libs/stats.min.js"></script>
+    <script src="libs/dat.gui.min.js"></script>
+    <script src="libs/dat.color.min.js"></script>
+    <script src="../../../lib/filters/filters.js"></script>
+    <script src="demo.js"></script>
+    <script>
+
+      window.requestAnimFrame = (function() {
+        return  window.requestAnimationFrame ||
+                window.webkitRequestAnimationFrame ||
+                window.mozRequestAnimationFrame ||
+                function(callback) {
+                  window.setTimeout(callback, 1000 / 60);
+                };
+      })();
+
+      (function() {
+
+        var canvas = document.getElementById("canvas");
+        var ctx = canvas.getContext("2d");
+
+        var stats = new Stats();
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.left = '0px';
+        stats.domElement.style.top = '0px';
+        document.body.appendChild(stats.domElement);
+
+        var demo = new Demo(ctx, stats);
+
+        initGui(demo);
+
+        window.addEventListener('resize', function() { demo.dirty = true; }, false);
+
+      })();
+
+      function initGui(demo) {
+        var controllers = [];
+
+        var gui = new dat.GUI();
+        gui.add(demo, 'shape', { 'square': 'square', 'firefox logo': 'logo' });
+        controllers.push(gui);
+
+        var dropshadow = gui.addFolder('dropshadow');
+        dropshadow.add(demo.dropshadow, 'enabled');
+        dropshadow.add(demo.dropshadow, 'quality', { low: 1, medium: 2, high: 3 });
+        dropshadow.addColor(demo.dropshadow, 'color');
+        dropshadow.add(demo.dropshadow, 'distance', -32, 32).step(1);
+        dropshadow.add(demo.dropshadow, 'angle', 0, 359).step(1);
+        dropshadow.add(demo.dropshadow, 'blurX', 0, 64).step(1);
+        dropshadow.add(demo.dropshadow, 'blurY', 0, 64).step(1);
+        dropshadow.add(demo.dropshadow, 'strength', 0, 8).step(0.1);
+        dropshadow.add(demo.dropshadow, 'inner');
+        dropshadow.add(demo.dropshadow, 'knockout');
+        dropshadow.add(demo.dropshadow, 'hideObject');
+        dropshadow.open();
+        controllers.push(dropshadow);
+
+        var glow = gui.addFolder('glow');
+        glow.add(demo.glow, 'enabled');
+        glow.add(demo.glow, 'quality', { low: 1, medium: 2, high: 3 });
+        glow.addColor(demo.glow, 'color');
+        glow.add(demo.glow, 'blurX', 0, 64).step(1);
+        glow.add(demo.glow, 'blurY', 0, 64).step(1);
+        glow.add(demo.glow, 'strength', 0, 8).step(0.1);
+        glow.add(demo.glow, 'inner');
+        glow.add(demo.glow, 'knockout');
+        glow.add(demo.glow, 'hideObject');
+        controllers.push(glow);
+
+        var blur = gui.addFolder('blur');
+        blur.add(demo.blur, 'enabled');
+        blur.add(demo.blur, 'quality', { low: 1, medium: 2, high: 3 });
+        blur.add(demo.blur, 'blurX', 0, 64).step(1);
+        blur.add(demo.blur, 'blurY', 0, 64).step(1);
+        controllers.push(blur);
+
+        var colormatrix = gui.addFolder('colormatrix');
+        colormatrix.add(demo.colormatrix, 'enabled');
+        colormatrix.add(demo.colormatrix, 'r0', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'r1', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'r2', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'r3', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'r4', -255, 255).step(1);
+        colormatrix.add(demo.colormatrix, 'g0', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'g1', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'g2', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'g3', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'g4', -255, 255).step(1);
+        colormatrix.add(demo.colormatrix, 'b0', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'b1', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'b2', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'b3', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'b4', -255, 255).step(1);
+        colormatrix.add(demo.colormatrix, 'a0', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'a1', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'a2', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'a3', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'a4', -255, 255).step(1);
+        controllers.push(colormatrix);
+
+        for (var i in controllers) {
+          var ctrl = controllers[i];
+          for (var j in ctrl.__controllers) {
+            ctrl.__controllers[j].onChange(function(value) {
+              demo.dirty = true;
+            });
+          }
+        }
+      }
+
+    </script>
+  </body>
+</html>

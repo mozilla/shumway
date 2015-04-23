@@ -1,0 +1,72 @@
+<DOMDocument xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://ns.adobe.com/xfl/2008/" currentTimeline="1" xflVersion="2.2" creatorInfo="Adobe Flash Professional CS6" platform="Macintosh" versionInfo="Saved by Adobe Flash Macintosh 12.0 build 537" majorVersion="12" buildNumber="537" nextSceneIdentifier="2" playOptionsPlayLoop="false" playOptionsPlayPages="false" playOptionsPlayFrameActions="false">
+     <timelines>
+          <DOMTimeline name="Scene 1">
+               <layers>
+                    <DOMLayer name="Layer 1" color="#4FFF4F" current="true" isSelected="true">
+                         <frames>
+                              <DOMFrame index="0" keyMode="9728">
+                                   <Actionscript>
+                                        <script><![CDATA[trace(t.htmlText)]]></script>
+                                   </Actionscript>
+                                   <elements>
+                                        <DOMDynamicText name="t" fontRenderingMode="device" width="388.95" height="265" isSelectable="false" renderAsHTML="true" lineType="multiline">
+                                             <matrix>
+                                                  <Matrix a="1.39967346191406" d="1.48698425292969" tx="2.8" ty="2.95"/>
+                                             </matrix>
+                                             <textRuns>
+                                                  <DOMTextRun>
+                                                       <characters>14px, sans, light-grey; </characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs aliasText="false" lineSpacing="0" size="14" bitmapSize="280" face="_sans" fillColor="#999999"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                                  <DOMTextRun>
+                                                       <characters>gre</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs aliasText="false" lineSpacing="0" size="14" bitmapSize="280" face="_sans" fillColor="#00AA00"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                                  <DOMTextRun>
+                                                       <characters>en</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs aliasText="false" lineSpacing="0" size="16" bitmapSize="320" face="_sans" fillColor="#00AA00"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                                  <DOMTextRun>
+                                                       <characters> 16px, sans, dark-grey, </characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs aliasText="false" lineSpacing="0" size="16" bitmapSize="320" face="_sans" fillColor="#333333"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                                  <DOMTextRun>
+                                                       <characters>red</characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs aliasText="false" lineSpacing="0" size="16" bitmapSize="320" face="_sans" fillColor="#AA0000"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                                  <DOMTextRun>
+                                                       <characters>, bold; </characters>
+                                                       <textAttrs>
+                                                            <DOMTextAttrs aliasText="false" lineSpacing="0" size="16" bitmapSize="320" face="_sans" fillColor="#333333"/>
+                                                       </textAttrs>
+                                                  </DOMTextRun>
+                                             </textRuns>
+                                        </DOMDynamicText>
+                                   </elements>
+                              </DOMFrame>
+                         </frames>
+                    </DOMLayer>
+               </layers>
+          </DOMTimeline>
+     </timelines>
+     <PrinterSettings platform="macintosh"/>
+     <publishHistory>
+          <PublishItem publishSize="1090" publishTime="1369242375"/>
+          <PublishItem publishSize="1075" publishTime="1369242347"/>
+          <PublishItem publishSize="1089" publishTime="1369242320"/>
+          <PublishItem publishSize="1262" publishTime="1369242294"/>
+          <PublishItem publishSize="1265" publishTime="1369242238"/>
+          <PublishItem publishSize="927" publishTime="1369242205"/>
+          <PublishItem publishSize="895" publishTime="1369242067"/>
+     </publishHistory>
+</DOMDocument>

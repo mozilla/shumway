@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<!-- Any copyright is dedicated to the Public Domain.
+   - http://creativecommons.org/publicdomain/zero/1.0/ -->
+<html>
+  <head>
+    <meta charset="utf-8">
+  </head>
+  <body>
+    <object type="application/x-shockwave-flash" data="params.swf">
+      <param name="A" value="obj1">
+    </object>
+
+    <object type="application/x-shockwave-flash" data="params.swf">
+      <param name="flashvars" value="A=obj2">
+    </object>
+
+    <object type="application/x-shockwave-flash" data="params.swf?A=obj3">
+    </object>
+
+    <embed type="application/x-shockwave-flash" src="params.swf" A="emb1">
+
+    <embed type="application/x-shockwave-flash" src="params.swf" flashvars="A=emb2">
+
+    <embed type="application/x-shockwave-flash" src="params.swf?A=emb3">
+  </body>
+</html>

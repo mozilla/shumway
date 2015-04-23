@@ -1,0 +1,397 @@
+html {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #14171a;
+}
+
+*[hidden] {
+  display: none;
+}
+*:focus {
+  outline: none;
+}
+
+body.simple {
+  text-align: center;
+}
+body.simple > div {
+  display: none;
+}
+body.simple #easelContainer {
+  display: block;
+}
+
+#topToolbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+}
+
+#profilerContainer {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  width: auto;
+  height: 450px;
+  overflow: hidden;
+  background-color: #000;
+}
+#profilerToolbar {
+  border-bottom: 1px solid #1e1e1e;
+}
+#profilerToolbar > .toolbarLabel {
+}
+
+#profilerButtons {
+  display: inline-block;
+  float: right;
+  margin-right: 10px;
+}
+#profilerButtons > .toolbarButtonBar {
+  float: none;
+  display: none;
+}
+#profilerMinimizeButton:before {
+  content: "\f078";
+}
+#profiler {
+  position: relative;
+  width: 100%;
+  height: 555px;
+}
+#profileList {
+  display: none;
+  position: absolute;
+  width: 0; /* 200px */
+  height: 100%;
+}
+#profilePanel {
+  position: absolute;
+  left: 0; /* 200px */
+  right: 0;
+  height: 100%;
+}
+#profilePanel > canvas {
+  display: block;
+}
+
+#profilerContainer.collapsed {
+  height: 32px !important;
+}
+#profilerContainer.collapsed #profilerMinimizeButton:before {
+  content: "\f077";
+}
+
+.toolbarBox {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.toolbarMessage {
+  padding-left: 6px;
+  opacity: 0.7;
+}
+.toolbarButtonBar {
+  display: none;
+  font-size: 0;
+  float: right;
+}
+.toolbarButtonBar.active {
+  display: inline-block;
+}
+.toolbarIconButton {
+  display: inline-block;
+  float: right;
+  height: 22px;
+  padding: 0px 8px;
+  color: #cdd8e4;
+  font-size: 12px;
+  line-height: 22px;
+  text-align: center;
+  cursor: pointer;
+}
+
+#openFile {
+  display: none;
+  float: right;
+}
+#openFile.active {
+  display: inline-block;
+}
+
+#easelContainer {
+  position: absolute;
+  top: 32px;
+  bottom: 32px;
+  left: 0px;
+  right: 0px;
+  display: inline-block;
+  overflow: visible;
+}
+
+#flashContainer {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  display: none;
+  mix-blend-mode: difference;
+  opacity: 0.8;
+}
+
+#panelContainer {
+  display: block;
+  position: absolute;
+  top: 32px;
+  bottom: 32px;
+  right: 0;
+  width: 300px;
+  overflow-y: hidden;
+  overflow-x: hidden;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-left: 1px solid #666;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+#assetList {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  overflow-y: auto;
+  font: 10px Consolas, "Liberation Mono", Courier, monospace;
+  color: #999;
+}
+
+#assetList {
+  padding: 0;
+}
+
+#assetList canvas {
+  border: 1px solid #630;
+}
+
+#assetList li {
+  list-style: none;
+  padding: 10px 10px 10px 10px;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+// CSS experts said this works.
+
+#assetList li:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+#assetList li:hover {
+  border-top: 2px solid #F60;
+  border-bottom: 2px solid #F60;
+}
+
+#scratchCanvasContainer.active, #assetListContainer.active, #debugInfoContainer.active, #displayListContainer.active, #settingsContainer.active {
+  display: block;
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+#scratchCanvasContainer, #assetListContainer, #debugInfoContainer, #displayListContainer, #settingsContainer {
+  display: none;
+  position: absolute;
+  width: 100%;
+  top: 0;
+  bottom: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-left: 1px solid #666;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+#scratchCanvasContainer {
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+#scratchCanvasContainer > canvas {
+  width: 100%;
+  border: 1px solid white;
+  margin: 1px;
+}
+
+
+#debugInfoContainer {
+  overflow: hidden;
+}
+#debugInfoContainer > canvas {
+  padding-bottom: 4px;
+  border-bottom: 1px solid #666;
+}
+
+#settingsContainer > .dg.main {
+  width: 100% !important;
+}
+#settingsContainer > .dg .property-name {
+  width: 50%;
+  color: #ccc;
+}
+#settingsContainer > .dg .c {
+  width: 50%;
+}
+#settingsContainer > .dg li.title {
+  font-weight: bold;
+}
+
+#displayListContainer {
+  color: #ccc;
+  font: 10px Consolas, "Liberation Mono", Courier, monospace;
+  cursor: default;
+  overflow-y: hidden;
+}
+#displayList {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  overflow-y: auto;
+}
+#displayList ul {
+  padding: 0 0 0 12px;
+  margin: 0;
+}
+#displayList > ul {
+  padding: 0;
+  margin: 4px 6px;
+}
+#displayList li {
+  list-style: none;
+}
+#displayList li > div {
+  display: block;
+  padding: 1px 0 1px 4px;
+}
+#displayList li > div:hover {
+  background-color: rgba(255,255,255, 0.1);
+}
+#displayList li > div.selected {
+  background-color: rgba(255,255,255, 0.2);
+}
+#displayList li > div.selected:hover {
+  background-color: rgba(255,255,255, 0.3);
+}
+#displayList li > div > span.mcFrameInfo {
+  padding-right: 4px;
+  float: right;
+  color: rgba(255, 136, 136, 0.75);
+}
+#displayList li > div > span.doName {
+  padding-left: 5px;
+  color: rgba(136, 136, 255, 1);
+}
+#displayList li > div > span.doOutline {
+  display: inline-block;
+  font-family: FontAwesome;
+  font-weight: normal;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  padding-top: 1px;
+  padding-right: 5px;
+  color: #666;
+}
+
+#displayObjectProperties {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 200px;
+  border-top: 1px solid #666;
+  padding: 6px 8px;
+}
+#displayListContainer.hasProperties > #displayList {
+  bottom: 213px;
+}
+#displayListContainer.hasProperties > #displayObjectProperties {
+  display: block;
+}
+
+body.hideDebugInfoPanels #debugInfoContainer {
+  display: none;
+}
+
+body.hideDebugInfoPanels #profilerContainer {
+  right: 0;
+}
+
+.profiler-tooltip {
+    position: absolute;
+    font-family: sans-serif;
+    color: #ddd;
+}
+.profiler-tooltip {
+    background-color: #111;
+    border: 1px solid #aaa;
+    border-radius: 5px;
+    padding: 5px;
+}
+.profiler-tooltip > div > h1 {
+    font-size: 11px;
+    margin: 1px 0 2px 0;
+}
+.profiler-tooltip > div > p {
+    font-size: 10px;
+    margin: 0 0 1px 0;
+}
+.profiler-tooltip > div > hr {
+  margin: 2px auto 4px auto;
+  border: none;
+  border-bottom: 1px solid #555;
+}
+
+#displayListButtons {
+  display: block;
+  float: left;
+  margin-left: 10px;
+}
+
+#displayListInnerContainer {
+  top: 32px;
+}
+
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+  body {
+    background-color: #1a2633;
+  }
+}
+
+@media only screen and (max-width: 2560px) {
+  #panelContainer { width: 450px; }
+  #easelContainer { right: 450px; }
+}
+
+@media only screen and (max-width: 1280px) {
+  #panelContainer { width: 350px; }
+  #easelContainer { right: 350px; }
+}
+
+@media only screen and (max-width: 1024px) {
+  #panelContainer { width: 250px; }
+  #easelContainer { right: 250px; }
+}
+
+@media only screen and (max-width: 512px) {
+  #panelContainer { display: none !important; }
+  #easelContainer { right: 0; }
+}

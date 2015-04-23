@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<!-- Any copyright is dedicated to the Public Domain.
+   - http://creativecommons.org/publicdomain/zero/1.0/ -->
+<html>
+  <head>
+    <meta charset="utf-8">
+  </head>
+  <body>
+    <script>
+      function testOut(s) {
+        console.log('testOut: ' + s);
+        return s.toLowerCase();
+      }
+
+      setTimeout(function () {
+        var result = document.getElementById('swf1').testIn('JS');
+        console.log('testIn: ' + result);
+      }, 2000);
+    </script>
+
+    <object id='swf1' type="application/x-shockwave-flash" data="callback.swf" width="600" height="400">
+      <param name="allowScriptAccess" value="always">
+    </object>
+  </body>
+</html>

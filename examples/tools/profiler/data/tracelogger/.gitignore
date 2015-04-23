@@ -1,0 +1,5 @@
+scraper/node_modules
+data-*.*.js
+data-*.*.tl
+data-*.json
+data.js

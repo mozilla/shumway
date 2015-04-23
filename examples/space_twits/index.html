@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link href='http://fonts.googleapis.com/css?family=Bangers' rel='stylesheet' type='text/css'>
+<link href='twits.css' rel='stylesheet' type='text/css'>
+<!-- run `grunt build closure-bundles shuobject-package`
+<script src="../../build/shuobject/shuobject.js"></script> -->
+<script src="../../shuobject.js"></script>
+<script src="./twits.js"></script>
+<script>
+shuobject.embedSWF('twits.swf', 'mainSWF', 400, 366, '9,0,10', null, {}, {}, {}, function(e) {
+    var shumwayObj = shuobject.getShumwayObject(e.ref);
+    // Waiting for main SWF to be loaded.
+    var stage = shumwayObj.stage;
+    stage.addEventListener('added', function rootAdded(e) {
+        stage.removeEventListener('added', rootAdded, true);
+        playTwits(shumwayObj);
+    }, true);
+});
+</script>
+</head>
+
+<body>
+<div id="title">Space Twits</div>
+
+<div id="game">
+    <div id="mainSWF" style="width:400px; height:366px;"></div>
+</div>
+
+<div id="credits">
+Background: <a href="http://www.eso.org/public/images/eso0839a/">ESO/ Mario Nonino, Piero Rosati and the ESO GOODS Team</a>
+</div>
+
+</body>
+</html>
