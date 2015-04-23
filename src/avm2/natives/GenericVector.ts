@@ -159,14 +159,14 @@ module Shumway.AVMX.AS {
       defineNonEnumerableProperty(proto, 'checkVectorMethodArgs', asProto.checkVectorMethodArgs);
     }
 
-    static axApply(self: GenericVector, args: any[]) {
+    static axApply(_: AXObject, args: any[]) {
       var object = args[0];
-      if (self.axClass.axIsType(object)) {
+      if (this.axIsType(object)) {
         return object;
       }
       var length = object.axGetPublicProperty("length");
       if (length !== undefined) {
-        var v = self.axClass.axConstruct([length, false]);
+        var v = this.axConstruct([length, false]);
         for (var i = 0; i < length; i++) {
           v.axSetNumericProperty(i, object.axGetPublicProperty(i));
         }
