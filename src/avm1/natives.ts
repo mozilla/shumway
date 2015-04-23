@@ -698,6 +698,10 @@ module Shumway.AVM1.Natives {
           value: this.push,
           writable: true
         },
+        shift: {
+          value: this.shift,
+          writable: true
+        },
         slice: {
           value: this.slice,
           writable: true
@@ -717,7 +721,11 @@ module Shumway.AVM1.Natives {
         toString: {
           value: this._toString,
           writable: true
-        }
+        },
+        unshift: {
+          value: this.unshift,
+          writable: true
+        },
       });
     }
 
@@ -800,6 +808,16 @@ module Shumway.AVM1.Natives {
       }
       // TODO implement generic method
       Debug.notImplemented('AVM1ArrayNative.push');
+    }
+
+    public shift(): any {
+      if (this instanceof AVM1ArrayNative) {
+        // Faster case for native array implementation
+        var arr = alEnsureType<AVM1ArrayNative>(this, AVM1ArrayNative).value;
+        return arr.shift();
+      }
+      // TODO implement generic method
+      Debug.notImplemented('AVM1ArrayNative.shift');
     }
 
     public slice(start: number, end?: number): AVM1Object {
@@ -911,6 +929,16 @@ module Shumway.AVM1.Natives {
 
       // Strange, the documentation said to do not return anything.
       return this;
+    }
+
+    public unshift(...items: any[]): number {
+      if (this instanceof AVM1ArrayNative) {
+        // Faster case for native array implementation
+        var arr = alEnsureType<AVM1ArrayNative>(this, AVM1ArrayNative).value;
+        return Array.prototype.unshift.apply(arr, items);
+      }
+      // TODO implement generic method
+      Debug.notImplemented('AVM1ArrayNative.unshift');
     }
   }
 
