@@ -1292,6 +1292,11 @@ module Shumway.GFX {
 
       return lines;
     }
+
+    toString() {
+      return 'TextLine {x: ' + this.x + ', y: ' + this.y + ', width: ' + this.width +
+             ', height: ' + (this.ascent + this.descent + this.leading) + '}';
+    }
   }
 
   export class TextRun {
