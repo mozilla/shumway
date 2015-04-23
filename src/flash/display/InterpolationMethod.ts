@@ -14,27 +14,24 @@
  * limitations under the License.
  */
 // Class: InterpolationMethod
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import GradientInterpolationMethod = Shumway.GradientInterpolationMethod;
-  export class InterpolationMethod extends ASNative {
-    
+  export class InterpolationMethod extends ASObject {
+
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // [];
-    
+
     constructor () {
-      false && super();
-      dummyConstructor("public flash.display.InterpolationMethod");
+      super();
     }
-    
+
     // JS -> AS Bindings
     static RGB: string = "rgb";
     static LINEAR_RGB: string = "linearRGB";
-    
-    
+
+
     // AS -> JS Bindings
 
     static fromNumber(n: number): string {

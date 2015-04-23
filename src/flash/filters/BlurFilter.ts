@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 // Class: BlurFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
   import Rectangle = flash.geom.Rectangle;
 
   export class BlurFilter extends flash.filters.BitmapFilter {
 
+    static axClass: typeof BlurFilter;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
 
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -33,11 +32,11 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     public static FromUntyped(obj: any) {
-      return new BlurFilter(obj.blurX, obj.blurY, obj.quality);
+      return new this.sec.flash.filters.BlurFilter(obj.blurX, obj.blurY, obj.quality);
     }
 
     constructor (blurX: number = 4, blurY: number = 4, quality: number /*int*/ = 1) {
-      false && super();
+      super();
       this.blurX = blurX;
       this.blurY = blurY;
       this.quality = quality;
@@ -85,7 +84,8 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return new BlurFilter(this._blurX, this._blurY, this._quality);
+      return new this.sec.flash.filters.BlurFilter(this._blurX, this._blurY,
+                                                              this._quality);
     }
   }
 }

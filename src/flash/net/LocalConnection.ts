@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 // Class: LocalConnection
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import FileLoadingService = Shumway.FileLoadingService;
 
@@ -25,10 +24,7 @@ module Shumway.AVM2.AS.flash.net {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // ["isSupported"];
     
@@ -36,8 +32,7 @@ module Shumway.AVM2.AS.flash.net {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.net.LocalConnection");
+      super();
     }
     
     // JS -> AS Bindings
@@ -54,7 +49,7 @@ module Shumway.AVM2.AS.flash.net {
       notImplemented("public flash.net.LocalConnection::close"); return;
     }
     connect(connectionName: string): void {
-      connectionName = asCoerceString(connectionName);
+      connectionName = axCoerceString(connectionName);
       notImplemented("public flash.net.LocalConnection::connect"); return;
     }
     get domain(): string {
@@ -65,7 +60,7 @@ module Shumway.AVM2.AS.flash.net {
       return m && m[1];
     }
     send(connectionName: string, methodName: string): void {
-      connectionName = asCoerceString(connectionName); methodName = asCoerceString(methodName);
+      connectionName = axCoerceString(connectionName); methodName = axCoerceString(methodName);
       notImplemented("public flash.net.LocalConnection::send"); return;
     }
     get client(): ASObject {

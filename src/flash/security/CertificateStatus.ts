@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 // Class: CertificateStatus
-module Shumway.AVM2.AS.flash.security {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class CertificateStatus extends ASNative {
+module Shumway.AVMX.AS.flash.security {
+  export class CertificateStatus extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +27,7 @@ module Shumway.AVM2.AS.flash.security {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.security.CertificateStatus");
+      super();
     }
     
     // JS -> AS Bindings
@@ -47,9 +40,5 @@ module Shumway.AVM2.AS.flash.security {
     static UNTRUSTED_SIGNERS: string = "untrustedSigners";
     static REVOKED: string = "revoked";
     static INVALID_CHAIN: string = "invalidChain";
-    
-    
-    // AS -> JS Bindings
-    
   }
 }

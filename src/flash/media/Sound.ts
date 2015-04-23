@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 // Class: Sound
-module Shumway.AVM2.AS.flash.media {
+module Shumway.AVMX.AS.flash.media {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+  import assert = Debug.assert;
   import Telemetry = Shumway.Telemetry;
-  import Multiname = Shumway.AVM2.ABC.Multiname;
 
   declare var Blob;
   declare var URL;
@@ -58,18 +58,21 @@ module Shumway.AVM2.AS.flash.media {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: SoundSymbol) {
+
+    _symbol: SoundSymbol;
+    applySymbol() {
+      release || assert(this._symbol);
       this._playQueue = [];
       this._url = null;
       this._length = 0;
       this._bytesTotal = 0;
       this._bytesLoaded = 0;
-      this._id3 = new flash.media.ID3Info();
+      this._id3 = new this.sec.flash.media.ID3Info();
 
-      Telemetry.instance.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.SOUND_FEATURE});
+      this._isURLInaccessible = false;
+      this._isBuffering = false;
 
+      var symbol = this._symbol;
       if (symbol) {
         var soundData = new SoundData();
         soundData.sampleRate = symbol.sampleRate;
@@ -89,8 +92,15 @@ module Shumway.AVM2.AS.flash.media {
         });
         this._soundData = soundData;
       }
-    };
-    
+    }
+
+    static initializeFromPCMData(sec: ISecurityDomain, data: any): Sound {
+      var sound = new sec.flash.media.Sound();
+      sound._symbol = data;
+      sound.applySymbol();
+      return sound;
+    }
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -98,8 +108,21 @@ module Shumway.AVM2.AS.flash.media {
     static instanceSymbols: string [] = null; // ["load"];
     
     constructor (stream?: flash.net.URLRequest, context?: flash.media.SoundLoaderContext) {
-      false && super(undefined);
-      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      if (this._symbol) {
+        this.applySymbol();
+      }
+
+      super();
+
+      Telemetry.instance.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.SOUND_FEATURE});
+
+      this._playQueue = [];
+      this._url = null;
+      this._length = 0;
+      this._bytesTotal = 0;
+      this._bytesLoaded = 0;
+      this._id3 = new this.sec.flash.media.ID3Info();
+
       this._isURLInaccessible = false;
       this._isBuffering = false;
       this.load(stream, context);
@@ -144,15 +167,16 @@ module Shumway.AVM2.AS.flash.media {
       notImplemented("public flash.media.Sound::loadCompressedDataFromByteArray"); return;
     }
     loadPCMFromByteArray(bytes: flash.utils.ByteArray, samples: number /*uint*/, format: string = "float", stereo: boolean = true, sampleRate: number = 44100): void {
-      bytes = bytes; samples = samples >>> 0; format = asCoerceString(format); stereo = !!stereo; sampleRate = +sampleRate;
+      bytes = bytes; samples = samples >>> 0; format = axCoerceString(format); stereo = !!stereo; sampleRate = +sampleRate;
       notImplemented("public flash.media.Sound::loadPCMFromByteArray"); return;
     }
     play(startTime: number = 0, loops: number /*int*/ = 0, sndTransform: flash.media.SoundTransform = null): flash.media.SoundChannel {
       startTime = +startTime; loops = loops | 0;
-      var channel = new flash.media.SoundChannel();
+      var channel = new this.sec.flash.media.SoundChannel();
       channel._sound = this;
       channel._soundTransform = isNullOrUndefined(sndTransform) ?
-        new flash.media.SoundTransform() : sndTransform;
+                                new this.sec.flash.media.SoundTransform() :
+                                sndTransform;
       this._playQueue.push({
         channel: channel,
         startTime: startTime
@@ -197,8 +221,8 @@ module Shumway.AVM2.AS.flash.media {
       var bufferTime: number = context ? context.bufferTime : 1000;
 
       var _this = this;
-      var stream = this._stream = new flash.net.URLStream();
-      var data = new flash.utils.ByteArray();
+      var stream = this._stream = new this.sec.flash.net.URLStream();
+      var data = new this.sec.flash.utils.ByteArray();
       var dataPosition = 0;
       var playUsingWebAudio = webAudioOption.value;
       var mp3DecodingSession = null;
@@ -206,8 +230,8 @@ module Shumway.AVM2.AS.flash.media {
       soundData.completed = false;
 
       stream.addEventListener("progress", function (event) {
-        _this._bytesLoaded = event[Multiname.getPublicQualifiedName("bytesLoaded")];
-        _this._bytesTotal = event[Multiname.getPublicQualifiedName("bytesTotal")];
+        _this._bytesLoaded = event.axGetPublicProperty("bytesLoaded");
+        _this._bytesTotal = event.axGetPublicProperty("bytesTotal");
 
         if (playUsingWebAudio && !mp3DecodingSession) {
           // initialize MP3 decoding
@@ -269,12 +293,12 @@ module Shumway.AVM2.AS.flash.media {
     pcm: Float32Array;
     packaged;
 
-    constructor(data: Timeline.SymbolData) {
-      super(data, flash.media.Sound);
+    constructor(data: Timeline.SymbolData, sec: ISecurityDomain) {
+      super(data, sec.flash.media.Sound.axClass);
     }
 
-    static FromData(data: any): SoundSymbol {
-      var symbol = new SoundSymbol(data);
+    static FromData(data: any, loaderInfo: display.LoaderInfo): SoundSymbol {
+      var symbol = new SoundSymbol(data, loaderInfo.sec);
       symbol.channels = data.channels;
       symbol.sampleRate = data.sampleRate;
       symbol.pcm = data.pcm;

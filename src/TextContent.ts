@@ -21,7 +21,7 @@ module Shumway {
   import Bounds = Shumway.Bounds;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import ColorUtilities = Shumway.ColorUtilities;
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
   import altTieBreakRound = Shumway.NumberUtilities.altTieBreakRound;
 
   export enum TextContentFlags {
@@ -99,6 +99,7 @@ module Shumway {
 
   export class TextContent implements Shumway.Remoting.IRemotable {
     _id: number;
+    sec: ISecurityDomain;
 
     private _bounds: Bounds;
     private _plainText: string;
@@ -116,8 +117,9 @@ module Shumway {
     matrix: flash.geom.Matrix;
     coords: number[];
 
-    constructor(defaultTextFormat?: flash.text.TextFormat) {
-      this._id = flash.display.DisplayObject.getNextSyncID();
+    constructor(sec: ISecurityDomain, defaultTextFormat?: flash.text.TextFormat) {
+      this.sec = sec;
+      this._id = sec.flash.display.DisplayObject.axClass.getNextSyncID();
       this._bounds = new Bounds(0, 0, 0, 0);
       this._plainText = '';
       this._backgroundColor = 0;
@@ -127,7 +129,7 @@ module Shumway {
       this._scrollV = 1;
       this._scrollH = 0;
       this.flags = TextContentFlags.None;
-      this.defaultTextFormat = defaultTextFormat || new flash.text.TextFormat();
+      this.defaultTextFormat = defaultTextFormat || new sec.flash.text.TextFormat();
       this.textRuns = [];
       this.textRunData = new DataBuffer();
       this.matrix = null;
@@ -155,7 +157,7 @@ module Shumway {
             if (prevTextRun && prevTextRun.textFormat.equals(textFormat)) {
               prevTextRun.endIndex = endIndex;
             } else {
-              prevTextRun = new flash.text.TextRun(beginIndex, endIndex, textFormat);
+              prevTextRun = new this.sec.flash.text.TextRun(beginIndex, endIndex, textFormat);
               textRuns.push(prevTextRun);
             }
             beginIndex = endIndex;
@@ -336,10 +338,10 @@ module Shumway {
     }
 
     set plainText(value: string) {
-      this._plainText = value;
+      this._plainText = value.split('\n').join('\r');
       this.textRuns.length = 0;
       if (value) {
-        var textRun = new flash.text.TextRun(0, value.length, this.defaultTextFormat);
+        var textRun = new this.sec.flash.text.TextRun(0, value.length, this.defaultTextFormat);
         this.textRuns[0] = textRun;
       }
       this._serializeTextRuns();
@@ -454,8 +456,9 @@ module Shumway {
       var size = +textFormat.size;
       textRunData.writeInt(size);
 
-      var font = flash.text.Font.getByNameAndStyle(textFormat.font, textFormat.style) ||
-                 flash.text.Font.getDefaultFont();
+      var fontClass = this.sec.flash.text.Font.axClass;
+      var font = fontClass.getByNameAndStyle(textFormat.font, textFormat.style) ||
+                 fontClass.getDefaultFont();
       if (font.fontType === flash.text.FontType.EMBEDDED) {
         textRunData.writeUTF('swffont' + font._id);
       } else {
@@ -503,7 +506,8 @@ module Shumway {
         format = this.defaultTextFormat;
       }
       var plainText = this._plainText;
-      var newRun = new flash.text.TextRun(plainText.length, plainText.length + newText.length, format);
+      var newRun = new this.sec.flash.text.TextRun(plainText.length,
+                                                   plainText.length + newText.length, format);
       this._plainText = plainText + newText;
       this.textRuns.push(newRun);
       this._writeTextRun(newRun);
@@ -523,7 +527,7 @@ module Shumway {
         run.endIndex += shift;
       }
       textRuns.unshift(
-        new flash.text.TextRun(0, shift, format)
+        new this.sec.flash.text.TextRun(0, shift, format)
       );
       this._serializeTextRuns();
     }
@@ -604,7 +608,7 @@ module Shumway {
             // If a a text format was passed, a new run needs to be inserted.
             if (format) {
               newTextRuns.push(
-                new flash.text.TextRun(beginIndex, newEndIndex, newFormat)
+                new this.sec.flash.text.TextRun(beginIndex, newEndIndex, newFormat)
               );
               run.beginIndex = newEndIndex;
             } else {

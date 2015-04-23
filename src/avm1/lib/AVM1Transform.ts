@@ -17,70 +17,50 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
 
-  export class AVM1Transform {
-    static createAVM1Class():typeof AVM1Transform {
-      return wrapAVM1Class(AVM1Transform,
+  export class AVM1Transform extends AVM1Object {
+    static createAVM1Class(context: AVM1Context): AVM1Object {
+      return wrapAVM1NativeClass(context, true, AVM1Transform,
         [],
-        ['matrix', 'concatenatedMatrix', 'colorTransform', 'pixelBounds']);
+        ['matrix#', 'concatenatedMatrix#', 'colorTransform#', 'pixelBounds#'],
+        null, AVM1Transform.prototype.avm1Constructor);
     }
 
     private _target:IAVM1SymbolBase;
 
-    public constructor(target_mc) {
-      this._target = AVM1Utils.resolveTarget(target_mc);
+    public avm1Constructor(target_mc) {
+      this._target = AVM1Utils.resolveTarget(this.context, target_mc);
     }
 
-    public get matrix():any {
-      return this._target.as3Object.transform.matrix;
+    public getMatrix(): AVM1Object {
+      var transform = this._target.as3Object.transform;
+      return AVM1Matrix.fromAS3Matrix(this.context, transform.matrix);
     }
 
-    public set matrix(value) {
-      if (value instanceof flash.geom.Matrix) {
-        this._target.as3Object.transform.matrix = value;
-        return;
-      }
-      if (value == null) {
-        return;
-      }
-      // It accepts random objects with a,b,c,d,tx,ty properties
-      var m = this.matrix;
-      if (value.asHasProperty(undefined, 'a', 0)) {
-        m.a = value.asGetPublicProperty('a');
-      }
-      if (value.asHasProperty(undefined, 'b', 0)) {
-        m.b = value.asGetPublicProperty('b');
-      }
-      if (value.asHasProperty(undefined, 'c', 0)) {
-        m.c = value.asGetPublicProperty('c');
-      }
-      if (value.asHasProperty(undefined, 'd', 0)) {
-        m.d = value.asGetPublicProperty('d');
-      }
-      if (value.asHasProperty(undefined, 'tx', 0)) {
-        m.tx = value.asGetPublicProperty('tx');
-      }
-      if (value.asHasProperty(undefined, 'ty', 0)) {
-        m.ty = value.asGetPublicProperty('ty');
-      }
-      this._target.as3Object.transform.matrix = m;
+    public setMatrix(value: AVM1Matrix) {
+      var transform = this._target.as3Object.transform;
+      transform.matrix = toAS3Matrix(value);
     }
 
-    public get concatenatedMatrix(): flash.geom.Matrix {
-      return this._target.as3Object.transform.concatenatedMatrix;
+    public getConcatenatedMatrix(): AVM1Matrix {
+      var transform = this._target.as3Object.transform;
+      return AVM1Matrix.fromAS3Matrix(this.context, transform.concatenatedMatrix);
     }
 
-    public get colorTransform(): flash.geom.ColorTransform {
-      return this._target.as3Object.transform.colorTransform;
+    public getColorTransform(): AVM1ColorTransform {
+      var transform = this._target.as3Object.transform;
+      return AVM1ColorTransform.fromAS3ColorTransform(this.context, transform.colorTransform);
     }
 
-    public set colorTransform(value: flash.geom.ColorTransform) {
-      this._target.as3Object.transform.colorTransform = value;
+    public setColorTransform(value: AVM1ColorTransform) {
+      var transform = this._target.as3Object.transform;
+      transform.colorTransform = toAS3ColorTransform(value);
     }
 
-    public get pixelBounds(): flash.geom.Rectangle {
-      return this._target.as3Object.pixelBounds;
+    public getPixelBounds(): AVM1Rectangle {
+      var transform = this._target.as3Object.transform;
+      return AVM1Rectangle.fromAS3Rectangle(this.context, transform.pixelBounds);
     }
   }
 }

@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: XMLSocket
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class XMLSocket extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,8 @@ module Shumway.AVM2.AS.flash.net {
     static instanceSymbols: string [] = null; // ["timeout", "timeout", "connected", "connect", "send", "close"];
     
     constructor (host: string = null, port: number /*int*/ = 0) {
-      host = asCoerceString(host); port = port | 0;
-      false && super(undefined);
-      dummyConstructor("public flash.net.XMLSocket");
+      super();
+      host = axCoerceString(host); port = port | 0;
     }
     
     // JS -> AS Bindings

@@ -17,38 +17,40 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
 
-  export class AVM1Color {
-    static createAVM1Class(): typeof AVM1Color {
-      return wrapAVM1Class(AVM1Color,
+  export class AVM1Color extends AVM1Object {
+    static createAVM1Class(context: AVM1Context): AVM1Object {
+      return wrapAVM1NativeClass(context, true, AVM1Color,
         [],
-        ['getRGB', 'getTransform', 'setRGB', 'setTransform']);
+        ['getRGB', 'getTransform', 'setRGB', 'setTransform'],
+        null, AVM1Color.prototype.avm1Constructor);
     }
 
     private _target: IAVM1SymbolBase;
 
-    public constructor(target_mc) {
-      this._target = AVM1Utils.resolveTarget(target_mc);
+    public avm1Constructor(target_mc) {
+      this._target = AVM1Utils.resolveTarget(this.context, target_mc);
     }
 
-    public getRGB() {
-      var transform = this.getTransform();
-      return transform.asGetPublicProperty('color');
+    public getRGB(): number {
+      var transform = AVM1Color.prototype.getTransform.call(this);
+      return transform.alGet('rgb');
     }
 
-    public getTransform(): any {
-      return this._target.as3Object.transform.colorTransform;
+    public getTransform(): AVM1ColorTransform {
+      return AVM1ColorTransform.fromAS3ColorTransform(this.context,
+        this._target.as3Object.transform.colorTransform);
     }
 
-    public setRGB(offset) {
-      var transform = new flash.geom.ColorTransform();
-      transform.asSetPublicProperty('color', offset);
-      this.setTransform(transform);
+    public setRGB(offset): void {
+      var transform = AVM1Color.prototype.getTransform.call(this);
+      transform.alPut('rgb', offset);
+      AVM1Color.prototype.setTransform.call(this, transform);
     }
 
-    public setTransform(transform: any) {
-      this._target.as3Object.transform.colorTransform = transform;
+    public setTransform(transform: AVM1Object): void {
+      this._target.as3Object.transform.colorTransform = toAS3ColorTransform(transform);
     }
   }
 }

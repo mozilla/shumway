@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 // Class: IMEConversionMode
-module Shumway.AVM2.AS.flash.system {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class IMEConversionMode extends ASNative {
+module Shumway.AVMX.AS.flash.system {
+  export class IMEConversionMode extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +27,7 @@ module Shumway.AVM2.AS.flash.system {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.system.IMEConversionMode");
+      super();
     }
     
     // JS -> AS Bindings
@@ -46,9 +39,5 @@ module Shumway.AVM2.AS.flash.system {
     static JAPANESE_KATAKANA_HALF: string = "JAPANESE_KATAKANA_HALF";
     static KOREAN: string = "KOREAN";
     static UNKNOWN: string = "UNKNOWN";
-    
-    
-    // AS -> JS Bindings
-    
   }
 }

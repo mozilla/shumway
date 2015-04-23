@@ -14,24 +14,16 @@
  * limitations under the License.
  */
 // Class: ConvolutionFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
   export class ConvolutionFilter extends flash.filters.BitmapFilter {
 
-    // Called whenever the class is initialized.
+    static axClass: typeof ConvolutionFilter;
+
     static classInitializer: any = null;
 
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null;
-
     public static FromUntyped(obj: any) {
-      return new ConvolutionFilter(
+      return new this.sec.flash.filters.ConvolutionFilter(
         obj.matrixX,
         obj.matrixY,
         obj.matrix,
@@ -45,8 +37,11 @@ module Shumway.AVM2.AS.flash.filters {
       );
     }
 
-    constructor (matrixX: number = 0, matrixY: number = 0, matrix: any [] = null, divisor: number = 1, bias: number = 0, preserveAlpha: boolean = true, clamp: boolean = true, color: number /*uint*/ = 0, alpha: number = 0) {
-      false && super();
+    constructor(matrixX: number = 0, matrixY: number = 0, matrix: ASArray = null,
+                divisor: number = 1, bias: number = 0, preserveAlpha: boolean = true,
+                clamp: boolean = true, color: number /*uint*/ = 0, alpha: number = 0)
+    {
+      super();
       this.matrixX = matrixX;
       this.matrixY = matrixY;
       if (matrix) {
@@ -72,10 +67,6 @@ module Shumway.AVM2.AS.flash.filters {
       return a;
     }
 
-    // JS -> AS Bindings
-
-    // AS -> JS Bindings
-
     private _matrix: number [];
     private _matrixX: number;
     private _matrixY: number;
@@ -86,22 +77,22 @@ module Shumway.AVM2.AS.flash.filters {
     private _color: number /*uint*/;
     private _alpha: number;
 
-    get matrix(): any [] {
-      return this._matrix.slice(0, this._matrixX * this._matrixY);
+    get matrix(): ASArray {
+      return this.sec.createArrayUnsafe(this._matrix.slice(0, this._matrixX * this._matrixY));
     }
-    set matrix(value: any []) {
-      if (!isNullOrUndefined(value)) {
-        var actualLen = this._matrixX * this._matrixY;
-        var minLen = Math.min(value.length, actualLen);
-        var matrix = Array(minLen);
-        for (var i = 0; i < minLen; i++) {
-          matrix[i] = toNumber(value[i]);
-        }
-        this._expandArray(matrix, actualLen);
-        this._matrix = matrix;
-      } else {
-        Runtime.throwError("TypeError", Errors.NullPointerError, "matrix");
+    set matrix(value_: ASArray) {
+      if (isNullOrUndefined(value_)) {
+        this.sec.throwError("TypeError", Errors.NullPointerError, "matrix");
       }
+      var value: number[] = value_.value;
+      var actualLen = this._matrixX * this._matrixY;
+      var minLen = Math.min(value.length, actualLen);
+      var matrix = Array(minLen);
+      for (var i = 0; i < minLen; i++) {
+        matrix[i] = toNumber(value[i]);
+      }
+      this._expandArray(matrix, actualLen);
+      this._matrix = matrix;
     }
 
     get matrixX(): number {
@@ -168,7 +159,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return new ConvolutionFilter(
+      return new this.sec.flash.filters.ConvolutionFilter(
         this._matrixX,
         this._matrixY,
         this.matrix,

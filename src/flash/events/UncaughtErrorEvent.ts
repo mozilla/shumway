@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 // Class: UncaughtErrorEvent
-module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
+module Shumway.AVMX.AS.flash.events {
   export class UncaughtErrorEvent extends flash.events.ErrorEvent {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
     constructor(type: string = "uncaughtError", bubbles: boolean = true, cancelable: boolean = true,
                 error_in: any = null) {
-      super(undefined, undefined, undefined, undefined, undefined);
-      dummyConstructor("public flash.events.UncaughtErrorEvent");
+      super(type, bubbles, cancelable, error_in);
     }
 
     // JS -> AS Bindings

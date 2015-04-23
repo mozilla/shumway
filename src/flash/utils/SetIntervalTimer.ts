@@ -14,40 +14,23 @@
  * limitations under the License.
  */
 // Class: SetIntervalTimer
-module Shumway.AVM2.AS.flash.utils {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+module Shumway.AVMX.AS.flash.utils {
   export class SetIntervalTimer extends flash.utils.Timer {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // ["intervalArray", "_clearInterval"];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["reference", "closure", "rest", "onTimer"];
-    
-    constructor (closure: ASFunction, delay: number, repeats: boolean, rest: any []) {
-      closure = closure; delay = +delay; repeats = !!repeats; rest = rest;
-      false && super(undefined, undefined);
-      dummyConstructor("packageInternal flash.utils.SetIntervalTimer");
+
+    constructor (closure: ASFunction, delay: number, repeats: boolean, rest: ASArray) {
+      super(+delay, !!repeats ? 0 : 1);
+      closure = closure; rest = rest;
     }
     
     // JS -> AS Bindings
-    static intervalArray: any [];
+    static intervalArray: ASArray;
     static _clearInterval: (id: number /*uint*/) => void;
     
     reference: number /*uint*/;
     closure: ASFunction;
-    rest: any [];
+    rest: ASArray;
     onTimer: (event: flash.events.Event) => void;
-    
-    // AS -> JS Bindings
-    
   }
 }

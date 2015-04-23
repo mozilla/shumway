@@ -169,8 +169,8 @@ module Shumway.Remoting.GFX {
       return <RenderableText>this._assets[id];
     }
 
-    registerFont(syncId: number, data: any, resolve: (data: any) => void) {
-      Shumway.registerCSSFont(syncId, data.data, !inFirefox);
+    registerFont(syncId: number, data: Uint8Array, resolve: (data: any) => void) {
+      Shumway.registerCSSFont(syncId, data, !inFirefox);
       if (inFirefox) {
         resolve(null);
       } else {
@@ -178,8 +178,9 @@ module Shumway.Remoting.GFX {
       }
     }
 
-    registerImage(syncId: number, symbolId: number, data: any, resolve: (data: any) => void) {
-      this._registerAsset(syncId, symbolId, this._decodeImage(data.dataType, data.data, resolve));
+    registerImage(syncId: number, symbolId: number, imageType: ImageType, data: Uint8Array,
+                  resolve: (data: any) => void) {
+      this._registerAsset(syncId, symbolId, this._decodeImage(imageType, data, resolve));
     }
 
     registerVideo(syncId: number) {

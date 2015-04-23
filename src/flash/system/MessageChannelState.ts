@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 // Class: MessageChannelState
-module Shumway.AVM2.AS.flash.system {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class MessageChannelState extends ASNative {
+module Shumway.AVMX.AS.flash.system {
+  export class MessageChannelState extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,17 +27,12 @@ module Shumway.AVM2.AS.flash.system {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.system.MessageChannelState");
+      super();
     }
     
     // JS -> AS Bindings
     static OPEN: string = "open";
     static CLOSING: string = "closing";
     static CLOSED: string = "closed";
-    
-    
-    // AS -> JS Bindings
-    
   }
 }

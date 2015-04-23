@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 // Class: NativeMenu
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   export class NativeMenu extends flash.events.EventDispatcher {
     
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super(undefined);
-      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      super();
     }
   }
 }

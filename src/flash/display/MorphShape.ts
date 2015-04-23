@@ -14,26 +14,31 @@
  * limitations under the License.
  */
 // Class: MorphShape
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
+  import assert = Debug.assert;
   export class MorphShape extends flash.display.DisplayObject {
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // [];
 
+    static axClass: typeof MorphShape;
+
     static classInitializer: any = null;
-    static initializer: any = function (symbol: flash.display.MorphShapeSymbol) {
-      var self: MorphShape = this;
-      self._graphics = null;
-      if (symbol) {
-        this._setStaticContentFromSymbol(symbol);
-        // TODO: Check what do do if the computed bounds of the graphics object don't
-        // match those given by the symbol.
-      }
+    _symbol: MorphShapeSymbol;
+    applySymbol() {
+      this._initializeFields();
+      release || assert(this._symbol);
+      this._setStaticContentFromSymbol(this._symbol);
+      // TODO: Check what do do if the computed bounds of the graphics object don't
+      // match those given by the symbol.
       this._setFlags(DisplayObjectFlags.ContainsMorph);
-    };
-    
+    }
+
     constructor () {
-      false && super();
-      DisplayObject.instanceConstructorNoInitialize.call(this);
+      if (this._symbol && !this._fieldsInitialized) {
+        this.applySymbol();
+      }
+      super();
+      release || assert(!this._symbol);
     }
 
     _canHaveGraphics(): boolean {
@@ -58,14 +63,14 @@ module Shumway.AVM2.AS.flash.display {
   export class MorphShapeSymbol extends flash.display.ShapeSymbol {
     morphFillBounds: Bounds;
     morphLineBounds: Bounds;
-    constructor(data: Timeline.SymbolData) {
-      super(data, flash.display.MorphShape);
+    constructor(data: Timeline.SymbolData, sec: ISecurityDomain) {
+      super(data, sec.flash.display.MorphShape.axClass);
     }
 
     static FromData(data: any, loaderInfo: flash.display.LoaderInfo): MorphShapeSymbol {
-      var symbol = new MorphShapeSymbol(data);
+      var symbol = new MorphShapeSymbol(data, loaderInfo.sec);
       symbol._setBoundsFromData(data);
-      symbol.graphics = flash.display.Graphics.FromData(data);
+      symbol.graphics = flash.display.Graphics.FromData(data, loaderInfo);
       symbol.processRequires(data.require, loaderInfo);
       symbol.morphFillBounds = data.morphFillBounds;
       symbol.morphLineBounds = data.morphLineBounds;

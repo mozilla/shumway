@@ -17,8 +17,9 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import ASObject = Shumway.AVM2.AS.ASObject;
-  import flash = Shumway.AVM2.AS.flash;
+  import ASObject = Shumway.AVMX.AS.ASObject;
+  import flash = Shumway.AVMX.AS.flash;
+  import AXClass = Shumway.AVMX.AXClass;
 
   export interface IAVM1SymbolBase {
     isAVM1Instance: boolean;
@@ -37,20 +38,12 @@ module Shumway.AVM1.Lib {
     public onUnbind(target: IAVM1SymbolBase): void {}
   }
 
-  export class AVM1NativeObject {
-    _context: AVM1Context;
-
-    public get context() {
-      return this._context;
-    }
-
-    public initAVM1ObjectInstance(context: AVM1Context) {
-      release || Debug.assert(context);
-      this._context = context;
-    }
+  function normalizeEventName(context: AVM1Context, eventName: string): string {
+    return context.isPropertyCaseSensitive ? eventName : eventName.toLowerCase();
   }
 
-  export class AVM1SymbolBase<T extends flash.display.DisplayObject> extends AVM1NativeObject implements IAVM1SymbolBase, IAVM1EventPropertyObserver {
+  // TODO replace to AVM1NativeSymbolObject
+  export class AVM1SymbolBase<T extends flash.display.DisplayObject> extends AVM1Object implements IAVM1SymbolBase, IAVM1EventPropertyObserver {
     public get isAVM1Instance(): boolean {
       return !!this._as3Object;
     }
@@ -62,14 +55,15 @@ module Shumway.AVM1.Lib {
     }
 
     public initAVM1SymbolInstance(context: AVM1Context, as3Object: T) {
-      this.initAVM1ObjectInstance(context);
+      AVM1Object.call(this, context);
+
       release || Debug.assert(as3Object);
       this._as3Object = as3Object;
     }
 
-    private _eventsMap: Map<AVM1EventHandler>;
+    private _eventsMap: MapObject<AVM1EventHandler>;
     private _events: AVM1EventHandler[];
-    private _eventsListeners: Map<Function>;
+    private _eventsListeners: MapObject<Function>;
 
     public bindEvents(events: AVM1EventHandler[], autoUnbind: boolean = true) {
       this._events = events;
@@ -77,10 +71,11 @@ module Shumway.AVM1.Lib {
       this._eventsMap = eventsMap;
       this._eventsListeners = Object.create(null);
       var observer = this;
-      var context = this.context;
+      var context: AVM1Context = (<any>this).context;
       events.forEach(function (event: AVM1EventHandler) {
-        eventsMap[event.propertyName] = event;
-        context.registerEventPropertyObserver(event.propertyName, observer);
+        var propertyName = normalizeEventName(context, event.propertyName);
+        eventsMap[propertyName] = event;
+        context.registerEventPropertyObserver(propertyName, observer);
         observer._updateEvent(event);
       });
 
@@ -120,94 +115,102 @@ module Shumway.AVM1.Lib {
     }
 
     private _addEventListener(event: AVM1EventHandler) {
-      var listener: any = this._eventsListeners[event.propertyName];
+      var propertyName = normalizeEventName(this.context, event.propertyName);
+      var listener: any = this._eventsListeners[propertyName];
       if (!listener) {
         listener = function avm1EventHandler() {
           var args = event.argsConverter ? event.argsConverter.apply(null, arguments) : null;
-          avm1BroadcastEvent(this.context, this, event.propertyName, args);
+          avm1BroadcastNativeEvent(this.context, this, propertyName, args);
         }.bind(this);
         this.as3Object.addEventListener(event.eventName, listener);
         event.onBind(this);
-        this._eventsListeners[event.propertyName] = listener;
+        this._eventsListeners[propertyName] = listener;
       }
     }
 
     private _removeEventListener(event: AVM1EventHandler) {
-      var listener: any = this._eventsListeners[event.propertyName];
+      var propertyName = normalizeEventName(this.context, event.propertyName);
+      var listener: any = this._eventsListeners[propertyName];
       if (listener) {
         event.onUnbind(this);
         this.as3Object.removeEventListener(event.eventName, listener);
-        this._eventsListeners[event.propertyName] = null;
+        this._eventsListeners[propertyName] = null;
       }
     }
 
-    public onEventPropertyModified(propertyName) {
+    public onEventPropertyModified(propertyName: string) {
+      var propertyName = normalizeEventName(this.context, propertyName);
       var event = this._eventsMap[propertyName];
       this._updateEvent(event);
     }
   }
 
   export function avm1HasEventProperty(context: AVM1Context, target: any, propertyName: string): boolean {
-    if (context.utils.hasProperty(target, propertyName)) {
+    if (target.alHasProperty(propertyName) &&
+        (target.alGet(propertyName) instanceof AVM1Function)) {
       return true;
     }
-    var _listeners = context.utils.getProperty(target, '_listeners');
-    if (!_listeners) {
+    var listenersField = target.alGet('_listeners');
+    if (!(listenersField instanceof Natives.AVM1ArrayNative)) {
       return false;
     }
-    return _listeners.some(function (listener) {
-      return context.utils.hasProperty(listener, propertyName);
+    var listeners: any[] = listenersField.value;
+    return listeners.some(function (listener) {
+      return (listener instanceof AVM1Object) && listener.alHasProperty(propertyName);
     });
   }
 
-  export function avm1BroadcastEvent(context: AVM1Context, target: any, propertyName: string, args: any[] = null): void {
-    var handler: Function = context.utils.getProperty(target, propertyName);
-    if (isFunction(handler)) {
-      handler.apply(target, args);
+  function avm1BroadcastNativeEvent(context: AVM1Context, target: any, propertyName: string, args: any[] = null): void {
+    var handler: AVM1Function = target.alGet(propertyName);
+    if (handler instanceof AVM1Function) {
+      context.executeFunction(handler, target, args);
     }
-    var _listeners = context.utils.getProperty(this, '_listeners');
-    if (Array.isArray(_listeners)) {
-      _listeners.forEach(function (listener) {
-        var handlerOnListener:Function = context.utils.getProperty(listener, propertyName);
-        if (isFunction(handlerOnListener)) {
-          handlerOnListener.apply(target, args);
+    var _listeners = target.alGet('_listeners');
+    if (_listeners instanceof Natives.AVM1ArrayNative) {
+      _listeners.value.forEach(function (listener) {
+        if (!(listener instanceof AVM1Object)) {
+          return;
+        }
+        var handlerOnListener: AVM1Function = listener.alGet(propertyName);
+        if (handlerOnListener instanceof AVM1Function) {
+          context.executeFunction(handlerOnListener, target, args);
+        }
+      });
+    }
+  }
+
+  export function avm1BroadcastEvent(context: AVM1Context, target: any, propertyName: string, args: any[] = null): void {
+    var handler: AVM1Function = target.alGet(propertyName);
+    if (handler instanceof AVM1Function) {
+      handler.alCall(target, args);
+    }
+    var _listeners = target.alGet('_listeners');
+    if (_listeners instanceof Natives.AVM1ArrayNative) {
+      _listeners.value.forEach(function (listener) {
+        if (!(listener instanceof AVM1Object)) {
+          return;
+        }
+        var handlerOnListener: AVM1Function = listener.alGet(propertyName);
+        if (handlerOnListener instanceof AVM1Function) {
+          handlerOnListener.alCall(target, args);
         }
       });
     }
   }
 
   export class AVM1Utils {
-    static addProperty(obj: any, propertyName: string, getter: () => any,
-                       setter: (v:any) => any, enumerable:boolean = true): any
-    {
-      obj.asDefinePublicProperty(propertyName, {
-        get: getter,
-        set: setter || undefined,
-        enumerable: enumerable,
-        configurable: true
-      });
-    }
-
-    static resolveTarget<T extends IAVM1SymbolBase>(target_mc: any = undefined): T {
-      return AVM1Context.instance.resolveTarget(target_mc);
+    static resolveTarget<T extends IAVM1SymbolBase>(context: AVM1Context, target_mc: any = undefined): any {
+      return context.resolveTarget(target_mc);
     }
 
     // Temporary solution as suggested by Yury. Will be refactored soon.
-    static resolveMovieClip<T extends IAVM1SymbolBase>(target: any = undefined): T {
-      return target ? AVM1Context.instance.resolveTarget(target) : undefined;
+    static resolveMovieClip<T extends IAVM1SymbolBase>(context: AVM1Context, target: any = undefined): any {
+      return target ? context.resolveTarget(target) : undefined;
     }
 
-    static resolveLevel(level: number): AVM1MovieClip {
+    static resolveLevel(context: AVM1Context, level: number): AVM1MovieClip {
       level = +level;
-      return AVM1Context.instance.resolveLevel(level);
-    }
-
-    static get currentStage(): flash.display.Stage {
-      return (<IAVM1SymbolBase>AVM1Context.instance.root).as3Object.stage;
-    }
-
-    static get swfVersion(): number {
-      return AVM1Context.instance.loaderInfo.swfVersion;
+      return context.resolveLevel(level);
     }
 
     public static getTarget(mc: IAVM1SymbolBase) {
@@ -224,177 +227,143 @@ module Shumway.AVM1.Lib {
     }
   }
 
-  function createAVM1Object(ctor, nativeObject: flash.display.DisplayObject, context: AVM1Context) {
+  function createAVM1NativeObject(ctor, nativeObject: flash.display.DisplayObject, context: AVM1Context) {
     // We need to walk on __proto__ to find right ctor.prototype.
-    var proto = ctor.prototype;
-    while (proto && !proto.initAVM1SymbolInstance) {
-      proto = proto.asGetPublicProperty('__proto__');
+    var proto = ctor.alGetPrototypeProperty();
+    while (proto && !(<any>proto).initAVM1SymbolInstance) {
+      proto = proto.alPrototype;
     }
     release || Debug.assert(proto);
-
-    var avm1Object: any = Object.create(proto);
-    avm1Object.asSetPublicProperty('__proto__', ctor.asGetPublicProperty('prototype'));
-    avm1Object.asDefinePublicProperty('__constructor__', {
-      value: ctor,
-      writable: true,
-      enumerable: false,
-      configurable: false
-    });
+    var avm1Object = Object.create(proto);
+    (<any>proto).initAVM1SymbolInstance.call(avm1Object, context, nativeObject);
+    avm1Object.alPrototype = ctor.alGetPrototypeProperty();
+    avm1Object.alSetOwnConstructorProperty(ctor);
     (<any>nativeObject)._as2Object = avm1Object;
-    (<IAVM1SymbolBase>avm1Object).initAVM1SymbolInstance(context, nativeObject);
-    ctor.call(avm1Object);
+    ctor.alCall(avm1Object);
     return avm1Object;
   }
 
-  export function getAVM1Object(as3Object, context: AVM1Context) {
+  export function getAVM1Object(as3Object, context: AVM1Context): AVM1Object {
     if (!as3Object) {
       return null;
     }
     if (as3Object._as2Object) {
       return as3Object._as2Object;
     }
-    if (flash.display.MovieClip.isType(as3Object)) {
+    var sec = context.sec;
+    if (sec.flash.display.MovieClip.axClass.axIsType(as3Object)) {
       if (<flash.display.MovieClip>as3Object._avm1SymbolClass) {
-        return createAVM1Object(<flash.display.MovieClip>as3Object._avm1SymbolClass, as3Object, context);
+        return createAVM1NativeObject(<flash.display.MovieClip>as3Object._avm1SymbolClass, as3Object, context);
       }
-      return createAVM1Object(context.globals.MovieClip, as3Object, context);
+      return createAVM1NativeObject(context.globals.MovieClip, as3Object, context);
     }
-    if (flash.display.SimpleButton.isType(as3Object)) {
-      return createAVM1Object(context.globals.Button, as3Object, context);
+    if (sec.flash.display.SimpleButton.axClass.axIsType(as3Object)) {
+      return createAVM1NativeObject(context.globals.Button, as3Object, context);
     }
-    if (flash.text.TextField.isType(as3Object)) {
-      return createAVM1Object(context.globals.TextField, as3Object, context);
+    if (sec.flash.text.TextField.axClass.axIsType(as3Object)) {
+      return createAVM1NativeObject(context.globals.TextField, as3Object, context);
     }
-    if (flash.display.BitmapData.isType(as3Object)) {
+    if (sec.flash.display.BitmapData.axClass.axIsType(as3Object)) {
       return new as3Object;
     }
 
     return null;
   }
 
-  export function wrapAVM1Object<T>(obj: T, members: string[]): T  {
-    var wrap: any;
-    if (typeof obj === 'function') {
-      // Coping all members if we wrapping a function
-      wrap = function () {
-        return (<any>obj).apply(this, arguments);
-      };
-      Object.getOwnPropertyNames(obj).forEach(function (name) {
-        if (wrap.hasOwnProperty(name)) {
-          // Object.defineProperty will error e.g. on name or length
-          return;
-        }
-        Object.defineProperty(wrap, name,
-          Object.getOwnPropertyDescriptor(obj, name));
-      });
-    } else {
-      // Using prototype chain in case of the object
-      Debug.assert(typeof obj === 'object' && obj !== null);
-      wrap = Object.create(obj);
-    }
-    if (!members) {
-      return wrap;
-    }
-    members.forEach(function (memberName) {
-      var definedAs = memberName;
-      // We can re-map property names by specifying memberName in the format:
-      //   "as2_property_name=>ts_property_name"
-      var i = memberName.indexOf('=>');
-      if (i >= 0) {
-        definedAs = memberName.substring(0, i);
-        memberName = memberName.substring(i + 2);
+  export function wrapAVM1NativeMembers(context: AVM1Context, wrap: AVM1Object, obj: any, members: string[], prefixFunctions: boolean = false): void  {
+    function wrapFunction(fn) {
+      if (isNullOrUndefined(fn)) {
+        return undefined;
       }
-
-      var getter = function() {
-        return this[memberName];
-      };
-      var setter = function(value) {
-        this[memberName] = value;
-      };
-      wrap.asDefinePublicProperty(definedAs, {
-        get: getter,
-        set: setter,
-        enumerable: false,
-        configurable: true
+      release || Debug.assert(typeof fn === 'function');
+      if (!prefixFunctions) {
+        return new AVM1NativeFunction(context, fn);
+      }
+      return new AVM1NativeFunction(context, function () {
+        var args = Array.prototype.slice.call(arguments, 0);
+        args.unshift(context);
+        return fn.apply(this, args);
       });
-    });
-    return wrap;
-  }
+    }
+    function getMemberDescriptor(memberName): PropertyDescriptor {
+      var desc;
+      for (var p = obj; p; p = Object.getPrototypeOf(p)) {
+        desc = Object.getOwnPropertyDescriptor(p, memberName);
+        if (desc) {
+          return desc;
+        }
+      }
+      return null;
+    }
 
-  export function wrapAVM1Class<T>(fn: T, staticMembers: string[], members: string[]): T  {
-    var wrappedFn = wrapAVM1Object(fn, staticMembers);
-    var prototype = (<any>fn).prototype;
-    var wrappedPrototype = wrapAVM1Object(prototype, members);
-    wrappedFn.asSetPublicProperty('prototype', wrappedPrototype);
-    return wrappedFn;
-  }
-
-  var isAvm1ObjectMethodsInstalled: boolean = false;
-
-  export function installObjectMethods(): any {
-    if (isAvm1ObjectMethodsInstalled) {
+    if (!members) {
       return;
     }
-    isAvm1ObjectMethodsInstalled = true;
-    var c: any = Shumway.AVM2.AS.ASObject, p = c.asGetPublicProperty('prototype');
-    c.asSetPublicProperty('registerClass', function registerClass(name, theClass) {
-      AVM1Context.instance.registerClass(name, theClass);
-    });
-    p.asDefinePublicProperty('addProperty', {
-      value: function addProperty(name, getter, setter) {
-        if (typeof name !== 'string' || name === '') {
-          return false;
-        }
-        if (typeof getter !== 'function') {
-          return false;
-        }
-        if (typeof setter !== 'function' && setter !== null) {
-          return false;
-        }
-        this.asDefinePublicProperty(name, {
-          get: getter,
-          set: setter || undefined,
-          configurable: true,
-          enumerable: true
-        });
-        return true;
-      },
-      writable: false,
-      enumerable: false,
-      configurable: false
-    });
-    // TODO move this initialization closer to the interpreter
-    Object.defineProperty(p, '__proto__avm1', {
-      value: null,
-      writable: true,
-      enumerable: false
-    });
-    p.asDefinePublicProperty('__proto__', {
-      get: function () {
-        return this.__proto__avm1;
-      },
-      set: function (proto) {
-        if (proto === this.__proto__avm1) {
-          return;
-        }
-        if (!proto) {
-          this.__proto__avm1 = null;
-          return;
-        }
+    members.forEach(function (memberName) {
+      if (memberName[memberName.length - 1] === '#') {
+        // Property mapping
+        var getterName = 'get' + memberName[0].toUpperCase() + memberName.slice(1, -1);
+        var getter = obj[getterName];
+        var setterName = 'set' + memberName[0].toUpperCase() + memberName.slice(1, -1);
+        var setter = obj[setterName];
+        release || Debug.assert(getter || setter, 'define getter or setter')
+        wrap.alSetOwnProperty(memberName.slice(0, -1), {
+          flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.DONT_ENUM,
+          get: wrapFunction(getter),
+          set: wrapFunction(setter)
+        })
+        return;
+      }
 
-        // checking for circular references
-        var p = proto;
-        while (p) {
-          if (p === this) {
-            return; // potencial loop found
-          }
-          p = p.__proto__avm1;
-        }
-        this.__proto__avm1 = proto;
-      },
-      enumerable: false,
-      configurable: false
+      var desc = getMemberDescriptor(memberName);
+      if (!desc) {
+        return;
+      }
+      if (desc.get || desc.set) {
+        release || Debug.assert(false, 'Redefine ' + memberName + ' property getter/setter as functions');
+        return;
+      }
+
+      var value = desc.value;
+      if (typeof value === 'function') {
+        value = wrapFunction(value);
+      }
+      wrap.alSetOwnProperty(memberName, {
+        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.DONT_ENUM,
+        value: value
+      })
     });
+  }
+
+  export function wrapAVM1NativeClass(context: AVM1Context, wrapAsFunction: boolean, cls: typeof AVM1Object, staticMembers: string[], members: string[], call?: Function, cstr?: Function): AVM1Object  {
+    var wrappedFn = wrapAsFunction ?
+      new AVM1NativeFunction(context, call || function () { }, function () {
+        // Creating simple AVM1 object
+        var obj = new cls(context);
+        obj.alPrototype = wrappedPrototype;
+        obj.alSetOwnConstructorProperty(wrappedFn);
+        if (cstr) {
+          cstr.apply(obj, arguments);
+        }
+        return obj;
+      }) :
+      new AVM1Object(context);
+    wrapAVM1NativeMembers(context, wrappedFn, cls, staticMembers, true);
+    var wrappedPrototype = new cls(context);
+    wrappedPrototype.alPrototype = context.builtins.Object.alGetPrototypeProperty();
+    wrapAVM1NativeMembers(context, wrappedPrototype, cls.prototype, members, false);
+    alDefineObjectProperties(wrappedFn, {
+      prototype: {
+        value: wrappedPrototype
+      }
+    });
+    alDefineObjectProperties(wrappedPrototype, {
+      constructor: {
+        value: wrappedFn,
+        writable: true
+      }
+    });
+    return wrappedFn;
   }
 
   // TODO: type arguments strongly
@@ -405,14 +374,15 @@ module Shumway.AVM1.Lib {
     release || Debug.assert(instanceAVM1);
 
     if (placeObjectTag.variableName) {
-      instanceAVM1.asSetPublicProperty('variable', placeObjectTag.variableName);
+      instanceAVM1.alPut('variable', placeObjectTag.variableName);
     }
 
     var events = placeObjectTag.events;
     if (!events) {
       return;
     }
-    //var stageListeners = [];
+    var stageListeners = [];
+    var as3Stage = (<any>context.globals.Stage)._as3Stage;
     for (var j = 0; j < events.length; j++) {
       var swfEvent = events[j];
       var actionsData;
@@ -433,31 +403,30 @@ module Shumway.AVM1.Lib {
           continue;
         }
         var eventName = ClipEventMappings[eventFlag];
-        //if (eventName === 'mouseDown' || eventName === 'mouseUp' || eventName === 'mouseMove') {
-        //  // FIXME regressed, avm1 mouse events shall be received all the time.
-        //  stageListeners.push({eventName: eventName, handler: handler});
-        //  as3Object.stage.addEventListener(eventName, handler);
-        //} else {
-        // AVM1 MovieClips are set to button mode if one of the button-related event listeners is
-        // set. This behaviour is triggered regardless of the actual value they are set to.
-        switch (eventFlag) {
-          case AVM1ClipEvents.Release:
-          case AVM1ClipEvents.ReleaseOutside:
-          case AVM1ClipEvents.RollOver:
-          case AVM1ClipEvents.RollOut:
-            as3Object.buttonMode = true;
+        if (eventName === 'mouseDown' || eventName === 'mouseUp' || eventName === 'mouseMove') {
+          stageListeners.push({eventName: eventName, handler: handler});
+          as3Stage.addEventListener(eventName, handler);
+        } else {
+          // AVM1 MovieClips are set to button mode if one of the button-related event listeners is
+          // set. This behaviour is triggered regardless of the actual value they are set to.
+          switch (eventFlag) {
+            case AVM1ClipEvents.Release:
+            case AVM1ClipEvents.ReleaseOutside:
+            case AVM1ClipEvents.RollOver:
+            case AVM1ClipEvents.RollOut:
+              as3Object.buttonMode = true;
+          }
+          as3Object.addEventListener(eventName, handler);
         }
-        as3Object.addEventListener(eventName, handler);
-        //}
       }
     }
-    //if (stageListeners.length > 0) {
-    //  as3Object.addEventListener('removedFromStage', function () {
-    //    for (var i = 0; i < stageListeners.length; i++) {
-    //      this.removeEventListener(stageListeners[i].eventName, stageListeners[i].fn, false);
-    //    }
-    //  }, false);
-    //}
+    if (stageListeners.length > 0) {
+      as3Object.addEventListener('removedFromStage', function () {
+        for (var i = 0; i < stageListeners.length; i++) {
+          as3Stage.removeEventListener(stageListeners[i].eventName, stageListeners[i].fn, false);
+        }
+      }, false);
+    }
   }
 
   function clipEventHandler(actionsData: AVM1.AVM1ActionsData,

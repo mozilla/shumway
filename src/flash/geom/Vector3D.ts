@@ -14,21 +14,31 @@
  * limitations under the License.
  */
 // Class: Vector3D
-module Shumway.AVM2.AS.flash.geom {
+module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Vector3D extends ASNative {
-    static classInitializer: any = null;
-    static initializer: any = null;
-    static classSymbols: string [] = null;
-    static instanceSymbols: string [] = null;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class Vector3D extends ASObject {
+    static classInitializer() {
+      this.X_AXIS = Object.freeze(this.Create(1, 0, 0, 0));
+      this.Y_AXIS = Object.freeze(this.Create(1, 0, 0, 0));
+      this.Z_AXIS = Object.freeze(this.Create(1, 0, 0, 0));
+    }
 
-    public static X_AXIS: Vector3D = Object.freeze(new Vector3D(1, 0, 0));
-    public static Y_AXIS: Vector3D = Object.freeze(new Vector3D(0, 1, 0));
-    public static Z_AXIS: Vector3D = Object.freeze(new Vector3D(0, 0, 1));
+    static Create(x: number, y: number, z: number, w: number) {
+      var v: Vector3D = Object.create(this.tPrototype);
+      v.x = x;
+      v.y = y;
+      v.z = z;
+      v.w = w;
+      return v;
+    }
+
+    public static X_AXIS: Vector3D;
+    public static Y_AXIS: Vector3D;
+    public static Z_AXIS: Vector3D;
 
     constructor (x: number = 0, y: number = 0, z: number = 0, w: number = 0) {
-      false && super();
+      super();
       this.x = +x;
       this.y = +y;
       this.z = +z;
@@ -98,10 +108,10 @@ module Shumway.AVM2.AS.flash.geom {
              this.z * a.z;
     }
     crossProduct(a: flash.geom.Vector3D): flash.geom.Vector3D {
-      return new Vector3D(this.y * a.z - this.z * a.y,
-                          this.z * a.x - this.x * a.z,
-                          this.x * a.y - this.y * a.x,
-                          1.0);
+      return new this.sec.flash.geom.Vector3D(this.y * a.z - this.z * a.y,
+                                              this.z * a.x - this.x * a.z,
+                                              this.x * a.y - this.y * a.x,
+                                              1.0);
     }
     normalize(): number {
       var length = this.length;
@@ -131,10 +141,10 @@ module Shumway.AVM2.AS.flash.geom {
       this.z -= a.z;
     }
     add(a: flash.geom.Vector3D): flash.geom.Vector3D {
-      return new Vector3D(this.x + a.x, this.y + a.y, this.z + a.z);
+      return new this.sec.flash.geom.Vector3D(this.x + a.x, this.y + a.y, this.z + a.z);
     }
     subtract(a: flash.geom.Vector3D): flash.geom.Vector3D {
-      return new Vector3D(this.x - a.x, this.y - a.y, this.z - a.z);
+      return new this.sec.flash.geom.Vector3D(this.x - a.x, this.y - a.y, this.z - a.z);
     }
     negate() {
       this.x = -this.x;
@@ -169,7 +179,7 @@ module Shumway.AVM2.AS.flash.geom {
       this.z = +za;
     }
     clone(): flash.geom.Vector3D {
-      return new Vector3D(this.x, this.y, this.z, this.w);
+      return new this.sec.flash.geom.Vector3D(this.x, this.y, this.z, this.w);
     }
     toString(): string {
       return "Vector3D(" + this.x + ", " + this.y + ", " + this.z + ")";

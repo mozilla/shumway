@@ -14,134 +14,155 @@
  * limitations under the License.
  */
 
-module Shumway.AVM2.AS {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import Namespace = Shumway.AVM2.ABC.Namespace;
-  import Multiname = Shumway.AVM2.ABC.Multiname;
-  import throwError = Shumway.AVM2.Runtime.throwError;
+module Shumway.AVMX.AS {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
 
   export module flash.utils {
-    var _asGetProperty = Object.prototype.asGetProperty;
-    var _asSetProperty = Object.prototype.asSetProperty;
-    var _asCallProperty = Object.prototype.asCallProperty;
-    var _asHasProperty = Object.prototype.asHasProperty;
-    var _asHasOwnProperty = Object.prototype.asHasOwnProperty;
-    var _asHasTraitProperty = Object.prototype.asHasTraitProperty;
-    var _asDeleteProperty = Object.prototype.asDeleteProperty;
+
+    var proxyNamespace = new Namespace(null, NamespaceType.Public,
+                                       "http://www.adobe.com/2006/actionscript/flash/proxy");
+    var proxyPrefix = '$' + proxyNamespace.getMangledName();
 
     /**
-     * The Proxy class lets you override the default behavior of ActionScript operations (such as retrieving and modifying properties) on an object.
+     * The Proxy class lets you override the default behavior of ActionScript operations
+     * (such as retrieving and modifying properties) on an object.
      */
-    export class Proxy extends ASNative {
-      public static protocol: IProtocol = Proxy.prototype;
+    export class ASProxy extends ASObject {
 
-      native_getProperty(name) {
-        throwError("IllegalOperationError", Errors.ProxyGetPropertyError);
+      static classInitializer() {
+        var proto: any = this.tPrototype;
+        var asProto: any = ASProxy.prototype;
+
+        defineNonEnumerableProperty(proto, proxyPrefix + 'getProperty', asProto.native_getProperty);
+        defineNonEnumerableProperty(proto, proxyPrefix + 'setProperty', asProto.native_setProperty);
+        defineNonEnumerableProperty(proto, proxyPrefix + 'callProperty', asProto.native_callProperty);
+        defineNonEnumerableProperty(proto, proxyPrefix + 'hasProperty', asProto.native_hasProperty);
+        defineNonEnumerableProperty(proto, proxyPrefix + 'deleteProperty', asProto.native_deleteProperty);
+        defineNonEnumerableProperty(proto, proxyPrefix + 'getDescendants', asProto.native_getDescendants);
+        defineNonEnumerableProperty(proto, proxyPrefix + 'nextNameIndex', asProto.native_nextNameIndex);
+        defineNonEnumerableProperty(proto, proxyPrefix + 'nextName', asProto.native_nextName);
+        defineNonEnumerableProperty(proto, proxyPrefix + 'nextValue', asProto.native_nextValue);
+      }
+
+      native_getProperty() {
+        this.sec.throwError("IllegalOperationError", Errors.ProxyGetPropertyError);
       }
 
       native_setProperty() {
-        throwError("IllegalOperationError", Errors.ProxySetPropertyError);
+        this.sec.throwError("IllegalOperationError", Errors.ProxySetPropertyError);
       }
 
       native_callProperty() {
-        throwError("IllegalOperationError", Errors.ProxyCallPropertyError);
+        this.sec.throwError("IllegalOperationError", Errors.ProxyCallPropertyError);
       }
 
       native_hasProperty() {
-        throwError("IllegalOperationError", Errors.ProxyHasPropertyError);
+        this.sec.throwError("IllegalOperationError", Errors.ProxyHasPropertyError);
       }
 
       native_deleteProperty() {
-        throwError("IllegalOperationError", Errors.ProxyDeletePropertyError);
+        this.sec.throwError("IllegalOperationError", Errors.ProxyDeletePropertyError);
       }
 
       native_getDescendants() {
-        throwError("IllegalOperationError", Errors.ProxyGetDescendantsError);
+        this.sec.throwError("IllegalOperationError", Errors.ProxyGetDescendantsError);
       }
 
       native_nextNameIndex() {
-        throwError("IllegalOperationError", Errors.ProxyNextNameIndexError);
+        this.sec.throwError("IllegalOperationError", Errors.ProxyNextNameIndexError);
       }
 
       native_nextName() {
-        throwError("IllegalOperationError", Errors.ProxyNextNameError);
+        this.sec.throwError("IllegalOperationError", Errors.ProxyNextNameError);
       }
 
       native_nextValue() {
-        throwError("IllegalOperationError", Errors.ProxyNextValueError);
+        this.sec.throwError("IllegalOperationError", Errors.ProxyNextValueError);
       }
 
-      public asGetProperty(namespaces: Namespace [], name: any, flags: number) {
-        var self: Object = this;
-        if (_asHasTraitProperty.call(self, namespaces, name, flags)) {
-          return _asGetProperty.call(self, namespaces, name, flags);
+      public axGetProperty(mn: Multiname) {
+        var value: any;
+        var trait = typeof mn.name === 'string' ? this.traits.getTrait(mn.namespaces, mn.name) : null;
+        if (trait) {
+          var name = trait.name.getMangledName();
+          value = this[name];
+          if (typeof value === 'function') {
+            return this.axGetMethod(name);
+          }
+        } else {
+          value = this[proxyPrefix + 'getProperty'](this.sec.AXQName.FromMultiname(mn));
         }
-        return _asCallProperty.call(self, [Namespace.PROXY], "getProperty", 0, false, [name]);
+        return value;
       }
 
-      public asGetNumericProperty(name: number) {
-        return this.asGetProperty(null, name, 0);
+      public axGetNumericProperty(name: number): any {
+        return this[proxyPrefix + 'getProperty']((+name) + '');
       }
 
-      public asSetNumericProperty(name: number, value) {
-        this.asSetProperty(null, name, 0, value);
+      public axSetNumericProperty(name: number, value: any) {
+        this[proxyPrefix + 'setProperty']((+name) + '', value);
       }
 
-      public asSetProperty(namespaces: Namespace [], name: any, flags: number, value: any) {
-        var self: Object = this;
-        if (_asHasTraitProperty.call(self, namespaces, name, flags)) {
-          _asSetProperty.call(self, namespaces, name, flags, value);
+      public axSetProperty(mn: Multiname, value: any, bc: Bytecode) {
+        var trait = typeof mn.name === 'string' ? this.traits.getTrait(mn.namespaces, mn.name) : null;
+        if (trait) {
+          super.axSetProperty(mn, value, bc);
           return;
         }
-        _asCallProperty.call(self, [Namespace.PROXY], "setProperty", 0, false, [name, value]);
+        this[proxyPrefix + 'setProperty'](this.sec.AXQName.FromMultiname(mn), value);
       }
 
-      public asCallProperty(namespaces: Namespace [], name: any, flags: number, isLex: boolean, args: any []): any {
-        var self: Object = this;
-        if (_asHasTraitProperty.call(self, namespaces, name, flags)) {
-          return _asCallProperty.call(self, namespaces, name, flags, false, args);
+      public axCallProperty(mn: Multiname, args: any[], isLex: boolean): any {
+        var trait = typeof mn.name === 'string' ? this.traits.getTrait(mn.namespaces, mn.name) : null;
+        if (trait) {
+          return super.axCallProperty(mn, args, isLex);
         }
-        return _asCallProperty.call(self, [Namespace.PROXY], "callProperty", 0, false, [name].concat(args));
+        var callArgs = [this.sec.AXQName.FromMultiname(mn)].concat(args);
+        return this[proxyPrefix + 'callProperty'].apply(this, callArgs);
       }
 
-      public asHasProperty(namespaces: Namespace [], name: any, flags: number): any {
-        var self: Object = this;
-        if (_asHasTraitProperty.call(self, namespaces, name, flags)) {
-          return _asHasProperty.call(self, namespaces, name, flags);
+      public axHasProperty(mn: Multiname): any {
+        return this.axHasOwnProperty(mn);
+      }
+
+      public axHasPublicProperty(nm: string): any {
+        rn.name = nm;
+        if (this.axHasPropertyInternal(rn)) {
+          return true;
         }
-        return _asCallProperty.call(self, [Namespace.PROXY], "hasProperty", 0, false, [name]);
+        return this[proxyPrefix + 'hasProperty'](nm);
       }
 
-      public asHasOwnProperty(namespaces: Namespace [], name: any, flags: number): any {
-        var self: Object = this;
-        if (_asHasTraitProperty.call(self, namespaces, name, flags)) {
-          return _asHasOwnProperty.call(self, namespaces, name, flags);
+      public axHasOwnProperty(mn: Multiname): any {
+        var trait = typeof mn.name === 'string' ? this.traits.getTrait(mn.namespaces, mn.name) : null;
+        if (trait) {
+          return true;
         }
-        return _asCallProperty.call(self, [Namespace.PROXY], "hasProperty", 0, false, [name]);
+        return this[proxyPrefix + 'hasProperty'](this.sec.AXQName.FromMultiname(mn));
       }
 
-      public asDeleteProperty(namespaces: Namespace [], name: any, flags: number): any {
-        var self: Object = this;
-        if (_asHasTraitProperty.call(self, namespaces, name, flags)) {
-          return _asDeleteProperty.call(self, namespaces, name, flags);
+      public axDeleteProperty(mn: Multiname): any {
+        var trait = typeof mn.name === 'string' ? this.traits.getTrait(mn.namespaces, mn.name) : null;
+        if (trait) {
+          return delete this[trait.name.getMangledName()];
         }
-        return _asCallProperty.call(self, [Namespace.PROXY], "deleteProperty", 0, false, [name]);
+        return this[proxyPrefix + 'deleteProperty'](this.sec.AXQName.FromMultiname(mn));
       }
 
-      public asNextName(index: number): any {
-        notImplemented("Proxy asNextName");
+      public axNextName(index: number): any {
+        return this[proxyPrefix + 'nextName'](index);
       }
 
-      public asNextValue(index: number): any {
-        notImplemented("Proxy asNextValue");
+      public axNextValue(index: number): any {
+        return this[proxyPrefix + 'nextValue'](index);
       }
 
-      public asNextNameIndex(index: number): number {
-        notImplemented("Proxy asNextNameIndex");
-        return;
+      public axNextNameIndex(index: number): number {
+        return this[proxyPrefix + 'nextNameIndex'](index);
       }
     }
-
-    export var OriginalProxy = Proxy;
   }
+
+  var rn = new Multiname(null, 0, CONSTANT.RTQNameL, [], null);
 }

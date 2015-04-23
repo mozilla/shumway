@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 // Class: AuthorizedFeaturesLoader
-module Shumway.AVM2.AS.flash.system {
+module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class AuthorizedFeaturesLoader extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,15 +28,9 @@ module Shumway.AVM2.AS.flash.system {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.system.AuthorizedFeaturesLoader");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
+
     // _authorizedFeatures: flash.system.AuthorizedFeatures;
     get authorizedFeatures(): flash.system.AuthorizedFeatures {
       notImplemented("public flash.system.AuthorizedFeaturesLoader::get authorizedFeatures"); return;

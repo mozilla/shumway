@@ -30,6 +30,22 @@ var avm2Options = shumwayOptions.register(new Shumway.Options.OptionSet("AVM2"))
 var sysCompiler = avm2Options.register(new Shumway.Options.Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter (requires restart)"));
 var appCompiler = avm2Options.register(new Shumway.Options.Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter (requires restart)"));
 
+
+var WriterFlags = Shumway.AVMX.WriterFlags;
+var writerFlags = WriterFlags.None;
+if (Shumway.AVM2.Runtime.traceRuntime.value) {
+  writerFlags |= WriterFlags.Runtime;
+}
+if (Shumway.AVM2.Runtime.traceExecution.value) {
+  writerFlags |= WriterFlags.Execution;
+}
+if (Shumway.AVM2.Runtime.traceInterpreter.value) {
+  writerFlags |= WriterFlags.Interpreter;
+}
+Shumway.AVMX.setWriters(writerFlags);
+
+var BinaryFileReader = Shumway.BinaryFileReader;
+
 function timeAllocation(C, count) {
   var s = Date.now();
   for (var i = 0; i < count; i++) {
@@ -137,17 +153,21 @@ function runIFramePlayer(data) {
   container.appendChild(playerWorkerIFrame);
 }
 
-function executeFile(file, buffer, movieParams, remoteDebugging) {
-  var filename = file.split('?')[0].split('#')[0];
+/**
+ * The |path| argument can be a comma delimited list of files, but this only works for .abc files at the moment.
+ */
+function executeFile(path, buffer, movieParams, remoteDebugging) {
+  var fileNames = path.split('?')[0].split('#')[0].split(",");
+  var fileName = fileNames[0];
 
-  file = new URL(file, document.location.href).href;
+  var files = fileNames.map(function (file) {
+    return new URL(file, document.location.href).href;
+  });
 
-  var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
-  var sysMode = sysCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-  var appMode = appCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  var file = files[0];
 
-  if (state.useIFramePlayer && filename.endsWith(".swf")) {
-    runIFramePlayer({sysMode: sysMode, appMode: appMode,
+  if (state.useIFramePlayer && fileName.endsWith(".swf")) {
+    runIFramePlayer({sysMode: false, appMode: false,
       movieParams: movieParams, file: file, asyncLoading: asyncLoading,
       stageAlign: state.salign, stageScale: state.scale,
       fileReadChunkSize: state.fileReadChunkSize, loaderURL: state.loaderURL,
@@ -181,29 +201,31 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
     Shumway.FileLoadingService.instance.init(file, state.fileReadChunkSize);
   }
 
-  // All execution paths must now load AVM2.
-  if (!appCompiler.value) {
-    showMessage("Running in the Interpreter");
-  }
-
   Shumway.SystemResourcesLoadingService.instance =
     new Shumway.Player.BrowserSystemResourcesLoadingService(builtinPath, playerglobalInfo, shellAbcPath);
 
-  if (filename.endsWith(".abc")) {
-    Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Shell, sysMode, appMode).then(function (avm2) {
-      function runAbc(file, buffer) {
-        avm2.applicationDomain.executeAbc(new Shumway.AVM2.ABC.AbcFile(new Uint8Array(buffer), file));
+  if (fileName.endsWith(".abc")) {
+    var flags = Shumway.AVM2LoadLibrariesFlags.Builtin |
+                Shumway.AVM2LoadLibrariesFlags.Playerglobal |
+                Shumway.AVM2LoadLibrariesFlags.Shell;
+    Shumway.createSecurityDomain(flags).then(function (securityDomain) {
+      function runAbc(env, buffer) {
+        securityDomain.system.loadAndExecuteABC(new Shumway.AVMX.ABCFile(env, new Uint8Array(buffer)));
       }
-      if (!buffer) {
+      function shift() {
+        var file = files.shift();
         new BinaryFileReader(file).readAll(null, function(buffer) {
-          runAbc(file, buffer);
+          var env = {url: file, app: securityDomain.system};
+          runAbc(env, buffer);
+          if (files.length) {
+            shift();
+          }
         });
-      } else {
-        runAbc(file, buffer);
       }
+      shift();
     });
-  } else if (filename.endsWith(".swf")) {
-    Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal, sysMode, appMode).then(function (avm2) {
+  } else if (fileName.endsWith(".swf")) {
+    Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal).then(function (securityDomain) {
       function runSWF(file, buffer) {
         var swfURL = Shumway.FileLoadingService.instance.resolveUrl(file);
 
@@ -214,8 +236,8 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
           easel.stage.invalidate();
         });
         syncGFXOptions(easel.options);
-        var gfxService = new Shumway.Player.Test.TestGFXService();
-        var player = new Shumway.Player.Player(gfxService);
+        var gfxService = new Shumway.Player.Test.TestGFXService(securityDomain);
+        var player = new Shumway.Player.Player(securityDomain, gfxService);
         player.movieParams = movieParams;
         player.stageAlign = state.salign;
         player.stageScale = state.scale;
@@ -248,9 +270,11 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
         runSWF(file, buffer);
       }
     });
-  } else if (filename.endsWith(".js") || filename.endsWith("/")) {
-    Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal, sysMode, appMode).then(function (avm2) {
-      executeUnitTests(file, avm2);
+  } else if (fileName.endsWith(".js") || fileName.endsWith("/")) {
+    Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal).then(function (securityDomain) {
+      jsGlobal.securityDomain = securityDomain;
+      Shumway.AVMX.AS.installClassLoaders(securityDomain.application, jsGlobal);
+      executeUnitTests(fileName);
     });
   }
 }

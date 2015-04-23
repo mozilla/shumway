@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 // Class: ThrottleEvent
-module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
+module Shumway.AVMX.AS.flash.events {
   export class ThrottleEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
+    state: string;
+    targetFrameRate: number;
+
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 state: string = null, targetFrameRate: number = 0) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.ThrottleEvent");
+      super(type, bubbles, cancelable);
+      this.state = axCoerceString(state);
+      this.targetFrameRate = +targetFrameRate;
     }
 
     // JS -> AS Bindings

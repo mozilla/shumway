@@ -111,7 +111,7 @@ function buildLibs(outputDir, rebuild, configs, callback) {
       }
     }
 
-    compileAbc(outputDir, "shell", ["Capabilities.as", "Domain.as", "System.as"], false, configs, rebuild || builtinWasBuilt, done);
+    compileAbc(outputDir, "shell", ["Capabilities.as", "Domain.as"], false, configs, rebuild || builtinWasBuilt, done);
     compileAbc(outputDir, "avmplus", ["avmplus.as"], false, configs, rebuild || builtinWasBuilt, done);
   });
 }

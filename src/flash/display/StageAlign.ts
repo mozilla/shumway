@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 // Class: StageAlign
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import StageAlignFlags = Shumway.Remoting.StageAlignFlags;
 
-  export class StageAlign extends ASNative {
+  export class StageAlign extends ASObject {
     
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.display.StageAlign");
+      super();
     }
     
     // JS -> AS Bindings

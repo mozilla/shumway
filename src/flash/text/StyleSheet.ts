@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: StyleSheet
-module Shumway.AVM2.AS.flash.text {
+module Shumway.AVMX.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import assert = Debug.assert;
 
   export interface Style {
@@ -39,19 +39,17 @@ module Shumway.AVM2.AS.flash.text {
 
   export class StyleSheet extends flash.events.EventDispatcher {
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
     
     constructor () {
-      false && super();
-      flash.events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      super();
       this.clear();
     }
 
     private _rules: { [key: string]: Style; };
 
-    get styleNames(): string[] {
+    get styleNames(): ASArray {
       var styles = this._rules;
       var names = [];
       for (var name in styles) {
@@ -59,20 +57,20 @@ module Shumway.AVM2.AS.flash.text {
           names.push(name);
         }
       }
-      return names;
+      return this.sec.createArrayUnsafe(names);
     }
 
     getStyle(styleName: string): Style {
-      styleName = asCoerceString(styleName);
+      styleName = axCoerceString(styleName);
       var style = this._rules[styleName.toLowerCase()];
       if (!style) {
-        return {}; // note that documentation is lying about `null`;
+        return this.sec.createObject(); // note that documentation is lying about `null`;
       }
-      return ASJSON.transformJSValueToAS(style, false);
+      return transformJSValueToAS(this.sec, style, false);
     }
 
     applyStyle(textFormat: TextFormat, styleName: string): TextFormat {
-      styleName = asCoerceString(styleName);
+      styleName = axCoerceString(styleName);
       var style = this._rules[styleName.toLowerCase()];
       if (style) {
         return textFormat.transform(style);
@@ -84,8 +82,8 @@ module Shumway.AVM2.AS.flash.text {
       if (typeof styleObject !== 'object') {
         return;
       }
-      styleName = asCoerceString(styleName);
-      this._rules[styleName.toLowerCase()] = ASJSON.transformASValueToJS(styleObject, false);
+      styleName = axCoerceString(styleName);
+      this._rules[styleName.toLowerCase()] = transformASValueToJS(this.sec, styleObject, false);
     }
 
     hasStyle(styleName: string): boolean {
@@ -100,14 +98,14 @@ module Shumway.AVM2.AS.flash.text {
       if (typeof formatObject !== 'object') {
         return null;
       }
-      formatObject = ASJSON.transformASValueToJS(formatObject, false);
-      var textFormat = new TextFormat();
+      formatObject = transformASValueToJS(this.sec, formatObject, false);
+      var textFormat = new this.sec.flash.text.TextFormat();
       textFormat.transform(formatObject);
       return textFormat;
     }
 
     parseCSS(css: string) {
-      css = asCoerceString(css) + '';
+      css = axCoerceString(css) + '';
       var length = css.length;
       var index = skipWhitespace(css, 0, length);
       // Styles are only added once parsing completed successfully. Invalid syntax anywhere discards all new styles.

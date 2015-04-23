@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 // Class: XMLParser
-module Shumway.AVM2.AS.flash.xml {
+module Shumway.AVMX.AS.flash.xml {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class XMLParser extends ASNative {
-    static initializer: any = null;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class XMLParser extends ASObject {
     constructor () {
-      false && super();
-      dummyConstructor("packageInternal flash.xml.XMLParser");
+      super();
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings
     // Instance JS -> AS Bindings
     // Instance AS -> JS Bindings
     startParse(source: string, ignoreWhite: boolean): void {
-      source = asCoerceString(source); ignoreWhite = !!ignoreWhite;
+      source = axCoerceString(source); ignoreWhite = !!ignoreWhite;
       notImplemented("packageInternal flash.xml.XMLParser::startParse"); return;
     }
     getNext(tag: flash.xml.XMLTag): number /*int*/ {

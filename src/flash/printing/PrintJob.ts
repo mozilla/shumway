@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: PrintJob
-module Shumway.AVM2.AS.flash.printing {
+module Shumway.AVMX.AS.flash.printing {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class PrintJob extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // ["isSupported"];
     
@@ -33,8 +29,7 @@ module Shumway.AVM2.AS.flash.printing {
     static instanceSymbols: string [] = null; // ["paperHeight", "paperWidth", "pageHeight", "pageWidth", "orientation", "start", "send", "addPage"];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.printing.PrintJob");
+      super();
     }
     
     // JS -> AS Bindings

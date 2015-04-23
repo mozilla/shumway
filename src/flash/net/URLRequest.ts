@@ -14,37 +14,30 @@
  * limitations under the License.
  */
 // Class: URLRequest
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import throwError = Shumway.AVM2.Runtime.throwError;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
-  export class URLRequest extends ASNative {
+  export class URLRequest extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
     
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function () {
-      this._url = null;
+    // List of static symbols to link.
+    static classSymbols: string [] = null; // [];
+
+    // List of instance symbols to link.
+    static bindings: string [] = null;
+
+    constructor (url: string = null) {
+      super();
+      this._url = axCoerceString(url);
       this._method = 'GET';
       this._data = null;
       this._digest = null;
       this._contentType = 'application/x-www-form-urlencoded';
       this._requestHeaders = [];
       this._checkPolicyFile = true;
-    };
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static bindings: string [] = null;
-    
-    constructor (url: string = null) {
-      false && super();
-      this._url = asCoerceString(url);
     }
 
     _checkPolicyFile: boolean;
@@ -63,7 +56,7 @@ module Shumway.AVM2.AS.flash.net {
       return this._url;
     }
     set url(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       this._url = value;
     }
     get data(): ASObject {
@@ -76,10 +69,10 @@ module Shumway.AVM2.AS.flash.net {
       return this._method;
     }
     set method(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       if (value !== 'get' && value !== 'GET' &&
           value !== 'post' && value !== 'POST') {
-        throwError('ArgumentError', Errors.InvalidArgumentError);
+        this.sec.throwError('ArgumentError', Errors.InvalidArgumentError);
       }
       this._method = value;
     }
@@ -87,23 +80,23 @@ module Shumway.AVM2.AS.flash.net {
       return this._contentType;
     }
     set contentType(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       this._contentType = value;
     }
-    get requestHeaders(): any [] {
-      return this._requestHeaders;
+    get requestHeaders(): ASArray {
+      return this.sec.createArrayUnsafe(this._requestHeaders);
     }
-    set requestHeaders(value: any []) {
-      if (!Array.isArray(value)) {
-        throwError('ArgumentError', Errors.InvalidArgumentError, "value");
+    set requestHeaders(value: ASArray) {
+      if (!this.sec.AXArray.axIsType(value)) {
+        this.sec.throwError('ArgumentError', Errors.InvalidArgumentError, "value");
       }
-      this._requestHeaders = value;
+      this._requestHeaders = value.value;
     }
     get digest(): string {
       return this._digest;
     }
     set digest(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       this._digest = value;
     }
 
@@ -114,11 +107,11 @@ module Shumway.AVM2.AS.flash.net {
       obj.checkPolicyFile = this._checkPolicyFile;
       if (this._data) {
         obj.mimeType = this._contentType;
-        if (flash.utils.ByteArray.isType(this._data)) {
+        if (this.sec.flash.utils.ByteArray.axClass.axIsType(this._data)) {
           obj.data = <ASObject><any>
             new Uint8Array((<any> this._data)._buffer, 0, (<any> this._data).length);
         } else {
-          var data = this._data.asGetPublicProperty("toString").call(this._data);
+          var data = this._data.axGetPublicProperty("toString").call(this._data);
           if (this._method === 'GET') {
             var i = obj.url.lastIndexOf('?');
             obj.url = (i < 0 ? obj.url : obj.url.substring(0, i)) + '?' + data;

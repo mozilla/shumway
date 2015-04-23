@@ -1,3 +1,7 @@
-#!/usr/bash
+#! /usr/bin/env bash
 
-colordiff -y --difftype=diffy <(js build/ts/shell.js -x -bl $1) <($AVM $1)
+java -jar utils/asc.jar -md -import build/libs/builtin.abc $1.as
+
+js build/ts/shell.js -x -bl $1.abc -w ri
+
+colordiff -s -W 150 -y --difftype=diffy <(js build/ts/shell.js -x -bl $1.abc) <(utils/avmshell/mac/avmshell $1.abc)

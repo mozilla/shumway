@@ -1,0 +1,31 @@
+Running test file: test/mock/jwplayer.js ...
+Executed JS File: test/mock/jwplayer.js
+[91msomewhatImplemented: public flash.system.Security::static allowDomain ["*"][0m
+eval(try {__flash__toXML(jwplayer.utils.tea.decrypt("","36QXq4W@GSBV^teR"));} catch (e) {"<undefined/>";})
+[91msomewhatImplemented: public flash.display.InteractiveObject::set focusRect[0m
+eval(try {__flash__toXML(jwplayer.embed.flash.getVars("jwplayerObjectId"));} catch (e) {"<undefined/>";})
+Frame: 1 HASHCODE: examples/jwplayer/jwplayer.flash.swf: 0x00000000
+[91msomewhatImplemented: public flash.net.NetConnection::connect[0m
+[91msomewhatImplemented: public flash.media.SoundTransform::_updateTransform[0m
+[91msomewhatImplemented: NetStream._invoke (4)[0m
+[91msomewhatImplemented: public flash.net.NetStream::set client[0m
+[91msomewhatImplemented: public flash.net.NetConnection::set objectEncoding[0m
+[91msomewhatImplemented: public flash.ui.ContextMenu::get builtInItems[0m
+[91msomewhatImplemented: public flash.display.InteractiveObject::set contextMenu[0m
+[91msomewhatImplemented: public flash.ui.ContextMenu::get customItems[0m
+[91msomewhatImplemented: public flash.system.Capabilities::get isDebugger[0m
+Frame: 2 HASHCODE: examples/jwplayer/jwplayer.flash.swf: 0x6ba9ad56
+[91mLoading error encountered:, Can't read examples/jwplayer/../examples/image-loading/firefox.png[0m
+[91mNot Implemented: processing loadClose when loading was aborted[0m
+[91msomewhatImplemented: public flash.text.TextField::getCharBoundaries[0m
+Frame: 3 HASHCODE: examples/jwplayer/jwplayer.flash.swf: 0x2d0615d0
+[91msomewhatImplemented: public flash.net.SharedObject::flush[0m
+Frame: 4 HASHCODE: examples/jwplayer/jwplayer.flash.swf: 0x9736bc96
+Frame: 5 HASHCODE: examples/jwplayer/jwplayer.flash.swf: 0x731aee90
+Frame: 6 HASHCODE: examples/jwplayer/jwplayer.flash.swf: 0x13bcfbd6
+Frame: 7 HASHCODE: examples/jwplayer/jwplayer.flash.swf: 0x875c9750
+Frame: 8 HASHCODE: examples/jwplayer/jwplayer.flash.swf: 0x87b06b16
+Frame: 9 HASHCODE: examples/jwplayer/jwplayer.flash.swf: 0x91d71010
+Frame: 10 HASHCODE: examples/jwplayer/jwplayer.flash.swf: 0xcc850a56
+Frame: 11 HASHCODE: examples/jwplayer/jwplayer.flash.swf: 0xe79658d0
+HASHCODE: examples/jwplayer/jwplayer.flash.swf: 0xe79658d0

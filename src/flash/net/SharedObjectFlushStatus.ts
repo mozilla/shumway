@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 // Class: SharedObjectFlushStatus
-module Shumway.AVM2.AS.flash.net {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class SharedObjectFlushStatus extends ASNative {
+module Shumway.AVMX.AS.flash.net {
+  export class SharedObjectFlushStatus extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,16 +27,11 @@ module Shumway.AVM2.AS.flash.net {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.net.SharedObjectFlushStatus");
+      super();
     }
     
     // JS -> AS Bindings
     static FLUSHED: string = "flushed";
     static PENDING: string = "pending";
-    
-    
-    // AS -> JS Bindings
-    
   }
 }

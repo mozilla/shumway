@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 // Class: MouseEvent
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   export class MouseEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
@@ -31,8 +28,15 @@ module Shumway.AVM2.AS.flash.events {
                 relatedObject: flash.display.InteractiveObject = null, ctrlKey: boolean = false,
                 altKey: boolean = false, shiftKey: boolean = false, buttonDown: boolean = false,
                 delta: number /*int*/ = 0) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.MouseEvent");
+      super(type, bubbles, cancelable);
+      this._localX = localX;
+      this._localY = localY;
+      this._relatedObject = relatedObject;
+      this._ctrlKey = ctrlKey;
+      this._altKey = altKey;
+      this._shiftKey = shiftKey;
+      this._buttonDown = buttonDown;
+      this._delta = delta;
     }
 
     // JS -> AS Bindings
@@ -198,13 +202,13 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     updateAfterEvent(): void {
-      Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'].requestRendering();
+      this.sec.player.requestRendering();
     }
 
     private _getGlobalPoint(): flash.geom.Point {
       var point = this._position;
       if (!point) {
-        point = this._position = new flash.geom.Point();
+        point = this._position = new this.sec.flash.geom.Point();
       }
       if (this.target) {
         point.setTo(this._localX, this._localY);
@@ -217,10 +221,12 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     clone(): Event {
-      return new flash.events.MouseEvent(this.type, this.bubbles, this.cancelable,
-                                         this.localX, this.localY, this.relatedObject,
-                                         this.ctrlKey, this.altKey, this.shiftKey,
-                                         this.buttonDown, this.delta);
+      return new this.sec.flash.events.MouseEvent(this.type, this.bubbles,
+                                                             this.cancelable,
+                                                             this.localX, this.localY,
+                                                             this.relatedObject, this.ctrlKey,
+                                                             this.altKey, this.shiftKey,
+                                                             this.buttonDown, this.delta);
     }
 
     toString(): string {

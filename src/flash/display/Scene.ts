@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 // Class: Scene
-module Shumway.AVM2.AS.flash.display {
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Scene extends ASNative {
+module Shumway.AVMX.AS.flash.display {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class Scene extends ASObject {
 
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null;
 
-    constructor (name: string, labels: FrameLabel[], offset: number, numFrames: number /*int*/) {
-      false && super();
-      this._name = asCoerceString(name);
+    constructor (name: string, labels: {value: FrameLabel[]}, offset: number, numFrames: number /*int*/) {
+      super();
+      this._name = axCoerceString(name);
       // Note: creating Scene objects in ActionScript, while possible, is undocumented and entirely
       // useless. Luckily, that also means that they're not very carefully implemented.
       // Specifically, the `labels` array isn't cloned during construction or when returned from
@@ -38,13 +37,13 @@ module Shumway.AVM2.AS.flash.display {
     _name: string;
     offset: number;
     _numFrames: number /*int*/;
-    _labels: FrameLabel[];
+    _labels: {value: FrameLabel[]};
 
     get name(): string {
       return this._name;
     }
 
-    get labels(): FrameLabel[] {
+    get labels(): {value: FrameLabel[]} {
       return this._labels;
     }
 
@@ -53,15 +52,16 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     clone(): Scene {
-      var labels = this._labels.map(function (label: FrameLabel) { return label.clone(); });
-      return new Scene(this._name, labels, this.offset, this._numFrames);
+      var labels_ = this._labels.value.map(function (label: FrameLabel) { return label.clone(); });
+      return new this.sec.flash.display.Scene(this._name, this.sec.createArrayUnsafe(labels_),
+                                              this.offset, this._numFrames);
     }
 
     getLabelByName(name: string, ignoreCase: boolean): FrameLabel {
       if (ignoreCase) {
         name = name.toLowerCase();
       }
-      var labels = this._labels;
+      var labels = this._labels.value;
       for (var i = 0; i < labels.length; i++) {
         var label = labels[i];
         if (ignoreCase ? label.name.toLowerCase() === name : label.name === name) {
@@ -72,7 +72,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     getLabelByFrame(frame: number): FrameLabel {
-      var labels = this._labels;
+      var labels = this._labels.value;
       for (var i = 0; i < labels.length; i++) {
         var label = labels[i];
         if (label.frame === frame) {

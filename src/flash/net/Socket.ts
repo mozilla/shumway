@@ -14,22 +14,16 @@
  * limitations under the License.
  */
 // Class: Socket
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import Errors = Shumway.AVM2.Errors;
-  import throwError = Shumway.AVM2.Runtime.throwError;
 
   export class Socket extends flash.events.EventDispatcher implements flash.utils.IDataInput, flash.utils.IDataOutput {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -37,9 +31,8 @@ module Shumway.AVM2.AS.flash.net {
     static instanceSymbols: string [] = null; // ["timeout", "timeout", "connect", "close"];
     
     constructor (host: string = null, port: number /*int*/ = 0) {
-      host = asCoerceString(host); port = port | 0;
-      false && super(undefined);
-      dummyConstructor("public flash.net.Socket");
+      super(undefined);
+      host = axCoerceString(host); port = port | 0;
     }
     
     // JS -> AS Bindings
@@ -78,7 +71,7 @@ module Shumway.AVM2.AS.flash.net {
       // return this._endian;
     }
     set endian(type: string) {
-      type = asCoerceString(type);
+      type = axCoerceString(type);
       notImplemented("public flash.net.Socket::set endian"); return;
       // this._endian = type;
     }
@@ -123,15 +116,15 @@ module Shumway.AVM2.AS.flash.net {
       notImplemented("public flash.net.Socket::writeDouble"); return;
     }
     writeMultiByte(value: string, charSet: string): void {
-      value = asCoerceString(value); charSet = asCoerceString(charSet);
+      value = axCoerceString(value); charSet = axCoerceString(charSet);
       notImplemented("public flash.net.Socket::writeMultiByte"); return;
     }
     writeUTF(value: string): void {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.net.Socket::writeUTF"); return;
     }
     writeUTFBytes(value: string): void {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.net.Socket::writeUTFBytes"); return;
     }
     readBoolean(): boolean {
@@ -162,7 +155,7 @@ module Shumway.AVM2.AS.flash.net {
       notImplemented("public flash.net.Socket::readDouble"); return;
     }
     readMultiByte(length: number /*uint*/, charSet: string): string {
-      length = length >>> 0; charSet = asCoerceString(charSet);
+      length = length >>> 0; charSet = axCoerceString(charSet);
       notImplemented("public flash.net.Socket::readMultiByte"); return;
     }
     readUTF(): string {
@@ -183,14 +176,14 @@ module Shumway.AVM2.AS.flash.net {
       notImplemented("public flash.net.Socket::readObject"); return;
     }
     internalGetSecurityErrorMessage(host, port): string {
-      host = asCoerceString(host); port |= 0;
+      host = axCoerceString(host); port |= 0;
       somewhatImplemented("flash.net.Socket::internalGetSecurityErrorMessage");
       return 'SecurityErrorEvent';
     }
     internalConnect(host, port) {
-      host = asCoerceString(host); port |= 0;
+      host = axCoerceString(host); port |= 0;
       somewhatImplemented("flash.net.Socket::internalConnect");
-      throwError('SecurityError', Errors.SocketConnectError, host, port);
+      this.sec.throwError('SecurityError', Errors.SocketConnectError, host, port);
     }
     didFailureOccur(): boolean {
       somewhatImplemented("flash.net.Socket::didFailureOccur");

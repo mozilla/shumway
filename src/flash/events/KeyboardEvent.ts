@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 // Class: KeyboardEvent
-module Shumway.AVM2.AS.flash.events {
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
+module Shumway.AVMX.AS.flash.events {
 
   export class KeyboardEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
@@ -29,8 +27,13 @@ module Shumway.AVM2.AS.flash.events {
                 charCodeValue: number /*uint*/ = 0, keyCodeValue: number /*uint*/ = 0,
                 keyLocationValue: number /*uint*/ = 0, ctrlKeyValue: boolean = false,
                 altKeyValue: boolean = false, shiftKeyValue: boolean = false) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.KeyboardEvent");
+      super(type, bubbles, cancelable);
+      this._charCode = charCodeValue >>> 0;
+      this._keyCode = keyCodeValue >>> 0;
+      this._keyLocation = keyLocationValue >>> 0;
+      this._ctrlKey = !!ctrlKeyValue;
+      this._altKey = !!altKeyValue;
+      this._shiftKey = !!shiftKeyValue;
     }
 
     static KEY_DOWN: string = "keyDown";
@@ -81,9 +84,11 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     clone(): Event {
-      return new events.KeyboardEvent(this.type, this.bubbles, this.cancelable, this.charCode,
-                                      this.keyCode, this.keyLocation, this.ctrlKey, this.altKey,
-                                      this.shiftKey);
+      return new this.sec.flash.events.KeyboardEvent(this.type, this.bubbles,
+                                                                this.cancelable, this.charCode,
+                                                                this.keyCode, this.keyLocation,
+                                                                this.ctrlKey, this.altKey,
+                                                                this.shiftKey);
     }
 
     toString(): string {
@@ -93,7 +98,7 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     updateAfterEvent(): void {
-      Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'].requestRendering();
+      this.sec.player.requestRendering();
     }
   }
 }

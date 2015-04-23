@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 // Class: ContextMenuBuiltInItems
-module Shumway.AVM2.AS.flash.ui {
-  export class ContextMenuBuiltInItems extends ASNative {
+module Shumway.AVMX.AS.flash.ui {
+  export class ContextMenuBuiltInItems extends ASObject {
     
     static classInitializer: any = null;
-    static initializer: any = null;
-    static classSymbols: string [] = null; // [];
-    static instanceSymbols: string [] = null;
-    
+
     constructor () {
-      false && super();
+      super();
 
       this._save = true;
       this._zoom = true;
@@ -94,7 +91,7 @@ module Shumway.AVM2.AS.flash.ui {
     }
 
     clone(): ContextMenuBuiltInItems {
-      var items = new ui.ContextMenuBuiltInItems();
+      var items = new this.sec.flash.ui.ContextMenuBuiltInItems();
       items._save = this._save;
       items._zoom = this._zoom;
       items._quality = this._quality;

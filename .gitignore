@@ -1,5 +1,6 @@
 *~
 .DS_Store
+.idea/*
 
 src/avm2/generated/
 
@@ -19,3 +20,7 @@ src/flash/classes/
 node_modules/
 
 build/
+*.tmp
+*.run
+test_swf_avm2.baseline
+test/arch/swfs

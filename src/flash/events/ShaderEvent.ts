@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 // Class: ShaderEvent
-module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
+module Shumway.AVMX.AS.flash.events {
   export class ShaderEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
@@ -28,8 +25,7 @@ module Shumway.AVM2.AS.flash.events {
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 bitmap: flash.display.BitmapData = null, array: flash.utils.ByteArray = null,
                 vector: ASVector<any> = null) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.ShaderEvent");
+      super(type, bubbles, cancelable);
     }
 
     // JS -> AS Bindings

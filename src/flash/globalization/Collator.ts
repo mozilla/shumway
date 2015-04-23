@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: Collator
-module Shumway.AVM2.AS.flash.globalization {
+module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Collator extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class Collator extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,8 @@ module Shumway.AVM2.AS.flash.globalization {
     static instanceSymbols: string [] = null; // [];
     
     constructor (requestedLocaleIDName: string, initialMode: string = "sorting") {
-      requestedLocaleIDName = asCoerceString(requestedLocaleIDName); initialMode = asCoerceString(initialMode);
-      false && super();
-      dummyConstructor("public flash.globalization.Collator");
+      requestedLocaleIDName = axCoerceString(requestedLocaleIDName); initialMode = axCoerceString(initialMode);
+      super();
     }
     
     // JS -> AS Bindings
@@ -122,15 +117,15 @@ module Shumway.AVM2.AS.flash.globalization {
       // return this._requestedLocaleIDName;
     }
     compare(string1: string, string2: string): number /*int*/ {
-      string1 = asCoerceString(string1); string2 = asCoerceString(string2);
+      string1 = axCoerceString(string1); string2 = axCoerceString(string2);
       notImplemented("public flash.globalization.Collator::compare"); return;
     }
     equals(string1: string, string2: string): boolean {
-      string1 = asCoerceString(string1); string2 = asCoerceString(string2);
+      string1 = axCoerceString(string1); string2 = axCoerceString(string2);
       notImplemented("public flash.globalization.Collator::equals"); return;
     }
     ctor(requestedLocaleIDName: string, initialMode: string): void {
-      requestedLocaleIDName = asCoerceString(requestedLocaleIDName); initialMode = asCoerceString(initialMode);
+      requestedLocaleIDName = axCoerceString(requestedLocaleIDName); initialMode = axCoerceString(initialMode);
       notImplemented("public flash.globalization.Collator::ctor"); return;
     }
   }

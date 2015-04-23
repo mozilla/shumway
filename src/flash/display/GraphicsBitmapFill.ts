@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 // Class: GraphicsBitmapFill
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class GraphicsBitmapFill extends ASNative implements IGraphicsFill, IGraphicsData {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class GraphicsBitmapFill extends ASObject implements IGraphicsFill, IGraphicsData {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -32,7 +29,7 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = null; // ["bitmapData", "matrix", "repeat", "smooth"];
     
     constructor (bitmapData: flash.display.BitmapData = null, matrix: flash.geom.Matrix = null, repeat: boolean = true, smooth: boolean = false) {
-      false && super();
+      super();
       this.bitmapData = bitmapData;
       this.matrix = matrix;
       this.repeat = !!repeat;

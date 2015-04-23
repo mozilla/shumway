@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: Multitouch
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Multitouch extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class Multitouch extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -34,14 +30,9 @@ module Shumway.AVM2.AS.flash.ui {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.ui.Multitouch");
+      super();
     }
     
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
     // static _inputMode: string;
     // static _supportsTouchEvents: boolean;
     // static _supportsGestureEvents: boolean;
@@ -53,7 +44,7 @@ module Shumway.AVM2.AS.flash.ui {
       // return this._inputMode;
     }
     static set inputMode(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.ui.Multitouch::set inputMode"); return;
       // this._inputMode = value;
     }
@@ -67,7 +58,7 @@ module Shumway.AVM2.AS.flash.ui {
       return false;
       // return this._supportsGestureEvents;
     }
-    static get supportedGestures(): ASVector<any> {
+    static get supportedGestures(): GenericVector {
       somewhatImplemented("public flash.ui.Multitouch::get supportedGestures");
       return null;
       // return this._supportedGestures;

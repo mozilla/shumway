@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 // Class: DropShadowFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
   import assert = Shumway.Debug.assert;
   import Rectangle = flash.geom.Rectangle;
 
   export class DropShadowFilter extends flash.filters.BitmapFilter {
 
+    static axClass: typeof DropShadowFilter;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
 
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -43,7 +42,7 @@ module Shumway.AVM2.AS.flash.filters {
       var angle: number = obj.angle * 180 / Math.PI;
       // obj.compositeSource maps to !hideObject
       var hideObject: boolean = !obj.compositeSource;
-      return new DropShadowFilter(
+      return new this.sec.flash.filters.DropShadowFilter(
         obj.distance,
         angle,
         color,
@@ -58,8 +57,12 @@ module Shumway.AVM2.AS.flash.filters {
       );
     }
 
-    constructor (distance: number = 4, angle: number = 45, color: number /*uint*/ = 0, alpha: number = 1, blurX: number = 4, blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1, inner: boolean = false, knockout: boolean = false, hideObject: boolean = false) {
-      false && super();
+    constructor(distance: number = 4, angle: number = 45, color: number /*uint*/ = 0,
+                alpha: number = 1, blurX: number = 4, blurY: number = 4, strength: number = 1,
+                quality: number /*int*/ = 1, inner: boolean = false, knockout: boolean = false,
+                hideObject: boolean = false)
+    {
+      super();
       this.distance = distance;
       this.angle = angle;
       this.color = color;
@@ -182,7 +185,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return new DropShadowFilter(
+      return new this.sec.flash.filters.DropShadowFilter(
         this._distance,
         this._angle,
         this._color,

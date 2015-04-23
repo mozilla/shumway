@@ -25,6 +25,8 @@ public dynamic class Object
 
   static native function init();
 
+  public native function Object();
+
   // Delay proto functions until class Function is initialized.
   internal native static function _init();
 }

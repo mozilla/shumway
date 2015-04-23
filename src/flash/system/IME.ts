@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: IME
-module Shumway.AVM2.AS.flash.system {
+module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class IME extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // ["isSupported"];
     
@@ -33,8 +29,7 @@ module Shumway.AVM2.AS.flash.system {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.system.IME");
+      super();
     }
     
     // JS -> AS Bindings
@@ -59,12 +54,12 @@ module Shumway.AVM2.AS.flash.system {
       // return this._conversionMode;
     }
     set conversionMode(mode: string) {
-      mode = asCoerceString(mode);
+      mode = axCoerceString(mode);
       notImplemented("public flash.system.IME::set conversionMode"); return;
       // this._conversionMode = mode;
     }
     static setCompositionString(composition: string): void {
-      composition = asCoerceString(composition);
+      composition = axCoerceString(composition);
       notImplemented("public flash.system.IME::static setCompositionString"); return;
     }
     static doConversion(): void {

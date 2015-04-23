@@ -1,8 +1,0 @@
---- /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11285-54586-1yak5kb	2012-09-07 13:57:17.000000000 -0700
-+++ /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11285-54586-1mho2rt	2012-09-07 13:57:17.000000000 -0700
-@@ -52,4 +52,4 @@
- Number.min(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY) = -Infinity PASSED!
- Number.min(Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY) = -Infinity PASSED!
- Number.min(Number.MIN_VALUE, 0) = 0 PASSED!
--Number.min(Number.POSITIVE_INFINITY, Number.MAX_VALUE) = 1.79769313486231e+308 PASSED!
-+Number.min(Number.POSITIVE_INFINITY, Number.MAX_VALUE) = 1.7976931348623157e+308 PASSED!

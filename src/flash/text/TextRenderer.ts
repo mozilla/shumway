@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: TextRenderer
-module Shumway.AVM2.AS.flash.text {
+module Shumway.AVMX.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class TextRenderer extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class TextRenderer extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,14 +29,9 @@ module Shumway.AVM2.AS.flash.text {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.text.TextRenderer");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
+
     // static _antiAliasType: string;
     // static _maxLevel: number /*int*/;
     // static _displayMode: string;
@@ -49,7 +40,7 @@ module Shumway.AVM2.AS.flash.text {
       // return this._antiAliasType;
     }
     set antiAliasType(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.text.TextRenderer::set antiAliasType"); return;
       // this._antiAliasType = value;
     }
@@ -67,12 +58,12 @@ module Shumway.AVM2.AS.flash.text {
       // return this._displayMode;
     }
     set displayMode(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       notImplemented("public flash.text.TextRenderer::set displayMode"); return;
       // this._displayMode = value;
     }
-    static setAdvancedAntiAliasingTable(fontName: string, fontStyle: string, colorType: string, advancedAntiAliasingTable: any []): void {
-      fontName = asCoerceString(fontName); fontStyle = asCoerceString(fontStyle); colorType = asCoerceString(colorType); advancedAntiAliasingTable = advancedAntiAliasingTable;
+    static setAdvancedAntiAliasingTable(fontName: string, fontStyle: string, colorType: string, advancedAntiAliasingTable: ASArray): void {
+      fontName = axCoerceString(fontName); fontStyle = axCoerceString(fontStyle); colorType = axCoerceString(colorType); advancedAntiAliasingTable = advancedAntiAliasingTable;
       notImplemented("public flash.text.TextRenderer::static setAdvancedAntiAliasingTable"); return;
     }
     

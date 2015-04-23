@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 // Class: IIMEClient
-module Shumway.AVM2.AS.flash.text.ime {
+module Shumway.AVMX.AS.flash.text.ime {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export interface IIMEClient {
     
     // JS -> AS Bindings
