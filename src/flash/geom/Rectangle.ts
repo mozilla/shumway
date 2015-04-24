@@ -167,11 +167,12 @@ module Shumway.AVMX.AS.flash.geom {
       return this.width <= 0 || this.height <= 0;
     }
 
-    public setEmpty(): void {
+    public setEmpty(): Rectangle {
       this.x = 0;
       this.y = 0;
       this.width = 0;
       this.height = 0;
+      return this;
     }
 
     public inflate(dx: number, dy: number): void {
@@ -227,8 +228,8 @@ module Shumway.AVMX.AS.flash.geom {
     }
 
     public intersects(toIntersect: Rectangle): boolean {
-      return Math.max(this.x, toIntersect.x) <= Math.min(this.right, toIntersect.right)
-        && Math.max(this.y, toIntersect.y) <= Math.min(this.bottom, toIntersect.bottom);
+      return Math.max(this.x, toIntersect.x) <= Math.min(this.right, toIntersect.right) &&
+             Math.max(this.y, toIntersect.y) <= Math.min(this.bottom, toIntersect.bottom);
     }
 
     public intersectInPlace(clipRect: Rectangle): Rectangle {

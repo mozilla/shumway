@@ -37,7 +37,9 @@ module Shumway.AVMX.AS.flash.display {
 
     static axClass: typeof BitmapData;
 
-    static classInitializer: any = null;
+    static classInitializer() {
+      this._temporaryRectangle = new this.sec.flash.geom.Rectangle();
+    }
 
     _symbol: BitmapSymbol;
     applySymbol() {
@@ -194,22 +196,13 @@ module Shumway.AVMX.AS.flash.display {
     _solidFillColorPBGRA: any; // any | number;
 
     /**
-     * Pool of temporary rectangles that is used to prevent allocation. We don't need more than 3
-     * for now.
+     * Temporary rectangle that is used to prevent allocation.
      */
-    private static _temporaryRectangles: flash.geom.Rectangle [] = [
-      new flash.geom.Rectangle(),
-      new flash.geom.Rectangle(),
-      new flash.geom.Rectangle()
-    ];
+    private static _temporaryRectangle: flash.geom.Rectangle;
 
-    private _getTemporaryRectangleFrom(rect: flash.geom.Rectangle,
-                                       index: number = 0): flash.geom.Rectangle {
-      release || assert (index >= 0 && index < BitmapData._temporaryRectangles.length);
-      var r = BitmapData._temporaryRectangles[index];
-      if (rect) {
-        r.copyFrom(rect);
-      }
+    private _getTemporaryRectangleFrom(rect: flash.geom.Rectangle): flash.geom.Rectangle {
+      var r = this.axClass._temporaryRectangle;
+      r.copyFrom(rect);
       return r;
     }
 
@@ -418,7 +411,7 @@ module Shumway.AVMX.AS.flash.display {
                destPoint: flash.geom.Point,
                alphaBitmapData: flash.display.BitmapData = null,
                alphaPoint: flash.geom.Point = null,
-               mergeAlpha: boolean = false): void
+               mergeAlpha?: boolean): void
     {
       mergeAlpha = !!mergeAlpha;
 
@@ -430,7 +423,12 @@ module Shumway.AVMX.AS.flash.display {
       // Deal with fractional pixel coordinates, looks like Flash "rounds" the corners of
       // the source rect, however a width of |0.5| rounds down rather than up so we're not
       // quite correct here.
-      var sRect = this._getTemporaryRectangleFrom(sourceRect, 0).roundInPlace();
+      var sRect;
+      if (sourceRect) {
+        sRect = this._getTemporaryRectangleFrom(sourceRect).roundInPlace();
+      } else {
+        sRect = this.axClass._temporaryRectangle.setEmpty();
+      }
 
       var tBRect = this._rect;
       var sBRect = sourceBitmapData._rect;
@@ -445,8 +443,8 @@ module Shumway.AVMX.AS.flash.display {
       var oX = sL - sRect.x ;
       var oY = sT - sRect.y;
 
-      var tL = destPoint.x | 0 + oX;
-      var tT = destPoint.y | 0 + oY;
+      var tL = (destPoint.x | 0) + oX;
+      var tT = (destPoint.y | 0) + oY;
 
       if (tL < 0) {
         sL -= tL;
