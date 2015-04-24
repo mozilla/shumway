@@ -333,6 +333,12 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, '$BgtoLocaleString', asProto.toString);
     }
 
+    constructor() {
+      // To prevent accidental instantiation of template classes, make sure that we throw
+      // right during construction.
+      release || checkValue(this);
+    }
+
     static _init() {
       // Nop.
     }
