@@ -41,6 +41,9 @@ module Shumway.AVMX {
 
     public topScope(): Scope {
       if (!this.scopes) {
+        if (this.stack.length === 0) {
+          return this.parent;
+        }
         this.scopes = [];
       }
       var parent = this.parent;
