@@ -95,10 +95,11 @@ module Shumway.AVMX {
   }
 
 
-  export function interpret(self: Object, methodInfo: MethodInfo, savedScope: Scope, args: any []) {
+  export function interpret(self: Object, methodInfo: MethodInfo, savedScope: Scope, args: any [],
+                            callee: AXFunction) {
     executionWriter && executionWriter.enter("> " + methodInfo);
     try {
-      var result = _interpret(self, methodInfo, savedScope, args);
+      var result = _interpret(self, methodInfo, savedScope, args, callee);
       executionWriter && executionWriter.leave("< " + methodInfo.trait);
       return result;
     } catch (e) {
@@ -107,7 +108,8 @@ module Shumway.AVMX {
     }
   }
 
-  function _interpret(self: Object, methodInfo: MethodInfo, savedScope: Scope, callArgs: any []) {
+  function _interpret(self: Object, methodInfo: MethodInfo, savedScope: Scope, callArgs: any [],
+                      callee: AXFunction) {
     var applicationDomain = methodInfo.abc.applicationDomain;
     var sec = applicationDomain.sec;
 
@@ -145,9 +147,15 @@ module Shumway.AVMX {
     }
 
     if (methodInfo.needsRest()) {
-      local.push(sec.createArray(sliceArguments(callArgs, methodInfo.parameters.length)));
+      local.push(sec.createArrayUnsafe(sliceArguments(callArgs, methodInfo.parameters.length)));
     } else if (methodInfo.needsArguments()) {
-      local.push(sec.createArray(sliceArguments(callArgs, 0)));
+      var argsArray = sliceArguments(callArgs, 0);
+      var argumentsArray = Object.create(sec.argumentsPrototype);
+      argumentsArray.value = argsArray;
+      argumentsArray.callee = callee;
+      argumentsArray.receiver = self;
+      argumentsArray.methodInfo = methodInfo;
+      local.push(argumentsArray);
     }
 
     var args = [];

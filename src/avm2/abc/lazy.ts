@@ -311,7 +311,7 @@ module Shumway.AVMX {
     } else {
       method = function () {
         var self = this === jsGlobal ? scope.global.object : this;
-        return interpret(self, methodInfo, scope, <any>arguments);
+        return interpret(self, methodInfo, scope, <any>arguments, null);
       };
       if (!release) {
         method.toString = function () {
