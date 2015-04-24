@@ -42,7 +42,8 @@ var stateDefaults = {
   remoteEnabled: false,
   remoteSWF: '',
   remoteAutoReload: true,
-  recordingLimit: 0
+  recordingLimit: 0,
+  flashlogEnabled: false
 };
 
 for (var option in stateDefaults) {
@@ -144,6 +145,7 @@ var GUI = (function () {
   inspectorOptions.add(state, "remoteSWF").onChange(saveInspectorOption);
   inspectorOptions.add(state, "remoteAutoReload").onChange(saveInspectorOption);
   inspectorOptions.add(state, "recordingLimit").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "flashlogEnabled").onChange(saveInspectorOption);
   //inspectorOptions.add(state, "mute").onChange(saveInspectorOption);
   if (state.folderOpen) {
     inspectorOptions.open();
