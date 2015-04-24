@@ -115,14 +115,14 @@ module Shumway.AVMX.AS {
       this._length = length;
     }
 
-    static axApply(self: Uint32Vector, args: any[]) {
+    static axApply(_: AXObject, args: any[]) {
       var object = args[0];
-      if (self.sec.Uint32Vector.axIsType(object)) {
+      if (this.axIsType(object)) {
         return object;
       }
       var length = object.axGetPublicProperty("length");
       if (length !== undefined) {
-        var v = new self.sec.Uint32Vector(length, false);
+        var v = this.axConstruct([length, false]);
         for (var i = 0; i < length; i++) {
           v.axSetNumericProperty(i, object.axGetPublicProperty(i));
         }
