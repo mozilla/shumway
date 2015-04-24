@@ -433,6 +433,7 @@ module.exports = function(grunt) {
     var closureCmd = 'java';
     var closureArgs = ['-jar', 'utils/closure.jar',
       '--formatting', 'PRETTY_PRINT',
+      '--define', 'release=true',
       '--compilation_level', 'SHUMWAY_OPTIMIZATIONS',
       '--language_in', 'ECMASCRIPT5'];
     if (!warnings) {

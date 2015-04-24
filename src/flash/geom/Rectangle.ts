@@ -54,8 +54,8 @@ module Shumway.AVMX.AS.flash.geom {
       var xMin = bounds.xMin;
       var yMin = bounds.yMin;
       return new this.sec.flash.geom.Rectangle(xMin / 20, yMin / 20,
-                                                          (bounds.xMax - xMin) / 20,
-                                                          (bounds.yMax - yMin) / 20);
+                                               (bounds.xMax - xMin) / 20,
+                                               (bounds.yMax - yMin) / 20);
     }
 
     public set native_x(x: number) {
