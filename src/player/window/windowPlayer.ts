@@ -98,7 +98,10 @@ module Shumway.Player.Window {
         data: data,
         requestId: requestId
       };
-      this._parent.postMessage(message, '*');
+      // Unfortunately we have to make this message synchronously since scripts in the same frame
+      // might rely on it being available in the gfx backend when requesting text measurements.
+      // Just another disadvantage of not doing our our own text shaping.
+      this._sendSyncMessage(message);
       return result.promise;
     }
 
