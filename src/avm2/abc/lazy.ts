@@ -320,6 +320,19 @@ module Shumway.AVMX {
         method.isInterpreted = true;
       }
     }
+    if (!release && flashlog && methodInfo.trait) {
+      method = (function (wrapped, methodInfo) {
+        var traceMsg = methodInfo.toFlashlogString();
+        var result: any = function () {
+          flashlog.writeAS3Trace(traceMsg);
+          return wrapped.apply(this, arguments);
+        };
+        result.toString = wrapped.toString;
+        result.isInterpreted = wrapped.isInterpreted;
+        return result;
+      })(method, methodInfo);
+    }
+
     methodTraitInfo.method = method;
     method.methodInfo = methodInfo;
     if (!release) {
@@ -390,6 +403,11 @@ module Shumway.AVMX {
 
     toString() {
       return TRAIT[this.kind] + " " + this.name;
+    }
+
+    toFlashlogString(): string {
+      this.resolve();
+      return this.getName().toFlashlogString();
     }
 
     isConst(): boolean {
@@ -744,6 +762,10 @@ module Shumway.AVMX {
       return "InstanceInfo " + this.getName().name;
     }
 
+    toFlashlogString(): string {
+      return this.getName().toFlashlogString();
+    }
+
     trace(writer: IndentingWriter) {
       writer.enter("InstanceInfo: " + this.getName());
       this.superName && writer.writeLn("Super: " + this.getSuperName());
@@ -963,6 +985,29 @@ module Shumway.AVMX {
       return str;
     }
 
+    toFlashlogString(): string {
+      var trait = this.trait;
+      var prefix = trait.kind === TRAIT.Getter ? 'get ' :
+                   trait.kind === TRAIT.Setter ? 'set ' : '';
+      var name = trait.toFlashlogString();
+      var holder = trait.holder;
+      var holderName;
+      if (holder && holder instanceof InstanceInfo) {
+        holderName = (<InstanceInfo>holder).toFlashlogString();
+        prefix = holderName + '/' + prefix;
+      }
+      if (holder && holder instanceof ClassInfo && (<ClassInfo>holder).trait) {
+        holderName = (<ClassInfo>holder).trait.toFlashlogString();
+        prefix = holderName + '$/' + prefix;
+      }
+      var prefixPos;
+      if (holderName && (prefixPos = name.indexOf('::')) > 0 &&
+          holderName.indexOf(name.substring(0, prefixPos + 2)) === 0) {
+        name = name.substring(prefixPos + 2);
+      }
+      return 'MTHD ' + prefix + name + ' ()';
+    }
+
     isNative(): boolean {
       return !!(this.flags & METHOD.Native);
     }
@@ -1166,6 +1211,11 @@ module Shumway.AVMX {
         str += "<" + this.parameterType + ">";
       }
       return str;
+    }
+
+    toFlashlogString(): string {
+      var namespaceUri = this.uri;
+      return namespaceUri ? namespaceUri + "::" + this.name : this.name;
     }
 
     /**

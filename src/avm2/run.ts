@@ -1233,7 +1233,9 @@ module Shumway.AVMX {
     }
 
     createFunction(methodInfo: MethodInfo, scope: Scope, hasDynamicScope: boolean): AXFunction {
+      var traceMsg = !release && flashlog && methodInfo.trait ? methodInfo.toFlashlogString() : null;
       var fun = this.boxFunction(function () {
+        release || (traceMsg && flashlog.writeAS3Trace(methodInfo.toFlashlogString()));
         var self = this === jsGlobal ? scope.global.object : this;
         return interpret(self, methodInfo, scope, <any>arguments);
       });
@@ -1251,11 +1253,13 @@ module Shumway.AVMX {
 
     createInitializerFunction(classInfo: ClassInfo, scope: Scope): AXCallable {
       var methodInfo = classInfo.instanceInfo.getInitializer();
+      var traceMsg = !release && flashlog && methodInfo.trait ? methodInfo.toFlashlogString() : null;
       var fun = AS.getNativeInitializer(classInfo);
       if (!fun) {
         release || assert(!methodInfo.isNative(), "Must provide a native initializer for " +
                                                   classInfo.instanceInfo.getClassName());
         fun = function () {
+          release || (traceMsg && flashlog.writeAS3Trace(methodInfo.toFlashlogString()));
           return interpret(this, methodInfo, scope, <any>arguments);
         };
         if (!release) {
