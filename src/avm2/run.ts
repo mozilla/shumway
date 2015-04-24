@@ -354,6 +354,27 @@ module Shumway.AVMX {
     return false;
   }
 
+  /**
+   * Returns the current interpreter frame's callee.
+   */
+  function axGetArgumentsCallee(): AXFunction {
+    var callee = this.callee;
+    if (callee) {
+      return callee;
+    }
+    release || assert(this.receiver);
+    release || assert(this.methodInfo);
+    if (this.methodInfo.trait === null) {
+      console.error('arguments.callee used on trait-less methodInfo function. Probably a constructor');
+      return null;
+    }
+    release || assert(this.methodInfo.trait);
+    var mn = this.methodInfo.trait.name;
+    var methodClosure = this.receiver.axGetProperty(mn);
+    release || assert(this.sec.AXMethodClosure.tPrototype === Object.getPrototypeOf(methodClosure));
+    return methodClosure;
+  }
+
   export function axDefaultCompareFunction(a, b) {
     return String(a).localeCompare(String(b));
   }
@@ -986,6 +1007,7 @@ module Shumway.AVMX {
     }
 
     public objectPrototype: AXObject;
+    public argumentsPrototype: AXObject;
     private rootClassPrototype: AXObject;
 
     private nativeClasses: any;
@@ -1126,7 +1148,9 @@ module Shumway.AVMX {
     }
 
     /**
-     * Constructs an AXArray in this security domain and sets its value to the given array.
+     * Constructs an AXArray in this security domain and copies all enumerable properties of
+     * the given array, setting them as public properties on the AXArray.
+     * Warning: this does not use the given Array as the `value`.
      */
     createArray(value: any[]) {
       var array = this.createArrayUnsafe([]);
@@ -1199,7 +1223,7 @@ module Shumway.AVMX {
       AS.tryLinkNativeClass(axClass);
 
       // Run the static initializer.
-      interpret(axClass, classInfo.getInitializer(), classScope, [axClass]);
+      interpret(axClass, classInfo.getInitializer(), classScope, [axClass], null);
       return axClass;
     }
 
@@ -1237,13 +1261,13 @@ module Shumway.AVMX {
       var fun = this.boxFunction(function () {
         release || (traceMsg && flashlog.writeAS3Trace(methodInfo.toFlashlogString()));
         var self = this === jsGlobal ? scope.global.object : this;
-        return interpret(self, methodInfo, scope, <any>arguments);
+        return interpret(self, methodInfo, scope, <any>arguments, fun);
       });
       //fun.methodInfo = methodInfo;
       fun.receiver = {scope: scope};
       if (!release) {
         try {
-          Object.defineProperty(fun, 'name', {value: methodInfo.getName()});
+          Object.defineProperty(fun.value, 'name', {value: methodInfo.getName()});
         } catch (e) {
           // Ignore errors in browsers that don't allow overriding Function#length;
         }
@@ -1260,7 +1284,7 @@ module Shumway.AVMX {
                                                   classInfo.instanceInfo.getClassName());
         fun = function () {
           release || (traceMsg && flashlog.writeAS3Trace(methodInfo.toFlashlogString()));
-          return interpret(this, methodInfo, scope, <any>arguments);
+          return interpret(this, methodInfo, scope, <any>arguments, null);
         };
         if (!release) {
           try {
@@ -1527,6 +1551,9 @@ module Shumway.AVMX {
       // Array.prototype is an Array, and behaves like one.
       AXArray.dPrototype['value'] = [];
 
+      this.argumentsPrototype = Object.create(this.AXArray.tPrototype);
+      Object.defineProperty(this.argumentsPrototype, '$Bgcallee', {get: axGetArgumentsCallee});
+
       var AXRegExp = this.prepareNativeClass("AXRegExp", "RegExp", false);
       // RegExp.prototype is an (empty string matching) RegExp, and behaves like one.
       AXRegExp.dPrototype['value'] = /(?:)/;
@@ -1617,7 +1644,7 @@ module Shumway.AVMX {
       var global = this.sec.createAXGlobal(this, scriptInfo);
       scriptInfo.global = global;
       scriptInfo.state = ScriptInfoState.Executing;
-      interpret(<any>global, scriptInfo.getInitializer(), global.scope, []);
+      interpret(<any>global, scriptInfo.getInitializer(), global.scope, [], null);
       scriptInfo.state = ScriptInfoState.Executed;
     }
 

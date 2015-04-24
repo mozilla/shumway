@@ -4216,3 +4216,20 @@ describeType used by YouTube
 3: abc
 4: def
 5: ghi
+::: test/avm2/shumway/arguments-callee.abc :::
+constructor:
+[object CalleeTest]
+
+inner function:
+function Function() {}
+true
+
+trait function:
+[object CalleeTest]
+[class MethodClosure]
+true
+
+extracted trait function:
+[object CalleeTest]
+[class MethodClosure]
+callee is memoized: true

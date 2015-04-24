@@ -165,3 +165,4 @@ test/avm2/shumway/byte-arrays-2.abc
 test/avm2/shumway/byte-arrays-3.abc
 test/avm2/shumway/you-0.abc
 test/avm2/shumway/describetype.abc
+test/avm2/shumway/arguments-callee.abc
