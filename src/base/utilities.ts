@@ -28,8 +28,8 @@ declare var putstr;
 // declare var document;
 // declare var getComputedStyle;
 
-/** @const */ var release: boolean = true; // by default 'true' -- we are folding constants in closure compiler
-/** @const */ var profile: boolean = false;
+/** @define {boolean} */ var release = false;
+/** @define {boolean} */ var profile = false;
 
 declare var dump: (message: string) => void;
 
