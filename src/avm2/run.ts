@@ -1214,7 +1214,11 @@ module Shumway.AVMX {
       } else {
         var rootClassTraits = this.AXClass.classInfo.instanceInfo.runtimeTraits;
         release || assert(rootClassTraits);
-        classTraits = classInfo.traits.resolveRuntimeTraits(rootClassTraits, null, scope);
+        // Class traits don't capture the class' scope. This is relevant because it allows
+        // referring to global names that would be shadowed if the class scope were active.
+        // Haxe's stdlib uses just such constructs, e.g. Std.parseFloat calls the global
+        // parseFloat.
+        classTraits = classInfo.traits.resolveRuntimeTraits(rootClassTraits, null, scope.parent);
       }
       classInfo.runtimeTraits = classTraits;
       applyTraits(axClass, classTraits);

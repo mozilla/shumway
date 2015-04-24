@@ -1585,9 +1585,8 @@ module Shumway.AVMX {
      */
     public getNamespace(i: number): Namespace {
       if (i < 0 || i >= this._namespaceOffsets.length) {
-        this.applicationDomain.sec.throwError("VerifierError",
-                                                         Errors.CpoolIndexRangeError, i,
-                                                         this._namespaceOffsets.length);
+        this.applicationDomain.sec.throwError("VerifierError", Errors.CpoolIndexRangeError, i,
+                                              this._namespaceOffsets.length);
       }
       if (i === 0) {
         return null;
@@ -1624,7 +1623,7 @@ module Shumway.AVMX {
           break;
         default:
           this.applicationDomain.sec.throwError("VerifierError",
-                                                           Errors.CpoolEntryWrongTypeError, i);
+                                                Errors.CpoolEntryWrongTypeError, i);
       }
       if (uri && type !== NamespaceType.Private) {
         // TODO: deal with API versions here. Those are suffixed to the uri. We used to
@@ -1644,9 +1643,8 @@ module Shumway.AVMX {
      */
     public getNamespaceSet(i: number): Namespace [] {
       if (i < 0 || i >= this._namespaceSets.length) {
-        this.applicationDomain.sec.throwError("VerifierError",
-                                                         Errors.CpoolIndexRangeError, i,
-                                                         this._namespaceSets.length);
+        this.applicationDomain.sec.throwError("VerifierError", Errors.CpoolIndexRangeError, i,
+                                              this._namespaceSets.length);
       }
       if (i === 0) {
         return null;
