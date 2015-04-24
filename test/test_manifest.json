@@ -394,6 +394,11 @@
        "swf": "swfs/MaskTest-2.swf",
        "type": "eq"
     },
+    {  "id": "MaskTest-3",
+      "frames": [4],
+      "swf": "swfs/MaskTest-3.swf",
+      "type": "eq"
+    },
     {  "id": "graphics-fills-ref",
       "frames": [1],
       "swf": "/examples/graphics/various-shapes.swf",

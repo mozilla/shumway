@@ -219,6 +219,9 @@ module Shumway.AVMX.AS.flash.display {
         // TODO: Implement proper reference counting.
         // child._removeReference();
       }
+      if (child._maskedObject) {
+        child._maskedObject.mask = null;
+      }
     }
 
     _canHaveGraphics(): boolean {

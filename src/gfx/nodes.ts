@@ -1075,8 +1075,11 @@ module Shumway.GFX {
     }
 
     set mask(value: Node) {
-      if (this._mask && this._mask !== value) {
-        this._mask.removeFlags(NodeFlags.IsMask);
+      if (this._mask !== value) {
+        this._node.invalidate();
+        if (this._mask) {
+          this._mask.removeFlags(NodeFlags.IsMask);
+        }
       }
       this._mask = value;
       if (this._mask) {

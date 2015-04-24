@@ -1453,6 +1453,9 @@ module Shumway.AVMX.AS.flash.display {
       if (value && value._maskedObject) {
         value._maskedObject.mask = null;
       }
+      if (this._mask) {
+        this._mask._maskedObject = null;
+      }
       this._mask = value;
       if (value) {
         value._maskedObject = this;
