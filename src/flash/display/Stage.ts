@@ -451,7 +451,7 @@ module Shumway.AVMX.AS.flash.display {
       if (!this._invalidated) {
         return;
       }
-      DisplayObject._broadcastFrameEvent(flash.events.Event.RENDER);
+      this.sec.flash.display.DisplayObject.axClass._broadcastFrameEvent(flash.events.Event.RENDER);
       this._invalidated = false;
     }
 
