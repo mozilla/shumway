@@ -51,7 +51,8 @@ function WebServer() {
   this.disableRangeRequests = false;
   this.hooks = {
     'GET': [],
-    'POST': []
+    'POST': [],
+    'DELETE': []
   };
 }
 WebServer.prototype = {

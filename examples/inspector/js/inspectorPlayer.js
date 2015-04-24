@@ -52,6 +52,9 @@ function runSwfPlayer(data) {
     Shumway.FileLoadingService.instance = new Shumway.Player.BrowserFileLoadingService();
     Shumway.FileLoadingService.instance.init(file, data.fileReadChunkSize);
   }
+  if (data.flashlog) {
+    Shumway.flashlog = new WebServerFlashLog();
+  }
   Shumway.SystemResourcesLoadingService.instance =
     new Shumway.Player.BrowserSystemResourcesLoadingService(builtinPath, playerglobalInfo);
   Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal).then(function (securityDomain) {

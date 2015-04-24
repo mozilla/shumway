@@ -521,9 +521,49 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('server', function () {
+    function isLogFileRequest(path) {
+      if (path.indexOf('/logs/') !== 0) {
+        return false;
+      }
+      return /^\/logs\/\w+\.(txt|log)$/i.test(path);
+    }
+    grunt.file.mkdir('build/logs/');
     var WebServer = require('./test/webserver.js').WebServer;
     var done = this.async();
     var server = new WebServer();
+    var url = require('url'), fs = require('fs');
+    server.hooks['POST'].push(function (req, res) {
+      var parsedUrl = url.parse(req.url, true);
+      var pathname = parsedUrl.pathname;
+      if (!isLogFileRequest(pathname)) {
+        return false;
+      }
+      var filename = 'build' + pathname;
+      var body = '';
+      req.on('data', function (data) {
+        body += data;
+      });
+      req.on('end', function () {
+        fs.appendFile(filename, body, function () {
+          res.writeHead(204, {'Content-Type': 'text/plain'});
+          res.end();
+        });
+      });
+      return true;
+    });
+    server.hooks['DELETE'].push(function (req, res) {
+      var parsedUrl = url.parse(req.url, true);
+      var pathname = parsedUrl.pathname;
+      if (!isLogFileRequest(pathname)) {
+        return false;
+      }
+      var filename = 'build' + pathname;
+      fs.unlink(filename, function () {
+        res.writeHead(204, {'Content-Type': 'text/plain'});
+        res.end();
+      });
+      return true;
+    });
     server.start();
   });
 

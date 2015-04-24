@@ -171,7 +171,7 @@ function executeFile(path, buffer, movieParams, remoteDebugging) {
       movieParams: movieParams, file: file, asyncLoading: asyncLoading,
       stageAlign: state.salign, stageScale: state.scale,
       fileReadChunkSize: state.fileReadChunkSize, loaderURL: state.loaderURL,
-      remoteDebugging: !!remoteDebugging});
+      remoteDebugging: !!remoteDebugging, flashlog: state.flashlogEnabled});
     return;
   }
 
@@ -199,6 +199,10 @@ function executeFile(path, buffer, movieParams, remoteDebugging) {
   } else {
     Shumway.FileLoadingService.instance = new Shumway.Player.BrowserFileLoadingService();
     Shumway.FileLoadingService.instance.init(file, state.fileReadChunkSize);
+  }
+
+  if (state.flashlogEnabled) {
+    Shumway.flashlog = new WebServerFlashLog();
   }
 
   Shumway.SystemResourcesLoadingService.instance =
