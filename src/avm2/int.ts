@@ -108,60 +108,76 @@ module Shumway.AVMX {
     }
   }
 
-  function _interpret(self: Object, methodInfo: MethodInfo, savedScope: Scope, callArgs: any [],
-                      callee: AXFunction) {
-    var applicationDomain = methodInfo.abc.applicationDomain;
-    var sec = applicationDomain.sec;
+  class InterpreterFrame {
+    public pc: number = 0;
+    public code: Uint8Array;
+    public body: MethodBodyInfo;
+    public stack: any[] = [];
+    public locals: any[];
+    public scopes: ScopeStack;
+    public app: AXApplicationDomain;
+    public sec: AXSecurityDomain;
 
-    var abc = methodInfo.abc;
-    var body = methodInfo.getBody();
-    release || assert(body);
+    private hasNext2Infos: HasNext2Info[] = null;
 
-    var local = [self];
-    var stack = [];
-    var scopes = new ScopeStack(savedScope);
-    var rn: Multiname = null;
+    constructor(receiver: Object, methodInfo: MethodInfo, parentScope: Scope, callArgs: any[],
+                callee: AXFunction) {
+      var body = this.body = methodInfo.getBody();
+      this.code = body.code;
+      this.scopes = new ScopeStack(parentScope);
+      var locals = this.locals = [receiver];
 
-    var argCount = callArgs.length;
-    var arg;
-    for (var i = 0, j = methodInfo.parameters.length; i < j; i++) {
-      var p = methodInfo.parameters[i];
-      if (i < argCount) {
-        arg = callArgs[i];
-      } else if (p.hasOptionalValue()) {
-        arg = p.getOptionalValue();
-      } else {
-        arg = undefined;
+      var app = this.app = methodInfo.abc.applicationDomain;
+      var sec = this.sec = app.sec;
+
+      var argCount = callArgs.length;
+      var arg;
+      for (var i = 0, j = methodInfo.parameters.length; i < j; i++) {
+        var p = methodInfo.parameters[i];
+        if (i < argCount) {
+          arg = callArgs[i];
+        } else if (p.hasOptionalValue()) {
+          arg = p.getOptionalValue();
+        } else {
+          arg = undefined;
+        }
+        var rn = p.getType();
+        if (rn && !rn.isAnyName()) {
+          var type = parentScope.getScopeProperty(rn, true, false);
+          if (!release && interpreterWriter) {
+            interpreterWriter.writeLn("Coercing argument to type " +
+                                      (type.axClass ? type.axClass.name.toFQNString(false) : type));
+          }
+          arg = type.axCoerce(arg);
+        }
+
+        locals.push(arg);
       }
-      rn = p.getType();
-      if (rn && !rn.isAnyName()) {
-        type = savedScope.getScopeProperty(rn, true, false);
-        interpreterWriter && interpreterWriter.writeLn("Coercing argument to type " +
-                                                       (type.axClass ?
-                                                        type.axClass.name.toFQNString(false) :
-                                                        type));
-        arg = type.axCoerce(arg);
-      }
 
-      local.push(arg);
+      if (methodInfo.needsRest()) {
+        locals.push(sec.createArrayUnsafe(sliceArguments(callArgs, methodInfo.parameters.length)));
+      } else if (methodInfo.needsArguments()) {
+        var argsArray = sliceArguments(callArgs, 0);
+        var argumentsArray = Object.create(sec.argumentsPrototype);
+        argumentsArray.value = argsArray;
+        argumentsArray.callee = callee;
+        argumentsArray.receiver = receiver;
+        argumentsArray.methodInfo = methodInfo;
+        locals.push(argumentsArray);
+        }
     }
 
-    if (methodInfo.needsRest()) {
-      local.push(sec.createArrayUnsafe(sliceArguments(callArgs, methodInfo.parameters.length)));
-    } else if (methodInfo.needsArguments()) {
-      var argsArray = sliceArguments(callArgs, 0);
-      var argumentsArray = Object.create(sec.argumentsPrototype);
-      argumentsArray.value = argsArray;
-      argumentsArray.callee = callee;
-      argumentsArray.receiver = self;
-      argumentsArray.methodInfo = methodInfo;
-      local.push(argumentsArray);
+    bc(): Bytecode {
+      return this.code[this.pc++];
     }
 
-    var args = [];
-    var pc = 0;
+    peekStack() {
+      return this.stack[this.stack.length - 1];
+    }
 
-    function u30(): number {
+    u30(): number {
+      var code = this.code;
+      var pc = this.pc;
       var result = code[pc++];
       if (result & 0x80) {
         result = result & 0x7f | code[pc++] << 7;
@@ -176,178 +192,207 @@ module Shumway.AVMX {
           }
         }
       }
+      this.pc = pc;
       return result >>> 0;
     }
 
-    function s24(): number {
-      var u = code[pc++] | (code[pc++] << 8) | (code[pc++] << 16);
+    s24(): number {
+      var code = this.code;
+      var pc = this.pc;
+      var u = code[pc] | (code[pc + 1] << 8) | (code[pc + 2] << 16);
+      this.pc = pc + 3;
       return (u << 8) >> 8;
     }
 
-    function box(v) {
-      return sec.box(v);
-    }
-
-    // Boxes the top of the stack.
-    function peekBox() {
-      return sec.box(stack[stack.length - 1]);
-    }
-
-    var hasNext2Infos: HasNext2Info [];
-
-    function getHasNext2Info(pc: number): HasNext2Info {
+    getHasNext2Info(): HasNext2Info {
+      var pc = this.pc;
+      var hasNext2Infos = this.hasNext2Infos;
       if (!hasNext2Infos) {
-        hasNext2Infos = [];
+        hasNext2Infos = this.hasNext2Infos = [];
       }
       if (!hasNext2Infos[pc]) {
         hasNext2Infos[pc] = new HasNext2Info(null, 0);
       }
       return hasNext2Infos[pc];
     }
+  }
 
-    rn = new Multiname(abc, 0, null, null, null);
+  function _interpret(self: Object, methodInfo: MethodInfo, savedScope: Scope, callArgs: any [],
+                      callee: AXFunction) {
+    var frame = new InterpreterFrame(self, methodInfo, savedScope, callArgs, callee);
+    var stack = frame.stack;
+    var locals = frame.locals;
+    var scopes = frame.scopes;
+    var sec = frame.sec;
+    var abc = methodInfo.abc;
 
-    var code = body.code;
-    var bc: Bytecode;
+    var rn = new Multiname(abc, 0, null, null, null);
+
     var value, object, receiver, type, a, b, offset, index, result;
+    var args = [];
+    var argCount = 0;
 
     var scopeStacksHeight = scopeStacks.length;
-    scopeStacks.push(scopes);
+    scopeStacks.push(frame.scopes);
 
     interpretLabel:
     while (true) {
-      interpreterWriter && interpreterWriter.greenLn("" + pc + ": " + Bytecode[code[pc]] + " [" +
-                                                     stack.map(
-                                                         x => stringifyStackEntry(x)).join(", ") +
-                                                     "]");
+      if (!release && interpreterWriter) {
+        interpreterWriter.greenLn("" + frame.pc + ": " + Bytecode[frame.code[frame.pc]] + " [" +
+                                  frame.stack.map(x => stringifyStackEntry(x)).join(", ") + "]");
+      }
       try {
-        bc = code[pc++];
+        var bc = frame.bc();
         switch (bc) {
           case Bytecode.LABEL:
             continue;
           case Bytecode.THROW:
             throw stack.pop();
           case Bytecode.KILL:
-            local[u30()] = undefined;
+            locals[frame.u30()] = undefined;
             break;
           case Bytecode.IFNLT:
             b = stack.pop();
             a = stack.pop();
-            offset = s24();
-            pc = !(a < b) ? pc + offset : pc;
+            offset = frame.s24();
+            if (!(a < b)) {
+              frame.pc += offset;
+            }
             continue;
           case Bytecode.IFGE:
             b = stack.pop();
             a = stack.pop();
-            offset = s24();
-            pc = a >= b ? pc + offset : pc;
+            offset = frame.s24();
+            if (a >= b) {
+              frame.pc += offset;
+            }
             continue;
           case Bytecode.IFNLE:
             b = stack.pop();
             a = stack.pop();
-            offset = s24();
-            pc = !(a <= b) ? pc + offset : pc;
+            offset = frame.s24();
+            if (!(a <= b)) {
+              frame.pc += offset;
+            }
             continue;
           case Bytecode.IFGT:
             b = stack.pop();
             a = stack.pop();
-            offset = s24();
-            pc = a > b ? pc + offset : pc;
+            offset = frame.s24();
+            if (a > b) {
+              frame.pc += offset;
+            }
             continue;
           case Bytecode.IFNGT:
             b = stack.pop();
             a = stack.pop();
-            offset = s24();
-            pc = !(a > b) ? pc + offset : pc;
+            offset = frame.s24();
+            if (!(a > b)) {
+              frame.pc += offset;
+            }
             continue;
           case Bytecode.IFLE:
             b = stack.pop();
             a = stack.pop();
-            offset = s24();
-            pc = a <= b ? pc + offset : pc;
+            offset = frame.s24();
+            if (a <= b) {
+              frame.pc += offset;
+            }
             continue;
           case Bytecode.IFNGE:
             b = stack.pop();
             a = stack.pop();
-            offset = s24();
-            pc = !(a >= b) ? pc + offset : pc;
+            offset = frame.s24();
+            if (!(a >= b)) {
+              frame.pc += offset;
+            }
             continue;
           case Bytecode.IFLT:
             b = stack.pop();
             a = stack.pop();
-            offset = s24();
-            pc = a < b ? pc + offset : pc;
+            offset = frame.s24();
+            if (a < b) {
+              frame.pc += offset;
+            }
             continue;
           case Bytecode.JUMP:
-            pc = s24() + pc;
+            frame.pc = frame.s24() + frame.pc;
             continue;
           case Bytecode.IFTRUE:
-            offset = s24();
-            pc = !!stack.pop() ? pc + offset : pc;
+            offset = frame.s24();
+            if (!!stack.pop()) {
+              frame.pc += offset;
+            }
             continue;
           case Bytecode.IFFALSE:
-            offset = s24();
-            pc = !stack.pop() ? pc + offset : pc;
+            offset = frame.s24();
+            if (!stack.pop()) {
+              frame.pc += offset;
+            }
             continue;
           case Bytecode.IFEQ:
             b = stack.pop();
             a = stack.pop();
-            offset = s24();
-            pc = axEquals(a, b, sec) ? pc + offset : pc;
+            offset = frame.s24();
+            if (axEquals(a, b, sec)) {
+              frame.pc += offset;
+            }
             continue;
           case Bytecode.IFNE:
             b = stack.pop();
             a = stack.pop();
-            offset = s24();
-            pc = !axEquals(a, b, sec) ? pc + offset : pc;
+            offset = frame.s24();
+            if (!axEquals(a, b, sec)) {
+              frame.pc += offset;
+            }
             continue;
           case Bytecode.IFSTRICTEQ:
             b = stack.pop();
             a = stack.pop();
-            offset = s24();
-            pc = a === b ? pc + offset : pc;
+            offset = frame.s24();
+            if (a === b) {
+              frame.pc += offset;
+            }
             continue;
           case Bytecode.IFSTRICTNE:
             b = stack.pop();
             a = stack.pop();
-            offset = s24();
-            pc = a !== b ? pc + offset : pc;
-            continue;
-          case Bytecode.LOOKUPSWITCH:
-            var basePC = pc - 1;
-            var defaultOffset = s24();
-            var caseCount = u30();
-            index = stack.pop();
-            if (index <= caseCount) {
-              pc = pc + 3 * index; // Jump to case offset.
-              pc = basePC + s24();
-            } else {
-              pc = basePC + defaultOffset;
+            offset = frame.s24();
+            if (a !== b) {
+              frame.pc += offset;
             }
             continue;
-          //case Bytecode.pushwith:
-          //  scope.push(box(stack.pop()), true);
-          //  break;
+          case Bytecode.LOOKUPSWITCH:
+            var basePC = frame.pc - 1;
+            offset = frame.s24();
+            var caseCount = frame.u30();
+            index = stack.pop();
+            if (index <= caseCount) {
+              frame.pc += 3 * index; // Jump to case offset.
+              offset = frame.s24();
+            }
+            frame.pc = basePC + offset;
+            continue;
           case Bytecode.POPSCOPE:
             scopes.pop();
             break;
           case Bytecode.NEXTNAME:
             index = stack.pop();
-            receiver = peekBox();
+            receiver = sec.box(frame.peekStack());
             stack[stack.length - 1] = receiver.axNextName(index);
             break;
           case Bytecode.NEXTVALUE:
             index = stack.pop();
-            receiver = peekBox();
+            receiver = sec.box(frame.peekStack());
             stack[stack.length - 1] = receiver.axNextValue(index);
             break;
           case Bytecode.HASNEXT2:
-            var hasNext2Info = getHasNext2Info(pc);
-            var objectIndex = u30();
-            var indexIndex = u30();
-            hasNext2Info.next(box(local[objectIndex]), <number>local[indexIndex]);
-            local[objectIndex] = hasNext2Info.object;
-            local[indexIndex] = hasNext2Info.index;
+            var hasNext2Info = frame.getHasNext2Info();
+            var objectIndex = frame.u30();
+            var indexIndex = frame.u30();
+            hasNext2Info.next(sec.box(locals[objectIndex]), <number>locals[indexIndex]);
+            locals[objectIndex] = hasNext2Info.object;
+            locals[indexIndex] = hasNext2Info.index;
             stack.push(!!hasNext2Info.index);
             break;
           case Bytecode.PUSHNULL:
@@ -357,22 +402,22 @@ module Shumway.AVMX {
             stack.push(undefined);
             break;
           case Bytecode.PUSHBYTE:
-            stack.push(code[pc++] << 24 >> 24);
+            stack.push(frame.code[frame.pc++] << 24 >> 24);
             break;
           case Bytecode.PUSHSHORT:
-            stack.push(u30() << 16 >> 16);
+            stack.push(frame.u30() << 16 >> 16);
             break;
           case Bytecode.PUSHSTRING:
-            stack.push(abc.getString(u30()));
+            stack.push(abc.getString(frame.u30()));
             break;
           case Bytecode.PUSHINT:
-            stack.push(abc.ints[u30()]);
+            stack.push(abc.ints[frame.u30()]);
             break;
           case Bytecode.PUSHUINT:
-            stack.push(abc.uints[u30()]);
+            stack.push(abc.uints[frame.u30()]);
             break;
           case Bytecode.PUSHDOUBLE:
-            stack.push(abc.doubles[u30()]);
+            stack.push(abc.doubles[frame.u30()]);
             break;
           case Bytecode.PUSHTRUE:
             stack.push(true);
@@ -395,27 +440,27 @@ module Shumway.AVMX {
             stack[stack.length - 2] = value;
             break;
           case Bytecode.PUSHSCOPE:
-            scopes.push(box(stack.pop()), false);
+            scopes.push(sec.box(stack.pop()), false);
             break;
           case Bytecode.PUSHWITH:
-            scopes.push(box(stack.pop()), true);
+            scopes.push(sec.box(stack.pop()), true);
             break;
           case Bytecode.PUSHNAMESPACE:
-            stack.push(sec.AXNamespace.FromNamespace(abc.getNamespace(u30())));
+            stack.push(sec.AXNamespace.FromNamespace(abc.getNamespace(frame.u30())));
             break;
           case Bytecode.NEWFUNCTION:
-            stack.push(sec.createFunction(abc.getMethodInfo(u30()), scopes.topScope(), true));
+            stack.push(sec.createFunction(abc.getMethodInfo(frame.u30()), scopes.topScope(), true));
             break;
           case Bytecode.CALL:
-            popManyInto(stack, u30(), args);
+            popManyInto(stack, frame.u30(), args);
             object = stack.pop();
             value = stack[stack.length - 1];
             validateCall(sec, value, args.length);
             stack[stack.length - 1] = value.axApply(object, args);
             break;
           case Bytecode.CONSTRUCT:
-            popManyInto(stack, u30(), args);
-            receiver = peekBox();
+            popManyInto(stack, frame.u30(), args);
+            receiver = sec.box(frame.peekStack());
             validateConstruct(sec, receiver, args.length);
             stack[stack.length - 1] = receiver.axConstruct(args);
             break;
@@ -436,24 +481,24 @@ module Shumway.AVMX {
             scopeStacks.length--;
             return value;
           case Bytecode.CONSTRUCTSUPER:
-            popManyInto(stack, u30(), args);
+            popManyInto(stack, frame.u30(), args);
             (<any>savedScope.object).superClass.tPrototype.axInitializer.apply(stack.pop(), args);
             break;
           case Bytecode.CONSTRUCTPROP:
-            index = u30();
-            popManyInto(stack, u30(), args);
+            index = frame.u30();
+            popManyInto(stack, frame.u30(), args);
             popNameInto(stack, abc.getMultiname(index), rn);
-            receiver = peekBox();
+            receiver = sec.box(frame.peekStack());
             stack[stack.length - 1] = receiver.axConstructProperty(rn, args);
             break;
           case Bytecode.CALLPROPLEX:
           case Bytecode.CALLPROPERTY:
           case Bytecode.CALLPROPVOID:
-            index = u30();
-            argCount = u30();
+            index = frame.u30();
+            argCount = frame.u30();
             popManyInto(stack, argCount, args);
             popNameInto(stack, abc.getMultiname(index), rn);
-            receiver = box(stack[stack.length - 1]);
+            receiver = sec.box(stack[stack.length - 1]);
             result = receiver.axCallProperty(rn, args, bc === Bytecode.CALLPROPLEX);
             if (bc === Bytecode.CALLPROPVOID) {
               stack.length--;
@@ -463,11 +508,11 @@ module Shumway.AVMX {
             break;
           case Bytecode.CALLSUPER:
           case Bytecode.CALLSUPERVOID:
-            index = u30();
-            argCount = u30();
+            index = frame.u30();
+            argCount = frame.u30();
             popManyInto(stack, argCount, args);
             popNameInto(stack, abc.getMultiname(index), rn);
-            receiver = box(stack[stack.length - 1]);
+            receiver = sec.box(stack[stack.length - 1]);
             result = receiver.axCallSuper(rn, savedScope, args);
             if (bc === Bytecode.CALLSUPERVOID) {
               stack.length--;
@@ -476,20 +521,20 @@ module Shumway.AVMX {
             }
             break;
           //case Bytecode.CALLSTATIC:
-          //  index = u30();
-          //  argCount = u30();
+          //  index = frame.u30();
+          //  argCount = frame.u30();
           //  popManyInto(stack, argCount, args);
           //  value = abc.getMetadataInfo(index);
           //  var receiver = box(stack[stack.length - 1]);
           //  stack.push(value.axApply(receiver, args));
           //  break;
           case Bytecode.APPLYTYPE:
-            popManyInto(stack, u30(), args);
+            popManyInto(stack, frame.u30(), args);
             stack[stack.length - 1] = sec.applyType(stack[stack.length - 1], args);
             break;
           case Bytecode.NEWOBJECT:
             object = Object.create(sec.AXObject.tPrototype);
-            argCount = u30();
+            argCount = frame.u30();
             // For LIFO-order iteration to be correct, we have to add items highest on the stack
             // first.
             for (var i = stack.length - argCount * 2; i < stack.length; i += 2) {
@@ -501,7 +546,7 @@ module Shumway.AVMX {
             break;
           case Bytecode.NEWARRAY:
             object = [];
-            argCount = u30();
+            argCount = frame.u30();
             for (var i = stack.length - argCount; i < stack.length; i++) {
               object.push(stack[i]);
             }
@@ -513,11 +558,11 @@ module Shumway.AVMX {
             break;
           case Bytecode.NEWCLASS:
             stack[stack.length - 1] = sec.createClass(
-              abc.classes[u30()], stack[stack.length - 1], scopes.topScope()
+              abc.classes[frame.u30()], stack[stack.length - 1], scopes.topScope()
             );
             break;
           case Bytecode.GETDESCENDANTS:
-            popNameInto(stack, abc.getMultiname(u30()), rn);
+            popNameInto(stack, abc.getMultiname(frame.u30()), rn);
             if (rn.name === undefined) {
               rn.name = '*';
             }
@@ -526,15 +571,15 @@ module Shumway.AVMX {
             stack[stack.length - 1] = result;
             break;
           case Bytecode.NEWCATCH:
-            stack.push(sec.createCatch(body.catchBlocks[u30()], scopes.topScope()));
+            stack.push(sec.createCatch(frame.body.catchBlocks[frame.u30()], scopes.topScope()));
             break;
           case Bytecode.FINDPROPERTY:
           case Bytecode.FINDPROPSTRICT:
-            popNameInto(stack, abc.getMultiname(u30()), rn);
+            popNameInto(stack, abc.getMultiname(frame.u30()), rn);
             stack.push(scopes.topScope().findScopeProperty(rn, bc === Bytecode.FINDPROPSTRICT, false));
             break;
           case Bytecode.GETLEX:
-            popNameInto(stack, abc.getMultiname(u30()), rn);
+            popNameInto(stack, abc.getMultiname(frame.u30()), rn);
             object = scopes.topScope().findScopeProperty(rn, true, false);
             result = object.axGetProperty(rn);
             release || checkValue(result);
@@ -543,66 +588,66 @@ module Shumway.AVMX {
           case Bytecode.INITPROPERTY:
           case Bytecode.SETPROPERTY:
             value = stack.pop();
-            popNameInto(stack, abc.getMultiname(u30()), rn);
-            receiver = box(stack.pop());
+            popNameInto(stack, abc.getMultiname(frame.u30()), rn);
+            receiver = sec.box(stack.pop());
             receiver.axSetProperty(rn, value, Bytecode.INITPROPERTY, methodInfo);
             break;
           case Bytecode.GETPROPERTY:
-            popNameInto(stack, abc.getMultiname(u30()), rn);
-            receiver = peekBox();
+            popNameInto(stack, abc.getMultiname(frame.u30()), rn);
+            receiver = sec.box(frame.peekStack());
             result = receiver.axGetProperty(rn);
             release || checkValue(result);
             stack[stack.length - 1] = result;
             break;
           case Bytecode.DELETEPROPERTY:
-            popNameInto(stack, abc.getMultiname(u30()), rn);
-            receiver = peekBox();
+            popNameInto(stack, abc.getMultiname(frame.u30()), rn);
+            receiver = sec.box(frame.peekStack());
             stack[stack.length - 1] = receiver.axDeleteProperty(rn);
             break;
           case Bytecode.GETSUPER:
-            popNameInto(stack, abc.getMultiname(u30()), rn);
-            receiver = peekBox();
+            popNameInto(stack, abc.getMultiname(frame.u30()), rn);
+            receiver = sec.box(frame.peekStack());
             result = receiver.axGetSuper(rn, savedScope);
             release || checkValue(result);
             stack[stack.length - 1] = result;
             break;
           case Bytecode.SETSUPER:
             value = stack.pop();
-            popNameInto(stack, abc.getMultiname(u30()), rn);
-            receiver = box(stack.pop());
+            popNameInto(stack, abc.getMultiname(frame.u30()), rn);
+            receiver = sec.box(stack.pop());
             receiver.axSetSuper(rn, savedScope, value);
             break;
           case Bytecode.GETLOCAL:
-            stack.push(local[u30()]);
+            stack.push(locals[frame.u30()]);
             break;
           case Bytecode.SETLOCAL:
-            local[u30()] = stack.pop();
+            locals[frame.u30()] = stack.pop();
             break;
           case Bytecode.GETGLOBALSCOPE:
             stack.push(savedScope.global.object);
             break;
           case Bytecode.GETSCOPEOBJECT:
-            stack.push(scopes.get(code[pc++]));
+            stack.push(scopes.get(frame.code[frame.pc++]));
             break;
           case Bytecode.GETSLOT:
-            receiver = peekBox();
-            result = receiver.axGetSlot(u30());
+            receiver = sec.box(frame.peekStack());
+            result = receiver.axGetSlot(frame.u30());
             release || checkValue(result);
             stack[stack.length - 1] = result;
             break;
           case Bytecode.SETSLOT:
             value = stack.pop();
-            receiver = box(stack.pop());
-            receiver.axSetSlot(u30(), value);
+            receiver = sec.box(stack.pop());
+            receiver.axSetSlot(frame.u30(), value);
             break;
           case Bytecode.GETGLOBALSLOT:
-            result = savedScope.global.object.axGetSlot(u30());
+            result = savedScope.global.object.axGetSlot(frame.u30());
             release || checkValue(result);
             stack[stack.length - 1] = result;
             break;
           case Bytecode.SETGLOBALSLOT:
             value = stack.pop();
-            savedScope.global.object.axSetSlot(u30(), value);
+            savedScope.global.object.axSetSlot(frame.u30(), value);
             break;
           case Bytecode.ESC_XATTR:
             stack[stack.length - 1] = AS.escapeAttributeValue(stack[stack.length - 1]);
@@ -636,14 +681,14 @@ module Shumway.AVMX {
             stack[stack.length - 1] = axCheckFilter(sec, stack[stack.length - 1]);
             break;
           case Bytecode.COERCE:
-            popNameInto(stack, abc.getMultiname(u30()), rn);
+            popNameInto(stack, abc.getMultiname(frame.u30()), rn);
             type = scopes.topScope().getScopeProperty(rn, true, false);
             stack[stack.length - 1] = type.axCoerce(stack[stack.length - 1]);
             break;
           case Bytecode.COERCE_A: /* NOP */
             break;
           case Bytecode.ASTYPE:
-            popNameInto(stack, abc.getMultiname(u30()), rn);
+            popNameInto(stack, abc.getMultiname(frame.u30()), rn);
             receiver = scopes.topScope().getScopeProperty(rn, true, false);
             stack[stack.length - 2] = receiver.axAsType(stack[stack.length - 1]);
             break;
@@ -662,13 +707,13 @@ module Shumway.AVMX {
             ++stack[stack.length - 1];
             break;
           case Bytecode.INCLOCAL:
-            ++(<number []>local)[u30()];
+            ++(<number []>locals)[frame.u30()];
             break;
           case Bytecode.DECREMENT:
             --stack[stack.length - 1];
             break;
           case Bytecode.DECLOCAL:
-            --(<number []>local)[u30()];
+            --(<number []>locals)[frame.u30()];
             break;
           case Bytecode.TYPEOF:
             stack[stack.length - 1] = axTypeOf(stack[stack.length - 1], sec);
@@ -743,7 +788,7 @@ module Shumway.AVMX {
             stack[stack.length - 1] = receiver.axIsInstanceOf(stack[stack.length - 1]);
             break;
           case Bytecode.ISTYPE:
-            popNameInto(stack, abc.getMultiname(u30()), rn);
+            popNameInto(stack, abc.getMultiname(frame.u30()), rn);
             receiver = scopes.topScope().findScopeProperty(rn, true, false);
             stack[stack.length - 1] = receiver.axIsType(stack[stack.length - 1]);
             break;
@@ -752,7 +797,7 @@ module Shumway.AVMX {
             stack[stack.length - 1] = receiver.axIsType(stack[stack.length - 1]);
             break;
           case Bytecode.IN:
-            receiver = box(stack.pop());
+            receiver = sec.box(stack.pop());
             var name = stack[stack.length - 1];
             if (name && name.axClass === sec.AXQName) {
               stack[stack.length - 1] = receiver.axHasProperty(name.name);
@@ -767,12 +812,12 @@ module Shumway.AVMX {
             stack[stack.length - 1] = (stack[stack.length - 1] | 0) - 1;
             break;
           case Bytecode.INCLOCAL_I:
-            index = u30();
-            (<number []>local)[index] = ((<number []>local)[index] | 0) + 1;
+            index = frame.u30();
+            (<number []>locals)[index] = ((<number []>locals)[index] | 0) + 1;
             break;
           case Bytecode.DECLOCAL_I:
-            index = u30();
-            (<number []>local)[index] = ((<number []>local)[index] | 0) - 1;
+            index = frame.u30();
+            (<number []>locals)[index] = ((<number []>locals)[index] | 0) - 1;
             break;
           case Bytecode.NEGATE_I:
             stack[stack.length - 1] = -(stack[stack.length - 1] | 0);
@@ -790,29 +835,29 @@ module Shumway.AVMX {
           case Bytecode.GETLOCAL1:
           case Bytecode.GETLOCAL2:
           case Bytecode.GETLOCAL3:
-            stack.push(local[bc - Bytecode.GETLOCAL0]);
+            stack.push(locals[bc - Bytecode.GETLOCAL0]);
             break;
           case Bytecode.SETLOCAL0:
           case Bytecode.SETLOCAL1:
           case Bytecode.SETLOCAL2:
           case Bytecode.SETLOCAL3:
-            local[bc - Bytecode.SETLOCAL0] = stack.pop();
+            locals[bc - Bytecode.SETLOCAL0] = stack.pop();
             break;
           case Bytecode.DXNS:
             scopes.topScope().defaultNamespace = new Namespace(null, NamespaceType.Public,
-                                                               abc.getString(u30()));
+                                                               abc.getString(frame.u30()));
             break;
           case Bytecode.DXNSLATE:
             scopes.topScope().defaultNamespace = new Namespace(null, NamespaceType.Public,
                                                                stack.pop());
             break;
           case Bytecode.DEBUG:
-            pc ++; u30();
-            pc ++; u30();
+            frame.pc ++; frame.u30();
+            frame.pc ++; frame.u30();
             break;
           case Bytecode.DEBUGLINE:
           case Bytecode.DEBUGFILE:
-            u30();
+            frame.u30();
             break;
           case Bytecode.NOP:
           case Bytecode.BKPT:
@@ -832,16 +877,16 @@ module Shumway.AVMX {
           e = createValidException(sec, e, bc, value, receiver, a, b, rn, scopeStacksHeight + 1);
         }
 
-        var catchBlocks = body.catchBlocks;
+        var catchBlocks = frame.body.catchBlocks;
         for (var i = 0; i < catchBlocks.length; i++) {
           var handler = catchBlocks[i];
-          if (pc >= handler.start && pc <= handler.end) {
+          if (frame.pc >= handler.start && frame.pc <= handler.end) {
             var typeName = handler.getType();
-            if (!typeName || applicationDomain.getClass(typeName).axIsType(e)) {
+            if (!typeName || frame.app.getClass(typeName).axIsType(e)) {
               stack.length = 0;
               stack.push(e);
               scopes.clear();
-              pc = handler.target;
+              frame.pc = handler.target;
               continue interpretLabel;
             }
           }
