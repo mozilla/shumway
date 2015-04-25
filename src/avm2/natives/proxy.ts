@@ -20,8 +20,8 @@ module Shumway.AVMX.AS {
 
   export module flash.utils {
 
-    var proxyNamespace = new Namespace(null, NamespaceType.Public,
-                                       "http://www.adobe.com/2006/actionscript/flash/proxy");
+    var proxyNamespace = internNamespace(NamespaceType.Public,
+                                         "http://www.adobe.com/2006/actionscript/flash/proxy");
     var proxyPrefix = '$' + proxyNamespace.getMangledName();
 
     /**

@@ -1040,7 +1040,7 @@ module Shumway.AVMX {
       var lastDot = fqn.lastIndexOf('.');
       var uri = lastDot === -1 ? '' : fqn.substr(0, lastDot);
       var name = lastDot === -1 ? fqn : fqn.substr(lastDot + 1);
-      var ns = new Namespace(null, nsType, uri);
+      var ns = internNamespace(nsType, uri);
       return new Multiname(null, 0, CONSTANT.RTQName, [ns], name);
     }
 
@@ -1126,7 +1126,11 @@ module Shumway.AVMX {
 
     public set prefix(prefix: string) {
       release || assert(this.isQName());
-      this.namespaces[0].prefix = prefix;
+      var ns = this.namespaces[0];
+      if (ns.prefix === prefix) {
+        return;
+      }
+      this.namespaces[0] = internPrefixedNamespace(ns.type, ns.uri, prefix);
     }
 
     public equalsQName(mn: Multiname): boolean {
@@ -1252,7 +1256,7 @@ module Shumway.AVMX {
       } else {
         name = simpleName;
       }
-      var ns = new Namespace(null, NamespaceType.Public, uri);
+      var ns = internNamespace(NamespaceType.Public, uri);
       return new Multiname(null, 0, CONSTANT.RTQName, [ns], name);
     }
   }
@@ -1261,10 +1265,13 @@ module Shumway.AVMX {
   var namespaceHashingBuffer = new Int32Array(100);
 
   export class Namespace {
-    public prefix: string = "";
     private _mangledName: string = null;
-    constructor(public abc: ABCFile, public type: NamespaceType, public uri: string) {
+    constructor(public type: NamespaceType, public uri: string, public prefix: string) {
       assert (type !== undefined);
+      if (!release) {
+        this.getMangledName();
+        Object.freeze(this);
+      }
     }
 
     toString() {
@@ -1276,6 +1283,8 @@ module Shumway.AVMX {
     ];
 
     private static _hashNamespace(type: NamespaceType, uri: string, prefix: string) {
+      uri = uri + '';
+      prefix = prefix + '';
       var index = Namespace._knownNames.indexOf(uri);
       if (index >= 0) {
         return type << 2 | index;
@@ -1314,14 +1323,26 @@ module Shumway.AVMX {
       return this.uri || (this.type === NamespaceType.Public ? null : this.uri);
     }
 
-    public static PUBLIC = new Namespace(null, NamespaceType.Public, "");
-    public static PROTECTED = new Namespace(null, NamespaceType.Protected, "");
-    public static STATIC_PROTECTED = new Namespace(null, NamespaceType.StaticProtected, "");
-    public static PROXY = new Namespace(null, NamespaceType.Public, "http://www.adobe.com/2006/actionscript/flash/proxy");
-    public static VECTOR = new Namespace(null, NamespaceType.Public, "__AS3__.vec");
-    public static VECTOR_PACKAGE = new Namespace(null, NamespaceType.PackageInternal, "__AS3__.vec");
-    public static BUILTIN = new Namespace(null, NamespaceType.Private, "builtin.as$0");
+    public static PUBLIC: Namespace;
   }
+
+  var _namespaces: MapObject<Namespace> = {};
+
+  export function internNamespace(type: NamespaceType, uri: string) {
+    var key = type + uri;
+    return _namespaces[key] || (_namespaces[key] = new Namespace(type, uri, ''));
+  }
+
+  export function internPrefixedNamespace(type: NamespaceType, uri: string, prefix: string) {
+    var key = type + uri + prefix;
+    var ns = _namespaces[key];
+    if (!ns) {
+      ns = _namespaces[key] = new Namespace(type, uri, prefix);
+    }
+    return ns;
+  }
+
+  Namespace.PUBLIC = internNamespace(NamespaceType.Public, "");
 
   export class ABCFile {
     public hash: number;
@@ -1694,7 +1715,7 @@ module Shumway.AVMX {
         // in Tamarin source code indicates this might not be intentional, but oh well.
         uri = '';
       }
-      ns = this._namespaces[i] = new Namespace(this, type, uri);
+      ns = this._namespaces[i] = internNamespace(type, uri);
       return ns;
     }
 
