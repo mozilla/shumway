@@ -21,9 +21,13 @@ module Shumway.AVM1 {
   import AVM1Globals = Lib.AVM1Globals;
 
   export class AVM1ActionsData {
-    public ir; // will cache compiled representation
+    public ir: AnalyzerResults;
+    public compiled: Function;
+
     constructor(public bytes: Uint8Array, public id: string, public parent: AVM1ActionsData = null) {
       release || assert(bytes instanceof Uint8Array);
+      this.ir = null;
+      this.compiled = null;
     }
   }
 
@@ -201,7 +205,7 @@ module Shumway.AVM1 {
       }
     }
 
-    public getStaticState(cls: typeof AVM1Object): any {
+    public getStaticState(cls): any {
       var state = this.staticStates.get(cls);
       if (!state) {
         state = Object.create(null);
