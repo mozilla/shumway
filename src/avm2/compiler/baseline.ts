@@ -14,24 +14,88 @@
  * limitations under the License.
  */
 
-module Shumway.AVM2.Compiler {
-  import Trait = ABC.Trait;
-  import AbcFile = ABC.AbcFile;
-  import ClassInfo = ABC.ClassInfo;
-  import MethodInfo = ABC.MethodInfo;
-  import ScriptInfo = ABC.ScriptInfo;
-  import Scope = Runtime.Scope;
-  import Multiname = ABC.Multiname;
-  import InstanceInfo = ABC.InstanceInfo;
-  import ConstantPool = ABC.ConstantPool;
+module Shumway.AVMX.Compiler {
   import assert = Debug.assert;
-  import escapeString = Shumway.AVM2.Compiler.AST.escapeString;
 
   var writer = Compiler.baselineDebugLevel.value > 0 ? new IndentingWriter() : null;
 
   declare var Relooper;
 
   var compileCount = 0, passCompileCount = 0, failCompileCount = 0, compileTime = 0;
+
+  function escapeAllowedCharacter(ch, next) {
+    switch (ch) {
+      case '\b':
+        return '\\b';
+      case '\f':
+        return '\\f';
+      case '\t':
+        return '\\t';
+      default:
+        var code = ch.charCodeAt(0), hex = code.toString(16), result;
+        if (code > 0xff) {
+          result = '\\u' + '0000'.slice(hex.length) + hex;
+        } else if (ch === '\u0000' && '0123456789'.indexOf(next) < 0) {
+          result = '\\0';
+        } else if (ch === '\x0B') { // '\v'
+          result = '\\x0B';
+        } else {
+          result = '\\x' + '00'.slice(hex.length) + hex;
+        }
+        return result;
+    }
+  }
+
+  function escapeDisallowedCharacter(ch) {
+    switch (ch) {
+      case '\\':
+        return '\\\\';
+      case '\n':
+        return '\\n';
+      case '\r':
+        return '\\r';
+      case '\u2028':
+        return '\\u2028';
+      case '\u2029':
+        return '\\u2029';
+      default:
+        throw new Error('Incorrectly classified character');
+    }
+  }
+
+  var escapeStringCacheCount = 0;
+  var escapeStringCache = Object.create(null);
+
+  export function escapeString(str: string) {
+    var result = escapeStringCache[str];
+    if (result) {
+      return result;
+    }
+    if (escapeStringCacheCount === 1024) {
+      escapeStringCache = Object.create(null);
+      escapeStringCacheCount = 0;
+    }
+    result = '"';
+
+    for (var i = 0, len = str.length; i < len; ++i) {
+      var ch = str[i];
+      if (ch === '"') {
+        result += '\\';
+      } else if ('\\\n\r\u2028\u2029'.indexOf(ch) >= 0) {
+        result += escapeDisallowedCharacter(ch);
+        continue;
+      } else if (!(ch >= ' ' && ch <= '~')) {
+        result += escapeAllowedCharacter(ch, str[i + 1]);
+        continue;
+      }
+      result += ch;
+    }
+
+    result += '"';
+    escapeStringCache[str] = result;
+    escapeStringCacheCount ++;
+    return result;
+  }
 
   function makeLiteral(value: any) {
     if (typeof value === "string") {
@@ -113,7 +177,7 @@ module Shumway.AVM2.Compiler {
     relooperEntryBlock: number;
     parameters: string [];
     local: string [];
-    constantPool: ConstantPool;
+    abc: ABCFile;
 
     private pushedStrings: number[] = [];
     private stack: number = 0;
@@ -131,7 +195,7 @@ module Shumway.AVM2.Compiler {
 
     constructor(public methodInfo: MethodInfo, private scope: Scope, private hasDynamicScope: boolean,
                 private globalMiName: string) {
-      this.constantPool = this.methodInfo.abc.constantPool;
+      this.abc = this.methodInfo.abc;
     }
 
     compile() {
@@ -143,9 +207,11 @@ module Shumway.AVM2.Compiler {
       this.bodyEmitter = new Emitter(!release);
       this.blockEmitter = new Emitter(!release);
 
-      var hasExceptions = this.methodInfo.hasExceptions();
+      var body = this.methodInfo.getBody();
 
-      if (hasExceptions) {
+      var hasCatchBlocks = body.catchBlocks.length > 0;
+
+      if (hasCatchBlocks) {
         this.bodyEmitter.writeLn("var pc = 0;");
       }
 
@@ -191,7 +257,7 @@ module Shumway.AVM2.Compiler {
         }
       }
 
-      var localsCount = this.methodInfo.localCount;
+      var localsCount = body.localCount;
       if (localsCount > parameterCount + 1) {
         var localsDefinition = 'var ';
         for (var i = parameterCount + 1; i < localsCount; i++) {
@@ -201,16 +267,16 @@ module Shumway.AVM2.Compiler {
         this.bodyEmitter.writeLn(localsDefinition);
       }
 
-      if (this.methodInfo.maxStack > 0) {
+      if (body.maxStack > 0) {
         var stackSlotsDefinition = 'var ';
-        for (var i = 0; i < this.methodInfo.maxStack; i++) {
+        for (var i = 0; i < body.maxStack; i++) {
           stackSlotsDefinition +=
-          this.getStack(i) + (i < (this.methodInfo.maxStack - 1) ? ', ' : ';');
+          this.getStack(i) + (i < (body.maxStack - 1) ? ', ' : ';');
         }
         this.bodyEmitter.writeLn(stackSlotsDefinition);
       }
 
-      var scopesCount = this.methodInfo.maxScopeDepth - this.methodInfo.initScopeDepth + 1;
+      var scopesCount = body.maxScopeDepth - body.initScopeDepth + 1;
       var scopesOffset = this.hasDynamicScope ? 1 : 0;
       if (scopesCount - scopesOffset) {
         var scopesDefinition = 'var ';
@@ -243,10 +309,10 @@ module Shumway.AVM2.Compiler {
       // If we have exception handlers, dispatch to appropriate block using the current PC, which
       // was set in the catch block.
       var exceptionEntryBlocks = [];
-      if (hasExceptions) {
-        var exceptions = this.methodInfo.exceptions;
-        for (var i = 0; i < exceptions.length; i++) {
-          var target = exceptions[i].target;
+      if (hasCatchBlocks) {
+        var catchBlocks = body.catchBlocks;
+        for (var i = 0; i < catchBlocks.length; i++) {
+          var target = catchBlocks[i].target;
           this.propagateBlockState(null, target, 1, 0);
           exceptionEntryBlocks[target.bid] = target;
           Relooper.addBranch(relooperEntryBlock, target.relooperBlock, "pc === " + target.pc);
@@ -268,7 +334,7 @@ module Shumway.AVM2.Compiler {
         this.bodyEmitter.writeLn(hasNext2Definition);
       }
 
-      if (hasExceptions) {
+      if (hasCatchBlocks) {
         this.bodyEmitter.enter("while(1) {");
         this.bodyEmitter.enter("try {");
       }
@@ -282,13 +348,14 @@ module Shumway.AVM2.Compiler {
       }
       this.bodyEmitter.writeLns(allBlocks);
 
-      if (hasExceptions) {
+      if (hasCatchBlocks) {
         this.bodyEmitter.leaveAndEnter("} catch (ex) {");
-        var exceptions = this.methodInfo.exceptions;
-        for (var i = 0; i < exceptions.length; i++) {
-          var handler = exceptions[i];
+        var catchBlocks = body.catchBlocks;
+        for (var i = 0; i < catchBlocks.length; i++) {
+          var handler = catchBlocks[i];
           var check = "";
-          if (handler.typeName) {
+          var type = handler.getType();
+          if (type) {
             this.bodyEmitter.writeLn('var mn = mi.abc.constantPool.multinames[' +
                                      handler.typeNameIndex + '];');
             this.bodyEmitter.writeLn('var type = mi.abc.applicationDomain.getType(mn);');
@@ -356,9 +423,9 @@ module Shumway.AVM2.Compiler {
         return null;
       }
       var pc = bc.pc;
-      var exceptions = this.methodInfo.exceptions;
-      for (var i = 0; i < exceptions.length; i++) {
-        var exception = exceptions[i];
+      var catchBlocks = this.methodInfo.getBody().catchBlocks;
+      for (var i = 0; i < catchBlocks.length; i++) {
+        var exception = catchBlocks[i];
         if (exception.start_pc >= pc && pc <= exception.end_pc) {
           return exception;
         }
@@ -441,403 +508,402 @@ module Shumway.AVM2.Compiler {
       return this.getScope(this.scopeIndex);
     }
 
-    emitBytecode(block: Bytecode, bc: Bytecode) {
+    emitBytecode(code: Uint8Array, pc: number, bc: Bytecode) {
       release || assert(this.stack >= 0);
       release || assert(this.scopeIndex >= 0);
 
       // If a exception handler exists for the current PC, save the PC in case we throw. This is
       // how the catch block can figure out where we came from.
       if (this.getHandler(bc)) {
-        this.blockEmitter.writeLn("pc = " + bc.pc + ";");
+        this.blockEmitter.writeLn("pc = " + pc + ";");
       }
 
-      var op = bc.op;
       if (!release) {
-        var opName = OP[op];
-        Compiler.baselineDebugLevel.value > 1 && this.emitLine("// BC: " + String(bc));
+        var opName = Bytecode[bc];
+        //Compiler.baselineDebugLevel.value > 1 && this.emitLine("// BC: " + String(bc));
       }
-      switch (op) {
-        case OP.getlocal:
+      switch (bc) {
+        case Bytecode.GETLOCAL:
           this.emitLoadLocal(bc.index);
           break;
-        case OP.getlocal0:
-        case OP.getlocal1:
-        case OP.getlocal2:
-        case OP.getlocal3:
-          this.emitLoadLocal(op - OP.getlocal0);
+        case Bytecode.GETLOCAL0:
+        case Bytecode.GETLOCAL1:
+        case Bytecode.GETLOCAL2:
+        case Bytecode.GETLOCAL3:
+          this.emitLoadLocal(op - Bytecode.getlocal0);
           break;
-        case OP.setlocal:
+        case Bytecode.SETLOCAL:
           this.emitStoreLocal(bc.index);
           break;
-        case OP.setlocal0:
-        case OP.setlocal1:
-        case OP.setlocal2:
-        case OP.setlocal3:
-          this.emitStoreLocal(op - OP.setlocal0);
+        case Bytecode.SETLOCAL0:
+        case Bytecode.SETLOCAL1:
+        case Bytecode.SETLOCAL2:
+        case Bytecode.SETLOCAL3:
+          this.emitStoreLocal(op - Bytecode.setlocal0);
           break;
-        case OP.initproperty:
-        case OP.setproperty:
+        case Bytecode.INITPROPERTY:
+        case Bytecode.SETPROPERTY:
           this.emitSetProperty(bc.index);
           break;
-        case OP.setsuper:
+        case Bytecode.SETSUPER:
           this.emitSetSuper(bc.index);
           break;
-        case OP.getproperty:
+        case Bytecode.GETPROPERTY:
           this.emitGetProperty(bc.index);
           break;
-        case OP.getsuper:
+        case Bytecode.GETSUPER:
           this.emitGetSuper(bc.index);
           break;
-        case OP.deleteproperty:
+        case Bytecode.DELETEPROPERTY:
           this.emitDeleteProperty(bc.index);
           break;
-        case OP.findproperty:
+        case Bytecode.FINDPROPERTY:
           this.emitFindProperty(bc.index, false);
           break;
-        case OP.findpropstrict:
+        case Bytecode.FINDPROPSTRICT:
           this.emitFindProperty(bc.index, true);
           break;
-        case OP.callproperty:
-        case OP.callpropvoid:
-        case OP.callproplex:
+        case Bytecode.CALLPROPERTY:
+        case Bytecode.CALLPROPVOID:
+        case Bytecode.CALLPROPLEX:
           this.emitCallProperty(bc);
           break;
-        case OP.callsuper:
-        case OP.callsupervoid:
+        case Bytecode.CALLSUPER:
+        case Bytecode.CALLSUPERVOID:
           this.emitCallSuper(bc);
         break;
-        case OP.call:
+        case Bytecode.CALL:
           this.emitCall(bc);
           break;
-        case OP.getlex:
+        case Bytecode.GETLEX:
           this.emitGetLex(bc.index);
           break;
-        case OP.getdescendants:
+        case Bytecode.GETDESCENDANTS:
           this.emitGetDescendants(bc.index);
           break;
-        case OP.checkfilter:
+        case Bytecode.CHECKFILTER:
           this.emitCheckFilter();
           break;
-        case OP.pushwith:
+        case Bytecode.PUSHWITH:
           this.emitPushScope(true);
           break;
-        case OP.pushscope:
+        case Bytecode.PUSHSCOPE:
           this.emitPushScope(false);
           break;
-        case OP.popscope:
+        case Bytecode.POPSCOPE:
           this.popScope();
           break;
-        case OP.getglobalscope:
+        case Bytecode.GETGLOBALSCOPE:
           this.emitGetGlobalScope();
           break;
-        case OP.getscopeobject:
+        case Bytecode.GETSCOPEOBJECT:
           this.emitGetScopeObject();
           break;
-        case OP.getslot:
+        case Bytecode.GETSLOT:
           this.emitGetSlot(bc.index);
           break;
-        case OP.setslot:
+        case Bytecode.SETSLOT:
           this.emitSetSlot(bc.index);
           break;
-        case OP.newactivation:
+        case Bytecode.NEWACTIVATION:
           this.emitPush('Object.create(mi.activationPrototype)');
           break;
-        case OP.newobject:
+        case Bytecode.NEWOBJECT:
           this.emitNewObject(bc);
           break;
-        case OP.newarray:
+        case Bytecode.NEWARRAY:
           this.emitNewArray(bc);
           break;
-        case OP.newclass:
+        case Bytecode.NEWCLASS:
           this.emitNewClass(bc);
           break;
-        case OP.newfunction:
+        case Bytecode.NEWFUNCTION:
           this.emitNewFunction(bc);
           break;
-        case OP.newcatch:
+        case Bytecode.NEWCATCH:
           this.emitNewCatch(bc);
           break;
-        case OP.construct:
+        case Bytecode.CONSTRUCT:
           this.emitConstruct(bc);
           break;
-        case OP.constructprop:
+        case Bytecode.CONSTRUCTPROP:
           this.emitConstructProperty(bc);
           break;
-        case OP.throw:
+        case Bytecode.THROW:
           this.emitThrow();
           break;
-        case OP.hasnext2:
+        case Bytecode.HASNEXT2:
           this.emitHasNext2(bc);
           break;
-        case OP.nextname:
+        case Bytecode.NEXTNAME:
           this.emitNextName();
           break;
-        case OP.nextvalue:
+        case Bytecode.NEXTVALUE:
           this.emitNextValue();
           break;
-        case OP.jump:
+        case Bytecode.JUMP:
           this.emitJump(block, bc);
           break;
-        case OP.ifnlt:
+        case Bytecode.IFNLT:
           this.emitBinaryIf(block, bc, "<", true);
           break;
-        case OP.ifnge:
+        case Bytecode.IFNGE:
           this.emitBinaryIf(block, bc, ">=", true);
           break;
-        case OP.ifngt:
+        case Bytecode.IFNGT:
           this.emitBinaryIf(block, bc, ">", true);
           break;
-        case OP.ifnle:
+        case Bytecode.IFNLE:
           this.emitBinaryIf(block, bc, "<=", true);
           break;
-        case OP.ifge:
+        case Bytecode.IFGE:
           this.emitBinaryIf(block, bc, ">=", false);
           break;
-        case OP.ifgt:
+        case Bytecode.IFGT:
           this.emitBinaryIf(block, bc, ">", false);
           break;
-        case OP.ifle:
+        case Bytecode.IFLE:
           this.emitBinaryIf(block, bc, "<=", false);
           break;
-        case OP.iflt:
+        case Bytecode.IFLT:
           this.emitBinaryIf(block, bc, "<", false);
           break;
-        case OP.ifeq:
+        case Bytecode.IFEQ:
           this.emitIfEq(block, bc, false);
           break;
-        case OP.ifne:
+        case Bytecode.IFNE:
           this.emitIfEq(block, bc, true);
           break;
-        case OP.ifstricteq:
+        case Bytecode.IFSTRICTEQ:
           this.emitBinaryIf(block, bc, "===", false);
           break;
-        case OP.ifstrictne:
+        case Bytecode.IFSTRICTNE:
           this.emitBinaryIf(block, bc, "!==", false);
           break;
-        case OP.iftrue:
+        case Bytecode.IFTRUE:
           this.emitUnaryIf(block,  bc, "!!");
           break;
-        case OP.iffalse:
+        case Bytecode.IFFALSE:
           this.emitUnaryIf(block,  bc, "!");
           break;
-        case OP.lookupswitch:
+        case Bytecode.LOOKUPSWITCH:
           this.emitLookupSwitch(block, bc);
           break;
-        case OP.pushstring:
+        case Bytecode.PUSHSTRING:
           this.emitPushString(bc);
           break;
-        case OP.pushdouble:
+        case Bytecode.PUSHDOUBLE:
           this.emitPushDouble(bc);
           break;
-        case OP.pushint:
+        case Bytecode.PUSHINT:
           this.emitPush(this.constantPool.ints[bc.index]);
           break;
-        case OP.pushuint:
+        case Bytecode.PUSHUINT:
           this.emitPush(this.constantPool.uints[bc.index]);
           break;
-        case OP.pushbyte:
-        case OP.pushshort:
+        case Bytecode.PUSHBYTE:
+        case Bytecode.PUSHSHORT:
           this.emitPush(bc.value);
           break;
-        case OP.pushnull:
+        case Bytecode.PUSHNULL:
           this.emitPush(null);
           break;
-        case OP.pushundefined:
+        case Bytecode.PUSHUNDEFINED:
           this.emitPush(undefined);
           break;
-        case OP.pushtrue:
+        case Bytecode.PUSHTRUE:
           this.emitPush(true);
           break;
-        case OP.pushfalse:
+        case Bytecode.PUSHFALSE:
           this.emitPush(false);
           break;
-        case OP.pushnan:
+        case Bytecode.PUSHNAN:
           this.emitPush('NaN');
           break;
-        case OP.pop:
+        case Bytecode.POP:
           // TODO whether this can validly happen. It does happen in mx.core::BitmapAsset's ctor,
           // where a block starts with a pop, but perhaps something has gone wrong earlier for that?
           if (this.stack > 0) {
             this.stack--;
           }
           break;
-        case OP.kill:
+        case Bytecode.KILL:
           if (bc.index > 0) {
             this.emitReplaceLocal(bc.index, 'undefined');
           }
           break;
-        case OP.constructsuper:
+        case Bytecode.CONSTRUCTSUPER:
           this.emitConstructSuper(bc);
           break;
-        case OP.increment:
+        case Bytecode.INCREMENT:
           this.emitLine(this.peek() + '++;');
           break;
-        case OP.increment_i:
+        case Bytecode.INCREMENT_I:
           this.emitReplace('(' + this.peek() + '|0) + ' + 1);
           break;
-        case OP.decrement:
+        case Bytecode.DECREMENT:
           this.emitLine(this.peek() + '--;');
           break;
-        case OP.decrement_i:
+        case Bytecode.DECREMENT_I:
           this.emitReplace('(' + this.peek() + '|0) - ' + 1);
           break;
-        case OP.inclocal:
+        case Bytecode.INCLOCAL:
           this.emitLine(this.getLocal(bc.index) + '++;');
           break;
-        case OP.inclocal_i:
+        case Bytecode.INCLOCAL_I:
           this.emitReplaceLocal(bc.index, '(' + this.getLocal(bc.index) + '|0) + ' + 1);
           break;
-        case OP.declocal:
+        case Bytecode.DECLOCAL:
           this.emitLine(this.getLocal(bc.index) + '--;');
           break;
-        case OP.declocal_i:
+        case Bytecode.DECLOCAL_I:
           this.emitReplaceLocal(bc.index, '(' + this.getLocal(bc.index) + '|0) - ' + 1);
           break;
-        case OP.not:
+        case Bytecode.NOT:
           this.emitUnaryOp('!');
           break;
-        case OP.bitnot:
+        case Bytecode.BITNOT:
           this.emitUnaryOp('~');
           break;
-        case OP.negate:
+        case Bytecode.NEGATE:
           this.emitUnaryOp('-');
           break;
-        case OP.negate_i:
+        case Bytecode.NEGATE_I:
           this.emitUnaryOp_i('-');
           break;
-        case OP.unplus:
+        case Bytecode.UNPLUS:
           this.emitUnaryOp('+');
           break;
-        case OP.equals:
+        case Bytecode.EQUALS:
           this.emitEquals();
           break;
-        case OP.add:
+        case Bytecode.ADD:
           this.emitAddExpression();
           break;
-        case OP.add_i:
+        case Bytecode.ADD_I:
           this.emitBinaryExpression_i(' + ');
           break;
-        case OP.subtract:
+        case Bytecode.SUBTRACT:
           this.emitBinaryExpression(' - ');
           break;
-        case OP.subtract_i:
+        case Bytecode.SUBTRACT_I:
           this.emitBinaryExpression_i(' - ');
           break;
-        case OP.multiply:
+        case Bytecode.MULTIPLY:
           this.emitBinaryExpression(' * ');
           break;
-        case OP.multiply_i:
+        case Bytecode.MULTIPLY_I:
           this.emitBinaryExpression_i(' * ');
           break;
-        case OP.divide:
+        case Bytecode.DIVIDE:
           this.emitBinaryExpression(' / ');
           break;
-        case OP.modulo:
+        case Bytecode.MODULO:
           this.emitBinaryExpression(' % ');
           break;
-        case OP.lshift:
+        case Bytecode.LSHIFT:
           this.emitBinaryExpression(' << ');
           break;
-        case OP.rshift:
+        case Bytecode.RSHIFT:
           this.emitBinaryExpression(' >> ');
           break;
-        case OP.urshift:
+        case Bytecode.URSHIFT:
           this.emitBinaryExpression(' >>> ');
           break;
-        case OP.bitand:
+        case Bytecode.BITAND:
           this.emitBinaryExpression(' & ');
           break;
-        case OP.bitor:
+        case Bytecode.BITOR:
           this.emitBinaryExpression(' | ');
           break;
-        case OP.bitxor:
+        case Bytecode.BITXOR:
           this.emitBinaryExpression(' ^ ');
           break;
-        case OP.strictequals:
+        case Bytecode.STRICTEQUALS:
           this.emitBinaryExpression(' === ');
           break;
-        case OP.lessequals:
+        case Bytecode.LESSEQUALS:
           this.emitBinaryExpression(' <= ');
           break;
-        case OP.lessthan:
+        case Bytecode.LESSTHAN:
           this.emitBinaryExpression(' < ');
           break;
-        case OP.greaterequals:
+        case Bytecode.GREATEREQUALS:
           this.emitBinaryExpression(' >= ');
           break;
-        case OP.greaterthan:
+        case Bytecode.GREATERTHAN:
           this.emitBinaryExpression(' > ');
           break;
-        case OP.coerce:
+        case Bytecode.COERCE:
           this.emitCoerce(bc);
           break;
-        case OP.coerce_a:
+        case Bytecode.COERCE_A:
           // NOP.
           break;
-        case OP.coerce_i:
-        case OP.convert_i:
+        case Bytecode.COERCE_I:
+        case Bytecode.CONVERT_I:
           this.emitCoerceInt();
           break;
-        case OP.coerce_u:
-        case OP.convert_u:
+        case Bytecode.COERCE_U:
+        case Bytecode.CONVERT_U:
           this.emitCoerceUint();
           break;
-        case OP.coerce_d:
-        case OP.convert_d:
+        case Bytecode.COERCE_D:
+        case Bytecode.CONVERT_D:
           this.emitCoerceNumber();
           break;
-        case OP.coerce_b:
-        case OP.convert_b:
+        case Bytecode.COERCE_B:
+        case Bytecode.CONVERT_B:
           this.emitCoerceBoolean();
           break;
-        case OP.coerce_o:
-        case OP.convert_o:
+        case Bytecode.COERCE_O:
+        case Bytecode.CONVERT_O:
           this.emitCoerceObject(bc);
           break;
-        case OP.coerce_s:
-        case OP.convert_s:
+        case Bytecode.COERCE_S:
+        case Bytecode.CONVERT_S:
           this.emitCoerceString(bc);
           break;
-        case OP.instanceof:
+        case Bytecode.INSTANCEOF:
           this.emitInstanceof();
           break;
-        case OP.istype:
+        case Bytecode.ISTYPE:
           this.emitIsType(bc.index);
           break;
-        case OP.istypelate:
+        case Bytecode.ISTYPELATE:
           this.emitIsTypeLate();
           break;
-        case OP.astypelate:
+        case Bytecode.ASTYPELATE:
           this.emitAsTypeLate();
           break;
-        case OP.applytype:
+        case Bytecode.APPLYTYPE:
           this.emitApplyType(bc);
           break;
-        case OP.in:
+        case Bytecode.IN:
           this.emitIn();
           break;
-        case OP.typeof:
-          this.emitReplace('asTypeOf(' + this.peek() + ')');
+        case Bytecode.TYPEOF:
+          this.emitReplace('axTypeOf(' + this.peek() + ', sec)');
           break;
-        case OP.dup:
+        case Bytecode.DUP:
           this.emitDup();
           break;
-        case OP.swap:
+        case Bytecode.SWAP:
           this.emitSwap();
           break;
-        case OP.returnvoid:
+        case Bytecode.RETURNVOID:
           this.emitReturnVoid();
           break;
-        case OP.returnvalue:
+        case Bytecode.RETURNVALUE:
           this.emitReturnValue();
           break;
-        case OP.debug:
-        case OP.debugfile:
-        case OP.debugline:
+        case Bytecode.DEBUG:
+        case Bytecode.DEBUGFILE:
+        case Bytecode.DEBUGLINE:
           // Ignored.
           break;
         default:
-          throw "Not Implemented: " + OP[op];
+          throw "Not Implemented: " + Bytecode[op];
       }
     }
 
@@ -862,7 +928,7 @@ module Shumway.AVM2.Compiler {
         this.blockEmitter.writeLn(this.pop() + '.' + qualifiedName + ' = ' + value + ';');
       } else {
         var nameElements = this.emitMultiname(nameIndex);
-        this.blockEmitter.writeLn(this.pop() + ".asSetProperty(" + nameElements + ", " +
+        this.blockEmitter.writeLn(this.pop() + ".axSetProperty(" + nameElements + ", " +
                                   value + ");");
       }
     }
@@ -882,7 +948,7 @@ module Shumway.AVM2.Compiler {
         }
       } else {
         var nameElements = this.emitMultiname(nameIndex);
-        this.emitLine(this.pop() + ".asSetSuper(mi.classScope, " + nameElements + ", " +
+        this.emitLine(this.pop() + ".axSetSuper(mi.classScope, " + nameElements + ", " +
                          value + ");");
       }
     }
@@ -895,7 +961,7 @@ module Shumway.AVM2.Compiler {
         this.emitReplace(this.peek() + '.' + qualifiedName);
       } else {
         var nameElements = this.emitMultiname(nameIndex);
-        this.emitReplace(this.peek() + ".asGetProperty(" + nameElements + ", false)");
+        this.emitReplace(this.peek() + ".axGetProperty(" + nameElements + ", false)");
       }
     }
 
@@ -914,7 +980,7 @@ module Shumway.AVM2.Compiler {
       } else {
         var nameElements = this.emitMultiname(nameIndex);
         var receiver = this.peek();
-        this.emitReplace(receiver + ".asGetSuper(mi.classScope, " + nameElements + ")");
+        this.emitReplace(receiver + ".axGetSuper(mi.classScope, " + nameElements + ")");
       }
     }
 
@@ -926,7 +992,7 @@ module Shumway.AVM2.Compiler {
         this.emitReplace('delete ' + this.peek() + '.' + qualifiedName);
       } else {
         var nameElements = this.emitMultiname(nameIndex);
-        this.emitReplace(this.peek() + ".asDeleteProperty(" + nameElements + ", false)");
+        this.emitReplace(this.peek() + ".axDeleteProperty(" + nameElements + ", false)");
       }
     }
 
@@ -948,7 +1014,7 @@ module Shumway.AVM2.Compiler {
         call = '.' + qualifiedName + '(' + args + ')';
       } else {
         var nameElements = this.emitMultiname(bc.index);
-        call = ".asCallProperty(" + nameElements + ", " + isLex + ", [" + args + "])";
+        call = ".axCallProperty(" + nameElements + ", " + isLex + ", [" + args + "])";
       }
       if (bc.op !== OP.callpropvoid) {
         this.emitReplace(this.peek() + call);
@@ -961,7 +1027,7 @@ module Shumway.AVM2.Compiler {
       var args = this.popArgs(bc.argCount);
       var multiname = this.constantPool.multinames[bc.index];
       // Super calls with statically resolvable names are optimized to direct calls.
-      // This must be valid as `asCallSuper` asserts that the method can be found. (Which in
+      // This must be valid as `axCallSuper` asserts that the method can be found. (Which in
       // itself is invalid, as an incorrect, but valid script can create this situation.)
       if (multiname.isSimpleStatic()) {
         var qualifiedName = 'm' + Multiname.qualifyName(multiname.namespaces[0], multiname.name);
@@ -970,7 +1036,7 @@ module Shumway.AVM2.Compiler {
       }
       if (!call) {
         var nameElements = this.emitMultiname(bc.index);
-        var call = this.peek() + '.asCallSuper(mi.classScope, ' + nameElements + ', [' + args +
+        var call = this.peek() + '.axCallSuper(mi.classScope, ' + nameElements + ', [' + args +
                                                                                               '])';
       }
       if (bc.op !== OP.callsupervoid) {
@@ -986,7 +1052,7 @@ module Shumway.AVM2.Compiler {
       var argsString = args.length ? ', ' + args.join(', ') : '';
       var receiver = this.pop();
       var callee = this.peek();
-      this.emitReplace(callee + '.asCall(' + receiver + argsString + ')');
+      this.emitReplace(callee + '.axCall(' + receiver + argsString + ')');
     }
 
     emitConstruct(bc: Bytecode) {
@@ -1009,7 +1075,7 @@ module Shumway.AVM2.Compiler {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         this.emitReplace(this.peek() + '.' + qualifiedName);
       } else {
-        this.emitReplace(this.peek() + ".asGetProperty(" + nameElements + ", false)");
+        this.emitReplace(this.peek() + ".axGetProperty(" + nameElements + ", false)");
       }
     }
 
@@ -1085,19 +1151,19 @@ module Shumway.AVM2.Compiler {
       var index = this.local[bc.index];
       this.emitLine(info + '.object = ' + object + ';');
       this.emitLine(info + '.index = ' + index + ';');
-      this.emitLine('Object(' + object + ').asHasNext2(' + info + ');');
+      this.emitLine('Object(' + object + ').axHasNext2(' + info + ');');
       this.emitLine(object + ' = ' + info + '.object;');
       this.emitPush(index + ' = ' + info + '.index');
     }
 
     emitNextName() {
       var index = this.pop();
-      this.emitReplace(this.peek() + '.asNextName(' + index + ')');
+      this.emitReplace(this.peek() + '.axNextName(' + index + ')');
     }
 
     emitNextValue() {
       var index = this.pop();
-      this.emitReplace(this.peek() + '.asNextValue(' + index + ')');
+      this.emitReplace(this.peek() + '.axNextValue(' + index + ')');
     }
 
     emitThrow() {
@@ -1186,13 +1252,13 @@ module Shumway.AVM2.Compiler {
     }
 
     emitGetSlot(index: number) {
-      this.emitReplace('asGetSlot(' + this.peek() + ', ' + index + ')');
+      this.emitReplace(this.peek() + '.axGetSlot(' + index + ')');
     }
 
     emitSetSlot(index: number) {
       var value = this.pop();
       var object = this.pop();
-      this.emitLine('asSetSlot(' + object + ', ' + index + ', '+ value + ')');
+      this.emitLine(object + '.axSetSlot(' + index + ', '+ value + ')');
     }
 
     emitNewClass(bc: Bytecode) {
@@ -1251,8 +1317,8 @@ module Shumway.AVM2.Compiler {
       if (bc.ti && bc.ti.noCoercionNeeded) {
         return;
       }
-      var coercion = 'asCoerce(mi.abc.applicationDomain.getType(mi.abc.constantPool.multinames[' +
-                     bc.index + ']), ' + this.pop() + ')';
+      var coercion = 'mi.abc.app.getType(mi.abc.constantPool.multinames[' +
+                     bc.index + '].axCoerce(' + this.pop() + ')';
       this.emitPush(coercion);
     }
 
@@ -1281,7 +1347,7 @@ module Shumway.AVM2.Compiler {
         return;
       }
       var val = this.peek();
-      this.blockEmitter.writeLn(val + ' = asCoerceObject(' + val + ');');
+      this.blockEmitter.writeLn(val + ' = axCoerceObject(' + val + ');');
     }
 
     emitCoerceString(bc: Bytecode) {
@@ -1294,7 +1360,7 @@ module Shumway.AVM2.Compiler {
 
     emitInstanceof() {
       var type = this.pop();
-      this.emitReplace(type + '.isInstanceOf(' + this.peek() + ')');
+      this.emitReplace(type + '.axIsInstanceOf(' + this.peek() + ')');
     }
 
     emitIsType(index: number) {
@@ -1305,23 +1371,23 @@ module Shumway.AVM2.Compiler {
 
     emitIsTypeLate() {
       var type = this.pop();
-      this.emitReplace('asIsType(' + type + ', ' + this.peek() + ')');
+      this.emitReplace(type + '.axIsType(' + this.peek() + ')');
     }
 
     emitAsTypeLate() {
       var type = this.pop();
-      this.emitReplace('asAsType(' + type + ', ' + this.peek() + ')');
+      this.emitReplace(type + '.axAsType(' + this.peek() + ')');
     }
 
     emitApplyType(bc: Bytecode) {
       var args = this.popArgs(bc.argCount);
       var type = this.peek();
-      this.emitReplace('applyType(mi, ' + type + ', [' + args + '])');
+      this.emitReplace('sec.applyType(' + type + ', [' + args + '])');
     }
 
     emitIn() {
       var object = this.pop();
-      this.emitReplace(object + '.asHasProperty(null, ' + this.peek() + ')');
+      this.emitReplace(object + '.axHasProperty(' + this.peek() + ')');
     }
 
     emitDup() {
@@ -1352,7 +1418,7 @@ module Shumway.AVM2.Compiler {
     emitAddExpression() {
       var right = this.pop();
       var left = this.peek();
-      this.blockEmitter.writeLn(left + ' = asAdd(' + left + ', ' + right + ');');
+      this.blockEmitter.writeLn(left + ' = axAdd(' + left + ', ' + right + ', sec);');
     }
 
     emitBinaryExpression(expression: string) {
@@ -1404,7 +1470,7 @@ module Shumway.AVM2.Compiler {
       case Multiname.Boolean:
         return '!!' + value;
       case Multiname.Object:
-        return 'asCoerceObject(' + value + ')';
+        return 'axCoerceObject(' + value + ')';
       default:
         return value;
     }
