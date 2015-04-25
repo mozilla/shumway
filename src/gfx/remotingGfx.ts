@@ -562,9 +562,7 @@ module Shumway.Remoting.GFX {
       }
       if (hasBits & MessageBits.HasMask) {
         var maskId = input.readInt();
-        if (maskId >= 0) {
-          node.getLayer().mask = context._makeNode(maskId);
-        }
+        node.getLayer().mask = maskId >= 0 ? context._makeNode(maskId) : null;
       }
       if (hasBits & MessageBits.HasClip) {
         node.clip = input.readInt();
