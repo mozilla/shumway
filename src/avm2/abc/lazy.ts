@@ -1164,12 +1164,13 @@ module Shumway.AVMX {
     }
 
     public getMangledName(): string {
-      assert (this.isQName());
-      var mangledName = this._mangledName;
-      if (mangledName) {
-        return mangledName;
-      }
-      mangledName = "$" + this.namespaces[0].getMangledName() + axCoerceString(this.name);
+      release || assert(this.isQName());
+      return this._mangledName || this._mangleName();
+    }
+
+    private _mangleName() {
+      release || assert(!this._mangledName);
+      var mangledName = "$" + this.namespaces[0].getMangledName() + axCoerceString(this.name);
       if (!this.isRuntime()) {
         this._mangledName = mangledName;
       }
