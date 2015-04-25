@@ -109,6 +109,7 @@ module Shumway.GFX {
         window.addEventListener(keyboardEvents[i], keyboardEventListener);
       }
       this._addFocusEventListeners();
+      this._addThrottleGovernor();
 
       this._easel.addEventListener('resize', this._resizeEventListener.bind(this));
     }
@@ -135,6 +136,36 @@ module Shumway.GFX {
         self._sendFocusEvent(Shumway.Remoting.FocusEventType.WindowBlur);
       });
     }
+
+    /**
+     * Detects changes in the requestAnimationFrame frequency and dispatches |DocumentVisible| and |DocumentHidden| events
+     * to the player to resume or pause frame execution. In FF, |requestAnimationFrame| of iFrames that are not in the
+     * viewport are throttled to 1 tick per second, this can be used to detect whether the iFrame is in the viewport.
+     */
+    private _addThrottleGovernor() {
+      var self = this;
+      var isThrottledDown = false;
+      var lastTick = performance.now();
+      // Poll for changes in the rAF frequency.
+      requestAnimationFrame(function tick() {
+        var thisTick = performance.now();
+        var elapsed = thisTick - lastTick;
+        if (elapsed < 500) {
+          if (isThrottledDown) {
+            self._sendFocusEvent(Shumway.Remoting.FocusEventType.DocumentVisible);
+            isThrottledDown = false;
+          }
+        } else if (!isThrottledDown) {
+          // If the last tick was over 500 ms ago, we are probably outside of the viewport. Send a |DocumentHidden|
+          // event to the player to stop execution.
+          isThrottledDown = true;
+          self._sendFocusEvent(Shumway.Remoting.FocusEventType.DocumentHidden);
+        }
+        lastTick = thisTick;
+        requestAnimationFrame(tick);
+      });
+    }
+
 
     private _resizeEventListener() {
       this.onDisplayParameters(this._easel.getDisplayParameters());
