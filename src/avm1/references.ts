@@ -17,6 +17,7 @@
 /// <reference path='../../build/ts/avm2.d.ts' />
 /// <reference path='flash.d.ts' />
 
+///<reference path='options.ts' />
 ///<reference path='stream.ts' />
 ///<reference path='parser.ts' />
 ///<reference path='analyze.ts' />

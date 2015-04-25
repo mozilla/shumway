@@ -17,16 +17,25 @@
 module Shumway.AVM1 {
   import notImplemented = Shumway.Debug.notImplemented;
 
+  interface IExecutionContext {
+    constantPool: any[];
+    registers: any[];
+    stack: any[];
+    isEndOfActions: boolean;
+  }
+
+  var cachedActionsCalls = null;
+  function getActionsCalls() {
+    if (!cachedActionsCalls) {
+      cachedActionsCalls = generateActionCalls();
+    }
+    return cachedActionsCalls;
+  }
+
   /**
    *  Bare-minimum JavaScript code generator to make debugging better.
    */
   export class ActionsDataCompiler {
-    static cachedCalls;
-    constructor() {
-      if (!ActionsDataCompiler.cachedCalls) {
-        ActionsDataCompiler.cachedCalls = generateActionCalls();
-      }
-    }
     private convertArgs(args: any[], id: number, res, ir: AnalyzerResults): string {
       var parts: string[] = [];
       for (var i: number = 0; i < args.length; i++) {
@@ -130,8 +139,79 @@ module Shumway.AVM1 {
       fn += ' default: ectx.isEndOfActions = true; break;\n}\n}\n' +
       'return stack.pop();};';
       fn += '//# sourceURL=avm1gen-' + debugName;
-      return (new Function('calls', 'res', fn))(
-        ActionsDataCompiler.cachedCalls, res);
+      return (new Function('calls', 'res', fn))(getActionsCalls(), res);
     }
+  }
+
+  // Instead of compiling, we can match frequently used actions patterns and use
+  // the dictionary functions without analyzing or compilations of the code.
+  // The functions/patterns were selected by analyzing the large amount of
+  // real-life SWFs.
+  export function findWellknowCompilation(actionsData: AVM1ActionsData, context: AVM1Context): Function {
+    var bytes = actionsData.bytes;
+
+    var fn: Function = null;
+    if (bytes.length === 0 || bytes[0] === ActionCode.None) {
+      // Empty/no actions or first command is ActionEnd.
+      fn = actionsNoop;
+    } else if (bytes.length >= 2 && bytes[1] === ActionCode.None) {
+      // Single bytes actions: ActionPlay, ActionStop, ActionStopSounds
+      // Example: 07 00
+      switch(bytes[0]) {
+        case ActionCode.ActionPlay:
+          fn = actionsPlay;
+          break;
+        case ActionCode.ActionStop:
+          fn = actionsStop;
+          break;
+        case ActionCode.ActionStopSounds:
+          fn = actionsStopSounds;
+          break;
+      }
+    } else if (bytes.length >= 7 && bytes[6] === ActionCode.None &&
+               bytes[0] === ActionCode.ActionGotoFrame &&
+               bytes[1] === 2 && bytes[2] === 0 &&
+               bytes[5] === ActionCode.ActionPlay) {
+      // ActionGotoFrame n, ActionPlay
+      // Example: 81 02 00 04 00 06 00
+      var frameIndex = bytes[3] | (bytes[4] << 8);
+      fn = actionsGotoFrame.bind(null, [frameIndex, true]);
+    } else if (bytes.length >= 6 && bytes[0] === ActionCode.ActionGoToLabel &&
+               bytes[2] === 0 && bytes.length >= bytes[1] + 5 &&
+               bytes[bytes[1] + 4] === ActionCode.None &&
+               bytes[bytes[1] + 3] === ActionCode.ActionPlay) {
+      //  ActionGoToLabel s, ActonPlay
+      // Example: 8c 03 00 73 31 00 06 00
+      var stream = new ActionsDataStream(bytes.subarray(3, 3 + bytes[1]), context.swfVersion);
+      var label = stream.readString();
+      fn = actionsGotoLabel.bind(null, [label, true]);
+    }
+
+    // TODO debugger pause and breakpoints ?
+    return fn;
+  }
+
+  function actionsNoop(ectx: IExecutionContext) {
+    // no operations stub
+  }
+
+  function actionsPlay(ectx: IExecutionContext) {
+    getActionsCalls().ActionPlay(ectx);
+  }
+
+  function actionsStop(ectx: IExecutionContext) {
+    getActionsCalls().ActionStop(ectx);
+  }
+
+  function actionsStopSounds(ectx: IExecutionContext) {
+    getActionsCalls().ActionStopSounds(ectx);
+  }
+
+  function actionsGotoFrame(args: any[], ectx: IExecutionContext) {
+    getActionsCalls().ActionGotoFrame(ectx, args);
+  }
+
+  function actionsGotoLabel(args: any[], ectx: IExecutionContext) {
+    getActionsCalls().ActionGoToLabel(ectx, args);
   }
 }
