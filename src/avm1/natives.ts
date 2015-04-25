@@ -1039,7 +1039,7 @@ module Shumway.AVM1.Natives {
     }
 
     public floor(x: number): number {
-      return Math.abs(alToNumber(this.context, x));
+      return Math.floor(alToNumber(this.context, x));
     }
 
     public log(x: number): number {
