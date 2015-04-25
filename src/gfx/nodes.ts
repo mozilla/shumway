@@ -1098,14 +1098,14 @@ module Shumway.GFX {
    */
   export class Shape extends Node {
     private _source: Renderable;
-    public ratio: number;
+    private _ratio: number;
 
     constructor(source: Renderable) {
       super();
       release || assert(source);
       this._source = source;
       this._type = NodeType.Shape;
-      this.ratio = 0;
+      this._ratio = 0;
     }
 
     public getBounds(clone: boolean = false): Rectangle {
@@ -1122,6 +1122,18 @@ module Shumway.GFX {
 
     get source(): Renderable {
       return this._source;
+    }
+
+    get ratio(): number {
+      return this._ratio;
+    }
+
+    set ratio(value: number) {
+      if (value === this._ratio) {
+        return;
+      }
+      this.invalidate();
+      this._ratio = value;
     }
 
     _propagateFlagsDown(flags: NodeFlags) {
