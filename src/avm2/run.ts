@@ -640,7 +640,7 @@ module Shumway.AVMX {
   export function applyTraits(object: ITraits, traits: RuntimeTraits) {
     release || assert(!object.hasOwnProperty("traits"));
     defineReadOnlyProperty(object, "traits", traits);
-    var T = traits.traits;
+    var T = traits.getTraitsList();
     for (var i = 0; i < T.length; i++) {
       var t = T[i];
       var p: PropertyDescriptor = t;
@@ -717,7 +717,7 @@ module Shumway.AVMX {
     D(AXBasePrototype, "axImplementsInterface", axImplementsInterface);
 
     // Dummy traits object so Object.prototype lookups succeed.
-    D(AXBasePrototype, "traits", new RuntimeTraits([], null, null, Object.create(null)));
+    D(AXBasePrototype, "traits", new RuntimeTraits(null, null, Object.create(null)));
 
     // Helper methods borrowed from Object.prototype.
     D(AXBasePrototype, "isPrototypeOf", Object.prototype.isPrototypeOf);

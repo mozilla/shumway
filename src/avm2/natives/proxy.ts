@@ -22,7 +22,7 @@ module Shumway.AVMX.AS {
 
     var proxyNamespace = internNamespace(NamespaceType.Public,
                                          "http://www.adobe.com/2006/actionscript/flash/proxy");
-    var proxyPrefix = '$' + proxyNamespace.getMangledName();
+    var proxyPrefix = '$' + proxyNamespace.mangledName;
 
     /**
      * The Proxy class lets you override the default behavior of ActionScript operations
