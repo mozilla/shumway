@@ -279,11 +279,6 @@ module Shumway.Player {
     public displayParameters: DisplayParameters;
 
     /**
-     * Time since the last time we've synchronized the display list.
-     */
-    private _lastPumpTime = 0;
-
-    /**
      * Page Visibility API visible state.
      */
     _isPageVisible = true;
@@ -505,15 +500,10 @@ module Shumway.Player {
         if (this._shouldThrottleDownRendering()) {
           return;
         }
-        var timeSinceLastPump = performance.now() - this._lastPumpTime;
-        if (timeSinceLastPump < (1000 / pumpRateOption.value)) {
-          return;
-        }
       }
       enterTimeline("pump");
       if (pumpEnabledOption.value) {
         this._pumpDisplayListUpdates();
-        this._lastPumpTime = performance.now();
       }
       leaveTimeline("pump");
     }
