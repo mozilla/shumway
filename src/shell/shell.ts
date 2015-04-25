@@ -417,7 +417,7 @@ module Shumway.Shell {
     }
     function runSWF(file: any) {
       microTaskQueue.clear();
-      if (deterministicOption) {
+      if (deterministicOption.value) {
         Shumway.Random.reset();
         Shumway.Shell.installTimeWarper();
       }
