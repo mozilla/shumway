@@ -155,11 +155,11 @@ module Shumway.AVM1.Lib {
     }
 
     public getGridFitType(): string {
-      throw 'Not implemented: get$gridFitType';
+      return this._as3Object.gridFitType;
     }
 
     public setGridFitType(value: string) {
-      throw 'Not implemented: get$gridFitType';
+      this._as3Object.gridFitType = value;
     }
 
     public get_height() {

@@ -449,6 +449,7 @@ declare module Shumway.AVMX.AS.flash {
       textWidth: number;
       textHeight: number;
       defaultTextFormat: TextFormat;
+      gridFitType: string;
       _symbol: TextSymbol;
     }
     class TextFormat extends ASObject {
