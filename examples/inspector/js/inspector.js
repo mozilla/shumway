@@ -247,6 +247,7 @@ function executeFile(path, buffer, movieParams, remoteDebugging) {
         player.stageScale = state.scale;
         player.displayParameters = easel.getDisplayParameters();
         player.loaderUrl = state.loaderURL;
+        player.initStartTime = initStartTime;
 
         var useRecorder = state.recordingLimit > 0;
         easelHost = useRecorder ?

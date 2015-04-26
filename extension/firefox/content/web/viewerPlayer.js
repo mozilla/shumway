@@ -19,11 +19,7 @@ window.print = function(msg) {
 };
 
 function runSwfPlayer(flashParams) {
-  var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
-
-  var compilerSettings = flashParams.compilerSettings;
-  var sysMode = compilerSettings.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-  var appMode = compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  console.info('Time from init start to SWF player start: ' + (Date.now() - flashParams.initStartTime));
   var asyncLoading = true;
   var baseUrl = flashParams.baseUrl;
   var objectParams = flashParams.objectParams;
@@ -41,8 +37,10 @@ function runSwfPlayer(flashParams) {
       player.stageAlign = (objectParams && (objectParams.salign || objectParams.align)) || '';
       player.stageScale = (objectParams && objectParams.scale) || 'showall';
       player.displayParameters = flashParams.displayParameters;
+      player.initStartTime = flashParams.initStartTime;
 
       player.pageUrl = baseUrl;
+      console.info('Time from init start to SWF loading start: ' + (Date.now() - flashParams.initStartTime));
       player.load(file, buffer);
     }
 

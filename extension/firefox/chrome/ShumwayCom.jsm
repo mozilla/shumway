@@ -356,6 +356,7 @@ function ShumwayChromeActions(startupInfo, window, document) {
   this.isOverlay = startupInfo.isOverlay;
   this.embedTag = startupInfo.embedTag;
   this.isPausedAtStart = startupInfo.isPausedAtStart;
+  this.initStartTime = startupInfo.initStartTime;
   this.window = window;
   this.document = document;
   this.allowScriptAccess = startupInfo.allowScriptAccess;
@@ -415,6 +416,7 @@ ShumwayChromeActions.prototype = {
       objectParams: this.objectParams,
       isOverlay: this.isOverlay,
       isPausedAtStart: this.isPausedAtStart,
+      initStartTime: this.initStartTime,
       isDebuggerEnabled: getBoolPref('shumway.debug.enabled', false)
     };
   },
