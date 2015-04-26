@@ -105,18 +105,19 @@ module Shumway.AVMX.AS.flash.net {
       obj.url = this._url;
       obj.method = this._method;
       obj.checkPolicyFile = this._checkPolicyFile;
-      if (this._data) {
+      var data = this._data;
+      if (data) {
         obj.mimeType = this._contentType;
-        if (this.sec.flash.utils.ByteArray.axClass.axIsType(this._data)) {
+        if (this.sec.flash.utils.ByteArray.axClass.axIsType(data)) {
           obj.data = <ASObject><any>
-            new Uint8Array((<any> this._data)._buffer, 0, (<any> this._data).length);
+            new Uint8Array((<any> data)._buffer, 0, (<any> data).length);
         } else {
-          var data = this._data.axGetPublicProperty("toString").call(this._data);
+          var dataStr = data.toString();
           if (this._method === 'GET') {
             var i = obj.url.lastIndexOf('?');
-            obj.url = (i < 0 ? obj.url : obj.url.substring(0, i)) + '?' + data;
+            obj.url = (i < 0 ? obj.url : obj.url.substring(0, i)) + '?' + dataStr;
           } else {
-            obj.data = data;
+            obj.data = dataStr;
           }
         }
       }
