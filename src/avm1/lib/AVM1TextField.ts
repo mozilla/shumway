@@ -241,7 +241,9 @@ module Shumway.AVM1.Lib {
     }
 
     public get_parent() {
-      return this._as3Object.parent;
+      var parent = getAVM1Object(this.as3Object.parent, this.context);
+      // In AVM1, the _parent property is `undefined`, not `null` if the element has no parent.
+      return <AVM1MovieClip>parent || undefined;
     }
 
     public set_parent(value) {
