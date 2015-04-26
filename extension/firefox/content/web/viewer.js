@@ -74,17 +74,19 @@ function runViewer() {
   });
 
   if (isOverlay) {
-    document.getElementById('overlay').className = 'enabled';
-    var fallbackDiv = document.getElementById('fallback');
-    fallbackDiv.addEventListener('click', function(e) {
-      fallback();
-      e.preventDefault();
-    });
-    var reportDiv = document.getElementById('report');
-    reportDiv.addEventListener('click', function(e) {
-      reportIssue();
-      e.preventDefault();
-    });
+    if (isDebuggerEnabled) {
+      document.getElementById('overlay').className = 'enabled';
+      var fallbackDiv = document.getElementById('fallback');
+      fallbackDiv.addEventListener('click', function (e) {
+        fallback();
+        e.preventDefault();
+      });
+      var reportDiv = document.getElementById('report');
+      reportDiv.addEventListener('click', function (e) {
+        reportIssue();
+        e.preventDefault();
+      });
+    }
     var fallbackMenu = document.getElementById('fallbackMenu');
     fallbackMenu.removeAttribute('hidden');
     fallbackMenu.addEventListener('click', fallback);
