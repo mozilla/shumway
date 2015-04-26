@@ -1125,6 +1125,30 @@ module Shumway.AVM1.Natives {
           value: this._toString,
           writable: true
         },
+        getDate: {
+          value: this.getDate,
+          writable: true
+        },
+        getFullYear: {
+          value: this.getFullYear,
+          writable: true
+        },
+        getHours: {
+          value: this.getHours,
+          writable: true
+        },
+        getMinutes: {
+          value: this.getMinutes,
+          writable: true
+        },
+        getMonth: {
+          value: this.getMonth,
+          writable: true
+        },
+        getSeconds: {
+          value: this.getSeconds,
+          writable: true
+        },
         getTime: {
           value: this.getTime,
           writable: true
@@ -1142,8 +1166,32 @@ module Shumway.AVM1.Natives {
       return native.value.toString();
     }
 
+    public getDate(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getDate();
+    }
+
+    public getFullYear(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getFullYear();
+    }
+
+    public getHours(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getHours();
+    }
+
+    public getMinutes(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getMinutes();
+    }
+
+    public getMonth(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getMonth();
+    }
+
+    public getSeconds(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getSeconds();
+    }
+
     public getTime(): number {
-      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.valueOf();
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getTime();
     }
   }
 
