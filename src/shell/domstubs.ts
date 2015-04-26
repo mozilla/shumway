@@ -24,7 +24,13 @@ declare function print(message: string): void;
 this.console = {
   _print: print,
   log: print,
-  info: print,
+  info: function() {
+    if (!Shumway.Shell.verbose) {
+      return;
+    }
+    print(Shumway.IndentingWriter.YELLOW + [].join.call(arguments, ', ') +
+          Shumway.IndentingWriter.ENDC);
+  },
   warn: function() {
     print(Shumway.IndentingWriter.RED + [].join.call(arguments, ', ') +
           Shumway.IndentingWriter.ENDC);
