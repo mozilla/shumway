@@ -89,6 +89,7 @@ function sanitizeLoadFileArgs(args) {
     sessionId: +args.sessionId,
     limit: +args.limit || 0,
     mimeType: String(args.mimeType || ''),
+    method: (args.method + '') || 'GET',
     postData: args.postData || null
   };
 }
