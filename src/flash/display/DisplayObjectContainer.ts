@@ -30,7 +30,7 @@ module Shumway.AVMX.AS.flash.display {
   export enum LookupChildOptions {
     DEFAULT = 0,
     IGNORE_CASE = 1,
-    INCLUDE_NOT_INITIALIZED = 2
+    INCLUDE_NON_INITIALIZED = 2
   }
 
   export class DisplayObjectContainer extends flash.display.InteractiveObject {
@@ -388,7 +388,7 @@ module Shumway.AVMX.AS.flash.display {
         this.sec.throwError('RangeError', Errors.ParamRangeError);
       }
 
-      var child = this._lookupChildByIndex(index);
+      var child = this._lookupChildByIndex(index, LookupChildOptions.DEFAULT);
       if (!child) {
         return null;
       }
@@ -456,9 +456,10 @@ module Shumway.AVMX.AS.flash.display {
      * Returns the child display object instance that exists at given index without creating a
      * reference nor taking ownership.
      */
-    _lookupChildByIndex(index: number): DisplayObject {
+    _lookupChildByIndex(index: number, options: LookupChildOptions): DisplayObject {
       var child = this._children[index];
-      if (child && child._hasFlags(DisplayObjectFlags.Constructed)) {
+      if (child && (child._hasFlags(DisplayObjectFlags.Constructed) ||
+                    options & LookupChildOptions.INCLUDE_NON_INITIALIZED)) {
         return child;
       }
       return null;
@@ -477,7 +478,7 @@ module Shumway.AVMX.AS.flash.display {
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
         if (!child._hasFlags(DisplayObjectFlags.Constructed) &&
-            !(options & LookupChildOptions.INCLUDE_NOT_INITIALIZED)) {
+            !(options & LookupChildOptions.INCLUDE_NON_INITIALIZED)) {
           continue;
         }
         if (child.name === name) {
@@ -494,7 +495,7 @@ module Shumway.AVMX.AS.flash.display {
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
         if (!child._hasFlags(DisplayObjectFlags.Constructed) &&
-          !(options & LookupChildOptions.INCLUDE_NOT_INITIALIZED)) {
+          !(options & LookupChildOptions.INCLUDE_NON_INITIALIZED)) {
           continue;
         }
         if (child.name.toLowerCase() === name) {

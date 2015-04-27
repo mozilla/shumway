@@ -75,7 +75,7 @@ module Shumway.AVM1.Lib {
 
     _lookupChildByName(name: string): AVM1Object {
       name = alCoerceString(this.context, name);
-      var lookupOptions = flash.display.LookupChildOptions.INCLUDE_NOT_INITIALIZED;
+      var lookupOptions = flash.display.LookupChildOptions.INCLUDE_NON_INITIALIZED;
       if (!this.context.isPropertyCaseSensitive) {
         lookupOptions |= flash.display.LookupChildOptions.IGNORE_CASE;
       }
@@ -325,8 +325,9 @@ module Shumway.AVM1.Lib {
 
     public getInstanceAtDepth(depth: number): AVM1MovieClip {
       var nativeObject = this.as3Object;
+      var lookupChildOptions = flash.display.LookupChildOptions.DEFAULT;
       for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
-        var child = nativeObject._lookupChildByIndex(i);
+        var child = nativeObject._lookupChildByIndex(i, lookupChildOptions);
         // child is null if it hasn't been constructed yet. This can happen in InitActionBlocks.
         if (child && child._depth === depth) {
           // Somewhat absurdly, this method returns the mc if a bitmap is at the given depth.
@@ -342,8 +343,9 @@ module Shumway.AVM1.Lib {
     public getNextHighestDepth(): number {
       var nativeObject = this.as3Object;
       var maxDepth = 0;
+      var lookupChildOptions = flash.display.LookupChildOptions.INCLUDE_NON_INITIALIZED;
       for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
-        var child = nativeObject._lookupChildByIndex(i);
+        var child = nativeObject._lookupChildByIndex(i, lookupChildOptions);
         if (child._depth > maxDepth) {
           maxDepth = child._depth;
         }

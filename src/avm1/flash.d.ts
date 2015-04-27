@@ -148,7 +148,7 @@ declare module Shumway.AVMX.AS.flash {
       addChildAt(child: DisplayObject, index: number);
       addTimelineObjectAtDepth(child, depth: number);
       swapChildren: Function;
-      _lookupChildByIndex(index: number): DisplayObject;
+      _lookupChildByIndex(index: number, options: LookupChildOptions): DisplayObject;
       _lookupChildByName(name: string, options: LookupChildOptions): DisplayObject;
     }
     class MovieClip extends DisplayObjectContainer {
@@ -239,7 +239,7 @@ declare module Shumway.AVMX.AS.flash {
     enum LookupChildOptions {
       DEFAULT = 0,
       IGNORE_CASE = 1,
-      INCLUDE_NOT_INITIALIZED = 2
+      INCLUDE_NON_INITIALIZED = 2
     }
   }
   module events {
@@ -449,6 +449,7 @@ declare module Shumway.AVMX.AS.flash {
       textWidth: number;
       textHeight: number;
       defaultTextFormat: TextFormat;
+      gridFitType: string;
       _symbol: TextSymbol;
     }
     class TextFormat extends ASObject {
