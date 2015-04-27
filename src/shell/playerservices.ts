@@ -44,10 +44,10 @@ module Shumway.Shell
       this.readAll(null, function (data, err) {
         if (data) {
           ondata(data, { loaded: data.byteLength, total: data.byteLength});
+          oncomplete();
         } else {
           onerror(err);
         }
-        oncomplete();
       });
     }
   }

@@ -1255,7 +1255,6 @@ Frame: 1 HASHCODE: test/ats/swfs/03398183f32bcf40113d61d80ff73c7ebae01eaf79e94c2
 [video-main][v1.0][LoaderBase] loadSwfFrom() http://disney.ff0000-cdn.net/2014/FY15__Disney_Side/core_family_160x600_ext.swf 
 [91msomewhatImplemented: public flash.system.Security::get sandboxType[0m
 [91mLoading error encountered:, Can't read http://disney.ff0000-cdn.net/2014/FY15__Disney_Side/core_family_160x600_ext.swf[0m
-[91mNot Implemented: processing loadClose when loading was aborted[0m
 Frame: 2 HASHCODE: test/ats/swfs/03398183f32bcf40113d61d80ff73c7ebae01eaf79e94c2e4ebe3c1c17c8fdb4432bcbc656e6e6b814b4539c81c644f0c661c0ab6bcbf274b134a96621a6b4ad.swf: 0x5a87bb32
 Frame: 3 HASHCODE: test/ats/swfs/03398183f32bcf40113d61d80ff73c7ebae01eaf79e94c2e4ebe3c1c17c8fdb4432bcbc656e6e6b814b4539c81c644f0c661c0ab6bcbf274b134a96621a6b4ad.swf: 0x3018910e
 Frame: 4 HASHCODE: test/ats/swfs/03398183f32bcf40113d61d80ff73c7ebae01eaf79e94c2e4ebe3c1c17c8fdb4432bcbc656e6e6b814b4539c81c644f0c661c0ab6bcbf274b134a96621a6b4ad.swf: 0x964cd8c8

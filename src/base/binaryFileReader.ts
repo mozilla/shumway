@@ -28,6 +28,7 @@ module Shumway {
     method: string;
     mimeType: string;
     data: any;
+    xhr: XMLHttpRequest;
 
     constructor(url: string, method?: string, mimeType?: string, data?) {
       this.url = url;
@@ -39,7 +40,7 @@ module Shumway {
     readAll(progress: (response: any, loaded: number, total: number) => void,
             complete: (response: any, error?: any) => void) {
       var url = this.url;
-      var xhr = new XMLHttpRequest({mozSystem: true});
+      var xhr = this.xhr = new XMLHttpRequest({mozSystem: true});
       var async = true;
       xhr.open(this.method || "GET", this.url, async);
       xhr.responseType = "arraybuffer";
@@ -112,7 +113,7 @@ module Shumway {
               onopen?: () => void,
               oncomplete?: () => void,
               onhttpstatus?: (location: string, status: string, responseHeaders: any) => void) {
-      var xhr = new XMLHttpRequest({mozSystem: true});
+      var xhr = this.xhr = new XMLHttpRequest({mozSystem: true});
       var url = this.url;
       var loaded = 0;
       var total = 0;
@@ -158,6 +159,13 @@ module Shumway {
       xhr.send(this.data || null);
       if (onopen) {
         onopen();
+      }
+    }
+
+    abort() {
+      if (this.xhr) {
+        this.xhr.abort();
+        this.xhr = null;
       }
     }
   }

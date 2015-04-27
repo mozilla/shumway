@@ -31,6 +31,7 @@ declare var ShumwayCom: {
   setFullscreen: (enabled: boolean) => void;
   externalCom: (args: any) => any;
   loadFile: (args: any) => void;
+  abortLoad: (sessionId: number) => void;
   loadSystemResource: (id: number) => void;
   navigateTo: (args: any) => void;
   setupComBridge: (playerWindow: any) => void;

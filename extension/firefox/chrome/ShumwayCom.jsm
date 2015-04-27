@@ -203,6 +203,11 @@ var ShumwayCom = {
         callbacks.sendMessage('loadFile', request, false);
       },
 
+      abortLoad: function abortLoad(sessionId) {
+        sessionId = sessionId|0;
+        callbacks.sendMessage('abortLoad', sessionId, false);
+      },
+
       reportTelemetry: function reportTelemetry(args) {
         var request = sanitizeTelemetryArgs(args);
         callbacks.sendMessage('reportTelemetry', request, false);
@@ -421,6 +426,10 @@ ShumwayChromeActions.prototype = {
 
   loadFile: function loadFile(data) {
     this.fileLoader.load(data);
+  },
+
+  abortLoad: function abortLoad(sessionId) {
+    this.fileLoader.abort(sessionId);
   },
 
   navigateTo: function (data) {

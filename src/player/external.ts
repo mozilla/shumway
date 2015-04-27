@@ -110,7 +110,7 @@ module Shumway.Player {
         },
         close: function () {
           if (service._sessions[sessionId]) {
-            // TODO send abort
+            ShumwayCom.abortLoad(sessionId);
           }
         }
       };
@@ -148,12 +148,15 @@ module Shumway.Player {
 
     createSession() {
       var service = this;
+      var reader: Shumway.BinaryFileReader;
       return {
         open: function (request) {
           var self: any = this;
           var path = service.resolveUrl(request.url);
           console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
-          new Shumway.BinaryFileReader(path, request.method, request.mimeType, request.data).readChunked(
+          reader = new Shumway.BinaryFileReader(path, request.method, request.mimeType,
+                                                request.data);
+          reader.readChunked(
             service._fileReadChunkSize,
             function (data, progress) {
               self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
@@ -164,7 +167,8 @@ module Shumway.Player {
             self.onhttpstatus);
         },
         close: function () {
-          // TODO abort BinaryFileReader
+          reader.abort();
+          reader = null;
         }
       };
     }

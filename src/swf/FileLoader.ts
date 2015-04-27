@@ -134,7 +134,9 @@ module Shumway {
       session.open(request);
     }
     abortLoad() {
-      // TODO: implement
+      this._loadingServiceSession.close();
+      this._file = null;
+      SWF.leaveTimeline();
     }
     loadBytes(bytes: Uint8Array) {
       SWF.enterTimeline('Load bytes');
@@ -199,7 +201,9 @@ module Shumway {
         this.processSWFFileUpdate(file, eagerlyParsedSymbolsCount, previousFramesLoaded);
       }
       if (!file || file.bytesLoaded !== file.bytesTotal) {
-        Debug.warning("Not Implemented: processing loadClose when loading was aborted");
+        Debug.warning("Shouldn't have reached this: aborting a load should prevent this from " +
+                      "being called.");
+        Debug.warning(new Error().stack);
       } else {
         SWF.leaveTimeline();
       }
