@@ -177,5 +177,12 @@
         "swfs/MaskTest-3.swf"
       ],
       "type": "stas"
+    },
+    {  "id": "avm1-bitmapdata-getpixel",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/bitmapdata/getPixel.swf"
+      ],
+      "type": "stas"
     }
 ]
