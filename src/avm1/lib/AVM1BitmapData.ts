@@ -137,13 +137,11 @@ module Shumway.AVM1.Lib {
     }
 
     getPixel(x: number, y: number): number {
-      Debug.notImplemented('AVM1BitmapData.getPixel');
-      return NaN;
+      return this._as3Object.getPixel(x, y);
     }
 
     getPixel32(x: number, y: number): number {
-      Debug.notImplemented('AVM1BitmapData.getPixel32');
-      return NaN;
+      return this._as3Object.getPixel32(x, y);
     }
 
     hitTest(firstPoint: AVM1Object, firstAlphaThreshold: number, secondObject: AVM1Object, secondBitmapPoint?: AVM1Object, secondAlphaThreshold?: number): boolean {

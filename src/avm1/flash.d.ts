@@ -204,6 +204,8 @@ declare module Shumway.AVMX.AS.flash {
       constructor(width: number, height: number, trasparent: boolean, fillColor: number);
       clone();
       compare(otherBitmapData: BitmapData): boolean;
+      getPixel(x: number, y: number): number;
+      getPixel32(x: number, y: number): number;
     }
     class Bitmap extends DisplayObject {
       constructor();
