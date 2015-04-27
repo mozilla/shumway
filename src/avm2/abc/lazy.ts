@@ -1024,6 +1024,7 @@ module Shumway.AVMX {
   export class Multiname {
     private static _nextID = 1;
     public id: number = Multiname._nextID ++;
+    private _mangledName: string = null;
     constructor(
       public abc: ABCFile,
       public index: number,
@@ -1164,7 +1165,15 @@ module Shumway.AVMX {
 
     public getMangledName(): string {
       assert (this.isQName());
-      return "$" + this.namespaces[0].getMangledName() + this.name.toString();
+      var mangledName = this._mangledName;
+      if (mangledName) {
+        return mangledName;
+      }
+      mangledName = "$" + this.namespaces[0].getMangledName() + axCoerceString(this.name);
+      if (!this.isRuntime()) {
+        this._mangledName = mangledName;
+      }
+      return mangledName;
     }
 
     public getPublicMangledName(): any {
