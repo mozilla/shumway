@@ -21,10 +21,25 @@ Components.utils.import('resource://gre/modules/Promise.jsm');
 Components.utils.import('resource://gre/modules/XPCOMUtils.jsm');
 Components.utils.import('resource://gre/modules/NetUtil.jsm');
 
+function FileLoaderSession(sessionId) {
+  this.sessionId = sessionId;
+  this.xhr = null;
+}
+FileLoaderSession.prototype = {
+  abort() {
+    if (this.xhr) {
+      this.xhr.abort();
+      this.xhr = null;
+    }
+  }
+};
+
+
 function FileLoader(swfUrl, baseUrl, callback) {
   this.swfUrl = swfUrl;
   this.baseUrl = baseUrl;
   this.callback = callback;
+  this.activeSessions = Object.create(null);
 
   this.crossdomainRequestsCache = Object.create(null);
 }
@@ -51,10 +66,17 @@ FileLoader.prototype = {
     var mimeType = data.mimeType;
     var postData = data.postData || null;
 
+    var session = new FileLoaderSession(sessionId);
+    this.activeSessions[sessionId] = session;
+    var self = this;
 
     var performXHR = function () {
-      var xhr = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"]
-        .createInstance(Components.interfaces.nsIXMLHttpRequest);
+      // Load has been aborted before we reached this point.
+      if (!self.activeSessions[sessionId]) {
+        return;
+      }
+      var xhr = session.xhr = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"].
+                              createInstance(Components.interfaces.nsIXMLHttpRequest);
       xhr.open(method, url, true);
       xhr.responseType = "moz-chunked-arraybuffer";
 
@@ -79,6 +101,7 @@ FileLoader.prototype = {
       };
       xhr.onreadystatechange = function(event) {
         if (xhr.readyState === 4) {
+          delete self.activeSessions[sessionId];
           if (xhr.status !== 200 && xhr.status !== 0) {
             notifyLoadFileListener({callback:"loadFile", sessionId: sessionId, topic: "error", error: xhr.statusText});
           }
@@ -95,9 +118,21 @@ FileLoader.prototype = {
       performXHR();
     }, function (reason) {
       log("data access is prohibited to " + url + " from " + baseUrl);
-      notifyLoadFileListener({callback:"loadFile", sessionId: sessionId, topic: "error",
-        error: "only original swf file or file from the same origin loading supported"});
+      delete self.activeSessions[sessionId];
+      notifyLoadFileListener({
+        callback: "loadFile", sessionId: sessionId, topic: "error",
+        error: "only original swf file or file from the same origin loading supported"
+      });
     });
+  },
+  abort: function(sessionId) {
+    var session = this.activeSessions[sessionId];
+    if (!session) {
+      log("Warning: trying to abort invalid session " + sessionId);
+      return;
+    }
+    session.abort();
+    delete this.activeSessions[sessionId];
   }
 };
 
