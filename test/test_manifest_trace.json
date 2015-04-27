@@ -33,7 +33,8 @@
       "stas": "swfs/trace.stas",
       "filenames": [
         "swfs/timeline/timeline_as2_4.swf",
-        "swfs/avm1/label/avm1-label-1.swf"
+        "swfs/avm1/label/avm1-label-1.swf",
+        "swfs/avm1/depth/depth.swf"
       ],
       "type": "stas"
     },
