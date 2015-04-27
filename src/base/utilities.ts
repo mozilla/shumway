@@ -1831,8 +1831,8 @@ module Shumway {
 
     public static logLevel: LogLevel = LogLevel.All;
 
-    private static _consoleOut = console.info.bind(console);
-    private static _consoleOutNoNewline = console.info.bind(console);
+    private static _consoleOut = console.log.bind(console);
+    private static _consoleOutNoNewline = console.log.bind(console);
 
     private _tab: string;
     private _padding: string;

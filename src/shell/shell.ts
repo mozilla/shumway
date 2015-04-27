@@ -180,7 +180,7 @@ module Shumway.Shell {
     }
   }
 
-  var verbose = false;
+  export var verbose = false;
   var writer = new IndentingWriter();
 
   var parseOption: Option;
