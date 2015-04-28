@@ -422,7 +422,7 @@ module Shumway.AVM1.Lib {
     }
 
     public hitTest(x, y, shapeFlag) {
-      if (x instanceof AVM1MovieClip) {
+      if (x.isAVM1Instance) {
         return this.as3Object.hitTestObject((<AVM1MovieClip>x).as3Object);
       } else {
         return this.as3Object.hitTestPoint(x, y, shapeFlag);
@@ -818,6 +818,10 @@ module Shumway.AVM1.Lib {
         var level = this._resolveLevelNProperty(name);
         if (level) {
           return this._getCachedPropertyResult(level);
+        }
+        // For MovieClip's properties that start from '_' case does not matter.
+        if (PropertiesIndexMap.indexOf(name.toLowerCase()) >= 0) {
+          return super.alGetOwnProperty(name.toLowerCase());
         }
       }
       if (this.isAVM1Instance) {
