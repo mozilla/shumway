@@ -422,7 +422,7 @@ module Shumway.AVM1.Lib {
     }
 
     public hitTest(x, y, shapeFlag) {
-      if (x instanceof AVM1MovieClip) {
+      if (x.isAVM1Instance) {
         return this.as3Object.hitTestObject((<AVM1MovieClip>x).as3Object);
       } else {
         return this.as3Object.hitTestPoint(x, y, shapeFlag);
