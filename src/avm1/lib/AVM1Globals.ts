@@ -303,7 +303,8 @@ module Shumway.AVM1.Lib {
 
     public duplicateMovieClip(target, newname, depth) {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
-      nativeTarget.duplicateMovieClip(newname, depth, null);
+      var nativeParent = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
+      nativeTarget.duplicateMovieClipInto(nativeParent, newname, depth, null);
     }
 
     public fscommand(command: string, args?: string) {
