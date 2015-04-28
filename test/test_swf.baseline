@@ -1,36 +1,6 @@
-Frame: 1 HASHCODE: test/swf/demo.swf: 0x7616b1d1
-Frame: 1 HASHCODE: test/swf/main.swf: 0x348e65ba
-Frame: 1 HASHCODE: test/swf/pac.swf: 0xd008a040
-Frame: 10 HASHCODE: test/swf/demo.swf: 0xe1e6561a
-Frame: 10 HASHCODE: test/swf/main.swf: 0xaac68428
-Frame: 10 HASHCODE: test/swf/pac.swf: 0x3219b160
-Frame: 11 HASHCODE: test/swf/demo.swf: 0x5536f4a7
-Frame: 11 HASHCODE: test/swf/main.swf: 0x45e3b136
-Frame: 11 HASHCODE: test/swf/pac.swf: 0xe0efeb40
-Frame: 2 HASHCODE: test/swf/demo.swf: 0x9c603b91
-Frame: 2 HASHCODE: test/swf/main.swf: 0x092f9496
-Frame: 2 HASHCODE: test/swf/pac.swf: 0x01126ca0
-Frame: 3 HASHCODE: test/swf/demo.swf: 0x5ef53a72
-Frame: 3 HASHCODE: test/swf/main.swf: 0x8089bd43
-Frame: 3 HASHCODE: test/swf/pac.swf: 0xf0f65e40
-Frame: 4 HASHCODE: test/swf/demo.swf: 0x85a5f7b7
-Frame: 4 HASHCODE: test/swf/main.swf: 0xfa7e0415
-Frame: 4 HASHCODE: test/swf/pac.swf: 0xfda8da60
-Frame: 5 HASHCODE: test/swf/demo.swf: 0x8262df1d
-Frame: 5 HASHCODE: test/swf/main.swf: 0xa79e9b80
-Frame: 5 HASHCODE: test/swf/pac.swf: 0x87610060
-Frame: 6 HASHCODE: test/swf/demo.swf: 0x8c5cb7e0
-Frame: 6 HASHCODE: test/swf/main.swf: 0xf529cc3f
-Frame: 6 HASHCODE: test/swf/pac.swf: 0x34c78b60
-Frame: 7 HASHCODE: test/swf/demo.swf: 0xe754a031
-Frame: 7 HASHCODE: test/swf/main.swf: 0x8ca4c6ff
-Frame: 7 HASHCODE: test/swf/pac.swf: 0x343280e0
-Frame: 8 HASHCODE: test/swf/demo.swf: 0x8c5a4b43
-Frame: 8 HASHCODE: test/swf/main.swf: 0xd3391c94
-Frame: 8 HASHCODE: test/swf/pac.swf: 0x22263b60
-Frame: 9 HASHCODE: test/swf/demo.swf: 0x42fdbe0c
-Frame: 9 HASHCODE: test/swf/main.swf: 0x620723b8
-Frame: 9 HASHCODE: test/swf/pac.swf: 0xf2a83580
 HASHCODE: test/swf/demo.swf: 0x5536f4a7
 HASHCODE: test/swf/main.swf: 0x45e3b136
 HASHCODE: test/swf/pac.swf: 0xe0efeb40
+RUNNING:  test/swf/demo.swf
+RUNNING:  test/swf/main.swf
+RUNNING:  test/swf/pac.swf
