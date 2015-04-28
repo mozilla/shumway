@@ -221,14 +221,18 @@ module Shumway.AVM1.Lib {
     }
 
     public duplicateMovieClip(name, depth, initObject): AVM1MovieClip {
+      return this.duplicateMovieClipInto(this, name, depth, initObject);
+    }
+
+    public duplicateMovieClipInto(parent: AVM1MovieClip, name: string, depth, initObject): AVM1MovieClip {
       var nativeAS3Object = <any> this.as3Object;
       var mc: flash.display.MovieClip;
       if (nativeAS3Object._symbol) {
         mc = Shumway.AVMX.AS.constructClassFromSymbol(nativeAS3Object._symbol, nativeAS3Object.axClass);
       } else {
         mc = new this.context.sec.flash.display.MovieClip();
-        mc.name = name;
       }
+      mc.name = alCoerceString(this.context, name);
 
       // These are all properties that get copied over when duplicating a movie clip.
       // Examined by testing.
@@ -248,7 +252,7 @@ module Shumway.AVM1.Lib {
 
       // TODO: Do event listeners get copied?
 
-      var as2mc = <AVM1MovieClip>this._insertChildAtDepth(mc, depth);
+      var as2mc = <AVM1MovieClip>parent._insertChildAtDepth(mc, depth);
       if (initObject) {
         as2mc._init(initObject);
       }
