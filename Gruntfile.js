@@ -208,7 +208,11 @@ module.exports = function(grunt) {
       },
       test_swf_avm2_all: {
         maxBuffer: Infinity,
-        cmd: 'mongo ats --eval \'db.swfs.find({"parse_result.uses_avm1": false}).forEach(function (x) { print("test/ats/swfs/" + x.file); })\' | parallel -k --gnu -X -N10 utils/jsshell/js build/ts/shell.js -x -det -fc 10 {} | tee test/ats/test_swf_avm2_all.run;'
+        cmd: 'mongo ats --eval \'db.swfs.find({"parse_result.uses_avm1": false}).forEach(function (x) { print("test/ats/swfs/" + x.file); })\' | parallel --gnu -X -N10 --timeout 2000% utils/jsshell/js build/ts/shell.js -x -det -fc 10 {} | tee test/ats/test_swf_avm2_all.run;'
+      },
+      test_swf_all: {
+        maxBuffer: Infinity,
+        cmd: 'mongo ats --eval \'db.swfs.find({}).forEach(function (x) { print("test/ats/swfs/" + x.file); })\' | parallel --gnu -X -N10 --timeout 2000% utils/jsshell/js build/ts/shell.js -x -det -fc 10 {} | tee test/ats/test_swf_all.run;'
       },
       test_mock: {
         maxBuffer: Infinity,
