@@ -449,14 +449,15 @@ module Shumway.Shell {
     try {
       var hash = 0;
       var lastFramesPlayed = 0;
+      writer.writeLn("RUNNING:  " + file);
       microTaskQueue.run(runDuration, runCount, true, function () {
         if (!frameCount) {
           return true;
         }
         if (lastFramesPlayed < player.framesPlayed) {
           hash = HashUtilities.mixHash(hash, player.stage.hashCode());
-          writer.writeLn("Frame: " + player.framesPlayed + " HASHCODE: " + file + ": " + IntegerUtilities.toHEX(hash));
           // This dumps too much output and is not all that useful, unless you want to debug something.
+          // writer.writeLn("Frame: " + player.framesPlayed + " HASHCODE: " + file + ": " + IntegerUtilities.toHEX(hash));
           // player.stage.debugTrace(writer);
           lastFramesPlayed = player.framesPlayed;
         }
