@@ -1002,7 +1002,7 @@ module Shumway.AVMX.AS {
         release || assert(mn.isRuntimeName());
         return name in this.value;
       }
-      if (this.traits.indexOf(mn.namespaces, name) > -1) {
+      if (this.traits.getTrait(mn.namespaces, name)) {
         return true;
       }
       return '$Bg' + name in this;

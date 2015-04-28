@@ -18,6 +18,7 @@
         "swfs/avm1/undefined/undefined-swf6.swf",
         "swfs/avm1/undefined/undefined-swf7.swf",
         "swfs/avm1/super/super.swf",
+        "swfs/avm1/propertycase/propertycase.swf",
         "swfs/avm1/scope/avm1-scope-1.swf"
       ],
       "type": "stas"
@@ -33,7 +34,8 @@
       "stas": "swfs/trace.stas",
       "filenames": [
         "swfs/timeline/timeline_as2_4.swf",
-        "swfs/avm1/label/avm1-label-1.swf"
+        "swfs/avm1/label/avm1-label-1.swf",
+        "swfs/avm1/depth/depth.swf"
       ],
       "type": "stas"
     },
@@ -175,6 +177,13 @@
       "stas": "swfs/trace.stas",
       "filenames": [
         "swfs/MaskTest-3.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "avm1-bitmapdata-getpixel",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/bitmapdata/getPixel.swf"
       ],
       "type": "stas"
     }

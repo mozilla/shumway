@@ -43,6 +43,8 @@ var playerWindowLoaded = new Promise(function(resolve) {
   playerWindowIframe.src = 'resource://shumway/web/viewer.player.html';
 });
 
+var initStartTime;
+
 function runViewer() {
   var flashParams = ShumwayCom.getPluginParams();
 
@@ -57,6 +59,7 @@ function runViewer() {
   var baseUrl = flashParams.baseUrl;
   var isOverlay = flashParams.isOverlay;
   pauseExecution = flashParams.isPausedAtStart;
+  initStartTime = flashParams.initStartTime;
   var isDebuggerEnabled = flashParams.isDebuggerEnabled;
 
   console.log("url=" + movieUrl + ";params=" + uneval(movieParams));
@@ -202,7 +205,8 @@ function parseSwf(url, baseUrl, movieParams, objectParams) {
       env: playerSettings.env,
       bgcolor: backgroundColor,
       url: url,
-      baseUrl: baseUrl || url
+      baseUrl: baseUrl || url,
+      initStartTime: initStartTime
     }
   };
   playerWindow.postMessage(data,  '*');

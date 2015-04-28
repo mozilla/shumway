@@ -16,7 +16,6 @@ Frame: 1 HASHCODE: examples/jwplayer/jwplayer.flash.swf: 0x00000000
 [91msomewhatImplemented: public flash.system.Capabilities::get isDebugger[0m
 Frame: 2 HASHCODE: examples/jwplayer/jwplayer.flash.swf: 0x6ba9ad56
 [91mLoading error encountered:, Can't read examples/jwplayer/../examples/image-loading/firefox.png[0m
-[91mNot Implemented: processing loadClose when loading was aborted[0m
 [91msomewhatImplemented: public flash.text.TextField::getCharBoundaries[0m
 Frame: 3 HASHCODE: examples/jwplayer/jwplayer.flash.swf: 0x2d0615d0
 [91msomewhatImplemented: public flash.net.SharedObject::flush[0m

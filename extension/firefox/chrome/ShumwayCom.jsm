@@ -203,6 +203,11 @@ var ShumwayCom = {
         callbacks.sendMessage('loadFile', request, false);
       },
 
+      abortLoad: function abortLoad(sessionId) {
+        sessionId = sessionId|0;
+        callbacks.sendMessage('abortLoad', sessionId, false);
+      },
+
       reportTelemetry: function reportTelemetry(args) {
         var request = sanitizeTelemetryArgs(args);
         callbacks.sendMessage('reportTelemetry', request, false);
@@ -356,6 +361,7 @@ function ShumwayChromeActions(startupInfo, window, document) {
   this.isOverlay = startupInfo.isOverlay;
   this.embedTag = startupInfo.embedTag;
   this.isPausedAtStart = startupInfo.isPausedAtStart;
+  this.initStartTime = startupInfo.initStartTime;
   this.window = window;
   this.document = document;
   this.allowScriptAccess = startupInfo.allowScriptAccess;
@@ -415,12 +421,17 @@ ShumwayChromeActions.prototype = {
       objectParams: this.objectParams,
       isOverlay: this.isOverlay,
       isPausedAtStart: this.isPausedAtStart,
+      initStartTime: this.initStartTime,
       isDebuggerEnabled: getBoolPref('shumway.debug.enabled', false)
     };
   },
 
   loadFile: function loadFile(data) {
     this.fileLoader.load(data);
+  },
+
+  abortLoad: function abortLoad(sessionId) {
+    this.fileLoader.abort(sessionId);
   },
 
   navigateTo: function (data) {

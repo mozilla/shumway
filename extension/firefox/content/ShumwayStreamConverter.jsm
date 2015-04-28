@@ -225,6 +225,7 @@ ShumwayStreamConverterBase.prototype = {
   },
 
   getStartupInfo: function(window, urlHint) {
+    var initStartTime = Date.now();
     var url = urlHint;
     var baseUrl;
     var pageUrl;
@@ -323,6 +324,7 @@ ShumwayStreamConverterBase.prototype = {
     startupInfo.isOverlay = isOverlay;
     startupInfo.embedTag = element;
     startupInfo.isPausedAtStart = /\bpaused=true$/.test(urlHint);
+    startupInfo.initStartTime = initStartTime;
     startupInfo.allowScriptAccess = allowScriptAccess;
     startupInfo.pageIndex = 0;
     return startupInfo;
@@ -387,8 +389,7 @@ ShumwayStreamConverterBase.prototype = {
         aRequest.cancel(Cr.NS_BINDING_ABORTED);
 
         var domWindow = getDOMWindow(channel);
-        let startupInfo = converter.getStartupInfo(domWindow,
-                                                   converter.getUrlHint(originalURI));
+        let startupInfo = converter.getStartupInfo(domWindow, converter.getUrlHint(originalURI));
 
         listener.onStopRequest(aRequest, context, statusCode);
 

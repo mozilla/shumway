@@ -279,6 +279,11 @@ module Shumway.Player {
     public displayParameters: DisplayParameters;
 
     /**
+     * Timestamp of initialization start of the player itself, including iframe creation.
+     */
+    public initStartTime: number;
+
+    /**
      * Time since the last time we've synchronized the display list.
      */
     private _lastPumpTime = 0;
@@ -557,6 +562,8 @@ module Shumway.Player {
         self._eventLoopTick();
       }
 
+      console.info('Time from init start to main event loop start: ' +
+                   (Date.now() - this.initStartTime));
       tick();
     }
 

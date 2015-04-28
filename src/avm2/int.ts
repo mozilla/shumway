@@ -844,12 +844,11 @@ module Shumway.AVMX {
             locals[bc - Bytecode.SETLOCAL0] = stack.pop();
             break;
           case Bytecode.DXNS:
-            scopes.topScope().defaultNamespace = new Namespace(null, NamespaceType.Public,
-                                                               abc.getString(frame.u30()));
+            scopes.topScope().defaultNamespace = internNamespace(NamespaceType.Public,
+                                                                 abc.getString(frame.u30()));
             break;
           case Bytecode.DXNSLATE:
-            scopes.topScope().defaultNamespace = new Namespace(null, NamespaceType.Public,
-                                                               stack.pop());
+            scopes.topScope().defaultNamespace = internNamespace(NamespaceType.Public, stack.pop());
             break;
           case Bytecode.DEBUG:
             frame.pc ++; frame.u30();

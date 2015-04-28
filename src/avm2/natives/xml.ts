@@ -665,8 +665,7 @@ module Shumway.AVMX.AS {
                   var uri = attribute.value;
                   if (lookupNs(prefix) !== uri) {
                     scope.lookup[prefix] = trimWhitespaces(uri);
-                    var ns = new Namespace(null, NamespaceType.Public, uri);
-                    ns.prefix = prefix;
+                    var ns = internPrefixedNamespace(NamespaceType.Public, uri, prefix);
                     scope.namespaces.push(ns);
                   }
                   contentAttributes[q] = null;
@@ -674,7 +673,7 @@ module Shumway.AVMX.AS {
                   var uri = attribute.value;
                   if (lookupDefaultNs() !== uri) {
                     scope["xmlns"] = trimWhitespaces(uri);
-                    var ns = new Namespace(null, NamespaceType.Public, uri);
+                    var ns = internNamespace(NamespaceType.Public, uri);
                     scope.namespaces.push(ns);
                   }
                   contentAttributes[q] = null;
@@ -861,7 +860,7 @@ module Shumway.AVMX.AS {
       return result;
     }
 
-    public static defaultNamespace = new Namespace(null, NamespaceType.Public, '');
+    public static defaultNamespace = Namespace.PUBLIC;
 
     axInitializer: (uriOrPrefix_?: any, uri_?: any) => any;
 
@@ -969,9 +968,7 @@ module Shumway.AVMX.AS {
         }
       }
       // 5. Return n
-      var ns = new Namespace(null, NamespaceType.Public, uri);
-      ns.prefix = prefix;
-      this._ns = ns;
+      this._ns = internPrefixedNamespace(NamespaceType.Public, uri, prefix);
     }
 
     // E4X 11.5.1 The Abstract Equality Comparison Algorithm, step 3.c.
@@ -1176,6 +1173,7 @@ module Shumway.AVMX.AS {
       if (uri === null) {
         return "*::" + this.name.name;
       }
+      uri = uri + '';
       var cc = uri.charCodeAt(uri.length - 1);
       // strip the version mark, if there is one
       var base_uri = uri;
@@ -2146,7 +2144,8 @@ module Shumway.AVMX.AS {
       var name: Multiname = this.sec.AXQName.Create(name_).name;
       // Step 4.
       if (this._kind === ASXMLKind.ProcessingInstruction) {
-        name.namespaces[0].uri = '';
+        release || assert(name.namespaces[0].type === NamespaceType.Public);
+        name.namespaces[0] = Namespace.PUBLIC;
       }
       // Step 5.
       this._name = name;
@@ -2248,8 +2247,7 @@ module Shumway.AVMX.AS {
         // there is no ns2 ∈ (AncestorNamespaces ∪ namespaceDeclarations) with namespace.prefix ==
         // ns2.prefix
         var newPrefix = generateUniquePrefix(currentNamespaces);
-        var ns2 = new Namespace(null, NamespaceType.Public, namespace.uri);
-        ns2.prefix = newPrefix;
+        var ns2 = internPrefixedNamespace(NamespaceType.Public, namespace.uri, newPrefix);
         // Let namespaceDeclarations = namespaceDeclarations ∪ { namespace }
         namespaceDeclarations.push(ns2);
         currentNamespaces.push(ns2);
@@ -2270,8 +2268,7 @@ module Shumway.AVMX.AS {
           // there is no ns2 ∈ (AncestorNamespaces ∪ namespaceDeclarations) with namespace.prefix ==
           // ns2.prefix
           var newPrefix = generateUniquePrefix(currentNamespaces);
-          var ns2 = new Namespace(null, NamespaceType.Public, namespace.uri);
-          ns2.prefix = newPrefix;
+          var ns2 = internPrefixedNamespace(NamespaceType.Public, namespace.uri, newPrefix);
           // Let namespaceDeclarations = namespaceDeclarations ∪ { namespace }
           namespaceDeclarations.push(ns2);
           currentNamespaces.push(ns2);
@@ -2803,8 +2800,7 @@ module Shumway.AVMX.AS {
   function createXML(sec: AXSecurityDomain, kind: ASXMLKind = ASXMLKind.Text,
                      uri: string = '', name: string = '', prefix?: string): ASXML {
     var xml = sec.AXXML.Create();
-    var ns = new Namespace(null, NamespaceType.Public, uri);
-    ns.prefix = prefix || '';
+    var ns = internPrefixedNamespace(NamespaceType.Public, uri, prefix || '');
     var mn = new Multiname(null, 0,
                            kind === ASXMLKind.Attribute ? CONSTANT.QNameA : CONSTANT.QName,
                            [ns], name, null);

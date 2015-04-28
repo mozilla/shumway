@@ -20,6 +20,8 @@ module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
   import assert = Shumway.Debug.assert;
 
+  var DEPTH_OFFSET = 16384;
+
   class AVM1MovieClipButtonModeEvent extends AVM1EventHandler {
     constructor(public propertyName: string,
                 public eventName: string,
@@ -75,7 +77,7 @@ module Shumway.AVM1.Lib {
 
     _lookupChildByName(name: string): AVM1Object {
       name = alCoerceString(this.context, name);
-      var lookupOptions = flash.display.LookupChildOptions.INCLUDE_NOT_INITIALIZED;
+      var lookupOptions = flash.display.LookupChildOptions.INCLUDE_NON_INITIALIZED;
       if (!this.context.isPropertyCaseSensitive) {
         lookupOptions |= flash.display.LookupChildOptions.IGNORE_CASE;
       }
@@ -179,8 +181,9 @@ module Shumway.AVM1.Lib {
     }
 
     private _insertChildAtDepth<T extends flash.display.DisplayObject>(mc: T, depth:number): AVM1SymbolBase<T> {
+      var symbolDepth = Math.max(0, alCoerceNumber(this.context, depth)) + DEPTH_OFFSET;
       var nativeAS3Object = this.as3Object;
-      nativeAS3Object.addTimelineObjectAtDepth(mc, Math.min(nativeAS3Object.numChildren, depth));
+      nativeAS3Object.addTimelineObjectAtDepth(mc, symbolDepth);
       // Bitmaps aren't reflected in AVM1, so the rest here doesn't apply.
       if (this.context.sec.flash.display.Bitmap.axIsType(mc)) {
         return null;
@@ -218,14 +221,18 @@ module Shumway.AVM1.Lib {
     }
 
     public duplicateMovieClip(name, depth, initObject): AVM1MovieClip {
+      return this.duplicateMovieClipInto(this, name, depth, initObject);
+    }
+
+    public duplicateMovieClipInto(parent: AVM1MovieClip, name: string, depth, initObject): AVM1MovieClip {
       var nativeAS3Object = <any> this.as3Object;
       var mc: flash.display.MovieClip;
       if (nativeAS3Object._symbol) {
         mc = Shumway.AVMX.AS.constructClassFromSymbol(nativeAS3Object._symbol, nativeAS3Object.axClass);
       } else {
         mc = new this.context.sec.flash.display.MovieClip();
-        mc.name = name;
       }
+      mc.name = alCoerceString(this.context, name);
 
       // These are all properties that get copied over when duplicating a movie clip.
       // Examined by testing.
@@ -245,7 +252,7 @@ module Shumway.AVM1.Lib {
 
       // TODO: Do event listeners get copied?
 
-      var as2mc = <AVM1MovieClip>this._insertChildAtDepth(mc, depth);
+      var as2mc = <AVM1MovieClip>parent._insertChildAtDepth(mc, depth);
       if (initObject) {
         as2mc._init(initObject);
       }
@@ -320,15 +327,17 @@ module Shumway.AVM1.Lib {
     }
 
     public getDepth() {
-      return this.as3Object._depth;
+      return this.as3Object._depth - DEPTH_OFFSET;
     }
 
     public getInstanceAtDepth(depth: number): AVM1MovieClip {
+      var symbolDepth = alCoerceNumber(this.context, depth) + DEPTH_OFFSET;
       var nativeObject = this.as3Object;
+      var lookupChildOptions = flash.display.LookupChildOptions.INCLUDE_NON_INITIALIZED;
       for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
-        var child = nativeObject._lookupChildByIndex(i);
+        var child = nativeObject._lookupChildByIndex(i, lookupChildOptions);
         // child is null if it hasn't been constructed yet. This can happen in InitActionBlocks.
-        if (child && child._depth === depth) {
+        if (child && child._depth === symbolDepth) {
           // Somewhat absurdly, this method returns the mc if a bitmap is at the given depth.
           if (this.context.sec.flash.display.Bitmap.axIsType(child)) {
             return this;
@@ -341,14 +350,15 @@ module Shumway.AVM1.Lib {
 
     public getNextHighestDepth(): number {
       var nativeObject = this.as3Object;
-      var maxDepth = 0;
+      var maxDepth = DEPTH_OFFSET;
+      var lookupChildOptions = flash.display.LookupChildOptions.INCLUDE_NON_INITIALIZED;
       for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
-        var child = nativeObject._lookupChildByIndex(i);
-        if (child._depth > maxDepth) {
-          maxDepth = child._depth;
+        var child = nativeObject._lookupChildByIndex(i, lookupChildOptions);
+        if (child._depth >= maxDepth) {
+          maxDepth = child._depth + 1;
         }
       }
-      return maxDepth + 1;
+      return maxDepth - DEPTH_OFFSET;
     }
 
     public getRect(bounds) {
@@ -412,7 +422,7 @@ module Shumway.AVM1.Lib {
     }
 
     public hitTest(x, y, shapeFlag) {
-      if (x instanceof AVM1MovieClip) {
+      if (x.isAVM1Instance) {
         return this.as3Object.hitTestObject((<AVM1MovieClip>x).as3Object);
       } else {
         return this.as3Object.hitTestPoint(x, y, shapeFlag);
@@ -808,6 +818,10 @@ module Shumway.AVM1.Lib {
         var level = this._resolveLevelNProperty(name);
         if (level) {
           return this._getCachedPropertyResult(level);
+        }
+        // For MovieClip's properties that start from '_' case does not matter.
+        if (PropertiesIndexMap.indexOf(name.toLowerCase()) >= 0) {
+          return super.alGetOwnProperty(name.toLowerCase());
         }
       }
       if (this.isAVM1Instance) {

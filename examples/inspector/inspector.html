@@ -83,8 +83,9 @@ limitations under the License.
       </div>
     </div>
     <script>
-      var requiredConsoleFunctions = ["profile", "profileEnd", "markTimeline",
-        "time", "timeEnd"];
+      var initStartTime = Date.now();
+
+      var requiredConsoleFunctions = ["profile", "profileEnd", "markTimeline", "time", "timeEnd"];
       for (var i = 0; i < requiredConsoleFunctions.length; i++) {
         if (!(requiredConsoleFunctions[i] in console))
           console[requiredConsoleFunctions[i]] = function () {};

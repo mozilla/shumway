@@ -187,10 +187,9 @@ module Shumway.AVMX {
         var trait = traits[i];
         var traitMn = <Multiname>trait.name;
         if (traitMn.name === mnName) {
-          var namespace = traitMn.namespaces[0];
-          var nsName = namespace.uri;
+          var ns = traitMn.namespaces[0];
           for (var j = 0; j < nss.length; j++) {
-            if (nsName === nss[j].uri && namespace.type === nss[j].type) {
+            if (ns === nss[j]) {
               return i;
             }
           }
@@ -207,6 +206,18 @@ module Shumway.AVMX {
     /**
      * Turns a list of compile-time traits into runtime traits with resolved bindings.
      *
+     * Runtime traits are stored in 2-dimensional maps. The outer dimension is keyed on the
+     * trait's local name. The inner dimension is a map of mangled namespace names to traits.
+     *
+     * Lookups are thus O(n) in the number of namespaces present in the query, instead of O(n+m)
+     * in the number of traits (n) on the type times the number of namespaces present in the
+     * query (m).
+     *
+     * Negative result note: an implementation with ECMAScript Maps with Namespace objects as
+     * keys was tried and found to be much slower than the Object-based one implemented here.
+     * Mostly, the difference was in how well accesses are optimized in JS engines, with Maps
+     * being new-ish and less well-optimized.
+     *
      * Additionally, all protected traits get added to a map with their unqualified name as key.
      * That map is created with the super type's map on its prototype chain. If a type overrides
      * a protected trait, it gets set as that type's value for the unqualified name. Additionally,
@@ -220,18 +231,13 @@ module Shumway.AVMX {
       // Resolve traits so that indexOf works out.
       this.resolve();
 
-      // First, copy all super traits if given.
-      var traits: RuntimeTraitInfo[] = superTraits ? superTraits.traits.slice() : [];
-
       var protectedNsMappings = Object.create(superTraits ? superTraits.protectedNsMappings : null);
-      var result = new RuntimeTraits(traits, superTraits, protectedNs, protectedNsMappings);
+      var result = new RuntimeTraits(superTraits, protectedNs, protectedNsMappings);
 
-      // Then, add all of the child traits, replacing or extending parent traits where necessary.
+      // Add all of the child traits, replacing or extending parent traits where necessary.
       for (var i = 0; i < this.traits.length; i++) {
         var trait = this.traits[i];
         var name = <Multiname>trait.name;
-        var j = result.indexOf(name.namespaces, name.name);
-        var currentTrait = j > -1 ? traits[j] : null;
         var runtimeTrait = new RuntimeTraitInfo(name, trait.kind, trait.abc);
         if (name.namespaces[0].type === NamespaceType.Protected) {
           // Names for protected traits get canonicalized to the name of the type that initially
@@ -242,11 +248,8 @@ module Shumway.AVMX {
           result.protectedNsMappings[name.name] = runtimeTrait;
         }
 
-        if (j === -1) {
-          traits.push(runtimeTrait);
-        } else {
-          traits[j] = runtimeTrait;
-        }
+        var currentTrait = result.addTrait(runtimeTrait);
+
         switch (trait.kind) {
           case TRAIT.Method:
             var method = createMethodForTrait(<MethodTraitInfo>trait, scope);
@@ -442,11 +445,37 @@ module Shumway.AVMX {
 
   export class RuntimeTraits {
     public slots: RuntimeTraitInfo[] = [];
+
+    private _traits: MapObject<MapObject<RuntimeTraitInfo>>;
     private _nextSlotID: number = 1;
 
-    constructor(public traits: RuntimeTraitInfo[], public superTraits: RuntimeTraits,
+    constructor(public superTraits: RuntimeTraits,
                 public protectedNs: Namespace, public protectedNsMappings: any) {
-      // ..
+      var traits = this._traits = Object.create(null);
+      if (!superTraits) {
+        return;
+      }
+      var superMappings = superTraits._traits;
+      for (var key in superMappings) {
+        traits[key] = Object.create(superMappings[key]);
+      }
+    }
+
+    /**
+     * Adds the given trait and returns any trait that might already exist under that name.
+     *
+     * See the comment for `Trait#resolveRuntimeTraits` for an explanation of the lookup scheme.
+     */
+    public addTrait(trait: RuntimeTraitInfo): RuntimeTraitInfo {
+      var mn = trait.name;
+      var mappings = this._traits[mn.name];
+      if (!mappings) {
+        mappings = this._traits[mn.name] = Object.create(null);
+      }
+      var nsName = mn.namespaces[0].mangledName;
+      var current = mappings[nsName];
+      mappings[nsName] = trait;
+      return current;
     }
 
     public addSlotTrait(trait: RuntimeTraitInfo) {
@@ -461,46 +490,49 @@ module Shumway.AVMX {
     }
 
     /**
-     * Searches for a trait with the specified name.
+     * Returns the trait matching the given multiname parts, if any.
+     *
+     * See the comment for `Trait#resolveRuntimeTraits` for an explanation of the lookup scheme.
      */
-    public indexOf(nss: Namespace[], mnName: string): number {
-      release || assert(typeof mnName === 'string');
-      var traits = this.traits;
-      for (var i = 0; i < traits.length; i++) {
-        var trait = traits[i];
-        var traitMn = <Multiname>trait.name;
-        if (traitMn.name === mnName) {
-          var namespace = traitMn.namespaces[0];
-          var nsName = namespace.uri;
-          for (var j = 0; j < nss.length; j++) {
-            if (nsName === nss[j].uri && namespace.type === nss[j].type) {
-              return i;
-            }
-          }
-        }
-      }
-      return -1;
-    }
-
     getTrait(namespaces: Namespace[], name: string): RuntimeTraitInfo {
       release || assert(typeof name === 'string');
-      var trait: RuntimeTraitInfo = this.protectedNsMappings[name];
-      if (trait) {
-        for (var i = 0; i < namespaces.length; i++) {
-          var ns = namespaces[i];
-          if (ns.type === NamespaceType.Protected) {
-            var protectedScope = this;
-            while (protectedScope) {
-              if (protectedScope.protectedNs.uri === ns.uri) {
+      var mappings = this._traits[name];
+      if (!mappings) {
+        return null;
+      }
+      var trait: RuntimeTraitInfo;
+      for (var i = 0; i < namespaces.length; i++) {
+        var ns = namespaces[i];
+        trait = mappings[ns.mangledName];
+        if (trait) {
+          return trait;
+        }
+        if (ns.type === NamespaceType.Protected) {
+          var protectedScope = this;
+          while (protectedScope) {
+            if (protectedScope.protectedNs === ns) {
+              trait = protectedScope.protectedNsMappings[name];
+              if (trait) {
                 return trait;
               }
-              protectedScope = protectedScope.superTraits;
             }
+            protectedScope = protectedScope.superTraits;
           }
         }
       }
-      var i = this.indexOf(namespaces, name);
-      return i >= 0 ? this.traits[i] : null;
+      return null;
+    }
+
+    getTraitsList() {
+      var list = [];
+      var names = this._traits;
+      for (var name in names) {
+        var mappings = names[name];
+        for (var nsName in mappings) {
+          list.push(mappings[nsName]);
+        }
+      }
+      return list;
     }
 
     getSlotPublicTraitNames(): string [] {
@@ -1024,6 +1056,7 @@ module Shumway.AVMX {
   export class Multiname {
     private static _nextID = 1;
     public id: number = Multiname._nextID ++;
+    private _mangledName: string = null;
     constructor(
       public abc: ABCFile,
       public index: number,
@@ -1039,7 +1072,7 @@ module Shumway.AVMX {
       var lastDot = fqn.lastIndexOf('.');
       var uri = lastDot === -1 ? '' : fqn.substr(0, lastDot);
       var name = lastDot === -1 ? fqn : fqn.substr(lastDot + 1);
-      var ns = new Namespace(null, nsType, uri);
+      var ns = internNamespace(nsType, uri);
       return new Multiname(null, 0, CONSTANT.RTQName, [ns], name);
     }
 
@@ -1125,7 +1158,11 @@ module Shumway.AVMX {
 
     public set prefix(prefix: string) {
       release || assert(this.isQName());
-      this.namespaces[0].prefix = prefix;
+      var ns = this.namespaces[0];
+      if (ns.prefix === prefix) {
+        return;
+      }
+      this.namespaces[0] = internPrefixedNamespace(ns.type, ns.uri, prefix);
     }
 
     public equalsQName(mn: Multiname): boolean {
@@ -1163,8 +1200,17 @@ module Shumway.AVMX {
     }
 
     public getMangledName(): string {
-      assert (this.isQName());
-      return "$" + this.namespaces[0].getMangledName() + this.name.toString();
+      release || assert(this.isQName());
+      return this._mangledName || this._mangleName();
+    }
+
+    private _mangleName() {
+      release || assert(!this._mangledName);
+      var mangledName = "$" + this.namespaces[0].mangledName + axCoerceString(this.name);
+      if (!this.isRuntime()) {
+        this._mangledName = mangledName;
+      }
+      return mangledName;
     }
 
     public getPublicMangledName(): any {
@@ -1242,7 +1288,7 @@ module Shumway.AVMX {
       } else {
         name = simpleName;
       }
-      var ns = new Namespace(null, NamespaceType.Public, uri);
+      var ns = internNamespace(NamespaceType.Public, uri);
       return new Multiname(null, 0, CONSTANT.RTQName, [ns], name);
     }
   }
@@ -1251,10 +1297,13 @@ module Shumway.AVMX {
   var namespaceHashingBuffer = new Int32Array(100);
 
   export class Namespace {
-    public prefix: string = "";
-    private _mangledName: string = null;
-    constructor(public abc: ABCFile, public type: NamespaceType, public uri: string) {
+    public mangledName: string = null;
+    constructor(public type: NamespaceType, public uri: string, public prefix: string) {
       assert (type !== undefined);
+      this.mangleName();
+      if (!release) {
+        Object.freeze(this);
+      }
     }
 
     toString() {
@@ -1266,6 +1315,8 @@ module Shumway.AVMX {
     ];
 
     private static _hashNamespace(type: NamespaceType, uri: string, prefix: string) {
+      uri = uri + '';
+      prefix = prefix + '';
       var index = Namespace._knownNames.indexOf(uri);
       if (index >= 0) {
         return type << 2 | index;
@@ -1283,15 +1334,13 @@ module Shumway.AVMX {
       return Shumway.HashUtilities.hashBytesTo32BitsMD5(data, 0, j);
     }
 
-    public getMangledName(): string {
-      if (this._mangledName !== null) {
-        return this._mangledName;
-      }
+    private mangleName() {
       if (this.type === NamespaceType.Public && this.uri === '') {
-        return this._mangledName = 'Bg';
+        this.mangledName = 'Bg';
+        return;
       }
       var nsHash = Namespace._hashNamespace(this.type, this.uri, this.prefix);
-      return this._mangledName = Shumway.StringUtilities.variableLengthEncodeInt32(nsHash);
+      this.mangledName = Shumway.StringUtilities.variableLengthEncodeInt32(nsHash);
     }
 
     public isPublic(): boolean {
@@ -1304,14 +1353,26 @@ module Shumway.AVMX {
       return this.uri || (this.type === NamespaceType.Public ? null : this.uri);
     }
 
-    public static PUBLIC = new Namespace(null, NamespaceType.Public, "");
-    public static PROTECTED = new Namespace(null, NamespaceType.Protected, "");
-    public static STATIC_PROTECTED = new Namespace(null, NamespaceType.StaticProtected, "");
-    public static PROXY = new Namespace(null, NamespaceType.Public, "http://www.adobe.com/2006/actionscript/flash/proxy");
-    public static VECTOR = new Namespace(null, NamespaceType.Public, "__AS3__.vec");
-    public static VECTOR_PACKAGE = new Namespace(null, NamespaceType.PackageInternal, "__AS3__.vec");
-    public static BUILTIN = new Namespace(null, NamespaceType.Private, "builtin.as$0");
+    public static PUBLIC: Namespace;
   }
+
+  var _namespaces: MapObject<Namespace> = {};
+
+  export function internNamespace(type: NamespaceType, uri: string) {
+    var key = type + uri;
+    return _namespaces[key] || (_namespaces[key] = new Namespace(type, uri, ''));
+  }
+
+  export function internPrefixedNamespace(type: NamespaceType, uri: string, prefix: string) {
+    var key = type + uri + prefix;
+    var ns = _namespaces[key];
+    if (!ns) {
+      ns = _namespaces[key] = new Namespace(type, uri, prefix);
+    }
+    return ns;
+  }
+
+  Namespace.PUBLIC = internNamespace(NamespaceType.Public, "");
 
   export class ABCFile {
     public hash: number;
@@ -1684,7 +1745,7 @@ module Shumway.AVMX {
         // in Tamarin source code indicates this might not be intentional, but oh well.
         uri = '';
       }
-      ns = this._namespaces[i] = new Namespace(this, type, uri);
+      ns = this._namespaces[i] = internNamespace(type, uri);
       return ns;
     }
 

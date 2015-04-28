@@ -247,6 +247,7 @@ function executeFile(path, buffer, movieParams, remoteDebugging) {
         player.stageScale = state.scale;
         player.displayParameters = easel.getDisplayParameters();
         player.loaderUrl = state.loaderURL;
+        player.initStartTime = initStartTime;
 
         var useRecorder = state.recordingLimit > 0;
         easelHost = useRecorder ?
@@ -426,7 +427,7 @@ function registerInspectorAsset(id, symbolId, asset) {
         context.stroke();
       }
       var start = performance.now();
-      renderable.render(context);
+      renderable.render(context, 0);
       renderTime = (performance.now() - start);
     }
     if (renderable instanceof Shumway.GFX.RenderableText) {

@@ -180,7 +180,7 @@ module Shumway.Shell {
     }
   }
 
-  var verbose = false;
+  export var verbose = false;
   var writer = new IndentingWriter();
 
   var parseOption: Option;
@@ -536,7 +536,6 @@ module Shumway.Shell {
   function resetSecurityDomain(sec: AVMX.AXSecurityDomain) {
     // Only reset XML settings if AXXML has been initialized.
     if (sec.AXXML.resetSettings) {
-      sec.AXNamespace.defaultNamespace = new AVMX.Namespace(null, AVMX.NamespaceType.Public, '');
       sec.AXXML.resetSettings();
     }
   }
