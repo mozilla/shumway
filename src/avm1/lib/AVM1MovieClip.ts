@@ -91,14 +91,6 @@ module Shumway.AVM1.Lib {
       return target != '/' ? prefix + target.replace(/\//g, '.') : prefix;
     }
 
-    public get_alpha() {
-      return this.as3Object.alpha;
-    }
-
-    public set_alpha(value) {
-      this.as3Object.alpha = value;
-    }
-
     public attachAudio(id) {
       throw 'Not implemented: attachAudio';
     }
@@ -155,22 +147,6 @@ module Shumway.AVM1.Lib {
       this.graphics.beginGradientFill(fillType, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPointRatio);
     }
 
-    public getBlendMode() {
-      return this.as3Object.blendMode;
-    }
-
-    public setBlendMode(value) {
-      this.as3Object.blendMode = value;
-    }
-
-    public getCacheAsBitmap() {
-      return this.as3Object.cacheAsBitmap;
-    }
-
-    public setCacheAsBitmap(value) {
-      this.as3Object.cacheAsBitmap = value;
-    }
-
     public _callFrame(frame:any):any {
       var nativeAS3Object = <any> this.as3Object;
       nativeAS3Object._callFrame(frame);
@@ -180,7 +156,7 @@ module Shumway.AVM1.Lib {
       this.graphics.clear();
     }
 
-    private _insertChildAtDepth<T extends flash.display.DisplayObject>(mc: T, depth:number): AVM1SymbolBase<T> {
+    private _insertChildAtDepth<T extends flash.display.InteractiveObject>(mc: T, depth:number): AVM1SymbolBase<T> {
       var symbolDepth = Math.max(0, alCoerceNumber(this.context, depth)) + DEPTH_OFFSET;
       var nativeAS3Object = this.as3Object;
       nativeAS3Object.addTimelineObjectAtDepth(mc, symbolDepth);
@@ -272,28 +248,12 @@ module Shumway.AVM1.Lib {
       this.graphics.endFill();
     }
 
-    public getFilters() {
-      throw 'Not implemented: get$filters';
-    }
-
-    public setFilters(value) {
-      throw 'Not implemented: set$filters';
-    }
-
     public getFocusEnabled() {
       throw 'Not implemented: get$focusEnabled';
     }
 
     public setFocusEnabled(value) {
       throw 'Not implemented: set$focusEnabled';
-    }
-
-    public get_focusrect() {
-      throw 'Not implemented: get$_focusrect';
-    }
-
-    public set_focusrect(value) {
-      throw 'Not implemented: set$_focusrect';
     }
 
     public getForceSmoothing() {
@@ -395,24 +355,6 @@ module Shumway.AVM1.Lib {
       return this.as3Object.gotoAndStop(frame);
     }
 
-    public get_height() {
-      return this.as3Object.height;
-    }
-
-    public set_height(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this.as3Object.height = value;
-    }
-
-    public get_highquality() {
-      return 1;
-    }
-
-    public set_highquality(value) {
-    }
-
     public getHitArea() {
       throw 'Not implemented: get$hitArea';
     }
@@ -477,24 +419,8 @@ module Shumway.AVM1.Lib {
       throw 'Not implemented: set$_lockroot';
     }
 
-    public getMenu() {
-      return this.as3Object.contextMenu;
-    }
-
-    public setMenu(value) {
-      this.as3Object.contextMenu = value;
-    }
-
     public moveTo(x, y) {
       this.graphics.moveTo(x, y);
-    }
-
-    public get_name() {
-      return this.as3Object.name;
-    }
-
-    public set_name(value) {
-      this.as3Object.name = value;
     }
 
     public nextFrame() {
@@ -503,24 +429,6 @@ module Shumway.AVM1.Lib {
 
     public nextScene() {
       this.as3Object.nextScene();
-    }
-
-    public getOpaqueBackground() {
-      return this.as3Object.opaqueBackground;
-    }
-
-    public setOpaqueBackground(value) {
-      this.as3Object.opaqueBackground = value;
-    }
-
-    public get_parent(): AVM1MovieClip {
-      var parent = getAVM1Object(this.as3Object.parent, this.context);
-      // In AVM1, the _parent property is `undefined`, not `null` if the element has no parent.
-      return <AVM1MovieClip>parent || undefined;
-    }
-
-    public set_parent(value) {
-      throw 'Not implemented: set$_parent';
     }
 
     public play() {
@@ -535,32 +443,9 @@ module Shumway.AVM1.Lib {
       this.as3Object.prevScene();
     }
 
-    public get_quality() {
-      return 'HIGH';
-    }
-
-    public set_quality(value) {
-    }
-
     public removeMovieClip() {
       var parent = this.get_parent().as3Object;
       parent.removeChild(this.as3Object);
-    }
-
-    public get_rotation() {
-      return this.as3Object.rotation;
-    }
-
-    public set_rotation(value) {
-      this.as3Object.rotation = value;
-    }
-
-    public getScale9Grid() {
-      throw 'Not implemented: get$scale9Grid';
-    }
-
-    public setScale9Grid(value) {
-      throw 'Not implemented: set$scale9Grid';
     }
 
     public getScrollRect() {
@@ -577,14 +462,6 @@ module Shumway.AVM1.Lib {
       if (mask) {
         nativeObject.mask = mask.as3Object;
       }
-    }
-
-    public get_soundbuftime() {
-      throw 'Not implemented: get$_soundbuftime';
-    }
-
-    public set_soundbuftime(value) {
-      throw 'Not implemented: set$_soundbuftime';
     }
 
     public startDrag(lock?: boolean, left?: number, top?: number, right?: number, bottom?: number): void {
@@ -627,39 +504,6 @@ module Shumway.AVM1.Lib {
       this.as3Object.tabChildren = value;
     }
 
-    public getTabEnabled() {
-      return this.as3Object.tabEnabled;
-    }
-
-    public setTabEnabled(value) {
-      this.as3Object.tabEnabled = value;
-    }
-
-    public getTabIndex() {
-      return this.as3Object.tabIndex;
-    }
-
-    public setTabIndex(value) {
-      this.as3Object.tabIndex = value;
-    }
-
-    public get_target() {
-      var nativeObject: flash.display.DisplayObject = this.as3Object;
-      if (nativeObject === nativeObject.root) {
-        return '/';
-      }
-      var path = '';
-      do {
-        if (isNullOrUndefined(nativeObject)) {
-          release || Debug.assert(false);
-          return undefined; // something went wrong
-        }
-        path = '/' + nativeObject.name + path;
-        nativeObject = nativeObject.parent;
-      } while (nativeObject !== nativeObject.root);
-      return path;
-    }
-
     public get_totalframes() {
       return this.as3Object.totalFrames;
     }
@@ -694,87 +538,12 @@ module Shumway.AVM1.Lib {
       nativeObject.stop();
     }
 
-    public get_url() {
-      return this.as3Object.loaderInfo.url;
-    }
-
     public getUseHandCursor() {
       return this.as3Object.useHandCursor;
     }
 
     public setUseHandCursor(value) {
       this.as3Object.useHandCursor = value;
-    }
-
-    public get_visible() {
-      return this.as3Object.visible;
-    }
-
-    public set_visible(value) {
-      this.as3Object.visible = +value !== 0;
-    }
-
-    public get_width() {
-      return this.as3Object.width;
-    }
-
-    public set_width(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this.as3Object.width = value;
-    }
-
-    public get_x() {
-      return this.as3Object.x;
-    }
-
-    public set_x(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this.as3Object.x = value;
-    }
-
-    public get_xmouse() {
-      return this.as3Object.mouseX;
-    }
-
-    public get_xscale() {
-      return this.as3Object.scaleX * 100;
-    }
-
-    public set_xscale(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this.as3Object.scaleX = value / 100;
-    }
-
-    public get_y() {
-      return this.as3Object.y;
-    }
-
-    public set_y(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this.as3Object.y = value;
-    }
-
-    public get_ymouse() {
-      return this.as3Object.mouseY;
-    }
-
-    public get_yscale() {
-      return this.as3Object.scaleY * 100;
-    }
-
-    public set_yscale(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this.as3Object.scaleY = value / 100;
     }
 
     // Special and children names properties resolutions
