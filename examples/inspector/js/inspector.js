@@ -427,7 +427,7 @@ function registerInspectorAsset(id, symbolId, asset) {
         context.stroke();
       }
       var start = performance.now();
-      renderable.render(context);
+      renderable.render(context, 0);
       renderTime = (performance.now() - start);
     }
     if (renderable instanceof Shumway.GFX.RenderableText) {
