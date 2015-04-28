@@ -819,6 +819,10 @@ module Shumway.AVM1.Lib {
         if (level) {
           return this._getCachedPropertyResult(level);
         }
+        // For MovieClip's properties that start from '_' case does not matter.
+        if (PropertiesIndexMap.indexOf(name.toLowerCase()) >= 0) {
+          return super.alGetOwnProperty(name.toLowerCase());
+        }
       }
       if (this.isAVM1Instance) {
         var child = this._lookupChildByName(name);
