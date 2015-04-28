@@ -39,7 +39,7 @@ function filterOutput(output) {
 
 function runSwf(path, callback) {
   var child = spawn(jsPath,
-    [shellPath, '-x', path, '--count', runTicksCount, '--porcelain'],
+    [shellPath, '-x', path, '--count', runTicksCount, '--nohangAvm1', '--porcelain'],
     {
       stdio: ['ignore', 'pipe', 'pipe']
     });

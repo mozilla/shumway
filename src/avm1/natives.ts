@@ -1221,7 +1221,7 @@ module Shumway.AVM1.Natives {
         case 1:
           value = new Date(alToPrimitive(context, args[0]));
           break;
-        case 2:
+        default: // case 2-7
           var numbers = [];
           for (var i = 0; i < args.length; i++) {
             numbers.push(alToNumber(context, args[i]));

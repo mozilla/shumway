@@ -33,7 +33,7 @@ module Shumway.AVM1.Lib {
           'scroll#', 'selectable#', 'setNewTextFormat', 'setTextFormat',
           '_soundbuftime#', 'tabEnabled#', 'tabIndex#', '_target#',
           'text#', 'textColor#', 'textHeight#', 'textWidth#', 'type#',
-          '_url#', '_visible#', '_width#', 'wordWrap#',
+          '_url#', 'variable#', '_visible#', '_width#', 'wordWrap#',
           '_x#', '_xmouse#', '_xscale#', '_y#', '_ymouse#', '_yscale#']);
     }
 
@@ -47,7 +47,7 @@ module Shumway.AVM1.Lib {
       this._exitFrameHandler = null;
 
       if (as3Object._symbol) {
-        this.variable = as3Object._symbol.variableName || '';
+        this.setVariable(as3Object._symbol.variableName || '');
       }
 
       this._initEventsHandlers();
@@ -394,11 +394,11 @@ module Shumway.AVM1.Lib {
       return this._as3Object.loaderInfo.url;
     }
 
-    get variable():any {
+    public getVariable():any {
       return this._variable;
     }
 
-    set variable(name:any) {
+    public setVariable(name:any) {
       if (name === this._variable) {
         return;
       }
