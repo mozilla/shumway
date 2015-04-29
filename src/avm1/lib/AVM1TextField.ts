@@ -53,14 +53,6 @@ module Shumway.AVM1.Lib {
       this._initEventsHandlers();
     }
 
-    public get_alpha() {
-      return this._as3Object.alpha;
-    }
-
-    public set_alpha(value) {
-      this._as3Object.alpha = value;
-    }
-
     public getAntiAliasType() {
       return this._as3Object.antiAliasType;
     }
@@ -135,14 +127,6 @@ module Shumway.AVM1.Lib {
       this._as3Object.embedFonts = value;
     }
 
-    public getFilters() {
-      throw 'Not implemented: get$filters';
-    }
-
-    public setFilters(value) {
-      throw 'Not implemented: get$filters';
-    }
-
     public getNewTextFormat() {
       return AVM1TextFormat.createFromNative(this.context, this._as3Object.defaultTextFormat);
     }
@@ -160,24 +144,6 @@ module Shumway.AVM1.Lib {
 
     public setGridFitType(value: string) {
       this._as3Object.gridFitType = value;
-    }
-
-    public get_height() {
-      return this._as3Object.height;
-    }
-
-    public set_height(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this._as3Object.height = value;
-    }
-
-    public get_highquality() {
-      return 1;
-    }
-
-    public set_highquality(value) {
     }
 
     public getHscroll() {
@@ -232,45 +198,12 @@ module Shumway.AVM1.Lib {
       this._as3Object.multiline = value;
     }
 
-    public get_name() {
-      return this.as3Object._name;
-    }
-
-    public set_name(value) {
-      this.as3Object._name = value;
-    }
-
-    public get_parent() {
-      var parent = getAVM1Object(this.as3Object.parent, this.context);
-      // In AVM1, the _parent property is `undefined`, not `null` if the element has no parent.
-      return <AVM1MovieClip>parent || undefined;
-    }
-
-    public set_parent(value) {
-      throw 'Not implemented: set$_parent';
-    }
-
     public getPassword() {
       return this._as3Object.displayAsPassword;
     }
 
     public setPassword(value) {
       this._as3Object.displayAsPassword = value;
-    }
-
-    public get_quality() {
-      return 'HIGH';
-    }
-
-    public set_quality(value) {
-    }
-
-    public get_rotation() {
-      return this._as3Object.rotation;
-    }
-
-    public set_rotation(value) {
-      this._as3Object.rotation = value;
     }
 
     public getScroll() {
@@ -322,34 +255,6 @@ module Shumway.AVM1.Lib {
       this._as3Object.setTextFormat(as3TextFormat, beginIndex, endIndex);
     }
 
-    public get_soundbuftime() {
-      throw 'Not implemented: get$_soundbuftime';
-    }
-
-    public set_soundbuftime(value) {
-      throw 'Not implemented: set$_soundbuftime';
-    }
-
-    public getTabEnabled() {
-      return this._as3Object.tabEnabled;
-    }
-
-    public setTabEnabled(value) {
-      this._as3Object.tabEnabled = value;
-    }
-
-    public getTabIndex() {
-      return this._as3Object.tabIndex;
-    }
-
-    public setTabIndex(value) {
-      this._as3Object.tabIndex = value;
-    }
-
-    public get_target() {
-      return AVM1Utils.getTarget(this);
-    }
-
     public getText() {
       return this._as3Object.text;
     }
@@ -388,10 +293,6 @@ module Shumway.AVM1.Lib {
 
     public setType(value) {
       this._as3Object.type = value;
-    }
-
-    public get_url() {
-      return this._as3Object.loaderInfo.url;
     }
 
     public getVariable():any {
@@ -459,83 +360,12 @@ module Shumway.AVM1.Lib {
       instance.text = '' + avm1ContextUtils.getProperty(clip, name);
     }
 
-    public get_visible() {
-      return this._as3Object.visible;
-    }
-
-    public set_visible(value) {
-      this._as3Object.visible = +value !== 0;
-    }
-
-    public get_width() {
-      return this._as3Object.width;
-    }
-
-    public set_width(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this._as3Object.width = value;
-    }
-
     public getWordWrap() {
       return this._as3Object.wordWrap;
     }
 
     public setWordWrap(value) {
       this._as3Object.wordWrap = value;
-    }
-
-    public get_x() {
-      return this._as3Object.x;
-    }
-
-    public set_x(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this._as3Object.x = value;
-    }
-
-    public get_xmouse() {
-      return this._as3Object.mouseX;
-    }
-
-    public get_xscale() {
-      return this._as3Object.scaleX;
-    }
-
-    public set_xscale(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this._as3Object.scaleX = value;
-    }
-
-    public get_y() {
-      return this._as3Object.y;
-    }
-
-    public set_y(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this._as3Object.y = value;
-    }
-
-    public get_ymouse() {
-      return this._as3Object.mouseY;
-    }
-
-    public get_yscale() {
-      return this._as3Object.scaleY;
-    }
-
-    public set_yscale(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this._as3Object.scaleY = value;
     }
 
 

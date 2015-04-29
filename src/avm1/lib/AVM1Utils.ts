@@ -23,9 +23,9 @@ module Shumway.AVM1.Lib {
 
   export interface IAVM1SymbolBase {
     isAVM1Instance: boolean;
-    as3Object: flash.display.DisplayObject;
+    as3Object: flash.display.InteractiveObject;
     context: AVM1Context;
-    initAVM1SymbolInstance(context: AVM1Context, as3Object: flash.display.DisplayObject);
+    initAVM1SymbolInstance(context: AVM1Context, as3Object: flash.display.InteractiveObject);
     updateAllEvents();
   }
 
@@ -42,8 +42,7 @@ module Shumway.AVM1.Lib {
     return context.isPropertyCaseSensitive ? eventName : eventName.toLowerCase();
   }
 
-  // TODO replace to AVM1NativeSymbolObject
-  export class AVM1SymbolBase<T extends flash.display.DisplayObject> extends AVM1Object implements IAVM1SymbolBase, IAVM1EventPropertyObserver {
+  export class AVM1SymbolBase<T extends flash.display.InteractiveObject> extends AVM1Object implements IAVM1SymbolBase, IAVM1EventPropertyObserver {
     public get isAVM1Instance(): boolean {
       return !!this._as3Object;
     }
@@ -143,6 +142,275 @@ module Shumway.AVM1.Lib {
       var event = this._eventsMap[propertyName];
       this._updateEvent(event);
     }
+
+    // Common DisplayObject properties
+
+    public get_alpha(): number {
+      return this.as3Object.alpha * 100;
+    }
+
+    public set_alpha(value: number) {
+      value = alToNumber(this.context, value);
+      if (isNaN(value)) {
+        return;
+      }
+      this.as3Object.alpha = value / 100;
+    }
+
+    public getBlendMode(): string {
+      return this.as3Object.blendMode;
+    }
+
+    public setBlendMode(value: string) {
+      value = alCoerceString(this.context, value);
+      this.as3Object.blendMode = value;
+    }
+
+    public getCacheAsBitmap(): boolean {
+      return this.as3Object.cacheAsBitmap;
+    }
+
+    public setCacheAsBitmap(value: boolean) {
+      value = alToBoolean(this.context, value);
+      this.as3Object.cacheAsBitmap = value;
+    }
+
+    public getFilters(): AVM1Object {
+      return convertFromAS3Filters(this.context, this.as3Object.filters);
+    }
+
+    public setFilters(value) {
+      this.as3Object.filters = convertToAS3Filters(this.context, value);
+    }
+
+    public get_focusrect(): boolean {
+      return this.as3Object.focusRect || false; // suppressing null
+    }
+
+    public set_focusrect(value: boolean) {
+      value = alToBoolean(this.context, value);
+      this.as3Object.focusRect = value;
+    }
+
+    public get_height() {
+      return this.as3Object.height;
+    }
+
+    public set_height(value: number) {
+      value = alToNumber(this.context, value);
+      if (isNaN(value)) {
+        return;
+      }
+      this.as3Object.height = value;
+    }
+
+    public get_highquality(): number {
+      Debug.somewhatImplemented('AVM1SymbolBase.get_highquality');
+      return 1;
+    }
+
+    public set_highquality(value: number) {
+      Debug.somewhatImplemented('AVM1SymbolBase.set_highquality');
+    }
+
+    public getMenu() {
+      Debug.somewhatImplemented('AVM1SymbolBase.getMenu');
+      // return this.as3Object.contextMenu;
+    }
+
+    public setMenu(value) {
+      Debug.somewhatImplemented('AVM1SymbolBase.setMenu');
+      // this.as3Object.contextMenu = value;
+    }
+
+    public get_name(): string {
+      return this.as3Object.name;
+    }
+
+    public set_name(value: string) {
+      value = alCoerceString(this.context, value);
+      this.as3Object.name = value;
+    }
+
+    public get_parent(): AVM1MovieClip {
+      var parent = getAVM1Object(this.as3Object.parent, this.context);
+      // In AVM1, the _parent property is `undefined`, not `null` if the element has no parent.
+      return <AVM1MovieClip>parent || undefined;
+    }
+
+    public set_parent(value: AVM1MovieClip) {
+      Debug.notImplemented('AVM1SymbolBase.set_parent');
+    }
+
+    public getOpaqueBackground(): number {
+      return this.as3Object.opaqueBackground;
+    }
+
+    public setOpaqueBackground(value: number) {
+      if (isNullOrUndefined(value)) {
+        this.as3Object.opaqueBackground = null;
+      } else {
+        this.as3Object.opaqueBackground = alToInt32(this.context, value);
+      }
+    }
+
+    public get_quality(): string {
+      Debug.somewhatImplemented('AVM1SymbolBase.get_quality');
+      return 'HIGH';
+    }
+
+    public set_quality(value) {
+      Debug.somewhatImplemented('AVM1SymbolBase.set_quality');
+    }
+
+    public get_rotation(): number {
+      return this.as3Object.rotation;
+    }
+
+    public set_rotation(value: number) {
+      value = alToNumber(this.context, value);
+      if (isNaN(value)) {
+        return;
+      }
+      this.as3Object.rotation = value;
+    }
+
+    public getScale9Grid() {
+      Debug.notImplemented('AVM1SymbolBase.setScale9Grid');
+    }
+
+    public setScale9Grid(value) {
+      Debug.notImplemented('AVM1SymbolBase.getScale9Grid');
+    }
+
+    public get_soundbuftime(): number {
+      Debug.notImplemented('AVM1SymbolBase.get_soundbuftime');
+      return NaN;
+    }
+
+    public set_soundbuftime(value: number) {
+      Debug.notImplemented('AVM1SymbolBase.set_soundbuftime');
+    }
+
+    public getTabEnabled(): boolean {
+      return this.as3Object.tabEnabled;
+    }
+
+    public setTabEnabled(value: boolean) {
+      value = alToBoolean(this.context, value);
+      this.as3Object.tabEnabled = value;
+    }
+
+    public getTabIndex(): number {
+      var tabIndex = this.as3Object.tabIndex;
+      return tabIndex < 0 ? undefined : tabIndex;
+    }
+
+    public setTabIndex(value: number) {
+      if (isNullOrUndefined(value)) {
+        this.as3Object.tabIndex = -1;
+      } else {
+        this.as3Object.tabIndex = alToInteger(this.context, value);
+      }
+    }
+
+    public get_target(): string {
+      var nativeObject: flash.display.DisplayObject = this.as3Object;
+      if (nativeObject === nativeObject.root) {
+        return '/';
+      }
+      var path = '';
+      do {
+        if (isNullOrUndefined(nativeObject)) {
+          release || Debug.assert(false);
+          return undefined; // something went wrong
+        }
+        path = '/' + nativeObject.name + path;
+        nativeObject = nativeObject.parent;
+      } while (nativeObject !== nativeObject.root);
+      return path;
+    }
+
+    public get_visible(): boolean {
+      return this.as3Object.visible;
+    }
+
+    public set_visible(value: boolean) {
+      value = alToBoolean(this.context, value);
+      this.as3Object.visible = value;
+    }
+
+    public get_url(): string {
+      return this.as3Object.loaderInfo.url;
+    }
+
+    public get_width(): number {
+      return this.as3Object.width;
+    }
+
+    public set_width(value: number) {
+      value = alToNumber(this.context, value);
+      if (isNaN(value)) {
+        return;
+      }
+      this.as3Object.width = value;
+    }
+
+    public get_x(): number {
+      return this.as3Object.x;
+    }
+
+    public set_x(value: number) {
+      value = alToNumber(this.context, value);
+      if (isNaN(value)) {
+        return;
+      }
+      this.as3Object.x = value;
+    }
+
+    public get_xmouse(): number {
+      return this.as3Object.mouseX;
+    }
+
+    public get_xscale(): number {
+      return this.as3Object.scaleX * 100;
+    }
+
+    public set_xscale(value: number) {
+      value = alToNumber(this.context, value);
+      if (isNaN(value)) {
+        return;
+      }
+      this.as3Object.scaleX = value / 100;
+    }
+
+    public get_y(): number {
+      return this.as3Object.y;
+    }
+
+    public set_y(value: number) {
+      value = alToNumber(this.context, value);
+      if (isNaN(value)) {
+        return;
+      }
+      this.as3Object.y = value;
+    }
+
+    public get_ymouse(): number {
+      return this.as3Object.mouseY;
+    }
+
+    public get_yscale(): number {
+      return this.as3Object.scaleY * 100;
+    }
+
+    public set_yscale(value: number) {
+      value = alToNumber(this.context, value);
+      if (isNaN(value)) {
+        return;
+      }
+      this.as3Object.scaleY = value / 100;
+    }
   }
 
   export function avm1HasEventProperty(context: AVM1Context, target: any, propertyName: string): boolean {
@@ -211,19 +479,6 @@ module Shumway.AVM1.Lib {
     static resolveLevel(context: AVM1Context, level: number): AVM1MovieClip {
       level = +level;
       return context.resolveLevel(level);
-    }
-
-    public static getTarget(mc: IAVM1SymbolBase) {
-      var nativeObject = mc.as3Object;
-      if (nativeObject === nativeObject.root) {
-        return '/';
-      }
-      var path = '';
-      do {
-        path = '/' + nativeObject.name + path;
-        nativeObject = nativeObject.parent;
-      } while (nativeObject !== nativeObject.root);
-      return path;
     }
   }
 

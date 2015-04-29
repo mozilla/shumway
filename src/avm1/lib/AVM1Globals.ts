@@ -260,7 +260,7 @@ module Shumway.AVM1.Lib {
       var external: AVM1Object = alNewObject(context);
       external.alPut('ExternalInterface', AVM1ExternalInterface.createAVM1Class(context));
       this.flash.alPut('external', external);
-      var filters: AVM1Object = alNewObject(context);
+      var filters: AVM1Object = createFiltersClasses(context);
       this.flash.alPut('filters', filters);
       var geom: AVM1Object = alNewObject(context);
       geom.alPut('ColorTransform', new AVM1ColorTransformFunction(context));
