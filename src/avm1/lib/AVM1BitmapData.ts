@@ -56,7 +56,7 @@ module Shumway.AVM1.Lib {
       var bitmapClass = context.sec.flash.display.BitmapData.axClass;
       if (symbol && bitmapClass.dPrototype.isPrototypeOf((<any>symbolClass).dPrototype)) {
         var as3Object = Shumway.AVMX.AS.constructClassFromSymbol(symbol, bitmapClass);
-        var BitmapData: AVM1Object = context.globals.alGet('BitmapData');
+        var BitmapData: AVM1Object = context.globals.alGet('flash').alGet('display').alGet('BitmapData');
         var bitmap = new AVM1BitmapData(context);
         bitmap.alPrototype = BitmapData.alGetPrototypeProperty();
         bitmap._as3Object = as3Object;
@@ -70,8 +70,7 @@ module Shumway.AVM1.Lib {
     }
 
     public getRectangle(): AVM1Object {
-      Debug.notImplemented('AVM1BitmapData.getRectangle');
-      return undefined;
+      return new AVM1Rectangle(this.context, 0, 0, this.as3BitmapData.width, this.as3BitmapData.height);
     }
 
     public getTransparent(): boolean {
@@ -83,13 +82,19 @@ module Shumway.AVM1.Lib {
     }
 
     public applyFilter(sourceBitmap: AVM1BitmapData, sourceRect: AVM1Object, destPoint: AVM1Object, filter: AVM1Object): number {
-      Debug.notImplemented('AVM1BitmapData.applyFilter');
-      return NaN;
+      // TODO handle incorrect arguments
+      var as3BitmapData = sourceBitmap.as3BitmapData;
+      var as3SourceRect = toAS3Rectangle(sourceRect);
+      var as3DestPoint = toAS3Point(destPoint);
+      var as3Filter = convertToAS3Filter(this.context, filter);
+
+      this.as3BitmapData.applyFilter(as3BitmapData, as3SourceRect, as3DestPoint, as3Filter);
+      return 0;
     }
 
     public clone(): AVM1BitmapData {
       var bitmap = new AVM1BitmapData(this.context);
-      var BitmapData: AVM1Object = this.context.globals.alGet('BitmapData');
+      var BitmapData: AVM1Object = this.context.globals.alGet('flash').alGet('display').alGet('BitmapData');
       bitmap.alPrototype = BitmapData.alGetPrototypeProperty();
       bitmap._as3Object = this._as3Object.clone();
       return bitmap;
@@ -111,19 +116,37 @@ module Shumway.AVM1.Lib {
     }
 
     public copyPixels(sourceBitmap: AVM1BitmapData, sourceRect: AVM1Object, destPoint: AVM1Object, alphaBitmap?: AVM1BitmapData, alphaPoint?: AVM1Object, mergeAlpha?: boolean): void {
-      Debug.notImplemented('AVM1BitmapData.copyPixels');
+      var as3BitmapData = sourceBitmap.as3BitmapData;
+      var as3SourceRect = toAS3Rectangle(sourceRect);
+      var as3DestPoint = toAS3Point(destPoint);
+      var as3AlphaData = alphaBitmap ? alphaBitmap.as3BitmapData : null;
+      var as3AlphaPoint = alphaPoint ? toAS3Point(alphaPoint) : null;
+      mergeAlpha = alToBoolean(this.context, mergeAlpha);
+
+      this.as3BitmapData.copyPixels(as3BitmapData, as3SourceRect, as3DestPoint, as3AlphaData, as3AlphaPoint, mergeAlpha);
     }
 
     dispose(): void {
       Debug.notImplemented('AVM1BitmapData.dispose');
     }
 
-    draw(source: AVM1Object, matrix?: AVM1Object, colorTransform?: AVM1Object, blendMode?: AVM1Object, clipRect?: AVM1Object, smooth?: boolean): void {
-      Debug.notImplemented('AVM1BitmapData.draw');
+    draw(source: AVM1Object, matrix?: AVM1Object, colorTransform?: AVM1Object, blendMode?: any, clipRect?: AVM1Object, smooth?: boolean): void {
+      var as3BitmapData = (<any>source)._as3Object; // movies and bitmaps
+      var as3Matrix = matrix ? toAS3Matrix(matrix) : null;
+      var as3ColorTransform = colorTransform ? toAS3ColorTransform(colorTransform) : null;
+      var as3ClipRect = clipRect ? toAS3Rectangle(clipRect) : null;
+      blendMode = typeof blendMode === 'number' ? BlendModesMap[blendMode] : alCoerceString(this.context, blendMode);
+      blendMode  = blendMode || null;
+      smooth = alToBoolean(this.context, smooth);
+
+      this.as3BitmapData.draw(as3BitmapData, as3Matrix, as3ColorTransform, blendMode, as3ClipRect, smooth);
     }
 
     fillRect(rect: AVM1Object, color: number): void {
-      Debug.notImplemented('AVM1BitmapData.fillRect');
+      var as3Rect = toAS3Rectangle(rect);
+      color = alToInt32(this.context, color);
+
+      this.as3BitmapData.fillRect(as3Rect, color);
     }
 
     floodFill(x: number, y: number, color: number): void {
@@ -167,7 +190,22 @@ module Shumway.AVM1.Lib {
     }
 
     perlinNoise(baseX: number, baseY: number, numOctaves: number, randomSeed: number, stitch: boolean, fractalNoise: boolean, channelOptions?: number, grayScale?: boolean, offsets?: AVM1Object): void {
-      Debug.notImplemented('AVM1BitmapData.perlinNoise');
+      baseX = alCoerceNumber(this.context, baseX);
+      baseY = alCoerceNumber(this.context, baseY);
+      numOctaves = alCoerceNumber(this.context, numOctaves);
+      randomSeed = alCoerceNumber(this.context, randomSeed);
+      stitch = alToBoolean(this.context, stitch);
+      fractalNoise = alToBoolean(this.context, fractalNoise);
+      channelOptions = channelOptions === undefined ? 7 : alCoerceNumber(this.context, channelOptions);
+      grayScale = alToBoolean(this.context, grayScale);
+      var as3Offsets = null;
+      if (!isNullOrUndefined(offsets)) {
+        for (var i = 0, length = offsets.alGet('length'); i < length; i++) {
+          as3Offsets.push(alCoerceNumber(this.context, offsets.alGet(i)));
+        }
+      }
+
+      this.perlinNoise(baseX, baseY, numOctaves, randomSeed, stitch, fractalNoise, channelOptions, grayScale, as3Offsets);
     }
 
     pixelDissolve(sourceBitmap: AVM1BitmapData, sourceRect: AVM1Object, destPoint: AVM1Object, randomSeed?: number, numberOfPixels?: number, fillColor?: number): number {

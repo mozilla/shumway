@@ -164,8 +164,8 @@ module Shumway.AVM1.Lib {
     }
 
     public setBlendMode(value: string) {
-      value = alCoerceString(this.context, value);
-      this.as3Object.blendMode = value;
+      value = typeof value === 'number' ? BlendModesMap[value] : alCoerceString(this.context, value);
+      this.as3Object.blendMode = value || null;
     }
 
     public getCacheAsBitmap(): boolean {
@@ -301,6 +301,14 @@ module Shumway.AVM1.Lib {
 
     public setScale9Grid(value: AVM1Rectangle) {
       this.as3Object.scale9Grid = isNullOrUndefined(value) ? null : toAS3Rectangle(value);
+    }
+
+    public getScrollRect(): AVM1Rectangle {
+      return AVM1Rectangle.fromAS3Rectangle(this.context, this.as3Object.scrollRect);
+    }
+
+    public setScrollRect(value: AVM1Rectangle) {
+      this.as3Object.scrollRect = isNullOrUndefined(value) ? null : toAS3Rectangle(value);
     }
 
     public get_soundbuftime(): number {
@@ -449,6 +457,10 @@ module Shumway.AVM1.Lib {
       return this.as3Object._depth - DEPTH_OFFSET;
     }
   }
+
+  export var BlendModesMap = [undefined, "normal", "layer", "multiply",
+    "screen", "lighten", "darken", "difference", "add", "subtract", "invert",
+    "alpha", "erase", "overlay", "hardlight"];
 
   export function avm1HasEventProperty(context: AVM1Context, target: any, propertyName: string): boolean {
     if (target.alHasProperty(propertyName) &&
