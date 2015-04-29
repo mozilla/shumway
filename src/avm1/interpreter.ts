@@ -900,31 +900,29 @@ module Shumway.AVM1 {
 
       var i = 0, j = variableName.length;
       var markedAsTarget = true;
-      var resolved, ch;
-      var propertyName, scope, obj;
+      var resolved, ch, needsScopeResolution;
+      var propertyName = null, scope = null, obj = undefined;
       if (variableName[0] === '/') {
         resolved = avm1ResolveSimpleVariable(ectx.scopeList, '_level0', AVM1ResolveVariableFlags.READ | AVM1ResolveVariableFlags.GET_VALUE);
-        propertyName = resolved ? resolved.propertyName : null;
-        scope = resolved ? resolved.scope : null;
-        obj = resolved ? resolved.value : undefined;
+        if (resolved) {
+          propertyName = resolved.propertyName;
+          scope = resolved.scope;
+          obj = resolved.value;
+        }
         i++;
+        needsScopeResolution = false;
       } else {
-        obj = avm1GetTarget(ectx, !(flags & AVM1ResolveVariableFlags.DISALLOW_TARGET_OVERRIDE));
-        propertyName = obj.name;
-        scope = obj._parent;
+        resolved = null;
+        needsScopeResolution = true;
       }
 
       if (i >= j) {
-        resolved = cachedResolvedVariableResult;
-        resolved.propertyName = propertyName;
-        resolved.scope = scope;
-        resolved.value = obj;
         return resolved;
       }
 
       var q = i;
       while (i < j) {
-        if (!(obj instanceof AVM1Object)) {
+        if (!needsScopeResolution && !(obj instanceof AVM1Object)) {
           avm1Warn('Unable to resolve variable on invalid object ' + variableName.substring(q, i - 1) + ' (expr ' + variableName + ')');
           return null;
         }
@@ -957,9 +955,20 @@ module Shumway.AVM1 {
             obj = child;
           }
         }
-        if (!valueFound && obj.alHasProperty(propertyName)) {
-          obj = obj.alGet(propertyName);
-          valueFound = true;
+        if (!valueFound) {
+          if (needsScopeResolution) {
+            resolved = avm1ResolveSimpleVariable(ectx.scopeList, propertyName, flags);
+            if (resolved) {
+              valueFound = true;
+              propertyName = resolved.propertyName;
+              scope = resolved.scope;
+              obj = resolved.value;
+            }
+            needsScopeResolution = false;
+          } else if (obj.alHasProperty(propertyName)) {
+            obj = obj.alGet(propertyName);
+            valueFound = true;
+          }
         }
         if (!valueFound && propertyName[0] === '_') {
           // FIXME hacking to pass some swfdec test cases
@@ -1617,6 +1626,7 @@ module Shumway.AVM1 {
       if (functionName) {
         var scope = ectx.scopeList.scope;
         scope.alPut(functionName, fn);
+        as2SyncEvents(ectx.context, functionName);
       } else {
         stack.push(fn);
       }
@@ -2001,6 +2011,7 @@ module Shumway.AVM1 {
         functionParams, registerCount, registerAllocation, suppressArguments);
       if (functionName) {
         scope.alPut(functionName, fn);
+        as2SyncEvents(ectx.context, name);
       } else {
         stack.push(fn);
       }
