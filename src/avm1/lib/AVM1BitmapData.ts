@@ -33,7 +33,11 @@ module Shumway.AVM1.Lib {
         null, AVM1BitmapData.prototype.avm1Constructor);
     }
 
-    _as3Object: flash.display.BitmapData;
+    private _as3Object: flash.display.BitmapData;
+
+    get as3BitmapData(): flash.display.BitmapData {
+      return this._as3Object;
+    }
 
     public avm1Constructor(width: number, height: number, transparent?: boolean, fillColor?: number) {
       width = alToNumber(this.context, width);

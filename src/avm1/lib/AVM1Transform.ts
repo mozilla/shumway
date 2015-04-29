@@ -29,6 +29,10 @@ module Shumway.AVM1.Lib {
 
     private _target:IAVM1SymbolBase;
 
+    get as3Transform(): flash.geom.Transform {
+      return this._target.as3Object.transform;
+    }
+
     public avm1Constructor(target_mc) {
       this._target = AVM1Utils.resolveTarget(this.context, target_mc);
     }

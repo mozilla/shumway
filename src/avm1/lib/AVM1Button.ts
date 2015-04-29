@@ -103,7 +103,7 @@ module Shumway.AVM1.Lib {
             somewhatImplemented('AVM1 drag trackAsMenu over/out button actions');
             break;
           default:
-            console.warn('Unknown AVM1 button action type: ' + action.stateTransitionFlags);
+            context.utils.warn('Unknown AVM1 button action type: ' + action.stateTransitionFlags);
             continue;
         }
         requiredListeners[type] = this._mouseEventHandler.bind(this, action.stateTransitionFlags);
@@ -111,32 +111,28 @@ module Shumway.AVM1.Lib {
       this._initEventsHandlers();
     }
 
-    public getEnabled() {
+    public getEnabled(): boolean {
       return this._as3Object.enabled;
     }
 
-    public setEnabled(value) {
-      this._as3Object.enabled = value;
-    }
-
-    public getDepth() {
-      return (<any>this._as3Object)._clipDepth;
+    public setEnabled(value: boolean) {
+      this._as3Object.enabled = alToBoolean(this.context, value);;
     }
 
     public getTrackAsMenu() {
-      throw 'Not implemented: get$trackAsMenu';
+      Debug.notImplemented('AVM1Button.getTrackAsMenu');
     }
 
     public setTrackAsMenu(value) {
-      throw 'Not implemented: set$trackAsMenu';
+      Debug.notImplemented('AVM1Button.setTrackAsMenu');
     }
 
-    public getUseHandCursor() {
+    public getUseHandCursor(): boolean {
       return this._as3Object.useHandCursor;
     }
 
-    public setUseHandCursor(value) {
-      this._as3Object.useHandCursor = value;
+    public setUseHandCursor(value: boolean) {
+      this._as3Object.useHandCursor = alToBoolean(this.context, value);
     }
 
 

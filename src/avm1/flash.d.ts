@@ -107,6 +107,7 @@ declare module Shumway.AVMX.AS.flash {
       dropTarget: DisplayObject;
       transform: geom.Transform;
       pixelBounds: geom.Rectangle;
+      scale9Grid: geom.Rectangle;
       enabled: boolean;
       visible: boolean;
       opaqueBackground;
@@ -119,6 +120,7 @@ declare module Shumway.AVMX.AS.flash {
       _depth: number;
       _symbol: DisplaySymbol;
       getBounds(obj: DisplayObject): flash.geom.Rectangle;
+      getRect(obj: DisplayObject): flash.geom.Rectangle;
       play();
       stop();
       gotoAndPlay: Function;
