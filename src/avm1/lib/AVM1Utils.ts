@@ -21,6 +21,8 @@ module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
   import AXClass = Shumway.AVMX.AXClass;
 
+  export var DEPTH_OFFSET = 16384;
+
   export interface IAVM1SymbolBase {
     isAVM1Instance: boolean;
     as3Object: flash.display.InteractiveObject;
@@ -205,12 +207,30 @@ module Shumway.AVM1.Lib {
     }
 
     public get_highquality(): number {
-      Debug.somewhatImplemented('AVM1SymbolBase.get_highquality');
-      return 1;
+      switch (this.get_quality()) {
+        case 'BEST':
+          return 2;
+        case 'HIGH':
+          return 1;
+        default: // case 'LOW':
+          return 0;
+      }
     }
 
     public set_highquality(value: number) {
-      Debug.somewhatImplemented('AVM1SymbolBase.set_highquality');
+      var quality: string;
+      switch (alToInteger(this.context, value)) {
+        case 2:
+          quality = 'BEST';
+          break;
+        case 1:
+          quality = 'HIGH';
+          break;
+        default:
+          quality = 'LOW';
+          break;
+      }
+      this.set_quality(quality);
     }
 
     public getMenu() {
@@ -275,21 +295,21 @@ module Shumway.AVM1.Lib {
       this.as3Object.rotation = value;
     }
 
-    public getScale9Grid() {
-      Debug.notImplemented('AVM1SymbolBase.setScale9Grid');
+    public getScale9Grid(): AVM1Rectangle {
+      return AVM1Rectangle.fromAS3Rectangle(this.context, this.as3Object.scale9Grid);
     }
 
-    public setScale9Grid(value) {
-      Debug.notImplemented('AVM1SymbolBase.getScale9Grid');
+    public setScale9Grid(value: AVM1Rectangle) {
+      this.as3Object.scale9Grid = isNullOrUndefined(value) ? null : toAS3Rectangle(value);
     }
 
     public get_soundbuftime(): number {
-      Debug.notImplemented('AVM1SymbolBase.get_soundbuftime');
-      return NaN;
+      Debug.somewhatImplemented('AVM1SymbolBase.get_soundbuftime');
+      return 0;
     }
 
     public set_soundbuftime(value: number) {
-      Debug.notImplemented('AVM1SymbolBase.set_soundbuftime');
+      Debug.somewhatImplemented('AVM1SymbolBase.set_soundbuftime');
     }
 
     public getTabEnabled(): boolean {
@@ -329,6 +349,19 @@ module Shumway.AVM1.Lib {
         nativeObject = nativeObject.parent;
       } while (nativeObject !== nativeObject.root);
       return path;
+    }
+
+    public getTransform(): AVM1Object {
+      var TransformClass: AVM1Function = this.context.globals.alGet('flash').alGet('geom').alGet('Transform');
+      return TransformClass.alConstruct([this]);
+    }
+
+    public setTransform(value: AVM1Transform) {
+      if (!(value instanceof AVM1Transform)) {
+        return;
+      }
+      var as3Transform = value.as3Transform;
+      this.as3Object.transform = as3Transform;
     }
 
     public get_visible(): boolean {
@@ -410,6 +443,10 @@ module Shumway.AVM1.Lib {
         return;
       }
       this.as3Object.scaleY = value / 100;
+    }
+
+    public getDepth() {
+      return this.as3Object._depth - DEPTH_OFFSET;
     }
   }
 

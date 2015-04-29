@@ -336,7 +336,7 @@ module Shumway.AVM1.Lib {
         try {
           fn.apply(subject, args);
         } catch (ex) {
-          console.error('AVM1 pending script error: ' + ex.message);
+          currentContext.utils.warn('AVM1 pending script error: ' + ex.message);
         }
       }, defaultTarget);
     }

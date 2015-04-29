@@ -26,7 +26,7 @@ module Shumway.AVM1.Lib {
         [],
         [ '_alpha#', 'antiAliasType#', 'autoSize#', 'background#', 'backgroundColor#',
           'border#', 'borderColor#', 'bottomScroll#', 'condenseWhite#', 'embedFonts#',
-          'filters#', 'getNewTextFormat', 'getTextFormat', 'gridFitType#',
+          'filters#', 'getNewTextFormat', 'getTextFormat', 'gridFitType#', 'getDepth',
           '_height#', '_highquality#', 'hscroll#', 'html#', 'htmlText#', 'length#',
           'maxChars#', 'maxhscroll#', 'maxscroll#', 'multiline#',
           '_name#', '_parent#', 'password#', '_quality#', '_rotation#',
@@ -53,11 +53,12 @@ module Shumway.AVM1.Lib {
       this._initEventsHandlers();
     }
 
-    public getAntiAliasType() {
+    public getAntiAliasType(): string {
       return this._as3Object.antiAliasType;
     }
 
-    public setAntiAliasType(value) {
+    public setAntiAliasType(value: string) {
+      value = alCoerceString(this.context, value);
       this._as3Object.antiAliasType = value;
     }
 
@@ -72,58 +73,65 @@ module Shumway.AVM1.Lib {
       } else if (value === false) {
         value = "none";
       }
+      value = alCoerceString(this.context, value);
       this._as3Object.autoSize = value;
     }
 
-    public getBackground() {
+    public getBackground(): boolean {
       return this._as3Object.background;
     }
 
-    public setBackground(value) {
+    public setBackground(value: boolean) {
+      value = alToBoolean(this.context, value);
       this._as3Object.background = value;
     }
 
-    public getBackgroundColor() {
+    public getBackgroundColor(): number {
       return this._as3Object.backgroundColor;
     }
 
     public setBackgroundColor(value) {
+      value = alToInt32(this.context, value);
       this._as3Object.backgroundColor = value;
     }
 
-    public getBorder() {
+    public getBorder(): boolean {
       return this._as3Object.border;
     }
 
-    public setBorder(value) {
+    public setBorder(value: boolean) {
+      value = alToBoolean(this.context, value);
       this._as3Object.border = value;
     }
 
-    public getBorderColor() {
+    public getBorderColor(): number {
       return this._as3Object.borderColor;
     }
 
-    public setBorderColor(value) {
+    public setBorderColor(value: number) {
+      value = alToInt32(this.context, value);
       this._as3Object.borderColor = value;
     }
 
-    public getBottomScroll() {
+    public getBottomScroll(): number {
       return this._as3Object.bottomScrollV;
     }
 
-    public getCondenseWhite() {
+    public getCondenseWhite(): boolean {
       return this._as3Object.condenseWhite;
     }
 
-    public setCondenseWhite(value) {
+    public setCondenseWhite(value: boolean) {
+      value = alToBoolean(this.context, value);
       this._as3Object.condenseWhite = value;
     }
 
-    public getEmbedFonts() {
+    public getEmbedFonts(): boolean {
       return this._as3Object.embedFonts;
     }
 
     public setEmbedFonts(value) {
+      value = alToBoolean(this.context, value);
       this._as3Object.embedFonts = value;
     }
 
@@ -143,82 +151,89 @@ module Shumway.AVM1.Lib {
     }
 
     public setGridFitType(value: string) {
+      value = alCoerceString(this.context, value);
       this._as3Object.gridFitType = value;
     }
 
-    public getHscroll() {
+    public getHscroll(): number {
       return this._as3Object.scrollH;
     }
 
-    public setHscroll(value) {
+    public setHscroll(value: number) {
+      value = alCoerceNumber(this.context, value);
       this._as3Object.scrollH = value;
     }
 
     public getHtml() {
-      throw 'Not implemented: get$_html';
+      Debug.notImplemented('AVM1TextField.getHtml');
     }
 
     public setHtml(value) {
-      throw 'Not implemented: set$_html';
+      Debug.notImplemented('AVM1TextField.setHtml');
     }
 
-    public getHtmlText() {
+    public getHtmlText(): string {
       return this._as3Object.htmlText;
     }
 
-    public setHtmlText(value) {
-      this._as3Object.htmlText = value;
+    public setHtmlText(value: string) {
+      this._as3Object.htmlText = alCoerceString(this.context, value);
     }
 
-    public getLength() {
+    public getLength(): number {
       return this._as3Object.length;
     }
 
-    public getMaxChars() {
+    public getMaxChars(): number  {
       return this._as3Object.maxChars;
     }
 
     public setMaxChars(value) {
+      value = alCoerceNumber(this.context, value);
       this._as3Object.maxChars = value;
     }
 
-    public getMaxhscroll() {
+    public getMaxhscroll(): number {
       return this._as3Object.maxScrollH;
     }
 
-    public getMaxscroll() {
+    public getMaxscroll(): number {
       return this._as3Object.maxScrollV;
     }
 
-    public getMultiline() {
+    public getMultiline(): boolean {
       return this._as3Object.multiline;
     }
 
-    public setMultiline(value) {
+    public setMultiline(value: boolean) {
+      value = alToBoolean(this.context, value);
       this._as3Object.multiline = value;
     }
 
-    public getPassword() {
+    public getPassword(): boolean {
       return this._as3Object.displayAsPassword;
     }
 
-    public setPassword(value) {
+    public setPassword(value: boolean) {
+      value = alToBoolean(this.context, value);
       this._as3Object.displayAsPassword = value;
     }
 
-    public getScroll() {
+    public getScroll(): number {
       return this._as3Object.scrollV;
     }
 
-    public setScroll(value) {
+    public setScroll(value: number) {
+      value = alCoerceNumber(this.context, value);
       this._as3Object.scrollV = value;
     }
 
-    public getSelectable() {
+    public getSelectable(): boolean {
       return this._as3Object.selectable;
     }
 
-    public setSelectable(value) {
+    public setSelectable(value: boolean) {
+      value = alToBoolean(this.context, value);
       this._as3Object.selectable = value;
     }
 
@@ -255,54 +270,59 @@ module Shumway.AVM1.Lib {
       this._as3Object.setTextFormat(as3TextFormat, beginIndex, endIndex);
     }
 
-    public getText() {
+    public getText(): string {
       return this._as3Object.text;
     }
 
-    public setText(value) {
+    public setText(value: string) {
+      value = alCoerceString(this.context, value);
       this._as3Object.text = value;
     }
 
-    public getTextColor() {
+    public getTextColor(): number {
       return this._as3Object.textColor;
     }
 
-    public setTextColor(value) {
+    public setTextColor(value: number) {
+      value = alToInt32(this.context, value);
       this._as3Object.textColor = value;
     }
 
-    public getTextHeight() {
+    public getTextHeight(): number {
       return this._as3Object.textHeight;
     }
 
-    public setTextHeight(value) {
-      throw 'Not supported: set$textHeight';
+    public setTextHeight(value: number) {
+      Debug.notImplemented('AVM1TextField.setTextHeight');
     }
 
-    public getTextWidth() {
+    public getTextWidth(): number {
       return this._as3Object.textWidth;
     }
 
     public setTextWidth(value) {
-      throw 'Not supported: set$textWidth';
+      Debug.notImplemented('AVM1TextField.setTextWidth');
     }
 
-    public getType() {
+    public getType(): string {
       return this._as3Object.type;
     }
 
-    public setType(value) {
+    public setType(value: string) {
+      value = alCoerceString(this.context, value);
       this._as3Object.type = value;
     }
 
-    public getVariable():any {
+    public getVariable(): string {
       return this._variable;
     }
 
-    public setVariable(name:any) {
+    public setVariable(name: string) {
+      name = alCoerceString(this.context, name);
       if (name === this._variable) {
         return;
       }
+
       var instance = this.as3Object;
       if (this._exitFrameHandler && !name) {
         instance.removeEventListener('exitFrame', this._exitFrameHandler);
@@ -349,7 +369,7 @@ module Shumway.AVM1.Lib {
         clip = getAVM1Object(instance._parent, this.context);
       }
       if (!clip) { // REDUX
-        console.warn('Clip ' + name + ' was not found');
+        avm1ContextUtils.warn('Clip ' + name + ' was not found');
         return;
       }
       // Sets default values as defined in SWF if this property was not found.
@@ -360,11 +380,12 @@ module Shumway.AVM1.Lib {
       instance.text = '' + avm1ContextUtils.getProperty(clip, name);
     }
 
-    public getWordWrap() {
+    public getWordWrap(): boolean {
       return this._as3Object.wordWrap;
     }
 
-    public setWordWrap(value) {
+    public setWordWrap(value: boolean) {
+      value = alToBoolean(this.context, value);
       this._as3Object.wordWrap = value;
     }
 
