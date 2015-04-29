@@ -17,7 +17,7 @@
 /// <reference path='../../build/ts/avm2.d.ts' />
 /// <reference path='flash.d.ts' />
 
-///<reference path='options.ts' />
+///<reference path='settings.ts' />
 ///<reference path='stream.ts' />
 ///<reference path='parser.ts' />
 ///<reference path='analyze.ts' />
@@ -48,3 +48,4 @@
 ///<reference path='lib/AVM1System.ts' />
 ///<reference path='lib/AVM1SharedObject.ts' />
 ///<reference path='lib/AVM1MovieClipLoader.ts' />
+///<reference path='lib/AVM1Filters.ts' />

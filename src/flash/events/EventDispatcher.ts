@@ -171,7 +171,7 @@ module Shumway.AVMX.AS.flash.events {
           try {
             target.dispatchEvent(event);
           } catch (e) {
-            console.warn('caught error under broadcast event ' + event._type + ': ', e);
+            Debug.warning('caught error under broadcast event ' + event._type + ': ', e);
           }
         }
       }

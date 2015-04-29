@@ -636,7 +636,7 @@ module Shumway.AVMX.AS.flash.net {
 
       var isMediaSourceEnabled = mediaSourceOption.value;
       if (isMediaSourceEnabled && typeof MediaSource === 'undefined') {
-        console.warn('MediaSource API is not enabled, falling back to regular playback');
+        Debug.warning('MediaSource API is not enabled, falling back to regular playback');
         isMediaSourceEnabled = false;
       }
       var forceMediaSource = false;

@@ -21,6 +21,7 @@ interface ISecurityDomain {
       EventDispatcher: typeof flashPackage.events.EventDispatcher;
       DisplayObject: typeof flashPackage.display.DisplayObject;
       DisplayObjectContainer: typeof flashPackage.display.DisplayObjectContainer;
+      InteractiveObject: typeof flashPackage.display.InteractiveObject;
       AVM1Movie: typeof flashPackage.display.AVM1Movie;
       Stage: typeof flashPackage.display.Stage;
       Loader: typeof flashPackage.display.Loader;
@@ -41,6 +42,7 @@ interface ISecurityDomain {
     external: {
       ExternalInterface: typeof flashPackage.external.ExternalInterface;
     };
+    filters: any;
     text: {
       TextField: typeof flashPackage.text.TextField;
       TextFormat: typeof flashPackage.text.TextFormat;
@@ -97,8 +99,6 @@ declare module Shumway.AVMX.AS.flash {
       mouseX: number;
       mouseY: number;
       tabChildren: boolean;
-      tabEnabled: boolean;
-      tabIndex: number;
       graphics: Graphics;
       blendMode;
       cacheAsBitmap: boolean;
@@ -107,17 +107,20 @@ declare module Shumway.AVMX.AS.flash {
       dropTarget: DisplayObject;
       transform: geom.Transform;
       pixelBounds: geom.Rectangle;
+      scale9Grid: geom.Rectangle;
       enabled: boolean;
       visible: boolean;
       opaqueBackground;
       useHandCursor: boolean;
       buttonMode: boolean;
+      filters;
       _mouseOver: boolean;
       _mouseDown: boolean;
       _children: DisplayObject [];
       _depth: number;
       _symbol: DisplaySymbol;
       getBounds(obj: DisplayObject): flash.geom.Rectangle;
+      getRect(obj: DisplayObject): flash.geom.Rectangle;
       play();
       stop();
       gotoAndPlay: Function;
@@ -132,11 +135,16 @@ declare module Shumway.AVMX.AS.flash {
       localToGlobal(p: geom.Point): geom.Point;
       hitTestObject: Function;
       hitTestPoint: Function;
-      contextMenu;
       mask: DisplayObject;
       _callFrame(frame: number);
     }
-    class DisplayObjectContainer extends DisplayObject {
+    class InteractiveObject extends DisplayObject  {
+      tabEnabled: boolean;
+      tabIndex: number;
+      focusRect: boolean;
+      contextMenu;
+    }
+    class DisplayObjectContainer extends InteractiveObject {
       _as2SymbolClass;
       _name: string;
       numChildren: number;
@@ -210,7 +218,7 @@ declare module Shumway.AVMX.AS.flash {
     class Bitmap extends DisplayObject {
       constructor();
     }
-    class SimpleButton extends DisplayObject {
+    class SimpleButton extends InteractiveObject {
       static axClass: typeof SimpleButton;
 
       _symbol: ButtonSymbol;
@@ -416,7 +424,7 @@ declare module Shumway.AVMX.AS.flash {
     var fscommand: { axCall: (thisArg, sec: ISecurityDomain, command: string, args?: string) => any };
   }
   module text {
-    class TextField extends flash.display.DisplayObject {
+    class TextField extends flash.display.InteractiveObject {
       static axClass: typeof TextField;
 
       getLineMetrics(index: number);

@@ -125,7 +125,7 @@ module Shumway.AVMX.AS.flash.display {
           try {
             loaderInfo.dispatchEvent(this.sec.flash.events.Event.axClass.getInstance(events.Event.INIT));
           } catch (e) {
-            console.warn('caught error under loaderInfo INIT event:', e);
+            Debug.warning('caught error under loaderInfo INIT event:', e);
           }
           leaveTimeline();
           instance._loadStatus = LoadStatus.Initialized;
@@ -140,7 +140,7 @@ module Shumway.AVMX.AS.flash.display {
                                                                 loaderInfo.bytesLoaded,
                                                                 loaderInfo.bytesTotal));
             } catch (e) {
-              console.warn('caught error under loaderInfo PROGRESS event:', e);
+              Debug.warning('caught error under loaderInfo PROGRESS event:', e);
             }
             leaveTimeline();
           }
@@ -155,7 +155,7 @@ module Shumway.AVMX.AS.flash.display {
           try {
             loaderInfo.dispatchEvent(this.sec.flash.events.Event.axClass.getInstance(events.Event.COMPLETE));
           } catch (e) {
-            console.warn('caught error under loaderInfo COMPLETE event: ', e);
+            Debug.warning('caught error under loaderInfo COMPLETE event: ', e);
           }
           leaveTimeline();
         }
@@ -184,7 +184,7 @@ module Shumway.AVMX.AS.flash.display {
             try {
               loaderInfo.dispatchEvent(this.sec.flash.events.Event.axClass.getInstance(events.Event.OPEN));
             } catch (e) {
-              console.warn('caught error under loaderInfo OPEN event: ', e);
+              Debug.warning('caught error under loaderInfo OPEN event: ', e);
             }
             leaveTimeline();
           }
@@ -195,7 +195,7 @@ module Shumway.AVMX.AS.flash.display {
             loaderInfo.dispatchEvent(new progressEventCtor(events.ProgressEvent.PROGRESS,
                                                            false, false, 0, bytesTotal));
           } catch (e) {
-            console.warn('caught error under loaderInfo PROGRESS event: ', e);
+            Debug.warning('caught error under loaderInfo PROGRESS event: ', e);
           }
           leaveTimeline();
           instance._loadStatus = LoadStatus.Opened;
@@ -210,7 +210,7 @@ module Shumway.AVMX.AS.flash.display {
                                                            false, false, update.bytesLoaded,
                                                            bytesTotal));
           } catch (e) {
-            console.warn('caught error under loaderInfo PROGRESS event: ', e);
+            Debug.warning('caught error under loaderInfo PROGRESS event: ', e);
           }
           leaveTimeline();
         }

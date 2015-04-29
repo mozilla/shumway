@@ -18,7 +18,7 @@
 
 ///<reference path='module.ts' />
 ///<reference path='errors.ts' />
-///<reference path='options.ts' />
+///<reference path='settings.ts' />
 
 ///<reference path='abc/stream.ts' />
 ///<reference path='abc/ops.ts' />

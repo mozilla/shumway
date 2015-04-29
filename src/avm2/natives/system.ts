@@ -74,7 +74,7 @@ module Shumway.AVMX.AS {
       static setClipboard(string: string): void {
         string = axCoerceString(string);
         if (ClipboardService.instance === null) {
-          console.warn('setClipboard is only available in the Firefox extension');
+          Debug.warning('setClipboard is only available in the Firefox extension');
           return;
         }
         ClipboardService.instance.setClipboard(string);

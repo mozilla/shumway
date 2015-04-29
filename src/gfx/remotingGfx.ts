@@ -133,7 +133,7 @@ module Shumway.Remoting.GFX {
         registerInspectorAsset(id, symbolId, asset);
       }
       if (!release && this._assets[id]) {
-        console.warn("Asset already exists: " + id + ". old:", this._assets[id], "new: " + asset);
+        Debug.warning("Asset already exists: " + id + ". old:", this._assets[id], "new: " + asset);
       }
       this._assets[id] = asset;
     }

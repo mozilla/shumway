@@ -20,8 +20,6 @@ module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
   import assert = Shumway.Debug.assert;
 
-  var DEPTH_OFFSET = 16384;
-
   class AVM1MovieClipButtonModeEvent extends AVM1EventHandler {
     constructor(public propertyName: string,
                 public eventName: string,
@@ -33,6 +31,15 @@ module Shumway.AVM1.Lib {
       var mc: AVM1MovieClip = <any>target;
       mc.as3Object.buttonMode = true;
     }
+  }
+
+  function convertAS3RectangeToBounds(as3Rectange: flash.geom.Rectangle): AVM1Object {
+    var result = alNewObject(this.context);
+    result.alPut('xMin', as3Rectange.axGetPublicProperty('left'));
+    result.alPut('yMin', as3Rectange.axGetPublicProperty('top'));
+    result.alPut('xMax', as3Rectange.axGetPublicProperty('right'));
+    result.alPut('yMax', as3Rectange.axGetPublicProperty('bottom'));
+    return result;
   }
 
   export class AVM1MovieClip extends AVM1SymbolBase<flash.display.MovieClip> {
@@ -91,24 +98,22 @@ module Shumway.AVM1.Lib {
       return target != '/' ? prefix + target.replace(/\//g, '.') : prefix;
     }
 
-    public get_alpha() {
-      return this.as3Object.alpha;
-    }
-
-    public set_alpha(value) {
-      this.as3Object.alpha = value;
-    }
-
     public attachAudio(id) {
-      throw 'Not implemented: attachAudio';
+      Debug.notImplemented('AVM1MovieClip.attachAudio');
     }
 
-//    public attachBitmap(bmp:AVM1BitmapData, depth:number, pixelSnapping:String = 'auto', smoothing:Boolean = false):void {
-//      var bitmap:flash.display.Bitmap = construct(flash.display.Bitmap, [bmp, pixelSnapping, smoothing]);
-//      this._insertChildAtDepth(bitmap, depth);
-//    }
+    public attachBitmap(bmp:AVM1BitmapData, depth:number, pixelSnapping:String = 'auto', smoothing:Boolean = false): void {
+      pixelSnapping = alCoerceString(this.context, pixelSnapping);
+      smoothing = alToBoolean(this.context, smoothing);
+      var as3BitmapData = bmp.as3BitmapData;
+      var bitmap: flash.display.Bitmap = this.context.sec.flash.display.Bitmap.axClass.axConstruct([as3BitmapData, pixelSnapping, smoothing]);
+      this._insertChildAtDepth(bitmap, depth);
+    }
 
-    public _constructMovieClipSymbol(symbolId:string, name:string):flash.display.MovieClip {
+    public _constructMovieClipSymbol(symbolId:string, name:string): flash.display.MovieClip {
+      symbolId = alCoerceString(this.context, symbolId);
+      name = alCoerceString(this.context, name);
+
       var symbol = this.context.getAsset(symbolId);
       if (!symbol) {
         return undefined;
@@ -155,22 +160,6 @@ module Shumway.AVM1.Lib {
       this.graphics.beginGradientFill(fillType, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPointRatio);
     }
 
-    public getBlendMode() {
-      return this.as3Object.blendMode;
-    }
-
-    public setBlendMode(value) {
-      this.as3Object.blendMode = value;
-    }
-
-    public getCacheAsBitmap() {
-      return this.as3Object.cacheAsBitmap;
-    }
-
-    public setCacheAsBitmap(value) {
-      this.as3Object.cacheAsBitmap = value;
-    }
-
     public _callFrame(frame:any):any {
       var nativeAS3Object = <any> this.as3Object;
       nativeAS3Object._callFrame(frame);
@@ -180,7 +169,7 @@ module Shumway.AVM1.Lib {
       this.graphics.clear();
     }
 
-    private _insertChildAtDepth<T extends flash.display.DisplayObject>(mc: T, depth:number): AVM1SymbolBase<T> {
+    private _insertChildAtDepth<T extends flash.display.DisplayObject>(mc: T, depth:number): AVM1Object {
       var symbolDepth = Math.max(0, alCoerceNumber(this.context, depth)) + DEPTH_OFFSET;
       var nativeAS3Object = this.as3Object;
       nativeAS3Object.addTimelineObjectAtDepth(mc, symbolDepth);
@@ -188,8 +177,7 @@ module Shumway.AVM1.Lib {
       if (this.context.sec.flash.display.Bitmap.axIsType(mc)) {
         return null;
       }
-      var as2mc = <AVM1SymbolBase<T>>getAVM1Object(mc, this.context);
-      return as2mc;
+      return getAVM1Object(mc, this.context);
     }
 
     public createEmptyMovieClip(name, depth): AVM1MovieClip {
@@ -272,48 +260,36 @@ module Shumway.AVM1.Lib {
       this.graphics.endFill();
     }
 
-    public getFilters() {
-      throw 'Not implemented: get$filters';
+    public getFocusEnabled(): boolean {
+      Debug.somewhatImplemented('AVM1MovieClip.getFocusEnabled');
+      return true;
     }
 
-    public setFilters(value) {
-      throw 'Not implemented: set$filters';
+    public setFocusEnabled(value: boolean) {
+      value = alToBoolean(this.context, value);
+      Debug.somewhatImplemented('AVM1MovieClip.setFocusEnabled');
     }
 
-    public getFocusEnabled() {
-      throw 'Not implemented: get$focusEnabled';
+    public getForceSmoothing(): boolean {
+      Debug.somewhatImplemented('AVM1MovieClip.getForceSmoothing');
+      return false;
     }
 
-    public setFocusEnabled(value) {
-      throw 'Not implemented: set$focusEnabled';
-    }
-
-    public get_focusrect() {
-      throw 'Not implemented: get$_focusrect';
-    }
-
-    public set_focusrect(value) {
-      throw 'Not implemented: set$_focusrect';
-    }
-
-    public getForceSmoothing() {
-      throw 'Not implemented: get$forceSmoothing';
-    }
-
-    public setForceSmoothing(value) {
-      throw 'Not implemented: set$forceSmoothing';
+    public setForceSmoothing(value: boolean) {
+      value = alToBoolean(this.context, value);
+      Debug.somewhatImplemented('AVM1MovieClip.setForceSmoothing');
     }
 
     public get_framesloaded() {
       return this.as3Object.framesLoaded;
     }
 
-    public getBounds(bounds) {
+    public getBounds(bounds): AVM1Object {
       var obj = bounds.as3Object;
       if (!obj) {
-        throw 'Unsupported bounds type';
+        throw new Error('Unsupported object type for AVM1MovieClip.getBounds');
       }
-      return this.as3Object.getBounds(obj);
+      return convertAS3RectangeToBounds(this.as3Object.getBounds(obj));
     }
 
     public getBytesLoaded(): number {
@@ -324,10 +300,6 @@ module Shumway.AVM1.Lib {
     public getBytesTotal() {
       var loaderInfo = this.as3Object.loaderInfo;
       return loaderInfo.bytesTotal;
-    }
-
-    public getDepth() {
-      return this.as3Object._depth - DEPTH_OFFSET;
     }
 
     public getInstanceAtDepth(depth: number): AVM1MovieClip {
@@ -361,17 +333,21 @@ module Shumway.AVM1.Lib {
       return maxDepth - DEPTH_OFFSET;
     }
 
-    public getRect(bounds) {
-      throw 'Not implemented: getRect';
+    public getRect(bounds): AVM1Object {
+      var obj = bounds.as3Object;
+      if (!obj) {
+        throw new Error('Unsupported object type for AVM1MovieClip.getRect');
+      }
+      return convertAS3RectangeToBounds(this.as3Object.getRect(obj));
     }
 
-    public getSWFVersion() {
+    public getSWFVersion(): number {
       var loaderInfo = this.as3Object.loaderInfo;
       return loaderInfo.swfVersion;
     }
 
     public getTextSnapshot() {
-      throw 'Not implemented: getTextSnapshot';
+      Debug.notImplemented('AVM1MovieClip.getTextSnapshot');
     }
 
     public getURL(url, window, method) {
@@ -395,30 +371,12 @@ module Shumway.AVM1.Lib {
       return this.as3Object.gotoAndStop(frame);
     }
 
-    public get_height() {
-      return this.as3Object.height;
-    }
-
-    public set_height(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this.as3Object.height = value;
-    }
-
-    public get_highquality() {
-      return 1;
-    }
-
-    public set_highquality(value) {
-    }
-
     public getHitArea() {
-      throw 'Not implemented: get$hitArea';
+      Debug.notImplemented('AVM1MovieClip.getHitArea');
     }
 
     public setHitArea(value) {
-      throw 'Not implemented: set$hitArea';
+      Debug.notImplemented('AVM1MovieClip.setHitArea');
     }
 
     public hitTest(x, y, shapeFlag) {
@@ -470,31 +428,15 @@ module Shumway.AVM1.Lib {
     }
 
     public get_lockroot() {
-      throw 'Not implemented: get$_lockroot';
+      Debug.notImplemented('AVM1MovieClip.get_lockroot');
     }
 
     public set_lockroot(value) {
-      throw 'Not implemented: set$_lockroot';
-    }
-
-    public getMenu() {
-      return this.as3Object.contextMenu;
-    }
-
-    public setMenu(value) {
-      this.as3Object.contextMenu = value;
+      Debug.notImplemented('AVM1MovieClip.set_lockroot');
     }
 
     public moveTo(x, y) {
       this.graphics.moveTo(x, y);
-    }
-
-    public get_name() {
-      return this.as3Object.name;
-    }
-
-    public set_name(value) {
-      this.as3Object.name = value;
     }
 
     public nextFrame() {
@@ -503,24 +445,6 @@ module Shumway.AVM1.Lib {
 
     public nextScene() {
       this.as3Object.nextScene();
-    }
-
-    public getOpaqueBackground() {
-      return this.as3Object.opaqueBackground;
-    }
-
-    public setOpaqueBackground(value) {
-      this.as3Object.opaqueBackground = value;
-    }
-
-    public get_parent(): AVM1MovieClip {
-      var parent = getAVM1Object(this.as3Object.parent, this.context);
-      // In AVM1, the _parent property is `undefined`, not `null` if the element has no parent.
-      return <AVM1MovieClip>parent || undefined;
-    }
-
-    public set_parent(value) {
-      throw 'Not implemented: set$_parent';
     }
 
     public play() {
@@ -535,40 +459,17 @@ module Shumway.AVM1.Lib {
       this.as3Object.prevScene();
     }
 
-    public get_quality() {
-      return 'HIGH';
-    }
-
-    public set_quality(value) {
-    }
-
     public removeMovieClip() {
       var parent = this.get_parent().as3Object;
       parent.removeChild(this.as3Object);
     }
 
-    public get_rotation() {
-      return this.as3Object.rotation;
-    }
-
-    public set_rotation(value) {
-      this.as3Object.rotation = value;
-    }
-
-    public getScale9Grid() {
-      throw 'Not implemented: get$scale9Grid';
-    }
-
-    public setScale9Grid(value) {
-      throw 'Not implemented: set$scale9Grid';
-    }
-
     public getScrollRect() {
-      throw 'Not implemented: get$scrollRect';
+      Debug.notImplemented('AVM1MovieClip.getScrollRect');
     }
 
     public setScrollRect(value) {
-      throw 'Not implemented: set$scrollRect';
+      Debug.notImplemented('AVM1MovieClip.setScrollRect');
     }
 
     public setMask(mc:Object) {
@@ -577,14 +478,6 @@ module Shumway.AVM1.Lib {
       if (mask) {
         nativeObject.mask = mask.as3Object;
       }
-    }
-
-    public get_soundbuftime() {
-      throw 'Not implemented: get$_soundbuftime';
-    }
-
-    public set_soundbuftime(value) {
-      throw 'Not implemented: set$_soundbuftime';
     }
 
     public startDrag(lock?: boolean, left?: number, top?: number, right?: number, bottom?: number): void {
@@ -619,65 +512,24 @@ module Shumway.AVM1.Lib {
       child1.parent.swapChildren(child1, child2);
     }
 
-    public getTabChildren() {
+    public getTabChildren(): boolean {
       return this.as3Object.tabChildren;
     }
 
-    public setTabChildren(value) {
-      this.as3Object.tabChildren = value;
+    public setTabChildren(value: boolean) {
+      this.as3Object.tabChildren = alToBoolean(this.context, value);
     }
 
-    public getTabEnabled() {
-      return this.as3Object.tabEnabled;
-    }
-
-    public setTabEnabled(value) {
-      this.as3Object.tabEnabled = value;
-    }
-
-    public getTabIndex() {
-      return this.as3Object.tabIndex;
-    }
-
-    public setTabIndex(value) {
-      this.as3Object.tabIndex = value;
-    }
-
-    public get_target() {
-      var nativeObject: flash.display.DisplayObject = this.as3Object;
-      if (nativeObject === nativeObject.root) {
-        return '/';
-      }
-      var path = '';
-      do {
-        if (isNullOrUndefined(nativeObject)) {
-          release || Debug.assert(false);
-          return undefined; // something went wrong
-        }
-        path = '/' + nativeObject.name + path;
-        nativeObject = nativeObject.parent;
-      } while (nativeObject !== nativeObject.root);
-      return path;
-    }
-
-    public get_totalframes() {
+    public get_totalframes(): number {
       return this.as3Object.totalFrames;
     }
 
     public getTrackAsMenu() {
-      throw 'Not implemented: get$trackAsMenu';
+      Debug.notImplemented('AVM1MovieClip.getTrackAsMenu');
     }
 
     public setTrackAsMenu(value) {
-      throw 'Not implemented: set$trackAsMenu';
-    }
-
-    public getTransform() {
-      throw 'Not implemented: get$transform';
-    }
-
-    public setTransform(value) {
-      throw 'Not implemented: set$transform';
+      Debug.notImplemented('AVM1MovieClip.setTrackAsMenu');
     }
 
     public toString() {
@@ -694,87 +546,12 @@ module Shumway.AVM1.Lib {
       nativeObject.stop();
     }
 
-    public get_url() {
-      return this.as3Object.loaderInfo.url;
-    }
-
     public getUseHandCursor() {
       return this.as3Object.useHandCursor;
     }
 
     public setUseHandCursor(value) {
       this.as3Object.useHandCursor = value;
-    }
-
-    public get_visible() {
-      return this.as3Object.visible;
-    }
-
-    public set_visible(value) {
-      this.as3Object.visible = +value !== 0;
-    }
-
-    public get_width() {
-      return this.as3Object.width;
-    }
-
-    public set_width(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this.as3Object.width = value;
-    }
-
-    public get_x() {
-      return this.as3Object.x;
-    }
-
-    public set_x(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this.as3Object.x = value;
-    }
-
-    public get_xmouse() {
-      return this.as3Object.mouseX;
-    }
-
-    public get_xscale() {
-      return this.as3Object.scaleX * 100;
-    }
-
-    public set_xscale(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this.as3Object.scaleX = value / 100;
-    }
-
-    public get_y() {
-      return this.as3Object.y;
-    }
-
-    public set_y(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this.as3Object.y = value;
-    }
-
-    public get_ymouse() {
-      return this.as3Object.mouseY;
-    }
-
-    public get_yscale() {
-      return this.as3Object.scaleY * 100;
-    }
-
-    public set_yscale(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this.as3Object.scaleY = value / 100;
     }
 
     // Special and children names properties resolutions

@@ -6,6 +6,14 @@
     ],
     "type": "stas"
   },
+  {  "id": "avm1core",
+    "stas": "swfs/trace.stas",
+    "filenames": [
+      "swfs/avm1/filters/filtersdump.swf",
+      "swfs/avm1/doactionorder/doactionorder.swf"
+    ],
+    "type": "stas"
+  },
   {  "id": "AVM1Movie",
     "stas": "swfs/trace.stas",
     "filenames": [

@@ -66,6 +66,7 @@ module Shumway.AVM1 {
     Array: AVM1Object;
     Date: AVM1Object;
     Math: AVM1Object;
+    Error: AVM1Object;
   }
 
   export interface IAVM1Context {

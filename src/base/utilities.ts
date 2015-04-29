@@ -293,8 +293,30 @@ module Shumway {
       }
     }
 
+    var _warnedCounts = Object.create(null);
+
     export function warning(message: any, arg1?: any, arg2?: any/*...messages: any[]*/) {
-      release || console.warn.apply(console, arguments);
+      if (release) {
+        return;
+      }
+      var key = Array.prototype.join.call(arguments, ',');
+      if (_warnedCounts[key]) {
+        _warnedCounts[key]++;
+        if (Shumway.omitRepeatedWarnings.value) {
+          return;
+        }
+      }
+      _warnedCounts[key] = 1;
+      console.warn.apply(console, arguments);
+    }
+
+    export function warnCounts() {
+      var list = [];
+      for (var key in _warnedCounts) {
+        list.push({key: key, count: _warnedCounts[key]});
+      }
+      list.sort((entry, prev) => prev.count - entry.count);
+      return list.reduce((result, entry) => (result += '\n' + entry.count + '\t' + entry.key), '');
     }
 
     export function notUsed(message: string) {
