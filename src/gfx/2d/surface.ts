@@ -282,7 +282,8 @@ module Shumway.GFX.Canvas2D {
     }
 
     public draw(source: Canvas2DSurfaceRegion, x: number, y: number, w: number, h: number,
-                blendMode: BlendMode, filters: Filter [], devicePixelRatio: number) {
+                colorMatrix: ColorMatrix, blendMode: BlendMode, filters: Filter [],
+                devicePixelRatio: number) {
       this.context.setTransform(1, 0, 0, 1, 0, 0);
       var sourceCanvas, sx = 0, sy = 0;
       // Handle copying from and to the same canvas.
@@ -312,6 +313,7 @@ module Shumway.GFX.Canvas2D {
         this.context.clip();
       }
       this.context.globalCompositeOperation = getCompositeOperation(blendMode);
+      Filters._applyColorMatrix(this.context, colorMatrix);
       Filters._applyFilters(devicePixelRatio, this.context, filters);
       this.context.drawImage(sourceCanvas, sx, sy, w, h, x, y, w, h);
       this.context.globalCompositeOperation = getCompositeOperation(BlendMode.Normal);

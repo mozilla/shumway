@@ -860,8 +860,7 @@ module Shumway.GFX.Canvas2D {
         var clip = Rectangle.allocate();
         var target = this._renderToTemporarySurface(node, state, clip, null);
         if (target) {
-          var matrix = state.matrix;
-          state.target.draw(target, clip.x, clip.y, clip.w, clip.h, layer.blendMode,
+          state.target.draw(target, clip.x, clip.y, clip.w, clip.h, state.colorMatrix, layer.blendMode,
                             this._options.filters ? layer.filters : null, this._devicePixelRatio);
           target.free();
         }
@@ -919,10 +918,12 @@ module Shumway.GFX.Canvas2D {
       var b = this._renderToTemporarySurface(mask, bState, Rectangle.createEmpty(), a.surface);
       bState.free();
 
-      a.draw(b, 0, 0, clip.w, clip.h, BlendMode.Alpha, null, this._devicePixelRatio);
+      a.draw(b, 0, 0, clip.w, clip.h, bState.colorMatrix, BlendMode.Alpha, null,
+             this._devicePixelRatio);
 
       var matrix = state.matrix;
-      state.target.draw(a, clip.x, clip.y, clip.w, clip.h, blendMode, null, this._devicePixelRatio);
+      state.target.draw(a, clip.x, clip.y, clip.w, clip.h, aState.colorMatrix, blendMode, null,
+                        this._devicePixelRatio);
 
       b.free();
       a.free();
@@ -992,6 +993,7 @@ module Shumway.GFX.Canvas2D {
 
       target.context.setTransform(1, 0, 0, 1, 0, 0);
       target.clear();
+
       matrix = matrix.clone();
 
       matrix.translate (
