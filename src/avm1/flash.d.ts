@@ -42,6 +42,7 @@ interface ISecurityDomain {
     external: {
       ExternalInterface: typeof flashPackage.external.ExternalInterface;
     };
+    filters: any;
     text: {
       TextField: typeof flashPackage.text.TextField;
       TextFormat: typeof flashPackage.text.TextFormat;
@@ -111,6 +112,7 @@ declare module Shumway.AVMX.AS.flash {
       opaqueBackground;
       useHandCursor: boolean;
       buttonMode: boolean;
+      filters;
       _mouseOver: boolean;
       _mouseDown: boolean;
       _children: DisplayObject [];

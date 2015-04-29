@@ -175,12 +175,12 @@ module Shumway.AVM1.Lib {
       this.as3Object.cacheAsBitmap = value;
     }
 
-    public getFilters() {
-      Debug.notImplemented('AVM1SymbolBase.getFilters');
+    public getFilters(): AVM1Object {
+      return convertFromAS3Filters(this.context, this.as3Object.filters);
     }
 
     public setFilters(value) {
-      Debug.notImplemented('AVM1SymbolBase.setFilters');
+      this.as3Object.filters = convertToAS3Filters(this.context, value);
     }
 
     public get_focusrect(): boolean {
