@@ -1,11 +1,3 @@
-var commandLineArguments;
-// SpiderMonkey
-if (typeof scriptArgs === "undefined") {
-  commandLineArguments = arguments;
-} else {
-  commandLineArguments = scriptArgs;
-}
-
 var fileCount = 0;
 var passCount = 0;
 var finishedCount = 0;
@@ -14,31 +6,29 @@ var zeroHashCount = 0;
 var histogramNames = ["Not Implemented", "somewhatImplemented", "Uncaught VM-internal", "AVM1 error", "AVM1 warning", "Tag not handled by the parser", "Unable to resolve"]
 var histograms = {};
 
-commandLineArguments.forEach(function (file) {
-
-  var file = commandLineArguments[0];
-
-  read(file).toString().split("\n").forEach(function (k) {
-    if (k.indexOf("RUNNING:") === 0) {
-      fileCount++;
-    } else if (k.indexOf("HASHCODE:") === 0) {
-      if (k.indexOf(': 0x00000000') > 0) {
-        zeroHashCount++
-      } else {
-        passCount++
-      }
-      finishedCount++;
+while (true) {
+  var line = readline();
+  if (line === null) {
+    break;
+  }
+  if (line.indexOf("RUNNING:") === 0) {
+    fileCount++;
+  } else if (line.indexOf("HASHCODE:") === 0) {
+    if (line.indexOf(': 0x00000000') > 0) {
+      zeroHashCount++
+    } else {
+      passCount++
     }
-    for (var i = 0; i < histogramNames.length; i++) {
-      var n = histogramNames[i];
-      if (k.indexOf(n) >= 0) {
-        if (!histograms[n]) histograms[n] = [];
-        histograms[n].push(k);
-      }
+    finishedCount++;
+  }
+  for (var i = 0; i < histogramNames.length; i++) {
+    var n = histogramNames[i];
+    if (line.indexOf(n) >= 0) {
+      if (!histograms[n]) histograms[n] = [];
+      histograms[n].push(line);
     }
-    // print(k);
-  });
-});
+  }
+}
 
 function histogram(array, min) {
   min = min || 0;
