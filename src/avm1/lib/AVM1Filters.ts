@@ -244,17 +244,24 @@ module Shumway.AVM1.Lib {
     'ConvolutionFilter', 'DisplacementMapFilter', 'DropShadowFilter', 'GlowFilter',
     'GradientBevelFilter', 'GradientGlowFilter'];
 
+  export function convertToAS3Filter(context: AVM1Context, as2Filter: AVM1Object): ASObject {
+    var proto = as2Filter.alPrototype;
+    while (proto && !(<AVM1BitmapFilterPrototype>proto).asFilterConverter) {
+      proto = proto.alPrototype;
+    }
+    if (proto) {
+      return (<AVM1BitmapFilterPrototype>proto).asFilterConverter.toAS3Filter(as2Filter);
+    }
+    return undefined;
+  }
+
   export function convertToAS3Filters(context: AVM1Context, as2Filters: AVM1Object): ASObject {
     var arr = [];
     if (as2Filters) {
       for (var i = 0, length = as2Filters.alGet('length'); i < length; i++) {
-        var as2Filter = as2Filters.alGet(i);
-        var proto = as2Filter.alPrototype;
-        while (proto && !(<AVM1BitmapFilterPrototype>proto).asFilterConverter) {
-          proto = proto.alPrototype;
-        }
-        if (proto) {
-          arr.push((<AVM1BitmapFilterPrototype>proto).asFilterConverter.toAS3Filter(as2Filter));
+        var as3Filter = convertToAS3Filter(context, as2Filters.alGet(i));
+        if (as3Filter) {
+          arr.push(as3Filter);
         }
       }
     }

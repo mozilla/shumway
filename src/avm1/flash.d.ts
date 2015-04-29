@@ -108,6 +108,7 @@ declare module Shumway.AVMX.AS.flash {
       transform: geom.Transform;
       pixelBounds: geom.Rectangle;
       scale9Grid: geom.Rectangle;
+      scrollRect: geom.Rectangle;
       enabled: boolean;
       visible: boolean;
       opaqueBackground;
@@ -210,10 +211,15 @@ declare module Shumway.AVMX.AS.flash {
       height: number;
       transparent: boolean;
       constructor(width: number, height: number, trasparent: boolean, fillColor: number);
+      applyFilter(sourceBitmap: BitmapData, sourceRect: geom.Rectangle, destPoint: geom.Point, filter): void;
       clone();
       compare(otherBitmapData: BitmapData): boolean;
+      copyPixels(sourceBitmap: BitmapData, sourceRect: geom.Rectangle, destPoint: geom.Point, alphaBitmap: BitmapData, alphaPoint: geom.Point, mergeAlpha: boolean): void;
+      draw(source, matrix: geom.Matrix, colorTransform: geom.ColorTransform, blendMode: string, clipRect: geom.Rectangle, smoothing: boolean): void;
+      fillRect(rect: geom.Rectangle, color: number): void;
       getPixel(x: number, y: number): number;
       getPixel32(x: number, y: number): number;
+      perlinNoise(baseX: number, baseY: number, numOctaves: number, randomSeed: number, stitch: boolean, fractalNoise: boolean, channelOptions: number, grayScale: boolean, offsets): void;
     }
     class Bitmap extends DisplayObject {
       constructor();

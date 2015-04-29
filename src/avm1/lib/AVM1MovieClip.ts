@@ -209,10 +209,7 @@ module Shumway.AVM1.Lib {
     }
 
     public duplicateMovieClip(name, depth, initObject): AVM1MovieClip {
-      return this.duplicateMovieClipInto(this, name, depth, initObject);
-    }
-
-    public duplicateMovieClipInto(parent: AVM1MovieClip, name: string, depth, initObject): AVM1MovieClip {
+      var parent = this.context.resolveTarget(null);
       var nativeAS3Object = <any> this.as3Object;
       var mc: flash.display.MovieClip;
       if (nativeAS3Object._symbol) {
@@ -462,14 +459,6 @@ module Shumway.AVM1.Lib {
     public removeMovieClip() {
       var parent = this.get_parent().as3Object;
       parent.removeChild(this.as3Object);
-    }
-
-    public getScrollRect() {
-      Debug.notImplemented('AVM1MovieClip.getScrollRect');
-    }
-
-    public setScrollRect(value) {
-      Debug.notImplemented('AVM1MovieClip.setScrollRect');
     }
 
     public setMask(mc:Object) {
