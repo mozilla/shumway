@@ -520,6 +520,21 @@ module Shumway.AVM1 {
     }
   }
 
+  class AVM1Arguments extends Natives.AVM1ArrayNative {
+    public constructor(context: AVM1Context, args: any[],
+                       callee: AVM1Function, caller: AVM1Function) {
+      super(context, args);
+      alDefineObjectProperties(this, {
+        callee: {
+          value: callee
+        },
+        caller: {
+          value: caller
+        }
+      });
+    }
+  }
+
   class ExecutionContext {
     static MAX_CACHED_EXECUTIONCONTEXTS = 20;
     static cache: ExecutionContext[];
@@ -678,12 +693,13 @@ module Shumway.AVM1 {
 
       var ectx = ExecutionContext.create(currentContext, newScopeList,
                                          this.constantPool, this.registersLength);
+      var caller = currentContext.frame ? currentContext.frame.fn : undefined;
       var frame = currentContext.pushCallFrame(thisArg, this, args, ectx);
 
       var supperWrapper;
       var suppressArguments = this.suppressArguments;
       if (!(suppressArguments & ArgumentAssignmentType.Arguments)) {
-        newScope.alPut('arguments', new Natives.AVM1ArrayNative(currentContext, args));
+        newScope.alPut('arguments', new AVM1Arguments(currentContext, args, this, caller));
       }
       if (!(suppressArguments & ArgumentAssignmentType.This)) {
         newScope.alPut('this', thisArg);
@@ -708,7 +724,7 @@ module Shumway.AVM1 {
               registers[i] = thisArg;
               break;
             case ArgumentAssignmentType.Arguments:
-              registers[i] = new Natives.AVM1ArrayNative(currentContext, args);
+              registers[i] = new AVM1Arguments(currentContext, args, this, caller);
               break;
             case ArgumentAssignmentType.Super:
               supperWrapper = supperWrapper || new AVM1SuperWrapper(currentContext, frame);
