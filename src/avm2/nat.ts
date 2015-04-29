@@ -2233,6 +2233,12 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["XML"]                 = ASXML;
     builtinNativeClasses["XMLList"]             = ASXMLList;
 
+    builtinNativeClasses["flash.xml.XMLNode"] = flash.xml.XMLNode;
+    builtinNativeClasses["flash.xml.XMLDocument"] = flash.xml.XMLDocument;
+    builtinNativeClasses["flash.xml.XMLParser"] = flash.xml.XMLParser;
+    builtinNativeClasses["flash.xml.XMLTag"] = flash.xml.XMLTag;
+    builtinNativeClasses["flash.xml.XMLNodeType"] = flash.xml.XMLNodeType;
+
     builtinNativeClasses["Math"]                = ASMath;
     builtinNativeClasses["Date"]                = ASDate;
     builtinNativeClasses["RegExp"]              = ASRegExp;

@@ -30,6 +30,7 @@ package flash.xml
  * @playerversion Flash 9
  * @langversion 3.0
  */
+[native]
 public class XMLNode
 {
 	/**

@@ -19,6 +19,7 @@ package flash.xml
  * in contrast, parse an entire XML document and produce
  * a document tree structure describing the full document.
  */
+[native]
 internal final class XMLParser
 {
   /**
@@ -29,14 +30,7 @@ internal final class XMLParser
    * @param ignoreWhite Indicates whether whitespace
    *                    should be ignored.
    */
-    public function startParse(source:String,ignoreWhite:Boolean):void {
-      trace("XMLParse.startParse() source="+source);
-      try {
-        throw new Error();
-      } catch (e) {
-        print(e.getStackTrace());
-      }
-    }
+    public native function startParse(source:String,ignoreWhite:Boolean):void;
 
   /**
    * Returns the next tag in the XML document
@@ -51,9 +45,7 @@ internal final class XMLParser
    *         are specified in the <code>XMLDocument</code>
    *         class.
    */
-    public function getNext(tag:XMLTag):int  {
-      trace("XMLParse.getNext()");
-    }
+    public native function getNext(tag:XMLTag):int;
 
 /*
  * [ggrossman 04/07/05] API SCRUB

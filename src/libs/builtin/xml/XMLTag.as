@@ -21,6 +21,7 @@ package flash.xml
  * repeatedly to the <code>XMLParser.getNext</code> method
  * to parse tags from an XML document.</p>
  */
+[native]
 internal final class XMLTag
 {
   /**
@@ -31,56 +32,28 @@ internal final class XMLTag
    * <code>DOCUMENT_TYPE_NODE</code>, <code>COMMENT_NODE</code>,
    * or <code>PROCESSING_INSTRUCTION_NODE</code>.
    */
-    private var _type:uint;
-  public function get type():uint {
-      trace("is.get type()");
-      return _type;
-    }
-  public function set type(value:uint):void {
-      trace("is.set type()");
-      _type=value;
-    }
+  public native function get type():uint;
+  public native function set type(value:uint):void;
 
   /**
    * If <code>true</code>, the XML tag represents
    * an empty element (e.g. <code>&lt;emptyTag/&gt;</code>).
    */
-    private var _empty:Boolean;
-  public function get empty():Boolean {
-      trace("is.get empty()");
-      return _empty;
-    }
-  public function set empty(value:Boolean):void {
-      trace("is.set empty()");
-      _empty=value;
-    }
+  public native function get empty():Boolean;
+  public native function set empty(value:Boolean):void;
 
   /**
    * The text of the XML tag.
    */
-    private var _value:String;
-  public function get value():String {
-      trace("is.get value()");
-      return _value;
-    }
-  public function set value(v:String):void {
-      trace("is.set value()");
-      _value=v;
-    }
+  public native function get value():String;
+  public native function set value(v:String):void;
 
   /**
    * The attributes of the XML tag, specified as an
    * associative array or null if no attributes.
    */
-    private var _attrs:Object;
-  public function get attrs():Object {
-      trace("is.get attrs()");
-      return _attrs;
-    }
-  public function set attrs(value:Object):void {
-      trace("is.set attrs()");
-      _attrs=value;
-    }
+  public native function get attrs():Object;
+  public native function set attrs(value:Object):void;
 }
 
 /*
