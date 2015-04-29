@@ -106,12 +106,12 @@ module Shumway.AVMX.AS.flash.display {
           try {
             child.dispatchEvent(eventClass.getInstance(events.Event.AVM1_INIT));
           } catch (e) {
-            console.warn('caught error under DisplayObjectContainer AVM1_INIT event: ', e);
+            Debug.warning('caught error under DisplayObjectContainer AVM1_INIT event: ', e);
           }
           try {
             child.dispatchEvent(eventClass.getInstance(events.Event.AVM1_CONSTRUCT));
           } catch (e) {
-            console.warn('caught error under DisplayObjectContainer AVM1_CONSTRUCT event: ', e);
+            Debug.warning('caught error under DisplayObjectContainer AVM1_CONSTRUCT event: ', e);
           }
           child._setFlags(DisplayObjectFlags.NeedsLoadEvent);
           if (child._hasAnyFlags(DisplayObjectFlags.HasFrameScriptPending |
@@ -123,13 +123,13 @@ module Shumway.AVMX.AS.flash.display {
         try {
           child.dispatchEvent(eventClass.getInstance(events.Event.ADDED, true));
         } catch (e) {
-          console.warn('caught error under DisplayObject ADDED event: ', e);
+          Debug.warning('caught error under DisplayObject ADDED event: ', e);
         }
         if (child.stage) {
           try {
             child.dispatchEvent(eventClass.getInstance(events.Event.ADDED_TO_STAGE));
           } catch (e) {
-            console.warn('caught error under DisplayObject ADDED_TO_STAGE event: ', e);
+            Debug.warning('caught error under DisplayObject ADDED_TO_STAGE event: ', e);
           }
         }
       }

@@ -19,7 +19,7 @@
 
 /// <reference path='module.ts' />
 /// <reference path='utilities.ts' />
-/// <reference path='options.ts'/>
+/// <reference path='settings.ts'/>
 /// <reference path='geometry.ts'/>
 /// <reference path='regionAllocator.ts'/>
 /// <reference path='nodes.ts'/>

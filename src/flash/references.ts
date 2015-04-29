@@ -20,7 +20,7 @@
 ///<reference path='module.ts' />
 ///<reference path='../htmlparser.ts' />
 ///<reference path='../TextContent.ts' />
-///<reference path='options.ts' />
+///<reference path='settings.ts' />
 
 ///<reference path='symbol.ts' />
 
