@@ -534,6 +534,30 @@ module Shumway.Remoting.GFX {
                 input.readFloat()    // strength
               ));
               break;
+            case FilterType.ColorMatrix:
+              var matrix = new Array(20);
+              matrix[0] = input.readFloat();
+              matrix[4] = input.readFloat();
+              matrix[8] = input.readFloat();
+              matrix[12] = input.readFloat();
+              matrix[16] = input.readFloat() / 255;
+              matrix[1] = input.readFloat();
+              matrix[5] = input.readFloat();
+              matrix[9] = input.readFloat();
+              matrix[13] = input.readFloat();
+              matrix[17] = input.readFloat() / 255;;
+              matrix[2] = input.readFloat();
+              matrix[6] = input.readFloat();
+              matrix[10] = input.readFloat();
+              matrix[14] = input.readFloat();
+              matrix[18] = input.readFloat() / 255;;
+              matrix[3] = input.readFloat();
+              matrix[7] = input.readFloat();
+              matrix[11] = input.readFloat();
+              matrix[15] = input.readFloat();
+              matrix[19] = input.readFloat() / 255;
+              filters.push(new ColorMatrix (matrix));
+              break;
             default:
               Shumway.Debug.somewhatImplemented(FilterType[type]);
               break;

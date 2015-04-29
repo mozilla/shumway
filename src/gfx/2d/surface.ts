@@ -157,6 +157,8 @@ module Shumway.GFX.Canvas2D {
           Filters._svgDropshadowFilterFlood.setAttribute("flood-color",
             ColorUtilities.rgbaToCSSStyle(((dropshadowFilter.color << 8) | Math.round(255 * dropshadowFilter.alpha))));
           context.filter = "url(#svgDropShadowFilter)";
+        } else {
+          this._applyColorMatrixFilter(context, <ColorMatrix>filter);
         }
       }
     }
