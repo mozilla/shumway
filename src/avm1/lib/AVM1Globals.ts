@@ -35,7 +35,7 @@ module Shumway.AVM1.Lib {
           'escape', 'unescape', 'setInterval', 'setTimeout', 'showRedrawRegions',
           'trace', 'updateAfterEvent',
           'NaN', 'Infinity', 'isFinite', 'isNaN', 'parseFloat', 'parseInt', 'undefined',
-          'Object', 'Function','Array', 'Number', 'Math', 'Boolean', 'Date', 'String',
+          'Object', 'Function','Array', 'Number', 'Math', 'Boolean', 'Date', 'String', 'Error',
           'MovieClip', 'AsBroadcaster', 'System', 'Stage', 'Button',
           'TextField', 'Color', 'Key', 'Mouse', 'MovieClipLoader',
           'Sound', 'SharedObject', 'ContextMenu', 'ContextMenuItem', 'TextFormat'], false);
@@ -200,6 +200,7 @@ module Shumway.AVM1.Lib {
     public Boolean: AVM1Object;
     public Date: AVM1Object;
     public String: AVM1Object;
+    public Error: AVM1Object;
 
     public MovieClip: AVM1Object;
     public AsBroadcaster: AVM1Object;
@@ -229,6 +230,7 @@ module Shumway.AVM1.Lib {
       this.Boolean = builtins.Boolean;
       this.Date = builtins.Date;
       this.String = builtins.String;
+      this.Error = builtins.Error;
 
       this.MovieClip = AVM1MovieClip.createAVM1Class(context);
       this.AsBroadcaster = AVM1Broadcaster.createAVM1Class(context);

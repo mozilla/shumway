@@ -2018,9 +2018,10 @@ module Shumway.AVM1 {
     }
     function avm1_0x69_ActionExtends(ectx: ExecutionContext) {
       var stack = ectx.stack;
+      var context = ectx.context;
 
-      var constrSuper = stack.pop();
-      var constr = stack.pop();
+      var constrSuper = alToObject(context, stack.pop());
+      var constr = alToObject(context, stack.pop());
       var prototype = constr.alGetPrototypeProperty();
       var prototypeSuper = constrSuper.alGetPrototypeProperty();
       prototype.alPrototype = prototypeSuper;

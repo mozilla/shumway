@@ -1256,6 +1256,70 @@ module Shumway.AVM1.Natives {
     }
   }
 
+  // Error natives
+
+  export class AVM1ErrorNative extends AVM1Object {
+    public constructor(context: IAVM1Context, message: string) {
+      super(context);
+      this.alPrototype = context.builtins.Error.alGetPrototypeProperty();
+      this.alSetOwnConstructorProperty(context.builtins.Error);
+      if (message !== undefined) {
+        this.alPut('message', message);
+      }
+    }
+  }
+
+  export class AVM1ErrorPrototype extends AVM1Object {
+    public constructor(context: IAVM1Context) {
+      super(context);
+      this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
+      alDefineObjectProperties(this, {
+        constructor: {
+          value: context.builtins.Error,
+          writable: true
+        },
+        name: {
+          value: 'Error',
+          writable: true
+        },
+        message: {
+          value: 'Error',
+          writable: true,
+        },
+        toString: {
+          value: this._toString,
+          writable: true
+        }
+      });
+    }
+
+    public _toString() {
+      return this.alGet('message');
+    }
+  }
+
+  export class AVM1ErrorFunction extends AVM1Function {
+    public constructor(context: IAVM1Context) {
+      super(context);
+      this.alPrototype = context.builtins.Function.alGetPrototypeProperty();
+      var proto = new AVM1ErrorPrototype(context);
+      alDefineObjectProperties(this, {
+        prototype: {
+          value: proto
+        }
+      });
+    }
+
+    public alConstruct(args?: any[]): AVM1Object {
+      var value: string = args && args[0] !== undefined ? alCoerceString(this.context, args[0]) : undefined;
+      return new AVM1ErrorNative(this.context, value);
+    }
+
+    public alCall(thisArg: any, args?: any[]): any {
+      var value: string = args && args[0] !== undefined ? alCoerceString(this.context, args[0]) : undefined;
+      return new AVM1ErrorNative(this.context, value);
+    }
+  }
 
   function alEnsureType<T extends AVM1Object>(obj: AVM1Object, cls: any /* typeof AVM1Object */): T {
     if (obj instanceof cls) {
@@ -1292,5 +1356,6 @@ module Shumway.AVM1.Natives {
     builtins.Array = new AVM1ArrayFunction(context);
     builtins.Date = new AVM1DateFunction(context);
     builtins.Math = new AVM1MathObject(context);
+    builtins.Error = new AVM1ErrorFunction(context);
   }
 }
