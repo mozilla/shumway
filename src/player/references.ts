@@ -25,7 +25,7 @@
 ///<reference path='options.ts' />
 ///<reference path='frameScheduler.ts' />
 ///<reference path='remotingPlayer.ts' />
-///<reference path='player.ts' />
+///<reference path='settings.ts' />
 ///<reference path='avmLoader.ts' />
 ///<reference path='external.ts' />
 
