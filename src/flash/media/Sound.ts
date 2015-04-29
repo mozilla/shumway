@@ -194,10 +194,10 @@ module Shumway.AVMX.AS.flash.media {
               this._soundData.end = result.data.length;
               channel._playSoundDataViaChannel(this._soundData, startTime, loops);
             }.bind(this), function (reason) {
-              console.warn('Unable to decode MP3 data: ' + reason);
+              Debug.warning('Unable to decode MP3 data: ' + reason);
             });
           } else {
-            console.warn('Unable to decode packaged sound data of type: ' + this._soundData.mimeType);
+            Debug.warning('Unable to decode packaged sound data of type: ' + this._soundData.mimeType);
           }
         } else {
           channel._playSoundDataViaChannel(this._soundData, startTime, loops);

@@ -237,7 +237,7 @@ module Shumway.SWF {
         this._decompressor.onData = this.processFirstBatchOfDecompressedData.bind(this);
         this._decompressor.onError = function (error) {
           // TODO: Let the loader handle this error.
-          console.warn('Invalid LZMA stream: ' + error);
+          Debug.warning('Invalid LZMA stream: ' + error);
         };
         this._decompressor.push(initialBytes);
       } else {

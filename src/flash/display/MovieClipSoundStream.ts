@@ -269,7 +269,7 @@ module Shumway.AVMX.AS.flash.display {
         WebAudioAdapter.prototype.finish.call(this);
       }.bind(this);
       this._decoderSession.onerror = function (error) {
-        console.warn('MP3DecoderSession error: ' + error);
+        Debug.warning('MP3DecoderSession error: ' + error);
       };
     }
 
@@ -325,7 +325,7 @@ module Shumway.AVMX.AS.flash.display {
             this.soundStreamAdapter = new MediaSourceStreamAdapter(sec, element);
           } else {
             // Falls back to blob playback.
-            console.warn('MediaSource is not supported');
+            Debug.warning('MediaSource is not supported');
             this.soundStreamAdapter = new BlobStreamAdapter(sec, element);
           }
           return;
@@ -375,11 +375,11 @@ module Shumway.AVMX.AS.flash.display {
             this.waitFor = 0;
           }
         } else if (elementTime - time > PAUSE_WHEN_OF_SYNC_GREATER) {
-          console.warn('Sound is faster than frames by ' + (elementTime - time));
+          Debug.warning('Sound is faster than frames by ' + (elementTime - time));
           this.waitFor = elementTime - PLAYBACK_ADJUSTMENT;
           this.soundStreamAdapter.paused = true;
         } else if (time - elementTime > PAUSE_WHEN_OF_SYNC_GREATER) {
-          console.warn('Sound is slower than frames by ' + (time - elementTime));
+          Debug.warning('Sound is slower than frames by ' + (time - elementTime));
           this.soundStreamAdapter.playFrom(time + PLAYBACK_ADJUSTMENT);
         }
         this.expectedFrame = frameNum + 1;
