@@ -271,7 +271,7 @@ module Shumway {
         if (typeof arg !== 'object' || !arg) {
           argStr = arg + '';
         } else if ('toString' in arg) {
-          argStr + arg.toString();
+          argStr = arg.toString();
         } else {
           argStr = Object.prototype.toString.call(arg);
         }
