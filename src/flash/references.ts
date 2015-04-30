@@ -408,12 +408,6 @@
 ///<reference path='utils/Timer.ts' />
 ///<reference path='utils/SetIntervalTimer.ts' />
 
-///<reference path='xml/XMLNode.ts' />
-///<reference path='xml/XMLDocument.ts' />
-///<reference path='xml/XMLNodeType.ts' />
-///<reference path='xml/XMLParser.ts' />
-///<reference path='xml/XMLTag.ts' />
-
 ///<reference path='avm1.d.ts' />
 
 // ///<reference path='linker.ts' />

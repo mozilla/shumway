@@ -448,283 +448,421 @@ module Shumway.AVMX.AS {
   var anyMultiname = new Multiname(null, 0, CONSTANT.QName, [], null);
   release || Object.seal(anyMultiname);
 
-  export class XMLParser {
-    constructor(private sec: AXSecurityDomain) {
+  export enum XMLParserErrorCode {
+    NoError = 0,
+    EndOfDocument = -1,
+    UnterminatedCdat = -2,
+    UnterminatedXmlDeclaration = -3,
+    UnterminatedDoctypeDeclaration  = -4,
+    UnterminatedComment  = -5,
+    MalformedElement = -6,
+    OutOfMemory = -7,
+    UnterminatedAttributeValue = -8,
+    UnterminatedElement = -9,
+    ElementNeverBegun = -10
+  }
+
+  export class XMLParserBase {
+    constructor() {
     }
-    private parseXml(s) {
-      var sec = this.sec;
-      var defaultNs = getDefaultNamespace(this.sec);
-      var i = 0, scopes: any [] = [{
-        namespaces: [],
-        lookup: {
-          "xmlns": 'http://www.w3.org/2000/xmlns/',
-          "xml": 'http://www.w3.org/XML/1998/namespace'
-        },
-        inScopes: [defaultNs],
-        space: 'default',
-        xmlns: defaultNs.uri
-      }];
-      function resolveEntities(s) {
-        return s.replace(/&([^;]+);/g, function(all, entity) {
-          if (entity.substring(0, 2) === '#x') {
-            return String.fromCharCode(parseInt(entity.substring(2), 16));
-          } else if(entity.substring(0,1) === '#') {
-            return String.fromCharCode(parseInt(entity.substring(1), 10));
-          }
-          switch (entity) {
-            case 'lt':
-              return '<';
-            case 'gt':
-              return '>';
-            case 'amp':
-              return '&';
-            case 'quot':
-              return '\"';
-          }
-          // throw "Unknown entity: " + entity;
-          return all;
-        });
-      }
-      function isWhitespacePreserved(): boolean {
-        for (var j = scopes.length - 1; j >= 0; --j) {
-          if (scopes[j].space === "preserve") {
-            return true;
-          }
+
+    private resolveEntities(s: string): string {
+      return s.replace(/&([^;]+);/g, function (all, entity) {
+        if (entity.substring(0, 2) === '#x') {
+          return String.fromCharCode(parseInt(entity.substring(2), 16));
+        } else if (entity.substring(0, 1) === '#') {
+          return String.fromCharCode(parseInt(entity.substring(1), 10));
         }
-        return false;
-      }
-      function lookupDefaultNs(): string {
-        for (var j = scopes.length - 1; j >= 0; --j) {
-          if ('xmlns' in scopes[j]) {
-            return scopes[j].xmlns;
-          }
+        switch (entity) {
+          case 'lt':
+            return '<';
+          case 'gt':
+            return '>';
+          case 'amp':
+            return '&';
+          case 'quot':
+            return '\"';
         }
-        return '';
-      }
-      function lookupNs(prefix: string): string {
-        for (var j = scopes.length - 1; j >= 0; --j) {
-          if (prefix in scopes[j].lookup) {
-            return scopes[j].lookup[prefix];
-          }
-        }
-        return undefined;
-      }
-      function getName(name: string, resolveDefaultNs: boolean): any {
-        var j = name.indexOf(':');
-        if (j >= 0) {
-          var prefix = name.substring(0,j);
-          var localName = name.substring(j + 1);
-          var namespace = lookupNs(prefix);
-          if (namespace === undefined) {
-            sec.throwError('TypeError', Errors.XMLPrefixNotBound, prefix, localName);
-          }
-          return {
-            name: namespace + '::' + localName,
-            localName: localName,
-            prefix: prefix,
-            namespace: namespace,
-          };
-        } else if (resolveDefaultNs) {
-          return {
-            name: name,
-            localName: name,
-            prefix: '',
-            namespace: lookupDefaultNs()
-          };
-        } else {
-          return {
-            name:name,
-            localName: name,
-            prefix: '',
-            namespace: ''
-          };
+        // throw "Unknown entity: " + entity;
+        return all;
+      });
+    }
+
+    private parseContent(s: string, start: number):
+        {name: string; attributes: {name: string; value: string}[]; parsed: number} {
+      var pos = start, name, attributes = [];
+
+      function skipWs() {
+        while (pos < s.length && isWhitespace(s, pos)) {
+          ++pos;
         }
       }
 
-      function parseContent(s, start) {
-        var pos = start, name, attributes = [];
-        function skipWs() {
-          while (pos < s.length && isWhitespace(s, pos)) {
-            ++pos;
-          }
-        }
-        while (pos < s.length && !isWhitespace(s, pos) && s[pos] !== ">" && s[pos] !== "/") {
-          ++pos;
-        }
-        name = s.substring(start, pos);
+      while (pos < s.length && !isWhitespace(s, pos) && s[pos] !== ">" && s[pos] !== "/") {
+        ++pos;
+      }
+      name = s.substring(start, pos);
+      skipWs();
+      while (pos < s.length && s[pos] !== ">" &&
+      s[pos] !== "/" && s[pos] !== "?") {
         skipWs();
-        while (pos < s.length && s[pos] !== ">" &&
-          s[pos] !== "/" && s[pos] !== "?") {
-          skipWs();
-          var attrName = "", attrValue = "";
-          while (pos < s.length && !isWhitespace(s, pos) && s[pos] !== "=") {
-            attrName += s[pos];
-            ++pos;
-          }
-          skipWs();
-          if (s[pos] !== "=") {
-            sec.throwError('TypeError', Errors.XMLMalformedElement);
-          }
-          ++pos;
-          skipWs();
-          var attrEndChar = s[pos];
-          if (attrEndChar !== "\"" && attrEndChar !== "\'" ) throw "Quote expected";
-          var attrEndIndex = s.indexOf(attrEndChar, ++pos);
-          if (attrEndIndex < 0) throw "Unexpected EOF[6]";
-          attrValue = s.substring(pos, attrEndIndex);
-          attributes.push({name: attrName, value: resolveEntities(attrValue)});
-          pos = attrEndIndex + 1;
-          skipWs();
-        }
-        return {name: name, attributes: attributes, parsed: pos - start};
-      }
-
-      function parseProcessingInstruction(s, start) {
-        var pos = start, name, value;
-        function skipWs() {
-          while (pos < s.length && isWhitespace(s, pos)) {
-            ++pos;
-          }
-        }
-        while (pos < s.length && !isWhitespace(s, pos) && s[pos] !== ">" && s[pos] !== "/") {
+        var attrName = "", attrValue = "";
+        while (pos < s.length && !isWhitespace(s, pos) && s[pos] !== "=") {
+          attrName += s[pos];
           ++pos;
         }
-        name = s.substring(start, pos);
         skipWs();
-        var attrStart = pos;
-        while (pos < s.length && (s[pos] !== "?" || s[pos + 1] != '>')) {
+        if (s[pos] !== "=") {
+          return null;
+        }
+        ++pos;
+        skipWs();
+        var attrEndChar = s[pos];
+        if (attrEndChar !== "\"" && attrEndChar !== "\'") {
+          return null;
+        }
+        var attrEndIndex = s.indexOf(attrEndChar, ++pos);
+        if (attrEndIndex < 0) {
+          return null;
+        }
+        attrValue = s.substring(pos, attrEndIndex);
+        attributes.push({name: attrName, value: this.resolveEntities(attrValue)});
+        pos = attrEndIndex + 1;
+        skipWs();
+      }
+      return {name: name, attributes: attributes, parsed: pos - start};
+    }
+
+    private parseProcessingInstruction(s: string, start: number):
+        {name: string; value: string; parsed: number} {
+      var pos = start, name, value;
+
+      function skipWs() {
+        while (pos < s.length && isWhitespace(s, pos)) {
           ++pos;
         }
-        value = s.substring(attrStart, pos);
-        return {name: name, value: value, parsed: pos - start};
       }
 
+      while (pos < s.length && !isWhitespace(s, pos) && s[pos] !== ">" && s[pos] !== "/") {
+        ++pos;
+      }
+      name = s.substring(start, pos);
+      skipWs();
+      var attrStart = pos;
+      while (pos < s.length && (s[pos] !== "?" || s[pos + 1] != '>')) {
+        ++pos;
+      }
+      value = s.substring(attrStart, pos);
+      return {name: name, value: value, parsed: pos - start};
+    }
+
+    parseXml(s: string): void {
+      var i = 0;
       while (i < s.length) {
         var ch = s[i];
         var j = i;
         if (ch === "<") {
           ++j;
-          var ch2 = s[j], q, name;
+          var ch2 = s[j], q;
           switch (ch2) {
             case "/":
               ++j;
-              q = s.indexOf(">", j); if(q < 0) { throw "Unexpected EOF[1]"; }
-              name = getName(s.substring(j,q), true);
-              this.endElement(name);
-              scopes.pop();
+              q = s.indexOf(">", j);
+              if (q < 0) {
+                this.onError(XMLParserErrorCode.UnterminatedElement);
+                return;
+              }
+              this.onEndElement(s.substring(j, q));
               j = q + 1;
               break;
             case "?":
               ++j;
-              var pi = parseProcessingInstruction(s, j);
+              var pi = this.parseProcessingInstruction(s, j);
               if (s.substring(j + pi.parsed, j + pi.parsed + 2) != "?>") {
-                throw "Unexpected EOF[2]";
+                this.onError(XMLParserErrorCode.UnterminatedXmlDeclaration);
+                return;
               }
-              this.pi(pi.name, pi.value);
+              this.onPi(pi.name, pi.value);
               j += pi.parsed + 2;
               break;
             case "!":
               if (s.substring(j + 1, j + 3) === "--") {
-                q = s.indexOf("-->", j + 3); if(q < 0) { throw "Unexpected EOF[3]"; }
-                this.comment(s.substring(j + 3, q));
+                q = s.indexOf("-->", j + 3);
+                if (q < 0) {
+                  this.onError(XMLParserErrorCode.UnterminatedComment);
+                  return;
+                }
+                this.onComment(s.substring(j + 3, q));
                 j = q + 3;
               } else if (s.substring(j + 1, j + 8) === "[CDATA[") {
-                q = s.indexOf("]]>", j + 8); if(q < 0) { throw "Unexpected EOF[4]"; }
-                this.cdata(s.substring(j + 8, q));
+                q = s.indexOf("]]>", j + 8);
+                if (q < 0) {
+                  this.onError(XMLParserErrorCode.UnterminatedCdat);
+                  return;
+                }
+                this.onCdata(s.substring(j + 8, q));
                 j = q + 3;
               } else if (s.substring(j + 1, j + 8) === "DOCTYPE") {
                 var q2 = s.indexOf("[", j + 8), complexDoctype = false;
-                q = s.indexOf(">", j + 8); if(q < 0) { throw "Unexpected EOF[5]"; }
+                q = s.indexOf(">", j + 8);
+                if (q < 0) {
+                  this.onError(XMLParserErrorCode.UnterminatedDoctypeDeclaration);
+                  return;
+                }
                 if (q2 > 0 && q > q2) {
-                  q = s.indexOf("]>", j + 8); if(q < 0) { throw "Unexpected EOF[7]"; }
+                  q = s.indexOf("]>", j + 8);
+                  if (q < 0) {
+                    this.onError(XMLParserErrorCode.UnterminatedDoctypeDeclaration);
+                    return;
+                  }
                   complexDoctype = true;
                 }
                 var doctypeContent = s.substring(j + 8, q + (complexDoctype ? 1 : 0));
-                this.doctype(doctypeContent);
+                this.onDoctype(doctypeContent);
                 // XXX pull entities ?
                 j = q + (complexDoctype ? 2 : 1);
               } else {
-                throw "Unknown !tag";
+                this.onError(XMLParserErrorCode.MalformedElement);
+                return;
               }
               break;
             default:
-              var content = parseContent(s, j);
+              var content = this.parseContent(s, j);
+              if (content === null) {
+                this.onError(XMLParserErrorCode.MalformedElement);
+                return;
+              }
               var isClosed = false;
               if (s.substring(j + content.parsed, j + content.parsed + 2) === "/>") {
                 isClosed = true;
               } else if (s.substring(j + content.parsed, j + content.parsed + 1) !== ">") {
-                throw "Unexpected EOF[2]";
+                this.onError(XMLParserErrorCode.UnterminatedElement);
+                return;
               }
-              var scope = {namespaces:[], lookup: Object.create(null), inScopes: null};
-              var contentAttributes = content.attributes;
-              for (q = 0; q < contentAttributes.length; ++q) {
-                var attribute = contentAttributes[q];
-                var attributeName = attribute.name;
-                if (attributeName.substring(0, 6) === "xmlns:") {
-                  var prefix = attributeName.substring(6);
-                  var uri = attribute.value;
-                  if (lookupNs(prefix) !== uri) {
-                    scope.lookup[prefix] = trimWhitespaces(uri);
-                    var ns = internPrefixedNamespace(NamespaceType.Public, uri, prefix);
-                    scope.namespaces.push(ns);
-                  }
-                  contentAttributes[q] = null;
-                } else if (attributeName === "xmlns") {
-                  var uri = attribute.value;
-                  if (lookupDefaultNs() !== uri) {
-                    scope["xmlns"] = trimWhitespaces(uri);
-                    var ns = internNamespace(NamespaceType.Public, uri);
-                    scope.namespaces.push(ns);
-                  }
-                  contentAttributes[q] = null;
-                } else if (attributeName.substring(0, 4) === "xml:") {
-                  var xmlAttrName = attributeName.substring(4);
-                  scope[xmlAttrName] = trimWhitespaces(attribute.value);
-                } else {
-                  // skip ordinary attributes until all xmlns have been handled
-                }
-              }
-              // build list of all namespaces including ancestors'
-              var inScopeNamespaces: Namespace[] = [];
-              scope.namespaces.forEach(function (ns) {
-                if (!ns.prefix || scope.lookup[ns.prefix] === ns.uri) {
-                  inScopeNamespaces.push(ns);
-                }
-              });
-              scopes[scopes.length - 1].inScopes.forEach(function (ns) {
-                if ((ns.prefix && !(ns.prefix in scope.lookup)) ||
-                    (!ns.prefix && !('xmlns' in scope))) {
-                  inScopeNamespaces.push(ns);
-                }
-              });
-              scope.inScopes = inScopeNamespaces;
-
-              scopes.push(scope);
-              var attributes = [];
-              for (q = 0; q < contentAttributes.length; ++q) {
-                attribute = contentAttributes[q];
-                if (attribute) {
-                  attributes.push({name: getName(attribute.name, false), value: attribute.value});
-                }
-              }
-              this.beginElement(getName(content.name, true), attributes, inScopeNamespaces, isClosed);
+              this.onBeginElement(content.name, content.attributes, isClosed);
               j += content.parsed + (isClosed ? 2 : 1);
-              if (isClosed) scopes.pop();
               break;
           }
         } else {
           do {
-          } while(j++ < s.length && s[j] !== "<");
+          } while (j++ < s.length && s[j] !== "<");
           var text = s.substring(i, j);
-          this.text(resolveEntities(text), isWhitespacePreserved());
+          this.onText(this.resolveEntities(text));
         }
         i = j;
       }
     }
-    // end of parser
 
+    onPi(name: string, value: string): void {
+    }
+
+    onComment(text: string): void {
+    }
+
+    onCdata(text: string): void {
+    }
+
+    onDoctype(doctypeContent: string): void {
+    }
+
+    onText(text: string): void {
+    }
+
+    onBeginElement(name: string, attributes: {name: string; value: string}[], isEmpty: boolean): void {
+    }
+
+    onEndElement(name: string): void {
+    }
+
+    onError(code: XMLParserErrorCode): void {
+    }
+  }
+
+  export class XMLParser extends XMLParserBase {
     private currentElement: ASXML;
     private elementsStack: ASXML[];
+    private scopes: any[] = [];
+
+    constructor(public sec: AXSecurityDomain) {
+      super();
+    }
+
+    private isWhitespacePreserved(): boolean {
+      var scopes = this.scopes;
+      for (var j = scopes.length - 1; j >= 0; --j) {
+        if (scopes[j].space === "preserve") {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private lookupDefaultNs(): string {
+      var scopes = this.scopes;
+      for (var j = scopes.length - 1; j >= 0; --j) {
+        if ('xmlns' in scopes[j]) {
+          return scopes[j].xmlns;
+        }
+      }
+      return '';
+    }
+
+    private lookupNs(prefix: string): string {
+      var scopes = this.scopes;
+      for (var j = scopes.length - 1; j >= 0; --j) {
+        if (prefix in scopes[j].lookup) {
+          return scopes[j].lookup[prefix];
+        }
+      }
+      return undefined;
+    }
+
+    private getName(name: string, resolveDefaultNs: boolean):
+        {name: string; localName: string; prefix: string; namespace: string} {
+      var j = name.indexOf(':');
+      if (j >= 0) {
+        var prefix = name.substring(0, j);
+        var localName = name.substring(j + 1);
+        var namespace = this.lookupNs(prefix);
+        if (namespace === undefined) {
+          this.sec.throwError('TypeError', Errors.XMLPrefixNotBound, prefix, localName);
+        }
+        return {
+          name: namespace + '::' + localName,
+          localName: localName,
+          prefix: prefix,
+          namespace: namespace,
+        };
+      } else if (resolveDefaultNs) {
+        return {
+          name: name,
+          localName: name,
+          prefix: '',
+          namespace: this.lookupDefaultNs()
+        };
+      } else {
+        return {
+          name: name,
+          localName: name,
+          prefix: '',
+          namespace: ''
+        };
+      }
+    }
+
+    onError(code: XMLParserErrorCode): void {
+      switch (code) {
+        case XMLParserErrorCode.MalformedElement:
+          this.sec.throwError('TypeError', Errors.XMLMalformedElement);
+          return;
+        case XMLParserErrorCode.UnterminatedElement:
+          this.sec.throwError('TypeError', Errors.XMLUnterminatedElement);
+          return;
+        case XMLParserErrorCode.UnterminatedDoctypeDeclaration:
+          this.sec.throwError('TypeError', Errors.XMLUnterminatedDocTypeDecl);
+          return;
+        case XMLParserErrorCode.UnterminatedCdat:
+          this.sec.throwError('TypeError', Errors.XMLUnterminatedCData);
+          return;
+        case XMLParserErrorCode.UnterminatedComment:
+          this.sec.throwError('TypeError', Errors.XMLUnterminatedComment);
+          return;
+        case XMLParserErrorCode.UnterminatedXmlDeclaration:
+          this.sec.throwError('TypeError', Errors.XMLUnterminatedXMLDecl);
+          return;
+      }
+    }
+
+    onPi(name: string, value: string): void {
+      this.pi(name, value);
+    }
+
+    onComment(text: string): void {
+      this.comment(text);
+    }
+
+    onCdata(text: string): void {
+      this.cdata(text);
+    }
+
+    onDoctype(doctypeContent: string): void {
+      this.doctype(doctypeContent);
+    }
+
+    onText(text: string): void {
+      this.text(text, this.isWhitespacePreserved());
+    }
+
+    onBeginElement(name: string, contentAttributes: {name: string; value: string}[], isEmpty: boolean): void {
+      var scopes = this.scopes;
+      var scope = {
+        namespaces: [],
+        lookup: Object.create(null),
+        inScopes: null
+      };
+      for (var q = 0; q < contentAttributes.length; ++q) {
+        var attribute = contentAttributes[q];
+        var attributeName = attribute.name;
+        if (attributeName.substring(0, 6) === "xmlns:") {
+          var prefix = attributeName.substring(6);
+          var uri = attribute.value;
+          if (this.lookupNs(prefix) !== uri) {
+            scope.lookup[prefix] = trimWhitespaces(uri);
+            var ns = internPrefixedNamespace(NamespaceType.Public, uri, prefix);
+            scope.namespaces.push(ns);
+          }
+          contentAttributes[q] = null;
+        } else if (attributeName === "xmlns") {
+          var uri = attribute.value;
+          if (this.lookupDefaultNs() !== uri) {
+            scope["xmlns"] = trimWhitespaces(uri);
+            var ns = internNamespace(NamespaceType.Public, uri);
+            scope.namespaces.push(ns);
+          }
+          contentAttributes[q] = null;
+        } else if (attributeName.substring(0, 4) === "xml:") {
+          var xmlAttrName = attributeName.substring(4);
+          scope[xmlAttrName] = trimWhitespaces(attribute.value);
+        } else {
+          // skip ordinary attributes until all xmlns have been handled
+        }
+      }
+      // build list of all namespaces including ancestors'
+      var inScopeNamespaces: Namespace[] = [];
+      scope.namespaces.forEach(function (ns) {
+        if (!ns.prefix || scope.lookup[ns.prefix] === ns.uri) {
+          inScopeNamespaces.push(ns);
+        }
+      });
+      scopes[scopes.length - 1].inScopes.forEach(function (ns) {
+        if ((ns.prefix && !(ns.prefix in scope.lookup)) ||
+          (!ns.prefix && !('xmlns' in scope))) {
+          inScopeNamespaces.push(ns);
+        }
+      });
+      scope.inScopes = inScopeNamespaces;
+
+      scopes.push(scope);
+      var attributes = [];
+      for (q = 0; q < contentAttributes.length; ++q) {
+        attribute = contentAttributes[q];
+        if (attribute) {
+          attributes.push({
+            name: this.getName(attribute.name, false),
+            value: attribute.value
+          });
+        }
+      }
+      this.beginElement(this.getName(name, true), attributes, inScopeNamespaces, isEmpty);
+      if (isEmpty) {
+        scopes.pop();
+      }
+    }
+
+    onEndElement(name: string): void {
+      this.endElement(this.getName(name, true));
+      this.scopes.pop();
+    }
 
     beginElement(name, attrs, namespaces: Namespace[], isEmpty: boolean) {
       var parent = this.currentElement;
@@ -796,6 +934,20 @@ module Shumway.AVMX.AS {
       var currentElement = this.currentElement = createXML(this.sec, ASXMLKind.Element,
                                                            '', '', '');
       this.elementsStack = [];
+
+      var defaultNs = getDefaultNamespace(this.sec);
+      var scopes: any[] = [{
+        namespaces: [],
+        lookup: {
+          "xmlns": 'http://www.w3.org/2000/xmlns/',
+          "xml": 'http://www.w3.org/XML/1998/namespace'
+        },
+        inScopes: [defaultNs],
+        space: 'default',
+        xmlns: defaultNs.uri
+      }];
+      this.scopes = scopes;
+
       this.parseXml(s);
       this.currentElement = null;
       if (this.elementsStack.length > 0) {
