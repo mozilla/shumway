@@ -599,7 +599,8 @@ module Shumway.GFX.Canvas2D {
         return;
       }
 
-      if (!(state.flags & RenderFlags.IgnoreNextLayer) && (
+      var ignoreNextLayer = state.flags & RenderFlags.IgnoreNextLayer;
+      if (!ignoreNextLayer && (
           ((node.getLayer().blendMode !== BlendMode.Normal || node.getLayer().mask) &&
           this._options.blending) ||
           (node.getLayer().filters && this._options.filters))) {
@@ -608,6 +609,9 @@ module Shumway.GFX.Canvas2D {
         this._renderLayer(node, state);
         state.free();
       } else {
+        if (ignoreNextLayer) {
+          state.removeFlags(RenderFlags.IgnoreNextLayer);
+        }
         if (this._intersectsClipList(node, state)) {
           var clips = null;
           var children = node.getChildren();
@@ -858,7 +862,7 @@ module Shumway.GFX.Canvas2D {
       var mask = layer.mask;
       if (!mask) {
         var clip = Rectangle.allocate();
-        var target = this._renderToTemporarySurface(node, state, clip, null);
+        var target = this._renderToTemporarySurface(node, state, clip, state.target.surface);
         if (target) {
           state.target.draw(target, clip.x, clip.y, clip.w, clip.h, state.colorMatrix, layer.blendMode,
                             this._options.filters ? layer.filters : null, this._devicePixelRatio);
