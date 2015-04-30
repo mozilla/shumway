@@ -44,8 +44,8 @@ module Shumway.AVM1.Lib {
       this.alPrototype = context.globals.alGet('flash').alGet('geom').alGet('Rectangle').alGetPrototypeProperty();
       this.alPut('x', x);
       this.alPut('y', y);
-      this.alPut('width', x);
-      this.alPut('height', y);
+      this.alPut('width', width);
+      this.alPut('height', height);
     }
 
     static fromAS3Rectangle(context: AVM1Context, r: flash.geom.Rectangle): AVM1Point  {
@@ -319,7 +319,7 @@ module Shumway.AVM1.Lib {
 
     public _toString(): string {
       return '(x=' + this.alGet('x') + ', y=' + this.alGet('y') +
-             ', width=' + this.alGet('width') + ', height=' + this.alGet('height') + ')';
+             ', w=' + this.alGet('width') + ', h=' + this.alGet('height') + ')';
     }
 
     public union(toUnion: AVM1Rectangle): AVM1Rectangle {
