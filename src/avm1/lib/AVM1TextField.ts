@@ -38,16 +38,19 @@ module Shumway.AVM1.Lib {
     }
 
     private _variable: string;
+    private _html: boolean;
     private _exitFrameHandler: (event: flash.events.Event) => void;
 
     public initAVM1SymbolInstance(context: AVM1Context, as3Object: flash.text.TextField) {
       super.initAVM1SymbolInstance(context, as3Object);
 
       this._variable = '';
+      this._html = false;
       this._exitFrameHandler = null;
 
       if (as3Object._symbol) {
         this.setVariable(as3Object._symbol.variableName || '');
+        this._html = as3Object._symbol.html;
       }
 
       this._initEventsHandlers();
@@ -165,19 +168,27 @@ module Shumway.AVM1.Lib {
     }
 
     public getHtml() {
-      Debug.notImplemented('AVM1TextField.getHtml');
+      return this._html;
     }
 
     public setHtml(value) {
-      Debug.notImplemented('AVM1TextField.setHtml');
+      this._html = !!value;
+      // Flash doesn't update the displayed text at this point, but the return
+      // value of `TextField#htmlText` is as though `TextField#htmlText = TextField#text` had
+      // also been called. For now, we ignore that.
     }
 
     public getHtmlText(): string {
-      return this._as3Object.htmlText;
+      return this._html ? this._as3Object.htmlText : this._as3Object.text;
     }
 
     public setHtmlText(value: string) {
-      this._as3Object.htmlText = alCoerceString(this.context, value);
+      value = alCoerceString(this.context, value);
+      if (this._html) {
+        this._as3Object.htmlText = value;
+      } else {
+        this._as3Object.text = value;
+      }
     }
 
     public getLength(): number {
