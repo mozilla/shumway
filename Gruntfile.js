@@ -749,7 +749,7 @@ module.exports = function(grunt) {
     'exec:test_trace',
     'exec:install_swfdec_travis',
     'exec:test_trace_swfdec',
-    'exec:test_avm2_ats',
+    //'exec:test_avm2_ats',
     //'exec:test_avm2_ats_parse',
     'exec:test_unit',
     'exec:test_mock'
