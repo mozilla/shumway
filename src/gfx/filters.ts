@@ -24,7 +24,56 @@ module Shumway.GFX {
   import assert = Shumway.Debug.assert;
 
   export class Filter {
+  	public expandBounds(bounds: Rectangle) {
+      // NOOP
+    }
+  }
 
+  var EPS = 0.000000001;
+  // Step widths for blur based filters, for quality values 1..15:
+  // If we plot the border width added by expandBlurBounds for each blurX (or blurY) value, the
+  // step width is the amount of blurX that adds one pixel to the border width. I.e. for quality = 1,
+  // the border width increments at blurX = 2, 4, 6, ...
+  var blurFilterStepWidths = [
+    2,
+    1 / 1.05,
+    1 / 1.35,
+    1 / 1.55,
+    1 / 1.75,
+    1 / 1.9,
+    1 / 2,
+    1 / 2.1,
+    1 / 2.2,
+    1 / 2.3,
+    1 / 2.5,
+    1 / 3,
+    1 / 3,
+    1 / 3.5,
+    1 / 3.5
+  ];
+  
+  function expandBlurBounds(bounds: Rectangle, quality: number,
+                            blurX: number, blurY: number, isBlurFilter: boolean) {
+    var stepWidth = blurFilterStepWidths[quality - 1];
+    var bx = blurX;
+    var by = blurY;
+    if (isBlurFilter) {
+      // BlurFilter behaves slightly different from other blur based filters:
+      // Given ascending blurX/blurY values, a BlurFilter expands the source rect later than with
+      // i.e. GlowFilter. The difference appears to be stepWidth / 4 for all quality values.
+      var stepWidth4 = stepWidth / 4;
+      bx -= stepWidth4;
+      by -= stepWidth4;
+    }
+    // Calculate horizontal and vertical borders:
+    // blurX/blurY values <= 1 are always rounded up to 1, which means that we always expand the
+    // source rect, even when blurX/blurY is 0.
+    var bh = (Math.ceil((bx < 1 ? 1 : bx) / (stepWidth - EPS)));
+    var bv = (Math.ceil((by < 1 ? 1 : by) / (stepWidth - EPS)));
+    bounds.x -= bh;
+    bounds.w += bh * 2;
+    bounds.y -= bv;
+    bounds.h += bv * 2;
   }
 
   export class BlurFilter extends Filter {
@@ -36,6 +85,10 @@ module Shumway.GFX {
       this.blurX = blurX;
       this.blurY = blurY;
       this.quality = quality;
+    }
+    
+    public expandBounds(bounds: Rectangle) {
+      expandBlurBounds(bounds, this.quality, this.blurX, this.blurY, true);
     }
   }
 
@@ -68,6 +121,26 @@ module Shumway.GFX {
       this.quality = quality;
       this.strength = strength;
     }
+    
+    public expandBounds(bounds: Rectangle) {
+      if (this.inner) {
+        return;
+      }
+      expandBlurBounds(bounds, this.quality, this.blurX, this.blurY, false);
+      if (this.distance) {
+        var a = this.angle * Math.PI / 180;
+        var dx = Math.cos(a) * this.distance;
+        var dy = Math.sin(a) * this.distance;
+        var xMin = bounds.x - (dx >= 0 ? 0 : Math.floor(dx));
+        var xMax = bounds.x + bounds.w + Math.ceil(Math.abs(dx));
+        var yMin = bounds.y - (dy >= 0 ? 0 : Math.floor(dy));
+        var yMax = bounds.y + bounds.h + Math.ceil(Math.abs(dy));
+        bounds.x = xMin;
+        bounds.w = xMax - xMin;
+        bounds.y = yMin;
+        bounds.h = yMax - yMin;
+      }
+    }
   }
 
   export class GlowFilter extends Filter {
@@ -92,6 +165,12 @@ module Shumway.GFX {
       this.quality = quality;
       this.strength = strength;
     }
+    
+    public expandBounds(bounds: Rectangle) {
+      if (!this.inner) {
+       expandBlurBounds(bounds, this.quality, this.blurX, this.blurY, false);
+      }
+    }
   }
 
   export enum ColorMatrixType {
@@ -99,11 +178,12 @@ module Shumway.GFX {
     Identity           = 0x0001
   }
 
-  export class ColorMatrix {
+  export class ColorMatrix extends Filter {
     private _data: Float32Array;
     private _type: ColorMatrixType;
 
     constructor (data: any) {
+      super();
       release || assert (data.length === 20);
       this._data = new Float32Array(data);
       this._type = ColorMatrixType.Unknown;

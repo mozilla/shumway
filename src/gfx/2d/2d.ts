@@ -862,7 +862,8 @@ module Shumway.GFX.Canvas2D {
       var mask = layer.mask;
       if (!mask) {
         var clip = Rectangle.allocate();
-        var target = this._renderToTemporarySurface(node, state, clip, state.target.surface);
+        var target = this._renderToTemporarySurface(node, node.getLayerBounds(!!this._options.filters),
+                                                    state, clip, state.target.surface);
         if (target) {
           state.target.draw(target, clip.x, clip.y, clip.w, clip.h, state.colorMatrix, layer.blendMode,
                             this._options.filters ? layer.filters : null, this._devicePixelRatio);
@@ -909,7 +910,7 @@ module Shumway.GFX.Canvas2D {
 
       var aState = state.clone();
       aState.clip.set(clip);
-      var a = this._renderToTemporarySurface(node, aState, Rectangle.createEmpty(), null);
+      var a = this._renderToTemporarySurface(node, node.getBounds(), aState, Rectangle.createEmpty(), null);
       aState.free();
 
       var bState = state.clone();
@@ -919,7 +920,7 @@ module Shumway.GFX.Canvas2D {
       if (stencil) {
         bState.flags |= RenderFlags.PaintStencil;
       }
-      var b = this._renderToTemporarySurface(mask, bState, Rectangle.createEmpty(), a.surface);
+      var b = this._renderToTemporarySurface(mask, mask.getBounds(), bState, Rectangle.createEmpty(), a.surface);
       bState.free();
 
       a.draw(b, 0, 0, clip.w, clip.h, bState.colorMatrix, BlendMode.Alpha, null,
@@ -973,10 +974,9 @@ module Shumway.GFX.Canvas2D {
       this._frameInfo.leave();
     }
 
-    private _renderToTemporarySurface(node: Node, state: RenderState, clip: Rectangle,
+    private _renderToTemporarySurface(node: Node, bounds: Rectangle, state: RenderState, clip: Rectangle,
                                       excludeSurface: ISurface): Canvas2DSurfaceRegion {
       var matrix = state.matrix;
-      var bounds = node.getBounds();
       var boundsAABB = bounds.clone();
       matrix.transformRectangleAABB(boundsAABB);
       boundsAABB.snap();
