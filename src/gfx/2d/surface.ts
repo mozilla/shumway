@@ -318,8 +318,33 @@ module Shumway.GFX.Canvas2D {
       }
       this.context.globalCompositeOperation = getCompositeOperation(blendMode);
       Filters._applyColorMatrix(this.context, colorMatrix);
-      Filters._applyFilters(devicePixelRatio, this.context, filters);
+      
+      if (filters && filters.length > 1) {
+        var target = source.surface.allocate(w, h);
+        var filter = [null];
+        for (var i = 0; i < filters.length; i++) {
+          filter[0] = filters[i];
+          
+          target.context.setTransform(1, 0, 0, 1, 0, 0);
+          target.clear();
+          var tx = target.region.x;
+          var ty = target.region.x;
+          
+          Filters._applyFilters(devicePixelRatio, target.context, filter);
+          target.context.drawImage(source.context.canvas, sx, sy, w, h, tx, ty, w, h);
+          
+          target = source;
+          source = target;
+          sx = tx;
+          sy = ty;
+        }
+        sourceCanvas = source.context.canvas;
+        target.free();
+      } else {
+        Filters._applyFilters(devicePixelRatio, this.context, filters);
+      }
       this.context.drawImage(sourceCanvas, sx, sy, w, h, x, y, w, h);
+      
       this.context.globalCompositeOperation = getCompositeOperation(BlendMode.Normal);
       Filters._removeFilters(this.context);
       if (clip) {
