@@ -243,9 +243,10 @@ var shuobject = (function () {
     var externalInterfaceService = playerWindowIframe.iframeExternalInterface;
     externalInterfaceService.processExternalCommand = processExternalCommand.bind(externalInterfaceService, iframeElement);
     iframeElement.shumway = {
+      sec: playerWindowIframe.player.sec,
       stage: playerWindowIframe.player.stage,
       Shumway: playerWindowIframe.Shumway,
-      flash: playerWindowIframe.Shumway.AVM2.AS.flash,
+      flash: playerWindowIframe.player.sec.flash,
       easelHost: easelHost
     };
   }

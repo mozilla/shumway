@@ -561,9 +561,10 @@ module Shumway.Player {
         self._frameTimeout = setTimeout(tick, self._getFrameInterval());
         self._eventLoopTick();
       }
-
-      console.info('Time from init start to main event loop start: ' +
-                   (Date.now() - this.initStartTime));
+      if (!isNaN(this.initStartTime)) {
+        console.info('Time from init start to main event loop start: ' +
+                     (Date.now() - this.initStartTime));
+      }
       tick();
     }
 
