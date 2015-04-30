@@ -127,7 +127,7 @@ module Shumway.AVM1.Lib {
     }
 
     dispose(): void {
-      Debug.notImplemented('AVM1BitmapData.dispose');
+      this.as3BitmapData.dispose();
     }
 
     draw(source: AVM1Object, matrix?: AVM1Object, colorTransform?: AVM1Object, blendMode?: any, clipRect?: AVM1Object, smooth?: boolean): void {
