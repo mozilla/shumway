@@ -262,6 +262,27 @@ module Shumway {
     return value == undefined;
   }
 
+  export function argumentsToString(args: IArguments) {
+    var resultList = [];
+    for (var i = 0; i < args.length; i++) {
+      var arg = args[i];
+      try {
+        var argStr;
+        if (typeof arg !== 'object' || !arg) {
+          argStr = arg + '';
+        } else if ('toString' in arg) {
+          argStr + arg.toString();
+        } else {
+          argStr = Object.prototype.toString.call(arg);
+        }
+        resultList.push(argStr);
+      } catch (e) {
+        resultList.push('<unprintable value>');
+      }
+    }
+    return resultList.join(', ');
+  }
+
   export module Debug {
     export function error(message: string) {
       console.error(message);
@@ -299,7 +320,7 @@ module Shumway {
       if (release) {
         return;
       }
-      var key = Array.prototype.join.call(arguments, ',');
+      var key = argumentsToString(arguments);
       if (_warnedCounts[key]) {
         _warnedCounts[key]++;
         if (Shumway.omitRepeatedWarnings.value) {

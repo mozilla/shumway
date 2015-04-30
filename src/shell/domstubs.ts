@@ -20,7 +20,6 @@ this.self = this;
 this.window = this;
 
 declare function print(message: string): void;
-
 this.console = {
   _print: print,
   log: print,
@@ -28,15 +27,15 @@ this.console = {
     if (!Shumway.Shell.verbose) {
       return;
     }
-    print(Shumway.IndentingWriter.YELLOW + [].join.call(arguments, ', ') +
+    print(Shumway.IndentingWriter.YELLOW + Shumway.argumentsToString(arguments) +
           Shumway.IndentingWriter.ENDC);
   },
   warn: function() {
-    print(Shumway.IndentingWriter.RED + [].join.call(arguments, ', ') +
+    print(Shumway.IndentingWriter.RED + Shumway.argumentsToString(arguments) +
           Shumway.IndentingWriter.ENDC);
   },
   error: function() {
-    print(Shumway.IndentingWriter.BOLD_RED + [].join.call(arguments, ', ') +
+    print(Shumway.IndentingWriter.BOLD_RED + Shumway.argumentsToString(arguments) +
           Shumway.IndentingWriter.ENDC + '\nstack:\n' + (new Error().stack));
   },
   time: function () {},
@@ -45,7 +44,7 @@ this.console = {
 
 declare var putstr;
 this.dump = function (message) {
-  putstr(message);
+  putstr(Shumway.argumentsToString(arguments));
 };
 
 this.addEventListener = function (type) {
