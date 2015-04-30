@@ -1127,7 +1127,7 @@ module Shumway.GFX {
       var filters = this._filters;
       if (filters) {
         for (var i = 0; i < filters.length; i++) {
-          filters[0].expandBounds(bounds);
+          filters[i].expandBounds(bounds);
         }
       }
     }
