@@ -38,6 +38,7 @@ module Shumway.GFX.Canvas2D {
         return;
       }
       var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("style", "display:block;width:0px;height:0px");
       var defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
 
       // Blur Filter
@@ -115,6 +116,7 @@ module Shumway.GFX.Canvas2D {
       }
       Filters._prepareSVGFilters();
       Filters._removeFilters(context);
+
       var scale = ratio;
       /**
        * Scale blur radius for each quality level. The scale constants were gathered
