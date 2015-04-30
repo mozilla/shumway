@@ -192,7 +192,7 @@ module.exports = function(grunt) {
         maxBuffer: Infinity,
         cmd: 'mkdir -p build/test; ' +
              'cat test/ats/test_swf_avm2.txt | parallel -k --gnu -X -N50 utils/jsshell/js build/ts/shell.js -x -det -fc 10 {} > build/test/test_avm2_ats.run; ' +
-             'if [ ! -f "test/ats/test_avm2_ats.baseline" ]; then echo "Creating Baseline"; cp build/test/test_avm2_ats.run test/test_avm2_ats.baseline; fi;' +
+             'if [ ! -f "test/test_avm2_ats.baseline" ]; then echo "Creating Baseline"; cp build/test/test_avm2_ats.run test/test_avm2_ats.baseline; fi;' +
              'diff build/test/test_avm2_ats.run test/test_avm2_ats.baseline;'
       },
       // Run this to make sure the SWF parser still works.
