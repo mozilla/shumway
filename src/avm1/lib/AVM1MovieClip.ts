@@ -68,6 +68,7 @@ module Shumway.AVM1.Lib {
 
     private _boundExecuteFrameScripts: () => void;
     private _frameScripts: AVM1.AVM1ActionsData[][];
+    private _hitArea: any;
 
     private get graphics() : flash.display.Graphics {
       return this.as3Object.graphics;
@@ -369,11 +370,18 @@ module Shumway.AVM1.Lib {
     }
 
     public getHitArea() {
-      Debug.notImplemented('AVM1MovieClip.getHitArea');
+      return this._hitArea;
     }
 
     public setHitArea(value) {
-      Debug.notImplemented('AVM1MovieClip.setHitArea');
+      // The hitArea getter always returns exactly the value set here, so we have to store that.
+      this._hitArea = value;
+      var obj = value ? value.as3Object : null;
+      // If the passed-in value isn't a MovieClip, reset the hitArea.
+      if (!this.context.sec.flash.display.MovieClip.axIsType(obj)) {
+        obj = null;
+      }
+      this.as3Object.hitArea = obj;
     }
 
     public hitTest(x, y, shapeFlag) {

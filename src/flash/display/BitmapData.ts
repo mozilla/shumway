@@ -579,6 +579,8 @@ module Shumway.AVMX.AS.flash.display {
     draw(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null,
          colorTransform: flash.geom.ColorTransform = null, blendMode: string = null,
          clipRect: flash.geom.Rectangle = null, smoothing: boolean = false): void {
+      blendMode = axCoerceString(blendMode);
+      smoothing = !!smoothing;
       somewhatImplemented("public flash.display.BitmapData::draw");
       var serializer: IBitmapDataSerializer = this.sec.player;
       if (matrix) {
@@ -592,15 +594,9 @@ module Shumway.AVMX.AS.flash.display {
                     colorTransform: flash.geom.ColorTransform = null, blendMode: string = null,
                     clipRect: flash.geom.Rectangle = null, smoothing: boolean = false,
                     quality: string = null): void {
-      source = source;
-      matrix = matrix;
-      colorTransform = colorTransform;
-      blendMode = axCoerceString(blendMode);
-      clipRect = clipRect;
-      smoothing = !!smoothing;
       quality = axCoerceString(quality);
-      notImplemented("public flash.display.BitmapData::drawWithQuality");
-      return;
+      somewhatImplemented("public flash.display.BitmapData::drawWithQuality");
+      this.draw(source, matrix, colorTransform, blendMode, clipRect, smoothing);
     }
 
     fillRect(rect: flash.geom.Rectangle, uARGB: number /*uint*/): void {

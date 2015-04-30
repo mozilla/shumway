@@ -1,0 +1,18 @@
+// hitarea test script
+
+run_test = function (t, file) {
+  var initx = 0, inity = 0, delta = 100;
+  print ("Testing " + file);
+  var expected = Buffer.load (file + ".trace");
+  t.reset (file);
+  t.mouse_move (initx, inity);
+  t.mouse_move (initx + delta, inity + delta);
+  t.advance(300);
+  var diff = t.trace.diff (expected);
+};
+
+t = new Test ();
+for (var i = 0; i < filenames.length; i++) {
+  run_test (t, filenames[i]);
+}
+

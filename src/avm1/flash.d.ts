@@ -169,6 +169,7 @@ declare module Shumway.AVMX.AS.flash {
       currentFrame: number;
       framesLoaded: number;
       totalFrames: number;
+      hitArea: DisplayObject;
 
       addFrameScript(frameIndex: number, script: (any?) => any /*, ...*/): void;
       _getAbsFrameNumber(frame: string, sceneName: string): number;
@@ -220,6 +221,7 @@ declare module Shumway.AVMX.AS.flash {
       getPixel(x: number, y: number): number;
       getPixel32(x: number, y: number): number;
       perlinNoise(baseX: number, baseY: number, numOctaves: number, randomSeed: number, stitch: boolean, fractalNoise: boolean, channelOptions: number, grayScale: boolean, offsets): void;
+      dispose();
     }
     class Bitmap extends DisplayObject {
       constructor();
