@@ -181,10 +181,11 @@
       ],
       "type": "stas"
     },
-    {  "id": "avm1-bitmapdata-getpixel",
+    {  "id": "avm1-bitmapdata",
       "stas": "swfs/trace.stas",
       "filenames": [
-        "swfs/avm1/bitmapdata/getPixel.swf"
+        "swfs/avm1/bitmapdata/getPixel.swf",
+        "swfs/avm1/bitmapdata/loadBitmap.swf"
       ],
       "type": "stas"
     }

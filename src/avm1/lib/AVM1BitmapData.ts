@@ -54,8 +54,9 @@ module Shumway.AVM1.Lib {
       // REDUX verify
       var symbolClass = symbol.symbolProps.symbolClass;
       var bitmapClass = context.sec.flash.display.BitmapData.axClass;
-      if (symbol && bitmapClass.dPrototype.isPrototypeOf((<any>symbolClass).dPrototype)) {
-        var as3Object = Shumway.AVMX.AS.constructClassFromSymbol(symbol, bitmapClass);
+      if (symbol && (bitmapClass === symbolClass ||
+          bitmapClass.dPrototype.isPrototypeOf((<any>symbolClass).dPrototype))) {
+        var as3Object = Shumway.AVMX.AS.constructClassFromSymbol(symbol.symbolProps, bitmapClass);
         var BitmapData: AVM1Object = context.globals.alGet('flash').alGet('display').alGet('BitmapData');
         var bitmap = new AVM1BitmapData(context);
         bitmap.alPrototype = BitmapData.alGetPrototypeProperty();
