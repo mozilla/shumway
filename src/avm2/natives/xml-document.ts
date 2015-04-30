@@ -70,39 +70,45 @@ module Shumway.AVMX.AS.flash.xml {
     constructor () {
       super();
     }
+
+    private _type: number = 0;
+    private _value: string = null;
+    private _empty: boolean = false;
+    private _attrs: ASObject = null;
+
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings
     // Instance JS -> AS Bindings
     // Instance AS -> JS Bindings
     get type(): number /*uint*/ {
-      notImplemented("packageInternal flash.xml.XMLTag::get type"); return;
+      return this._type;
     }
     set type(value: number /*uint*/) {
       value = value >>> 0;
-      notImplemented("packageInternal flash.xml.XMLTag::set type"); return;
+      this._type = value;
     }
     get empty(): boolean {
-      notImplemented("packageInternal flash.xml.XMLTag::get empty"); return;
+      return this._empty;
     }
     set empty(value: boolean) {
       value = !!value;
-      notImplemented("packageInternal flash.xml.XMLTag::set empty"); return;
+      this._empty = value;
     }
     get value(): string {
-      notImplemented("packageInternal flash.xml.XMLTag::get value"); return;
+      return this._value;
     }
     set value(v: string) {
       v = axCoerceString(v);
-      notImplemented("packageInternal flash.xml.XMLTag::set value"); return;
+      this._value = v;
     }
     get attrs(): ASObject {
-      notImplemented("packageInternal flash.xml.XMLTag::get attrs"); return;
+      return this._attrs;
     }
     set attrs(value: ASObject) {
-      value = value;
-      notImplemented("packageInternal flash.xml.XMLTag::set attrs"); return;
+      this._attrs = value;
     }
   }
+
 
   export class XMLNodeType extends ASObject {
     constructor () {
@@ -114,22 +120,121 @@ module Shumway.AVMX.AS.flash.xml {
     // Instance AS -> JS Bindings
   }
 
+  function isWhitespace(s: string) {
+    for (var i = 0; i < s.length; i++) {
+      var ch = s[i];
+      if (!(ch === ' ' || ch === '\n' || ch === '\r' || ch === '\t')) {
+        return false;
+
+      }
+    }
+    return true;
+  }
+
+  interface XMLParserResult {
+    type: number;
+    value: string;
+    empty?: boolean;
+    attrs?: ASObject;
+  }
+
+  class XMLParserForXMLDocument extends XMLParserBase {
+    queue: (XMLParserResult|number)[];
+    ignoreWhitespace: boolean;
+    sec: ISecurityDomain;
+
+    constructor(sec: ISecurityDomain) {
+      super();
+      this.sec = sec;
+      this.queue = [];
+      this.ignoreWhitespace = false;
+    }
+
+    onError(code: XMLParserErrorCode): void {
+      this.queue.push(code);
+    }
+
+    onPi(name: string, value: string): void {
+      Debug.warning('Unhandled XMLParserForXMLDocument.onPi');
+    }
+
+    onComment(text: string): void {
+      Debug.warning('Unhandled XMLParserForXMLDocument.onComment');
+    }
+
+    onCdata(text: string): void {
+      this.queue.push({
+        type: 4,
+        value: text
+      });
+    }
+
+    onDoctype(doctypeContent: string): void {
+      Debug.warning('Unhandled XMLParserForXMLDocument.onDoctype');
+    }
+
+    onBeginElement(name: string, attributes: {name: string; value: string}[], isEmpty: boolean): void {
+      var attrObj = this.sec.createObject();
+      attributes.forEach((a) => {
+        attrObj.axSetPublicProperty(a.name, a.value);
+      });
+      this.queue.push({
+        type: 1,
+        value: name,
+        empty: isEmpty,
+        attrs: attrObj
+      });
+    }
+
+    onEndElement(name: string): void {
+      this.queue.push({
+        type: 1,
+        value: '/' + name
+      });
+    }
+
+    onText(text: string): void {
+      if (this.ignoreWhitespace && isWhitespace(text)) {
+        return;
+      }
+      this.queue.push({
+        type: 3,
+        value: text
+      });
+    }
+  }
+
   export class XMLParser extends ASObject {
     constructor() {
       super();
     }
 
+    private queue: (XMLParserResult|number)[];
+
     startParse(source: string, ignoreWhite: boolean): void {
       source = axCoerceString(source);
       ignoreWhite = !!ignoreWhite;
-      notImplemented("packageInternal flash.xml.XMLParser::startParse");
-      return;
+
+      var parser = new XMLParserForXMLDocument(this.sec);
+      parser.ignoreWhitespace = ignoreWhite;
+      parser.parseXml(source);
+      this.queue = parser.queue;
     }
 
     getNext(tag: flash.xml.XMLTag): number /*int*/ {
-      tag = tag;
-      notImplemented("packageInternal flash.xml.XMLParser::getNext");
-      return;
+      if (this.queue.length === 0) {
+        return XMLParserErrorCode.EndOfDocument;
+      }
+      var nextItem = this.queue.shift();
+      if (typeof nextItem === 'number') {
+        return nextItem;
+      }
+      var parseResult = <XMLParserResult>nextItem;
+      tag.type = parseResult.type;
+      tag.value = parseResult.value;
+      tag.empty = parseResult.empty || false;
+      tag.attrs = parseResult.attrs || null;
+      return XMLParserErrorCode.NoError;
     }
   }
 }
