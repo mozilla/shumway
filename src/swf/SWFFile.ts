@@ -511,17 +511,17 @@ module Shumway.SWF {
         case SWFTag.CODE_DEFINE_FONT_ALIGN_ZONES:
         case SWFTag.CODE_SCRIPT_LIMITS:
         case SWFTag.CODE_SET_TAB_INDEX:
-          this.jumpToNextTag(tagLength);
-          break;
         // These tags are used by the player, but not relevant to us.
         case SWFTag.CODE_ENABLE_DEBUGGER:
         case SWFTag.CODE_ENABLE_DEBUGGER2:
         case SWFTag.CODE_DEBUG_ID:
         case SWFTag.CODE_DEFINE_FONT_NAME:
+        case SWFTag.CODE_NAME_CHARACTER:
         case SWFTag.CODE_PRODUCT_INFO:
         case SWFTag.CODE_METADATA:
         case SWFTag.CODE_PROTECT:
         case SWFTag.CODE_PATHS_ARE_POSTSCRIPT:
+        case SWFTag.CODE_TELEMETRY:
         // These are obsolete Generator-related tags.
         case SWFTag.CODE_GEN_TAG_OBJECTS:
         case SWFTag.CODE_GEN_COMMAND:
@@ -543,13 +543,13 @@ module Shumway.SWF {
           console.info("Ignored tag (these shouldn't occur) " + tagCode + ': ' + SWFTag[tagCode]);
           this.jumpToNextTag(tagLength);
           break;
-        case SWFTag.CODE_OBFUSCATOR_SHENANIGANS:
-          Debug.warning("Encountered AVM1 obfuscator thingy. " +
-                        "See http://ijs.mtasa.com/files/swfdecrypt.cpp.");
-          this.jumpToNextTag(tagLength);
-          break;
         default:
-          Debug.warning('Tag not handled by the parser: ' + tagCode + ': ' + SWFTag[tagCode]);
+          if (tagCode > 100) {
+            Debug.warning("Encountered undefined tag " + tagCode + ", probably used for AVM1 " +
+                          "obfuscation. See http://ijs.mtasa.com/files/swfdecrypt.cpp.");
+          } else {
+            Debug.warning('Tag not handled by the parser: ' + tagCode + ': ' + SWFTag[tagCode]);
+          }
           this.jumpToNextTag(tagLength);
       }
     }
