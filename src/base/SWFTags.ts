@@ -107,7 +107,8 @@ module Shumway.SWF.Parser {
     CODE_DEFINE_FONT_NAME                  = 88,
     CODE_START_SOUND2                      = 89,
     CODE_DEFINE_BITS_JPEG4                 = 90,
-    CODE_DEFINE_FONT4                      = 91
+    CODE_DEFINE_FONT4                      = 91,
+    CODE_OBFUSCATOR_SHENANIGANS            = 253
   }
 
   export enum DefinitionTags {
