@@ -188,5 +188,12 @@
         "swfs/avm1/bitmapdata/loadBitmap.swf"
       ],
       "type": "stas"
+    },
+    {  "id": "avm1-textfield-html",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/textfield-html/textfield-html.swf"
+      ],
+      "type": "stas"
     }
 ]

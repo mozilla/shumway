@@ -475,6 +475,7 @@ declare module Shumway.AVMX.AS.flash {
     }
     class TextSymbol extends display.DisplaySymbol {
       variableName: string;
+      html: boolean;
     }
   }
   module ui {
