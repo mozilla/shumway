@@ -303,6 +303,13 @@
       ],
       "type": "stas"
     },
+    {  "id": "avm1-hitarea",
+      "stas": "swfs/avm1/hitarea/hitarea.stas",
+      "filenames": [
+        "swfs/avm1/hitarea/hitarea.swf"
+      ],
+      "type": "stas"
+    },
     {  "id": "ZeroClipboardTest",
        "stas": "swfs/ZeroClipboardTest.stas",
        "filenames": [

@@ -169,6 +169,7 @@ declare module Shumway.AVMX.AS.flash {
       currentFrame: number;
       framesLoaded: number;
       totalFrames: number;
+      hitArea: DisplayObject;
 
       addFrameScript(frameIndex: number, script: (any?) => any /*, ...*/): void;
       _getAbsFrameNumber(frame: string, sceneName: string): number;
