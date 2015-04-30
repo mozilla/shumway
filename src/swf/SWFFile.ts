@@ -521,6 +521,10 @@ module Shumway.SWF {
         case SWFTag.CODE_PRODUCT_INFO:
         case SWFTag.CODE_METADATA:
         case SWFTag.CODE_PROTECT:
+        case SWFTag.CODE_PATHS_ARE_POSTSCRIPT:
+        // These are obsolete Generator-related tags.
+        case SWFTag.CODE_GEN_TAG_OBJECTS:
+        case SWFTag.CODE_GEN_COMMAND:
           this.jumpToNextTag(tagLength);
           break;
         // These tags aren't used in the player.
@@ -537,6 +541,11 @@ module Shumway.SWF {
         case SWFTag.CODE_STOP_SOUND:
         case SWFTag.CODE_SYNC_FRAME:
           console.info("Ignored tag (these shouldn't occur) " + tagCode + ': ' + SWFTag[tagCode]);
+          this.jumpToNextTag(tagLength);
+          break;
+        case SWFTag.CODE_OBFUSCATOR_SHENANIGANS:
+          Debug.warning("Encountered AVM1 obfuscator thingy. " +
+                        "See http://ijs.mtasa.com/files/swfdecrypt.cpp.");
           this.jumpToNextTag(tagLength);
           break;
         default:
