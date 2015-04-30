@@ -2027,7 +2027,7 @@ module Shumway.AVM1 {
         functionParams, registerCount, registerAllocation, suppressArguments);
       if (functionName) {
         scope.alPut(functionName, fn);
-        as2SyncEvents(ectx.context, name);
+        as2SyncEvents(ectx.context, functionName);
       } else {
         stack.push(fn);
       }
