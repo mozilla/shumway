@@ -273,8 +273,8 @@ module Shumway.GFX.Canvas2D {
         if (typeof registerScratchCanvas !== "undefined") {
           registerScratchCanvas(canvas);
         }
-        canvas.width = 512;
-        canvas.height = 512;
+        canvas.width = IntegerUtilities.nearestPowerOfTwo(w);
+        canvas.height = IntegerUtilities.nearestPowerOfTwo(h);
         Canvas2DSurfaceRegion._copyCanvasContext = canvas.getContext("2d");
       } else {
         canvas = Canvas2DSurfaceRegion._copyCanvasContext.canvas;
@@ -289,22 +289,22 @@ module Shumway.GFX.Canvas2D {
                 colorMatrix: ColorMatrix, blendMode: BlendMode, filters: Filter [],
                 devicePixelRatio: number) {
       this.context.setTransform(1, 0, 0, 1, 0, 0);
-      var sourceCanvas, sx = 0, sy = 0;
+      var sourceContext, copyContext, sx = 0, sy = 0;
       // Handle copying from and to the same canvas.
       if (source.context.canvas === this.context.canvas) {
         Canvas2DSurfaceRegion._ensureCopyCanvasSize(w, h);
-        var copyContext = Canvas2DSurfaceRegion._copyCanvasContext;
+        copyContext = Canvas2DSurfaceRegion._copyCanvasContext;
         copyContext.clearRect(0, 0, w, h);
         copyContext.drawImage(
           source.surface.canvas,
           source.region.x, source.region.y, w, h,
           0, 0, w, h
         );
-        sourceCanvas = copyContext.canvas;
+        sourceContext = copyContext;
         sx = 0;
         sy = 0;
       } else {
-        sourceCanvas = source.surface.canvas;
+        sourceContext = source.surface.context;
         sx = source.region.x;
         sy = source.region.y;
       }
@@ -318,32 +318,38 @@ module Shumway.GFX.Canvas2D {
       }
       this.context.globalCompositeOperation = getCompositeOperation(blendMode);
       Filters._applyColorMatrix(this.context, colorMatrix);
-      
       if (filters && filters.length > 1) {
-        var target = source.surface.allocate(w, h);
-        var filter = [null];
-        for (var i = 0; i < filters.length; i++) {
-          filter[0] = filters[i];
-          
-          target.context.setTransform(1, 0, 0, 1, 0, 0);
-          target.clear();
-          var tx = target.region.x;
-          var ty = target.region.x;
-          
-          Filters._applyFilters(devicePixelRatio, target.context, filter);
-          target.context.drawImage(source.context.canvas, sx, sy, w, h, tx, ty, w, h);
-          
-          target = source;
-          source = target;
-          sx = tx;
-          sy = ty;
+        filters = filters.slice();
+        var dx, dy, _cc, _sx, _sy;
+        if (copyContext) {
+          _cc = copyContext;
+          copyContext = sourceContext;
+          sourceContext = _cc;
+        } else {
+          Canvas2DSurfaceRegion._ensureCopyCanvasSize(w, h);
+          copyContext = Canvas2DSurfaceRegion._copyCanvasContext;
+          dx = 0;
+          dy = 0;
         }
-        sourceCanvas = source.context.canvas;
-        target.free();
-      } else {
-        Filters._applyFilters(devicePixelRatio, this.context, filters);
+        var filter = [null];
+        while (filters.length > 1) {
+          filter[0] = filters.shift();
+          copyContext.clearRect(0, 0, w, h);
+          Filters._applyFilters(devicePixelRatio, copyContext, filter);
+          copyContext.drawImage(sourceContext.canvas, sx, sy, w, h, dx, dy, w, h);
+          _cc = copyContext;
+          _sx = sx;
+          _sy = sy;
+          copyContext = sourceContext;
+          sourceContext = _cc;
+          sx = dx;
+          sy = dx;
+          dx = _sx;
+          dy = _sy;
+        }
       }
-      this.context.drawImage(sourceCanvas, sx, sy, w, h, x, y, w, h);
+      Filters._applyFilters(devicePixelRatio, this.context, filters);
+      this.context.drawImage(sourceContext.canvas, sx, sy, w, h, x, y, w, h);
       
       this.context.globalCompositeOperation = getCompositeOperation(BlendMode.Normal);
       Filters._removeFilters(this.context);
