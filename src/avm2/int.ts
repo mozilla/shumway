@@ -1,6 +1,7 @@
 module Shumway.AVMX {
   import assert = Shumway.Debug.assert;
   import popManyInto = Shumway.ArrayUtilities.popManyInto;
+  import getPropertyDescriptor = Shumway.ObjectUtilities.getPropertyDescriptor;
 
   /**
    * Helps the interpreter allocate fewer Scope objects.
@@ -991,7 +992,7 @@ module Shumway.AVMX {
           return sec.createError('TypeError', Errors.ConvertUndefinedToObjectError);
         }
         var nm = receiver.axResolveMultiname(mn);
-        if (nm in receiver && Object.getOwnPropertyDescriptor(receiver, nm).writable === false) {
+        if (nm in receiver && getPropertyDescriptor(receiver, nm).writable === false) {
           return sec.createError('ReferenceError', Errors.ConstWriteError, nm,
                                  receiver.axClass.name.name);
         }

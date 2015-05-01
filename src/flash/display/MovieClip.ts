@@ -187,7 +187,8 @@ module Shumway.AVMX.AS.flash.display {
       this._frames = symbol.frames;
       if (symbol.isAVM1Object) {
         if (symbol.frameScripts) {
-          var avm1MovieClip = <Shumway.AVM1.Lib.AVM1MovieClip>Shumway.AVM1.Lib.getAVM1Object(this, symbol.avm1Context);
+          var avm1MovieClip = <AVM1.Lib.AVM1MovieClip>AVM1.Lib.getAVM1Object(this,
+                                                                             symbol.avm1Context);
           var data = symbol.frameScripts;
           for (var i = 0; i < data.length; i += 2) {
             avm1MovieClip.addFrameScript(data[i], data[i + 1]);
@@ -212,6 +213,9 @@ module Shumway.AVMX.AS.flash.display {
       this._totalFrames = 1;
       this._trackAsMenu = false;
       this._scenes = [];
+      if (!this._symbol) {
+        this.addScene('', [], 0, 1);
+      }
       this._enabled = true;
       this._isPlaying = false;
 

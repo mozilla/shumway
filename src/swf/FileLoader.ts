@@ -134,9 +134,11 @@ module Shumway {
       session.open(request);
     }
     abortLoad() {
-      this._loadingServiceSession.close();
+      if (this._loadingServiceSession) {
+        this._loadingServiceSession.close();
+        SWF.leaveTimeline();
+      }
       this._file = null;
-      SWF.leaveTimeline();
     }
     loadBytes(bytes: Uint8Array) {
       SWF.enterTimeline('Load bytes');
