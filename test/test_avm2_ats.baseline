@@ -191,7 +191,6 @@ RUNNING:  test/ats/swfs/03398183f32bcf40113d61d80ff73c7ebae01eaf79e94c2e4ebe3c1c
 [video-main][v1.0][ClickTag]  - urlMode:      	urlModeVendor 
 [video-main][v1.0][ClickTag] ------------------------------------------------------------------------------------------------------------- 
 [video-main][v1.0][MainBase] launch() 
-[91msomewhatImplemented: public flash.system.Capabilities::get playerType[0m
 [video-main][v1.0][MainBase] -- RED POLITE AD SETTINGS ------------------------------------------------------------------------------------------- 
 [video-main][v1.0][MainBase]  environment:	EmbeddedSWF via Browser 
 [video-main][v1.0][MainBase]  externalPath:	LIVE -> http://disney.ff0000-cdn.net/2014/FY15__Disney_Side/core_family_160x600_ext.swf 
