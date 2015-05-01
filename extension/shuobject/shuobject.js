@@ -257,13 +257,15 @@ var shuobject = (function () {
     this.onFSCommand = null;
   }
   ShumwayBindings.prototype = {
-    takeScreenshot: function (bounds, stageContent) {
-      bounds = bounds || null;
-      stageContent = !!stageContent;
+    takeScreenshot: function (options) {
+      options = options || {};
+      var bounds = options.bounds || null;
+      var stageContent = !!options.stageContent;
+      var disableHidpi = !!options.disableHidpi;
 
       var easel = this.easelHost.easel;
       easel.render();
-      return easel.screenShot(bounds, stageContent);
+      return easel.screenShot(bounds, stageContent, disableHidpi);
     },
     _processFrame: function (iframeElement) {
       var onFrame = iframeElement.shumway.onFrame;

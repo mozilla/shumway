@@ -591,8 +591,8 @@ module Shumway.GFX {
 
     }
 
-    public screenShot(bounds: Rectangle, stageContent: boolean): ScreenShot {
-      return this._renderer.screenShot(bounds, stageContent);
+    public screenShot(bounds: Rectangle, stageContent: boolean, disableHidpi: boolean): ScreenShot {
+      return this._renderer.screenShot(bounds, stageContent, disableHidpi);
     }
   }
 }
