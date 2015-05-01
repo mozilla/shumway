@@ -195,5 +195,12 @@
         "swfs/avm1/textfield-html/textfield-html.swf"
       ],
       "type": "stas"
+    },
+    {  "id": "moviecli-empty-mc-scenes",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/movieclip/empty-mc-scenes.swf"
+      ],
+      "type": "stas"
     }
 ]
