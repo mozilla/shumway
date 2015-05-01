@@ -131,9 +131,9 @@ module Shumway.GFX {
         var a = this.angle * Math.PI / 180;
         var dx = Math.cos(a) * this.distance;
         var dy = Math.sin(a) * this.distance;
-        var xMin = bounds.x - (dx >= 0 ? 0 : Math.floor(dx));
+        var xMin = bounds.x + (dx >= 0 ? 0 : Math.floor(dx));
         var xMax = bounds.x + bounds.w + Math.ceil(Math.abs(dx));
-        var yMin = bounds.y - (dy >= 0 ? 0 : Math.floor(dy));
+        var yMin = bounds.y + (dy >= 0 ? 0 : Math.floor(dy));
         var yMax = bounds.y + bounds.h + Math.ceil(Math.abs(dy));
         bounds.x = xMin;
         bounds.w = xMax - xMin;
