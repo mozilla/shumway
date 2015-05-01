@@ -7,3 +7,4 @@ user_pref("browser.displayedE10SPrompt.1", 5);
 user_pref("browser.displayedE10SNotice", 2);
 user_pref("browser.tabs.remote.autostart", false);
 user_pref("browser.tabs.remote.autostart.1", false);
+user_pref('canvas.filters.enabled', true);
