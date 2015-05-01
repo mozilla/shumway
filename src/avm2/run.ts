@@ -195,7 +195,6 @@ module Shumway.AVMX {
   import defineReadOnlyProperty = Shumway.ObjectUtilities.defineReadOnlyProperty;
 
   import defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
-  import getOwnPropertyDescriptor = Shumway.ObjectUtilities.getOwnPropertyDescriptor;
   import ASClass = Shumway.AVMX.AS.ASClass;
 
   function axBoxIdentity(args) {

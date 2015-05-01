@@ -75,7 +75,6 @@ module Shumway.AVMX.AS {
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
   import isPrototypeWriteable = Shumway.ObjectUtilities.isPrototypeWriteable;
-  import getOwnPropertyDescriptor = Shumway.ObjectUtilities.getOwnPropertyDescriptor;
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
@@ -2431,7 +2430,7 @@ module Shumway.AVMX.AS {
       if (hasOwnProperty(native, fullName)) {
         var value;
         if (trait.isAccessor()) {
-          var pd = getOwnPropertyDescriptor(native, fullName);
+          var pd = Object.getOwnPropertyDescriptor(native, fullName);
           if (trait.isGetter()) {
             value = pd.get;
           } else {

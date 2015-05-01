@@ -743,8 +743,19 @@ module Shumway {
       return Object.prototype.propertyIsEnumerable.call(object, name);
     }
 
-    export function getOwnPropertyDescriptor(object: Object, name: string): PropertyDescriptor {
-      return Object.getOwnPropertyDescriptor(object, name);
+    /**
+     * Returns a property descriptor for the own or inherited property with the given name, or
+     * null if one doesn't exist.
+     */
+    export function getPropertyDescriptor(object: Object, name: string): PropertyDescriptor {
+      do {
+        var propDesc = Object.getOwnPropertyDescriptor(object, name);
+        if (propDesc) {
+          return propDesc;
+        }
+        object = Object.getPrototypeOf(object);
+      } while (object);
+      return null;
     }
 
     export function hasOwnGetter(object: Object, name: string): boolean {
