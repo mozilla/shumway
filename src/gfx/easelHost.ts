@@ -175,9 +175,11 @@ module Shumway.GFX {
     }
 
     processFSCommand(command: string, args: string) {
+      arguments.length; // keeping from closure removal
     }
 
     processFrame() {
+      arguments.length; // keeping from closure removal
     }
 
     onVideoPlaybackEvent(id: number, eventType: VideoPlaybackEvent, data: any) {
