@@ -235,21 +235,49 @@ var shuobject = (function () {
     }
   }
 
-  // Exposes the 'shumway' property in the Shumway iframe, such as:
-  // stage, flash namespace, and Shumway utils.
-  function initializeBindings(iframeElement) {
+  // Exposed as the 'shumway' property in the Shumway iframe, contains:
+  // stage, flash namespace, and other Shumway utils.
+  function ShumwayBindings(iframeElement) {
     var easelHost = iframeElement.contentWindow.easelHost;
+    easelHost.processFrame = this._processFrame.bind(this, iframeElement);
+    easelHost.processFSCommand = this._processFSCommand.bind(this, iframeElement);
+
     var playerWindowIframe = iframeElement.contentWindow.playerWindowIframe.contentWindow;
     var externalInterfaceService = playerWindowIframe.iframeExternalInterface;
-    externalInterfaceService.processExternalCommand = processExternalCommand.bind(externalInterfaceService, iframeElement);
-    iframeElement.shumway = {
-      sec: playerWindowIframe.player.sec,
-      stage: playerWindowIframe.player.stage,
-      Shumway: playerWindowIframe.Shumway,
-      flash: playerWindowIframe.player.sec.flash,
-      easelHost: easelHost
-    };
+    externalInterfaceService.processExternalCommand =
+      processExternalCommand.bind(externalInterfaceService, iframeElement);
+
+    this.sec = playerWindowIframe.player.sec;
+    this.stage = playerWindowIframe.player.stage;
+    this.Shumway = playerWindowIframe.Shumway;
+    this.flash = playerWindowIframe.player.sec.flash;
+    this.easelHost = easelHost;
+
+    this.onFrame = null;
+    this.onFSCommand = null;
   }
+  ShumwayBindings.prototype = {
+    takeScreenshot: function (bounds, stageContent) {
+      bounds = bounds || null;
+      stageContent = !!stageContent;
+
+      var easel = this.easelHost.easel;
+      easel.render();
+      return easel.screenShot(bounds, stageContent);
+    },
+    _processFrame: function (iframeElement) {
+      var onFrame = iframeElement.shumway.onFrame;
+      if (onFrame) {
+        onFrame();
+      }
+    },
+    _processFSCommand: function (iframeElement, command, args) {
+      var onFSCommand = iframeElement.shumway.onFSCommand;
+      if (onFSCommand) {
+        return onFSCommand(command, args);
+      }
+    }
+  };
 
   // Creates Shumway iframe
   function createSWF(swfUrl, id, width, height, flashvars, params, attributes) {
@@ -350,7 +378,7 @@ var shuobject = (function () {
       var contentDocument = iframeElement.contentDocument;
       contentDocument.addEventListener('shumwaystarted', function started(e) {
         contentDocument.removeEventListener('shumwaystarted', started, true);
-        initializeBindings(iframeElement);
+        iframeElement.shumway = new ShumwayBindings(iframeElement);
         if (callbackFn) {
           callbackFn({success: true, id: iframeElement.id, ref: iframeElement});
         }
