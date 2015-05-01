@@ -773,7 +773,7 @@ module Shumway.GFX {
   }
 
   export class ScreenShot {
-    constructor(public dataURL: string, public w: number, public h: number) {
+    constructor(public dataURL: string, public w: number, public h: number, public pixelRatio: number) {
       // ...
     }
   }

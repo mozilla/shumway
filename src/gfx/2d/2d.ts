@@ -1042,7 +1042,7 @@ module Shumway.GFX.Canvas2D {
       return surface;
     }
 
-    public screenShot(bounds: Rectangle, stageContent: boolean): ScreenShot {
+    public screenShot(bounds: Rectangle, stageContent: boolean, disableHidpi: boolean): ScreenShot {
       if (stageContent) {
         // HACK: Weird way to get to the real content, but oh well...
         var contentStage = <Stage>this._stage.content.groupChild.child;
@@ -1056,14 +1056,22 @@ module Shumway.GFX.Canvas2D {
       if (!bounds) {
         bounds = new Rectangle(0, 0, this._target.w, this._target.h);
       }
+      var outputWidth = bounds.w;
+      var outputHeight = bounds.h;
+      var pixelRatio = this._devicePixelRatio;
+      if (disableHidpi) {
+        outputWidth /= pixelRatio;
+        outputHeight /= pixelRatio;
+        pixelRatio = 1;
+      }
       var canvas = document.createElement("canvas");
-      canvas.width = bounds.w;
-      canvas.height = bounds.h;
+      canvas.width = outputWidth;
+      canvas.height = outputHeight;
       var context = canvas.getContext("2d");
       context.fillStyle = this._container.style.backgroundColor;
-      context.fillRect(0, 0, bounds.w, bounds.h);
-      context.drawImage(this._target.context.canvas, bounds.x, bounds.y, bounds.w, bounds.h, 0, 0, bounds.w, bounds.h);
-      return new ScreenShot(canvas.toDataURL('image/png'), bounds.w, bounds.h);
+      context.fillRect(0, 0, outputWidth, outputHeight);
+      context.drawImage(this._target.context.canvas, bounds.x, bounds.y, bounds.w, bounds.h, 0, 0, outputWidth, outputHeight);
+      return new ScreenShot(canvas.toDataURL('image/png'), outputWidth, outputHeight, pixelRatio);
     }
   }
 }

@@ -1219,7 +1219,7 @@ module Shumway.GFX {
      * Captures a rectangular region of the easel as a dataURL as specified by |bounds|. |stageContent| indicates if the bounds
      * should be computed by looking at the bounds of the content of the easel rather than the easel itself.
      */
-    public screenShot(bounds: Rectangle, stageContent: boolean): ScreenShot {
+    public screenShot(bounds: Rectangle, stageContent: boolean, disableHidpi: boolean): ScreenShot {
       throw Shumway.Debug.abstractMethod("Renderer::screenShot");
     }
   }

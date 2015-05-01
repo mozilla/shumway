@@ -162,7 +162,7 @@ var tmpCanvas = document.createElement('canvas');
 function getCanvasData() {
   // flush rendering buffers
   easel.render();
-  return easel.screenShot(null, true).dataURL;
+  return easel.screenShot(null, true, false).dataURL;
 }
 
 var mouseOutside = true;
