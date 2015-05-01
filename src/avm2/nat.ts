@@ -467,11 +467,15 @@ module Shumway.AVMX.AS {
       return value;
     }
 
-    protected _methodClosureCache: any = null;
+    protected _methodClosureCache: any;
 
     axGetMethod(name: string): AXFunction {
       release || assert(typeof this[name] === 'function');
-      var cache = this._methodClosureCache || (this._methodClosureCache = Object.create(null));
+      var cache = this._methodClosureCache;
+      if (!cache) {
+        Object.defineProperty(this, '_methodClosureCache', {value: Object.create(null)});
+        cache = this._methodClosureCache;
+      }
       var method = cache[name];
       if (!method) {
         method = cache[name] = this.sec.AXMethodClosure.Create(<any>this, this[name]);
