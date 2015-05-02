@@ -1222,7 +1222,12 @@ module Shumway.AVMX {
       AS.tryLinkNativeClass(axClass);
 
       // Run the static initializer.
-      interpret(axClass, classInfo.getInitializer(), classScope, [axClass], null);
+      var initializer = classInfo.getInitializer();
+      var initializerCode = initializer.getBody().code;
+      // ... except if it's the standard class initializer that doesn't really do anything.
+      if (initializerCode[0] !== 208 || initializerCode[1] !== 48 || initializerCode[2] !== 71) {
+        interpret(axClass, initializer, classScope, [axClass], null);
+      }
       return axClass;
     }
 
