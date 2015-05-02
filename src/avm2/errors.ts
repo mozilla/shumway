@@ -127,7 +127,7 @@ module Shumway.AVMX {
   //  CannotExtendFinalClass               : {code: 1103, message: "Class %1 cannot extend final base class."},
   //  XMLDuplicateAttribute                : {code: 1104, message: "Attribute \"%1\" was already specified for element \"%2\"."},
   //  CorruptABCError                      : {code: 1107, message: "The ABC data is corrupt, attempt to read out of bounds."},
-  //  InvalidBaseClassError                : {code: 1108, message: "The OP_newclass opcode was used with the incorrect base class."},
+    InvalidBaseClassError                : {code: 1108, message: "The OP_newclass opcode was used with the incorrect base class."},
   //  DanglingFunctionError                : {code: 1109, message: "Attempt to directly call unbound function %1 from method %2."},
   //  CannotExtendError                    : {code: 1110, message: "%1 cannot extend %2."},
   //  CannotImplementError                 : {code: 1111, message: "%1 cannot implement %2."},
