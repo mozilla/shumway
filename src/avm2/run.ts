@@ -597,7 +597,7 @@ module Shumway.AVMX {
         }
       }
       // Scope lookups should not be trapped by proxies.
-      if (this.object.axHasPropertyInternal(mn)) {
+      if (this.object && this.object.axHasPropertyInternal(mn)) {
         return (this.isWith || mn.isRuntime()) ? this.object : (this.cache[mn.id] = this.object);
       }
       if (this.parent) {
