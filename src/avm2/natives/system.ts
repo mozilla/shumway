@@ -96,11 +96,12 @@ module Shumway.AVMX.AS {
       }
 
       static get useCodePage(): boolean {
-        return System._useCodePage;
+        return this._useCodePage;
       }
 
       static set useCodePage(value: boolean) {
-        System._useCodePage = !!value;
+        somewhatImplemented("public flash.system.System::set useCodePage");
+        this._useCodePage = !!value;
       }
 
       static get vmVersion(): string {
