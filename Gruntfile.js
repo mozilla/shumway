@@ -265,9 +265,6 @@ module.exports = function(grunt) {
       stop_ats_db: {
         cmd: "test -e /tmp/ats.pid && kill $(cat /tmp/ats.pid); rm /tmp/ats.pid"
       },
-      setup_ats: {
-        cmd: "mongo ats --eval 'db.copyDatabase(\"ats\",\"ats\",\"areweflashyet.com\",\"grunt\",\"grunt\")'"
-      },
       ats_parsetest: {
         cmd: "parallel --will-cite node run.js --task parse ::: 0 1 2 3 4 5 6 7 8 9 a b c d e f",
         cwd: "test/ats"
@@ -1184,5 +1181,4 @@ module.exports = function(grunt) {
   grunt.registerTask('mozcentral', ['build', 'closure-bundles', 'exec:build_mozcentral']);
   grunt.registerTask('web', ['build', 'closure-bundles', 'exec:build_extension', 'shell-package', 'shuobject-package', 'exec:build_web']);
   grunt.registerTask('dist', ['build', 'closure-bundles', 'dist-package']);
-  grunt.registerTask('setup-ats', ['exec:install_mongo', 'exec:start_ats_db', 'exec:setup_ats']);
 };
