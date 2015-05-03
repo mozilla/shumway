@@ -603,9 +603,9 @@ module Shumway.AVMX {
       }
       // Scope lookups should not be trapped by proxies. Except for with scopes, check only trait
       // properties.
-      if (this.object && this.isWith ?
-                         this.object.axHasPropertyInternal(mn) :
-                         this.object.traits.getTrait(mn.namespaces, mn.name)) {
+      if (this.object && (this.isWith ?
+                          this.object.axHasPropertyInternal(mn) :
+                          this.object.traits.getTrait(mn.namespaces, mn.name))) {
         return (this.isWith || mn.isRuntime()) ? this.object : (this.cache[mn.id] = this.object);
       }
       if (this.parent) {
