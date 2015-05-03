@@ -3228,6 +3228,30 @@ module Shumway {
       return Math.max(0, Math.min(255, value));
     }
 
+    export function uARGBToImagePixel(value: number, imageType: ImageType) {
+      switch (imageType) {
+        case ImageType.PremultipliedAlphaARGB:
+          return premultiplyARGB(value);
+        case ImageType.StraightAlphaRGBA:
+          return swap32(ARGBToRGBA(value));
+        default:
+          Shumway.Debug.notImplemented(ImageType[this._type]);
+          return 0;
+      }
+    }
+
+    export function imagePixelToUARGB(value: number, imageType: ImageType) {
+      switch (imageType) {
+        case ImageType.PremultipliedAlphaARGB:
+          return unpremultiplyARGB(swap32(value)) >>> 0;
+        case ImageType.StraightAlphaRGBA:
+          return RGBAToARGB(swap32(value));
+        default:
+          Shumway.Debug.notImplemented(ImageType[this._type]);
+          return 0;
+      }
+    }
+
     /**
      * Unpremultiplies the given |pARGB| color value.
      */

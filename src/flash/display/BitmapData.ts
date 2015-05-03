@@ -26,6 +26,8 @@ module Shumway.AVMX.AS.flash.display {
   import RGBAToARGB = Shumway.ColorUtilities.RGBAToARGB;
   import tableLookupUnpremultiplyARGB = Shumway.ColorUtilities.tableLookupUnpremultiplyARGB;
   import blendPremultipliedBGRA = Shumway.ColorUtilities.blendPremultipliedBGRA;
+  import uARGBToImagePixel = Shumway.ColorUtilities.uARGBToImagePixel;
+  import imagePixelToUARGB = Shumway.ColorUtilities.imagePixelToUARGB;
   import indexOf = Shumway.ArrayUtilities.indexOf;
 
   /**
@@ -317,18 +319,7 @@ module Shumway.AVMX.AS.flash.display {
         return 0;
       }
       this._ensureBitmapData();
-      var value = this._view[y * this._rect.width + x];
-      switch (this._type) {
-        case ImageType.PremultipliedAlphaARGB:
-          var pARGB = swap32(value);
-          var uARGB = unpremultiplyARGB(pARGB);
-          return uARGB >>> 0;
-        case ImageType.StraightAlphaRGBA:
-          return RGBAToARGB(swap32(value));
-        default:
-          Shumway.Debug.notImplemented(ImageType[this._type]);
-          return 0;
-      }
+      return imagePixelToUARGB(this._view[y * this._rect.width + x], this._type);
     }
 
     setPixel(x: number /*int*/, y: number /*int*/, uARGB: number /*uint*/): void {
@@ -669,12 +660,64 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     getColorBoundsRect(mask: number /*uint*/, color: number /*uint*/,
-                       findColor: boolean = true): flash.geom.Rectangle {
-      mask = mask >>> 0;
-      color = color >>> 0;
-      findColor = !!findColor;
-      notImplemented("public flash.display.BitmapData::getColorBoundsRect");
-      return;
+                       findColor?: boolean): geom.Rectangle {
+      // Coerce to int instead of uint because that's faster in SpiderMonkey.
+      mask = mask | 0;
+      color = color | 0;
+      this._getPixelData()
+      var maskedColor = uARGBToImagePixel(color & mask, this._type);
+      if (arguments.length < 3) {
+        findColor = true;
+      } else {
+        findColor = !!findColor;
+      }
+      var rect = this._rect.clone();
+      var width = rect.width;
+      var height = rect.height;
+      var minX = width;
+      var minY = height;
+      var maxX = 0;
+      var maxY = 0;
+      this._ensureBitmapData();
+      var buffer = this._view;
+
+      for (var y = 0; y < height; y++) {
+        var lineOffset = y * height;
+        var index = lineOffset;
+        var limit = index + minX - 1;
+        var anyMatches = false;
+        for (; index < limit; index++) {
+          var pixel = buffer[index];
+          if ((<any>(pixel & mask) === maskedColor) === findColor) {
+            anyMatches = true;
+            minX = index - lineOffset;
+            break;
+          }
+        }
+        maxX = Math.max(maxX, minX);
+        index = lineOffset + width;
+        limit = lineOffset + maxX + 1;
+        for (; index > limit; index--) {
+          var pixel = buffer[index];
+          if ((<any>(pixel & mask) === maskedColor) === findColor) {
+            anyMatches = true;
+            maxX = index - lineOffset;
+            break;
+          }
+        }
+        if (anyMatches) {
+          minY = Math.min(minY, y);
+          maxY = Math.max(maxY, y);
+        }
+      }
+
+      release || assert(minX <= maxX);
+      release || assert(minY <= maxY);
+      rect.x = minX;
+      rect.y = minY;
+      rect.width = maxX - minX;
+      rect.height = maxY - minY;
+      return rect;
     }
 
     getPixels(rect: flash.geom.Rectangle): flash.utils.ByteArray {
