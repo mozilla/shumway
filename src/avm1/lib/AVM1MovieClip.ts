@@ -573,7 +573,7 @@ module Shumway.AVM1.Lib {
     private _getCachedPropertyResult(value) {
       if (!this._cachedPropertyResult) {
         this._cachedPropertyResult = {
-          flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.DONT_ENUM,
+          flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
           value: value
         };
       } else {

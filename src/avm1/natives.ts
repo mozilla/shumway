@@ -111,13 +111,16 @@ module Shumway.AVM1.Natives {
     }
 
     public unwatch(name: string): boolean {
-      Debug.notImplemented('AVM1Object.prototype.unwatch');
-      return false;
+      name = alCoerceString(this.context, name);
+      return this.alRemotePropertyWatcher(name);
     }
 
     public watch(name: string, callback: AVM1Function, userData?: any): boolean {
-      Debug.notImplemented('AVM1Object.prototype.watch');
-      return false;
+      name = alCoerceString(this.context, name);
+      if (!alIsFunction(callback)) {
+        return false;
+      }
+      return this.alAddPropertyWatcher(name, callback, userData);
     }
   }
 

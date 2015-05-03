@@ -46,12 +46,18 @@ module Shumway.AVM1 {
     alCall(thisArg: any, args?: any[]): any;
   }
 
+  export interface IAVM1PropertyWatcher {
+    name: any;
+    callback: IAVM1Callable;
+    userData: any;
+  }
+
   export interface AVM1PropertyDescriptor {
     flags: AVM1PropertyFlags;
     value?: any;
     get?: IAVM1Callable;
     set?: IAVM1Callable;
-    id?: string;
+    watcher?: IAVM1PropertyWatcher;
   }
 
   var ESCAPED_PROPERTY_PREFIX = '__avm1';
@@ -267,8 +273,12 @@ module Shumway.AVM1 {
       }
       var ownDesc = this.alGetOwnProperty(p);
       if (ownDesc && (ownDesc.flags & AVM1PropertyFlags.DATA)) {
+        if (ownDesc.watcher) {
+          v = ownDesc.watcher.callback.alCall(this,
+            [ownDesc.watcher.name, ownDesc.value, v, ownDesc.watcher.userData]);
+        }
         var newDesc: AVM1PropertyDescriptor = {
-          flags: AVM1PropertyFlags.DATA,
+          flags: ownDesc.flags,
           value: v
         };
         this.alSetOwnProperty(p, newDesc);
@@ -276,12 +286,22 @@ module Shumway.AVM1 {
       }
       var desc = this.alGetProperty(p);
       if (desc && (desc.flags & AVM1PropertyFlags.ACCESSOR)) {
+        if (desc.watcher) {
+          var oldValue = desc.get ? desc.get.alCall(this) : undefined;
+          v = desc.watcher.callback.alCall(this,
+            [desc.watcher.name, oldValue, v, desc.watcher.userData]);
+        }
         var setter = desc.set;
         release || Debug.assert(setter);
         setter.alCall(this, [v]);
       } else {
+        if (desc && desc.watcher) {
+          release || Debug.assert(desc.flags & AVM1PropertyFlags.DATA);
+          v = desc.watcher.callback.alCall(this,
+            [desc.watcher.name, desc.value, v, desc.watcher.userData]);
+        }
         var newDesc: AVM1PropertyDescriptor = {
-          flags: AVM1PropertyFlags.DATA,
+          flags: desc ? desc.flags : AVM1PropertyFlags.DATA,
           value: v
         };
         this.alSetOwnProperty(p, newDesc);
@@ -303,6 +323,30 @@ module Shumway.AVM1 {
       }
       this.alDeleteOwnProperty(p);
       return true;
+    }
+
+    public alAddPropertyWatcher(p: any, callback: IAVM1Callable, userData: any): boolean {
+      // TODO verify/test this functionality to match ActionScript
+      var desc = this.alGetProperty(p);
+      if (!desc) {
+        return false;
+      }
+      desc.watcher = {
+        name: p,
+        callback: callback,
+        userData: userData
+      };
+      return true;
+    }
+
+    public alRemotePropertyWatcher(p: any): boolean {
+      var desc = this.alGetProperty(p);
+      if (!desc || !desc.watcher) {
+        return false;
+      }
+      desc.watcher = undefined;
+      return true;
+
     }
 
     public alDefaultValue(hint: AVM1DefaultValueHint = AVM1DefaultValueHint.NUMBER): any {
