@@ -399,7 +399,7 @@ module Shumway.AVMX.AS.flash.display {
       destPoint = destPoint;
       sourceChannel = sourceChannel >>> 0;
       destChannel = destChannel >>> 0;
-      notImplemented("public flash.display.BitmapData::copyChannel");
+      somewhatImplemented("public flash.display.BitmapData::copyChannel");
       return;
     }
 
@@ -416,7 +416,7 @@ module Shumway.AVMX.AS.flash.display {
       mergeAlpha = !!mergeAlpha;
 
       if (alphaBitmapData || alphaPoint) {
-        notImplemented("public flash.display.BitmapData::copyPixels - Alpha");
+        somewhatImplemented("public flash.display.BitmapData::copyPixels - Alpha");
         return;
       }
 
@@ -483,7 +483,7 @@ module Shumway.AVMX.AS.flash.display {
       }
 
       if (mergeAlpha && this._type !== ImageType.PremultipliedAlphaARGB) {
-        notImplemented("public flash.display.BitmapData::copyPixels - Merge Alpha");
+        somewhatImplemented("public flash.display.BitmapData::copyPixels - Merge Alpha");
         return;
       }
 
@@ -656,7 +656,7 @@ module Shumway.AVMX.AS.flash.display {
       x = x | 0;
       y = y | 0;
       color = color >>> 0;
-      notImplemented("public flash.display.BitmapData::floodFill");
+      somewhatImplemented("public flash.display.BitmapData::floodFill");
       return;
     }
 
@@ -664,7 +664,7 @@ module Shumway.AVMX.AS.flash.display {
                        filter: flash.filters.BitmapFilter): flash.geom.Rectangle {
       sourceRect = sourceRect;
       filter = filter;
-      notImplemented("public flash.display.BitmapData::generateFilterRect");
+      somewhatImplemented("public flash.display.BitmapData::generateFilterRect");
       return;
     }
 
@@ -673,8 +673,8 @@ module Shumway.AVMX.AS.flash.display {
       mask = mask >>> 0;
       color = color >>> 0;
       findColor = !!findColor;
-      notImplemented("public flash.display.BitmapData::getColorBoundsRect");
-      return;
+      somewhatImplemented("public flash.display.BitmapData::getColorBoundsRect");
+      return new this.sec.flash.geom.Rectangle();
     }
 
     getPixels(rect: flash.geom.Rectangle): flash.utils.ByteArray {
@@ -711,8 +711,8 @@ module Shumway.AVMX.AS.flash.display {
       secondObject = secondObject;
       secondBitmapDataPoint = secondBitmapDataPoint;
       secondAlphaThreshold = secondAlphaThreshold >>> 0;
-      notImplemented("public flash.display.BitmapData::hitTest");
-      return;
+      somewhatImplemented("public flash.display.BitmapData::hitTest");
+      return true;
     }
 
     merge(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle,
@@ -776,14 +776,14 @@ module Shumway.AVMX.AS.flash.display {
       randomSeed = randomSeed | 0;
       numPixels = numPixels | 0;
       fillColor = fillColor >>> 0;
-      notImplemented("public flash.display.BitmapData::pixelDissolve");
+      somewhatImplemented("public flash.display.BitmapData::pixelDissolve");
       return;
     }
 
     scroll(x: number /*int*/, y: number /*int*/): void {
       x = x | 0;
       y = y | 0;
-      notImplemented("public flash.display.BitmapData::scroll");
+      somewhatImplemented("public flash.display.BitmapData::scroll");
       return;
     }
 
@@ -807,7 +807,7 @@ module Shumway.AVMX.AS.flash.display {
       color = color >>> 0;
       mask = mask >>> 0;
       copySource = !!copySource;
-      notImplemented("public flash.display.BitmapData::threshold");
+      somewhatImplemented("public flash.display.BitmapData::threshold");
       return;
     }
 
