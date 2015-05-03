@@ -256,6 +256,9 @@ module.exports = function(grunt) {
       versions_travis: {
         cmd: "parallel --gnu --version; utils/jsshell/js --version; utils/tamarin-redux/bin/shell/avmshell -Dversion;"
       },
+      install_mongo: {
+        cmd: "npm install mongojs@0.18.1"
+      },
       start_ats_db: {
         cmd: "test -e /tmp/ats.pid || mongod --dbpath test/ats/db --fork --logpath test/ats/db/log --pidfilepath /tmp/ats.pid || rm /tmp/ats.pid"
       },
@@ -1181,5 +1184,5 @@ module.exports = function(grunt) {
   grunt.registerTask('mozcentral', ['build', 'closure-bundles', 'exec:build_mozcentral']);
   grunt.registerTask('web', ['build', 'closure-bundles', 'exec:build_extension', 'shell-package', 'shuobject-package', 'exec:build_web']);
   grunt.registerTask('dist', ['build', 'closure-bundles', 'dist-package']);
-  grunt.registerTask('setup-ats', ['exec:start_ats_db', 'exec:setup_ats']);
+  grunt.registerTask('setup-ats', ['exec:install_mongo', 'exec:start_ats_db', 'exec:setup_ats']);
 };
