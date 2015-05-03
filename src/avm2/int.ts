@@ -558,9 +558,10 @@ module Shumway.AVMX {
             stack.push(sec.createActivation(methodInfo, scopes.topScope()));
             break;
           case Bytecode.NEWCLASS:
-            stack[stack.length - 1] = sec.createClass(
-              abc.classes[frame.u30()], stack[stack.length - 1], scopes.topScope()
-            );
+            // Storing super class in `value` to make exception handling easier.
+            value = stack[stack.length - 1];
+            stack[stack.length - 1] = sec.createClass(abc.classes[frame.u30()], value,
+                                                      scopes.topScope());
             break;
           case Bytecode.GETDESCENDANTS:
             popNameInto(stack, abc.getMultiname(frame.u30()), rn);
@@ -939,6 +940,11 @@ module Shumway.AVMX {
       case Bytecode.CONSTRUCT:
         if (!receiver || !receiver.axConstruct) {
           return sec.createError('TypeError', Errors.ConstructOfNonFunctionError);
+        }
+        break;
+      case Bytecode.NEWCLASS:
+        if (!value || !sec.AXClass.axIsType(value)) {
+          return sec.createError('VerifyError', Errors.InvalidBaseClassError);
         }
         break;
       case Bytecode.CALLSUPERVOID:

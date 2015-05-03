@@ -590,14 +590,22 @@ module Shumway.AVMX {
     }
 
     public findScopeProperty(mn: Multiname, strict: boolean, scopeOnly: boolean): any {
+      // Multinames with a `null` name are the any name, '*'. Need to catch those here, because
+      // otherwise we'll get a failing assert in `RuntimeTraits#getTrait` below.
+      if (mn.name === null) {
+        this.global.object.sec.throwError('ReferenceError', Errors.UndefinedVarError, '*');
+      }
       var object;
       if (!scopeOnly && !mn.isRuntime()) {
         if ((object = this.cache[mn.id])) {
           return object;
         }
       }
-      // Scope lookups should not be trapped by proxies.
-      if (this.object.axHasPropertyInternal(mn)) {
+      // Scope lookups should not be trapped by proxies. Except for with scopes, check only trait
+      // properties.
+      if (this.object && this.isWith ?
+                         this.object.axHasPropertyInternal(mn) :
+                         this.object.traits.getTrait(mn.namespaces, mn.name)) {
         return (this.isWith || mn.isRuntime()) ? this.object : (this.cache[mn.id] = this.object);
       }
       if (this.parent) {
@@ -627,7 +635,7 @@ module Shumway.AVMX {
       // global anyways.
       if (strict) {
         if (!(mn.getPublicMangledName() in globalObject)) {
-          this.object.sec.throwError("ReferenceError", Errors.UndefinedVarError, mn.name);
+          this.global.object.sec.throwError("ReferenceError", Errors.UndefinedVarError, mn.name);
         }
       }
 
@@ -1222,7 +1230,12 @@ module Shumway.AVMX {
       AS.tryLinkNativeClass(axClass);
 
       // Run the static initializer.
-      interpret(axClass, classInfo.getInitializer(), classScope, [axClass], null);
+      var initializer = classInfo.getInitializer();
+      var initializerCode = initializer.getBody().code;
+      // ... except if it's the standard class initializer that doesn't really do anything.
+      if (initializerCode[0] !== 208 || initializerCode[1] !== 48 || initializerCode[2] !== 71) {
+        interpret(axClass, initializer, classScope, [axClass], null);
+      }
       return axClass;
     }
 
