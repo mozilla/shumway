@@ -71,7 +71,8 @@ module Shumway.AVM1.Lib {
     }
 
     public getRectangle(): AVM1Object {
-      return new AVM1Rectangle(this.context, 0, 0, this.as3BitmapData.width, this.as3BitmapData.height);
+      var rect = this.as3BitmapData;
+      return new AVM1Rectangle(this.context, 0, 0, rect.width, rect.height);
     }
 
     public getTransparent(): boolean {
@@ -112,11 +113,20 @@ module Shumway.AVM1.Lib {
       return this._as3Object.compare((<AVM1BitmapData>other)._as3Object);
     }
 
-    public copyChannel(sourceBitmap: AVM1BitmapData, sourceRect: AVM1Object, destPoint: AVM1Object, sourceChannel: number, destChannel: number): void {
-      Debug.notImplemented('AVM1BitmapData.copyChannel');
+    public copyChannel(sourceBitmap: AVM1BitmapData, sourceRect: AVM1Object, destPoint: AVM1Object,
+                       sourceChannel: number, destChannel: number): void {
+      var as3BitmapData = sourceBitmap.as3BitmapData;
+      var as3SourceRect = toAS3Rectangle(sourceRect);
+      var as3DestPoint = toAS3Point(destPoint);
+      sourceChannel = alCoerceNumber(this.context, sourceChannel);
+      destChannel = alCoerceNumber(this.context, destChannel);
+      this.as3BitmapData.copyChannel(as3BitmapData, as3SourceRect, as3DestPoint, sourceChannel,
+                                     destChannel);
     }
 
-    public copyPixels(sourceBitmap: AVM1BitmapData, sourceRect: AVM1Object, destPoint: AVM1Object, alphaBitmap?: AVM1BitmapData, alphaPoint?: AVM1Object, mergeAlpha?: boolean): void {
+    public copyPixels(sourceBitmap: AVM1BitmapData, sourceRect: AVM1Object, destPoint: AVM1Object,
+                      alphaBitmap?: AVM1BitmapData, alphaPoint?: AVM1Object,
+                      mergeAlpha?: boolean): void {
       var as3BitmapData = sourceBitmap.as3BitmapData;
       var as3SourceRect = toAS3Rectangle(sourceRect);
       var as3DestPoint = toAS3Point(destPoint);
@@ -124,14 +134,16 @@ module Shumway.AVM1.Lib {
       var as3AlphaPoint = alphaPoint ? toAS3Point(alphaPoint) : null;
       mergeAlpha = alToBoolean(this.context, mergeAlpha);
 
-      this.as3BitmapData.copyPixels(as3BitmapData, as3SourceRect, as3DestPoint, as3AlphaData, as3AlphaPoint, mergeAlpha);
+      this.as3BitmapData.copyPixels(as3BitmapData, as3SourceRect, as3DestPoint, as3AlphaData,
+                                    as3AlphaPoint, mergeAlpha);
     }
 
     dispose(): void {
       this.as3BitmapData.dispose();
     }
 
-    draw(source: AVM1Object, matrix?: AVM1Object, colorTransform?: AVM1Object, blendMode?: any, clipRect?: AVM1Object, smooth?: boolean): void {
+    draw(source: AVM1Object, matrix?: AVM1Object, colorTransform?: AVM1Object, blendMode?: any,
+         clipRect?: AVM1Object, smooth?: boolean): void {
       var as3BitmapData = (<any>source)._as3Object; // movies and bitmaps
       var as3Matrix = matrix ? toAS3Matrix(matrix) : null;
       var as3ColorTransform = colorTransform ? toAS3ColorTransform(colorTransform) : null;
@@ -151,7 +163,10 @@ module Shumway.AVM1.Lib {
     }
 
     floodFill(x: number, y: number, color: number): void {
-      Debug.notImplemented('AVM1BitmapData.floodFill');
+      x = alCoerceNumber(this.context, x);
+      y = alCoerceNumber(this.context, y);
+      color = alToInt32(this.context, color);
+      this._as3Object.floodFill(x, y, color);
     }
 
     generateFilterRect(sourceRect: AVM1Object, filter: AVM1Object): AVM1Object {
@@ -160,8 +175,11 @@ module Shumway.AVM1.Lib {
     }
 
     getColorBoundsRect(mask: number, color: number, findColor?: boolean): AVM1Object {
-      Debug.notImplemented('AVM1BitmapData.getColorBoundsRect');
-      return undefined;
+      mask = alToInt32(this.context, mask);
+      color = alToInt32(this.context, color);
+      findColor = alToBoolean(this.context, findColor);
+      var rect = this._as3Object.getColorBoundsRect(mask, color, findColor);
+      return new AVM1Rectangle(this.context, rect.x, rect.y, rect.width, rect.height);
     }
 
     getPixel(x: number, y: number): number {
@@ -172,18 +190,48 @@ module Shumway.AVM1.Lib {
       return this._as3Object.getPixel32(x, y);
     }
 
-    hitTest(firstPoint: AVM1Object, firstAlphaThreshold: number, secondObject: AVM1Object, secondBitmapPoint?: AVM1Object, secondAlphaThreshold?: number): boolean {
-      Debug.notImplemented('AVM1BitmapData.hitTest');
-      return false;
+    hitTest(firstPoint: AVM1Object, firstAlphaThreshold: number, secondObject: AVM1Object,
+            secondBitmapPoint?: AVM1Object, secondAlphaThreshold?: number): boolean {
+      Debug.somewhatImplemented('AVM1BitmapData.hitTest');
+      var as3FirstPoint = toAS3Point(firstPoint);
+      firstAlphaThreshold = alToInt32(this.context, firstAlphaThreshold);
+      // TODO: Check for Rectangle, Point, Bitmap, or BitmapData here. Or whatever AVM1 allows.
+      var as3SecondObject = (<any>secondObject)._as3Object; // movies and bitmaps
+      if (arguments.length < 4) {
+        return this._as3Object.hitTest(as3FirstPoint, firstAlphaThreshold, as3SecondObject);
+      }
+      var as3SecondBitmapPoint = secondBitmapPoint != null ? toAS3Point(secondBitmapPoint) : null;
+      if (arguments.length < 4) {
+        return this._as3Object.hitTest(as3FirstPoint, firstAlphaThreshold, as3SecondObject,
+                                       as3SecondBitmapPoint);
+      }
+      secondAlphaThreshold = alToInt32(this.context, secondAlphaThreshold);
+      return this._as3Object.hitTest(as3FirstPoint, firstAlphaThreshold, as3SecondObject,
+                                     as3SecondBitmapPoint, secondAlphaThreshold);
     }
 
-    merge(sourceBitmap: AVM1BitmapData, sourceRect: AVM1Object, destPoint: AVM1Object, redMult: number, greenMult: number, blueMult: number, alphaMult: number): void {
-      Debug.notImplemented('AVM1BitmapData.merge');
-      return undefined;
+    merge(sourceBitmap: AVM1BitmapData, sourceRect: AVM1Object, destPoint: AVM1Object,
+          redMult: number, greenMult: number, blueMult: number, alphaMult: number): void {
+      var as3BitmapData = sourceBitmap.as3BitmapData;
+      var as3SourceRect = toAS3Rectangle(sourceRect);
+      var as3DestPoint = toAS3Point(destPoint);
+      redMult = alToInt32(this.context, redMult);
+      greenMult = alToInt32(this.context, greenMult);
+      blueMult = alToInt32(this.context, blueMult);
+      alphaMult = alToInt32(this.context, alphaMult);
+
+      this.as3BitmapData.merge(as3BitmapData, as3SourceRect, as3DestPoint, redMult, greenMult,
+                               blueMult, alphaMult);
     }
 
-    noise(randomSeed: number, low?: number, high?: number, channelOptions?: number, grayScale?: boolean): void {
-      Debug.notImplemented('AVM1BitmapData.noise');
+    noise(randomSeed: number, low?: number, high?: number, channelOptions?: number,
+          grayScale?: boolean): void {
+      randomSeed = alToInt32(this.context, randomSeed);
+      low = arguments.length < 2 ? 0 : alToInt32(this.context, low);
+      high = arguments.length < 3 ? 255 : alToInt32(this.context, high);
+      channelOptions = arguments.length < 4 ? 1 | 2 | 4 : alToInt32(this.context, channelOptions);
+      grayScale = arguments.length < 5 ? false : alToBoolean(this.context, grayScale);
+      this._as3Object.noise(randomSeed, low, high, channelOptions, grayScale);
     }
 
     paletteMap(sourceBitmap: AVM1BitmapData, sourceRect: AVM1Object, destPoint: AVM1Object, redArray?: AVM1Object, greenArray?: AVM1Object, blueArray?: AVM1Object, alphaArray?: AVM1Object): void {
@@ -209,26 +257,54 @@ module Shumway.AVM1.Lib {
       this.perlinNoise(baseX, baseY, numOctaves, randomSeed, stitch, fractalNoise, channelOptions, grayScale, as3Offsets);
     }
 
-    pixelDissolve(sourceBitmap: AVM1BitmapData, sourceRect: AVM1Object, destPoint: AVM1Object, randomSeed?: number, numberOfPixels?: number, fillColor?: number): number {
-      Debug.notImplemented('AVM1BitmapData.pixelDissolve');
-      return NaN;
+    pixelDissolve(sourceBitmap: AVM1BitmapData, sourceRect: AVM1Object, destPoint: AVM1Object,
+                  randomSeed?: number, numberOfPixels?: number, fillColor?: number): number {
+      var as3BitmapData = sourceBitmap.as3BitmapData;
+      var as3SourceRect = toAS3Rectangle(sourceRect);
+      var as3DestPoint = toAS3Point(destPoint);
+      randomSeed = arguments.length < 4 ? 0 : alToInt32(this.context, randomSeed);
+      numberOfPixels = arguments.length < 5 ?
+                       as3SourceRect.width * as3SourceRect.height / 30 :
+                       alToInt32(this.context, numberOfPixels);
+      fillColor = arguments.length < 6 ? 0 : alToInt32(this.context, fillColor);
+
+      return this.as3BitmapData.pixelDissolve(as3BitmapData, as3SourceRect, as3DestPoint,
+                                              randomSeed, numberOfPixels, fillColor);
     }
 
     scroll(x: number, y: number): void {
-      Debug.notImplemented('AVM1BitmapData.scroll');
+      x = alCoerceNumber(this.context, x);
+      y = alCoerceNumber(this.context, y);
+      this._as3Object.scroll(x, y);
     }
 
     setPixel(x: number, y: number, color: number): void {
-      Debug.notImplemented('AVM1BitmapData.setPixel');
+      x = alCoerceNumber(this.context, x);
+      y = alCoerceNumber(this.context, y);
+      color = alToInt32(this.context, color);
+      this._as3Object.setPixel(x, y, color);
     }
 
     setPixel32(x: number, y: number, color: number): void {
-      Debug.notImplemented('AVM1BitmapData.setPixel32');
+      x = alCoerceNumber(this.context, x);
+      y = alCoerceNumber(this.context, y);
+      color = alToInt32(this.context, color);
+      this._as3Object.setPixel32(x, y, color);
     }
 
-    threshold(sourceBitmap: AVM1BitmapData, sourceRect: AVM1Object, destPoint: AVM1Object, operation: String, threshold: number, color?: number, mask?: number, copySource?: boolean): number {
-      Debug.notImplemented('AVM1BitmapData.threshold');
-      return NaN;
+    threshold(sourceBitmap: AVM1BitmapData, sourceRect: AVM1Object, destPoint: AVM1Object,
+              operation: string, threshold: number, color?: number, mask?: number,
+              copySource?: boolean): number {
+      var as3BitmapData = sourceBitmap.as3BitmapData;
+      var as3SourceRect = toAS3Rectangle(sourceRect);
+      var as3DestPoint = toAS3Point(destPoint);
+      operation = alCoerceString(this.context, operation);
+      threshold = alToInt32(this.context, threshold);
+      color = arguments.length < 6 ? 0 : alToInt32(this.context, color);
+      mask = arguments.length < 7 ? 0xFFFFFFFF : alToInt32(this.context, mask);
+      copySource = arguments.length < 8 ? false : alToBoolean(this.context, copySource);
+      return this._as3Object.threshold(as3BitmapData, as3SourceRect, as3DestPoint, operation,
+                                       threshold, color, mask, copySource);
     }
   }
 }
