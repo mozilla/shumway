@@ -16,8 +16,6 @@
 
 module Shumway.AVMX.AS {
 
-  import assertNotImplemented = Shumway.Debug.assertNotImplemented;
-  import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
 
@@ -27,32 +25,34 @@ module Shumway.AVMX.AS {
         super();
       }
       static get enabled(): boolean {
-        notImplemented("public flash.system.IME::static get enabled"); return;
+        somewhatImplemented("public flash.system.IME::static get enabled");
+        return false;
       }
       static set enabled(enabled: boolean) {
+        somewhatImplemented("public flash.system.IME::static set enabled");
         enabled = !!enabled;
-        notImplemented("public flash.system.IME::static set enabled"); return;
       }
       static get conversionMode(): string {
-        notImplemented("public flash.system.IME::static get conversionMode"); return;
+        somewhatImplemented("public flash.system.IME::static get conversionMode");
+        return 'UNKNOWN';
       }
       static set conversionMode(mode: string) {
         mode = axCoerceString(mode);
-        notImplemented("public flash.system.IME::static set conversionMode"); return;
+        somewhatImplemented("public flash.system.IME::static set conversionMode");
       }
       static setCompositionString(composition: string): void {
         composition = axCoerceString(composition);
-        notImplemented("public flash.system.IME::static setCompositionString"); return;
+        somewhatImplemented("public flash.system.IME::static setCompositionString");
       }
       static doConversion(): void {
-        notImplemented("public flash.system.IME::static doConversion"); return;
+        somewhatImplemented("public flash.system.IME::static doConversion");
       }
       static compositionSelectionChanged(start: number /*int*/, end: number /*int*/): void {
         start = start | 0; end = end | 0;
-        notImplemented("public flash.system.IME::static compositionSelectionChanged"); return;
+        somewhatImplemented("public flash.system.IME::static compositionSelectionChanged");
       }
       static compositionAbandoned(): void {
-        notImplemented("public flash.system.IME::static compositionAbandoned"); return;
+        somewhatImplemented("public flash.system.IME::static compositionAbandoned");
       }
       static get isSupported(): boolean {
         somewhatImplemented("public flash.system.IME::static get isSupported");
@@ -68,7 +68,8 @@ module Shumway.AVMX.AS {
       }
 
       static get ime(): flash.system.IME {
-        notImplemented("public flash.system.System::get ime"); return;
+        somewhatImplemented("public flash.system.System::get ime");
+        return null;
       }
 
       static setClipboard(string: string): void {
@@ -96,11 +97,12 @@ module Shumway.AVMX.AS {
       }
 
       static get useCodePage(): boolean {
-        return System._useCodePage;
+        return this._useCodePage;
       }
 
       static set useCodePage(value: boolean) {
-        System._useCodePage = !!value;
+        somewhatImplemented("public flash.system.System::set useCodePage");
+        this._useCodePage = !!value;
       }
 
       static get vmVersion(): string {

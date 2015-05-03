@@ -215,12 +215,24 @@ declare module Shumway.AVMX.AS.flash {
       applyFilter(sourceBitmap: BitmapData, sourceRect: geom.Rectangle, destPoint: geom.Point, filter): void;
       clone();
       compare(otherBitmapData: BitmapData): boolean;
+      copyChannel(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle, destPoint: flash.geom.Point, sourceChannel: number, destChannel: number): void;
       copyPixels(sourceBitmap: BitmapData, sourceRect: geom.Rectangle, destPoint: geom.Point, alphaBitmap: BitmapData, alphaPoint: geom.Point, mergeAlpha: boolean): void;
       draw(source, matrix: geom.Matrix, colorTransform: geom.ColorTransform, blendMode: string, clipRect: geom.Rectangle, smoothing: boolean): void;
       fillRect(rect: geom.Rectangle, color: number): void;
+      floodFill(x: number, y: number, color: number): void;
+      getColorBoundsRect(mask: number, color: number, findColor?: boolean): flash.geom.Rectangle;
       getPixel(x: number, y: number): number;
       getPixel32(x: number, y: number): number;
-      perlinNoise(baseX: number, baseY: number, numOctaves: number, randomSeed: number, stitch: boolean, fractalNoise: boolean, channelOptions: number, grayScale: boolean, offsets): void;
+      setPixel(x: number, y: number, uARGB: number): void;
+      setPixel32(x: number, y: number, uARGB: number): void;
+      hitTest(firstPoint: flash.geom.Point, firstAlphaThreshold: number, secondObject: ASObject, secondBitmapDataPoint?: flash.geom.Point, secondAlphaThreshold?: number): boolean;
+      merge(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle, destPoint: flash.geom.Point, redMultiplier: number, greenMultiplier: number, blueMultiplier: number, alphaMultiplier: number): void;
+      noise(randomSeed: number, low?: number, high?: number, channelOptions?: number, grayScale?: boolean): void;
+      paletteMap(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle, destPoint: flash.geom.Point, redArray?: any[], greenArray?: any[], blueArray?: any[], alphaArray?: any[]): void;
+      perlinNoise(baseX: number, baseY: number, numOctaves: number, randomSeed: number, stitch: boolean, fractalNoise: boolean, channelOptions?: number, grayScale?: boolean, offsets?: any[]): void;
+      pixelDissolve(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle, destPoint: flash.geom.Point, randomSeed?: number, numPixels?: number, fillColor?: number): number;
+      scroll(x: number, y: number): void;
+      threshold(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle, destPoint: flash.geom.Point, operation: string, threshold: number, color?: number, mask?: number, copySource?: boolean): number;
       dispose();
     }
     class Bitmap extends DisplayObject {
