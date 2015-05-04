@@ -283,6 +283,21 @@ module Shumway.AVM1.Lib {
       Debug.somewhatImplemented('AVM1SymbolBase.set_quality');
     }
 
+    public get_root(): AVM1MovieClip {
+      var as3Object: flash.display.InteractiveObject = this.as3Object;
+      while (as3Object && as3Object !== as3Object.root) {
+        var as2Object = <AVM1MovieClip>getAVM1Object(as3Object, this.context);
+        if (as2Object.get_lockroot()) {
+          return as2Object;
+        }
+        as3Object = as3Object.parent;
+      }
+      if (!as3Object) {
+        return undefined;
+      }
+      return <AVM1MovieClip>getAVM1Object(as3Object, this.context);
+    }
+
     public get_rotation(): number {
       return this.as3Object.rotation;
     }

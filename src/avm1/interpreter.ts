@@ -181,9 +181,9 @@ module Shumway.AVM1 {
       var ectx = this._getExecutionContext();
       return avm1ResolveTarget(ectx, target, true) || avm1GetTarget(ectx, true);
     }
-    resolveLevel(level: number) : any {
+    resolveRoot() : any {
       var ectx = this._getExecutionContext();
-      return avm1ResolveLevel(ectx, level);
+      return avm1ResolveRoot(ectx);
     }
     checkTimeout() {
       if (Date.now() >= this.abortExecutionAt) {
@@ -737,7 +737,7 @@ module Shumway.AVM1 {
               registers[i] = oldScope.alGet('_parent');
               break;
             case ArgumentAssignmentType.Root:
-              registers[i] = currentContext.resolveLevel(0);
+              registers[i] = avm1ResolveRoot(ectx);
               break;
           }
         }
@@ -919,7 +919,7 @@ module Shumway.AVM1 {
       var resolved, ch, needsScopeResolution;
       var propertyName = null, scope = null, obj = undefined;
       if (variableName[0] === '/') {
-        resolved = avm1ResolveSimpleVariable(ectx.scopeList, '_level0', AVM1ResolveVariableFlags.READ | AVM1ResolveVariableFlags.GET_VALUE);
+        resolved = avm1ResolveSimpleVariable(ectx.scopeList, '_root', AVM1ResolveVariableFlags.READ | AVM1ResolveVariableFlags.GET_VALUE);
         if (resolved) {
           propertyName = resolved.propertyName;
           scope = resolved.scope;
@@ -988,8 +988,11 @@ module Shumway.AVM1 {
         }
         if (!valueFound && propertyName[0] === '_') {
           // FIXME hacking to pass some swfdec test cases
-          if (propertyName === '_level0' || propertyName === '_root') {
-            obj = avm1ResolveLevel(ectx, 0);
+          if (propertyName === '_level0') {
+            obj = ectx.context.resolveLevel(0);
+            valueFound = true;
+          } else if (propertyName === '_root') {
+            obj = avm1ResolveRoot(ectx);
             valueFound = true;
           }
         }
@@ -1060,13 +1063,9 @@ module Shumway.AVM1 {
       return result;
     }
 
-    function avm1ResolveLevel(ectx: ExecutionContext, level: number): AVM1Object {
-      // TODO levels 1, 2, etc.
-      // TODO _lockroot
-      if (level === 0) {
-        return ectx.context.root;
-      }
-      return undefined;
+    function avm1ResolveRoot(ectx: ExecutionContext): AVM1Object {
+      var target = avm1GetTarget(ectx, true);
+      return (<Lib.AVM1MovieClip>target).get_root();
     }
 
     function avm1ProcessWith(ectx: ExecutionContext, obj, withBlock) {

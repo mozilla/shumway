@@ -27,7 +27,6 @@ declare module Shumway.AVM1 {
     executeActions(actionsData: AVM1ActionsData, scopeObj): void;
     flushPendingScripts(): void;
     setStage(stage: flash.display.Stage): void;
-    setRoot(stage: flash.display.DisplayObject, parameters: any): void;
   }
   export class AVM1Object {
   }
@@ -38,6 +37,7 @@ declare module Shumway.AVM1 {
     class AVM1MovieClip extends AVM1Object {
       addFrameActionBlocks(frameIndex: number, frameData: any): void;
       addFrameScript(frameIndex: number, actionsBlock: Uint8Array): void;
+      setParameters(parameters: any): void;
     }
   }
 }

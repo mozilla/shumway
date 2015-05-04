@@ -700,8 +700,9 @@ module Shumway.AVMX.AS.flash.display {
                             false,
                             Number.MAX_VALUE);
 
+      var avm1MovieClip = <AVM1.Lib.AVM1MovieClip>AVM1.Lib.getAVM1Object(root, avm1Context);
       var parameters = this._contentLoaderInfo._parameters;
-      avm1Context.setRoot(root, parameters);
+      avm1MovieClip.setParameters(parameters);
 
       var avm1Movie = new this.sec.flash.display.AVM1Movie(<MovieClip>root);
       return avm1Movie;

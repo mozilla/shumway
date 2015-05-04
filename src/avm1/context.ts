@@ -16,6 +16,7 @@
 
 module Shumway.AVM1 {
   import assert = Shumway.Debug.assert;
+  import flash = Shumway.AVMX.AS.flash;
 
   import AVM1MovieClip = Lib.AVM1MovieClip;
   import AVM1Globals = Lib.AVM1Globals;
@@ -62,7 +63,6 @@ module Shumway.AVM1 {
   }
 
   export class AVM1Context implements IAVM1Context {
-    public root: AVM1MovieClip;
     public loaderInfo: Shumway.AVMX.AS.flash.display.LoaderInfo;
     public sec: ISecurityDomain;
     public globals: AVM1Globals;
@@ -79,7 +79,6 @@ module Shumway.AVM1 {
 
     constructor(swfVersion: number) {
       this.swfVersion = swfVersion;
-      this.root = null;
       this.globals = null;
       this.actionsDataFactory = new ActionsDataFactory();
       this.isPropertyCaseSensitive = swfVersion > 6;
@@ -100,7 +99,7 @@ module Shumway.AVM1 {
 
     public flushPendingScripts() {}
     public resolveTarget(target): any {}
-    public resolveLevel(level: number): any {}
+    public resolveRoot(): any {}
     public addToPendingScripts(fn, defaultTarget) {}
     public checkTimeout() {}
 
@@ -194,17 +193,6 @@ module Shumway.AVM1 {
       Lib.AVM1Stage.bindStage(this, this.globals.Stage, stage);
     }
 
-    public setRoot(root: Shumway.AVMX.AS.flash.display.DisplayObject, parameters: any): any {
-      var as2Object = <AVM1MovieClip>Lib.getAVM1Object(root, this);
-      this.root = as2Object;
-      // transfer parameters
-      for (var paramName in parameters) {
-        if (!as2Object.alHasProperty(paramName)) {
-          as2Object.alPut(paramName, parameters[paramName]);
-        }
-      }
-    }
-
     public getStaticState(cls): any {
       var state = this.staticStates.get(cls);
       if (!state) {
@@ -217,5 +205,21 @@ module Shumway.AVM1 {
       }
       return state;
     }
+
+    public resolveLevel(level: number): AVM1MovieClip {
+      release || Debug.assert(typeof level === 'number');
+      // TODO planning to load levels as children of the stage
+      var as3Stage = (<Lib.AVM1Stage>this.globals.Stage)._as3Stage;
+      // TODO currently there is only one (_level0)
+      var as3Loader = <flash.display.Loader>as3Stage._lookupChildByIndex(level,
+        flash.display.LookupChildOptions.INCLUDE_NON_INITIALIZED);
+      if (!as3Loader) {
+        this.utils.warn('Unable to resolve level ' + level + ' root');
+        return undefined;
+      }
+      var as3Root = as3Loader._content; // FIXME content is undefined
+      return <AVM1MovieClip>Lib.getAVM1Object(as3Root, this);
+    }
+
   }
 }
