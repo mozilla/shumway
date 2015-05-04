@@ -684,6 +684,28 @@ module Shumway.AVM1 {
     return alInstanceOf(context, v, context.builtins.Array);
   }
 
+  export function alIsArrayObject(context: IAVM1Context, v): boolean {
+    if (!(v instanceof AVM1Object)) {
+      return false;
+    }
+    var length = alToInteger(context, v.alGet('length'));
+    if (isNaN(length) || length < 0 || length >= 4294967296) {
+      return false;
+    }
+    return true;
+  }
+
+  export function alIterateArray(context: IAVM1Context, arr: AVM1Object,
+                                 fn: (obj: any, index?: number) => void, thisArg: any = null): void {
+    var length = alToInteger(context, arr.alGet('length'));
+    if (isNaN(length) || length >= 4294967296) {
+      return;
+    }
+    for (var i = 0; i < length; i++) {
+      fn.call(thisArg, arr.alGet(i), i);
+    }
+  }
+
   export function alIsString(context: IAVM1Context, v): boolean {
     return typeof v === 'string';
   }
