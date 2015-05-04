@@ -188,9 +188,10 @@ declare module Shumway.AVMX.AS.flash {
       beginGradientFill: Function;
       copyFrom: Function;
     }
-    class Loader extends DisplayObject {
+    class Loader extends DisplayObjectContainer {
       url: string;
       content: DisplayObject;
+      _content: DisplayObject; // TODO remove
       contentLoaderInfo: LoaderInfo;
       load(request: flash.net.URLRequest);
       static runtimeStartTime: number;
@@ -244,7 +245,7 @@ declare module Shumway.AVMX.AS.flash {
       _symbol: ButtonSymbol;
     }
 
-    class Stage extends DisplayObject {
+    class Stage extends DisplayObjectContainer {
       align: string;
       scaleMode: string;
       displayState: number;

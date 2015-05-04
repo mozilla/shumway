@@ -69,6 +69,7 @@ module Shumway.AVM1.Lib {
     private _boundExecuteFrameScripts: () => void;
     private _frameScripts: AVM1.AVM1ActionsData[][];
     private _hitArea: any;
+    private _lockroot: boolean;
 
     private get graphics() : flash.display.Graphics {
       return this.as3Object.graphics;
@@ -432,12 +433,12 @@ module Shumway.AVM1.Lib {
       copyAS3PointTo(tmp, pt);
     }
 
-    public get_lockroot() {
-      Debug.notImplemented('AVM1MovieClip.get_lockroot');
+    public get_lockroot(): boolean {
+      return this._lockroot;
     }
 
-    public set_lockroot(value) {
-      Debug.notImplemented('AVM1MovieClip.set_lockroot');
+    public set_lockroot(value: boolean) {
+      this._lockroot = alToBoolean(this.context, value);
     }
 
     public moveTo(x, y) {
@@ -551,14 +552,24 @@ module Shumway.AVM1.Lib {
       this.as3Object.useHandCursor = value;
     }
 
+    public setParameters(parameters: any): any {
+      for (var paramName in parameters) {
+        if (!this.alHasProperty(paramName)) {
+          this.alPut(paramName, parameters[paramName]);
+        }
+      }
+    }
+
     // Special and children names properties resolutions
 
     private _resolveLevelNProperty(name: string): AVM1MovieClip {
       if (!this.context.isPropertyCaseSensitive) {
         name = name.toLowerCase();
       }
-      if (name === '_root' || name === '_level0') {
+      if (name === '_level0') {
         return this.context.resolveLevel(0);
+      } else if (name === '_root') {
+        return this.context.resolveRoot();
       } else if (name.indexOf('_level') === 0) {
         var level = name.substring(6);
         var levelNum = <any>level | 0;
