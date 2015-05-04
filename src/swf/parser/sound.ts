@@ -252,7 +252,7 @@ module Shumway.SWF.Parser {
           stream.decode = SwfSoundStream_decode_MP3;
           break;
         default:
-          Debug.warning('Unsupported audio format: ' + tag.soundFormat);
+          Debug.warning('Unsupported audio stream format: ' + tag.streamCompression);
           return null;
       }
 
