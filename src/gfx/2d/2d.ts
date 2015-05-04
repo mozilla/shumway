@@ -772,6 +772,7 @@ module Shumway.GFX.Canvas2D {
       if (state.flags & RenderFlags.PixelSnapping) {
         matrix.free();
       }
+      Filters._removeFilters(context);
     }
 
     /**
