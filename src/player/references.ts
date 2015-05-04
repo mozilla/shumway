@@ -18,7 +18,6 @@
 /// <reference path='../../build/ts/tools.d.ts' />
 /// <reference path='../../build/ts/swf.d.ts' />
 /// <reference path='../../build/ts/flash.d.ts' />
-// /// <reference path='../../build/ts/avm1.d.ts' />
 /// <reference path='../flash/avm1.d.ts' />
 
 ///<reference path='module.ts' />

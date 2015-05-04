@@ -169,13 +169,6 @@ module Shumway.AVMX.AS {
 
       private _resetViews: () => void;
 
-      asGetNumericProperty: (name: number) => number;
-      asSetNumericProperty: (name: number, value: number) => void;
-
-//      readBytes: (bytes: flash.utils.ByteArray, offset: number, length: number) => void =
-// DataBuffer.prototype.readByte; writeBytes: (bytes: flash.utils.ByteArray, offset: number,
-// length: number) => void = DataBuffer.prototype.writeBytes;
-
       readBytes: (bytes: flash.utils.ByteArray, offset?: number /*uint*/, length?: number /*uint*/) => void;
       readBoolean: () => boolean;
       readByte: () => number /*int*/;
@@ -222,6 +215,8 @@ module Shumway.AVMX.AS {
             unexpected("Object Encoding");
         }
       }
+
+      getBytes: () => Uint8Array;
 
       objectEncoding: number /*uint*/;
       endian: string;

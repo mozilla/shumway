@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Mozilla Foundation
+ * Copyright 2015 Mozilla Foundation
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,79 +13,187 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Class: LocalConnection
+
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import axCoerceString = Shumway.AVMX.axCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+  import assert = Debug.assert;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  import ByteArray = flash.utils.ByteArray;
   import FileLoadingService = Shumway.FileLoadingService;
 
-  export class LocalConnection extends flash.events.EventDispatcher {
-    
-    // Called whenever the class is initialized.
-    static classInitializer: any = null;
+  var forbiddenNames = ['send', 'connect', 'close', 'allowDomain', 'allowInsecureDomain', 'client',
+                        'domain'];
+  Object.freeze(forbiddenNames);
 
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // ["isSupported"];
+  export class LocalConnection extends flash.events.EventDispatcher
+                               implements ILocalConnectionReceiver {
     
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
+    static classInitializer = null;
+
     constructor () {
       super();
+      this._client = this;
+      this._connectionName = null;
+      this._allowedInsecureDomains = [];
+      this._allowedSecureDomains = [];
     }
     
-    // JS -> AS Bindings
-    static isSupported: boolean;
+    static get isSupported() {
+      return true;
+    }
     
-    
-    // AS -> JS Bindings
-    // static _isSupported: boolean;
-    
-    // _domain: string;
-    // _client: ASObject;
-    // _isPerUser: boolean;
+    private _client: ASObject;
+    private _connectionName: string;
+
+    // Required because allowDomain can be called before a connection is made.
+    private _allowedInsecureDomains: string[];
+    private _allowedSecureDomains: string[];
+
     close(): void {
-      notImplemented("public flash.net.LocalConnection::close"); return;
+      var connectionName = this._connectionName;
+      if (!connectionName) {
+        this.sec.throwError('ArgumentError', Errors.CloseNotConnectedError);
+      }
+      release || assert(typeof connectionName === 'string' && connectionName.length > 0);
+      // TODO: verify that these really are reset. For now, we aim to err on the safe side.
+      this._allowedInsecureDomains = [];
+      this._allowedSecureDomains = [];
+      LocalConnectionService.instance.closeConnection(connectionName, this);
     }
+
     connect(connectionName: string): void {
       connectionName = axCoerceString(connectionName);
-      notImplemented("public flash.net.LocalConnection::connect"); return;
+      if (connectionName === null) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'connectionName');
+      }
+      if (connectionName === '') {
+        this.sec.throwError('TypeError', Errors.EmptyStringError, 'connectionName');
+      }
+      // The only disallowed character for the connection name is ":".
+      if (connectionName.indexOf(':') > -1) {
+        this.sec.throwError('ArgumentError', Errors.InvalidParamError);
+      }
+      LocalConnectionService.instance.createConnection(connectionName, this);
+      if (this._allowedInsecureDomains.length) {
+        this._allowDomains(this._allowedInsecureDomains, false);
+      }
+      if (this._allowedSecureDomains.length) {
+        this._allowDomains(this._allowedSecureDomains, true);
+      }
     }
+
+    send(connectionName: string, methodName: string, ...args): void {
+      connectionName = axCoerceString(connectionName);
+      methodName = axCoerceString(methodName);
+      if (connectionName === null) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'connectionName');
+      }
+      if (connectionName === '') {
+        this.sec.throwError('TypeError', Errors.EmptyStringError, 'connectionName');
+      }
+      if (methodName === null) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'methodName');
+      }
+      if (methodName === '') {
+        this.sec.throwError('TypeError', Errors.EmptyStringError, 'methodName');
+      }
+      if (forbiddenNames.indexOf(methodName) > -1) {
+        this.sec.throwError('ArgumentError', Errors.InvalidParamError);
+      }
+      var serializedArgs = new this.sec.flash.utils.ByteArray();
+      serializedArgs.writeObject(this.sec.createArrayUnsafe(args));
+      if (serializedArgs.length > 40 * 1024) {
+        this.sec.throwError('ArgumentError', Errors.ArgumentSizeError);
+      }
+      var argsBuffer = serializedArgs.getBytes().buffer;
+      LocalConnectionService.instance.send(connectionName, methodName, argsBuffer);
+    }
+
+    get client(): ASObject {
+       return this._client;
+    }
+
+    set client(client: ASObject) {
+      if (!this.sec.AXObject.axIsType(client)) {
+        this.sec.throwError('ArgumentError', Errors.InvalidParamError);
+      }
+      this._client = client;
+    }
+
+    allowDomain(): void {
+      this._allowDomains(<any>arguments, false);
+    }
+
+    allowInsecureDomain(): void {
+      this._allowDomains(<any>arguments, true);
+    }
+
+    private _allowDomains(domains: string[], secure: boolean) {
+      var result = [];
+      // If no connection has been made yet, store the domains for later retrieval.
+      if (!this._connectionName) {
+        result = secure ? this._allowedSecureDomains : this._allowedInsecureDomains;
+      }
+      for (var i = 0; i < domains.length; i++) {
+        var domain = domains[i];
+        if (!axIsTypeString(domain)) {
+          this.sec.throwError('ArgumentError', Errors.AllowDomainArgumentError);
+        }
+        result.push(domain);
+      }
+      if (this._connectionName) {
+        LocalConnectionService.instance.allowDomains(this._connectionName, domains, secure);
+      }
+    }
+
+    public handleMessage(methodName: string, argsBuffer: ArrayBuffer) {
+      var client = this._client;
+      if (!client.axHasPublicProperty(methodName) || forbiddenNames.indexOf(methodName) > -1) {
+        // Forbidden names really shouldn't reach this point, but should everything else fail,
+        // we just pretend not to have found them here.
+        return LocalConnectionHandleMessageResult.MethodNotFound;
+      }
+      var handler = client.axGetPublicProperty(methodName);
+      if (!axIsCallable(handler)) {
+        // Non-callable handlers are just ignored.
+        return LocalConnectionHandleMessageResult.Success;
+      }
+
+      var args: ASArray;
+      try {
+        var ba: ByteArray = new this.sec.flash.utils.ByteArray(argsBuffer);
+        args = ba.readObject();
+        if (!this.sec.AXArray.axIsType(args)) {
+          return LocalConnectionHandleMessageResult.Error;
+        }
+      } catch (e) {
+        // Not sure what Flash does with corrupted messages, we just bail.
+        return LocalConnectionHandleMessageResult.Error;
+      }
+
+      handler.apply(client, args);
+    }
+
     get domain(): string {
       somewhatImplemented("public flash.net.LocalConnection::get domain");
       // HACK some SWFs want to know where they are hosted
+      // TODO: change this to use the current ApplicationDomain.
       var url = FileLoadingService.instance.resolveUrl('/');
       var m = /:\/\/(.+?)[:?#\/]/.exec(url);
       return m && m[1];
     }
-    send(connectionName: string, methodName: string): void {
-      connectionName = axCoerceString(connectionName); methodName = axCoerceString(methodName);
-      notImplemented("public flash.net.LocalConnection::send"); return;
-    }
-    get client(): ASObject {
-      notImplemented("public flash.net.LocalConnection::get client"); return;
-      // return this._client;
-    }
-    set client(client: ASObject) {
-      client = client;
-      notImplemented("public flash.net.LocalConnection::set client"); return;
-      // this._client = client;
-    }
+
     get isPerUser(): boolean {
-      notImplemented("public flash.net.LocalConnection::get isPerUser"); return;
-      // return this._isPerUser;
+      // We always return true, because everything else would be a lie.
+      return true;
     }
+
     set isPerUser(newValue: boolean) {
-      newValue = !!newValue;
-      notImplemented("public flash.net.LocalConnection::set isPerUser"); return;
-      // this._isPerUser = newValue;
-    }
-    allowDomain(): void {
-      notImplemented("public flash.net.LocalConnection::allowDomain"); return;
-    }
-    allowInsecureDomain(): void {
-      notImplemented("public flash.net.LocalConnection::allowInsecureDomain"); return;
+      !!newValue;
+      // Ignored. See
+      // https://blogs.adobe.com/simplicity/2009/08/localconnectionisperuser_in_ai.html for an
+      // explanation.
     }
   }
 }

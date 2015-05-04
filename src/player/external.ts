@@ -267,4 +267,38 @@ module Shumway.Player {
       });
     }
   }
+
+  export class BrowserLocalConnectionService implements ILocalConnectionService {
+    createConnection(connectionName: string,
+                     receiver: ILocalConnectionReceiver): LocalConnectionConnectResult {
+      return LocalConnectionConnectResult.Success;
+    }
+    closeConnection(connectionName: string,
+                    receiver: ILocalConnectionReceiver): LocalConnectionCloseResult {
+      return LocalConnectionCloseResult.Success;
+    }
+    send(connectionName: string, methodName: string,
+         argsBuffer: ArrayBuffer): LocalConnectionHandleMessageResult {
+      return LocalConnectionHandleMessageResult.Success;
+    }
+    allowDomains(connectionName: string, domains: string[], secure: boolean) {
+    }
+  }
+
+  export class ShumwayComLocalConnectionService implements ILocalConnectionService {
+    createConnection(connectionName: string,
+                     receiver: ILocalConnectionReceiver): LocalConnectionConnectResult {
+      return LocalConnectionConnectResult.Success;
+    }
+    closeConnection(connectionName: string,
+                    receiver: ILocalConnectionReceiver): LocalConnectionCloseResult {
+      return LocalConnectionCloseResult.Success;
+    }
+    send(connectionName: string, methodName: string,
+         argsBuffer: ArrayBuffer): LocalConnectionHandleMessageResult {
+      return LocalConnectionHandleMessageResult.Success;
+    }
+    allowDomains(connectionName: string, domains: string[], secure: boolean) {
+    }
+  }
 }
