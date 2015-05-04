@@ -171,8 +171,7 @@ module Shumway.AVM1.Lib {
     }
 
     public updateAfterEvent() {
-      // flash.events.TimerEvent.updateAfterEvent
-      somewhatImplemented('AVM1Globals.updateAfterEvent');
+      this.context.sec.player.requestRendering();
     }
 
     // built-ins

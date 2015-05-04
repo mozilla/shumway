@@ -46,7 +46,7 @@ module Shumway.AVM1.Lib {
     public static createAVM1Class(context: AVM1Context): AVM1Object {
       return wrapAVM1NativeClass(context, true, AVM1MovieClip,
         [],
-        ['_alpha#', 'attachAudio', 'attachBitmap', 'attachMovie',
+        ['$version#', '_alpha#', 'attachAudio', 'attachBitmap', 'attachMovie',
           'beginFill', 'beginBitmapFill', 'beginGradientFill', 'blendMode#',
           'cacheAsBitmap#', '_callFrame', 'clear', 'createEmptyMovieClip',
           'createTextField', '_currentframe#', 'curveTo', '_droptarget#',
@@ -129,6 +129,10 @@ module Shumway.AVM1.Lib {
       mc = Shumway.AVMX.AS.constructClassFromSymbol(props, this.context.sec.flash.display.MovieClip.axClass);
 
       return mc;
+    }
+
+    public get$version(): string {
+      return this.context.sec.flash.system.Capabilities.version;
     }
 
     public attachMovie(symbolId, name, depth, initObject) {

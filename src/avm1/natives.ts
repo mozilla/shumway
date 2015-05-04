@@ -764,8 +764,24 @@ module Shumway.AVM1.Natives {
         return new AVM1ArrayNative(this.context,
           Array.prototype.concat.apply(arr, items));
       }
-      // TODO implement generic method
-      Debug.notImplemented('AVM1ArrayNative.concat');
+      // Generic behavior
+      var a = [];
+      var e: any = this;
+      var isArrayObject = alIsArrayObject(this.context, this);
+      var i = 0;
+      while (true) {
+        if (isArrayObject) {
+          alIterateArray(this.context, e, (value) => a.push(value));
+        } else {
+          a.push(alToString(this.context, e));
+        }
+        if (i >= items.length) {
+          break;
+        }
+        e = items[i++];
+        isArrayObject = alIsArray(this.context, e); // not-logical behavior
+      }
+      return new AVM1ArrayNative(this.context, a);
     }
 
     public join(separator?: string): string {
@@ -799,8 +815,15 @@ module Shumway.AVM1.Natives {
         var arr = alEnsureType<AVM1ArrayNative>(this, AVM1ArrayNative).value;
         return arr.pop();
       }
-      // TODO implement generic method
-      Debug.notImplemented('AVM1ArrayNative.pop');
+      var length = alToInt32(this.context, this.alGet('length')) >>> 0;
+      if (length === 0) {
+        return undefined;
+      }
+      var i = length - 1;
+      var result = this.alGet(i);
+      this.alDeleteProperty(i);
+      this.alPut('length', i);
+      return result;
     }
 
     public push(...items: any[]): number {
@@ -809,8 +832,13 @@ module Shumway.AVM1.Natives {
         var arr = alEnsureType<AVM1ArrayNative>(this, AVM1ArrayNative).value;
         return Array.prototype.push.apply(arr, items);
       }
-      // TODO implement generic method
-      Debug.notImplemented('AVM1ArrayNative.push');
+      var length = alToInt32(this.context, this.alGet('length')) >>> 0;
+      for (var i = 0; i < items.length; i++) {
+        this.alPut(length, items[i]);
+        length++; // TODO check overflow
+      }
+      this.alPut('length', length);
+      return length;
     }
 
     public shift(): any {
@@ -819,8 +847,21 @@ module Shumway.AVM1.Natives {
         var arr = alEnsureType<AVM1ArrayNative>(this, AVM1ArrayNative).value;
         return arr.shift();
       }
-      // TODO implement generic method
-      Debug.notImplemented('AVM1ArrayNative.shift');
+      var length = alToInt32(this.context, this.alGet('length')) >>> 0;
+      if (length === 0) {
+        return undefined;
+      }
+      var result = this.alGet(0);
+      for (var i = 1; i < length; i++) {
+        if (this.alHasProperty(i)) {
+          this.alPut(i - 1, this.alGet(i));
+        } else {
+          this.alDeleteProperty(i - 1);
+        }
+      }
+      this.alDeleteProperty(length - 1);
+      this.alPut('length', length - 1);
+      return result;
     }
 
     public slice(start: number, end?: number): AVM1Object {
@@ -831,8 +872,17 @@ module Shumway.AVM1.Natives {
         var arr = alEnsureType<AVM1ArrayNative>(this, AVM1ArrayNative).value;
         return new AVM1ArrayNative(this.context, arr.slice(start, end));
       }
-      // TODO implement generic method
-      Debug.notImplemented('AVM1ArrayNative.slice');
+      var a = [];
+      var length = alToInt32(this.context, this.alGet('length')) >>> 0;
+      start = start < 0 ? Math.max(length + start, 0) : Math.min(length, start);
+      end = end === undefined ? length :
+        (end < 0 ? Math.max(length + end, 0) : Math.min(length, end));
+      for (var i = start, j = 0; i < end; i++, j++) {
+        if (this.alHasProperty(i)) {
+          a[j] = this.alGet(i);
+        }
+      }
+      return new AVM1ArrayNative(this.context, a);
     }
 
     public splice(start: number, deleteCount: number, ...items: any[]): AVM1Object {
@@ -844,8 +894,42 @@ module Shumway.AVM1.Natives {
         return new AVM1ArrayNative(this.context,
           Array.prototype.splice.apply(arr, [start, deleteCount].concat(items)));
       }
-      // TODO implement generic method
-      Debug.notImplemented('AVM1ArrayNative.splice');
+      var a = [];
+      var length = alToInt32(this.context, this.alGet('length')) >>> 0;
+      start = start < 0 ? Math.max(length + start, 0) : Math.min(length, start);
+      deleteCount = Math.min(Math.max(deleteCount, 0), length - start);
+      for (var i = 0; i < deleteCount; i++) {
+        if (this.alHasProperty(start + i)) {
+          a[i] = this.alGet(start + i);
+        }
+      }
+      var delta = items.length - deleteCount;
+      if (delta < 0) {
+        for (var i = start - delta; i < length; i++) {
+          if (this.alHasProperty(i)) {
+            this.alPut(i + delta, this.alGet(i));
+          } else {
+            this.alDeleteProperty(i + delta);
+          }
+        }
+        for (var i = delta; i < 0; i++) {
+          this.alDeleteProperty(length + i);
+        }
+      } else if (delta > 0) {
+        // TODO check overflow
+        for (var i = length - 1; i >= start + delta; i--) {
+          if (this.alHasProperty(i)) {
+            this.alPut(i + delta, this.alGet(i));
+          } else {
+            this.alDeleteProperty(i + delta);
+          }
+        }
+      }
+      for (var i = 0; i < items.length; i++) {
+        this.alPut(start + i, items[i]);
+      }
+      this.alPut('length', length + delta);
+      return new AVM1ArrayNative(this.context, a);
     }
 
     public sort(comparefn?: AVM1Function): AVM1Object {
@@ -940,8 +1024,23 @@ module Shumway.AVM1.Natives {
         var arr = alEnsureType<AVM1ArrayNative>(this, AVM1ArrayNative).value;
         return Array.prototype.unshift.apply(arr, items);
       }
-      // TODO implement generic method
-      Debug.notImplemented('AVM1ArrayNative.unshift');
+      var length = alToInt32(this.context, this.alGet('length')) >>> 0;
+      var insertCount = items.length;
+      // TODO check overflow
+      for (var i = length - 1; i >= 0; i--) {
+        if (this.alHasProperty(i)) {
+          this.alPut(i + insertCount, this.alGet(i));
+        } else {
+          this.alDeleteProperty(i + insertCount);
+        }
+      }
+
+      for (var i = 0; i < items.length; i++) {
+        this.alPut(i, items[i]);
+      }
+      length += insertCount;
+      this.alPut('length', length); // ActionScript does not do that?
+      return length;
     }
   }
 
