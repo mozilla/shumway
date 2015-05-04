@@ -76,9 +76,15 @@ interface ISecurityDomain {
       SoundChannel: typeof flashPackage.media.SoundChannel;
       SoundTransform: typeof flashPackage.media.SoundTransform;
     }
-  }
+  };
+  player: Shumway.Player.Player;
 }
 
+declare module Shumway.Player {
+  class Player {
+    requestRendering(): void;
+  }
+}
 declare module Shumway.AVMX.AS.flash {
   module display {
     class DisplayObject extends events.EventDispatcher {
