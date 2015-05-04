@@ -181,12 +181,10 @@ module Shumway.GFX.Canvas2D {
         context.globalColorMatrix = null;
       } else {
         context.globalAlpha = 1;
-        if (Filters._svgFiltersAreSupported && true) {
-          Filters._applyColorMatrixFilter(context, colorMatrix);
-          context.globalColorMatrix = null;
-        } else {
-          context.globalColorMatrix = colorMatrix;
-        }
+        // TODO: We should reconsider using SVG color matrix filters once we found out how to deal
+        // withe the fact that they always get applied to the whole canvas, not just the covered
+        // pixels of drawn images/shapes/text.
+        context.globalColorMatrix = colorMatrix;
       }
     }
   }
