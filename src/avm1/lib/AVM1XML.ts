@@ -17,7 +17,9 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
+  import ASObject = Shumway.AVMX.AS.ASObject;
   import flash = Shumway.AVMX.AS.flash;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   enum AVM1XMLNodeType {
     ELEMENT_NODE = 1,
@@ -34,6 +36,21 @@ module Shumway.AVM1.Lib {
     }
     release || Debug.assert((<AVM1XMLNodePrototype>as2Node).as3XMLNode);
     return (<AVM1XMLNodePrototype>as2Node).as3XMLNode;
+  }
+
+  function fromAS3XMLNode(context: AVM1Context, as3Node: flash.xml.XMLNode): AVM1Object {
+    if (isNullOrUndefined(as3Node)) {
+      return undefined;
+    }
+    var as2Node: AVM1Object = (<any>as3Node)._as2Node;
+    if (!as2Node) {
+      as2Node = new AVM1Object(context);
+      as2Node.alPrototype = context.globals.XMLNode.alGetPrototypeProperty();
+      AVM1XMLNodePrototype.prototype.initializeFromAS3Node.call(as2Node, as3Node);
+    } else {
+      release || Debug.assert(as2Node.context === context);
+    }
+    return as2Node;
   }
 
   export class AVM1XMLNodeFunction extends AVM1Function {
@@ -95,12 +112,58 @@ module Shumway.AVM1.Lib {
       if (alIsIndex(this.context, p)) {
         var index = alToInteger(this.context, p);
         if (index >= 0 && index < this.as3ChildNodes.length) {
-          this._cachedNodePropertyDescriptor.value =
-            AVM1XMLNodePrototype.getFromAS3Node(this.context, this.as3ChildNodes[index]);
+          this._cachedNodePropertyDescriptor.value = fromAS3XMLNode(this.context, this.as3ChildNodes[index]);
           return this._cachedNodePropertyDescriptor;
         }
       }
       return super.alGetOwnProperty(p);
+    }
+  }
+
+  class AVM1XMLNodeAttributes extends AVM1Object {
+    private _as3Attributes: ASObject;
+    private _cachedNodePropertyDescriptor: AVM1PropertyDescriptor;
+    constructor(context: AVM1Context, as3Attributes: ASObject) {
+      super(context);
+      this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
+      this._as3Attributes = as3Attributes;
+      this._cachedNodePropertyDescriptor = {
+        flags: AVM1PropertyFlags.DATA,
+        value: undefined
+      };
+    }
+
+    public alGetOwnProperty(p): AVM1PropertyDescriptor {
+      var name = alCoerceString(this.context, p);
+      if (this._as3Attributes.axHasPublicProperty(name)) {
+        this._cachedNodePropertyDescriptor.value =
+          this._as3Attributes.axGetPublicProperty(name);
+        return this._cachedNodePropertyDescriptor;
+      }
+      return undefined;
+    }
+
+    public alSetOwnProperty(p, desc: AVM1PropertyDescriptor): void {
+      var name = alCoerceString(this.context, p);
+      if ((desc.flags & AVM1PropertyFlags.DATA)) {
+        var value = alCoerceString(this.context, desc.value);
+        this._as3Attributes.axSetPublicProperty(name, value);
+      }
+    }
+
+    public alHasOwnProperty(p): boolean  {
+      var name = alCoerceString(this.context, p);
+      return this._as3Attributes.axHasPublicProperty(name);
+    }
+
+    public alDeleteOwnProperty(p) {
+      var name = alCoerceString(this.context, p);
+      this._as3Attributes.axDeletePublicProperty(name);
+    }
+
+    public alGetOwnPropertiesKeys(): string[] {
+      var as3Keys = this._as3Attributes.axGetEnumerableKeys();
+      return as3Keys.map((key) => axCoerceString(key));
     }
   }
 
@@ -161,48 +224,52 @@ module Shumway.AVM1.Lib {
         },
 
         appendChild: {
-          get: this.appendChild
+          value: this.appendChild
         },
         cloneNode: {
-          get: this.cloneNode
+          value: this.cloneNode
         },
         getNamespaceForPrefix: {
-          get: this.getNamespaceForPrefix
+          value: this.getNamespaceForPrefix
         },
         getPrefixForNamespace: {
-          get: this.getPrefixForNamespace
+          value: this.getPrefixForNamespace
         },
         hasChildNodes: {
-          get: this.hasChildNodes
+          value: this.hasChildNodes
         },
         insertBefore: {
-          get: this.insertBefore
+          value: this.insertBefore
         },
         removeNode: {
-          get: this.removeNode
+          value: this.removeNode
         },
         toString: {
-          get: this._toString
+          value: this._toString
         }
       });
     }
 
     initializeNode(type: number, value: string): void {
       this.as3XMLNode = new this.context.sec.flash.xml.XMLNode(type, value);
+      this._attributes = undefined;
+      this._childNodes = undefined;
       AVM1XMLNodePrototype.addMap(this.as3XMLNode, this);
     }
 
     initializeFromAS3Node(as3XMLNode: flash.xml.XMLNode): void {
       this.as3XMLNode = as3XMLNode;
+      this._attributes = undefined;
+      this._childNodes = undefined;
       AVM1XMLNodePrototype.addMap(this.as3XMLNode, this);
     }
 
     _toString(): string {
-      return this.as3XMLNode.axCallPublicProperty('toString', []);
+      return this.as3XMLNode.axCallPublicProperty('toString', null);
     }
 
     appendChild(newChild: AVM1Object): void {
-      this.as3XMLNode.axCallPublicProperty('appendChild', [newChild]);
+      this.as3XMLNode.axCallPublicProperty('appendChild', [toAS3XMLNode(newChild)]);
     }
 
     getAttributes(): AVM1Object {
@@ -212,18 +279,28 @@ module Shumway.AVM1.Lib {
       }
       // TODO create a proxy to map AVM2 object stuff to AVM1
       if (!this._attributes) {
-        var as2Attributes = alNewObject(this.context);
-        Shumway.AVMX.forEachPublicProperty(as3Attributes, (property: any, value: any): void => {
-          release || Debug.assert(typeof value === 'string');
-          as2Attributes.alPut(property, value);
-        });
-        this._attributes = as2Attributes;
+        this._attributes = new AVM1XMLNodeAttributes(this.context, as3Attributes);
       }
       return this._attributes;
     }
 
     setAttributes(value: AVM1Object) {
-      Debug.notImplemented('AVM1XMLNodePrototype.setAttributes');
+      if (isNullOrUndefined(value)) {
+        this._attributes = undefined;
+        return;
+      }
+      if (value instanceof AVM1XMLNodeAttributes) {
+        this._attributes = value;
+        return;
+      }
+      var context = this.context;
+      var as3Attributes = context.sec.createObject();
+      alForEachProperty(value, (prop) => {
+        var name = alCoerceString(context, prop);
+        var value = alCoerceString(context, this.alGet(prop));
+        as3Attributes.axSetPublicProperty(name, value);
+      }, this);
+      this._attributes = new AVM1XMLNodeAttributes(context, as3Attributes);
     }
 
     getChildNodes(): AVM1Object {
@@ -233,13 +310,14 @@ module Shumway.AVM1.Lib {
       return this._childNodes;
     }
 
-    cloneNode(): AVM1Object {
-      var clone = this.as3XMLNode.cloneNode(true);
-      return AVM1XMLNodePrototype.getFromAS3Node(this.context, clone);
+    cloneNode(deepClone: boolean): AVM1Object {
+      deepClone = alToBoolean(this.context, deepClone);
+      var clone = this.as3XMLNode.axCallPublicProperty('cloneNode', [deepClone]);
+      return fromAS3XMLNode(this.context, clone);
     }
 
     getFirstChild(): AVM1Object {
-      return AVM1XMLNodePrototype.getFromAS3Node(this.context, this.as3XMLNode.axGetPublicProperty('firstChild'));
+      return fromAS3XMLNode(this.context, this.as3XMLNode.axGetPublicProperty('firstChild'));
     }
 
     getNamespaceForPrefix(prefix: string): string {
@@ -260,7 +338,7 @@ module Shumway.AVM1.Lib {
     }
 
     getLastChild(): AVM1Object {
-      return AVM1XMLNodePrototype.getFromAS3Node(this.context, this.as3XMLNode.axGetPublicProperty('lastChild'));
+      return fromAS3XMLNode(this.context, this.as3XMLNode.axGetPublicProperty('lastChild'));
     }
 
     getLocalName(): string {
@@ -272,7 +350,7 @@ module Shumway.AVM1.Lib {
     }
 
     getNextSibling(): AVM1Object {
-      return AVM1XMLNodePrototype.getFromAS3Node(this.context, this.as3XMLNode.axGetPublicProperty('nextSibling'));
+      return fromAS3XMLNode(this.context, this.as3XMLNode.axGetPublicProperty('nextSibling'));
     }
 
     getNodeName(): string {
@@ -298,7 +376,7 @@ module Shumway.AVM1.Lib {
     }
 
     getParentNode(): AVM1Object {
-      return AVM1XMLNodePrototype.getFromAS3Node(this.context, this.as3XMLNode.axGetPublicProperty('parentNode'));
+      return fromAS3XMLNode(this.context, this.as3XMLNode.axGetPublicProperty('parentNode'));
     }
 
     getPrefix(): string {
@@ -306,7 +384,7 @@ module Shumway.AVM1.Lib {
     }
 
     getPreviousSibling(): AVM1Object {
-      return AVM1XMLNodePrototype.getFromAS3Node(this.context, this.as3XMLNode.axGetPublicProperty('previousSibling'));
+      return fromAS3XMLNode(this.context, this.as3XMLNode.axGetPublicProperty('previousSibling'));
     }
 
     removeNode(): void {
@@ -316,21 +394,6 @@ module Shumway.AVM1.Lib {
     static addMap(as3Node: flash.xml.XMLNode, as2Node: AVM1Object): void {
       release || Debug.assert(!(<any>as3Node)._as2Node);
       (<any>as3Node)._as2Node = as2Node;
-    }
-
-    static getFromAS3Node(context: AVM1Context, as3Node: flash.xml.XMLNode): AVM1Object {
-      if (isNullOrUndefined(as3Node)) {
-        return undefined;
-      }
-      var as2Node: AVM1Object = (<any>as3Node)._as2Node;
-      if (!as2Node) {
-        as2Node = new AVM1Object(context);
-        as2Node.alPrototype = context.globals.XMLNode.alGetPrototypeProperty();
-        AVM1XMLNodePrototype.prototype.initializeFromAS3Node.call(as2Node, as3Node);
-      } else {
-        release || Debug.assert(as2Node.context === context);
-      }
-      return as2Node;
     }
   }
 
@@ -392,14 +455,13 @@ module Shumway.AVM1.Lib {
       })
     }
 
-    get as3XMLDocument(): flash.xml.XMLDocument {
-      return <flash.xml.XMLDocument>(<AVM1XMLNodePrototype><any>this).as3XMLNode;
-    }
+    as3XMLDocument: flash.xml.XMLDocument;
 
     initializeDocument(text: string) {
       text = alCoerceString(this.context, text) || null;
       var as3Doc = new this.context.sec.flash.xml.XMLDocument(text);
       AVM1XMLNodePrototype.prototype.initializeFromAS3Node.call(this, as3Doc);
+      this.as3XMLDocument = as3Doc;
     }
 
     addRequestHeader(headers: any, headerValue?: String): void {
@@ -408,14 +470,14 @@ module Shumway.AVM1.Lib {
 
     createElement(name: string): AVM1Object {
       name = alCoerceString(this.context, name);
-      Debug.notImplemented('AVM1XMLPrototype.createElement');
-      return undefined;
+      var as3Node = this.as3XMLDocument.axCallPublicProperty('createElement', [name]);
+      return fromAS3XMLNode(this.context, as3Node);
     }
 
     createTextNode(value: string) : AVM1Object {
       value = alCoerceString(this.context, value);
-      Debug.notImplemented('AVM1XMLPrototype.createTextNode');
-      return undefined;
+      var as3Node = this.as3XMLDocument.axCallPublicProperty('createTextNode', [value]);
+      return fromAS3XMLNode(this.context, as3Node);
     }
 
     getBytesLoaded(): number {
@@ -436,7 +498,7 @@ module Shumway.AVM1.Lib {
 
     parseXML(value: string): void {
       value = alCoerceString(this.context, value);
-      this.as3XMLDocument.parseXML(value);
+      this.as3XMLDocument.axCallPublicProperty('parseXML', [value]);
     }
 
     send(url: string, target?: string, method?: string): boolean {

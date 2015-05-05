@@ -18,6 +18,14 @@ module Shumway.AVMX.AS.flash.xml {
   import notImplemented = Shumway.Debug.notImplemented;
   import axCoerceString = Shumway.AVMX.axCoerceString;
 
+  enum XMLSpecialChars {
+    APOS = 39, // "\'"
+    AMP = 38, // "&"
+    QUOT = 34, // "\""
+    LT = 60, // "<"
+    GT = 62, // ">"
+  }
+
   export class XMLNode extends ASObject {
     constructor (type: number /*uint*/, value: string) {
       type = type >>> 0; value = axCoerceString(value);
@@ -27,7 +35,54 @@ module Shumway.AVMX.AS.flash.xml {
     // Static   AS -> JS Bindings
     static escapeXML(value: string): string {
       value = axCoerceString(value);
-      notImplemented("public flash.xml.XMLNode::static escapeXML"); return;
+      var i = 0, length = value.length, ch;
+      while (i < length) {
+        ch = value.charCodeAt(i);
+        if (ch === XMLSpecialChars.APOS || ch === XMLSpecialChars.AMP ||
+            ch === XMLSpecialChars.QUOT || ch === XMLSpecialChars.LT ||
+            ch === XMLSpecialChars.GT) {
+          break;
+        }
+        i++;
+      }
+      if (i >= length) {
+        return value;
+      }
+      var parts = [value.substring(0, i)];
+      while (i < length) {
+        switch (ch) {
+          case XMLSpecialChars.APOS:
+            parts.push('&apos;');
+            break;
+          case XMLSpecialChars.AMP:
+            parts.push('&amp;');
+            break;
+          case XMLSpecialChars.QUOT:
+            parts.push('&quot;');
+            break;
+          case XMLSpecialChars.LT:
+            parts.push('&lt;');
+            break;
+          case XMLSpecialChars.GT:
+            parts.push('&gt;');
+            break;
+        }
+        ++i;
+        var j = i;
+        while (i < length) {
+          ch = value.charCodeAt(i);
+          if (ch === XMLSpecialChars.APOS || ch === XMLSpecialChars.AMP ||
+              ch === XMLSpecialChars.QUOT || ch === XMLSpecialChars.LT ||
+              ch === XMLSpecialChars.GT) {
+            break;
+          }
+          i++;
+        }
+        if (j < i) {
+          parts.push(value.substring(j, i));
+        }
+      }
+      return parts.join('');
     }
     // Instance JS -> AS Bindings
     nodeType: number /*uint*/;
