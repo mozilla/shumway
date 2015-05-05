@@ -188,6 +188,16 @@ module Shumway.GFX.Canvas2D {
       }
     }
   }
+  
+  if (filters && Filters._svgFiltersAreSupported) {
+    // Temporary hack to work around a bug that prevents SVG filters to work for off-screen canvases.
+    if (!('registerScratchCanvas' in window)) {
+      window['registerScratchCanvas'] = function (scratchCanvas) {
+        scratchCanvas.style.display = 'none';
+        document.body.appendChild(scratchCanvas);
+      }
+    }
+  }
 
   /**
    * Match up FLash blend modes with Canvas blend operations:
