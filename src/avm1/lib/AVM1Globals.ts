@@ -37,7 +37,7 @@ module Shumway.AVM1.Lib {
           'NaN', 'Infinity', 'isFinite', 'isNaN', 'parseFloat', 'parseInt', 'undefined',
           'Object', 'Function','Array', 'Number', 'Math', 'Boolean', 'Date', 'String', 'Error',
           'MovieClip', 'AsBroadcaster', 'System', 'Stage', 'Button',
-          'TextField', 'Color', 'Key', 'Mouse', 'MovieClipLoader',
+          'TextField', 'Color', 'Key', 'Mouse', 'MovieClipLoader', 'XML', 'XMLNode',
           'Sound', 'SharedObject', 'ContextMenu', 'ContextMenuItem', 'TextFormat'], false);
       return globals;
     }
@@ -218,6 +218,9 @@ module Shumway.AVM1.Lib {
     public ContextMenuItem: AVM1Object;
     public TextFormat: AVM1Object;
 
+    public XMLNode: AVM1Object;
+    public XML: AVM1Object;
+
     private _initBuiltins(context: AVM1Context) {
       var builtins = context.builtins;
 
@@ -247,6 +250,9 @@ module Shumway.AVM1.Lib {
       this.ContextMenu = undefined; // wrapAVM1Builtin(sec.flash.ui.ContextMenu.axClass);
       this.ContextMenuItem = undefined; // wrapAVM1Builtin(sec.flash.ui.ContextMenuItem.axClass);
       this.TextFormat = AVM1TextFormat.createAVM1Class(context);
+
+      this.XMLNode = new AVM1XMLNodeFunction(context);
+      this.XML = new AVM1XMLFunction(context, <AVM1XMLNodeFunction>this.XMLNode);
 
       AVM1Broadcaster.initialize(context, this.Stage);
       AVM1Broadcaster.initialize(context, this.Key);

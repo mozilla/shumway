@@ -57,6 +57,10 @@ module Shumway.AVMX.AS.flash.xml {
   }
 
   export class XMLDocument extends flash.xml.XMLNode {
+    constructor (text: string = null) {
+      text = axCoerceString(text);
+      super(1, "");
+    }
     xmlDecl: ASObject;
     docTypeDecl: ASObject;
     idMap: ASObject;

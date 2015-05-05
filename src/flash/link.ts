@@ -253,6 +253,9 @@ module Shumway.AVMX.AS {
   M("flash.utils.Timer", flash.utils.Timer);
   M("flash.utils.ByteArray", flash.utils.ByteArray);
 
+  M("flash.xml.XMLNode", flash.xml.XMLNode);
+  M("flash.xml.XMLDocument", flash.xml.XMLDocument);
+
   registerNativeFunction('flash.system.fscommand', flash.system.fscommand);
 
   export function constructClassFromSymbol(symbol: Timeline.Symbol, axClass: ASClass) {
