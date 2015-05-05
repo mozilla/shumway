@@ -608,9 +608,7 @@ public class XMLNode
 		}
 	}
 
-    private function escapeXML(value:String):String {
-      trace("XMLNode.escapeXML()");
-    }
+    private native static function escapeXML(value:String):String;
 
 	/**
 	 * Evaluates the specified XMLNode object, constructs a textual representation of the XML structure,

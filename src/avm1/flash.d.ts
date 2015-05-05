@@ -67,6 +67,7 @@ interface ISecurityDomain {
     ui: {
       ContextMenu: typeof flashPackage.ui.ContextMenu;
       ContextMenuItem: typeof flashPackage.ui.ContextMenuItem;
+      Mouse: typeof flashPackage.ui.Mouse;
     }
     utils: {
       ByteArray: typeof flashPackage.utils.ByteArray;
@@ -75,6 +76,7 @@ interface ISecurityDomain {
       Sound: typeof flashPackage.media.Sound;
       SoundChannel: typeof flashPackage.media.SoundChannel;
       SoundTransform: typeof flashPackage.media.SoundTransform;
+      SoundMixer: typeof flashPackage.media.SoundMixer;
     }
     xml: {
       XMLDocument: typeof flashPackage.xml.XMLDocument;
@@ -406,6 +408,7 @@ declare module Shumway.AVMX.AS.flash {
   }
   module media {
     class SoundMixer {
+      static axClass: typeof SoundMixer;
       static stopAll(): void;
     }
     class Sound extends ASObject {
@@ -426,6 +429,8 @@ declare module Shumway.AVMX.AS.flash {
     class URLLoader extends events.EventDispatcher {
       dataFormat;
       data: any;
+      bytesLoaded: number;
+      bytesTotal: number;
       constructor(request?: URLRequest);
       _ignoreDecodeErrors: boolean;
     }
@@ -507,6 +512,10 @@ declare module Shumway.AVMX.AS.flash {
     }
     class ContextMenuItem extends ASObject {
       static axClass: typeof ContextMenuItem;
+    }
+    class Mouse extends ASObject {
+      static axClass: typeof Mouse;
+      static draggableObject: display.DisplayObject;
     }
   }
   module utils {

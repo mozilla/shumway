@@ -34,6 +34,7 @@ var mimeTypes = {
   '.gif': 'image/gif',
   '.ico': 'image/x-icon',
   '.png': 'image/png',
+  '.xml': 'text/xml',
   '.log': 'text/plain',
   '.bcmap': 'application/octet-stream',
   '.properties': 'text/plain'

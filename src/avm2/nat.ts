@@ -298,6 +298,7 @@ module Shumway.AVMX.AS {
     static axSetPublicProperty: (nm: any, value: any) => void;
     static axGetPublicProperty: (nm: any) => any;
     static axCallPublicProperty: (nm: any, argArray: any []) => any;
+    static axDeletePublicProperty: (nm: any) => boolean;
 
     static axSetNumericProperty: (nm: number, value: any) => void;
     static axGetNumericProperty: (nm: number) => any;
@@ -590,6 +591,10 @@ module Shumway.AVMX.AS {
     
     axCallPublicProperty(nm: any, argArray: any []): any {
       return this[Multiname.getPublicMangledName(nm)].axApply(this, argArray);
+    }
+
+    axDeletePublicProperty(nm: any): boolean {
+      return delete this[Multiname.getPublicMangledName(nm)];
     }
 
     axGetSlot(i: number): any {
@@ -2542,6 +2547,7 @@ module Shumway.AVMX.AS {
     "axSetPublicProperty",
     "axGetPublicProperty",
     "axCallPublicProperty",
+    "axDeletePublicProperty",
     "axSetNumericProperty",
     "axGetNumericProperty",
     "axGetSlot",

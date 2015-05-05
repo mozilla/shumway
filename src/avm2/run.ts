@@ -28,6 +28,7 @@ interface IMetaobjectProtocol {
   axSetPublicProperty(nm: any, value: any);
   axGetPublicProperty(nm: any): any;
   axCallPublicProperty(nm: any, argArray: any []): any;
+  axDeletePublicProperty(nm: any): boolean;
 
   axSetNumericProperty(nm: number, value: any);
   axGetNumericProperty(nm: number): any;
@@ -707,6 +708,7 @@ module Shumway.AVMX {
     D(AXBasePrototype, "axSetPublicProperty", Op.axSetPublicProperty);
     D(AXBasePrototype, "axGetPublicProperty", Op.axGetPublicProperty);
     D(AXBasePrototype, "axCallPublicProperty", Op.axCallPublicProperty);
+    D(AXBasePrototype, "axDeletePublicProperty", Op.axDeletePublicProperty);
     D(AXBasePrototype, "axGetProperty", Op.axGetProperty);
     D(AXBasePrototype, "axDeleteProperty", Op.axDeleteProperty);
     D(AXBasePrototype, "axGetSuper", Op.axGetSuper);

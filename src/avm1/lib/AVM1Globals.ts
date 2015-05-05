@@ -453,7 +453,7 @@ module Shumway.AVM1.Lib {
       var loader = new context.sec.flash.net.URLLoader(request);
       loader._ignoreDecodeErrors = true;
       loader.dataFormat = 'variables'; // flash.net.URLLoaderDataFormat.VARIABLES;
-      function completeHandler(event: flash.events.Event): void {
+      var completeHandler = context.sec.boxFunction(function (event: flash.events.Event): void {
         loader.removeEventListener(flash.events.Event.COMPLETE, completeHandler);
         release || Debug.assert(typeof loader.data === 'object');
         Shumway.AVMX.forEachPublicProperty(loader.data, function (key, value) {
@@ -462,7 +462,7 @@ module Shumway.AVM1.Lib {
         if (nativeTarget instanceof AVM1MovieClip) {
           avm1BroadcastEvent(context, nativeTarget, 'onData');
         }
-      }
+      });
       loader.addEventListener(flash.events.Event.COMPLETE, completeHandler);
     }
 
@@ -552,11 +552,15 @@ module Shumway.AVM1.Lib {
       nativeTarget.stop();
     }
     public stopAllSounds() {
-      flash.media.SoundMixer.stopAll();
+      this.context.sec.flash.media.SoundMixer.axClass.stopAll();
     }
-    public stopDrag(target?) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
-      nativeTarget.stopDrag();
+    public stopDrag() {
+      // Using current draggable instead of current target.
+      var as3CurrentDraggable = this.context.sec.flash.ui.Mouse.axClass.draggableObject;
+      if (as3CurrentDraggable) {
+        var nativeTarget = <AVM1MovieClip>getAVM1Object(as3CurrentDraggable, this.context);
+        nativeTarget.stopDrag();
+      }
     }
     public substring(value, index, count) {
       return this.mbsubstring(value, index, count); // ASCII Only?
