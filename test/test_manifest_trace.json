@@ -191,6 +191,13 @@
       ],
       "type": "stas"
     },
+    {  "id": "avm1-xml",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/xml/xmlstring.swf"
+      ],
+      "type": "stas"
+    },
     {  "id": "avm1-textfield-html",
       "stas": "swfs/trace.stas",
       "filenames": [

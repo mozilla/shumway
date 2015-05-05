@@ -76,6 +76,10 @@ interface ISecurityDomain {
       SoundChannel: typeof flashPackage.media.SoundChannel;
       SoundTransform: typeof flashPackage.media.SoundTransform;
     }
+    xml: {
+      XMLDocument: typeof flashPackage.xml.XMLDocument;
+      XMLNode: typeof flashPackage.xml.XMLNode;
+    }
   };
   player: Shumway.Player.Player;
 }

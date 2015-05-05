@@ -631,15 +631,5 @@
     ],
     "defaultRate": 20,
     "type": "stas"
-  },
-  {
-    "id": "trace-x",
-    "stas": "/utils/swfdec/test/trace/default.stas",
-    "filenames": [
-      "/utils/swfdec/test/trace/xml-init-5.swf",
-      "/utils/swfdec/test/trace/xml-node-init-5.swf"
-    ],
-    "defaultRate": 20,
-    "type": "stas"
   }
 ]
