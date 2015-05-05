@@ -778,6 +778,9 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     _addSoundStreamBlock(frameNum: number, streamBlock: any) {
+      if (this._sounds === null) {
+        this._sounds = new MovieClipSoundsManager(this);
+      }
       this._sounds.addSoundStreamBlock(frameNum, streamBlock);
     }
 

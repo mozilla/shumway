@@ -298,7 +298,7 @@ module Shumway.AVMX.AS.flash.display {
 
     public constructor(streamInfo: SWF.Parser.SoundStream, movieClip: MovieClip) {
       this.movieClip = movieClip;
-      this.decode = streamInfo.decode;
+      this.decode = streamInfo.decode.bind(streamInfo);
       this.data = {
         sampleRate: streamInfo.sampleRate,
         channels: streamInfo.channels
