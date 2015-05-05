@@ -453,7 +453,7 @@ module Shumway.AVM1.Lib {
       var loader = new context.sec.flash.net.URLLoader(request);
       loader._ignoreDecodeErrors = true;
       loader.dataFormat = 'variables'; // flash.net.URLLoaderDataFormat.VARIABLES;
-      function completeHandler(event: flash.events.Event): void {
+      var completeHandler = context.sec.boxFunction(function (event: flash.events.Event): void {
         loader.removeEventListener(flash.events.Event.COMPLETE, completeHandler);
         release || Debug.assert(typeof loader.data === 'object');
         Shumway.AVMX.forEachPublicProperty(loader.data, function (key, value) {
@@ -462,7 +462,7 @@ module Shumway.AVM1.Lib {
         if (nativeTarget instanceof AVM1MovieClip) {
           avm1BroadcastEvent(context, nativeTarget, 'onData');
         }
-      }
+      });
       loader.addEventListener(flash.events.Event.COMPLETE, completeHandler);
     }
 

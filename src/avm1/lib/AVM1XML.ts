@@ -440,6 +440,10 @@ module Shumway.AVM1.Lib {
         getBytesTotal: {
           value: this.getBytesTotal
         },
+        ignoreWhite: {
+          value: false,
+          writable: true
+        },
         load: {
           value: this.load
         },
@@ -451,11 +455,16 @@ module Shumway.AVM1.Lib {
         },
         sendAndLoad: {
           value: this.sendAndLoad
+        },
+        onData: {
+          value: this.defaultOnData,
+          writable: true
         }
       })
     }
 
     as3XMLDocument: flash.xml.XMLDocument;
+    private _as3Loader: flash.net.URLLoader;
 
     initializeDocument(text: string) {
       text = alCoerceString(this.context, text) || null;
@@ -481,23 +490,52 @@ module Shumway.AVM1.Lib {
     }
 
     getBytesLoaded(): number {
-      Debug.notImplemented('AVM1XMLPrototype.getBytesLoaded');
-      return NaN;
+      if (!this._as3Loader) {
+        return undefined;
+      }
+      return this._as3Loader.bytesLoaded;
     }
 
     getBytesTotal(): number {
-      Debug.notImplemented('AVM1XMLPrototype.getBytesTotal');
-      return NaN;
+      if (!this._as3Loader) {
+        return undefined;
+      }
+      return this._as3Loader.bytesTotal;
     }
 
     load(url: string): boolean {
       url = alCoerceString(this.context, url);
-      Debug.notImplemented('AVM1XMLPrototype.load');
-      return false;
+      if (!url) {
+        return false;
+      }
+
+      var context = this.context;
+      var request = new context.sec.flash.net.URLRequest(url);
+      var loader = new context.sec.flash.net.URLLoader(request);
+      loader._ignoreDecodeErrors = true;
+      loader.dataFormat = 'text'; // flash.net.URLLoaderDataFormat.TEXT;
+      var eventTarget = this;
+      var completeHandler = context.sec.boxFunction(function (event: flash.events.Event): void {
+        loader.removeEventListener(flash.events.Event.COMPLETE, completeHandler);
+        release || Debug.assert(typeof loader.data === 'string');
+        avm1BroadcastEvent(context, eventTarget, 'onData', [loader.data]);
+      });
+      loader.addEventListener(flash.events.Event.COMPLETE, completeHandler);
+      this._as3Loader = loader;
+      return true;
+    }
+
+    defaultOnData(src: string) {
+      // TODO handle failure
+      AVM1XMLPrototype.prototype.parseXML.call(this, src);
+      this.alPut('loaded', true);
+      avm1BroadcastEvent(this.context, this, 'onLoad', [true]);
     }
 
     parseXML(value: string): void {
       value = alCoerceString(this.context, value);
+      this.as3XMLDocument.axSetPublicProperty('ignoreWhite',
+        alToBoolean(this.context, this.alGet('ignoreWhite')));
       this.as3XMLDocument.axCallPublicProperty('parseXML', [value]);
     }
 

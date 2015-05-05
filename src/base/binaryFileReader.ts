@@ -146,7 +146,7 @@ module Shumway {
           }
           if (isNotProgressive) {
             var buffer = xhr.response;
-            ondata(new Uint8Array(buffer), { loaded: 0, total: buffer.byteLength });
+            ondata(new Uint8Array(buffer), { loaded: buffer.byteLength, total: buffer.byteLength });
           }
           if (oncomplete) {
             oncomplete();

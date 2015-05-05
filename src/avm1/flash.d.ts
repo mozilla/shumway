@@ -426,6 +426,8 @@ declare module Shumway.AVMX.AS.flash {
     class URLLoader extends events.EventDispatcher {
       dataFormat;
       data: any;
+      bytesLoaded: number;
+      bytesTotal: number;
       constructor(request?: URLRequest);
       _ignoreDecodeErrors: boolean;
     }

@@ -195,6 +195,7 @@
       "stas": "swfs/trace.stas",
       "filenames": [
         "swfs/avm1/xml/xmlbuild.swf",
+        "swfs/avm1/xml/xmlload.swf",
         "swfs/avm1/xml/xmlstring.swf"
       ],
       "type": "stas"
