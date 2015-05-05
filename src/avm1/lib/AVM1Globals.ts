@@ -552,11 +552,15 @@ module Shumway.AVM1.Lib {
       nativeTarget.stop();
     }
     public stopAllSounds() {
-      flash.media.SoundMixer.stopAll();
+      this.context.sec.flash.media.SoundMixer.axClass.stopAll();
     }
-    public stopDrag(target?) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
-      nativeTarget.stopDrag();
+    public stopDrag() {
+      // Using current draggable instead of current target.
+      var as3CurrentDraggable = this.context.sec.flash.ui.Mouse.axClass.draggableObject;
+      if (as3CurrentDraggable) {
+        var nativeTarget = <AVM1MovieClip>getAVM1Object(as3CurrentDraggable, this.context);
+        nativeTarget.stopDrag();
+      }
     }
     public substring(value, index, count) {
       return this.mbsubstring(value, index, count); // ASCII Only?

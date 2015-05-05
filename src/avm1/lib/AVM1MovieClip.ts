@@ -485,7 +485,7 @@ module Shumway.AVM1.Lib {
     public startDrag(lock?: boolean, left?: number, top?: number, right?: number, bottom?: number): void {
       lock = alToBoolean(this.context, lock);
       var bounds = null;
-      if (arguments.length < 3) {
+      if (arguments.length > 1) {
         left = alToNumber(this.context, left);
         top = alToNumber(this.context, top);
         right = alToNumber(this.context, right);
