@@ -39,39 +39,37 @@ module Shumway.SWF.Parser {
    * Parses JPEG chunks and reads image width and height information. JPEG data
    * in SWFs is encoded in chunks and not directly decodable by the JPEG parser.
    */
-  export function parseJpegChunks(image: any, bytes:Uint8Array,
-                                  chunks: Uint8Array[]): Uint8Array [] {
+  export function parseJpegChunks(bytes:Uint8Array,
+                                  chunks: Uint8Array[]): void {
     var i = 0;
     var n = bytes.length;
-    var code;
+    // Finding first marker, and skipping the data before this marker.
+    // (FF 00 - code is escaped 00; FF FF ... (FF xx) - fill bytes before marker).
+    while (i < n && (bytes[i] !== 0xff ||
+           (i + 1 < n && (bytes[i + 1] === 0x00 || bytes[i + 1] === 0xff)))) {
+      ++i;
+    }
+    if (i >= n) {
+      return; // no valid data was found
+    }
+
     do {
-      var begin = i;
-      while (i < n && bytes[i] !== 0xff) {
+      release || Debug.assert(bytes[i] === 0xff);
+      var begin = i++;
+      var code = bytes[i++];
+
+      // Finding next marker.
+      while (i < n && (bytes[i] !== 0xff ||
+             (i + 1 < n && (bytes[i + 1] === 0x00 || bytes[i + 1] === 0xff)))) {
         ++i;
       }
-      while (i < n && bytes[i] === 0xff) {
-        ++i;
-      }
-      code = bytes[i++];
-      if (code === 0xda) {
-        i = n;
-      } else if (code === 0xd9) {
-        i += 2;
+
+      if (code === 0xd8 || code === 0xd9) {
+        // Removing SOI and EOI to avoid wrong EOI-SOI pairs in the middle.
         continue;
-      } else if (code < 0xd0 || code > 0xd8) {
-        var length = readUint16(bytes, i);
-        if (code >= 0xc0 && code <= 0xc3) {
-          image.height = readUint16(bytes, i + 3);
-          image.width = readUint16(bytes, i + 5);
-        }
-        i += length;
       }
       chunks.push(bytes.subarray(begin, i));
     } while (i < n);
-    if (!release && !(image.width && image.height)) {
-      Debug.warning('bad jpeg image');
-    }
-    return chunks;
   }
 
   /**
@@ -118,13 +116,37 @@ module Shumway.SWF.Parser {
     image: any; // For some reason, tsc doesn't like us using the DOM Image definition here.
   }
 
+  export interface JPEGTablesState {
+    data: Uint8Array;
+    parsedChunks?: Uint8Array[]; // Cached parsing results
+  }
+
   export interface DefineImageTag {
     id: number;
     imgData: Uint8Array;
     mimeType: string;
     alphaData: boolean;
-    jpegTables: Uint8Array;
+    jpegTables: JPEGTablesState;
   }
+
+  function injectJPEGTables(chunks: Uint8Array[], state: JPEGTablesState): void {
+    if (!state.parsedChunks) {
+      var parsedChunks: Uint8Array[] = [];
+      parseJpegChunks(state.data, parsedChunks);
+      state.parsedChunks = parsedChunks;
+    }
+    // Finding first SOF and inserting tables there
+    var i = 0;
+    while (i < chunks.length &&
+           !(chunks[i][1] >= 0xc0 && chunks[i][1] <= 0xc0)) {
+      i++;
+    }
+    Array.prototype.splice.apply(chunks,
+      Array.prototype.concat.call([i, 0], state.parsedChunks));
+  }
+
+  var JPEG_SOI = new Uint8Array([0xff, 0xd8]);
+  var JPEG_EOI = new Uint8Array([0xff, 0xd9]);
 
   export function defineImage(tag: DefineImageTag): ImageDefinition {
     enterTimeline("defineImage");
@@ -136,12 +158,29 @@ module Shumway.SWF.Parser {
     var imgData = tag.imgData;
 
     if (tag.mimeType === 'image/jpeg') {
+      // Parsing/repairing the SWF JPEG data.
+      var chunks: Uint8Array[] = [];
+      chunks.push(JPEG_SOI);
+      parseJpegChunks(imgData, chunks);
+      if (tag.jpegTables) {
+        injectJPEGTables(chunks, tag.jpegTables);
+      }
+      chunks.push(JPEG_EOI);
+      // Finding SOF to extract image size.
+      chunks.forEach(function (chunk: Uint8Array) {
+        var code = chunk[1];
+        if (code >= 0xc0 && code <= 0xc3) {
+          image.height = readUint16(chunk, 5);
+          image.width = readUint16(chunk, 7);
+        }
+      });
+
       var alphaData: Uint8Array = <any>tag.alphaData;
       if (alphaData) {
         var jpegImage = new Shumway.JPEG.JpegImage();
-        jpegImage.parse(joinChunks(parseJpegChunks(image, imgData, [])));
-        release || assert(image.width === jpegImage.width);
-        release || assert(image.height === jpegImage.height);
+        jpegImage.parse(joinChunks(chunks));
+        release || assert(image.width === jpegImage.width && image.height === jpegImage.height,
+          'Wrong image size after parsing: ' + image.width + 'x' + image.height + ' vs ' + jpegImage.width + 'x' + jpegImage.height);
         var width = image.width;
         var height = image.height;
         var length = width * height;
@@ -159,19 +198,9 @@ module Shumway.SWF.Parser {
         for (var i = 0, k = 3; i < length; i++, k += 4) {
           data[k] = alphaMaskBytes[i];
         }
-        image.mimeType = 'application/octet-stream';
         image.dataType = ImageType.StraightAlphaRGBA;
+        image.mimeType = 'application/octet-stream';
       } else {
-        var chunks = [];
-        if (tag.jpegTables) {
-          chunks.push(tag.jpegTables);
-        }
-        parseJpegChunks(image, imgData, chunks);
-
-        if (tag.jpegTables && tag.jpegTables.byteLength > 0) {
-          chunks[1] = chunks[1].subarray(2);
-        }
-
         image.data = joinChunks(chunks);
         image.dataType = ImageType.JPEG;
       }
