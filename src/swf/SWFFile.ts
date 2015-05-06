@@ -188,7 +188,7 @@ module Shumway.SWF {
       var handler = Parser.LowLevel.tagHandlers[unparsed.tagCode];
       release || Debug.assert(handler, 'handler shall exists here');
       var tagEnd = Math.min(unparsed.byteOffset + unparsed.byteLength, this._dataStream.end);
-      handler(this.data, this._dataStream, tag, this.swfVersion, unparsed.tagCode, tagEnd);
+      handler(this.data, this._dataStream, tag, this.swfVersion, unparsed.tagCode, tagEnd, this._jpegTables);
       var finalPos = this._dataStream.pos;
       if (finalPos !== tagEnd) {
         this.emitTagSlopWarning(unparsed, tagEnd);
@@ -402,6 +402,7 @@ module Shumway.SWF {
           break;
         case SWFTag.CODE_JPEG_TABLES:
           // Only use the first JpegTables tag, ignore any following.
+          // TODO test it, swfdec is using the last one
           if (!this._jpegTables) {
             this._jpegTables = tagLength === 0 ?
                               new Uint8Array(0) :

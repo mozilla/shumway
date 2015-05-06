@@ -175,7 +175,7 @@ module Shumway.SWF.Parser.LowLevel {
       default:
         tag.mimeType = "application/octet-stream";
     }
-    tag.jpegTables = tagCode === 6 ? jpegTables : null;
+    tag.jpegTables = tagCode === 6 ? {data: jpegTables} : null;
     return tag;
   }
 
