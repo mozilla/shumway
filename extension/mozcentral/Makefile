@@ -22,7 +22,7 @@ EXTENSION_SRC = ../firefox
 # Just builds a ff extension
 
 build: ensureoutputdir
-	# Coping extension files
+	# Copying extension files
 	echo "Creating mozcentral package"
 	mkdir -p $(BUILD_EXTENSION_DIR)
 	cp -R ../../LICENSE $(EXTENSION_SRC)/chrome $(EXTENSION_SRC)/content $(BUILD_EXTENSION_DIR)/
@@ -31,13 +31,13 @@ build: ensureoutputdir
 	mkdir -p $(BUILD_EXTENSION_DIR)/content/gfx/gl/shaders
 	cp ../../src/gfx/gl/shaders/combined.frag $(BUILD_EXTENSION_DIR)/content/gfx/gl/shaders/
 	cp ../../src/gfx/gl/shaders/combined.vert $(BUILD_EXTENSION_DIR)/content/gfx/gl/shaders/
-	# Coping JavaScript content files
+	# Copying JavaScript content files
 	mkdir -p $(BUILD_EXTENSION_DIR)/content/playerglobal
 	cp ../../build/playerglobal/playerglobal.json $(BUILD_EXTENSION_DIR)/content/playerglobal/
 	cp ../../build/playerglobal/playerglobal.abcs $(BUILD_EXTENSION_DIR)/content/playerglobal/
 	mkdir -p $(BUILD_EXTENSION_DIR)/content/libs
 	cp ../../build/libs/builtin.abc $(BUILD_EXTENSION_DIR)/content/libs/
-	# Coping closure optimized shumway.js files
+	# Copying closure optimized shumway.js files
 	cp $(BUNDLES_DIR)/shumway*.js $(BUILD_EXTENSION_DIR)/content/
 	cp ../../build/version/version.txt $(BUILD_EXTENSION_DIR)/content/version.txt
 

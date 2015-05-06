@@ -21,14 +21,14 @@ EXTENSION_DIR=../build/firefox
 
 build: ensureoutputdir
 	cp -R $(SHUMWAY_ROOT)/LICENSE index.html main.css demo.swf gallery images $(BUILD_DIR)/
-	# Coping some JavaScript file
+	# Copying some JavaScript file
 	mkdir -p $(BUILD_DIR)/src/player
 	cp $(SHUMWAY_ROOT)/src/player/fakechannel.js $(BUILD_DIR)/src/player/
-	# Coping WebGL shaders
+	# Copying WebGL shaders
 	mkdir -p $(BUILD_DIR)/src/gfx/gl/shaders
 	cp $(SHUMWAY_ROOT)/src/gfx/gl/shaders/combined.frag $(BUILD_DIR)/src/gfx/gl/shaders/
 	cp $(SHUMWAY_ROOT)/src/gfx/gl/shaders/combined.vert $(BUILD_DIR)/src/gfx/gl/shaders/
-	# Coping generated JavaScript file
+	# Copying generated JavaScript file
 	mkdir $(BUILD_DIR)/build
 	cp -R $(SHUMWAY_ROOT)/build/ts $(BUILD_DIR)/build/
 	cp -R $(SHUMWAY_ROOT)/build/bundles $(BUILD_DIR)/build/
@@ -36,24 +36,24 @@ build: ensureoutputdir
 	mkdir $(BUILD_DIR)/build/playerglobal
 	cp $(SHUMWAY_ROOT)/build/playerglobal/playerglobal.json $(BUILD_DIR)/build/playerglobal/
 	cp $(SHUMWAY_ROOT)/build/playerglobal/playerglobal.abcs $(BUILD_DIR)/build/playerglobal/
-	# Coping ABC and Relooper files
+	# Copying ABC and Relooper files
 	mkdir $(BUILD_DIR)/build/libs
 	cp -R $(SHUMWAY_ROOT)/build/libs/*.abc $(BUILD_DIR)/build/libs/
 	cp -R $(SHUMWAY_ROOT)/build/libs/*.js $(BUILD_DIR)/build/libs/
 	mkdir $(BUILD_DIR)/build/version
 	cp -R $(SHUMWAY_ROOT)/build/version/version.js $(BUILD_DIR)/build/version/
-	# Copy examples
+	# Copying examples
 	cp -R $(SHUMWAY_ROOT)/examples $(BUILD_DIR)
-	# Copy build and iframe files
+	# Copying build and iframe files
 	cp -R iframe $(BUILD_DIR)/
-	# Copy extensions
+	# Copying extensions
 	mkdir -p $(BUILD_DIR)/extension/firefox
 	cp $(EXTENSION_DIR)/shumway.xpi $(BUILD_DIR)/extension/firefox/
 	cp $(EXTENSION_DIR)/update.rdf $(BUILD_DIR)/extension/firefox/
-	# Package shell
+	# Packaging shell
 	mkdir -p $(BUILD_DIR)/shell
 	cd ../build/shell; zip -r ../../web/$(BUILD_DIR)/shell/shumway-shell.zip *
-	# Package shuobject
+	# Packaging shuobject
 	mkdir -p $(BUILD_DIR)/shuobject
 	cd ../build/shuobject; zip -r ../../web/$(BUILD_DIR)/shuobject/shuobject.zip *
 	cp ../extension/shuobject/shuobject.js $(BUILD_DIR)/
