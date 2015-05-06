@@ -89,7 +89,8 @@ module Shumway.Remoting {
 
   export enum FilterType {
     Blur,
-    DropShadow
+    DropShadow,
+    ColorMatrix
   }
 
   /**

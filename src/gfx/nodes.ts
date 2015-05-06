@@ -700,6 +700,14 @@ module Shumway.GFX {
       }
       return this._layer;
     }
+    
+    public getLayerBounds(includeFilters: boolean): Rectangle {
+      var bounds = this.getBounds();
+      if (includeFilters && this._layer) {
+        this._layer.expandBounds(bounds);
+      }
+      return bounds;
+    }
 
 //    public getConcatenatedMatrix(clone: boolean = false): Matrix {
 //      var transform: Transform = this.getTransform(false);
@@ -845,7 +853,7 @@ module Shumway.GFX {
     }
 
     /**
-     * Takes the inion of all child bounds and caches the bounds locally.
+     * Takes the union of all child bounds and caches the bounds locally.
      */
     public getBounds(clone: boolean = false): Rectangle {
       var bounds = this._bounds || (this._bounds = Rectangle.createEmpty());
@@ -864,6 +872,29 @@ module Shumway.GFX {
       }
       if (clone) {
         return bounds.clone();
+      }
+      return bounds;
+    }
+    
+    /**
+     * Takes the union of all child bounds, optionaly including filter expansions.
+     */
+    public getLayerBounds(includeFilters: boolean): Rectangle {
+      if (!includeFilters) {
+        return this.getBounds();
+      }
+      var bounds = Rectangle.createEmpty();
+      var children = this._children;
+      var childBounds = Rectangle.allocate();
+      for (var i = 0; i < children.length; i++) {
+        var child = children[i];
+        childBounds.set(child.getLayerBounds(includeFilters));
+        child.getTransformMatrix().transformRectangleAABB(childBounds);
+        bounds.union(childBounds);
+      }
+      childBounds.free();
+      if (includeFilters && this._layer) {
+        this._layer.expandBounds(bounds);
       }
       return bounds;
     }
@@ -1090,6 +1121,15 @@ module Shumway.GFX {
 
     public toString() {
       return BlendMode[this._blendMode];
+    }
+    
+    public expandBounds(bounds: Rectangle) {
+      var filters = this._filters;
+      if (filters) {
+        for (var i = 0; i < filters.length; i++) {
+          filters[i].expandBounds(bounds);
+        }
+      }
     }
   }
 

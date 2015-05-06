@@ -460,10 +460,12 @@ module Shumway.Remoting.Player {
       var blurFilterClass = sec.flash.filters.BlurFilter.axClass;
       var dropShadowFilterClass = sec.flash.filters.DropShadowFilter.axClass;
       var glowFilterClass = sec.flash.filters.GlowFilter.axClass;
+      var colorMatrixFilterClass = sec.flash.filters.ColorMatrixFilter.axClass;
       for (var i = 0; i < filters.length; i++) {
         if (blurFilterClass.axIsType(filters[i]) ||
             dropShadowFilterClass.axIsType(filters[i]) ||
-            glowFilterClass.axIsType(filters[i])) {
+            glowFilterClass.axIsType(filters[i]) ||
+            colorMatrixFilterClass.axIsType(filters[i])) {
           count ++;
         } else {
           Shumway.Debug.somewhatImplemented(filters[i].toString());
@@ -506,6 +508,12 @@ module Shumway.Remoting.Player {
           this.output.writeBoolean(glowFilter.knockout);
           this.output.writeInt(glowFilter.quality);
           this.output.writeFloat(glowFilter.strength);
+        } else if (colorMatrixFilterClass.axIsType(filter)) {
+          var matrix = (<flash.filters.ColorMatrixFilter>filter).matrix.value;
+          this.output.writeInt(FilterType.ColorMatrix);
+          for (var i = 0; i < 20; i++) {
+            this.output.writeFloat(matrix[i]);
+          }
         }
       }
     }
