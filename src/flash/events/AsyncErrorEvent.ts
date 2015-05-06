@@ -17,20 +17,31 @@
 module Shumway.AVMX.AS.flash.events {
   export class AsyncErrorEvent extends flash.events.ErrorEvent {
 
+    static ASYNC_ERROR: string = "asyncError";
+
     static classInitializer: any = null;
 
-    static classSymbols: string [] = null;
-    static instanceSymbols: string [] = null;
+    $Bgerror: ASError;
 
-    error: ASError;
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 text: string = "", error: ASError = null) {
       super(type, bubbles, cancelable, text);
-      this.error = error;
+      this.$Bgerror = error;
     }
 
-    // JS -> AS Bindings
-    static ASYNC_ERROR: string = "asyncError";
+    public get error() {
+      return this.$Bgerror;
+    }
+
+    clone(): Event {
+      return new this.sec.flash.events.AsyncErrorEvent(this._type, this._bubbles, this._cancelable,
+                                                       this._text, this.$Bgerror);
+    }
+
+    toString(): string {
+      return this.formatToString('AsyncErrorEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
+                                 'text', 'error');
+    }
   }
 }

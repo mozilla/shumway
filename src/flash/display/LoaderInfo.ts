@@ -126,7 +126,7 @@ module Shumway.AVMX.AS.flash.display {
       if (!this._file) {
         return null;
       }
-      return this._url;
+      return FileLoadingService.instance.resolveUrl(this._url);
     }
 
     get isURLInaccessible(): boolean {

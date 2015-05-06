@@ -268,23 +268,6 @@ module Shumway.Player {
     }
   }
 
-  export class BrowserLocalConnectionService implements ILocalConnectionService {
-    createConnection(connectionName: string,
-                     receiver: ILocalConnectionReceiver): LocalConnectionConnectResult {
-      return LocalConnectionConnectResult.Success;
-    }
-    closeConnection(connectionName: string,
-                    receiver: ILocalConnectionReceiver): LocalConnectionCloseResult {
-      return LocalConnectionCloseResult.Success;
-    }
-    send(connectionName: string, methodName: string,
-         argsBuffer: ArrayBuffer): LocalConnectionHandleMessageResult {
-      return LocalConnectionHandleMessageResult.Success;
-    }
-    allowDomains(connectionName: string, domains: string[], secure: boolean) {
-    }
-  }
-
   export class ShumwayComLocalConnectionService implements ILocalConnectionService {
     createConnection(connectionName: string,
                      receiver: ILocalConnectionReceiver): LocalConnectionConnectResult {
@@ -294,9 +277,99 @@ module Shumway.Player {
                     receiver: ILocalConnectionReceiver): LocalConnectionCloseResult {
       return LocalConnectionCloseResult.Success;
     }
-    send(connectionName: string, methodName: string,
-         argsBuffer: ArrayBuffer): LocalConnectionHandleMessageResult {
-      return LocalConnectionHandleMessageResult.Success;
+    send(connectionName: string, methodName: string, argsBuffer: ArrayBuffer): void {
+    }
+    allowDomains(connectionName: string, domains: string[], secure: boolean) {
+    }
+  }
+
+  function qualifyLocalConnectionName(connectionName: string): string {
+    release || Debug.assert(typeof connectionName === 'string');
+    release || Debug.assert(connectionName.indexOf(':') === -1);
+    if (connectionName[0] !== '_') {
+      var currentURL = new jsGlobal.URL(Shumway.AVMX.getCurrentABC().env.url);
+      connectionName = currentURL.hostname + ':' + connectionName;
+    }
+    return connectionName;
+  }
+
+  export class PlayerInternalLocalConnectionService implements ILocalConnectionService {
+    private _localConnections = Object.create(null);
+
+    createConnection(connectionName: string,
+                     receiver: ILocalConnectionReceiver): LocalConnectionConnectResult {
+      connectionName = qualifyLocalConnectionName(connectionName);
+      release || Debug.assert(receiver);
+      if (this._localConnections[connectionName]) {
+        return LocalConnectionConnectResult.AlreadyTaken;
+      }
+      this._localConnections[connectionName] = receiver;
+      return LocalConnectionConnectResult.Success;
+    }
+    closeConnection(connectionName: string,
+                    receiver: ILocalConnectionReceiver): LocalConnectionCloseResult {
+      connectionName = qualifyLocalConnectionName(connectionName);
+      if (this._localConnections[connectionName] !== receiver) {
+        return LocalConnectionCloseResult.NotConnected;
+      }
+      delete this._localConnections[connectionName];
+      return LocalConnectionCloseResult.Success;
+    }
+    send(connectionName: string, methodName: string, argsBuffer: ArrayBuffer,
+         sender: ILocalConnectionSender): void {
+      connectionName = qualifyLocalConnectionName(connectionName);
+      release || Debug.assert(typeof methodName === 'string');
+      release || Debug.assert(argsBuffer instanceof ArrayBuffer);
+      var self = this;
+      function invokeMessageHandler() {
+        var receiver: ILocalConnectionReceiver = self._localConnections[connectionName];
+
+        var status = receiver ? 'status' : 'error';
+        var statusEvent = new sender.sec.flash.events.StatusEvent('status', false, false, null,
+                                                                  status);
+        try {
+          sender.dispatchEvent(statusEvent);
+        } catch (e) {
+          console.warn("Exception encountered during statusEvent handling in LocalConnection" +
+                       " sender.", e);
+        }
+
+        if (!receiver) {
+          // If no receiver is found for the connectionName, bail silently.
+          return;
+        }
+        var receiverError: AVMX.AXObject = null;
+        try {
+          receiver.handleMessage(methodName, argsBuffer, sender);
+          return;
+        } catch (e) {
+          receiverError = e;
+        }
+        // The error object must have been created in the sender's AXSecurityDomain. If that's
+        // not the case, then something went horribly wrong and we don't want to leak the object
+        // into the sender's domain. So we warn and bail.
+        if (receiverError.sec !== sender.sec) {
+          console.error('LocalConnection message handler threw exception object created in wrong' +
+                        ' SecurityDomain.');
+          return;
+        }
+        var errorEvent = new sender.sec.flash.events.AsyncErrorEvent('asyncError', false, false,
+                                                'flash.net.LocalConnection was unable to invoke' +
+                                                ' callback ' + methodName, receiverError);
+        if (sender.hasEventListener('asyncError')) {
+          try {
+            sender.dispatchEvent(errorEvent);
+          } catch (e) {
+            console.warn("Exception encountered during asyncErrorEvent handling in " +
+                         "LocalConnection sender.");
+          }
+        } else {
+          // TODO: add the error to the LoaderInfo#uncaughtErrorEvents list.
+          console.warn('No handler for asyncError on LocalConnection sender, not sending event',
+                       errorEvent);
+        }
+      }
+      Promise.resolve(true).then(invokeMessageHandler);
     }
     allowDomains(connectionName: string, domains: string[], secure: boolean) {
     }

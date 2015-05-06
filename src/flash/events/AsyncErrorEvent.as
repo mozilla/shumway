@@ -15,8 +15,10 @@
  */
 
 package flash.events {
+[native]
 public class AsyncErrorEvent extends ErrorEvent {
   public static const ASYNC_ERROR:String = "asyncError";
+
   public function AsyncErrorEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false,
                                   text:String = "", error:Error = null)
   {
@@ -24,12 +26,7 @@ public class AsyncErrorEvent extends ErrorEvent {
     this.error = error;
   }
   public var error:Error;
-  public override function clone():Event {
-    return new AsyncErrorEvent(type, bubbles, cancelable, text, error);
-  }
-  public override function toString():String {
-    return formatToString('AsyncErrorEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
-                          'text', 'error');
-  }
+  public native override function clone():Event;
+  public native override function toString():String;
 }
 }
