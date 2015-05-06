@@ -8,6 +8,25 @@ module Shumway.GFX.Canvas2D {
 
   var isFirefox = navigator.userAgent.indexOf('Firefox') != -1;
 
+  /**
+    * Scale blur radius for each quality level. The scale constants were gathered
+    * experimentally.
+    */
+  function getBlurScale(ratio: number, quality: number) {
+    var blurScale = ratio / 2; // For some reason we always have to scale by 1/2 first.
+    switch (quality) {
+      case 0:
+        return 0;
+      case 1:
+        return blurScale / 2.7;
+      case 2:
+        return blurScale / 1.28;
+      case 3:
+      default:
+        return blurScale;
+    }
+  }
+
   export class Filters {
     /**
      * Reusable blur filter SVG element.
@@ -100,79 +119,49 @@ module Shumway.GFX.Canvas2D {
       document.documentElement.appendChild(svg);
     }
 
-    static _applyColorMatrixFilter(context: CanvasRenderingContext2D, colorMatrix: ColorMatrix) {
-      Filters._prepareSVGFilters();
-      Filters._svgColorMatrixFilter.setAttribute("values", colorMatrix.toSVGFilterMatrix());
-      context.filter = "url(#svgColorMatrixFilter)";
-    }
-
-    /**
-     * This doesn't currently allow you to specify multiple filters. Only the last one is used.
-     * To support multiple filters, we need to group them in SVG nodes.
-     */
-    static _applyFilters(ratio: number, context: CanvasRenderingContext2D, filters: Filter []) {
-      if (!Filters._svgFiltersAreSupported || !Array.isArray(filters)) {
+    static _applyFilter(ratio: number, context: CanvasRenderingContext2D, filter: Filter) {
+      debugger;
+      if (!Filters._svgFiltersAreSupported) {
         return;
       }
       Filters._prepareSVGFilters();
-      Filters._removeFilters(context);
-
+      Filters._removeFilter(context);
       var scale = ratio;
-      /**
-       * Scale blur radius for each quality level. The scale constants were gathered
-       * experimentally.
-       */
-      function getBlurScale(quality: number) {
-        var blurScale = ratio / 2; // For some reason we always have to scale by 1/2 first.
-        switch (quality) {
-          case 0:
-            return 0;
-          case 1:
-            return blurScale / 2.7;
-          case 2:
-            return blurScale / 1.28;
-          case 3:
-          default:
-            return blurScale;
-        }
-      }
-      for (var i = 0; i < filters.length; i++) {
-        var filter = filters[i];
-        if (filter instanceof BlurFilter) {
-          var blurFilter = <BlurFilter>filter;
-          var blurScale = getBlurScale(blurFilter.quality);
-          Filters._svgBlurFilter.setAttribute("stdDeviation",
-            blurFilter.blurX * blurScale + " " +
-              blurFilter.blurY * blurScale);
-          context.filter = "url(#svgBlurFilter)";
-        } else if (filter instanceof DropshadowFilter) {
-          var dropshadowFilter = <DropshadowFilter>filter;
-          var blurScale = getBlurScale(dropshadowFilter.quality);
-          Filters._svgDropshadowFilterBlur.setAttribute("stdDeviation",
-            dropshadowFilter.blurX * blurScale + " " +
-              dropshadowFilter.blurY * blurScale
-          );
-          Filters._svgDropshadowFilterOffset.setAttribute("dx",
-            String(Math.cos(dropshadowFilter.angle * Math.PI / 180) * dropshadowFilter.distance * scale));
-          Filters._svgDropshadowFilterOffset.setAttribute("dy",
-            String(Math.sin(dropshadowFilter.angle * Math.PI / 180) * dropshadowFilter.distance * scale));
-          Filters._svgDropshadowFilterFlood.setAttribute("flood-color",
-            ColorUtilities.rgbaToCSSStyle(((dropshadowFilter.color << 8) | Math.round(255 * dropshadowFilter.alpha))));
-          context.filter = "url(#svgDropShadowFilter)";
-        } else {
-          this._applyColorMatrixFilter(context, <ColorMatrix>filter);
-        }
+      if (filter instanceof BlurFilter) {
+        var blurFilter = <BlurFilter>filter;
+        var blurScale = getBlurScale(ratio, blurFilter.quality);
+        Filters._svgBlurFilter.setAttribute("stdDeviation",
+          blurFilter.blurX * blurScale + " " +
+            blurFilter.blurY * blurScale);
+        context.filter = "url(#svgBlurFilter)";
+      } else if (filter instanceof DropshadowFilter) {
+        var dropshadowFilter = <DropshadowFilter>filter;
+        var blurScale = getBlurScale(ratio, dropshadowFilter.quality);
+        Filters._svgDropshadowFilterBlur.setAttribute("stdDeviation",
+          dropshadowFilter.blurX * blurScale + " " +
+            dropshadowFilter.blurY * blurScale
+        );
+        Filters._svgDropshadowFilterOffset.setAttribute("dx",
+          String(Math.cos(dropshadowFilter.angle * Math.PI / 180) * dropshadowFilter.distance * scale));
+        Filters._svgDropshadowFilterOffset.setAttribute("dy",
+          String(Math.sin(dropshadowFilter.angle * Math.PI / 180) * dropshadowFilter.distance * scale));
+        Filters._svgDropshadowFilterFlood.setAttribute("flood-color",
+          ColorUtilities.rgbaToCSSStyle(((dropshadowFilter.color << 8) | Math.round(255 * dropshadowFilter.alpha))));
+        context.filter = "url(#svgDropShadowFilter)";
+      } else if (filter instanceof ColorMatrix) {
+        var colorMatrix = <ColorMatrix>filter;
+        Filters._svgColorMatrixFilter.setAttribute("values", colorMatrix.toSVGFilterMatrix());
+        context.filter = "url(#svgColorMatrixFilter)";
       }
     }
 
-    static _removeFilters(context: CanvasRenderingContext2D) {
+    static _removeFilter(context: CanvasRenderingContext2D) {
       // For some reason, setting this to the default empty string "" does
       // not work, it expects "none".
       context.filter = "none";
     }
 
     static _applyColorMatrix(context: CanvasRenderingContext2D, colorMatrix: ColorMatrix) {
-      Filters._removeFilters(context);
       if (colorMatrix.isIdentity()) {
         context.globalAlpha = 1;
         context.globalColorMatrix = null;
@@ -326,40 +315,46 @@ module Shumway.GFX.Canvas2D {
       }
       this.context.globalCompositeOperation = getCompositeOperation(blendMode);
       Filters._applyColorMatrix(this.context, colorMatrix);
-      if (filters && filters.length > 1) {
-        filters = filters.slice();
-        var dx, dy, _cc, _sx, _sy;
-        if (copyContext) {
-          _cc = copyContext;
-          copyContext = sourceContext;
-          sourceContext = _cc;
-        } else {
-          Canvas2DSurfaceRegion._ensureCopyCanvasSize(w, h);
-          copyContext = Canvas2DSurfaceRegion._copyCanvasContext;
-          dx = 0;
-          dy = 0;
+      
+      if (filters) {
+        var i = 0;
+        if (filters.length > 1) {
+          // If there are more than one filter defined on this node, we create another temporary
+          // surface and keep drawing back and forth between them till all filters are applied,
+          // except of the last one which gets applied when actually drawing into the target after
+          // this block, to safe a drawImage call.
+          var dx, dy, _cc, _sx, _sy;
+          if (copyContext) {
+            _cc = copyContext;
+            copyContext = sourceContext;
+            sourceContext = _cc;
+          } else {
+            Canvas2DSurfaceRegion._ensureCopyCanvasSize(w, h);
+            copyContext = Canvas2DSurfaceRegion._copyCanvasContext;
+            dx = 0;
+            dy = 0;
+          }
+          for (;i < filters.length - 1; i++) {
+            copyContext.clearRect(0, 0, w, h);
+            Filters._applyFilter(devicePixelRatio, copyContext, filters[i]);
+            copyContext.drawImage(sourceContext.canvas, sx, sy, w, h, dx, dy, w, h);
+            Filters._removeFilter(copyContext);
+            _cc = copyContext;
+            _sx = sx;
+            _sy = sy;
+            copyContext = sourceContext;
+            sourceContext = _cc;
+            sx = dx;
+            sy = dx;
+            dx = _sx;
+            dy = _sy;
+          }
         }
-        var filter = [null];
-        while (filters.length > 1) {
-          filter[0] = filters.shift();
-          copyContext.clearRect(0, 0, w, h);
-          Filters._applyFilters(devicePixelRatio, copyContext, filter);
-          copyContext.drawImage(sourceContext.canvas, sx, sy, w, h, dx, dy, w, h);
-          Filters._removeFilters(copyContext);
-          _cc = copyContext;
-          _sx = sx;
-          _sy = sy;
-          copyContext = sourceContext;
-          sourceContext = _cc;
-          sx = dx;
-          sy = dx;
-          dx = _sx;
-          dy = _sy;
-        }
+        Filters._applyFilter(devicePixelRatio, this.context, filters[i]);
       }
-      Filters._applyFilters(devicePixelRatio, this.context, filters);
+      
       this.context.drawImage(sourceContext.canvas, sx, sy, w, h, x, y, w, h);
-      Filters._removeFilters(this.context);
+      Filters._removeFilter(this.context);
       
       this.context.globalCompositeOperation = getCompositeOperation(BlendMode.Normal);
       if (clip) {

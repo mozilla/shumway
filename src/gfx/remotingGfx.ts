@@ -535,7 +535,7 @@ module Shumway.Remoting.GFX {
               ));
               break;
             case FilterType.ColorMatrix:
-              var matrix = new Array(20);
+              var matrix = new Float32Array(20);
               matrix[0] = input.readFloat();
               matrix[4] = input.readFloat();
               matrix[8] = input.readFloat();
