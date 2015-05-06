@@ -4,8 +4,8 @@
   "devDependencies": {
     "typescript": "1.4.1",
     "grunt": "~0.4.2",
-    "grunt-tslint": "~2.0.0",
-    "grunt-contrib-jshint": "~0.7.2",
+    "tslint": "2.0.1",
+    "grunt-tslint": "2.0.0",
     "grunt-exec": "~0.4.2",
     "grunt-contrib-watch": "~0.5.3",
     "grunt-parallel": "~0.3.1",

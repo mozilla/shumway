@@ -46,12 +46,6 @@ module.exports = function(grunt) {
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
-    jshint: {
-      options: {
-        jshintrc: 'test/jshint_config.json'
-      },
-      all: ['src/flash/**/*.js', 'src/swf/*.js']
-    },
     tslint: {
       options: {
         configuration: grunt.file.readJSON("tslint.json")
@@ -394,7 +388,6 @@ module.exports = function(grunt) {
   });
 
   grunt.loadNpmTasks('grunt-tslint');
-  grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-exec');
   grunt.loadNpmTasks('grunt-parallel');
