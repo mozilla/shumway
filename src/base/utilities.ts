@@ -3615,33 +3615,33 @@ module Shumway {
   }
 
   export enum LocalConnectionConnectResult {
-    AlreadyTaken = 0,
-    Success = 1,
-    InvalidName = 2
+    AlreadyTaken = -2,
+    InvalidName = -1,
+    Success = 0
   }
 
   export enum LocalConnectionCloseResult {
-    NotConnected = 0,
-    Success = 1
-  }
-
-  export enum LocalConnectionHandleMessageResult {
-    MethodNotFound = 0,
-    Success = 1,
-    Error = 1
+    NotConnected = -1,
+    Success = 0
   }
 
   export interface ILocalConnectionReceiver {
-    handleMessage(methodName: string, argsBuffer: ArrayBuffer): void;
+    handleMessage(methodName: string, argsBuffer: ArrayBuffer, sender: any): void;
   }
 
-    export interface ILocalConnectionService {
+  export interface ILocalConnectionSender {
+    dispatchEvent(event): void;
+    hasEventListener(type: string): boolean;
+    sec: any;
+  }
+
+  export interface ILocalConnectionService {
     createConnection(connectionName: string,
                           receiver: ILocalConnectionReceiver): LocalConnectionConnectResult;
     closeConnection(connectionName: string,
                          receiver: ILocalConnectionReceiver): LocalConnectionCloseResult;
-    send(connectionName: string, methodName: string,
-                           args: ArrayBuffer): LocalConnectionHandleMessageResult;
+    send(connectionName: string, methodName: string, args: ArrayBuffer,
+         sender: ILocalConnectionSender): void;
     allowDomains(connectionName: string, domains: string[], secure: boolean);
   }
 

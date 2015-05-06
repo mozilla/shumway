@@ -46,6 +46,7 @@ interface ISecurityDomain {
       ProgressEvent: typeof flashPackage.events.ProgressEvent;
       ErrorEvent: typeof flashPackage.events.ErrorEvent;
       GestureEvent: typeof flashPackage.events.GestureEvent;
+      StatusEvent: typeof flashPackage.events.StatusEvent;
       HTTPStatusEvent: typeof flashPackage.events.HTTPStatusEvent;
       IOErrorEvent: typeof flashPackage.events.IOErrorEvent;
       NetStatusEvent: typeof flashPackage.events.NetStatusEvent;
@@ -53,6 +54,7 @@ interface ISecurityDomain {
       TimerEvent: typeof flashPackage.events.TimerEvent;
       TouchEvent: typeof flashPackage.events.TouchEvent;
       UncaughtErrorEvents: typeof flashPackage.events.UncaughtErrorEvents;
+      AsyncErrorEvent: typeof flashPackage.events.AsyncErrorEvent;
     };
     filters: {
       BitmapFilter: typeof flashPackage.filters.BitmapFilter;
@@ -179,8 +181,10 @@ module Shumway.AVMX.AS {
   M("flash.events.TextEvent", flash.events.TextEvent);
   M("flash.events.TimerEvent", flash.events.TimerEvent);
   M("flash.events.ProgressEvent", flash.events.ProgressEvent);
+  M("flash.events.StatusEvent", flash.events.StatusEvent);
   M("flash.events.NetStatusEvent", flash.events.NetStatusEvent);
   M("flash.events.HTTPStatusEvent", flash.events.HTTPStatusEvent);
+  M("flash.events.AsyncErrorEvent", flash.events.AsyncErrorEvent);
   M("flash.events.UncaughtErrorEvents", flash.events.UncaughtErrorEvents);
 
   M("flash.external.ExternalInterface", flash.external.ExternalInterface);

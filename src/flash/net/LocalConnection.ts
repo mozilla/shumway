@@ -56,6 +56,7 @@ module Shumway.AVMX.AS.flash.net {
         this.sec.throwError('ArgumentError', Errors.CloseNotConnectedError);
       }
       release || assert(typeof connectionName === 'string' && connectionName.length > 0);
+      this._connectionName = null;
       // TODO: verify that these really are reset. For now, we aim to err on the safe side.
       this._allowedInsecureDomains = [];
       this._allowedSecureDomains = [];
@@ -74,7 +75,15 @@ module Shumway.AVMX.AS.flash.net {
       if (connectionName.indexOf(':') > -1) {
         this.sec.throwError('ArgumentError', Errors.InvalidParamError);
       }
-      LocalConnectionService.instance.createConnection(connectionName, this);
+      if (this._connectionName) {
+        this.sec.throwError('ArgumentError', Errors.AlreadyConnectedError);
+      }
+      var result = LocalConnectionService.instance.createConnection(connectionName, this);
+      if (result === LocalConnectionConnectResult.AlreadyTaken) {
+        this.sec.throwError('ArgumentError', Errors.AlreadyConnectedError);
+      }
+      this._connectionName = connectionName;
+      release || assert(result === LocalConnectionConnectResult.Success);
       if (this._allowedInsecureDomains.length) {
         this._allowDomains(this._allowedInsecureDomains, false);
       }
@@ -107,7 +116,12 @@ module Shumway.AVMX.AS.flash.net {
         this.sec.throwError('ArgumentError', Errors.ArgumentSizeError);
       }
       var argsBuffer = serializedArgs.getBytes().buffer;
-      LocalConnectionService.instance.send(connectionName, methodName, argsBuffer);
+      try {
+        LocalConnectionService.instance.send(connectionName, methodName, argsBuffer, this);
+      } catch (e) {
+        // Not sure what to do here, this shouldn't happen. We'll just ignore it with a warning.
+        Debug.warning('Unknown error occurred in LocalConnection#send', e);
+      }
     }
 
     get client(): ASObject {
@@ -147,39 +161,34 @@ module Shumway.AVMX.AS.flash.net {
       }
     }
 
-    public handleMessage(methodName: string, argsBuffer: ArrayBuffer) {
+    public handleMessage(methodName: string, argsBuffer: ArrayBuffer,
+                         sender: LocalConnection): void {
       var client = this._client;
       if (!client.axHasPublicProperty(methodName) || forbiddenNames.indexOf(methodName) > -1) {
         // Forbidden names really shouldn't reach this point, but should everything else fail,
         // we just pretend not to have found them here.
-        return LocalConnectionHandleMessageResult.MethodNotFound;
+        sender.sec.throwError('ReferenceError', Errors.ReadSealedError, 'methodName',
+                              this.axClass.name.name);
       }
       var handler = client.axGetPublicProperty(methodName);
       if (!axIsCallable(handler)) {
         // Non-callable handlers are just ignored.
-        return LocalConnectionHandleMessageResult.Success;
+        return;
       }
 
-      var args: ASArray;
-      try {
-        var ba: ByteArray = new this.sec.flash.utils.ByteArray(argsBuffer);
-        args = ba.readObject();
-        if (!this.sec.AXArray.axIsType(args)) {
-          return LocalConnectionHandleMessageResult.Error;
-        }
-      } catch (e) {
-        // Not sure what Flash does with corrupted messages, we just bail.
-        return LocalConnectionHandleMessageResult.Error;
+      var ba: ByteArray = new this.sec.flash.utils.ByteArray(argsBuffer);
+      var args: ASArray = ba.readObject();
+      if (!this.sec.AXArray.axIsType(args)) {
+        sender.sec.throwError('TypeError', Errors.CheckTypeFailedError, args, 'Array');
       }
-
-      handler.apply(client, args);
+      handler.apply(client, args.value);
     }
 
     get domain(): string {
       somewhatImplemented("public flash.net.LocalConnection::get domain");
       // HACK some SWFs want to know where they are hosted
-      // TODO: change this to use the current ApplicationDomain.
-      var url = FileLoadingService.instance.resolveUrl('/');
+      // TODO: change this to use URL.
+      var url = Shumway.AVMX.getCurrentABC().env.url;
       var m = /:\/\/(.+?)[:?#\/]/.exec(url);
       return m && m[1];
     }

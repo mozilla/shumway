@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-module Shumway.Shell
-{
+module Shumway.Shell {
   class ShellBinaryFileReader {
     public url:string;
     public method:string;
@@ -95,27 +94,10 @@ module Shumway.Shell
     shellFileLoadingService.baseUrl = baseUrl;
   }
 
-  class ShellLocalConnectionService implements ILocalConnectionService {
-    createConnection(connectionName: string,
-                     receiver: ILocalConnectionReceiver): LocalConnectionConnectResult {
-      return LocalConnectionConnectResult.Success;
-    }
-    closeConnection(connectionName: string,
-                    receiver: ILocalConnectionReceiver): LocalConnectionCloseResult {
-      return LocalConnectionCloseResult.Success;
-    }
-    send(connectionName: string, methodName: string,
-         argsBuffer: ArrayBuffer): LocalConnectionHandleMessageResult {
-      return LocalConnectionHandleMessageResult.Success;
-    }
-    allowDomains(connectionName: string, domains: string[], secure: boolean) {
-    }
-  }
-
   export function initializePlayerServices() {
     Shumway.BinaryFileReader = <typeof BinaryFileReader><any>ShellBinaryFileReader;
     Shumway.Telemetry.instance = shellTelemetry;
     Shumway.FileLoadingService.instance = shellFileLoadingService;
-    Shumway.LocalConnectionService.instance = new ShellLocalConnectionService();
+    Shumway.LocalConnectionService.instance = new Player.PlayerInternalLocalConnectionService();
   }
 }

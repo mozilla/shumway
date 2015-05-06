@@ -19,20 +19,41 @@ module Shumway.AVMX.AS.flash.events {
 
     static classInitializer: any = null;
 
-    static classSymbols: string [] = null;
-    static instanceSymbols: string [] = null;
-
-    code: string;
-    level: string;
+    private _code: string;
+    private _level: string;
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 code: string = "", level: string = "") {
       super(type, bubbles, cancelable);
-      this.code = axCoerceString(code);
-      this.level = axCoerceString(level);
+      this._code = axCoerceString(code);
+      this._level = axCoerceString(level);
     }
 
-    // JS -> AS Bindings
+    public get level(): string {
+      return this._level;
+    }
+
+    public set level(value: string) {
+      this._level = value;
+    }
+    public get code(): string {
+      return this._code;
+    }
+
+    public set code(value: string) {
+      this._code = value;
+    }
+
+    clone(): Shumway.AVMX.AS.flash.events.Event {
+      return new this.sec.flash.events.StatusEvent(this._type, this._bubbles, this._cancelable,
+                                                   this._code, this._level);
+    }
+
+    toString(): string {
+      return this.formatToString('StatusEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
+                                 'code', 'level');
+    }
+
     static STATUS: string = "status";
   }
 }

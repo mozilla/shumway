@@ -15,37 +15,23 @@
  */
 
 package flash.events {
+[native]
 public class StatusEvent extends Event {
   public static const STATUS:String = "status";
-  private var _code:String;
-  private var _level:String;
   public function StatusEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false,
                               code:String = "", level:String = "")
   {
     super(type, bubbles, cancelable);
-    _code = code;
-    _level = level;
+    this.code = code;
+    this.level = level;
   }
-  public function get code():String {
-    return _code;
-  }
-  public function set code(value:String):void {
-    _code = value;
-  }
-  public function get level():String {
-    return _level;
-  }
-  public function set level(value:String):void {
-    _level = value;
-  }
+  public native function get code():String;
+  public native function set code(value:String):void;
+  public native function get level():String;
+  public native function set level(value:String):void;
 
-  public override function clone():Event {
-    return new StatusEvent(type, bubbles, cancelable, code, level);
-  }
+  public native override function clone():Event;
 
-  public override function toString():String {
-    return formatToString('SyncEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
-                          'code', 'level');
-  }
+  public native override function toString():String;
 }
 }
