@@ -264,15 +264,7 @@ module.exports = function(grunt) {
         cwd: "test/ats"
       },
       restartless: {
-        cmd: 'ln -fs ../../../examples/inspector/debug/pingpong.js chrome/pingpong.js;' +
-          'ln -fs ../../../src/gfx content/gfx;' +
-          'ln -fs ../../../build/playerglobal content/playerglobal;' +
-          'ln -fs ../../../build/libs content/libs;' +
-          'ln -fs ../../../build/bundles/shumway.gfx.js content/shumway.gfx.js;' +
-          'ln -fs ../../../build/bundles/shumway.player.js content/shumway.player.js;' +
-          'ln -fs ../../../build/version/version.txt content/version.txt;' +
-          'OUT=' + (grunt.option('profile') || '').replace(/ /g, '\\ ') + '/extensions/shumway@research.mozilla.org;' +
-          'rm -r "$OUT" 2>/dev/null; pwd > "$OUT"',
+        cmd: 'make restartless PROFILE="' + (grunt.option('profile') || '') + '"',
         cwd: "extension/firefox"
       }
     },
