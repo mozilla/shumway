@@ -684,8 +684,8 @@ module Shumway.AVMX {
             break;
           case Bytecode.COERCE:
             popNameInto(stack, abc.getMultiname(frame.u30()), rn);
-            type = scopes.topScope().getScopeProperty(rn, true, false);
-            stack[stack.length - 1] = type.axCoerce(stack[stack.length - 1]);
+            receiver = scopes.topScope().getScopeProperty(rn, true, false);
+            stack[stack.length - 1] = receiver.axCoerce(stack[stack.length - 1]);
             break;
           case Bytecode.COERCE_A: /* NOP */
             break;
@@ -1016,6 +1016,13 @@ module Shumway.AVMX {
           return sec.createError('TypeError', Errors.CantUseInstanceofOnNonObjectError);
         }
         break;
+      case Bytecode.ASTYPE:
+      case Bytecode.ASTYPELATE:
+        // ASTYPE(LATE) have almost the same error messages as ISTYPE(LATE), but not *quite*.
+        if (receiver && !receiver.axAsType) {
+          return sec.createError('TypeError', Errors.ConvertNullToObjectError);
+        }
+        // Fallthrough.
       case Bytecode.ISTYPE:
       case Bytecode.ISTYPELATE:
         if (receiver === null) {
@@ -1026,6 +1033,12 @@ module Shumway.AVMX {
         }
         if (!receiver.axIsType) {
           return sec.createError('TypeError', Errors.IsTypeMustBeClassError);
+        }
+        break;
+      case Bytecode.COERCE:
+        if (!receiver) {
+          return sec.createError('ReferenceError', Errors.ClassNotFoundError,
+                                 mn.toFQNString(false));
         }
         break;
       case Bytecode.IN:

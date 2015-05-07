@@ -1700,7 +1700,7 @@ module Shumway.AVMX {
                                               this._namespaceOffsets.length);
       }
       if (i === 0) {
-        return null;
+        return Namespace.PUBLIC;
       }
       var ns = this._namespaces[i];
       if (ns !== undefined) {
