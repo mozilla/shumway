@@ -126,9 +126,9 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     set accessibilityImplementation(value: flash.accessibility.AccessibilityImplementation) {
-      value = value;
-      notImplemented("public flash.display.InteractiveObject::set accessibilityImplementation"); return;
-      // this._accessibilityImplementation = value;
+      somewhatImplemented("public flash.display.InteractiveObject::set" +
+                         " accessibilityImplementation");
+      this._accessibilityImplementation = value;
     }
 
     get softKeyboardInputAreaOfInterest(): flash.geom.Rectangle {
