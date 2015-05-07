@@ -221,6 +221,7 @@ module Shumway.AVMX.AS {
   M("flash.media.StageVideo", flash.media.StageVideo);
   M("flash.media.ID3Info", flash.media.ID3Info);
   M("flash.media.Microphone", flash.media.Microphone);
+  M("flash.media.Camera", flash.media.Camera);
 
   M("flash.net.FileFilter", flash.net.FileFilter);
   M("flash.net.FileReference", flash.net.FileReference);
