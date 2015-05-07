@@ -246,6 +246,9 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set antiAliasType(antiAliasType: string) {
+      if (isNullOrUndefined(antiAliasType)) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'antiAliasType');
+      }
       antiAliasType = axCoerceString(antiAliasType);
       if (AntiAliasType.toNumber(antiAliasType) < 0) {
         this.sec.throwError("ArgumentError", Errors.InvalidParamError, "antiAliasType");
@@ -258,6 +261,9 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set autoSize(value: string) {
+      if (isNullOrUndefined(value)) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'autoSize');
+      }
       value = axCoerceString(value);
       if (value === this._autoSize) {
         return;
@@ -354,6 +360,9 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set defaultTextFormat(format: flash.text.TextFormat) {
+      if (isNullOrUndefined(format)) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'format');
+      }
       var defaultTextFormat = this._textContent.defaultTextFormat;
       defaultTextFormat.merge(format);
       if (defaultTextFormat.color === null) {
@@ -376,6 +385,9 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set gridFitType(gridFitType: string) {
+      if (isNullOrUndefined(gridFitType)) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'gridFitType');
+      }
       gridFitType = axCoerceString(gridFitType);
       release || assert (flash.text.GridFitType.toNumber(gridFitType) >= 0);
       this._gridFitType = gridFitType;
@@ -386,6 +398,9 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set htmlText(value: string) {
+      if (isNullOrUndefined(value)) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'value');
+      }
       value = axCoerceString(value);
       // Flash resets the bold and italic flags when an html value is set on a text field created
       // from a symbol.
@@ -530,7 +545,10 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set text(value: string) {
-      value = axCoerceString(value);
+      if (isNullOrUndefined(value)) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'value');
+      }
+      value = axCoerceString(value) || '';
       if (value === this._textContent.plainText) {
         return;
       }
