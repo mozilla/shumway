@@ -120,7 +120,6 @@ module Shumway.GFX.Canvas2D {
     }
 
     static _applyFilter(ratio: number, context: CanvasRenderingContext2D, filter: Filter) {
-      debugger;
       if (!Filters._svgFiltersAreSupported) {
         return;
       }
