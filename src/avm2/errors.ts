@@ -464,7 +464,7 @@ module Shumway.AVMX {
   //  VoucherIntegrityError                                     : { code: 3312, message: "Verification of voucher failed."},
   //  WriteFileSystemFailed                                     : { code: 3313, message: "Write to the file system failed."},
   //  FLVHeaderIntegrityFailed                                  : { code: 3314, message: "Verification of FLV/F4V header file failed."},
-  //  PermissionDenied                                          : { code: 3315, message: "The current security context does not allow this operation."},
+    PermissionDenied                                          : { code: 3315, message: "The current security context does not allow this operation."},
   //  LocalConnectionUserScopedLocked                           : { code: 3316, message: "The value of LocalConnection.isPerUser cannot be changed because it has already been locked by a call to LocalConnection.connect, .send, or .close."},
   //  LoadAdobeCPFailed                                         : { code: 3317, message: "Failed to load Flash Access module."},
   //  IncompatibleAdobeCPVersion                                : { code: 3318, message: "Incompatible version of Flash Access module found."},
