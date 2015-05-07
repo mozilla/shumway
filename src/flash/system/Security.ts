@@ -69,23 +69,24 @@ module Shumway.AVMX.AS.flash.system {
     }
     static get pageDomain(): string {
       somewhatImplemented("public flash.system.Security::get pageDomain");
+      // TODO: convert this to proper URI parsing.
       var pageHost: string = Shumway.FileLoadingService.instance.resolveUrl('/');
       var parts = pageHost.split('/'); parts.pop();
       return parts.pop();
     }
     static allowDomain(): void {
-      somewhatImplemented("public flash.system.Security::static allowDomain [\"" +
-        Array.prototype.join.call(arguments, "\", \"") + "\"]");
+      somewhatImplemented('public flash.system.Security::static allowDomain ["' +
+        Array.prototype.join.call(arguments, '", "') + '"]');
       var whitelist: ICrossDomainSWFLoadingWhitelist = this.sec.player;
       for (var i = 0; i < arguments.length; i++) {
-        whitelist.addToSWFLoadingWhitelist(axCoerceString(arguments[i]), false);
+        whitelist.addToSWFLoadingWhitelist(axCoerceString(arguments[i]) || '', false);
       }
     }
     static allowInsecureDomain(): void {
       somewhatImplemented("public flash.system.Security::static allowInsecureDomain");
       var whitelist: ICrossDomainSWFLoadingWhitelist = this.sec.player;
       for (var i = 0; i < arguments.length; i++) {
-        whitelist.addToSWFLoadingWhitelist(axCoerceString(arguments[i]), true);
+        whitelist.addToSWFLoadingWhitelist(axCoerceString(arguments[i]) || '', true);
       }
     }
     static loadPolicyFile(url: string): void {
