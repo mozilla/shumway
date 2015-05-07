@@ -141,9 +141,13 @@ module Shumway.AVMX {
     }
   }
   // REDUX: check if we need this now that we do arg checking at callsites.
-  export function checkParameterType(argument: any, name: string, type: AS.ASClass) {
+  export function checkParameterType(argument: any, name: string, type: AS.ASClass,
+                                     allowNull: boolean) {
     if (argument == null) {
-      return;
+      if (allowNull) {
+        return;
+      }
+      type.sec.throwError('TypeError', Errors.NullPointerError, name);
     }
     if (!type.axIsType(argument)) {
       type.sec.throwError('TypeError', Errors.CheckTypeFailedError, argument,
