@@ -44,7 +44,7 @@ module Shumway.SWF.Parser {
     var i = 0;
     var n = bytes.length;
     // Finding first marker, and skipping the data before this marker.
-    // (FF 00 - code is escaped 00; FF FF ... (FF xx) - fill bytes before marker).
+    // (FF 00 - code is escaped FF; FF FF ... (FF xx) - fill bytes before marker).
     while (i < n && (bytes[i] !== 0xff ||
            (i + 1 < n && (bytes[i + 1] === 0x00 || bytes[i + 1] === 0xff)))) {
       ++i;
@@ -57,6 +57,13 @@ module Shumway.SWF.Parser {
       release || Debug.assert(bytes[i] === 0xff);
       var begin = i++;
       var code = bytes[i++];
+
+      // Some tags have length field -- using it
+      if ((code >= 0xc0 && code <= 0xc7) || (code >= 0xc9 && code <= 0xcf) ||
+          (code >= 0xda && code <= 0xef) || code === 0xfe) {
+        var length = readUint16(bytes, i);
+        i += length;
+      }
 
       // Finding next marker.
       while (i < n && (bytes[i] !== 0xff ||
