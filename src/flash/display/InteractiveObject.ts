@@ -15,7 +15,6 @@
  */
 // Class: InteractiveObject
 module Shumway.AVMX.AS.flash.display {
-  import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import axCoerceString = Shumway.AVMX.axCoerceString;
 
@@ -23,15 +22,8 @@ module Shumway.AVMX.AS.flash.display {
 
   export class InteractiveObject extends flash.display.DisplayObject {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
 
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
     constructor () {
       super();
       if (!this._fieldsInitialized) {
@@ -51,11 +43,6 @@ module Shumway.AVMX.AS.flash.display {
       this._needsSoftKeyboard = false;
       this._contextMenu = null;
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
     
     _tabEnabled: boolean;
     _tabIndex: number /*int*/;
@@ -136,9 +123,9 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     set softKeyboardInputAreaOfInterest(value: flash.geom.Rectangle) {
-      value = value;
-      notImplemented("public flash.display.InteractiveObject::set softKeyboardInputAreaOfInterest"); return;
-      // this._softKeyboardInputAreaOfInterest = value;
+      somewhatImplemented("public flash.display.InteractiveObject::set" +
+                          " softKeyboardInputAreaOfInterest");
+       this._softKeyboardInputAreaOfInterest = value;
     }
 
     get needsSoftKeyboard(): boolean {
@@ -147,8 +134,8 @@ module Shumway.AVMX.AS.flash.display {
 
     set needsSoftKeyboard(value: boolean) {
       value = !!value;
-      notImplemented("public flash.display.InteractiveObject::set needsSoftKeyboard"); return;
-      // this._needsSoftKeyboard = value;
+      somewhatImplemented("public flash.display.InteractiveObject::set needsSoftKeyboard");
+       this._needsSoftKeyboard = value;
     }
 
     get contextMenu(): flash.ui.ContextMenu {
@@ -162,7 +149,8 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     requestSoftKeyboard(): boolean {
-      notImplemented("public flash.display.InteractiveObject::requestSoftKeyboard"); return;
+      somewhatImplemented("public flash.display.InteractiveObject::requestSoftKeyboard");
+      return false;
     }
   }
 }
