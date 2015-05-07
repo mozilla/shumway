@@ -3626,7 +3626,7 @@ module Shumway {
   }
 
   export interface ILocalConnectionReceiver {
-    handleMessage(methodName: string, argsBuffer: ArrayBuffer, sender: any): void;
+    handleMessage(methodName: string, argsBuffer: ArrayBuffer): void;
   }
 
   export interface ILocalConnectionSender {
@@ -3641,8 +3641,9 @@ module Shumway {
     closeConnection(connectionName: string,
                          receiver: ILocalConnectionReceiver): LocalConnectionCloseResult;
     send(connectionName: string, methodName: string, args: ArrayBuffer,
-         sender: ILocalConnectionSender): void;
-    allowDomains(connectionName: string, domains: string[], secure: boolean);
+         sender: ILocalConnectionSender, senderURL: string): void;
+    allowDomains(connectionName: string, receiver: ILocalConnectionReceiver, domains: string[],
+                 secure: boolean);
   }
 
   export module LocalConnectionService {

@@ -37,12 +37,19 @@ module Shumway.AVMX.AS.flash.net {
       this._connectionName = null;
       this._allowedInsecureDomains = [];
       this._allowedSecureDomains = [];
+      this._url = Shumway.AVMX.getCurrentABC().env.url;
+      if (this._url.indexOf('https') === 0) {
+        this.allowDomain(this.domain);
+      } else {
+        this.allowInsecureDomain(this.domain);
+      }
     }
     
     static get isSupported() {
       return true;
     }
-    
+
+    private _url: string;
     private _client: ASObject;
     private _connectionName: string;
 
@@ -85,10 +92,12 @@ module Shumway.AVMX.AS.flash.net {
       this._connectionName = connectionName;
       release || assert(result === LocalConnectionConnectResult.Success);
       if (this._allowedInsecureDomains.length) {
-        this._allowDomains(this._allowedInsecureDomains, false);
+        LocalConnectionService.instance.allowDomains(connectionName, this,
+                                                     this._allowedInsecureDomains, false);
       }
       if (this._allowedSecureDomains.length) {
-        this._allowDomains(this._allowedSecureDomains, true);
+        LocalConnectionService.instance.allowDomains(connectionName, this,
+                                                     this._allowedSecureDomains, true);
       }
     }
 
@@ -116,8 +125,9 @@ module Shumway.AVMX.AS.flash.net {
         this.sec.throwError('ArgumentError', Errors.ArgumentSizeError);
       }
       var argsBuffer = serializedArgs.getBytes().buffer;
+      var url = this._url;
       try {
-        LocalConnectionService.instance.send(connectionName, methodName, argsBuffer, this);
+        LocalConnectionService.instance.send(connectionName, methodName, argsBuffer, this, url);
       } catch (e) {
         // Not sure what to do here, this shouldn't happen. We'll just ignore it with a warning.
         Debug.warning('Unknown error occurred in LocalConnection#send', e);
@@ -135,12 +145,12 @@ module Shumway.AVMX.AS.flash.net {
       this._client = client;
     }
 
-    allowDomain(): void {
-      this._allowDomains(<any>arguments, false);
+    allowDomain(...domains: string[]): void {
+      this._allowDomains(domains, true);
     }
 
-    allowInsecureDomain(): void {
-      this._allowDomains(<any>arguments, true);
+    allowInsecureDomain(...domains: string[]): void {
+      this._allowDomains(domains, false);
     }
 
     private _allowDomains(domains: string[], secure: boolean) {
@@ -154,21 +164,22 @@ module Shumway.AVMX.AS.flash.net {
         if (!axIsTypeString(domain)) {
           this.sec.throwError('ArgumentError', Errors.AllowDomainArgumentError);
         }
-        result.push(domain);
+        if (result.indexOf(domain) === -1) {
+          result.push(domain);
+        }
       }
       if (this._connectionName) {
-        LocalConnectionService.instance.allowDomains(this._connectionName, domains, secure);
+        LocalConnectionService.instance.allowDomains(this._connectionName, this, domains, secure);
       }
     }
 
-    public handleMessage(methodName: string, argsBuffer: ArrayBuffer,
-                         sender: LocalConnection): void {
+    public handleMessage(methodName: string, argsBuffer: ArrayBuffer): void {
       var client = this._client;
       if (!client.axHasPublicProperty(methodName) || forbiddenNames.indexOf(methodName) > -1) {
         // Forbidden names really shouldn't reach this point, but should everything else fail,
         // we just pretend not to have found them here.
-        sender.sec.throwError('ReferenceError', Errors.ReadSealedError, 'methodName',
-                              this.axClass.name.name);
+        this.sec.throwError('ReferenceError', Errors.ReadSealedError, methodName,
+                            client.axClass.name.name);
       }
       var handler = client.axGetPublicProperty(methodName);
       if (!axIsCallable(handler)) {
@@ -179,7 +190,7 @@ module Shumway.AVMX.AS.flash.net {
       var ba: ByteArray = new this.sec.flash.utils.ByteArray(argsBuffer);
       var args: ASArray = ba.readObject();
       if (!this.sec.AXArray.axIsType(args)) {
-        sender.sec.throwError('TypeError', Errors.CheckTypeFailedError, args, 'Array');
+        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, args, 'Array');
       }
       handler.apply(client, args.value);
     }
@@ -188,8 +199,7 @@ module Shumway.AVMX.AS.flash.net {
       somewhatImplemented("public flash.net.LocalConnection::get domain");
       // HACK some SWFs want to know where they are hosted
       // TODO: change this to use URL.
-      var url = Shumway.AVMX.getCurrentABC().env.url;
-      var m = /:\/\/(.+?)[:?#\/]/.exec(url);
+      var m = /:\/\/(.+?)[:?#\/]/.exec(this._url);
       return m && m[1];
     }
 
