@@ -312,8 +312,8 @@ module Shumway.GFX.Canvas2D {
         this.context.rect(x, y, w, h);
         this.context.clip();
       }
+      this.context.globalAlpha = 1;
       this.context.globalCompositeOperation = getCompositeOperation(blendMode);
-      Filters._applyColorMatrix(this.context, colorMatrix);
       
       if (filters) {
         var i = 0;
@@ -353,7 +353,6 @@ module Shumway.GFX.Canvas2D {
       }
       
       this.context.drawImage(sourceContext.canvas, sx, sy, w, h, x, y, w, h);
-      Filters._removeFilter(this.context);
       
       this.context.globalCompositeOperation = getCompositeOperation(BlendMode.Normal);
       if (clip) {
