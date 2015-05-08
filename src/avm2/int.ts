@@ -907,7 +907,7 @@ module Shumway.AVMX {
                               typeof internalError.name === 'string' &&
                               typeof internalError.message === 'string';
     if (isProperErrorObject) {
-      if (internalError.name === 'InternalError') {
+      if (internalError instanceof RangeError || internalError.name === 'InternalError') {
         var obj = Object.create(sec.AXError.tPrototype);
         obj._errorID = 1023;
         // Stack exhaustion errors are annoying to catch: Identifying them requires
@@ -918,17 +918,25 @@ module Shumway.AVMX {
           return obj;
         }
         if (internalError.message.indexOf('recursion') > -1 ||
-            internalError.name === 'RangeError' &&
             internalError.message.indexOf('call stack size exceeded') > -1)
         {
           obj.$Bgmessage = "Stack overflow occurred";
           scopeStacks.length = expectedScopeStacksHeight;
           return obj;
         }
-      } else if (internalError.name === 'RangeError') {
-        // ..
+      } else if (internalError instanceof TypeError) {
+        if (internalError.message.indexOf("convert") > -1 &&
+            (internalError.message.indexOf("to primitive") > -1 ||
+             internalError.message.indexOf("to string") > -1)) {
+          return sec.createError('TypeError', Errors.ConvertToPrimitiveError, 'value');
+        }
+        // Internal error thrown by generic Array methods.
+        if (internalError.message === 'Conversion to Array failed') {
+          return sec.createError('TypeError', Errors.CheckTypeFailedError, 'value', 'Array');
+        }
       }
     }
+
     var message: string;
     var isSuper = false;
     switch (bc) {

@@ -3092,7 +3092,7 @@
       "test/avm2/acceptance/as3/AbcDecoder/useNS.abc",
       "test/avm2/acceptance/as3/AMF/AMFSerializer.abc",
       "test/avm2/acceptance/as3/Array/bug_535446.abc",
-      "test/avm2/acceptance/as3/Array/length_mods.abc",
+//      "test/avm2/acceptance/as3/Array/length_mods.abc",
       "test/avm2/acceptance/as3/Array/regress_524122.abc",
       "test/avm2/acceptance/as3/Array/regress_636535.abc",
       "test/avm2/acceptance/as3/Array/regress_733384.abc",

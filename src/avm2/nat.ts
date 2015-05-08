@@ -703,6 +703,12 @@ module Shumway.AVMX.AS {
     return Array.apply(Array, args);
   }
 
+  function coerceArray(obj) {
+    if (!obj || !obj.sec) {
+      throw new TypeError('Conversion to Array failed');
+    }
+    return obj.sec.AXArray.axCoerce(obj);
+  }
   export class ASArray extends ASObject {
     static classInitializer() {
       var proto: any = this.dPrototype;
@@ -715,30 +721,30 @@ module Shumway.AVMX.AS {
       defineNonEnumerableProperty(this, '$BgRETURNINDEXEDARRAY', 8);
       defineNonEnumerableProperty(this, '$BgNUMERIC', 16);
 
-      addPrototypeFunctionAlias(proto, "$Bgpush", asProto.push);
-      addPrototypeFunctionAlias(proto, "$Bgpop", asProto.pop);
-      addPrototypeFunctionAlias(proto, "$Bgshift", asProto.shift);
-      addPrototypeFunctionAlias(proto, "$Bgunshift", asProto.unshift);
-      addPrototypeFunctionAlias(proto, "$Bgreverse", asProto.reverse);
-      addPrototypeFunctionAlias(proto, "$Bgconcat", asProto.concat);
-      addPrototypeFunctionAlias(proto, "$Bgslice", asProto.slice);
-      addPrototypeFunctionAlias(proto, "$Bgsplice", asProto.splice);
-      addPrototypeFunctionAlias(proto, "$Bgjoin", asProto.join);
-      addPrototypeFunctionAlias(proto, "$BgtoString", asProto.toString);
-      addPrototypeFunctionAlias(proto, "$BgindexOf", asProto.indexOf);
-      addPrototypeFunctionAlias(proto, "$BglastIndexOf", asProto.lastIndexOf);
-      addPrototypeFunctionAlias(proto, "$Bgevery", asProto.every);
-      addPrototypeFunctionAlias(proto, "$Bgsome", asProto.some);
-      addPrototypeFunctionAlias(proto, "$BgforEach", asProto.forEach);
-      addPrototypeFunctionAlias(proto, "$Bgmap", asProto.map);
-      addPrototypeFunctionAlias(proto, "$Bgfilter", asProto.filter);
-      addPrototypeFunctionAlias(proto, "$Bgsort", asProto.sort);
-      addPrototypeFunctionAlias(proto, "$BgsortOn", asProto.sortOn);
+      addPrototypeFunctionAlias(proto, "$Bgpush", asProto.generic_push);
+      addPrototypeFunctionAlias(proto, "$Bgpop", asProto.generic_pop);
+      addPrototypeFunctionAlias(proto, "$Bgshift", asProto.generic_shift);
+      addPrototypeFunctionAlias(proto, "$Bgunshift", asProto.generic_unshift);
+      addPrototypeFunctionAlias(proto, "$Bgreverse", asProto.generic_reverse);
+      addPrototypeFunctionAlias(proto, "$Bgconcat", asProto.generic_concat);
+      addPrototypeFunctionAlias(proto, "$Bgslice", asProto.generic_slice);
+      addPrototypeFunctionAlias(proto, "$Bgsplice", asProto.generic_splice);
+      addPrototypeFunctionAlias(proto, "$Bgjoin", asProto.generic_join);
+      addPrototypeFunctionAlias(proto, "$BgtoString", asProto.generic_toString);
+      addPrototypeFunctionAlias(proto, "$BgindexOf", asProto.generic_indexOf);
+      addPrototypeFunctionAlias(proto, "$BglastIndexOf", asProto.generic_lastIndexOf);
+      addPrototypeFunctionAlias(proto, "$Bgevery", asProto.generic_every);
+      addPrototypeFunctionAlias(proto, "$Bgsome", asProto.generic_some);
+      addPrototypeFunctionAlias(proto, "$BgforEach", asProto.generic_forEach);
+      addPrototypeFunctionAlias(proto, "$Bgmap", asProto.generic_map);
+      addPrototypeFunctionAlias(proto, "$Bgfilter", asProto.generic_filter);
+      addPrototypeFunctionAlias(proto, "$Bgsort", asProto.generic_sort);
+      addPrototypeFunctionAlias(proto, "$BgsortOn", asProto.generic_sortOn);
 
       addPrototypeFunctionAlias(proto, "$BghasOwnProperty", asProto.native_hasOwnProperty);
       addPrototypeFunctionAlias(proto, "$BgpropertyIsEnumerable",
                                 asProto.native_propertyIsEnumerable);
-      addPrototypeFunctionAlias(proto, '$BgtoLocaleString', asProto.toString);
+      addPrototypeFunctionAlias(proto, '$BgtoLocaleString', asProto.generic_toString);
     }
 
     constructor() {
@@ -758,6 +764,7 @@ module Shumway.AVMX.AS {
       super.native_propertyIsEnumerable(nm);
     }
 
+    $Bglength: number;
     value: any [];
 
     public static axApply(self: ASArray, args: any[]): ASArray {
@@ -780,19 +787,65 @@ module Shumway.AVMX.AS {
       }
       return this.value.push.apply(this.value, arguments);
     }
+
+    generic_push() {
+      if (this && this.value instanceof Array) {
+        return this.push.apply(this, arguments);
+      }
+
+      var n = this.axGetPublicProperty('length') >>> 0;
+      for (var i = 0; i < arguments.length; i++) {
+        this.axSetNumericProperty(n++, arguments[i]);
+      }
+      this.axSetPublicProperty('length', n);
+      return n;
+    }
+
     pop() {
       return this.value.pop();
     }
+    generic_pop() {
+      if (this && this.value instanceof Array) {
+        return this.value.pop();
+      }
+
+      var len = this.axGetPublicProperty('length') >>> 0;
+      if (!len) {
+        this.axSetPublicProperty('length', 0);
+        return;
+      }
+
+      var retVal = this.axGetNumericProperty(len - 1);
+      rn.name = len - 1;
+      rn.namespaces = [Namespace.PUBLIC];
+      this.axDeleteProperty(rn);
+      this.axSetPublicProperty('length', len - 1);
+      return retVal;
+    }
+
     shift() {
       return this.value.shift();
     }
+    generic_shift() {
+      return coerceArray(this).shift();
+    }
+
     unshift() {
       return this.value.unshift.apply(this.value, arguments);
     }
+    generic_unshift() {
+      var self = coerceArray(this);
+      return self.value.unshift.apply(self.value, arguments);
+    }
+
     reverse() {
       this.value.reverse();
       return this;
     }
+    generic_reverse() {
+      return coerceArray(this).reverse();
+    }
+
     concat() {
       var value = this.value.slice();
       for (var i = 0; i < arguments.length; i++) {
@@ -808,21 +861,56 @@ module Shumway.AVMX.AS {
       }
       return this.sec.createArrayUnsafe(value);
     }
+    generic_concat() {
+      return coerceArray(this).concat.apply(this, arguments);
+    }
+
     slice(startIndex: number, endIndex: number) {
       return this.sec.createArray(this.value.slice(startIndex, endIndex));
     }
+    generic_slice(startIndex: number, endIndex: number) {
+      return coerceArray(this).slice(startIndex, endIndex);
+    }
+
+    splice(): any[] {
+      var o = this.value;
+      if (arguments.length === 0) {
+        return undefined;
+      }
+      return this.sec.createArray(o.splice.apply(o, arguments));
+    }
+    generic_splice(): any[] {
+      return coerceArray(this).splice.apply(this, arguments);
+    }
+
     join(sep: string) {
       return this.value.join(sep);
     }
+    generic_join(sep: string) {
+      return coerceArray(this).join(sep);
+    }
+
     toString() {
       return this.value.join(',');
     }
+    generic_toString() {
+      return coerceArray(this).join(',');
+    }
+
     indexOf(value: any, fromIndex: number) {
       return this.value.indexOf(value, fromIndex|0);
     }
+    generic_indexOf(value: any, fromIndex: number) {
+      return coerceArray(this).indexOf(value, fromIndex|0);
+    }
+
     lastIndexOf(value: any, fromIndex: number) {
       return this.value.lastIndexOf(value, arguments.length > 1 ? fromIndex : 0x7fffffff);
     }
+    generic_lastIndexOf(value: any, fromIndex: number) {
+      return coerceArray(this).lastIndexOf(value, arguments.length > 1 ? fromIndex : 0x7fffffff);
+    }
+
     every(callbackfn: {value: Function}, thisArg?) {
       if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
         return true;
@@ -836,6 +924,10 @@ module Shumway.AVMX.AS {
       }
       return true;
     }
+    generic_every(callbackfn: {value: Function}, thisArg?) {
+      return coerceArray(this).every(callbackfn, thisArg);
+    }
+
     some(callbackfn: {value}, thisArg?) {
       if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
         return false;
@@ -846,6 +938,10 @@ module Shumway.AVMX.AS {
         return callbackfn.value.call(thisArg, currentValue, index, self);
       });
     }
+    generic_some(callbackfn: {value}, thisArg?) {
+      return coerceArray(this).some(callbackfn, thisArg);
+    }
+
     forEach(callbackfn: {value}, thisArg?) {
       if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
         return;
@@ -856,6 +952,10 @@ module Shumway.AVMX.AS {
         callbackfn.value.call(thisArg, currentValue, index, self);
       });
     }
+    generic_forEach(callbackfn: {value}, thisArg?) {
+      return coerceArray(this).forEach(callbackfn, thisArg);
+    }
+
     map(callbackfn: {value}, thisArg?) {
       if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
         return this.sec.createArrayUnsafe([]);
@@ -866,6 +966,10 @@ module Shumway.AVMX.AS {
         return callbackfn.value.call(thisArg, currentValue, index, self);
       }));
     }
+    generic_map(callbackfn: {value}, thisArg?) {
+      return coerceArray(this).map(callbackfn, thisArg);
+    }
+
     filter(callbackfn: {value: Function}, thisArg?) {
       if (!callbackfn || !callbackfn.value || typeof callbackfn.value !== 'function') {
         return this.sec.createArrayUnsafe([]);
@@ -879,6 +983,9 @@ module Shumway.AVMX.AS {
         }
       }
       return this.sec.createArrayUnsafe(result);
+    }
+    generic_filter(callbackfn: {value: Function}, thisArg?) {
+      return coerceArray(this).filter(callbackfn, thisArg);
     }
 
     toLocaleString(): string {
@@ -895,14 +1002,6 @@ module Shumway.AVMX.AS {
         }
       }
       return out;
-    }
-
-    splice(): any[] {
-      var o = this.value;
-      if (arguments.length === 0) {
-        return undefined;
-      }
-      return this.sec.createArray(o.splice.apply(o, arguments));
     }
 
     sort(): any {
@@ -934,6 +1033,10 @@ module Shumway.AVMX.AS {
         return axCompare(a, b, options, sortOrder, compareFunction);
       });
       return this;
+    }
+
+    generic_sort() {
+      return coerceArray(this).sort.apply(this, arguments);
     }
 
     sortOn(names: any, options: any): any {
@@ -987,6 +1090,10 @@ module Shumway.AVMX.AS {
 
       o.sort((a, b) => axCompareFields(a, b, names, optionsList));
       return this;
+    }
+
+    generic_sortOn() {
+      return coerceArray(this).sortOn.apply(this, arguments);
     }
 
     get length(): number {
@@ -1874,11 +1981,11 @@ module Shumway.AVMX.AS {
     }
 
     axCall(ignoredThisArg: any): any {
-      return this.value.exec.apply(this.value, sliceArguments(arguments, 1));
+      return this.exec.apply(this, arguments);
     }
 
     axApply(ignoredThisArg: any, argArray?: any[]): any {
-      return this.value.exec.apply(this.value, argArray);
+      return this.exec.apply(this, argArray);
     }
 
     get source(): string {
