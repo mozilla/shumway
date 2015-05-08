@@ -511,8 +511,8 @@ module Shumway.Remoting.Player {
         } else if (colorMatrixFilterClass.axIsType(filter)) {
           var matrix = (<flash.filters.ColorMatrixFilter>filter).matrix.value;
           this.output.writeInt(FilterType.ColorMatrix);
-          for (var i = 0; i < 20; i++) {
-            this.output.writeFloat(matrix[i]);
+          for (var j = 0; j < 20; j++) {
+            this.output.writeFloat(matrix[j]);
           }
         }
       }

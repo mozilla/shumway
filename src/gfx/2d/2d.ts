@@ -866,7 +866,8 @@ module Shumway.GFX.Canvas2D {
         var target = this._renderToTemporarySurface(node, node.getLayerBounds(!!this._options.filters),
                                                     state, clip, state.target.surface);
         if (target) {
-          state.target.draw(target, clip.x, clip.y, clip.w, clip.h, state.colorMatrix, layer.blendMode,
+          state.target.draw(target, clip.x, clip.y, clip.w, clip.h, state.colorMatrix,
+                            this._options.blending ? layer.blendMode : BlendMode.Normal,
                             this._options.filters ? layer.filters : null, this._devicePixelRatio);
           target.free();
         }
