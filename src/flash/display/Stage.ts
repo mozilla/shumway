@@ -47,7 +47,7 @@ module Shumway.AVMX.AS.flash.display {
       this._mouseLock = false;
       var objectVectorClass = this.sec.getVectorClass(this.sec.AXObject);
       this._stageVideos = <any>objectVectorClass.axConstruct([0, true]);
-      this._stage3Ds = null; // TODO
+      this._stage3Ds = <any>objectVectorClass.axConstruct([0, true]);
       this._colorARGB = 0xFFFFFFFF;
       this._fullScreenWidth = 0;
       this._fullScreenHeight = 0;
@@ -305,8 +305,8 @@ module Shumway.AVMX.AS.flash.display {
       return this._stageVideos;
     }
     get stage3Ds(): GenericVector {
-      notImplemented("public flash.display.Stage::get stage3Ds"); return;
-      // return this._stage3Ds;
+      somewhatImplemented("public flash.display.Stage::get stage3Ds");
+       return this._stage3Ds;
     }
 
     get color(): number /*uint*/ {

@@ -137,8 +137,22 @@ module Shumway.AVMX.AS {
         sec.throwError('URIError', Errors.InvalidURIError, 'decodeURIComponent');
       }
     }
-    export var encodeURI: (uri: string) => string = wrapJSGlobalFunction(jsGlobal.encodeURI);
-    export var encodeURIComponent: (uriComponent: string) => string = wrapJSGlobalFunction(jsGlobal.encodeURIComponent);
+
+    export function encodeURI(sec: AXSecurityDomain, uri: string): string {
+      try {
+        return jsGlobal.encodeURI(uri);
+      } catch (e) {
+        sec.throwError('URIError', Errors.InvalidURIError, 'encodeURI');
+      }
+    }
+
+    export function encodeURIComponent(sec: AXSecurityDomain, uri: string): string {
+      try {
+        return jsGlobal.encodeURIComponent(uri);
+      } catch (e) {
+        sec.throwError('URIError', Errors.InvalidURIError, 'encodeURIComponent');
+      }
+    }
     export var isNaN: (number: number) => boolean = wrapJSGlobalFunction(jsGlobal.isNaN);
     export var isFinite: (number: number) => boolean = wrapJSGlobalFunction(jsGlobal.isFinite);
     export var parseInt: (s: string, radix?: number) => number = wrapJSGlobalFunction(jsGlobal.parseInt);
