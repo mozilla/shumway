@@ -153,8 +153,7 @@ function sendResponse(data) {
 }
 
 function getCanvas() {
-  var canvasList = document.getElementsByTagName('canvas');
-  return canvasList[canvasList.length - 1]; // we need last one
+  return document.getElementsByTagName('canvas')[0];
 }
 
 var tmpCanvas = document.createElement('canvas');
