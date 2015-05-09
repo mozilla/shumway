@@ -7,6 +7,7 @@
          "swfs/local2global.swf",
          "swfs/movieinfo1.swf",
          "swfs/stream1.swf",
+         "swfs/avm1/filters/filtersdump.swf",
          "swfs/stroke1.swf"
        ],
        "type": "stas"

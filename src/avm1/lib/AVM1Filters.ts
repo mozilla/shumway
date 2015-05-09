@@ -207,8 +207,7 @@ module Shumway.AVM1.Lib {
         }
         return context.sec.createArray(arr);
       case 'BitmapData':
-        // TODO implement BitmapData conversion
-        return undefined;
+        return toAS3BitmapData(value);
       case 'Point':
         return toAS3Point(value);
       default:
@@ -231,8 +230,7 @@ module Shumway.AVM1.Lib {
         }
         return new Natives.AVM1ArrayNative(context, arr);
       case 'BitmapData':
-        // TODO implement BitmapData conversion
-        return undefined;
+        return AVM1BitmapData.fromAS3BitmapData(context, value);
       case 'Point':
         return AVM1Point.fromAS3Point(context, value);
       default:
