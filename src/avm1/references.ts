@@ -49,4 +49,5 @@
 ///<reference path='lib/AVM1SharedObject.ts' />
 ///<reference path='lib/AVM1MovieClipLoader.ts' />
 ///<reference path='lib/AVM1Filters.ts' />
+///<reference path='lib/AVM1LoadVars.ts' />
 ///<reference path='lib/AVM1XML.ts' />

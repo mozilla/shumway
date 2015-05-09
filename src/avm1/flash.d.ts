@@ -57,6 +57,7 @@ interface ISecurityDomain {
     net: {
       URLRequest: typeof flashPackage.net.URLRequest;
       URLLoader: typeof flashPackage.net.URLLoader;
+      URLVariables: typeof flashPackage.net.URLVariables;
       SharedObject: typeof flashPackage.net.SharedObject;
     }
     system: {
@@ -425,6 +426,8 @@ declare module Shumway.AVMX.AS.flash {
     class URLRequest extends ASObject {
       constructor(url: string);
       method: string;
+      contentType: string;
+      data: any;
     }
     class URLLoader extends events.EventDispatcher {
       dataFormat;
@@ -433,6 +436,10 @@ declare module Shumway.AVMX.AS.flash {
       bytesTotal: number;
       constructor(request?: URLRequest);
       _ignoreDecodeErrors: boolean;
+    }
+    class URLVariables extends ASObject {
+      _ignoreDecodingErrors: boolean;
+      decode(queryString: string): void;
     }
     class SharedObject extends ASObject {
       static axClass: typeof SharedObject;

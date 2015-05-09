@@ -963,20 +963,17 @@ module Shumway.SWF.Parser.LowLevel {
   }
 
   function filterGlow($bytes, $stream, $, type) {
+    // type: 0 - drop shadow, 2 - glow, 3 - bevel, 4 - gradient glow, 7 - gradient bevel
     var count;
     if (type === 4 || type === 7) {
       count = readUi8($bytes, $stream);
-    }
-    else {
-      count = 1;
+    } else {
+      count = type === 3 ? 2 : 1;
     }
     var $5 = $.colors = [];
     var $6 = count;
     while ($6--) {
       $5.push(rgba($bytes, $stream));
-    }
-    if (type === 3) {
-      $.hightlightColor = rgba($bytes, $stream);
     }
     if (type === 4 || type === 7) {
       var $9 = $.ratios = [];

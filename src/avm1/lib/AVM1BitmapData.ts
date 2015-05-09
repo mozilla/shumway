@@ -19,6 +19,13 @@
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
 
+  export function toAS3BitmapData(as2Object: AVM1BitmapData): flash.display.BitmapData {
+    if (!(as2Object instanceof AVM1BitmapData)) {
+      return null;
+    }
+    return as2Object.as3BitmapData;
+  }
+
   export class AVM1BitmapData extends AVM1Object {
     static createAVM1Class(context: AVM1Context): AVM1Object {
       return wrapAVM1NativeClass(context, true, AVM1BitmapData,
@@ -46,6 +53,13 @@ module Shumway.AVM1.Lib {
       fillColor = arguments.length < 4 ? 0xFFFFFFFF : alToInt32(this.context, fillColor);
       var as3Object = new this.context.sec.flash.display.BitmapData(width, height, transparent, fillColor);
       this._as3Object = as3Object;
+    }
+
+    static fromAS3BitmapData(context: AVM1Context, as3Object: flash.display.BitmapData): AVM1Object {
+      var as2Object = new AVM1BitmapData(context);
+      as2Object.alPrototype = context.globals.alGet('flash').alGet('display').alGet('BitmapData').alGetPrototypeProperty();
+      as2Object._as3Object = as3Object;
+      return as2Object;
     }
 
     static loadBitmap(context: AVM1Context, symbolId: string): AVM1BitmapData {

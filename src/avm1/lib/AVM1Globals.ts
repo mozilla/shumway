@@ -37,7 +37,7 @@ module Shumway.AVM1.Lib {
           'NaN', 'Infinity', 'isFinite', 'isNaN', 'parseFloat', 'parseInt', 'undefined',
           'Object', 'Function','Array', 'Number', 'Math', 'Boolean', 'Date', 'String', 'Error',
           'MovieClip', 'AsBroadcaster', 'System', 'Stage', 'Button',
-          'TextField', 'Color', 'Key', 'Mouse', 'MovieClipLoader', 'XML', 'XMLNode',
+          'TextField', 'Color', 'Key', 'Mouse', 'MovieClipLoader', 'XML', 'XMLNode', 'LoadVars',
           'Sound', 'SharedObject', 'ContextMenu', 'ContextMenuItem', 'TextFormat'], false);
       return globals;
     }
@@ -211,6 +211,7 @@ module Shumway.AVM1.Lib {
     public Key: AVM1Object;
     public Mouse: AVM1Object;
     public MovieClipLoader: AVM1Object;
+    public LoadVars: AVM1Object;
 
     public Sound: AVM1Object;
     public SharedObject: AVM1Object;
@@ -244,6 +245,7 @@ module Shumway.AVM1.Lib {
       this.Key = AVM1Key.createAVM1Class(context);
       this.Mouse = AVM1Mouse.createAVM1Class(context);
       this.MovieClipLoader = AVM1MovieClipLoader.createAVM1Class(context);
+      this.LoadVars = new AVM1LoadVarsFunction(context);
 
       this.Sound = AVM1Sound.createAVM1Class(context);
       this.SharedObject = new AVM1SharedObjectFunction(context);

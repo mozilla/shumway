@@ -32,6 +32,7 @@ module Shumway.AVM1.Lib {
 
     public avm1Constructor() {
       this._loader = new this.context.sec.flash.display.Loader();
+      AVM1Broadcaster.initialize(this.context, this);
     }
 
     public loadClip(url: string, target):Boolean {

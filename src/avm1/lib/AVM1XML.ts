@@ -407,6 +407,7 @@ module Shumway.AVM1.Lib {
       var text = args && alCoerceString(this.context, args[0]);
       var obj = new AVM1Object(this.context);
       obj.alPrototype = this.alGetPrototypeProperty();
+      (<IAVM1DataObject><any>obj).isAVM1DataObject = true;
       AVM1XMLPrototype.prototype.initializeDocument.call(obj, text);
       return obj;
     }
@@ -416,7 +417,7 @@ module Shumway.AVM1.Lib {
     }
   }
 
-  class AVM1XMLPrototype extends AVM1Object {
+  class AVM1XMLPrototype extends AVM1Object implements IAVM1DataObject {
     constructor(context: AVM1Context, fn: AVM1Function, xmlNodeClass: AVM1XMLNodeFunction) {
       super(context);
       this.alPrototype = xmlNodeClass.alGetPrototypeProperty();
@@ -464,7 +465,8 @@ module Shumway.AVM1.Lib {
     }
 
     as3XMLDocument: flash.xml.XMLDocument;
-    private _as3Loader: flash.net.URLLoader;
+    isAVM1DataObject: boolean;
+    _as3Loader: flash.net.URLLoader;
 
     initializeDocument(text: string) {
       text = alCoerceString(this.context, text) || null;
@@ -508,25 +510,15 @@ module Shumway.AVM1.Lib {
       if (!url) {
         return false;
       }
-
-      var context = this.context;
-      var request = new context.sec.flash.net.URLRequest(url);
-      var loader = new context.sec.flash.net.URLLoader(request);
-      loader._ignoreDecodeErrors = true;
-      loader.dataFormat = 'text'; // flash.net.URLLoaderDataFormat.TEXT;
-      var eventTarget = this;
-      var completeHandler = context.sec.boxFunction(function (event: flash.events.Event): void {
-        loader.removeEventListener(flash.events.Event.COMPLETE, completeHandler);
-        release || Debug.assert(typeof loader.data === 'string');
-        avm1BroadcastEvent(context, eventTarget, 'onData', [loader.data]);
-      });
-      loader.addEventListener(flash.events.Event.COMPLETE, completeHandler);
-      this._as3Loader = loader;
+      loadAVM1DataObject(this.context, url, null, null, null, <IAVM1DataObject><any>this);
       return true;
     }
 
     defaultOnData(src: string) {
-      // TODO handle failure
+      if (isNullOrUndefined(src)) {
+        avm1BroadcastEvent(this.context, this, 'onLoad', [false]);
+        return;
+      }
       AVM1XMLPrototype.prototype.parseXML.call(this, src);
       this.alPut('loaded', true);
       avm1BroadcastEvent(this.context, this, 'onLoad', [true]);
@@ -541,13 +533,26 @@ module Shumway.AVM1.Lib {
 
     send(url: string, target?: string, method?: string): boolean {
       url = alCoerceString(this.context, url);
+      target = isNullOrUndefined(target) ? undefined : alCoerceString(this.context, target);
+      method = isNullOrUndefined(method) ? undefined : alCoerceString(this.context, method);
       Debug.notImplemented('AVM1XMLPrototype.send');
       return false;
     }
 
     sendAndLoad(url: string, resultXML: AVM1Object): void {
       url = alCoerceString(this.context, url);
-      Debug.notImplemented('AVM1XMLPrototype.sendAndLoad');
+      if (!url) {
+        return;
+      }
+      if (!(<IAVM1DataObject><any>resultXML).isAVM1DataObject) {
+        return;
+      }
+      Debug.somewhatImplemented('AVM1XMLPrototype.send');
+      // TODO check content types and test
+      var contentType = this.alGet('contentType');
+      contentType = isNullOrUndefined(contentType) ? undefined : alCoerceString(this.context, contentType);
+      var data = alToString(this.context, this);
+      loadAVM1DataObject(this.context, url, 'POST', contentType, data, <IAVM1DataObject><any>resultXML);
     }
   }
 }
