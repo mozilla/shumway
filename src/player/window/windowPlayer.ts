@@ -154,43 +154,6 @@ module Shumway.Player.Window {
           case 'options':
             Shumway.Settings.setSettings(data.settings);
             break;
-          case 'timeline':
-            switch (data.request) {
-              case 'AVM2':
-                if (data.cmd === 'clear') {
-                  Shumway.AVM2.timelineBuffer.reset();
-                  break;
-                }
-                this._parent.postMessage({
-                  type: 'timelineResponse',
-                  request: data.request,
-                  timeline: Shumway.AVM2.timelineBuffer
-                }, '*');
-                break;
-              case 'Player':
-                if (data.cmd === 'clear') {
-                  Shumway.Player.timelineBuffer.reset();
-                  break;
-                }
-                this._parent.postMessage({
-                  type: 'timelineResponse',
-                  request: data.request,
-                  timeline: Shumway.Player.timelineBuffer
-                }, '*');
-                break;
-              case 'SWF':
-                if (data.cmd === 'clear') {
-                  Shumway.SWF.timelineBuffer.reset();
-                  break;
-                }
-                this._parent.postMessage({
-                  type: 'timelineResponse',
-                  request: data.request,
-                  timeline: Shumway.SWF.timelineBuffer
-                }, '*');
-                break;
-            }
-            break;
         }
       }
     }

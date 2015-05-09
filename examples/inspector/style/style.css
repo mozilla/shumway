@@ -18,16 +18,6 @@ body {
   outline: none;
 }
 
-body.simple {
-  text-align: center;
-}
-body.simple > div {
-  display: none;
-}
-body.simple #easelContainer {
-  display: block;
-}
-
 #topToolbar {
   position: absolute;
   top: 0;
@@ -127,23 +117,23 @@ body.simple #easelContainer {
   display: inline-block;
 }
 
-#easelContainer {
+#gfxIframe {
   position: absolute;
   top: 32px;
-  bottom: 32px;
   left: 0px;
-  right: 0px;
+  width: 100%;
+  height: calc(100% - 64px);
+  border: 0px none;
   display: inline-block;
   overflow: visible;
 }
 
-#flashContainer {
+#playerIframe {
   position: absolute;
-  left: 0px;
   top: 0px;
-  display: none;
-  mix-blend-mode: difference;
-  opacity: 0.8;
+  right: 0px;
+  width: 3px;
+  height: 3px;
 }
 
 #panelContainer {
@@ -378,20 +368,20 @@ body.hideDebugInfoPanels #profilerContainer {
 
 @media only screen and (max-width: 2560px) {
   #panelContainer { width: 450px; }
-  #easelContainer { right: 450px; }
+  #gfxIframe { right: 450px; }
 }
 
 @media only screen and (max-width: 1280px) {
   #panelContainer { width: 350px; }
-  #easelContainer { right: 350px; }
+  #gfxIframe { right: 350px; }
 }
 
 @media only screen and (max-width: 1024px) {
   #panelContainer { width: 250px; }
-  #easelContainer { right: 250px; }
+  #gfxIframe { right: 250px; }
 }
 
 @media only screen and (max-width: 512px) {
   #panelContainer { display: none !important; }
-  #easelContainer { right: 0; }
+  #gfxIframe { right: 0; }
 }

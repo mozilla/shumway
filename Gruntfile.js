@@ -396,8 +396,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('update-refs', function  () {
     var updateRefs = require('./utils/update-flash-refs.js').updateRefs;
-    updateRefs('examples/inspector/inspector.html', {gfx: true, player: true});
-    updateRefs('test/harness/slave.html', {gfx: true, player: true});
+    updateRefs('examples/inspector/inspector.gfx.html', {gfx: true});
     updateRefs('examples/xlsimport/index.html', {gfx: true, player: true});
     updateRefs('examples/inspector/inspector.player.html', {player: true});
     updateRefs('src/shell/shell.ts', {player: true, onlyIncludes: true});

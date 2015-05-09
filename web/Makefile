@@ -21,9 +21,6 @@ EXTENSION_DIR=../build/firefox
 
 build: ensureoutputdir
 	cp -R $(SHUMWAY_ROOT)/LICENSE index.html main.css demo.swf gallery images $(BUILD_DIR)/
-	# Copying some JavaScript file
-	mkdir -p $(BUILD_DIR)/src/player
-	cp $(SHUMWAY_ROOT)/src/player/fakechannel.js $(BUILD_DIR)/src/player/
 	# Copying WebGL shaders
 	mkdir -p $(BUILD_DIR)/src/gfx/gl/shaders
 	cp $(SHUMWAY_ROOT)/src/gfx/gl/shaders/combined.frag $(BUILD_DIR)/src/gfx/gl/shaders/

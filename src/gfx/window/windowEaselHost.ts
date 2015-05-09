@@ -25,26 +25,24 @@ module Shumway.GFX.Window {
   import DisplayParameters = Shumway.Remoting.DisplayParameters;
 
   export class WindowEaselHost extends EaselHost {
-    private _timelineRequests: MapObject<(data) => void>;
     private _window;
     private _playerWindow;
 
     public constructor(easel: Easel, playerWindow, window) {
       super(easel);
-      this._timelineRequests = Object.create(null);
       this._playerWindow = playerWindow;
       this._window = window;
       this._window.addEventListener('message', function (e) {
-        this.onWindowMessage(e.data);
+        this._onWindowMessage(e.data);
       }.bind(this));
       if (typeof ShumwayCom !== 'undefined') {
         ShumwayCom.setSyncMessageCallback(function (msg) {
-          this.onWindowMessage(msg, false);
+          this._onWindowMessage(msg, false);
           return msg.result;
         }.bind(this));
       } else {
         this._window.addEventListener('syncmessage', function (e) {
-          this.onWindowMessage(e.detail, false);
+          this._onWindowMessage(e.detail, false);
         }.bind(this));
       }
     }
@@ -74,17 +72,6 @@ module Shumway.GFX.Window {
       }, '*');
     }
 
-    public requestTimeline(type: string, cmd: string): Promise<TimelineBuffer> {
-      return new Promise(function (resolve) {
-        this._timelineRequests[type] = resolve;
-        this._playerWindow.postMessage({
-          type: 'timeline',
-          cmd: cmd,
-          request: type
-        }, '*');
-      }.bind(this));
-    }
-
     private _sendRegisterFontResponse(requestId: number, result: any) {
       this._playerWindow.postMessage({
         type: 'registerFontResponse',
@@ -101,7 +88,7 @@ module Shumway.GFX.Window {
       }, '*');
     }
 
-    private onWindowMessage(data, async: boolean = true) {
+    _onWindowMessage(data, async: boolean = true) {
       if (typeof data === 'object' && data !== null) {
         if (data.type === 'player') {
           var updates = DataBuffer.FromArrayBuffer(data.updates.buffer);
@@ -124,12 +111,6 @@ module Shumway.GFX.Window {
                                     this._sendRegisterImageResponse.bind(this, data.requestId));
         } else if (data.type === 'fscommand') {
           this.processFSCommand(data.command, data.args);
-        } else if (data.type === 'timelineResponse' && data.timeline) {
-          // Transform timeline into a Timeline object.
-          data.timeline.__proto__ = TimelineBuffer.prototype;
-          data.timeline._marks.__proto__ = CircularBuffer.prototype;
-          data.timeline._times.__proto__ = CircularBuffer.prototype;
-          this._timelineRequests[data.request](<TimelineBuffer>data.timeline);
         } else {
           // release || Debug.assertUnreachable("Unhandled remoting event " + data.type);
         }

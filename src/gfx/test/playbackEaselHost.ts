@@ -73,10 +73,6 @@ module Shumway.GFX.Test {
       // Ignoring
     }
 
-    requestTimeline(type: string, cmd: string): Promise<TimelineBuffer> {
-      return Promise.resolve(undefined);
-    }
-
     private _parseNext() {
       var type = this._parser.readNextRecord();
       if (type !== MovieRecordType.None) {

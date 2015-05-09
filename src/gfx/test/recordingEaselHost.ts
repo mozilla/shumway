@@ -15,21 +15,22 @@
  */
 
 module Shumway.GFX.Test {
-  export class RecordingEaselHost extends TestEaselHost {
+  import WindowEaselHost = Shumway.GFX.Window.WindowEaselHost;
+
+  export class RecordingEaselHost extends WindowEaselHost {
     private _recorder: MovieRecorder = null;
 
     public get recorder(): MovieRecorder  {
       return this._recorder;
     }
 
-    constructor(easel: Easel, recordingLimit: number = 0) {
-      super(easel);
+    constructor(easel: Easel, playerWindow, window, recordingLimit: number = 0) {
+      super(easel, playerWindow, window);
 
       this._recorder = new MovieRecorder(recordingLimit);
     }
 
-    _onWorkerMessage(e, async: boolean = true): any {
-      var data = e.data;
+    _onWindowMessage(data, async: boolean = true) {
       if (typeof data !== 'object' || data === null) {
         return;
       }
@@ -52,7 +53,7 @@ module Shumway.GFX.Test {
           break;
       }
 
-      super._onWorkerMessage(e, async);
+      super._onWindowMessage(data, async);
     }
   }
 }

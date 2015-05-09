@@ -14,15 +14,6 @@
  * limitations under the License.
  */
 
-function notifyUserInput() {
-  ShumwayCom.userInput();
-}
-
-document.addEventListener('mousedown', notifyUserInput, true);
-document.addEventListener('mouseup', notifyUserInput, true);
-document.addEventListener('keydown', notifyUserInput, true);
-document.addEventListener('keyup', notifyUserInput, true);
-
 function fallback() {
   ShumwayCom.fallback();
 }
@@ -31,17 +22,7 @@ window.print = function(msg) {
   console.log(msg);
 };
 
-var SHUMWAY_ROOT = "resource://shumway/";
-
-var playerWindow;
-var playerWindowLoaded = new Promise(function(resolve) {
-  var playerWindowIframe = document.getElementById("playerWindow");
-  playerWindowIframe.addEventListener('load', function () {
-    playerWindow = playerWindowIframe.contentWindow;
-    resolve(playerWindowIframe);
-  });
-  playerWindowIframe.src = 'resource://shumway/web/viewer.player.html';
-});
+var playerWindow, gfxWindow;
 
 var initStartTime;
 
@@ -58,7 +39,7 @@ function runViewer() {
   objectParams = flashParams.objectParams;
   var baseUrl = flashParams.baseUrl;
   var isOverlay = flashParams.isOverlay;
-  pauseExecution = flashParams.isPausedAtStart;
+  var pauseExecution = flashParams.isPausedAtStart;
   initStartTime = flashParams.initStartTime;
   var isDebuggerEnabled = flashParams.isDebuggerEnabled;
 
@@ -71,43 +52,44 @@ function runViewer() {
     }).join(',');
   }
 
-  playerWindowLoaded.then(function (playerWindowIframe) {
-    ShumwayCom.setupComBridge(playerWindowIframe);
+  playerReady.then(function () {
+    ShumwayCom.setupComBridge(document.getElementById('playerIframe'));
     parseSwf(movieUrl, baseUrl, movieParams, objectParams);
-  });
 
-  if (isOverlay) {
-    if (isDebuggerEnabled) {
-      document.getElementById('overlay').className = 'enabled';
-      var fallbackDiv = document.getElementById('fallback');
-      fallbackDiv.addEventListener('click', function (e) {
-        fallback();
-        e.preventDefault();
-      });
-      var reportDiv = document.getElementById('report');
-      reportDiv.addEventListener('click', function (e) {
-        reportIssue();
-        e.preventDefault();
-      });
+    var gfxDocument = gfxWindow.document;
+    if (isOverlay) {
+      if (isDebuggerEnabled) {
+        document.getElementById('overlay').className = 'enabled';
+        var fallbackDiv = document.getElementById('fallback');
+        fallbackDiv.addEventListener('click', function (e) {
+          fallback();
+          e.preventDefault();
+        });
+        var reportDiv = document.getElementById('report');
+        reportDiv.addEventListener('click', function (e) {
+          reportIssue();
+          e.preventDefault();
+        });
+      }
+      var fallbackMenu = gfxDocument.getElementById('fallbackMenu');
+      fallbackMenu.removeAttribute('hidden');
+      fallbackMenu.addEventListener('click', fallback);
     }
-    var fallbackMenu = document.getElementById('fallbackMenu');
-    fallbackMenu.removeAttribute('hidden');
-    fallbackMenu.addEventListener('click', fallback);
-  }
-  document.getElementById('showURLMenu').addEventListener('click', showURL);
-  document.getElementById('inspectorMenu').addEventListener('click', showInInspector);
-  document.getElementById('reportMenu').addEventListener('click', reportIssue);
-  document.getElementById('aboutMenu').addEventListener('click', showAbout);
+    gfxDocument.getElementById('showURLMenu').addEventListener('click', showURL);
+    gfxDocument.getElementById('inspectorMenu').addEventListener('click', showInInspector);
+    gfxDocument.getElementById('reportMenu').addEventListener('click', reportIssue);
+    gfxDocument.getElementById('aboutMenu').addEventListener('click', showAbout);
 
-  var version = Shumway.version || '';
-  document.getElementById('aboutMenu').label =
-    document.getElementById('aboutMenu').label.replace('%version%', version);
+    var version = gfxWindow.Shumway.version || '';
+    gfxDocument.getElementById('aboutMenu').label =
+      gfxDocument.getElementById('aboutMenu').label.replace('%version%', version);
 
-  if (isDebuggerEnabled) {
-    document.getElementById('debugMenu').addEventListener('click', enableDebug);
-  } else {
-    document.getElementById('debugMenu').remove();
-  }
+    if (isDebuggerEnabled) {
+      gfxDocument.getElementById('debugMenu').addEventListener('click', enableDebug);
+    } else {
+      gfxDocument.getElementById('debugMenu').remove();
+    }
+  });
 }
 
 function showURL() {
@@ -171,8 +153,7 @@ function parseSwf(url, baseUrl, movieParams, objectParams) {
   var playerSettings = settings.playerSettings;
 
   // init misc preferences
-  Shumway.GFX.hud.value = playerSettings.hud;
-  //forceHidpi.value = settings.playerSettings.forceHidpi;
+  gfxWindow.setHudVisible(playerSettings.hud);
 
   console.info("Compiler settings: " + JSON.stringify(compilerSettings));
   console.info("Parsing " + url + "...");
@@ -189,13 +170,12 @@ function parseSwf(url, baseUrl, movieParams, objectParams) {
     }
   }
 
-  var easel = createEasel(backgroundColor);
-  easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWindow, window);
+  var easel = gfxWindow.createEasel(backgroundColor);
+  easelHost = gfxWindow.createEaselHost(playerWindow);
 
   var displayParameters = easel.getDisplayParameters();
   var data = {
     type: 'runSwf',
-    settings: Shumway.Settings.getSettings(),
     flashParams: {
       compilerSettings: compilerSettings,
       movieParams: movieParams,
@@ -209,16 +189,29 @@ function parseSwf(url, baseUrl, movieParams, objectParams) {
       initStartTime: initStartTime
     }
   };
-  playerWindow.postMessage(data,  '*');
+  playerWindow.postMessage(data, '*');
 }
 
-function createEasel(backgroundColor) {
-  var Stage = Shumway.GFX.Stage;
-  var Easel = Shumway.GFX.Easel;
-  var Canvas2DRenderer = Shumway.GFX.Canvas2DRenderer;
+var playerReady = new Promise(function (resolve) {
+  function iframeLoaded() {
+    if (--iframesToLoad > 0) {
+      return;
+    }
 
-  Shumway.GFX.WebGL.SHADER_ROOT = SHUMWAY_ROOT + "gfx/gl/shaders/";
-  var easel = new Easel(document.getElementById("easelContainer"), false, backgroundColor);
-  easel.startRendering();
-  return easel;
-}
+    gfxWindow = document.getElementById('gfxIframe').contentWindow;
+    playerWindow = document.getElementById('playerIframe').contentWindow;
+    resolve();
+  }
+
+  var iframesToLoad = 2;
+  document.getElementById('gfxIframe').addEventListener('load', iframeLoaded);
+  document.getElementById('gfxIframe').src = 'resource://shumway/web/viewer.gfx.html';
+  document.getElementById('playerIframe').addEventListener('load', iframeLoaded);
+  document.getElementById('playerIframe').src = 'resource://shumway/web/viewer.player.html';
+});
+
+window.addEventListener('message', function onWindowMessage(e) {
+  if (e.source === playerWindow) {
+    gfxWindow.postMessage(e.data, '*');
+  }
+}, true);

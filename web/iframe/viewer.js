@@ -50,46 +50,26 @@ function getPluginParams() {
   };
 }
 
-var playerWindowIframe, playerWindowIframeReady;
-var easelHost;
+var gfxWindow, playerWindow;
 
 function runViewer(flashParams) {
-  playerWindowIframeReady.then(function () {
-    var playerWindow = playerWindowIframe.contentWindow;
-
-    var easel = createEasel();
-    easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWindow, window);
-    var data = {
-      type: 'runSwf',
-      settings: Shumway.Settings.getSettings(),
-      flashParams: {
-        url: flashParams.url,
-        baseUrl: flashParams.baseUrl || flashParams.url,
-        movieParams: flashParams.movieParams || {},
-        objectParams: flashParams.objectParams || {},
-        compilerSettings: flashParams.compilerSettings || {
-          sysCompiler: true,
-          appCompiler: true,
-          verifier: true
-        },
-        isRemote: flashParams.isRemote,
-        bgcolor: undefined,
-        displayParameters: easel.getDisplayParameters()
-      }
-    };
-    playerWindow.postMessage(data,  '*');
-  });
-}
-
-function createEasel() {
-  var Stage = Shumway.GFX.Stage;
-  var Easel = Shumway.GFX.Easel;
-  var Canvas2DRenderer = Shumway.GFX.Canvas2DRenderer;
-
-  Shumway.GFX.WebGL.SHADER_ROOT = "../src/gfx/gl/shaders/";
-  var easel = new Easel(document.getElementById("easelContainer"));
-  easel.startRendering();
-  return easel;
+  var easel = gfxWindow.createEasel();
+  var easelHost = gfxWindow.createEaselHost(playerWindow);
+  var flashParams = {
+    url: flashParams.url,
+    baseUrl: flashParams.baseUrl || flashParams.url,
+    movieParams: flashParams.movieParams || {},
+    objectParams: flashParams.objectParams || {},
+    compilerSettings: flashParams.compilerSettings || {
+      sysCompiler: true,
+      appCompiler: true,
+      verifier: true
+    },
+    isRemote: flashParams.isRemote,
+    bgcolor: undefined,
+    displayParameters: easel.getDisplayParameters()
+  };
+  playerWindow.runSwfPlayer(flashParams, null, gfxWindow);
 }
 
 function waitForParametersMessage(e) {
@@ -99,14 +79,22 @@ function waitForParametersMessage(e) {
   }
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-  playerWindowIframe = document.getElementById("playerWindow");
-  playerWindowIframeReady = new Promise(function (resolve) {
-    playerWindowIframe.addEventListener('load', function load() {
-      playerWindowIframe.removeEventListener('load', load);
-      resolve();
-    });
-  });
+var playerReady = new Promise(function (resolve) {
+  function iframeLoaded() {
+    if (--iframesToLoad > 0) {
+      return;
+    }
+    resolve();
+  }
+
+  var iframesToLoad = 2;
+  document.getElementById('gfxIframe').addEventListener('load', iframeLoaded);
+  document.getElementById('playerIframe').addEventListener('load', iframeLoaded);
+});
+
+playerReady.then(function() {
+  gfxWindow = document.getElementById('gfxIframe').contentWindow;
+  playerWindow = document.getElementById('playerIframe').contentWindow;
 
   var flashParams = getPluginParams();
   if (!flashParams.url) {

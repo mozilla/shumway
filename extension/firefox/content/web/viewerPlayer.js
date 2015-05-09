@@ -18,19 +18,23 @@ window.print = function(msg) {
   console.log(msg);
 };
 
-function runSwfPlayer(flashParams) {
+function runSwfPlayer(flashParams, settings, gfxWindow) {
   console.info('Time from init start to SWF player start: ' + (Date.now() - flashParams.initStartTime));
+  if (settings) {
+    Shumway.Settings.setSettings(settings);
+  }
+  setupServices();
+
   var asyncLoading = true;
   var baseUrl = flashParams.baseUrl;
   var objectParams = flashParams.objectParams;
   var movieUrl = flashParams.url;
 
   Shumway.frameRateOption.value = flashParams.turboMode ? 60 : -1;
-  //Shumway.AVM2.Verifier.enabled.value = compilerSettings.verifier;
 
   Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal).then(function (securityDomain) {
     function runSWF(file, buffer, baseUrl) {
-      var gfxService = new Shumway.Player.Window.WindowGFXService(securityDomain, window, window.parent);
+      var gfxService = new Shumway.Player.Window.WindowGFXService(securityDomain, window, gfxWindow);
       var player = new Shumway.Player.Player(securityDomain, gfxService, flashParams.env);
       player.defaultStageColor = flashParams.bgcolor;
       player.movieParams = flashParams.movieParams;
@@ -42,6 +46,7 @@ function runSwfPlayer(flashParams) {
       player.pageUrl = baseUrl;
       console.info('Time from init start to SWF loading start: ' + (Date.now() - flashParams.initStartTime));
       player.load(file, buffer);
+      playerStarted();
     }
 
     Shumway.FileLoadingService.instance.init(baseUrl);
@@ -66,6 +71,13 @@ function setupServices() {
   Shumway.SystemResourcesLoadingService.instance = new Shumway.Player.ShumwayComResourcesLoadingService(true);
 }
 
+function playerStarted() {
+  document.body.style.backgroundColor = 'green';
+  window.parent.postMessage({
+    callback: 'started'
+  }, '*');
+}
+
 window.addEventListener('message', function onWindowMessage(e) {
   var data = e.data;
   if (typeof data !== 'object' || data === null) {
@@ -77,12 +89,7 @@ window.addEventListener('message', function onWindowMessage(e) {
         Shumway.Settings.setSettings(data.settings);
       }
       setupServices();
-      runSwfPlayer(data.flashParams);
-
-      document.body.style.backgroundColor = 'green';
-      window.parent.postMessage({
-        callback: 'started'
-      }, '*');
+      runSwfPlayer(data.flashParams, data.settings, window.parent);
       break;
   }
 }, true);
