@@ -39,11 +39,15 @@ var profiler = (function() {
         self._onStartStopClick();
       }
     }, false);
-  }
+  };
 
-  Profiler.prototype.start = function(startTime_, maxTime, resetTimelines) {
-    window.profile = true;
-    requestTimelineBuffers(resetTimelines ? 'clear' : 'get');
+  Profiler.prototype.start = function(startTime_, maxTime, resetTimeline) {
+    setProfile(true);
+    if (resetTimeline) {
+      resetTimelineBuffers();
+    } else {
+      getTimelineBuffers();
+    }
     controller.deactivateProfile();
     elProfilerToolbar.classList.add("withEmphasis");
     elBtnStartStop.textContent = "Stop";
@@ -53,33 +57,32 @@ var profiler = (function() {
       timeoutHandle = setTimeout(this.createProfile.bind(this), maxTime);
     }
     showTimeMessage();
-  }
+  };
 
   Profiler.prototype.createProfile = function() {
-    requestTimelineBuffers('get').then(function (buffers) {
-      controller.createProfile(buffers, startTime);
-      elProfilerToolbar.classList.remove("withEmphasis");
-      elBtnStartStop.textContent = "Start";
-      clearInterval(timerHandle);
-      clearTimeout(timeoutHandle);
-      timerHandle = 0;
-      timeoutHandle = 0;
-      window.profile = false;
-      showTimeMessage(false);
-    });
-  }
+    var buffers = getTimelineBuffers();
+    controller.createProfile(buffers, startTime);
+    elProfilerToolbar.classList.remove("withEmphasis");
+    elBtnStartStop.textContent = "Start";
+    clearInterval(timerHandle);
+    clearTimeout(timeoutHandle);
+    timerHandle = 0;
+    timeoutHandle = 0;
+    setProfile(true);
+    showTimeMessage(false);
+  };
 
   Profiler.prototype.openPanel = function() {
     elProfilerContainer.classList.remove("collapsed");
-  }
+  };
 
   Profiler.prototype.closePanel = function() {
     elProfilerContainer.classList.add("collapsed");
-  }
+  };
 
   Profiler.prototype.resize = function() {
     controller.resize();
-  }
+  };
 
   Profiler.prototype._onMinimizeClick = function(e) {
     if (elProfilerContainer.classList.contains("collapsed")) {
@@ -87,7 +90,7 @@ var profiler = (function() {
     } else {
       this.closePanel();
     }
-  }
+  };
 
   Profiler.prototype._onStartStopClick = function(e) {
     if (timerHandle) {
@@ -96,7 +99,7 @@ var profiler = (function() {
     } else {
       this.start(0, 0, true);
     }
-  }
+  };
 
   function showTimeMessage(show) {
     show = typeof show === "undefined" ? true : show;
@@ -108,24 +111,37 @@ var profiler = (function() {
 
 })();
 
-function requestTimelineBuffers(cmd) {
-  var buffersPromises = [];
-  // TODO request timelineBuffers using postMessage (instead of IFramePlayer.Shumway)
-
-  if (cmd === 'clear') {
-    Shumway.GFX.timelineBuffer.reset();
-  } else {
-    buffersPromises.push(Promise.resolve(Shumway.GFX.timelineBuffer));
+function resetTimelineBuffers() {
+  if (typeof gfxWindow !== 'undefined') {
+    gfxWindow.Shumway.GFX.timelineBuffer.reset();
   }
-  if (typeof easelHost !== 'undefined') {
-    buffersPromises.push(easelHost.requestTimeline('AVM2', cmd));
-    buffersPromises.push(easelHost.requestTimeline('Player', cmd));
-    buffersPromises.push(easelHost.requestTimeline('SWF', cmd));
+  if (typeof playerWindow !== 'undefined') {
+    playerWindow.Shumway.AVM2.timelineBuffer.reset();
+    playerWindow.Shumway.Player.timelineBuffer.reset();
+    playerWindow.Shumway.SWF.timelineBuffer.reset();
   }
-
-  return Promise.all(buffersPromises).then(function (result) {
-    return result.filter(function (i) {
-      return !!i;
-    })
-  });
 }
+
+function getTimelineBuffers() {
+  var buffers = [];
+
+  if (typeof gfxWindow !== 'undefined') {
+    buffers.push(gfxWindow.Shumway.GFX.timelineBuffer);
+  }
+  if (typeof playerWindow !== 'undefined') {
+    buffers.push(playerWindow.Shumway.AVM2.timelineBuffer);
+    buffers.push(playerWindow.Shumway.Player.timelineBuffer);
+    buffers.push(playerWindow.Shumway.SWF.timelineBuffer);
+  }
+  return buffers;
+}
+
+function setProfile(enabled) {
+  if (typeof gfxWindow !== 'undefined') {
+    gfxWindow.setProfile(enabled);
+  }
+  if (typeof playerWindow !== 'undefined') {
+    playerWindow.setProfile(enabled);
+  }
+}
+

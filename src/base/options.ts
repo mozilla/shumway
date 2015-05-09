@@ -96,10 +96,10 @@ module Shumway.Options {
     public addBoundOptionSet(optionSet) {
       var self = this;
       optionSet.options.forEach(function (x) {
-        if (x instanceof OptionSet) {
+        if (OptionSet.isOptionSet(x)) {
           self.addBoundOptionSet(x);
         } else {
-          release || assert(x instanceof Option);
+          release || assert(x);
           self.addBoundOption(x);
         }
       });
@@ -167,24 +167,38 @@ module Shumway.Options {
     settings: any;
     options: any;
     open: boolean = false;
+
+    public static isOptionSet(obj: any): boolean {
+      // We will be getting options from different iframe, so this function will
+      // check if the obj somewhat like OptionSet.
+      if (obj instanceof OptionSet) {
+        return true;
+      }
+      if (typeof obj !== 'object' || obj === null ||
+          obj instanceof Option) {
+        return false;
+      }
+      return ('options' in obj) && ('name' in obj) && ('settings' in obj);
+    }
+
     constructor(name: string, settings: any = null) {
       this.name = name;
       this.settings = settings || {};
       this.options = [];
     }
     public register(option) {
-      if (option instanceof OptionSet) {
+      if (OptionSet.isOptionSet(option)) {
         // check for duplicate option sets (bail if found)
         for (var i = 0; i < this.options.length; i++) {
           var optionSet = this.options[i];
-          if (optionSet instanceof OptionSet && optionSet.name === option.name) {
+          if (OptionSet.isOptionSet(optionSet) && optionSet.name === option.name) {
             return optionSet;
           }
         }
       }
       this.options.push(option);
       if (this.settings) {
-        if (option instanceof OptionSet) {
+        if (OptionSet.isOptionSet(option)) {
           var optionSettings = this.settings[option.name];
           if (isObject(optionSettings)) {
             option.settings = optionSettings.settings;
@@ -220,7 +234,7 @@ module Shumway.Options {
     public getSettings() {
       var settings = {};
       this.options.forEach(function(option) {
-        if (option instanceof OptionSet) {
+        if (OptionSet.isOptionSet(option)) {
           settings[option.name] = {
             settings: option.getSettings(),
             open: option.open
@@ -236,7 +250,7 @@ module Shumway.Options {
         return;
       }
       this.options.forEach(function (option) {
-        if (option instanceof OptionSet) {
+        if (OptionSet.isOptionSet(option)) {
           if (option.name in settings) {
             option.setSettings(settings[option.name].settings);
           }
@@ -254,7 +268,7 @@ module Shumway.Options {
     shortName: string;
     type: string;
     defaultValue: any;
-    value: any;
+    value: any; // during options merge can be changed to accessor
     description: string;
     config: any;
     /**

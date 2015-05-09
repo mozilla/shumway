@@ -30,5 +30,3 @@
 ///<reference path='external.ts' />
 
 ///<reference path='window/windowPlayer.ts' />
-///<reference path='test/testPlayer.ts' />
-///<reference path='test/fakeSyncWorker.ts' />

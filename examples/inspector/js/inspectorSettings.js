@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-Shumway.Settings.shumwayOptions.setSettings(loadSettingsFromStorage(Shumway.Settings.ROOT));
-
-
 var LC_KEY_INSPECTOR_SETTINGS = "Inspector Options";
 
 var state = loadSettingsFromStorage(LC_KEY_INSPECTOR_SETTINGS);
@@ -30,7 +27,6 @@ var stateDefaults = {
   logToDebugPanel: false,
   logAssets: false,
   overlayFlash: false,
-  useIFramePlayer: false,
   fileReadChunkSize: 0,
   mute: false,
   release: true,
@@ -50,17 +46,6 @@ for (var option in stateDefaults) {
   if (typeof state[option] === "undefined") {
     state[option] = stateDefaults[option];
   }
-}
-
-function setRelease(release) {
-  window.release = release;
-  Shumway.GFX.Canvas2D.notifyReleaseChanged();
-}
-
-setRelease(state.release);
-
-if (state.profileStartup && state.profileStartupDuration > 0) {
-  profiler.start(performance.now(), state.profileStartupDuration, false);
 }
 
 function loadSettingsFromStorage(key) {
@@ -85,24 +70,7 @@ function saveInspectorState() {
   saveSettingsToStorage(LC_KEY_INSPECTOR_SETTINGS, state);
 }
 
-function resizeEaselContainer() {
-  var easelContainer = document.getElementById('easelContainer');
-  var width = state.width, height = state.height;
-  if (width < 0) {
-    easelContainer.style.width = '';
-  } else {
-    easelContainer.style.width = width + 'px';
-  }
-  if (height < 0) {
-    easelContainer.style.height = '';
-  } else {
-    easelContainer.style.height = height + 'px';
-  }
-}
-
-resizeEaselContainer();
-
-var GUI = (function () {
+function createOptionsGUI() {
   var Option = Shumway.Options.Option;
   var OptionSet = Shumway.Options.OptionSet;
 
@@ -119,7 +87,6 @@ var GUI = (function () {
   inspectorOptions.add(state, "profileStartup").onChange(saveInspectorOption);
   inspectorOptions.add(state, "profileStartupDuration").onChange(saveInspectorOption);
   inspectorOptions.add(state, "overlayFlash").onChange(saveInspectorOption);
-  inspectorOptions.add(state, "useIFramePlayer").onChange(saveInspectorOption);
   inspectorOptions.add(state, "fileReadChunkSize").onChange(saveInspectorOption);
   inspectorOptions.add(state, "scale").options({
     "ShowAll": 'showall',
@@ -211,7 +178,7 @@ var GUI = (function () {
   }
 
   function saveRecording() {
-    if (!easelHost.recorder) {
+    if (typeof easelHost === 'undefined' || !easelHost.recorder) {
       return;
     }
 
@@ -233,24 +200,18 @@ var GUI = (function () {
   }
 
   function saveInspectorOption(value) {
-    if (this.property === "release") {
-      setRelease(value);
-    }
-    if (this.property === 'overlayFlash') {
-      ensureFlashOverlay();
-      flashOverlay.style.display = value ? 'inline-block' : 'none';
-    }
-    if (this.property === 'width' || this.property === 'height') {
-      resizeEaselContainer();
-    }
     state[this.property] = value;
     saveInspectorState();
+
+    var event = document.createEvent('CustomEvent');
+    event.initCustomEvent('inspectorOptionsChanged', false, false, {property: this.property});
+    document.dispatchEvent(event);
   }
 
   function findOptionSetByName(name, optionSet) {
     for (var i = 0, n = optionSet.options.length; i < n; i++) {
       var option = optionSet.options[i];
-      if (option instanceof OptionSet) {
+      if (OptionSet.isOptionSet(option)) {
         if (option.name === name) {
           return option;
         } else {
@@ -278,7 +239,7 @@ var GUI = (function () {
     var isObject = Shumway.isObject;
     var isNullOrUndefined = Shumway.isNullOrUndefined;
     optionSet.options.forEach(function(option) {
-      if (option instanceof OptionSet) {
+      if (OptionSet.isOptionSet(option)) {
         folder = parent.addFolder(option.name);
         if (option.open) { folder.open(); }
         addOptionSet(folder, option);
@@ -299,7 +260,6 @@ var GUI = (function () {
         }
         ctrl.name(option.longName);
         ctrl.onChange(function() {
-          saveSettingsToStorage(Shumway.Settings.ROOT, Shumway.Settings.getSettings());
           notifyOptionsChanged();
         });
         addTooltip(ctrl, option.description);
@@ -308,45 +268,45 @@ var GUI = (function () {
     });
   }
 
-  // shumwayOptions.register(webGLOptions);
   addOptionSet(gui, Shumway.Settings.shumwayOptions);
 
   document.getElementById("settingsContainer").appendChild(gui.domElement);
 
-  return gui;
+  window.GUI = gui;
+}
 
-})();
-
-function syncGFXOptions(options) {
-  var GFX = Shumway.GFX;
-  options.perspectiveCamera = GFX.perspectiveCamera.value;
-  options.perspectiveCameraFOV = GFX.perspectiveCameraFOV.value;
-  options.perspectiveCameraAngle = GFX.perspectiveCameraAngle.value;
-  options.perspectiveCameraDistance = GFX.perspectiveCameraDistance.value;
-
-  options.drawTiles = GFX.drawTiles.value;
-  options.drawSurfaces = GFX.drawSurfaces.value;
-  options.drawSurface = GFX.drawSurface.value;
-  options.drawElements = GFX.drawElements.value;
-  options.clipDirtyRegions = GFX.clipDirtyRegions.value;
-  options.clipCanvas = GFX.clipCanvas.value;
-
-  options.premultipliedAlpha = GFX.premultipliedAlpha.value;
-  options.unpackPremultiplyAlpha = GFX.unpackPremultiplyAlpha.value;
-
-  options.sourceBlendFactor = GFX.sourceBlendFactor.value;
-  options.destinationBlendFactor = GFX.destinationBlendFactor.value;
-
-  options.masking = GFX.masking.value;
-  options.disableSurfaceUploads = GFX.disableSurfaceUploads.value;
-
-  options.snapToDevicePixels = GFX.snapToDevicePixels.value;
-  options.imageSmoothing = GFX.imageSmoothing.value;
-  options.blending = GFX.blending.value;
-  options.debugLayers = GFX.debugLayers.value;
-
-  options.filters = GFX.filters.value;
-  options.cacheShapes = GFX.cacheShapes.value;
-  options.cacheShapesMaxSize = GFX.cacheShapesMaxSize.value;
-  options.cacheShapesThreshold = GFX.cacheShapesThreshold.value;
+function mergeOptionSets(destSet, otherSet) {
+  // Merging sets from the different iframes.
+  var OptionSet = Shumway.Options.OptionSet;
+  var index = {};
+  otherSet.options.forEach(function (option) {
+    index[option.name] = option;
+  });
+  destSet.options.forEach(function (option) {
+    var otherOption = index[option.name];
+    if (otherOption === undefined) {
+      return;
+    }
+    if (OptionSet.isOptionSet(option)) {
+      if (OptionSet.isOptionSet(otherOption)) {
+        mergeOptionSets(option, otherOption);
+      }
+    } else {
+      // Replacing data 'value' properties to the getters/setters on options
+      // that are present in both iframes.
+      Object.defineProperty(otherOption, 'value', {
+        get: function() { return option.value; },
+        set: function (value) { option.value = value; },
+        enumerable: true,
+        configurable: true
+      })
+    }
+    index[option.name] = undefined;
+  });
+  // Adding non-existent options to the main options set.
+  for (var name in index) {
+    if (index[name] !== undefined) {
+      destSet.options.push(index[name]);
+    }
+  }
 }

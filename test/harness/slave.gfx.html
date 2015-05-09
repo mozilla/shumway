@@ -19,31 +19,25 @@ limitations under the License.
     <meta charset="utf-8">
     <title>Test</title>
     <style>
-      body {
+      html, body {
         background: #404040;
         margin: 0;
-      }
-      #playerWindow {
-        position: absolute;
-        top: 0;
-        right: 0;
+        padding: 0;
       }
 
       #easelContainer {
+        position: absolute;
+        top: 0;
+        left: 0;
         width: 1024px;
         height: 1024px;
       }
     </style>
 
     <script src="../../build/bundles/shumway.gfx.js"></script>
-
-    <script>
-      var TEST_MODE = 'iframe';
-    </script>
-    <script src="slave.js"></script>
   </head>
   <body>
-    <iframe id="playerWindow" src="" width="9" height="9"></iframe>
     <div id="easelContainer"></div>
+    <script src="slaveGfx.js"></script>
   </body>
 </html>

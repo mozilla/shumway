@@ -77,7 +77,11 @@ var iframeExternalInterface = {
   }
 };
 
-function runSwfPlayer(flashParams) {
+function runSwfPlayer(flashParams, settings, gfxWindow) {
+  if (settings) {
+    Shumway.Settings.setSettings(settings);
+  }
+
   var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
 
   var compilerSettings = flashParams.compilerSettings;
@@ -93,7 +97,7 @@ function runSwfPlayer(flashParams) {
       var movieParams = flashParams.movieParams;
       var objectParams = flashParams.objectParams;
 
-      var gfxService = new Shumway.Player.Window.WindowGFXService(securityDomain, window, window.parent);
+      var gfxService = new Shumway.Player.Window.WindowGFXService(securityDomain, window, gfxWindow);
       player = new Shumway.Player.Player(securityDomain, gfxService);
       player.defaultStageColor = flashParams.bgcolor;
       player.movieParams = movieParams;
@@ -108,6 +112,7 @@ function runSwfPlayer(flashParams) {
       var event = parentDocument.createEvent('CustomEvent');
       event.initCustomEvent('shumwaystarted', true, true, null);
       parentDocument.dispatchEvent(event);
+      document.body.style.backgroundColor = 'green';
     }
 
     Shumway.FileLoadingService.instance = flashParams.isRemote ?
@@ -206,17 +211,3 @@ RemoteFileLoadingService.prototype = {
     window.open(this.resolveUrl(url), target || '_blank');
   }
 };
-
-window.addEventListener('message', function onWindowMessage(e) {
-  var data = e.data;
-  if (typeof data !== 'object' || data === null || data.type !== 'runSwf') {
-    return;
-  }
-  window.removeEventListener('message', onWindowMessage);
-
-  if (data.settings) {
-    Shumway.Settings.setSettings(data.settings);
-  }
-  runSwfPlayer(data.flashParams);
-  document.body.style.backgroundColor = 'green';
-});

@@ -180,6 +180,14 @@ function readDirectoryListing(path, next) {
   xhr.send();
 }
 
+function loadScript(file, next) {
+  var script = document.createElement('script');
+  script.setAttribute('type', 'text/javascript');
+  script.onload = next || null;
+  script.src = file;
+  document.getElementsByTagName('head')[0].appendChild(script);
+}
+
 function executeUnitTests(file, avm2) {
   function runTests() {
     console.info("Executing Unit Tests");

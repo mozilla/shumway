@@ -180,7 +180,7 @@ module Shumway.GFX.Test {
     public recordFont(syncId: number, data: Uint8Array) {
       var buffer = new DataBuffer();
       buffer.writeInt(syncId);
-      writeUint8Array(buffer, data);
+      writeUint8Array(buffer, serializeObj(data));
       this._createRecord(MovieRecordType.Font, buffer);
     }
 
@@ -189,7 +189,7 @@ module Shumway.GFX.Test {
       buffer.writeInt(syncId);
       buffer.writeInt(symbolId);
       buffer.writeInt(imageType);
-      writeUint8Array(buffer, data);
+      writeUint8Array(buffer, serializeObj(data));
       this._createRecord(MovieRecordType.Image, buffer);
     }
 
@@ -255,6 +255,9 @@ module Shumway.GFX.Test {
                                          type === MovieRecordObjectType.PlainObjectDataBufferLE);
       case MovieRecordObjectType.Int32Array:
         return new Int32Array(readUint8Array(buffer).buffer);
+      default:
+        release || Debug.assert(false);
+        break
     }
   }
 

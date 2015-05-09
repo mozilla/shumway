@@ -238,19 +238,20 @@ var shuobject = (function () {
   // Exposed as the 'shumway' property in the Shumway iframe, contains:
   // stage, flash namespace, and other Shumway utils.
   function ShumwayBindings(iframeElement) {
-    var easelHost = iframeElement.contentWindow.easelHost;
+    var gfxWindow = iframeElement.contentWindow.gfxWindow;
+    var easelHost = gfxWindow.easelHost;
     easelHost.processFrame = this._processFrame.bind(this, iframeElement);
     easelHost.processFSCommand = this._processFSCommand.bind(this, iframeElement);
 
-    var playerWindowIframe = iframeElement.contentWindow.playerWindowIframe.contentWindow;
-    var externalInterfaceService = playerWindowIframe.iframeExternalInterface;
+    var playerWindow = iframeElement.contentWindow.playerWindow;
+    var externalInterfaceService = playerWindow.iframeExternalInterface;
     externalInterfaceService.processExternalCommand =
       processExternalCommand.bind(externalInterfaceService, iframeElement);
 
-    this.sec = playerWindowIframe.player.sec;
-    this.stage = playerWindowIframe.player.stage;
-    this.Shumway = playerWindowIframe.Shumway;
-    this.flash = playerWindowIframe.player.sec.flash;
+    this.sec = playerWindow.player.sec;
+    this.stage = playerWindow.player.stage;
+    this.Shumway = playerWindow.Shumway;
+    this.flash = playerWindow.player.sec.flash;
     this.easelHost = easelHost;
 
     this.onFrame = null;

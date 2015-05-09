@@ -39,8 +39,7 @@ function execManifest(path, bundle) {
       }));
 
 
-      TestContext._slavePath = bundle ? 'harness/slave-bundle.html' :
-                                        'harness/slave.html';
+      TestContext._slavePath = 'harness/slave.html';
 
       switch (test.type) {
       case 'stas':

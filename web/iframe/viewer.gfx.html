@@ -17,30 +17,27 @@ limitations under the License.
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Test</title>
+    <base href=""/>
+    <title></title>
+
     <style>
       body {
-        background: #404040;
         margin: 0;
+        overflow: hidden;
       }
 
-      #gfxIframe {
-        width: 1024px;
-        height: 1024px;
-      }
-
-      #playerWindow {
-        position: absolute;
-        top: 0;
-        right: 0;
+      #easelContainer {
+        position:fixed !important;
+        left:0;top:0;bottom:0;right:0;
+        overflow: hidden;
       }
     </style>
-
+    <script src="compatibility.js"></script>
+    <script src="../build/bundles/shumway.gfx.js"></script>
   </head>
+
   <body>
     <div id="easelContainer"></div>
-    <iframe id="gfxIframe" src="slave.gfx.html"></iframe>
-    <iframe id="playerIframe" src="slave.player.html"></iframe>
-    <script src="slave.js"></script>
+    <script src="viewerGfx.js"></script>
   </body>
 </html>
