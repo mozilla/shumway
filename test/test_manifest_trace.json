@@ -99,6 +99,14 @@
       ],
       "type": "stas"
     },
+    {  "id": "avm1 loadvariables",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/loadvariables/loadvariables.swf",
+        "swfs/avm1/loadvariables/loadvars.swf"
+      ],
+      "type": "stas"
+    },
     {  "id": "flash_utils_Timer",
       "stas": "swfs/trace.stas",
       "filenames": [
@@ -195,6 +203,7 @@
       "stas": "swfs/trace.stas",
       "filenames": [
         "swfs/avm1/xml/xmlbuild.swf",
+        "swfs/avm1/xml/xmlload.swf",
         "swfs/avm1/xml/xmlload.swf",
         "swfs/avm1/xml/xmlstring.swf"
       ],
