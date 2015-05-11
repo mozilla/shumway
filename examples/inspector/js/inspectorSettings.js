@@ -23,7 +23,7 @@ var stateDefaults = {
   debugPanelId: "settingsContainer",
   profileStartup: false,
   profileStartupDuration: 10000,
-  logToConsole: false,
+  logToConsole: true,
   logToDebugPanel: false,
   logAssets: false,
   logScratchCanvases: false,

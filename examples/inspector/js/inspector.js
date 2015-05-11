@@ -79,6 +79,16 @@ function setRelease(release) {
   playerWindow.setRelease(release);
 }
 
+var traceTerminal;
+function setLogOptions(logToConsole, logToDebugPanel) {
+  if (logToDebugPanel) {
+    traceTerminal = new Shumway.Tools.Terminal.Terminal(document.getElementById("traceTerminal"));
+    traceTerminal.refreshEvery(100);
+  }
+  gfxWindow.setLogOptions(logToConsole, logToDebugPanel, traceTerminal);
+  playerWindow.setLogOptions(logToConsole, logToDebugPanel, traceTerminal);
+}
+
 function monitorGfxOptionsChange() {
   document.addEventListener('shumwayOptionsChanged', function () {
     gfxWindow.syncGFXOptions();
@@ -176,7 +186,9 @@ function togglePanelVisibility(id, visible) {
     document.body.classList.toggle("hideDebugInfoPanels", visible);
   }
   profiler.resize();
-  traceTerminal.resize();
+  if (traceTerminal) {
+    traceTerminal.resize();
+  }
 }
 function resetPanelsToSettings() {
   if (state.debugPanelId === 'settingsContainer') {
@@ -201,6 +213,7 @@ Promise.all([gfxReady, playerReady]).then(function () {
   createOptionsGUI();
 
   setRelease(state.release);
+  setLogOptions(state.logToConsole, state.logToDebugPanel);
   gfxWindow.resizeEaselContainer(state.width, state.height);
   gfxWindow.setLogAssets(state.logAssets, document.getElementById("assetList"));
   gfxWindow.setLogScratchCanvases(state.logScratchCanvases,
