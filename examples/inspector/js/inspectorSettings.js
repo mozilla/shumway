@@ -26,6 +26,7 @@ var stateDefaults = {
   logToConsole: false,
   logToDebugPanel: false,
   logAssets: false,
+  logScratchCanvases: false,
   overlayFlash: false,
   fileReadChunkSize: 0,
   mute: false,
@@ -84,6 +85,7 @@ function createOptionsGUI() {
   inspectorOptions.add(state, "logToConsole").onChange(saveInspectorOption);
   inspectorOptions.add(state, "logToDebugPanel").onChange(saveInspectorOption);
   inspectorOptions.add(state, "logAssets").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "logScratchCanvases").onChange(saveInspectorOption);
   inspectorOptions.add(state, "profileStartup").onChange(saveInspectorOption);
   inspectorOptions.add(state, "profileStartupDuration").onChange(saveInspectorOption);
   inspectorOptions.add(state, "overlayFlash").onChange(saveInspectorOption);

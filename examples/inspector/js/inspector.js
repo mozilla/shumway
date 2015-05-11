@@ -200,12 +200,11 @@ Promise.all([gfxReady, playerReady]).then(function () {
 
   createOptionsGUI();
 
-  gfxWindow.assetListContainer = document.getElementById("assetList");
-  gfxWindow.scratchCanvasContainer = document.getElementById("scratchCanvasContainer");
-
   setRelease(state.release);
   gfxWindow.resizeEaselContainer(state.width, state.height);
-  gfxWindow.setLogAssets(state.logAssets);
+  gfxWindow.setLogAssets(state.logAssets, document.getElementById("assetList"));
+  gfxWindow.setLogScratchCanvases(state.logScratchCanvases,
+    document.getElementById("scratchCanvasContainer"));
 
   if (state.profileStartup && state.profileStartupDuration > 0) {
     profiler.start(performance.now(), state.profileStartupDuration, false);
@@ -231,7 +230,11 @@ document.addEventListener('inspectorOptionsChanged', function (e) {
       setRelease(state.release);
       break;
     case 'logAssets':
-      gfxWindow.setLogAssets(state.logAssets);
+      gfxWindow.setLogAssets(state.logAssets, document.getElementById("assetList"));
+      break;
+    case 'logScratchCanvases':
+      gfxWindow.setLogScratchCanvases(state.logScratchCanvases,
+        document.getElementById("scratchCanvasContainer"));
       break;
     case 'overlayFlash':
       gfxWindow.setFlashOverlayState(state.overlayFlash);
