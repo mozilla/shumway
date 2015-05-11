@@ -176,7 +176,7 @@ module Shumway.AVM1.Lib {
     }
 
     private _insertChildAtDepth<T extends flash.display.DisplayObject>(mc: T, depth:number): AVM1Object {
-      var symbolDepth = Math.max(0, alCoerceNumber(this.context, depth)) + DEPTH_OFFSET;
+      var symbolDepth = alCoerceNumber(this.context, depth) + DEPTH_OFFSET;
       var nativeAS3Object = this.as3Object;
       nativeAS3Object.addTimelineObjectAtDepth(mc, symbolDepth);
       // Bitmaps aren't reflected in AVM1, so the rest here doesn't apply.

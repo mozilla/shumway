@@ -122,6 +122,11 @@ module Shumway.AVMX.AS.flash.display {
           if (child._depth < 0) {
             continue;
           }
+          // For AVM1 objects, children with depth 16384 (0 from API point of view)
+          // are not removed.
+          if ('_as2Object' in child && child._depth >= 16384) {
+            continue;
+          }
           var tag = null;
           // Look for a control tag tag that places an object at the same depth as the current
           // child.
