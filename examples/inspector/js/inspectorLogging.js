@@ -21,7 +21,7 @@ function setLogOptions(logToConsole, logToDebugPanel, traceTerminal_) {
       appendToTraceTerminal([].join.call(arguments, " "), "#FF6700");
     };
     console.error = function (str) {
-      if (state.logToConsole) {
+      if (logToConsole) {
         console_error.apply(console, arguments);
       }
       appendToTraceTerminal([].join.call(arguments, " "), "#AA0000");

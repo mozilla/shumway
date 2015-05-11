@@ -541,6 +541,9 @@ module Shumway.AVM1.Lib {
 
     public removeMovieClip(target) {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
+      if (!nativeTarget) {
+        return;
+      }
       nativeTarget.removeMovieClip();
     }
 

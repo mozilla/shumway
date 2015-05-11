@@ -470,8 +470,11 @@ module Shumway.AVM1.Lib {
     }
 
     public removeMovieClip() {
-      var parent = this.get_parent().as3Object;
-      parent.removeChild(this.as3Object);
+      var as2Parent = this.get_parent();
+      if (!as2Parent) {
+        return; // let's not remove root symbol
+      }
+      as2Parent.as3Object.removeChild(this.as3Object);
     }
 
     public setMask(mc:Object) {
