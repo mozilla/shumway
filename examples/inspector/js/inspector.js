@@ -79,6 +79,16 @@ function setRelease(release) {
   playerWindow.setRelease(release);
 }
 
+var traceTerminal;
+function setLogOptions(logToConsole, logToDebugPanel) {
+  if (logToDebugPanel) {
+    traceTerminal = new Shumway.Tools.Terminal.Terminal(document.getElementById("traceTerminal"));
+    traceTerminal.refreshEvery(100);
+  }
+  gfxWindow.setLogOptions(logToConsole, logToDebugPanel, traceTerminal);
+  playerWindow.setLogOptions(logToConsole, logToDebugPanel, traceTerminal);
+}
+
 function monitorGfxOptionsChange() {
   document.addEventListener('shumwayOptionsChanged', function () {
     gfxWindow.syncGFXOptions();
@@ -176,7 +186,9 @@ function togglePanelVisibility(id, visible) {
     document.body.classList.toggle("hideDebugInfoPanels", visible);
   }
   profiler.resize();
-  traceTerminal.resize();
+  if (traceTerminal) {
+    traceTerminal.resize();
+  }
 }
 function resetPanelsToSettings() {
   if (state.debugPanelId === 'settingsContainer') {
@@ -200,12 +212,12 @@ Promise.all([gfxReady, playerReady]).then(function () {
 
   createOptionsGUI();
 
-  gfxWindow.assetListContainer = document.getElementById("assetList");
-  gfxWindow.scratchCanvasContainer = document.getElementById("scratchCanvasContainer");
-
   setRelease(state.release);
+  setLogOptions(state.logToConsole, state.logToDebugPanel);
   gfxWindow.resizeEaselContainer(state.width, state.height);
-  gfxWindow.setLogAssets(state.logAssets);
+  gfxWindow.setLogAssets(state.logAssets, document.getElementById("assetList"));
+  gfxWindow.setLogScratchCanvases(state.logScratchCanvases,
+    document.getElementById("scratchCanvasContainer"));
 
   if (state.profileStartup && state.profileStartupDuration > 0) {
     profiler.start(performance.now(), state.profileStartupDuration, false);
@@ -231,7 +243,11 @@ document.addEventListener('inspectorOptionsChanged', function (e) {
       setRelease(state.release);
       break;
     case 'logAssets':
-      gfxWindow.setLogAssets(state.logAssets);
+      gfxWindow.setLogAssets(state.logAssets, document.getElementById("assetList"));
+      break;
+    case 'logScratchCanvases':
+      gfxWindow.setLogScratchCanvases(state.logScratchCanvases,
+        document.getElementById("scratchCanvasContainer"));
       break;
     case 'overlayFlash':
       gfxWindow.setFlashOverlayState(state.overlayFlash);

@@ -38,8 +38,15 @@ function setProfile(enabled) {
 }
 
 var logAssets = false;
-function setLogAssets(enabled) {
+function setLogAssets(enabled, assetListContainer_) {
   logAssets = enabled;
+  assetListContainer = assetListContainer_;
+}
+
+var logScratchCanvases = false;
+function setLogScratchCanvases(enabled, scratchCanvasContainer_) {
+  logScratchCanvases = enabled;
+  scratchCanvasContainer = scratchCanvasContainer_;
 }
 
 function resizeEaselContainer(width, height) {
@@ -168,8 +175,13 @@ HTMLCanvasElement.prototype.getContext = function getContext(contextId, args) {
 
 var scratchCanvasContainer;
 function registerScratchCanvas(scratchCanvas) {
-  if (scratchCanvasContainer) {
+  if (logScratchCanvases) {
     scratchCanvasContainer.appendChild(scratchCanvas);
+  } else {
+    // Temporary hack to work around a bug that prevents SVG filters to work for off-screen canvases.
+    // TODO remove
+    scratchCanvas.style.display = 'none';
+    document.body.appendChild(scratchCanvas);
   }
 }
 
