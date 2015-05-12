@@ -747,6 +747,7 @@ module Shumway.AVM1.Lib {
         new AVM1EventHandler('onLoad', 'load'),
         new AVM1EventHandler('onMouseDown', 'mouseDown'),
         new AVM1EventHandler('onMouseUp', 'mouseUp'),
+        new AVM1EventHandler('onMouseMove', 'mouseMove'),
         new AVM1MovieClipButtonModeEvent('onPress', 'mouseDown'),
         new AVM1MovieClipButtonModeEvent('onRelease', 'mouseUp'),
         new AVM1MovieClipButtonModeEvent('onReleaseOutside', 'releaseOutside'),

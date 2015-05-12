@@ -357,6 +357,15 @@
        "swf": "/examples/pac/pac.swf",
        "type": "eq"
     },
+    {  "id": "mouse trace",
+      "stas": "swfs/mouse/drag.stas",
+      "filenames": [
+        "swfs/mouse/StartDragTest.swf",
+        "swfs/mouse/StartDragLockTest.swf",
+        "swfs/mouse/MouseCoordsTest.swf"
+      ],
+      "type": "stas"
+    },
     {  "id": "3_joystick",
        "stas": "swfs/3_joystick.stas",
        "filenames": [

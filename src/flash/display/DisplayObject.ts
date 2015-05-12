@@ -2013,10 +2013,7 @@ module Shumway.AVMX.AS.flash.display {
      */
     _getLocalMousePosition(): flash.geom.Point {
       var position = this.sec.flash.ui.Mouse.axClass._currentPosition;
-      if (this._parent) {
-        position = this._parent.globalToLocal(position);
-      }
-      return position;
+      return this.globalToLocal(position);
     }
 
     get mouseX(): number {
