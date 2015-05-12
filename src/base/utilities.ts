@@ -3492,7 +3492,10 @@ module Shumway {
     export enum LoadResource {
       LOAD_SOURCE = 0,
       LOAD_WHITELIST_SUCCESS = 1,
-      LOAD_WHITELIST_FAILED = 2
+      LOAD_WHITELIST_FAILED = 2,
+      STREAM_OPENED = 3,
+      STREAM_FAILED = 4,
+      STREAM_XDOMAIN = 5
     }
 
     export var instance: ITelemetryService;
