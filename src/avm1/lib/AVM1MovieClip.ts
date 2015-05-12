@@ -176,6 +176,11 @@ module Shumway.AVM1.Lib {
     }
 
     private _insertChildAtDepth<T extends flash.display.DisplayObject>(mc: T, depth:number): AVM1Object {
+      var oldChild = this.getInstanceAtDepth(depth);
+      if (oldChild) {
+        var oldAS3Object = oldChild.as3Object;
+        oldAS3Object.parent.removeChild(oldAS3Object);
+      }
       var symbolDepth = alCoerceNumber(this.context, depth) + DEPTH_OFFSET;
       var nativeAS3Object = this.as3Object;
       nativeAS3Object.addTimelineObjectAtDepth(mc, symbolDepth);
@@ -320,7 +325,7 @@ module Shumway.AVM1.Lib {
           return <AVM1MovieClip>getAVM1Object(child, this.context);
         }
       }
-      return null;
+      return undefined;
     }
 
     public getNextHighestDepth(): number {
