@@ -113,6 +113,25 @@ function sanitizeExternalComArgs(args) {
   return request;
 }
 
+var cloneIntoFromContent = (function () {
+  // waiveXrays are used due to bug 1150771, checking if we are affected
+  // TODO remove workaround after Firefox 40 is released (2015-08-11)
+  let sandbox1 = new Components.utils.Sandbox(null);
+  let sandbox2 = new Components.utils.Sandbox(null);
+  let arg = Components.utils.evalInSandbox('({buf: new ArrayBuffer(2)})', sandbox1);
+  let clonedArg = Components.utils.cloneInto(arg, sandbox2);
+  if (!Components.utils.waiveXrays(clonedArg).buf) {
+    return function (obj, contentSandbox) {
+      return Components.utils.cloneInto(
+        Components.utils.waiveXrays(obj), contentSandbox);
+    };
+  }
+
+  return function (obj, contentSandbox) {
+    return Components.utils.cloneInto(obj, contentSandbox);
+  };
+})();
+
 var ShumwayCom = {
   createAdapter: function (content, callbacks, hooks) {
     // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
@@ -160,12 +179,10 @@ var ShumwayCom = {
         function postSyncMessage(msg) {
           if (onSyncMessageCallback) {
             // the msg came from other content window
-            // waiveXrays are used due to bug 1150771.
-            var reclonedMsg = Components.utils.cloneInto(Components.utils.waiveXrays(msg), content);
+            var reclonedMsg = cloneIntoFromContent(msg, content);
             var result = onSyncMessageCallback(reclonedMsg);
             // the result will be sent later to other content window
-            var waivedResult = Components.utils.waiveXrays(result);
-            return waivedResult;
+            return result;
           }
         }
 
@@ -238,7 +255,7 @@ var ShumwayCom = {
 
       postSyncMessage: function (msg) {
         var result = postSyncMessage(msg);
-        return Components.utils.cloneInto(result, content)
+        return cloneIntoFromContent(result, content)
       },
 
       createSpecialStorage: function () {
