@@ -179,7 +179,7 @@ module Shumway.AVM1 {
     }
     resolveTarget(target: any) : any {
       var ectx = this._getExecutionContext();
-      return avm1ResolveTarget(ectx, target, true) || avm1GetTarget(ectx, true);
+      return avm1ResolveTarget(ectx, target, true);
     }
     resolveRoot() : any {
       var ectx = this._getExecutionContext();

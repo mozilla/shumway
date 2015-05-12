@@ -311,8 +311,9 @@ module Shumway.AVM1.Lib {
     }
 
     public duplicateMovieClip(target, newname, depth) {
+      var normalizedDepth = alCoerceNumber(this.context, depth) - DEPTH_OFFSET;
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
-      nativeTarget.duplicateMovieClip(newname, depth, null);
+      nativeTarget.duplicateMovieClip(newname, normalizedDepth, null);
     }
 
     public fscommand(command: string, args?: string) {
@@ -541,6 +542,9 @@ module Shumway.AVM1.Lib {
 
     public removeMovieClip(target) {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
+      if (!nativeTarget) {
+        return;
+      }
       nativeTarget.removeMovieClip();
     }
 
