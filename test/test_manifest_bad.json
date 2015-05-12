@@ -9,6 +9,7 @@
   {  "id": "avm1core",
     "stas": "swfs/trace.stas",
     "filenames": [
+      "swfs/avm1/doactionorder/symbolclass.swf"
       "swfs/avm1/doactionorder/doactionorder.swf"
     ],
     "type": "stas"
