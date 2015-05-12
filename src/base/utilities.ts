@@ -3489,6 +3489,15 @@ module Shumway {
       AVM2_ERROR = 2
     }
 
+    export enum LoadResource {
+      LoadSource = 0,
+      LoadWhitelistAllowed = 1,
+      LoadWhitelistDenied = 2,
+      StreamAllowed = 3,
+      StreamDenied = 4,
+      StreamCrossdomain = 5
+    }
+
     export var instance: ITelemetryService;
   }
 
