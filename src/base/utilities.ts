@@ -3489,6 +3489,12 @@ module Shumway {
       AVM2_ERROR = 2
     }
 
+    export enum LoadResource {
+      LOAD_SOURCE = 0,
+      LOAD_WHITELIST_SUCCESS = 1,
+      LOAD_WHITELIST_FAILED = 2
+    }
+
     export var instance: ITelemetryService;
   }
 

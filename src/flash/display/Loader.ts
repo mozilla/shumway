@@ -24,6 +24,7 @@ module Shumway.AVMX.AS.flash.display {
   import LoaderContext = flash.system.LoaderContext;
   import events = flash.events;
   import ICrossDomainSWFLoadingWhitelist = flash.system.ICrossDomainSWFLoadingWhitelist;
+  import CrossDomainSWFLoadingWhitelistResult = flash.system.CrossDomainSWFLoadingWhitelistResult;
 
   import FileLoader = Shumway.FileLoader;
   import ILoadListener = Shumway.ILoadListener;
@@ -340,7 +341,7 @@ module Shumway.AVMX.AS.flash.display {
       return this._uncaughtErrorEvents;
     }
 
-    private _canLoadSWFFromDomain(url: string): boolean {
+    private _canLoadSWFFromDomain(url: string): CrossDomainSWFLoadingWhitelistResult {
       url = FileLoadingService.instance.resolveUrl(url);
       var whitelist: ICrossDomainSWFLoadingWhitelist = this.sec.player;
       return whitelist.checkDomainForSWFLoading(url);
@@ -360,7 +361,22 @@ module Shumway.AVMX.AS.flash.display {
       // will be called. This is a very simplified heuristic to restrict
       // unwanted SWFs that can break the loading one.
       Promise.resolve<any>(undefined).then(function (fileLoader: FileLoader, fileRequest) {
-        if (this._canLoadSWFFromDomain(fileRequest.url)) {
+        var whitelistResult = this._canLoadSWFFromDomain(fileRequest.url);
+
+        switch (whitelistResult) {
+          case CrossDomainSWFLoadingWhitelistResult.SOURCE:
+            Telemetry.instance.reportTelemetry({topic: 'loadResource', resultType: Telemetry.LoadResource.LOAD_SOURCE});
+            break;
+          case CrossDomainSWFLoadingWhitelistResult.REMOTE:
+            Telemetry.instance.reportTelemetry({topic: 'loadResource', resultType: Telemetry.LoadResource.LOAD_WHITELIST_SUCCESS});
+            break;
+          case CrossDomainSWFLoadingWhitelistResult.FAILED:
+            Telemetry.instance.reportTelemetry({topic: 'loadResource', resultType: Telemetry.LoadResource.LOAD_WHITELIST_FAILED});
+            break;
+        }
+
+        if (whitelistResult === CrossDomainSWFLoadingWhitelistResult.SOURCE ||
+            whitelistResult === CrossDomainSWFLoadingWhitelistResult.REMOTE) {
           fileLoader.loadFile(fileRequest);
         } else {
           console.error('Loading of ' + fileRequest.url + ' was rejected based on allowDomain heuristic.');

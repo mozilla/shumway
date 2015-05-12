@@ -60,6 +60,7 @@ registerAddonHistogram(ADDON_ID, "SHUMWAY_SWF_AVM2", Telemetry.HISTOGRAM_BOOLEAN
 registerAddonHistogram(ADDON_ID, "SHUMWAY_SWF_BANNER", Telemetry.HISTOGRAM_LINEAR, 1, 30, 31);
 registerAddonHistogram(ADDON_ID, "SHUMWAY_ERROR", Telemetry.HISTOGRAM_LINEAR, 1, 2, 3);
 registerAddonHistogram(ADDON_ID, "SHUMWAY_FEATURE_USED", Telemetry.HISTOGRAM_LINEAR, 1, 700, 701);
+registerAddonHistogram(ADDON_ID, "SHUMWAY_LOAD_RESOURCE_RESULT", Telemetry.HISTOGRAM_LINEAR, 1, 10, 11);
 registerAddonHistogram(ADDON_ID, "SHUMWAY_FALLBACK", Telemetry.HISTOGRAM_BOOLEAN, 1, 2, 3);
 
 const BANNER_SIZES = [
@@ -104,6 +105,10 @@ this.ShumwayTelemetry = {
   onFeature: function (featureType) {
     var histogram = Telemetry.getAddonHistogram(ADDON_ID, "SHUMWAY_FEATURE_USED");
     histogram.add(featureType);
+  },
+  onLoadResource: function (resultType) {
+    var histogram = Telemetry.getAddonHistogram(ADDON_ID, "SHUMWAY_LOAD_RESOURCE_RESULT");
+    histogram.add(resultType);
   },
   onFallback: function (userAction) {
     var histogram = Telemetry.getAddonHistogram(ADDON_ID, "SHUMWAY_FALLBACK");

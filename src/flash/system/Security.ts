@@ -108,8 +108,17 @@ module Shumway.AVMX.AS.flash.system {
     
   }
 
+  export enum CrossDomainSWFLoadingWhitelistResult {
+    /** the requested domain belongs to the same domain as SWF's */
+    SOURCE = 0,
+    /** the requested domain belongs to the other domain than SWF's */
+    REMOTE = 1,
+    /** the requested domain is not whitelisted */
+    FAILED = 2
+  }
+
   export interface ICrossDomainSWFLoadingWhitelist {
     addToSWFLoadingWhitelist(domain: string, insecure: boolean);
-    checkDomainForSWFLoading(domain: string): boolean;
+    checkDomainForSWFLoading(domain: string): CrossDomainSWFLoadingWhitelistResult;
   }
 }
