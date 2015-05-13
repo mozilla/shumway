@@ -25,6 +25,9 @@ module Shumway.GFX {
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
   import DisplayParameters = Shumway.Remoting.DisplayParameters;
 
+  // Set to -1 to enable events for right button.
+  export var ContextMenuButton = 2;
+
   export class EaselHost {
     private static _mouseEvents = Shumway.Remoting.MouseEventNames;
     private static _keyboardEvents = Shumway.Remoting.KeyboardEventNames;
@@ -78,6 +81,10 @@ module Shumway.GFX {
     }
 
     private _mouseEventListener(event: MouseEvent) {
+      if (event.button === ContextMenuButton) {
+        // Disable all events for right button -- usually it triggers context menu.
+        return;
+      }
       // var position = this._easel.getMouseWorldPosition(event);
       var position = this._easel.getMousePosition(event, this._content);
       var point = new Point(position.x, position.y);
