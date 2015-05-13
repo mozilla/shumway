@@ -60,6 +60,10 @@ function getDOMWindow(aChannel) {
   return win;
 }
 
+function flashUnescape(s) {
+  return decodeURIComponent(s.split('+').join(' '));
+}
+
 function parseQueryString(qs) {
   if (!qs)
     return {};
@@ -72,7 +76,7 @@ function parseQueryString(qs) {
   for (var i = 0; i < values.length; i++) {
     var kv = values[i].split('=');
     var key = kv[0], value = kv[1];
-    obj[decodeURIComponent(key)] = decodeURIComponent(value);
+    obj[flashUnescape(key)] = flashUnescape(value);
   }
 
   return obj;
