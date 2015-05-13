@@ -348,6 +348,8 @@ module Shumway.GFX.Canvas2D {
             dx = _sx;
             dy = _sy;
           }
+          Filters._removeFilter(sourceContext);
+          Filters._removeFilter(copyContext);
         }
         Filters._applyFilter(devicePixelRatio, this.context, filters[i]);
       }
@@ -355,6 +357,7 @@ module Shumway.GFX.Canvas2D {
       this.context.drawImage(sourceContext.canvas, sx, sy, w, h, x, y, w, h);
       
       this.context.globalCompositeOperation = getCompositeOperation(BlendMode.Normal);
+      Filters._removeFilter(this.context);
       if (clip) {
         this.context.restore();
       }
