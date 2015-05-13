@@ -288,13 +288,25 @@ module Shumway.AVMX.AS.flash.display {
       notImplemented("public flash.display.Sprite::set soundTransform"); return;
       // this._soundTransform = sndTransform;
     }
+
+    /**
+     * Returns the current mouse position relative to this object.
+     */
+    _getDragMousePosition(): flash.geom.Point {
+      var position = this.sec.flash.ui.Mouse.axClass._currentPosition;
+      if (this._parent) {
+        position = this._parent.globalToLocal(position);
+      }
+      return position;
+    }
+
     startDrag(lockCenter: boolean = false, bounds: flash.geom.Rectangle = null): void {
       lockCenter = !!lockCenter;
       if (lockCenter) {
         this._dragMode = DragMode.LockToPointer;
       } else {
         this._dragMode = DragMode.PreserveDistance;
-        var mousePosition = this._getLocalMousePosition();
+        var mousePosition = this._getDragMousePosition();
         this._dragDeltaX = this.x - mousePosition.x;
         this._dragDeltaY = this.y - mousePosition.y;
       }
@@ -313,7 +325,7 @@ module Shumway.AVMX.AS.flash.display {
       }
     }
     _updateDragState(dropTarget: DisplayObject = null): void {
-      var mousePosition = this._getLocalMousePosition();
+      var mousePosition = this._getDragMousePosition();
       var newX = mousePosition.x;
       var newY = mousePosition.y;
       if (this._dragMode === DragMode.PreserveDistance) {
