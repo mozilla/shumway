@@ -71,6 +71,6 @@ module Shumway {
   );
 
   export var playSymbolCountOption = playerOptions.register (
-    new Shumway.Options.Option("", "Play Symbol Count", "number", -1, "Select symbol count.", {range: { min: 0, max: 20000, step: 1 }})
+    new Shumway.Options.Option("", "Play Symbol Count", "number", -1, "Select symbol count.", {range: { min: -1, max: 20000, step: 1 }})
   );
 }
