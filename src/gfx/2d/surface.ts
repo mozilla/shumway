@@ -374,8 +374,8 @@ module Shumway.GFX.Canvas2D {
     public reset() {
       var context = this.surface.context;
       context.setTransform(1, 0, 0, 1, 0, 0);
-      context.fillStyle = null;
-      context.strokeStyle = null;
+      context.fillStyle = '#000000';
+      context.strokeStyle = '#000000';
       context.globalAlpha = 1;
       context.globalColorMatrix = null;
       context.globalCompositeOperation = getCompositeOperation(BlendMode.Normal);

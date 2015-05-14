@@ -254,7 +254,7 @@ module Shumway.Tools.Terminal {
     private _resizeHandler() {
       var parent = this.canvas.parentElement;
       var cw = parent.clientWidth;
-      var ch = parent.clientHeight - 1;
+      var ch = parent.clientHeight && (parent.clientHeight - 1);
 
       var devicePixelRatio = window.devicePixelRatio || 1;
       var backingStoreRatio = 1;
