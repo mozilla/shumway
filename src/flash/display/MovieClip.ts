@@ -114,6 +114,32 @@ module Shumway.AVMX.AS.flash.display {
     }
   }
 
+  export interface FrameScript {
+    (any?): any;
+    precedence?: number;
+    context?: MovieClip;
+  }
+  
+  function callFrameScripts(frameScripts: FrameScript [], context: MovieClip) {
+    for (var i = 0; i < frameScripts.length; i++) {
+      var script = frameScripts[i];
+      var mc = context || script.context;
+      release || assert(mc);
+      try {
+        script.call(mc); // REDUX ? why it was frameScript.$Bgcall(thisArg);
+      } catch (e) {
+        Telemetry.instance.reportTelemetry({ topic: 'error', error: Telemetry.ErrorTypes.AVM2_ERROR });
+
+        //if ($DEBUG) {
+        //  console.error('error ' + e + ', stack: \n' + e.stack);
+        //}
+
+        mc.stop();
+        throw e;
+      }
+    }
+  }
+
   export class MovieClip extends flash.display.Sprite implements IAdvancable {
 
     static frameNavigationModel: FrameNavigationModel;
@@ -145,16 +171,37 @@ module Shumway.AVMX.AS.flash.display {
       var eventClass = this.sec.flash.events.Event.axClass;
       var queue: MovieClip[] = movieClipClass._callQueue;
       movieClipClass._callQueue = [];
+      var unsortedScripts: FrameScript [] = [];
+      
       for (var i = 0; i < queue.length; i++) {
         var instance = queue[i];
 
-        if (instance._hasFlags(DisplayObjectFlags.NeedsLoadEvent)) {
-          instance._removeFlags(DisplayObjectFlags.NeedsLoadEvent);
-          instance.dispatchEvent(eventClass.getInstance(events.Event.AVM1_LOAD));
+        if (movieClipClass.frameNavigationModel === FrameNavigationModel.SWF1) {
+          // AVM1 action blocks must be executed exactly in the same order they appear in the SWF
+          // file. We keep track of the position for each action block at parsing time and carry that
+          // information on to their wrapping functions (via the precedence property). Here we queue
+          // up all such functions so we can sort and execute them after this loop.
+          if (instance._hasFlags(DisplayObjectFlags.NeedsLoadEvent)) {
+            instance._removeFlags(DisplayObjectFlags.NeedsLoadEvent);
+            release || assert(instance._symbol);
+            var handler = function () {
+              this.dispatchEvent(eventClass.getInstance(events.Event.AVM1_LOAD));
+            }.bind(instance);
+            handler.precedence = instance._symbol.data.actionBlocksPrecedence;
+            handler.context = instance;
+            unsortedScripts.push(handler);
+            continue;
+          }
+          var frameScripts = instance._frameScripts[instance._currentFrame];
+          for (var j = 0; j < frameScripts.length; j++) {
+            var script = frameScripts[j];
+            script.context = instance;
+            unsortedScripts.push(script);
+          }
           continue;
         }
 
-        instance._allowFrameNavigation = movieClipClass.frameNavigationModel === FrameNavigationModel.SWF1;
+        instance._allowFrameNavigation = false;
         instance.callFrame(instance._currentFrame);
         instance._allowFrameNavigation = true;
 
@@ -172,6 +219,14 @@ module Shumway.AVMX.AS.flash.display {
           }
         }
       }
+      
+      if (unsortedScripts.length) {
+        unsortedScripts.sort(function (a: FrameScript, b: FrameScript) {
+          return a.precedence - b.precedence;
+        });
+        callFrameScripts(unsortedScripts, null);
+      }
+      
       leaveTimeline();
     }
 
@@ -667,21 +722,9 @@ module Shumway.AVMX.AS.flash.display {
 
     callFrame(frame: number): void {
       frame = frame | 0;
-      var frameScript = this._frameScripts[frame];
-      if (!frameScript) {
-        return;
-      }
-      try {
-        frameScript.call(this); // REDUX ? why it was frameScript.$Bgcall(this);
-      } catch (e) {
-        Telemetry.instance.reportTelemetry({ topic: 'error', error: Telemetry.ErrorTypes.AVM2_ERROR });
-
-        //if ($DEBUG) {
-        //  console.error('error ' + e + ', stack: \n' + e.stack);
-        //}
-
-        this.stop();
-        throw e;
+      var frameScripts = this._frameScripts[frame];
+      if (frameScripts) {
+        callFrameScripts(frameScripts, this);
       }
     }
 
@@ -728,7 +771,7 @@ module Shumway.AVMX.AS.flash.display {
      *
      * Undocumented method used to implement the old timeline concept in AS3.
      */
-    addFrameScript(frameIndex: number, script: (any?) => any /*, ...*/): void {
+    addFrameScript(frameIndex: number, script: FrameScript /*, ...*/): void {
       if (!this._currentFrame) {
         return;
       }
@@ -746,7 +789,17 @@ module Shumway.AVMX.AS.flash.display {
         if (frameNum < 1 || frameNum > totalFrames) {
           continue;
         }
-        frameScripts[frameNum] = arguments[i + 1];
+        var fn = arguments[i + 1];
+        var list = frameScripts[frameNum];
+        if (list) {
+          if (fn.precedence) {
+            list.push(fn);
+          } else {
+            list[0] = fn;
+          }
+        } else {
+          frameScripts[frameNum] = [fn];
+        }
         if (frameNum === this._currentFrame) {
           this._setFlags(DisplayObjectFlags.HasFrameScriptPending);
           this._parent && this._propagateFlagsUp(DisplayObjectFlags.ContainsFrameScriptPendingChildren);

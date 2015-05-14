@@ -66,8 +66,6 @@ module Shumway.AVM1.Lib {
           '_x#', '_xmouse#', '_xscale#', '_y#', '_ymouse#', '_yscale#']);
     }
 
-    private _boundExecuteFrameScripts: () => void;
-    private _frameScripts: AVM1.AVM1ActionsData[][];
     private _hitArea: any;
     private _lockroot: boolean;
 
@@ -77,10 +75,6 @@ module Shumway.AVM1.Lib {
 
     public initAVM1SymbolInstance(context: AVM1Context, as3Object: flash.display.MovieClip) {
       super.initAVM1SymbolInstance(context, as3Object);
-
-      this._frameScripts = null;
-      this._boundExecuteFrameScripts = null;
-
       this._initEventsHandlers();
     }
 
@@ -669,22 +663,13 @@ module Shumway.AVM1.Lib {
         }
       }
     }
-
-    addFrameScript(frameIndex: number, actionsBlock: Uint8Array): void {
-      var frameScripts = this._frameScripts;
-      if (!frameScripts) {
-        release || assert(!this._boundExecuteFrameScripts);
-        this._boundExecuteFrameScripts = this._executeFrameScripts.bind(this);
-        frameScripts = this._frameScripts = [];
-      }
-      var scripts: AVM1.AVM1ActionsData[] = frameScripts[frameIndex + 1];
-      if (!scripts) {
-        scripts = frameScripts[frameIndex + 1] = [];
-        this.as3Object.addFrameScript(frameIndex, this._boundExecuteFrameScripts);
-      }
+    
+    addFrameScript(frameIndex: number, actionsBlock: any): void {
       var actionsData = this.context.actionsDataFactory.createActionsData(
-        actionsBlock, 's' + this.as3Object._symbol.id + 'f' + frameIndex + 'i' + scripts.length);
-      scripts.push(actionsData);
+        actionsBlock.actionsData, 's' + this.as3Object._symbol.id + 'f' + frameIndex);
+      var script = this.context.executeActions.bind(this.context, actionsData, this);
+      script.precedence = actionsBlock.precedence;
+      this.as3Object.addFrameScript(frameIndex, script);
     }
 
     /**
@@ -713,16 +698,6 @@ module Shumway.AVM1.Lib {
         }
       }
       avm2MovieClip.addEventListener('enterFrame', listener);
-    }
-
-    private _executeFrameScripts() {
-      var context = this.context;
-      var scripts: AVM1.AVM1ActionsData[] = this._frameScripts[this.as3Object.currentFrame];
-      release || assert(scripts && scripts.length);
-      for (var i = 0; i < scripts.length; i++) {
-        var actionsData = scripts[i];
-        context.executeActions(actionsData, this);
-      }
     }
 
     private _init(initObject) {

@@ -113,10 +113,12 @@ module Shumway.AVMX.AS.flash.display {
           } catch (e) {
             Debug.warning('caught error under DisplayObjectContainer AVM1_CONSTRUCT event: ', e);
           }
-          child._setFlags(DisplayObjectFlags.NeedsLoadEvent);
-          if (child._hasAnyFlags(DisplayObjectFlags.HasFrameScriptPending |
-                                 DisplayObjectFlags.ContainsFrameScriptPendingChildren)) {
-            this._setFlags(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
+          if (child.hasEventListener(events.Event.AVM1_LOAD)) {
+            child._setFlags(DisplayObjectFlags.NeedsLoadEvent);
+            if (child._hasAnyFlags(DisplayObjectFlags.HasFrameScriptPending |
+                                   DisplayObjectFlags.ContainsFrameScriptPendingChildren)) {
+              this._setFlags(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
+            }
           }
         }
 
