@@ -39,6 +39,19 @@ module Shumway.GFX.Test {
     buffer.writeRawBytes(data);
   }
 
+  // Borrowed from other frame typed arrays does not match current global
+  // objects, so instanceof does not work.
+  function isInstanceOfTypedArray(obj, name: string): boolean {
+    return ('byteLength' in obj) &&
+           ('buffer' in obj) &&
+           (obj.constructor && obj.constructor.name) === name;
+  }
+
+  function isInstanceOfArrayBuffer(obj): boolean {
+    return ('byteLength' in obj) &&
+           (obj.constructor && obj.constructor.name) === 'ArrayBuffer';
+  }
+
   function serializeObj(obj) {
     function serialize(item) {
       switch (typeof item) {
@@ -62,13 +75,13 @@ module Shumway.GFX.Test {
             break;
           }
 
-          if (Array.isArray(item) && (item instanceof Int32Array)) {
+          if (Array.isArray(item)) {
             buffer.writeByte(MovieRecordObjectType.Array);
             buffer.writeInt(item.length);
             for (var i = 0; i < item.length; i++) {
               serialize(item[i]);
             }
-          } else if (item instanceof Uint8Array) {
+          } else if (isInstanceOfTypedArray(item, 'Uint8Array')) {
             buffer.writeByte(MovieRecordObjectType.Uint8Array);
             writeUint8Array(buffer, item);
           } else if (('length' in item) && ('buffer' in item) && ('littleEndian' in item)) {
@@ -76,14 +89,15 @@ module Shumway.GFX.Test {
               MovieRecordObjectType.PlainObjectDataBufferLE :
               MovieRecordObjectType.PlainObjectDataBufferBE);
             writeUint8Array(buffer, new Uint8Array(item.buffer, 0, item.length));
-          } else if (item instanceof ArrayBuffer) {
+          } else if (isInstanceOfArrayBuffer(item)) {
             buffer.writeByte(MovieRecordObjectType.ArrayBuffer);
             writeUint8Array(buffer, new Uint8Array(item));
-          } else if (item instanceof Int32Array) {
+          } else if (isInstanceOfTypedArray(item, 'Int32Array')) {
             buffer.writeByte(MovieRecordObjectType.Int32Array);
             writeUint8Array(buffer, new Uint8Array(item.buffer, item.byteOffset, item.byteLength));
           } else {
-            if (item.buffer instanceof ArrayBuffer &&
+            if (!isNullOrUndefined(item.buffer) &&
+              isInstanceOfArrayBuffer(item.buffer) &&
               (typeof item.byteOffset === 'number')) {
               throw new Error('Some unsupported TypedArray is used')
             }
@@ -329,7 +343,6 @@ module Shumway.GFX.Test {
       var type: MovieRecordType;
       while ((type = this.readNextRecord())) {
         console.log('record ' + type + ' @' + this.currentTimestamp);
-        debugger;
         switch (type) {
           case MovieRecordType.PlayerCommand:
           case MovieRecordType.PlayerCommandAsync:
