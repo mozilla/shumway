@@ -38,18 +38,15 @@ function createEasel(backgroundColor) {
 }
 
 var easelHost;
-function createEaselHost(playerWindow) {
-  easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWindow, window);
+function createEaselHost() {
+  var peer = new Shumway.Remoting.ShumwayComTransportPeer();
+  easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, peer);
   return easelHost;
 }
 
 function setHudVisible(visible) {
   Shumway.GFX.hud.value = !!visible;
 }
-
-Object.defineProperty(window, 'ShumwayCom', {
-  get: function() { return parent.ShumwayCom; }
-});
 
 function fallback() {
   parent.postMessage({callback: 'fallback'}, '*');
@@ -99,7 +96,7 @@ function prepareUI(params) {
   setHudVisible(params.isHudOn);
 
   createEasel(params.backgroundColor);
-  createEaselHost(window.parent);
+  createEaselHost();
 
   var displayParameters = easel.getDisplayParameters();
   window.parent.postMessage({
@@ -111,11 +108,15 @@ function prepareUI(params) {
 window.addEventListener('message', function onWindowMessage(e) {
   var data = e.data;
   if (typeof data !== 'object' || data === null) {
+    console.error('Unexpected message for gfx frame.');
     return;
   }
   switch (data.type) {
     case "prepareUI":
       prepareUI(data.params);
+      break;
+    default:
+      console.error('Unexpected message for gfx frame: ' + args.callback);
       break;
   }
 }, true);

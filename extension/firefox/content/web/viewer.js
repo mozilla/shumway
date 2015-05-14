@@ -56,7 +56,7 @@ function runViewer() {
     var settings = ShumwayCom.getSettings();
     var playerSettings = settings.playerSettings;
 
-    ShumwayCom.setupComBridge(document.getElementById('playerIframe'));
+    ShumwayCom.setupPlayerComBridge(document.getElementById('playerIframe'));
     parseSwf(movieUrl, baseUrl, movieParams, objectParams, settings, initStartTime, backgroundColor);
 
     if (isOverlay) {
@@ -75,7 +75,7 @@ function runViewer() {
       }
     }
 
-    //ShumwayCom.setupGfxComBridge(document.getElementById('gfxIframe'));
+    ShumwayCom.setupGfxComBridge(document.getElementById('gfxIframe'));
     gfxWindow.postMessage({
       type: 'prepareUI',
       params: {
@@ -96,6 +96,8 @@ window.addEventListener("message", function handlerMessage(e) {
   if (gfxWindow && e.source === gfxWindow) {
     switch (args.callback) {
       case 'displayParameters':
+        // The display parameters data will be send to the player window.
+        // TODO do we need sanitize it?
         displayParametersResolved(args.params);
         break;
       case 'showURL':
@@ -116,12 +118,18 @@ window.addEventListener("message", function handlerMessage(e) {
       case 'fallback':
         fallback();
         break;
+      default:
+        console.error('Unexpected message from gfx frame: ' + args.callback);
+        break;
     }
   }
   if (playerWindow && e.source === playerWindow) {
     switch (args.callback) {
       case 'started':
         document.body.classList.add('started');
+        break;
+      default:
+        console.error('Unexpected message from player frame: ' + args.callback);
         break;
     }
   }
@@ -180,9 +188,6 @@ function parseSwf(url, baseUrl, movieParams, objectParams, settings,
   var compilerSettings = settings.compilerSettings;
   var playerSettings = settings.playerSettings;
 
-  console.info("Compiler settings: " + JSON.stringify(compilerSettings));
-  console.info("Parsing " + url + "...");
-
   displayParametersReady.then(function (displayParameters) {
     var data = {
       type: 'runSwf',
@@ -203,6 +208,8 @@ function parseSwf(url, baseUrl, movieParams, objectParams, settings,
   });
 }
 
+// We need to wait for gfx window to report display parameters before we
+// start SWF playback in the player window.
 var displayParametersResolved;
 var displayParametersReady = new Promise(function (resolve) {
   displayParametersResolved = resolve;
@@ -225,12 +232,3 @@ var playerReady = new Promise(function (resolve) {
   document.getElementById('playerIframe').addEventListener('load', iframeLoaded);
   document.getElementById('playerIframe').src = 'resource://shumway/web/viewer.player.html';
 });
-
-window.addEventListener('message', function onWindowMessage(e) {
-  if (e.source === playerWindow) {
-    gfxWindow.postMessage(e.data, '*');
-  }
-  if (e.source === gfxWindow) {
-    playerWindow.postMessage(e.data, '*');
-  }
-}, true);
