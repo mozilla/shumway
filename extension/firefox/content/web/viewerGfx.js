@@ -38,8 +38,9 @@ function createEasel(backgroundColor) {
 }
 
 var easelHost;
-function createEaselHost(playerWindow) {
-  easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWindow, window);
+function createEaselHost() {
+  var peer = new Shumway.Remoting.ShumwayComTransportPeer();
+  easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, peer);
   return easelHost;
 }
 
@@ -95,7 +96,7 @@ function prepareUI(params) {
   setHudVisible(params.isHudOn);
 
   createEasel(params.backgroundColor);
-  createEaselHost(window.parent);
+  createEaselHost();
 
   var displayParameters = easel.getDisplayParameters();
   window.parent.postMessage({

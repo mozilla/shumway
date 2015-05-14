@@ -199,16 +199,35 @@ var ShumwayCom = {
         callbacks.sendMessage('reportTelemetry', request, false);
       },
 
+      postAsyncMessage: function (msg) {
+        if (hooks.onPlayerAsyncMessageCallback) {
+          hooks.onPlayerAsyncMessageCallback(msg);
+        }
+      },
+
       setSyncMessageCallback: function (callback) {
         if (callback === null) {
-          hooks.onSyncMessageCallback = null;
+          hooks.onGfxSyncMessageCallback = null;
           return;
         }
         if (typeof callback === 'function') {
-          hooks.onSyncMessageCallback = function (msg, sandbox) {
+          hooks.onGfxSyncMessageCallback = function (msg, sandbox) {
             var reclonedMsg = cloneIntoFromContent(msg, content);
             var result = callback(reclonedMsg);
             return cloneIntoFromContent(result, sandbox);
+          };
+        }
+      },
+
+      setAsyncMessageCallback: function (callback) {
+        if (callback === null) {
+          hooks.onGfxAsyncMessageCallback = null;
+          return;
+        }
+        if (typeof callback === 'function') {
+          hooks.onGfxAsyncMessageCallback = function (msg) {
+            var reclonedMsg = cloneIntoFromContent(msg, content);
+            callback(reclonedMsg);
           };
         }
       }
@@ -266,12 +285,31 @@ var ShumwayCom = {
         });
       },
 
-      postSyncMessage: function (msg) {
+      sendSyncMessage: function (msg) {
         var result;
-        if (hooks.onSyncMessageCallback) {
-          result = hooks.onSyncMessageCallback(msg, content);
+        if (hooks.onGfxSyncMessageCallback) {
+          result = hooks.onGfxSyncMessageCallback(msg, content);
         }
         return result;
+      },
+
+      postAsyncMessage: function (msg) {
+        if (hooks.onGfxAsyncMessageCallback) {
+          hooks.onGfxAsyncMessageCallback(msg);
+        }
+      },
+
+      setAsyncMessageCallback: function (callback) {
+        if (callback === null) {
+          hooks.onPlayerAsyncMessageCallback = null;
+          return;
+        }
+        if (typeof callback === 'function') {
+          hooks.onPlayerAsyncMessageCallback = function (msg) {
+            var reclonedMsg = cloneIntoFromContent(msg, content);
+            callback(reclonedMsg);
+          };
+        }
       },
 
       createSpecialStorage: function () {

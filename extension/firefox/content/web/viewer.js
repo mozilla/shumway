@@ -225,12 +225,3 @@ var playerReady = new Promise(function (resolve) {
   document.getElementById('playerIframe').addEventListener('load', iframeLoaded);
   document.getElementById('playerIframe').src = 'resource://shumway/web/viewer.player.html';
 });
-
-window.addEventListener('message', function onWindowMessage(e) {
-  if (e.source === playerWindow) {
-    gfxWindow.postMessage(e.data, '*');
-  }
-  if (e.source === gfxWindow) {
-    playerWindow.postMessage(e.data, '*');
-  }
-}, true);

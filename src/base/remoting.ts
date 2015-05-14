@@ -220,4 +220,66 @@ module Shumway.Remoting {
                   data: Uint8Array): Promise<any>;
     fscommand(command: string, args: string): void;
   }
+
+  export interface ITransportPeer {
+    onAsyncMessage: (msg: any) => void;
+    onSyncMessage: (msg: any) => any;
+
+    postAsyncMessage(msg: any, transfers?: any[]): void;
+    sendSyncMessage(msg: any, transfers?: any[]): any;
+  }
+
+  export class WindowTransportPeer implements ITransportPeer  {
+    set onAsyncMessage(callback: (msg: any) => void) {
+      this.window.addEventListener('message', function (e) {
+        Promise.resolve(e.data).then(function (msg) { // delay
+          callback(msg);
+        });
+      });
+    }
+
+    set onSyncMessage(callback: (msg: any) => any) {
+      this.window.addEventListener('syncmessage', function (e) {
+        var wrappedMessage = (<any>e).detail;
+        wrappedMessage.result = callback(wrappedMessage.msg);
+      });
+    }
+
+    constructor(public window: Window, public other: Window) {
+      //
+    }
+
+    postAsyncMessage(msg: any, transfers?: any[]): void {
+      this.other.postMessage(msg, '*', transfers);
+    }
+
+    sendSyncMessage(msg: any, transfers?: any[]): any {
+      var event = this.other.document.createEvent('CustomEvent');
+      var wrappedMessage = {
+        msg: msg,
+        result: undefined
+      };
+      event.initCustomEvent('syncmessage', false, false, wrappedMessage);
+      this.other.dispatchEvent(event);
+      return wrappedMessage.result;
+    }
+  }
+
+  export class ShumwayComTransportPeer implements ITransportPeer  {
+    set onAsyncMessage(callback: (msg: any) => void) {
+      ShumwayCom.setAsyncMessageCallback(callback);
+    }
+
+    set onSyncMessage(callback: (msg: any) => any) {
+      ShumwayCom.setSyncMessageCallback(callback);
+    }
+
+    postAsyncMessage(msg: any, transfers?: any[]): void {
+      ShumwayCom.postAsyncMessage(msg);
+    }
+
+    sendSyncMessage(msg: any, transfers?: any[]): any {
+      return ShumwayCom.sendSyncMessage(msg);
+    }
+  }
 }

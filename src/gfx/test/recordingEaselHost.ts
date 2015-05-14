@@ -24,15 +24,15 @@ module Shumway.GFX.Test {
       return this._recorder;
     }
 
-    constructor(easel: Easel, playerWindow, window, recordingLimit: number = 0) {
-      super(easel, playerWindow, window);
+    constructor(easel: Easel, peer: Shumway.Remoting.ITransportPeer, recordingLimit: number = 0) {
+      super(easel, peer);
 
       this._recorder = new MovieRecorder(recordingLimit);
     }
 
-    _onWindowMessage(data, async: boolean = true) {
+    _onWindowMessage(data: any, async: boolean): any {
       if (typeof data !== 'object' || data === null) {
-        return;
+        return undefined;
       }
       var type = data.type;
       switch (type) {
@@ -53,7 +53,7 @@ module Shumway.GFX.Test {
           break;
       }
 
-      super._onWindowMessage(data, async);
+      return super._onWindowMessage(data, async);
     }
   }
 }

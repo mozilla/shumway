@@ -27,7 +27,8 @@ function createEasel() {
 
 var easelHost;
 function createEaselHost(playerWindow) {
-  easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWindow, window);
+  var peer = new Shumway.Remoting.WindowTransportPeer(window, playerWindow);
+  easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, peer);
   return easelHost;
 }
 

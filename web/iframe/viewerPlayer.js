@@ -97,7 +97,8 @@ function runSwfPlayer(flashParams, settings, gfxWindow) {
       var movieParams = flashParams.movieParams;
       var objectParams = flashParams.objectParams;
 
-      var gfxService = new Shumway.Player.Window.WindowGFXService(securityDomain, window, gfxWindow);
+      var peer = new Shumway.Remoting.WindowTransportPeer(window, gfxWindow);
+      var gfxService = new Shumway.Player.Window.WindowGFXService(securityDomain, peer);
       player = new Shumway.Player.Player(securityDomain, gfxService);
       player.defaultStageColor = flashParams.bgcolor;
       player.movieParams = movieParams;
