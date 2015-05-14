@@ -56,7 +56,7 @@ function runViewer() {
     var settings = ShumwayCom.getSettings();
     var playerSettings = settings.playerSettings;
 
-    ShumwayCom.setupComBridge(document.getElementById('playerIframe'));
+    ShumwayCom.setupPlayerComBridge(document.getElementById('playerIframe'));
     parseSwf(movieUrl, baseUrl, movieParams, objectParams, settings, initStartTime, backgroundColor);
 
     if (isOverlay) {
@@ -75,7 +75,7 @@ function runViewer() {
       }
     }
 
-    //ShumwayCom.setupGfxComBridge(document.getElementById('gfxIframe'));
+    ShumwayCom.setupGfxComBridge(document.getElementById('gfxIframe'));
     gfxWindow.postMessage({
       type: 'prepareUI',
       params: {

@@ -141,11 +141,6 @@ var ShumwayCom = {
         callbacks.enableDebug()
       },
 
-      setFullscreen: function setFullscreen(value) {
-        value = !!value;
-        callbacks.sendMessage('setFullscreen', value, false);
-      },
-
       fallback: function fallback() {
         callbacks.sendMessage('fallback', null, false);
       },
@@ -169,43 +164,61 @@ var ShumwayCom = {
         callbacks.sendMessage('reportTelemetry', request, false);
       },
 
-      userInput: function userInput() {
-        callbacks.sendMessage('userInput', null, true);
+      setupGfxComBridge: function setupGfxComBrodge(gfxWindow) {
+        // Creates secondary ShumwayCom adapter.
+        var gfxContent = gfxWindow.contentWindow.wrappedJSObject;
+        ShumwayCom.createGfxAdapter(gfxContent, callbacks, hooks);
       },
 
-      setupComBridge: function setupComBridge(playerWindow) {
-        // postSyncMessage helper function to relay messages from the secondary
-        // window to the primary one.
-        function postSyncMessage(msg) {
-          if (onSyncMessageCallback) {
-            // the msg came from other content window
-            var reclonedMsg = cloneIntoFromContent(msg, content);
-            var result = onSyncMessageCallback(reclonedMsg);
-            // the result will be sent later to other content window
-            return result;
-          }
-        }
-
+      setupPlayerComBridge: function setupPlayerComBridge(playerWindow) {
         // Creates secondary ShumwayCom adapter.
         var playerContent = playerWindow.contentWindow.wrappedJSObject;
-        ShumwayCom.createPlayerAdapter(playerContent, postSyncMessage, callbacks, hooks);
-      },
-
-      setSyncMessageCallback: function (callback) {
-        if (callback !== null && typeof callback !== 'function') {
-          return;
-        }
-        onSyncMessageCallback = callback;
+        ShumwayCom.createPlayerAdapter(playerContent, callbacks, hooks);
       }
     };
-
-    var onSyncMessageCallback = null;
 
     var shumwayComAdapter = Components.utils.cloneInto(wrapped, content, {cloneFunctions:true});
     content.ShumwayCom = shumwayComAdapter;
   },
 
-  createPlayerAdapter: function (content, postSyncMessage, callbacks, hooks) {
+  createGfxAdapter: function (content, callbacks, hooks) {
+    // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
+    // up Xray wrappers.
+    var wrapped = {
+      userInput: function userInput() {
+        callbacks.sendMessage('userInput', null, true);
+      },
+
+      setFullscreen: function setFullscreen(value) {
+        value = !!value;
+        callbacks.sendMessage('setFullscreen', value, false);
+      },
+
+      reportTelemetry: function reportTelemetry(args) {
+        var request = sanitizeTelemetryArgs(args);
+        callbacks.sendMessage('reportTelemetry', request, false);
+      },
+
+      setSyncMessageCallback: function (callback) {
+        if (callback === null) {
+          hooks.onSyncMessageCallback = null;
+          return;
+        }
+        if (typeof callback === 'function') {
+          hooks.onSyncMessageCallback = function (msg, sandbox) {
+            var reclonedMsg = cloneIntoFromContent(msg, content);
+            var result = callback(reclonedMsg);
+            return cloneIntoFromContent(result, sandbox);
+          };
+        }
+      }
+    };
+
+    var shumwayComAdapter = Components.utils.cloneInto(wrapped, content, {cloneFunctions:true});
+    content.ShumwayCom = shumwayComAdapter;
+  },
+
+  createPlayerAdapter: function (content, callbacks, hooks) {
     // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
     // up Xray wrappers.
     var wrapped = {
@@ -254,8 +267,11 @@ var ShumwayCom = {
       },
 
       postSyncMessage: function (msg) {
-        var result = postSyncMessage(msg);
-        return cloneIntoFromContent(result, content)
+        var result;
+        if (hooks.onSyncMessageCallback) {
+          result = hooks.onSyncMessageCallback(msg, content);
+        }
+        return result;
       },
 
       createSpecialStorage: function () {

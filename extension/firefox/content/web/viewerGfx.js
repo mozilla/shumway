@@ -47,10 +47,6 @@ function setHudVisible(visible) {
   Shumway.GFX.hud.value = !!visible;
 }
 
-Object.defineProperty(window, 'ShumwayCom', {
-  get: function() { return parent.ShumwayCom; }
-});
-
 function fallback() {
   parent.postMessage({callback: 'fallback'}, '*');
 }
