@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Mozilla Foundation
+ * Copyright 2015 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,7 @@
  * limitations under the License.
  */
 
-function fallback() {
-  ShumwayCom.fallback();
-}
-
-window.print = function(msg) {
-  console.log(msg);
-};
-
-var playerWindow, gfxWindow;
-
-var initStartTime;
+var movieUrl, movieParams;
 
 function runViewer() {
   var flashParams = ShumwayCom.getPluginParams();
@@ -36,14 +26,12 @@ function runViewer() {
   }
 
   movieParams = flashParams.movieParams;
-  objectParams = flashParams.objectParams;
+  var objectParams = flashParams.objectParams;
   var baseUrl = flashParams.baseUrl;
   var isOverlay = flashParams.isOverlay;
-  var pauseExecution = flashParams.isPausedAtStart;
-  initStartTime = flashParams.initStartTime;
   var isDebuggerEnabled = flashParams.isDebuggerEnabled;
+  var initStartTime = flashParams.initStartTime;
 
-  console.log("url=" + movieUrl + ";params=" + uneval(movieParams));
   if (movieParams.fmt_list && movieParams.url_encoded_fmt_stream_map) {
     // HACK removing FLVs from the fmt_list
     movieParams.fmt_list = movieParams.fmt_list.split(',').filter(function (s) {
@@ -52,11 +40,25 @@ function runViewer() {
     }).join(',');
   }
 
-  playerReady.then(function () {
-    ShumwayCom.setupComBridge(document.getElementById('playerIframe'));
-    parseSwf(movieUrl, baseUrl, movieParams, objectParams);
+  var backgroundColor;
+  if (objectParams) {
+    var m;
+    if (objectParams.bgcolor && (m = /#([0-9A-F]{6})/i.exec(objectParams.bgcolor))) {
+      var hexColor = parseInt(m[1], 16);
+      backgroundColor = hexColor << 8 | 0xff;
+    }
+    if (objectParams.wmode === 'transparent') {
+      backgroundColor = 0;
+    }
+  }
 
-    var gfxDocument = gfxWindow.document;
+  playerReady.then(function () {
+    var settings = ShumwayCom.getSettings();
+    var playerSettings = settings.playerSettings;
+
+    ShumwayCom.setupComBridge(document.getElementById('playerIframe'));
+    parseSwf(movieUrl, baseUrl, movieParams, objectParams, settings, initStartTime, backgroundColor);
+
     if (isOverlay) {
       if (isDebuggerEnabled) {
         document.getElementById('overlay').className = 'enabled';
@@ -71,25 +73,62 @@ function runViewer() {
           e.preventDefault();
         });
       }
-      var fallbackMenu = gfxDocument.getElementById('fallbackMenu');
-      fallbackMenu.removeAttribute('hidden');
-      fallbackMenu.addEventListener('click', fallback);
     }
-    gfxDocument.getElementById('showURLMenu').addEventListener('click', showURL);
-    gfxDocument.getElementById('inspectorMenu').addEventListener('click', showInInspector);
-    gfxDocument.getElementById('reportMenu').addEventListener('click', reportIssue);
-    gfxDocument.getElementById('aboutMenu').addEventListener('click', showAbout);
 
-    var version = gfxWindow.Shumway.version || '';
-    gfxDocument.getElementById('aboutMenu').label =
-      gfxDocument.getElementById('aboutMenu').label.replace('%version%', version);
-
-    if (isDebuggerEnabled) {
-      gfxDocument.getElementById('debugMenu').addEventListener('click', enableDebug);
-    } else {
-      gfxDocument.getElementById('debugMenu').remove();
-    }
+    //ShumwayCom.setupGfxComBridge(document.getElementById('gfxIframe'));
+    gfxWindow.postMessage({
+      type: 'prepareUI',
+      params: {
+        isOverlay: isOverlay,
+        isDebuggerEnabled: isDebuggerEnabled,
+        isHudOn: playerSettings.hud,
+        backgroundColor: backgroundColor
+      }
+    }, '*')
   });
+}
+
+window.addEventListener("message", function handlerMessage(e) {
+  var args = e.data;
+  if (typeof args !== 'object' || args === null) {
+    return;
+  }
+  if (gfxWindow && e.source === gfxWindow) {
+    switch (args.callback) {
+      case 'displayParameters':
+        displayParametersResolved(args.params);
+        break;
+      case 'showURL':
+        showURL();
+        break;
+      case 'showInInspector':
+        showInInspector();
+        break;
+      case 'reportIssue':
+        reportIssue();
+        break;
+      case 'showAbout':
+        showAbout();
+        break;
+      case 'enableDebug':
+        enableDebug();
+        break;
+      case 'fallback':
+        fallback();
+        break;
+    }
+  }
+  if (playerWindow && e.source === playerWindow) {
+    switch (args.callback) {
+      case 'started':
+        document.body.classList.add('started');
+        break;
+    }
+  }
+}, true);
+
+function fallback() {
+  ShumwayCom.fallback();
 }
 
 function showURL() {
@@ -134,63 +173,40 @@ function enableDebug() {
   ShumwayCom.enableDebug();
 }
 
-var movieUrl, movieParams, objectParams;
+var playerWindow, gfxWindow;
 
-window.addEventListener("message", function handlerMessage(e) {
-  var args = e.data;
-  switch (args.callback) {
-    case 'started':
-      document.body.classList.add('started');
-      break;
-  }
-}, true);
-
-var easelHost;
-
-function parseSwf(url, baseUrl, movieParams, objectParams) {
-  var settings = ShumwayCom.getSettings();
+function parseSwf(url, baseUrl, movieParams, objectParams, settings,
+                  initStartTime, backgroundColor) {
   var compilerSettings = settings.compilerSettings;
   var playerSettings = settings.playerSettings;
-
-  // init misc preferences
-  gfxWindow.setHudVisible(playerSettings.hud);
 
   console.info("Compiler settings: " + JSON.stringify(compilerSettings));
   console.info("Parsing " + url + "...");
 
-  var backgroundColor;
-  if (objectParams) {
-    var m;
-    if (objectParams.bgcolor && (m = /#([0-9A-F]{6})/i.exec(objectParams.bgcolor))) {
-      var hexColor = parseInt(m[1], 16);
-      backgroundColor = hexColor << 8 | 0xff;
-    }
-    if (objectParams.wmode === 'transparent') {
-      backgroundColor = 0;
-    }
-  }
-
-  var easel = gfxWindow.createEasel(backgroundColor);
-  easelHost = gfxWindow.createEaselHost(playerWindow);
-
-  var displayParameters = easel.getDisplayParameters();
-  var data = {
-    type: 'runSwf',
-    flashParams: {
-      compilerSettings: compilerSettings,
-      movieParams: movieParams,
-      objectParams: objectParams,
-      displayParameters: displayParameters,
-      turboMode: playerSettings.turboMode,
-      env: playerSettings.env,
-      bgcolor: backgroundColor,
-      url: url,
-      baseUrl: baseUrl || url,
-      initStartTime: initStartTime
-    }
-  };
-  playerWindow.postMessage(data, '*');
+  displayParametersReady.then(function (displayParameters) {
+    var data = {
+      type: 'runSwf',
+      flashParams: {
+        compilerSettings: compilerSettings,
+        movieParams: movieParams,
+        objectParams: objectParams,
+        displayParameters: displayParameters,
+        turboMode: playerSettings.turboMode,
+        env: playerSettings.env,
+        bgcolor: backgroundColor,
+        url: url,
+        baseUrl: baseUrl || url,
+        initStartTime: initStartTime
+      }
+    };
+    playerWindow.postMessage(data, '*');
+  });
 }
+
+var displayParametersResolved;
+var displayParametersReady = new Promise(function (resolve) {
+  displayParametersResolved = resolve;
+});
 
 var playerReady = new Promise(function (resolve) {
   function iframeLoaded() {
@@ -213,5 +229,8 @@ var playerReady = new Promise(function (resolve) {
 window.addEventListener('message', function onWindowMessage(e) {
   if (e.source === playerWindow) {
     gfxWindow.postMessage(e.data, '*');
+  }
+  if (e.source === gfxWindow) {
+    playerWindow.postMessage(e.data, '*');
   }
 }, true);
