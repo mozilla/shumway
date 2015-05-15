@@ -317,6 +317,7 @@ ShumwayStreamConverterBase.prototype = {
 
     var allowScriptAccess = !!url &&
       isScriptAllowed(objectParams.allowscriptaccess, url, pageUrl);
+    var isFullscreenSwf = !isOverlay || isStandardEmbedWrapper(element);
 
     var startupInfo = {};
     startupInfo.window = window;
@@ -326,6 +327,7 @@ ShumwayStreamConverterBase.prototype = {
     startupInfo.movieParams = movieParams;
     startupInfo.baseUrl = baseUrl || url;
     startupInfo.isOverlay = isOverlay;
+    startupInfo.refererUrl = !isFullscreenSwf ? baseUrl : null;
     startupInfo.embedTag = element;
     startupInfo.isPausedAtStart = /\bpaused=true$/.test(urlHint);
     startupInfo.initStartTime = initStartTime;
@@ -449,6 +451,32 @@ function setupSimpleExternalInterface(embedTag) {
         return undefined;
     }
   }, embedTag.wrappedJSObject, {defineAs: 'GetVariable'});
+}
+
+function isStandardEmbedWrapper(embedElement) {
+  try {
+    if (embedElement.tagName !== 'EMBED') {
+      return false;
+    }
+    var swfUrl = embedElement.src;
+    var document = embedElement.ownerDocument;
+    var docUrl = document.location.href;
+    if (swfUrl !== docUrl) {
+      return false; // document URL shall match embed src
+    }
+    if (document.body.children.length !== 1 ||
+        document.body.firstChild !== embedElement) {
+      return false; // not the only child
+    }
+    if (document.defaultView.top !== document.defaultView) {
+      return false; // not a top window
+    }
+    // Looks like a standard wrapper
+    return true;
+  } catch (e) {
+    // Declare that is not a standard fullscreen plugin wrapper for any error
+    return false;
+  }
 }
 
 function isScriptAllowed(allowScriptAccessParameter, url, pageUrl) {

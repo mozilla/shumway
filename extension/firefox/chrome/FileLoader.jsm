@@ -35,9 +35,10 @@ FileLoaderSession.prototype = {
 };
 
 
-function FileLoader(swfUrl, baseUrl, callback) {
+function FileLoader(swfUrl, baseUrl, refererUrl, callback) {
   this.swfUrl = swfUrl;
   this.baseUrl = baseUrl;
+  this.refererUrl = refererUrl;
   this.callback = callback;
   this.activeSessions = Object.create(null);
 
@@ -65,6 +66,7 @@ FileLoader.prototype = {
     var method = data.method || "GET";
     var mimeType = data.mimeType;
     var postData = data.postData || null;
+    var sendReferer = canSendReferer(swfUrl, this.refererUrl);
 
     var session = new FileLoaderSession(sessionId);
     this.activeSessions[sessionId] = session;
@@ -80,10 +82,10 @@ FileLoader.prototype = {
       xhr.open(method, url, true);
       xhr.responseType = "moz-chunked-arraybuffer";
 
-      if (baseUrl) {
+      if (sendReferer) {
         // Setting the referer uri, some site doing checks if swf is embedded
         // on the original page.
-        xhr.setRequestHeader("Referer", baseUrl);
+        xhr.setRequestHeader("Referer", self.refererUrl);
       }
 
       // TODO apply range request headers if limit is specified
@@ -162,6 +164,25 @@ function disableXHRRedirect(xhr) {
     QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsIChannelEventSink])
   };
   xhr.channel.notificationCallbacks = listener;
+}
+
+function canSendReferer(url, refererUrl) {
+  if (!refererUrl) {
+    return false;
+  }
+  // Allow sending HTTPS referer only to HTTPS.
+  var parsedUrl, parsedRefererUrl;
+  try {
+    parsedRefererUrl = NetUtil.newURI(refererUrl);
+  } catch (ex) { /* skipping invalid urls */ }
+  if (!parsedRefererUrl ||
+      parsedRefererUrl.scheme.toLowerCase() !== 'https') {
+    return true;
+  }
+  try {
+    parsedUrl = NetUtil.newURI(url);
+  } catch (ex) { /* skipping invalid urls */ }
+  return !!parsedUrl && parsedUrl.scheme.toLowerCase() === 'https';
 }
 
 function canDownloadFile(url, checkPolicyFile, swfUrl, cache) {

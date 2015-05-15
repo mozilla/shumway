@@ -389,9 +389,8 @@ function ShumwayChromeActions(startupInfo, window, document) {
     errors: []
   };
 
-  this.fileLoader = new FileLoader(startupInfo.url, startupInfo.baseUrl, function (args) {
-    this.onLoadFileCallback(args);
-  }.bind(this));
+  this.fileLoader = new FileLoader(startupInfo.url, startupInfo.baseUrl, startupInfo.refererUrl,
+    function (args) { this.onLoadFileCallback(args); }.bind(this));
   this.onLoadFileCallback = null;
 
   this.externalInterface = null;
