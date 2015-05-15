@@ -580,23 +580,25 @@ module Shumway.GFX {
         transformedPath.addPath(path, m);
         var oldLineWidth = this.lineWidth;
         this.setTransform(1, 0, 0, 1, 0, 0);
-        // Figure out how we should scale the |lineWidth|. This is not quite how Flash does it but it's close enough. Flash
-        // documentation says that for |Vertica| or |Horizontal| scale modes the |lineWidth| is only scaled if the stroke
-        // is scaled in that direction. This is a bit strange if you scale in one direction and then rotate. The |lineWidth|
-        // will change with the angle of rotation, probably because the scaleX and scaleY properties change.
-        // If this code turns out to be incorrect in practice, we should look deeper into how |getScaleX| and |getScaleY| are
-        // computed.
+        // We need to scale the |lineWidth| based on the current transform.
+        // If we scale square 1x1 using this transform, it will fit into a
+        // rectangular area, that has sides parallel to the x- and y-axis,
+        // (a + c) x (d + b).
         switch (lineScaleMode) {
           case LineScaleMode.None:
             break;
           case LineScaleMode.Normal:
-            this.lineWidth = clamp(oldLineWidth * (getScaleX(m) + getScaleY(m)) / 2, MIN_LINE_WIDTH, MAX_LINE_WIDTH);
+            var scale = Math.sqrt((m.a + m.c) * (m.a + m.c) +
+                                  (m.d + m.b) * (m.d + m.b)) * Math.SQRT1_2;
+            this.lineWidth = clamp(oldLineWidth * scale, MIN_LINE_WIDTH, MAX_LINE_WIDTH);
             break;
           case LineScaleMode.Vertical:
-            this.lineWidth = clamp(oldLineWidth * getScaleY(m), MIN_LINE_WIDTH, MAX_LINE_WIDTH);
+            var scaleHeight = m.d + m.b;
+            this.lineWidth = clamp(oldLineWidth * scaleHeight, MIN_LINE_WIDTH, MAX_LINE_WIDTH);
             break;
           case LineScaleMode.Horizontal:
-            this.lineWidth = clamp(oldLineWidth * getScaleX(m), MIN_LINE_WIDTH, MAX_LINE_WIDTH);
+            var scaleWidth = m.a + m.c;
+            this.lineWidth = clamp(oldLineWidth * scaleWidth, MIN_LINE_WIDTH, MAX_LINE_WIDTH);
             break;
         }
         // Stroke and restore the previous matrix.
