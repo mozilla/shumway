@@ -152,7 +152,8 @@ module Shumway {
     }
     processNewData(data: Uint8Array, progressInfo: {bytesLoaded: number; bytesTotal: number}) {
       this._bytesLoaded += data.length;
-      if (this._bytesLoaded < MIN_LOADED_BYTES && this._bytesLoaded < progressInfo.bytesTotal) {
+      var isLoadingInProgress = progressInfo.bytesLoaded < progressInfo.bytesTotal;
+      if (this._bytesLoaded < MIN_LOADED_BYTES && isLoadingInProgress) {
         if (!this._queuedInitialData) {
           this._queuedInitialData = new Uint8Array(Math.min(MIN_LOADED_BYTES,
                                                             progressInfo.bytesTotal));
