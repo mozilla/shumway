@@ -117,26 +117,4 @@ module Shumway {
       }
     }
   }
-
-  function getDeterminant(matrix: SVGMatrix): number {
-    return matrix.a * matrix.d - matrix.b * matrix.c;
-  }
-
-  export function getScaleX(matrix: SVGMatrix): number {
-    return matrix.a;
-    if (matrix.a === 1 && matrix.b === 0) {
-      return 1;
-    }
-    var result = Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b);
-    return getDeterminant(matrix) < 0 ? -result : result;
-  }
-
-  export function getScaleY(matrix: SVGMatrix): number {
-    return matrix.d;
-    if (matrix.c === 0 && matrix.d === 1) {
-      return 1;
-    }
-    var result = Math.sqrt(matrix.c * matrix.c + matrix.d * matrix.d);
-    return getDeterminant(matrix) < 0 ? -result : result;
-  }
 }
