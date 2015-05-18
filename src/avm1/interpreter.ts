@@ -310,11 +310,13 @@ module Shumway.AVM1 {
     }
 
     var type = typeof v;
-    if (type === 'function') {
-      return 'object';
-    }
-    if (type === 'object' && isAVM1MovieClip(v)) {
-      return 'movieclip';
+    if (typeof v === 'object') {
+      if (v instanceof Lib.AVM1MovieClip) {
+        return 'movieclip';
+      }
+      if (v instanceof AVM1Function) {
+        return 'function';
+      }
     }
     return type;
   }
