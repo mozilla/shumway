@@ -1070,7 +1070,7 @@ module Shumway.SWF.Parser.LowLevel {
       length--;
     }
     var end = $stream.pos + length;
-    $.actionsData = $bytes.subarray($stream.pos, end);
+    $.actionsBlock = $bytes.subarray($stream.pos, end);
     $stream.pos = end;
     return false;
   }

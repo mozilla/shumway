@@ -689,7 +689,7 @@ module Shumway.AVM1.Lib {
   export function initializeAVM1Object(as3Object: any,
                                        context: AVM1Context,
                                        placeObjectTag: any) {
-    var instanceAVM1 = getAVM1Object(as3Object, context);
+    var instanceAVM1 = <AVM1SymbolBase<flash.display.DisplayObject>>getAVM1Object(as3Object, context);
     release || Debug.assert(instanceAVM1);
 
     if (placeObjectTag.variableName) {
@@ -705,10 +705,10 @@ module Shumway.AVM1.Lib {
     for (var j = 0; j < events.length; j++) {
       var swfEvent = events[j];
       var actionsData;
-      if (swfEvent.actionsData) {
+      if (swfEvent.actionsBlock) {
         actionsData = context.actionsDataFactory.createActionsData(
-          swfEvent.actionsData, 's' + placeObjectTag.symbolId + 'e' + j);
-        swfEvent.actionsData = null;
+          swfEvent.actionsBlock, 's' + placeObjectTag.symbolId + 'e' + j);
+        swfEvent.actionsBlock = null;
         swfEvent.compiled = actionsData;
       } else {
         actionsData = swfEvent.compiled;

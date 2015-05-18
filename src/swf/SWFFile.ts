@@ -81,7 +81,7 @@ module Shumway.SWF {
     private _currentSoundStreamHead: Parser.SoundStream;
     private _currentSoundStreamBlock: Uint8Array;
     private _currentControlTags: UnparsedTag[];
-    private _currentActionBlocks: Uint8Array[];
+    private _currentActionBlocks: ActionBlock[];
     private _currentInitActionBlocks: InitActionBlock[];
     private _currentExports: SymbolExport[];
 
@@ -459,7 +459,8 @@ module Shumway.SWF {
         case SWFTag.CODE_DO_ACTION:
           if (this.useAVM1) {
             var actionBlocks = this._currentActionBlocks || (this._currentActionBlocks = []);
-            actionBlocks.push(this.data.subarray(stream.pos, stream.pos + tagLength));
+            var actionsData = this.data.subarray(stream.pos, stream.pos + tagLength);
+            actionBlocks.push({actionsData: actionsData, precedence: stream.pos});
           }
           this.jumpToNextTag(tagLength);
           break;
@@ -563,7 +564,8 @@ module Shumway.SWF {
       var timeline: any = {
         id: spriteTag.id,
         type: 'sprite',
-        frames: []
+        frames: [],
+        actionBlocksPrecedence: spriteTag.byteOffset
       }
       var spriteTagEnd = spriteTag.byteOffset + spriteTag.byteLength;
       var frames = timeline.frames;
@@ -571,8 +573,8 @@ module Shumway.SWF {
       var controlTags: UnparsedTag[] = [];
       var soundStreamHead: Parser.SoundStream = null;
       var soundStreamBlock: Uint8Array = null;
-      var actionBlocks: Uint8Array[] = null;
-      var initActionBlocks:  {spriteId: number; actionsData: Uint8Array}[] = null;
+      var actionBlocks: {actionsData: Uint8Array; precedence: number}[] = null;
+      var initActionBlocks: {spriteId: number; actionsData: Uint8Array}[] = null;
       // Skip ID.
       stream.pos = spriteTag.byteOffset + 2;
       // TODO: check if numFrames or the real number of ShowFrame tags wins. (Probably the former.)
@@ -600,7 +602,8 @@ module Shumway.SWF {
               if (!actionBlocks) {
                 actionBlocks = [];
               }
-              actionBlocks.push(data.subarray(stream.pos, stream.pos + tagLength));
+              var actionsData = data.subarray(stream.pos, stream.pos + tagLength);
+              actionBlocks.push({actionsData: actionsData, precedence: stream.pos});
             }
             break;
           case SWFTag.CODE_DO_INIT_ACTION:
@@ -796,13 +799,13 @@ module Shumway.SWF {
     labelName: string;
     soundStreamHead: Parser.SoundStream;
     soundStreamBlock: Uint8Array;
-    actionBlocks: Uint8Array[];
+    actionBlocks: ActionBlock[];
     initActionBlocks: InitActionBlock[];
     exports: SymbolExport[];
     constructor(controlTags?: UnparsedTag[], labelName?: string,
                 soundStreamHead?: Parser.SoundStream,
                 soundStreamBlock?: Uint8Array,
-                actionBlocks?: Uint8Array[],
+                actionBlocks?: ActionBlock[],
                 initActionBlocks?: InitActionBlock[],
                 exports?: SymbolExport[]) {
       release || controlTags && Object.freeze(controlTags);
@@ -823,6 +826,11 @@ module Shumway.SWF {
     name: string;
     flags: number;
     data: Uint8Array;
+  }
+
+  export class ActionBlock {
+    actionsData: Uint8Array;
+    precedence: number;
   }
 
   export class InitActionBlock {

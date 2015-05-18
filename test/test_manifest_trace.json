@@ -23,7 +23,8 @@
         "swfs/avm1/watch/watch.swf",
         "swfs/avm1/array/arraygeneric.swf",
         "swfs/avm1/propertycase/propertycase.swf",
-        "swfs/avm1/scope/avm1-scope-1.swf"
+        "swfs/avm1/scope/avm1-scope-1.swf",
+        "swfs/avm1/doactionorder/doactionorder.swf"
       ],
       "type": "stas"
     },
