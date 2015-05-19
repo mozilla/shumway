@@ -51,7 +51,7 @@ module Shumway.AVM1.Lib {
           'cacheAsBitmap#', '_callFrame', 'clear', 'createEmptyMovieClip',
           'createTextField', '_currentframe#', 'curveTo', '_droptarget#',
           'duplicateMovieClip', 'enabled#', 'endFill', 'filters#', '_framesloaded#',
-          'focusEnabled#', '_focusrect#', 'forceSmoothing#', 'getBounds',
+          '_focusrect#', 'forceSmoothing#', 'getBounds',
           'getBytesLoaded', 'getBytesTotal', 'getDepth', 'getInstanceAtDepth',
           'getNextHighestDepth', 'getRect', 'getSWFVersion', 'getTextSnapshot',
           'getURL', 'globalToLocal', 'gotoAndPlay', 'gotoAndStop', '_height#',
@@ -257,25 +257,15 @@ module Shumway.AVM1.Lib {
     }
 
     public getEnabled() {
-      return this.as3Object.enabled;
+      return this.as3ObjectOrTemplate.enabled;
     }
 
     public setEnabled(value) {
-      this.as3Object.enabled = value;
+      this.as3ObjectOrTemplate.enabled = value;
     }
 
     public endFill() {
       this.graphics.endFill();
-    }
-
-    public getFocusEnabled(): boolean {
-      Debug.somewhatImplemented('AVM1MovieClip.getFocusEnabled');
-      return true;
-    }
-
-    public setFocusEnabled(value: boolean) {
-      value = alToBoolean(this.context, value);
-      Debug.somewhatImplemented('AVM1MovieClip.setFocusEnabled');
     }
 
     public getForceSmoothing(): boolean {
@@ -523,23 +513,23 @@ module Shumway.AVM1.Lib {
     }
 
     public getTabChildren(): boolean {
-      return this.as3Object.tabChildren;
+      return this.as3ObjectOrTemplate.tabChildren;
     }
 
     public setTabChildren(value: boolean) {
-      this.as3Object.tabChildren = alToBoolean(this.context, value);
+      this.as3ObjectOrTemplate.tabChildren = alToBoolean(this.context, value);
     }
 
     public get_totalframes(): number {
       return this.as3Object.totalFrames;
     }
 
-    public getTrackAsMenu() {
-      Debug.notImplemented('AVM1MovieClip.getTrackAsMenu');
+    public getTrackAsMenu(): boolean {
+      return this.as3ObjectOrTemplate.trackAsMenu;
     }
 
-    public setTrackAsMenu(value) {
-      Debug.notImplemented('AVM1MovieClip.setTrackAsMenu');
+    public setTrackAsMenu(value: boolean) {
+      this.as3ObjectOrTemplate.trackAsMenu = alToBoolean(this.context, value);
     }
 
     public toString() {
