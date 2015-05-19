@@ -119,12 +119,12 @@ module Shumway.AVM1.Lib {
       this._as3Object.enabled = alToBoolean(this.context, value);;
     }
 
-    public getTrackAsMenu() {
-      Debug.notImplemented('AVM1Button.getTrackAsMenu');
+    public getTrackAsMenu(): boolean {
+      return this.as3ObjectOrTemplate.trackAsMenu;
     }
 
-    public setTrackAsMenu(value) {
-      Debug.notImplemented('AVM1Button.setTrackAsMenu');
+    public setTrackAsMenu(value: boolean) {
+      this.as3ObjectOrTemplate.trackAsMenu = alToBoolean(this.context, value);
     }
 
     public getUseHandCursor(): boolean {

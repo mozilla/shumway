@@ -183,6 +183,7 @@ declare module Shumway.AVMX.AS.flash {
       framesLoaded: number;
       totalFrames: number;
       hitArea: DisplayObject;
+      trackAsMenu: boolean;
 
       addFrameScript(frameIndex: number, script: (any?) => any /*, ...*/): void;
       _getAbsFrameNumber(frame: string, sceneName: string): number;
@@ -256,6 +257,7 @@ declare module Shumway.AVMX.AS.flash {
       static axClass: typeof SimpleButton;
 
       _symbol: ButtonSymbol;
+      trackAsMenu: boolean;
     }
 
     class Stage extends DisplayObjectContainer {

@@ -50,9 +50,14 @@ module Shumway.AVM1.Lib {
     }
 
     _as3Object: T;
+    _as3ObjectTemplate: any;
 
     public get as3Object(): T {
       return this._as3Object;
+    }
+
+    public get as3ObjectOrTemplate(): T {
+      return this._as3Object || this._getAS3ObjectTemplate();
     }
 
     public initAVM1SymbolInstance(context: AVM1Context, as3Object: T) {
@@ -60,6 +65,22 @@ module Shumway.AVM1.Lib {
 
       release || Debug.assert(as3Object);
       this._as3Object = as3Object;
+    }
+
+    private _getAS3ObjectTemplate(): T {
+      if (!this._as3ObjectTemplate) {
+        var template;
+        var proto = this.alPrototype;
+        while (proto && !(<any>proto).initAVM1SymbolInstance) {
+          template = (<any>proto)._as3ObjectTemplate;
+          if (template) {
+            break;
+          }
+          proto = proto.alPrototype;
+        }
+        this._as3ObjectTemplate = Object.create(template || null);
+      }
+      return this._as3ObjectTemplate;
     }
 
     private _eventsMap: MapObject<AVM1EventHandler>;
@@ -336,12 +357,12 @@ module Shumway.AVM1.Lib {
     }
 
     public getTabEnabled(): boolean {
-      return this.as3Object.tabEnabled;
+      return this.as3ObjectOrTemplate.tabEnabled;
     }
 
     public setTabEnabled(value: boolean) {
       value = alToBoolean(this.context, value);
-      this.as3Object.tabEnabled = value;
+      this.as3ObjectOrTemplate.tabEnabled = value;
     }
 
     public getTabIndex(): number {
@@ -548,8 +569,12 @@ module Shumway.AVM1.Lib {
 
   function createAVM1NativeObject(ctor, nativeObject: flash.display.DisplayObject, context: AVM1Context) {
     // We need to walk on __proto__ to find right ctor.prototype.
+    var template;
     var proto = ctor.alGetPrototypeProperty();
     while (proto && !(<any>proto).initAVM1SymbolInstance) {
+      if ((<any>proto)._as3ObjectTemplate && !template) {
+        template = (<any>proto)._as3ObjectTemplate;
+      }
       proto = proto.alPrototype;
     }
     release || Debug.assert(proto);
@@ -559,6 +584,12 @@ module Shumway.AVM1.Lib {
     avm1Object.alSetOwnConstructorProperty(ctor);
     (<any>nativeObject)._as2Object = avm1Object;
     ctor.alCall(avm1Object);
+    if (template) {
+      // transfer properties from the template
+      for (var prop in template) {
+        nativeObject[prop] = template[prop];
+      }
+    }
     return avm1Object;
   }
 
