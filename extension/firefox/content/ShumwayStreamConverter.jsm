@@ -74,8 +74,11 @@ function parseQueryString(qs) {
   var values = qs.split('&');
   var obj = {};
   for (var i = 0; i < values.length; i++) {
-    var kv = values[i].split('=');
-    var key = kv[0], value = kv[1];
+    var pair = values[i], j = pair.indexOf('=');
+    if (j < 0) {
+      continue; // skipping invalid values
+    }
+    var key = pair.substring(0, j), value = pair.substring(j + 1);
     obj[flashUnescape(key)] = flashUnescape(value);
   }
 
