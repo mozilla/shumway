@@ -182,34 +182,18 @@ module Shumway.SWF.Parser {
         }
       });
 
+      image.data = joinChunks(chunks);
+      image.dataType = ImageType.JPEG;
+      
       var alphaData: Uint8Array = <any>tag.alphaData;
       if (alphaData) {
-        var jpegImage = new Shumway.JPEG.JpegImage();
-        jpegImage.parse(joinChunks(chunks));
-        release || assert(image.width === jpegImage.width && image.height === jpegImage.height,
-          'Wrong image size after parsing: ' + image.width + 'x' + image.height + ' vs ' + jpegImage.width + 'x' + jpegImage.height);
-        var width = image.width;
-        var height = image.height;
-        var length = width * height;
-
-        var alphaMaskBytes;
+        var length = image.width * image.height;
         try {
-          alphaMaskBytes = Inflate.inflate(alphaData, length, true);
+          image.alphaData = Inflate.inflate(alphaData, length, true);
         } catch (e) {
           // Alpha layer is invalid, so hiding everything.
-          alphaMaskBytes = new Uint8Array(width);
+          image.alphaData = new Uint8Array(length);
         }
-
-        var data = image.data = new Uint8ClampedArray(length * 4);
-        jpegImage.copyToImageData(image);
-        for (var i = 0, k = 3; i < length; i++, k += 4) {
-          data[k] = alphaMaskBytes[i];
-        }
-        image.dataType = ImageType.StraightAlphaRGBA;
-        image.mimeType = 'application/octet-stream';
-      } else {
-        image.data = joinChunks(chunks);
-        image.dataType = ImageType.JPEG;
       }
     } else {
       parsePngHeaders(image, imgData);

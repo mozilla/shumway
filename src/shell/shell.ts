@@ -167,7 +167,7 @@ module Shumway.Shell {
       return Promise.resolve(undefined);
     }
 
-    registerImage(syncId: number, symbolId: number, data: any): Promise<any> {
+    registerImage(syncId: number, symbolId: number, data: any, alphaData: any): Promise<any> {
       // console.log('registerImage');
       return Promise.resolve({width: 100, height: 50});
     }

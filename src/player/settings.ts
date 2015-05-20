@@ -98,7 +98,7 @@ module Shumway.Player {
     }
 
     registerImage(syncId: number, symbolId: number, imageType: ImageType,
-                  data: Uint8Array): Promise<any> {
+                  data: Uint8Array, alphaData: Uint8Array): Promise<any> {
       throw new Error('This method is abstract');
     }
 
@@ -755,10 +755,10 @@ module Shumway.Player {
     }
 
     registerImage(symbol: Timeline.EagerlyResolvedSymbol, imageType: ImageType,
-                  data: Uint8Array): void {
+                  data: Uint8Array, alphaData: Uint8Array): void {
       release || assert(symbol.syncId);
       symbol.resolveAssetPromise = new PromiseWrapper(); // TODO no need for wrapper here, change to Promise
-      this._gfxService.registerImage(symbol.syncId, symbol.id, imageType, data).then(function (result) {
+      this._gfxService.registerImage(symbol.syncId, symbol.id, imageType, data, alphaData).then(function (result) {
         symbol.resolveAssetPromise.resolve(result);
       });
       symbol.resolveAssetPromise.then(symbol.resolveAssetCallback, null);

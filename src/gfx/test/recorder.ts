@@ -198,12 +198,14 @@ module Shumway.GFX.Test {
       this._createRecord(MovieRecordType.Font, buffer);
     }
 
-    public recordImage(syncId: number, symbolId: number, imageType: ImageType, data: Uint8Array) {
+    public recordImage(syncId: number, symbolId: number, imageType: ImageType,
+                       data: Uint8Array, alphaData: Uint8Array) {
       var buffer = new DataBuffer();
       buffer.writeInt(syncId);
       buffer.writeInt(symbolId);
       buffer.writeInt(imageType);
       writeUint8Array(buffer, serializeObj(data));
+      writeUint8Array(buffer, serializeObj(alphaData));
       this._createRecord(MovieRecordType.Image, buffer);
     }
 

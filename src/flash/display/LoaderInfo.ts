@@ -330,7 +330,7 @@ module Shumway.AVMX.AS.flash.display {
           symbol = flash.display.BitmapSymbol.FromData(data, this);
           if (symbol.ready === false) {
             this.sec.player.registerImage(<Timeline.EagerlyResolvedSymbol><any>symbol,
-                                          data.dataType, data.data);
+                                          data.dataType, data.data, data.alphaData);
           }
           break;
         case 'label':

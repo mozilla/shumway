@@ -557,6 +557,24 @@ module Shumway.GFX {
       renderer.renderNode(source, clip || bounds, matrix);
       leaveTimeline("RenderableBitmap.drawFrame");
     }
+    
+    mask(alphaValues: Uint8Array) {
+      var imageData = this.imageData;
+      var pixels = new Uint32Array((<any>imageData.data).buffer);
+      for (var i = 0; i < alphaValues.length; i++) {
+        var pixel = pixels[i];
+        var r = (pixel >>> 0) & 0xff;
+        var g = (pixel >>> 8) & 0xff;
+        var b = (pixel >>> 16) & 0xff;
+        var a = alphaValues[i];
+        var aInverse = 255 / a;
+        r = Math.min(r, a) * aInverse;
+        g = Math.min(g, a) * aInverse;
+        b = Math.min(b, a) * aInverse;
+        pixels[i] = a << 24 | b << 16 | g << 8 | r;
+      }
+      this._context.putImageData(imageData, 0, 0);
+    }
 
     private _initializeSourceCanvas(source: HTMLCanvasElement) {
       this._canvas = source;

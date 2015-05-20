@@ -106,7 +106,7 @@ module Shumway.Player.Window {
     }
 
     registerImage(syncId: number, symbolId: number, imageType: ImageType,
-                  data: Uint8Array): Promise<any> {
+                  data: Uint8Array, alphaData: Uint8Array): Promise<any> {
       var requestId = this._assetDecodingRequests.length;
       var result = new PromiseWrapper<any>();
       this._assetDecodingRequests[requestId] = result;
@@ -116,6 +116,7 @@ module Shumway.Player.Window {
         symbolId: symbolId,
         imageType: imageType,
         data: data,
+        alphaData: alphaData,
         requestId: requestId
       };
       this._parent.postMessage(message, '*');

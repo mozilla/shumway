@@ -179,8 +179,8 @@ module Shumway.Remoting.GFX {
     }
 
     registerImage(syncId: number, symbolId: number, imageType: ImageType, data: Uint8Array,
-                  resolve: (data: any) => void) {
-      this._registerAsset(syncId, symbolId, this._decodeImage(imageType, data, resolve));
+                  alphaData: Uint8Array, resolve: (data: any) => void) {
+      this._registerAsset(syncId, symbolId, this._decodeImage(imageType, data, alphaData, resolve));
     }
 
     registerVideo(syncId: number) {
@@ -195,13 +195,16 @@ module Shumway.Remoting.GFX {
      * Once the image is loaded, the RenderableBitmap's bounds are updated and the provided
      * oncomplete callback is invoked with the image dimensions.
      */
-    _decodeImage(type: ImageType, data: Uint8Array, oncomplete: (data: any) => void) {
+    _decodeImage(type: ImageType, data: Uint8Array, alphaData: Uint8Array, oncomplete: (data: any) => void) {
       var image = new Image();
       var asset = RenderableBitmap.FromImage(image, -1, -1);
       image.src = URL.createObjectURL(new Blob([data], {type: getMIMETypeForImageType(type)}));
       image.onload = function () {
         release || assert(!asset.parent);
         asset.setBounds(new Rectangle(0, 0, image.width, image.height));
+        if (alphaData) {
+          asset.mask(alphaData);
+        }
         asset.invalidate();
         oncomplete({width: image.width, height: image.height});
       };

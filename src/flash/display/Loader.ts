@@ -483,7 +483,7 @@ module Shumway.AVMX.AS.flash.display {
       };
       var symbol = BitmapSymbol.FromData(data, this._contentLoaderInfo);
       this._imageSymbol = symbol;
-      this.sec.player.registerImage(symbol, file.type, file.data);
+      this.sec.player.registerImage(symbol, file.type, file.data, null);
       release || assert(symbol.resolveAssetPromise);
     }
 

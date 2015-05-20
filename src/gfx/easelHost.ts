@@ -177,8 +177,8 @@ module Shumway.GFX {
       this._context.registerFont(syncId, data, resolve);
     }
     processRegisterImage(syncId: number, symbolId: number, imageType: ImageType, data: Uint8Array,
-                         resolve: (data: any) => void) {
-      this._context.registerImage(syncId, symbolId, imageType, data, resolve);
+                         alphaData: Uint8Array, resolve: (data: any) => void) {
+      this._context.registerImage(syncId, symbolId, imageType, data, alphaData, resolve);
     }
 
     processFSCommand(command: string, args: string) {
