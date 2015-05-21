@@ -172,7 +172,9 @@ module Shumway {
       var previousFramesLoaded = 0;
       if (!file) {
         file = this._file = createFileInstanceForHeader(data, progressInfo.bytesTotal, this._env);
-        this._listener.onLoadOpen(file);
+        if (file) {
+          this._listener.onLoadOpen(file);
+        }
       } else {
         if (file instanceof SWFFile) {
           eagerlyParsedSymbolsCount = file.eagerlyParsedSymbolsList.length;
@@ -195,6 +197,10 @@ module Shumway {
     }
     processLoadClose() {
       var file = this._file;
+      if (!file) {
+        this._listener.onLoadOpen(null);
+        return;
+      }
       if (file instanceof SWFFile) {
         var eagerlyParsedSymbolsCount = file.eagerlyParsedSymbolsList.length;
         var previousFramesLoaded = file.framesLoaded;
@@ -203,7 +209,7 @@ module Shumway {
 
         this.processSWFFileUpdate(file, eagerlyParsedSymbolsCount, previousFramesLoaded);
       }
-      if (!file || file.bytesLoaded !== file.bytesTotal) {
+      if (file.bytesLoaded !== file.bytesTotal) {
         Debug.warning("Shouldn't have reached this: aborting a load should prevent this from " +
                       "being called.");
         Debug.warning(new Error().stack);

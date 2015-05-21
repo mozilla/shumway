@@ -148,9 +148,11 @@ module Shumway {
             var buffer = xhr.response;
             ondata(new Uint8Array(buffer), { loaded: buffer.byteLength, total: buffer.byteLength });
           }
-          if (oncomplete) {
-            oncomplete();
-          }
+        }
+      };
+      xhr.onload = function () {
+        if (oncomplete) {
+          oncomplete();
         }
       };
       if (this.mimeType) {

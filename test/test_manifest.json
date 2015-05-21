@@ -443,6 +443,14 @@
       ],
       "type": "stas"
     },
+    {  "id": "Bug 1157243 - Correctly handle unknown file types in Loader",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/as3-loader/bug1157243/load-empty-file.swf",
+         "swfs/as3-loader/bug1157243/load-invalid-file.swf"
+       ],
+       "type": "stas"
+    },
     {  "id": "defineFont2-test",
        "frames": [60],
        "swf": "swfs/food.swf",
