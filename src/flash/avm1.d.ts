@@ -19,9 +19,13 @@ import ASClass = Shumway.AVMX.AS.ASClass;
 declare module Shumway.AVM1 {
   import flash = Shumway.AVMX.AS.flash;
 
+  export class ActionsDataFactory {
+    public createActionsData(bytes: Uint8Array, id: string, parent?: AVM1ActionsData): AVM1ActionsData;
+  }
   export class AVM1ActionsData {
   }
   export class AVM1Context {
+    actionsDataFactory: ActionsDataFactory;
     static create(loaderInfo: flash.display.LoaderInfo): AVM1Context;
     addAsset(className: string, symbolId: number, symbolProps): void;
     executeActions(actionsData: AVM1ActionsData, scopeObj): void;
@@ -35,8 +39,6 @@ declare module Shumway.AVM1 {
     function initializeAVM1Object(as3Object: flash.display.DisplayObject, context: AVM1Context,
                                   placeObjectTag: Shumway.SWF.PlaceObjectTag): void;
     class AVM1MovieClip extends AVM1Object {
-      addFrameActionBlocks(frameIndex: number, frameData: any): void;
-      addFrameScript(frameIndex: number, actionsBlock: Uint8Array): void;
       setParameters(parameters: any): void;
     }
   }

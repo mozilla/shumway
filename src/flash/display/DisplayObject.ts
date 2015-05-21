@@ -180,6 +180,14 @@ module Shumway.AVMX.AS.flash.display {
     CacheAsBitmap                             = 0x010000,
 
     /**
+     * Indicates whether an AVM1 load event needs to initialize an object when place object
+     * occured.
+     */
+    HasPlaceObjectInitPending                 = 0x020000,
+
+    ContainsPlaceObjectInitPendingChildren    = 0x040000,
+
+    /**
      * Indicates whether this display object's matrix has changed since the last time it was
      * synchronized.
      */
@@ -788,6 +796,7 @@ module Shumway.AVMX.AS.flash.display {
     _mouseDown: boolean;
 
     _symbol: Shumway.Timeline.DisplaySymbol;
+    _placeObjectTag: Shumway.SWF.PlaceObjectTag;
     _graphics: flash.display.Graphics;
 
     /**
