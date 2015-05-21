@@ -560,17 +560,25 @@ module Shumway.GFX {
     
     mask(alphaValues: Uint8Array) {
       var imageData = this.imageData;
-      var pixels = new Uint32Array((<any>imageData.data).buffer);
+      var pixels = new Int32Array((<any>imageData.data).buffer);
+      var T = Shumway.ColorUtilities.getUnpremultiplyTable();
       for (var i = 0; i < alphaValues.length; i++) {
-        var pixel = pixels[i];
-        var r = (pixel >>> 0) & 0xff;
-        var g = (pixel >>> 8) & 0xff;
-        var b = (pixel >>> 16) & 0xff;
         var a = alphaValues[i];
-        var aInverse = 255 / a;
-        r = Math.min(r, a) * aInverse;
-        g = Math.min(g, a) * aInverse;
-        b = Math.min(b, a) * aInverse;
+        if (a === 0) {
+          pixels[i] = 0;
+          continue;
+        }
+        if (a === 0xff) {
+          continue;
+        }
+        var pixel = pixels[i];
+        var r = (pixel >>  0) & 0xff;
+        var g = (pixel >>  8) & 0xff;
+        var b = (pixel >> 16) & 0xff;
+        var o = a << 8;
+        r = T[o + Math.min(r, a)];
+        g = T[o + Math.min(g, a)];
+        b = T[o + Math.min(b, a)];
         pixels[i] = a << 24 | b << 16 | g << 8 | r;
       }
       this._context.putImageData(imageData, 0, 0);
