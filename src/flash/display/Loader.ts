@@ -444,6 +444,14 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     onLoadOpen(file: any) {
+      if (!file) {
+        this._contentLoaderInfo.dispatchEvent(
+          new this.sec.flash.events.IOErrorEvent(events.IOErrorEvent.IO_ERROR, false, false,
+                                                 Errors.UnknownFileTypeError.message,
+                                                 Errors.UnknownFileTypeError.code
+        ));
+        return;
+      }
       this._contentLoaderInfo.setFile(file);
     }
 

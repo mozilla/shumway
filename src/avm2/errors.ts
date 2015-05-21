@@ -279,7 +279,7 @@ module Shumway.AVMX {
   //  SecuritySwfNotAllowedError                                : { code: 2121, message: "Security sandbox violation: %1: %2 cannot access %3. This may be worked around by calling Security.allowDomain."},
   //  SecurityNonSwfIncompletePolicyFilesError                  : { code: 2122, message: "Security sandbox violation: %1: %2 cannot access %3. A policy file is required, but the checkPolicyFile flag was not set when this media was loaded."},
   //  SecurityNonSwfNotAllowedError                             : { code: 2123, message: "Security sandbox violation: %1: %2 cannot access %3. No policy files granted access."},
-  //  UnknownFileTypeError                                      : { code: 2124, message: "Loaded file is an unknown type."},
+    UnknownFileTypeError                                      : { code: 2124, message: "Loaded file is an unknown type."},
   //  SecurityCrossVMNotAllowedError                            : { code: 2125, message: "Security sandbox violation: %1 cannot use Runtime Shared Library %2 because crossing the boundary between ActionScript 3.0 and ActionScript 1.0/2.0 objects is not allowed."},
   //  NotConnectedError                                         : { code: 2126, message: "NetConnection object must be connected."},
   //  FileRefBadPostDataTypeError                               : { code: 2127, message: "FileReference POST data cannot be type ByteArray."},
