@@ -103,6 +103,10 @@ module Shumway.AVMX.AS.flash.display {
 
         var eventClass = this.sec.flash.events.Event.axClass;
         if (child._symbol && child._symbol.isAVM1Object) {
+          if (this.sec.flash.display.MovieClip.axClass.axIsType(child)) {
+            (<MovieClip>child).initAvm1Data();
+          }
+
           try {
             child.dispatchEvent(eventClass.getInstance(events.Event.AVM1_INIT));
           } catch (e) {
@@ -113,7 +117,8 @@ module Shumway.AVMX.AS.flash.display {
           } catch (e) {
             Debug.warning('caught error under DisplayObjectContainer AVM1_CONSTRUCT event: ', e);
           }
-          if (child.hasEventListener(events.Event.AVM1_LOAD)) {
+          if (child._placeObjectTag && child._placeObjectTag.events) {
+            // Has LOAD event or can potentially have one.
             child._setFlags(DisplayObjectFlags.NeedsLoadEvent);
             if (child._hasAnyFlags(DisplayObjectFlags.HasFrameScriptPending |
                                    DisplayObjectFlags.ContainsFrameScriptPendingChildren)) {

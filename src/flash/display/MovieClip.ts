@@ -172,7 +172,7 @@ module Shumway.AVMX.AS.flash.display {
       var queue: MovieClip[] = movieClipClass._callQueue;
       movieClipClass._callQueue = [];
       var unsortedScripts: FrameScript [] = [];
-      
+
       for (var i = 0; i < queue.length; i++) {
         var instance = queue[i];
 
@@ -181,22 +181,43 @@ module Shumway.AVMX.AS.flash.display {
           // file. We keep track of the position for each action block at parsing time and carry that
           // information on to their wrapping functions (via the precedence property). Here we queue
           // up all such functions so we can sort and execute them after this loop.
+          var children = instance._children;
+          for (var j = 0; j < children.length; j++) {
+            var child = children[j];
+            if (!child._hasFlags(DisplayObjectFlags.HasPlaceObjectInitPending)) {
+              continue;
+            }
+            child._removeFlags(DisplayObjectFlags.HasPlaceObjectInitPending);
+            var script = function (placeObjectTag, child) {
+              var symbol = child._symbol;
+              var avm1Context = symbol.avm1Context;
+              Shumway.AVM1.Lib.initializeAVM1Object(child, avm1Context, placeObjectTag);
+            }.bind(this, child._placeObjectTag, child);
+            script.precedence = child._symbol.data.actionBlocksPrecedence;
+            script.context = child;
+            unsortedScripts.push(script);
+          }
+
           if (instance._hasFlags(DisplayObjectFlags.NeedsLoadEvent)) {
             instance._removeFlags(DisplayObjectFlags.NeedsLoadEvent);
             release || assert(instance._symbol);
             var handler = function () {
               this.dispatchEvent(eventClass.getInstance(events.Event.AVM1_LOAD));
             }.bind(instance);
-            handler.precedence = instance._symbol.data.actionBlocksPrecedence;
+            // Bumping LOAD event precedence by one to give PlaceObject a chance
+            // to initialize AVM1 object properly.
+            handler.precedence = instance._symbol.data.actionBlocksPrecedence + 1;
             handler.context = instance;
             unsortedScripts.push(handler);
-            continue;
           }
+
           var frameScripts = instance._frameScripts[instance._currentFrame];
-          for (var j = 0; j < frameScripts.length; j++) {
-            var script = frameScripts[j];
-            script.context = instance;
-            unsortedScripts.push(script);
+          if (frameScripts) {
+            for (var j = 0; j < frameScripts.length; j++) {
+              var script = frameScripts[j];
+              script.context = instance;
+              unsortedScripts.push(script);
+            }
           }
           continue;
         }
@@ -241,18 +262,97 @@ module Shumway.AVMX.AS.flash.display {
       }
       this._frames = symbol.frames;
       if (symbol.isAVM1Object) {
-        if (symbol.frameScripts) {
-          var avm1MovieClip = <AVM1.Lib.AVM1MovieClip>AVM1.Lib.getAVM1Object(this,
-                                                                             symbol.avm1Context);
-          var data = symbol.frameScripts;
-          for (var i = 0; i < data.length; i += 2) {
-            avm1MovieClip.addFrameScript(data[i], data[i + 1]);
-          }
-        }
         if (symbol.avm1Name) {
           this.name = symbol.avm1Name;
         }
       }
+    }
+
+    // This method is called when children are being constructed and AVM1 scripts
+    // is about to be run.
+    initAvm1Data() {
+      var symbol = this._symbol;
+      var frames = symbol.frames;
+      for (var i = 0; i < frames.length; i++) {
+        var frameInfo = frames[i];
+        this._initAvm1FrameData(i, frameInfo);
+      }
+    }
+
+    // Adds missing AVM1 scripts data to the AS3 object frameScripts and events.
+    private _initAvm1FrameData(frameIndex: number, frameInfo: any): void  {
+      var symbol = this._symbol;
+      var avm1Context = symbol.avm1Context;
+      if (frameInfo.exports) {
+        var exports = frameInfo.exports;
+        for (var i = 0; i < exports.length; i++) {
+          var asset = exports[i];
+          avm1Context.addAsset(asset.className, asset.symbolId, null);
+        }
+      }
+
+      var initActionBlocks = frameInfo.initActionBlocks;
+      if (initActionBlocks) {
+        this._addAvm1InitActionBlocks(frameIndex, initActionBlocks);
+      }
+
+      var actionBlocks = frameInfo.actionBlocks;
+      if (actionBlocks) {
+        this._addAvm1FrameScripts(frameIndex, actionBlocks);
+      }
+    }
+
+    private _addAvm1FrameScripts(frameIndex: number,
+                                 actionsBlocks: SWF.ActionBlock[]): void {
+      for (var i = 0; i < actionsBlocks.length; i++) {
+        var actionsBlock = actionsBlocks[i];
+        var symbol = this._symbol;
+        var avm1Context = symbol.avm1Context;
+        var actionsData = avm1Context.actionsDataFactory.createActionsData(
+          actionsBlock.actionsData, 's' + symbol.id + 'f' + frameIndex + 'i' + i);
+        var script: FrameScript = function (actionsData) {
+          var as2MovieClip = AVM1.Lib.getAVM1Object(this, avm1Context);
+          avm1Context.executeActions(actionsData, as2MovieClip);
+        }.bind(this, actionsData);
+        script.precedence = actionsBlock.precedence;
+        this.addFrameScript(frameIndex, script);
+      }
+    }
+
+    /**
+     * AVM1 InitActionBlocks are executed once, before the children are initialized for a frame.
+     * That matches AS3's enterFrame event, so we can add an event listener that just bails
+     * as long as the target frame isn't reached, and executes the InitActionBlock once it is.
+     *
+     * After that, the listener removes itself.
+     */
+    private _addAvm1InitActionBlocks(frameIndex: number,
+                                     actionsBlocks: SWF.InitActionBlock[]): void
+    {
+      function executeInitActions() {
+        var symbol = self._symbol;
+        var avm1Context = symbol.avm1Context;
+        var as2MovieClip = AVM1.Lib.getAVM1Object(self, avm1Context);
+        for (var i = 0; i < actionsBlocks.length; i++) {
+          var actionsData = avm1Context.actionsDataFactory.createActionsData(
+            actionsBlocks[i].actionsData, 's' + symbol.id + 'f' + frameIndex + 'i' + i);
+          avm1Context.executeActions(actionsData, as2MovieClip);
+        }
+      }
+
+      var self = this;
+      if (this.currentFrame === frameIndex + 1) {
+        executeInitActions();
+        return;
+      }
+      var enterFrameLister = function () {
+        if (this.currentFrame !== frameIndex + 1) {
+          return;
+        }
+        self.removeEventListener('enterFrame', enterFrameLister);
+        executeInitActions();
+      };
+      this.addEventListener('enterFrame', enterFrameLister);
     }
 
     constructor () {
@@ -301,17 +401,9 @@ module Shumway.AVMX.AS.flash.display {
         // Frame indices are 1-based, so use frames.length after pushing the frame.
         this._addSoundStreamBlock(frames.length, frameInfo.soundStreamBlock);
       }
-      if (spriteSymbol.isAVM1Object) {
+      if (spriteSymbol.isAVM1Object && this._hasFlags(DisplayObjectFlags.Constructed)) {
         var avm1Context = spriteSymbol.avm1Context;
-        var avm1MovieClip = <Shumway.AVM1.Lib.AVM1MovieClip>Shumway.AVM1.Lib.getAVM1Object(this, avm1Context);
-        avm1MovieClip.addFrameActionBlocks(frames.length - 1, frameInfo);
-        if (frameInfo.exports) {
-          var exports = frameInfo.exports;
-          for (var i = 0; i < exports.length; i++) {
-            var asset = exports[i];
-            avm1Context.addAsset(asset.className, asset.symbolId, null);
-          }
-        }
+        this._initAvm1FrameData(frames.length - 1, frameInfo);
       }
       if (frames.length === 1) {
         this._initializeChildren(frames[0]);
@@ -348,11 +440,11 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     _enqueueFrameScripts() {
-      if (this._hasFlags(DisplayObjectFlags.NeedsLoadEvent)) {
-        this.sec.flash.display.MovieClip.axClass._callQueue.push(this);
-      }
-      if (this._hasFlags(DisplayObjectFlags.HasFrameScriptPending)) {
-        this._removeFlags(DisplayObjectFlags.HasFrameScriptPending);
+      if (this._hasAnyFlags(DisplayObjectFlags.NeedsLoadEvent |
+                            DisplayObjectFlags.HasFrameScriptPending |
+                            DisplayObjectFlags.ContainsPlaceObjectInitPendingChildren)) {
+        this._removeFlags(DisplayObjectFlags.HasFrameScriptPending |
+                          DisplayObjectFlags.ContainsPlaceObjectInitPendingChildren);
         this.sec.flash.display.MovieClip.axClass._callQueue.push(this);
       }
       super._enqueueFrameScripts();
@@ -805,11 +897,6 @@ module Shumway.AVMX.AS.flash.display {
           this._parent && this._propagateFlagsUp(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
         }
       }
-    }
-
-    get _avm1SymbolClass(): any {
-      return (this._symbol &&
-              (<flash.display.SpriteSymbol>this._symbol).avm1SymbolClass) || null;
     }
 
     get _isFullyLoaded(): boolean {

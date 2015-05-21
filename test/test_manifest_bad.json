@@ -6,13 +6,6 @@
     ],
     "type": "stas"
   },
-  {  "id": "avm1core",
-    "stas": "swfs/trace.stas",
-    "filenames": [
-      "swfs/avm1/doactionorder/symbolclass.swf"
-    ],
-    "type": "stas"
-  },
   {  "id": "AVM1Movie",
     "stas": "swfs/trace.stas",
     "filenames": [

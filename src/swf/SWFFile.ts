@@ -566,7 +566,7 @@ module Shumway.SWF {
         type: 'sprite',
         frames: [],
         actionBlocksPrecedence: spriteTag.byteOffset
-      }
+      };
       var spriteTagEnd = spriteTag.byteOffset + spriteTag.byteLength;
       var frames = timeline.frames;
       var label: string = null;
@@ -935,5 +935,6 @@ module Shumway.SWF {
     blendMode?: number;
     bmpCache?: number;
     visibility?: number;
+    events?: any[];
   }
 }
