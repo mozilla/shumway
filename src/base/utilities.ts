@@ -3285,6 +3285,11 @@ module Shumway {
         }
       }
     }
+    
+    export function getUnpremultiplyTable(): Uint8Array {
+      ensureUnpremultiplyTable();
+      return unpremultiplyTable;
+    }
 
     export function tableLookupUnpremultiplyARGB(pARGB): number {
       pARGB = pARGB | 0;
