@@ -107,7 +107,7 @@ module Shumway.GFX.Window {
           this.processRegisterFont(data.syncId, data.data,
                                    this._sendRegisterFontResponse.bind(this, data.requestId));
         } else if (data.type === 'registerImage') {
-          this.processRegisterImage(data.syncId, data.symbolId, data.imageType, data.data,
+          this.processRegisterImage(data.syncId, data.symbolId, data.imageType, data.data, data.alphaData,
                                     this._sendRegisterImageResponse.bind(this, data.requestId));
         } else if (data.type === 'fscommand') {
           this.processFSCommand(data.command, data.args);

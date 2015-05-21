@@ -217,7 +217,7 @@ module Shumway.Remoting {
     videoControl(id: number, eventType: VideoControlEvent, data: any): any;
     registerFont(syncId: number, data: Uint8Array): Promise<any>;
     registerImage(syncId: number, symbolId: number, imageType: ImageType,
-                  data: Uint8Array): Promise<any>;
+                  data: Uint8Array, alphaData: Uint8Array): Promise<any>;
     fscommand(command: string, args: string): void;
   }
 }

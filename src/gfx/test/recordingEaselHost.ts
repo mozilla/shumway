@@ -46,7 +46,8 @@ module Shumway.GFX.Test {
           this._recorder.recordFont(data.syncId, data.data);
           break;
         case 'registerImage':
-          this._recorder.recordImage(data.syncId, data.symbolId, data.imageType, data.data);
+          this._recorder.recordImage(data.syncId, data.symbolId, data.imageType,
+                                     data.data, data.alphaData);
           break;
         case 'fscommand':
           this._recorder.recordFSCommand(data.command, data.args);

@@ -29,7 +29,7 @@ module Shumway.Timeline {
   export interface IAssetResolver {
     registerFont(symbol: Timeline.EagerlyResolvedSymbol, data: Uint8Array): void;
     registerImage(symbol: Timeline.EagerlyResolvedSymbol, imageType: ImageType,
-                  data: Uint8Array): void;
+                  data: Uint8Array, alphaData: Uint8Array): void;
   }
 
   export interface EagerlyResolvedSymbol {
