@@ -117,7 +117,6 @@ module Shumway.AVM1.Lib {
 
       var props: flash.display.SpriteSymbol = Object.create(symbol.symbolProps);
       props.avm1Name = name;
-      props.avm1SymbolClass = symbol.theClass;
 
       var mc:flash.display.MovieClip;
       mc = Shumway.AVMX.AS.constructClassFromSymbol(props, this.context.sec.flash.display.MovieClip.axClass);
@@ -637,57 +636,6 @@ module Shumway.AVM1.Lib {
         processed[normalizedName] = true;
       }
       return Object.getOwnPropertyNames(processed);
-    }
-
-    addFrameActionBlocks(frameIndex: number, frameData: any) {
-      var initActionBlocks: any[] = frameData.initActionBlocks;
-      var actionBlocks: any[] = frameData.actionBlocks;
-
-      if (initActionBlocks) {
-        this._addInitActionBlocks(frameIndex, initActionBlocks);
-      }
-
-      if (actionBlocks) {
-        for (var i = 0; i < actionBlocks.length; i++) {
-          this.addFrameScript(frameIndex, actionBlocks[i]);
-        }
-      }
-    }
-    
-    addFrameScript(frameIndex: number, actionsBlock: any): void {
-      var actionsData = this.context.actionsDataFactory.createActionsData(
-        actionsBlock.actionsData, 's' + this.as3Object._symbol.id + 'f' + frameIndex);
-      var script = this.context.executeActions.bind(this.context, actionsData, this);
-      script.precedence = actionsBlock.precedence;
-      this.as3Object.addFrameScript(frameIndex, script);
-    }
-
-    /**
-     * AVM1 InitActionBlocks are executed once, before the children are initialized for a frame.
-     * That matches AS3's enterFrame event, so we can add an event listener that just bails
-     * as long as the target frame isn't reached, and executes the InitActionBlock once it is.
-     *
-     * After that, the listener removes itself.
-     */
-    private _addInitActionBlocks(frameIndex: number,
-                                 actionsBlocks: {actionsData: Uint8Array} []): void
-    {
-      var avm2MovieClip = this.as3Object;
-      var self = this;
-      function listener (e) {
-        if (avm2MovieClip.currentFrame !== frameIndex + 1) {
-          return;
-        }
-        avm2MovieClip.removeEventListener('enterFrame', listener);
-
-        var avm1Context = self.context;
-        for (var i = 0; i < actionsBlocks.length; i++) {
-          var actionsData = avm1Context.actionsDataFactory.createActionsData(
-            actionsBlocks[i].actionsData, 's' + avm2MovieClip._symbol.id + 'f' + frameIndex + 'i' + i);
-          avm1Context.executeActions(actionsData, self);
-        }
-      }
-      avm2MovieClip.addEventListener('enterFrame', listener);
     }
 
     private _init(initObject) {
