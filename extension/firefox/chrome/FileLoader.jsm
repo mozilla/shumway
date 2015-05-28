@@ -123,7 +123,7 @@ FileLoader.prototype = {
       delete self.activeSessions[sessionId];
       notifyLoadFileListener({
         callback: "loadFile", sessionId: sessionId, topic: "error",
-        error: "only original swf file or file from the same origin loading supported"
+        error: "only original swf file or file from the same origin loading supported (XDOMAIN)"
       });
     });
   },

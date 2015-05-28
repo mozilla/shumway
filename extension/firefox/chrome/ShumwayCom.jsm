@@ -75,6 +75,9 @@ function sanitizeTelemetryArgs(args) {
     case 'feature':
       request.featureType = args.feature | 0;
       break;
+    case 'loadResource':
+      request.resultType = args.resultType | 0;
+      break;
     case 'error':
       request.errorType = args.error | 0;
       break;
@@ -541,6 +544,13 @@ ShumwayChromeActions.prototype = {
           !this.telemetry.features[featureType]) {
           this.telemetry.features[featureType] = true; // record only one feature per SWF
           ShumwayTelemetry.onFeature(featureType);
+        }
+        break;
+      case 'loadResource':
+        var resultType = request.resultType;
+        var MIN_RESULT_TYPE = 0, MAX_RESULT_TYPE = 10;
+        if (resultType >= MIN_RESULT_TYPE && resultType <= MAX_RESULT_TYPE) {
+          ShumwayTelemetry.onLoadResource(resultType);
         }
         break;
       case 'error':

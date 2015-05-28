@@ -79,14 +79,14 @@ module Shumway.AVMX.AS.flash.system {
         Array.prototype.join.call(arguments, '", "') + '"]');
       var whitelist: ICrossDomainSWFLoadingWhitelist = this.sec.player;
       for (var i = 0; i < arguments.length; i++) {
-        whitelist.addToSWFLoadingWhitelist(axCoerceString(arguments[i]) || '', false);
+        whitelist.addToSWFLoadingWhitelist(axCoerceString(arguments[i]) || '', false, false);
       }
     }
     static allowInsecureDomain(): void {
       somewhatImplemented("public flash.system.Security::static allowInsecureDomain");
       var whitelist: ICrossDomainSWFLoadingWhitelist = this.sec.player;
       for (var i = 0; i < arguments.length; i++) {
-        whitelist.addToSWFLoadingWhitelist(axCoerceString(arguments[i]) || '', true);
+        whitelist.addToSWFLoadingWhitelist(axCoerceString(arguments[i]) || '', true, false);
       }
     }
     static loadPolicyFile(url: string): void {
@@ -108,8 +108,23 @@ module Shumway.AVMX.AS.flash.system {
     
   }
 
+  export enum CrossDomainSWFLoadingWhitelistResult {
+    /**
+     * The requested domain belongs to the same domain as SWF's.
+     */
+    OwnDomain = 0,
+    /**
+     * The requested domain belongs to the other domain than SWF's.
+     */
+    Remote = 1,
+    /**
+     * The requested domain is not whitelisted.
+     */
+    Failed = 2
+  }
+
   export interface ICrossDomainSWFLoadingWhitelist {
-    addToSWFLoadingWhitelist(domain: string, insecure: boolean);
-    checkDomainForSWFLoading(domain: string): boolean;
+    addToSWFLoadingWhitelist(domain: string, insecure: boolean, ownDomain: boolean);
+    checkDomainForSWFLoading(domain: string): CrossDomainSWFLoadingWhitelistResult;
   }
 }

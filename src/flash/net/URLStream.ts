@@ -102,10 +102,16 @@ module Shumway.AVMX.AS.flash.net {
         self._connected = false;
         self.dispatchEvent(new eventsPackage.IOErrorEvent(IOErrorEvent.IO_ERROR, false, false,
                                                           error));
+        var isXDomainError = typeof error === 'string' && error.indexOf('XDOMAIN') >= 0;
+        Telemetry.instance.reportTelemetry({topic: 'loadResource',
+          resultType: isXDomainError ? Telemetry.LoadResource.StreamCrossdomain :
+                                       Telemetry.LoadResource.StreamDenied});
       };
       session.onopen = function () {
         self._connected = true;
         self.dispatchEvent(new eventsPackage.Event(Event.OPEN, false, false));
+        Telemetry.instance.reportTelemetry({topic: 'loadResource',
+          resultType: Telemetry.LoadResource.StreamAllowed});
       };
       session.onhttpstatus = function (location: string, httpStatus: number, httpHeaders: any) {
         var httpStatusEvent = new eventsPackage.HTTPStatusEvent(HTTPStatusEvent.HTTP_STATUS, false,

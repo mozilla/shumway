@@ -43,6 +43,7 @@ module Shumway.Player {
   import IVideoElementService = flash.net.IVideoElementService;
   import IRootElementService = flash.display.IRootElementService;
   import ICrossDomainSWFLoadingWhitelist = flash.system.ICrossDomainSWFLoadingWhitelist;
+  import CrossDomainSWFLoadingWhitelistResult = flash.system.CrossDomainSWFLoadingWhitelistResult;
   import MessageTag = Shumway.Remoting.MessageTag;
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
@@ -384,7 +385,7 @@ module Shumway.Player {
       } else {
         this._enterRootLoadingLoop();
       }
-      this.addToSWFLoadingWhitelist(FileLoadingService.instance.resolveUrl(url), false);
+      this.addToSWFLoadingWhitelist(FileLoadingService.instance.resolveUrl(url), false, true);
       var context = this.createLoaderContext();
       if (buffer) {
         var byteArray = new this.sec.flash.utils.ByteArray(buffer);
@@ -764,35 +765,46 @@ module Shumway.Player {
       symbol.resolveAssetPromise.then(symbol.resolveAssetCallback, null);
     }
 
-    private _crossDomainSWFLoadingWhitelist: {protocol: string; hostname: string; insecure: boolean}[] = [];
+    private _crossDomainSWFLoadingWhitelist: {protocol: string; hostname: string; insecure: boolean; ownDomain: boolean}[] = [];
 
-    addToSWFLoadingWhitelist(domain: string, insecure: boolean) {
+    addToSWFLoadingWhitelist(domain: string, insecure: boolean, ownDomain: boolean) {
       if (domain.indexOf('/') < 0) { // anything without path, this includes '*'
-        this._crossDomainSWFLoadingWhitelist.push({protocol: 'http:', hostname: domain, insecure: insecure});
+        this._crossDomainSWFLoadingWhitelist.push({protocol: 'http:', hostname: domain, insecure: insecure, ownDomain: ownDomain});
         return;
       }
       try {
         var url = new (<any>window).URL(domain);
-        this._crossDomainSWFLoadingWhitelist.push({protocol: url.protocol, hostname: url.hostname, insecure: insecure});
+        this._crossDomainSWFLoadingWhitelist.push({protocol: url.protocol, hostname: url.hostname, insecure: insecure, ownDomain: ownDomain});
       } catch (e) { }
     }
 
-    checkDomainForSWFLoading(domain: string): boolean {
+    checkDomainForSWFLoading(domain: string): CrossDomainSWFLoadingWhitelistResult {
       try {
         var url = new (<any>window).URL(domain);
       } catch (e) {
-        return false;
+        return CrossDomainSWFLoadingWhitelistResult.Failed;
       }
-      return this._crossDomainSWFLoadingWhitelist.some(function (entry) {
+      var result: CrossDomainSWFLoadingWhitelistResult =
+        CrossDomainSWFLoadingWhitelistResult.Failed;
+      this._crossDomainSWFLoadingWhitelist.some(function (entry) {
+        var success;
         if (url.hostname !== entry.hostname && entry.hostname !== '*') {
-          return false;
+          success = false;
+        } else if (entry.insecure) {
+          success = true;
+        } else {
+          // The HTTPS SWF has to be more protected than it's whitelisted HTTP equivalent.
+          success = url.protocol === 'https:' || entry.protocol !== 'https:';
         }
-        if (entry.insecure) {
+        if (success) {
+          result = entry.ownDomain ?
+            CrossDomainSWFLoadingWhitelistResult.OwnDomain :
+            CrossDomainSWFLoadingWhitelistResult.Remote;
           return true;
         }
-        // The HTTPS SWF has to be more protected than it's whitelisted HTTP equivalent.
-        return url.protocol === 'https:' || entry.protocol !== 'https:';
+        return false;
       }, this);
+      return result;
     }
   }
 }
