@@ -20,8 +20,8 @@
 /// <reference path='../../build/ts/flash.d.ts' />
 
 ///<reference path='module.ts' />
-///<reference path='options.ts' />
+///<reference path='settings.ts' />
 ///<reference path='frameScheduler.ts' />
 ///<reference path='remotingPlayer.ts' />
-///<reference path='settings.ts' />
+///<reference path='player.ts' />
 ///<reference path='avmLoader.ts' />

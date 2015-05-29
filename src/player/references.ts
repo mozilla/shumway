@@ -22,10 +22,10 @@
 /// <reference path='../flash/avm1.d.ts' />
 
 ///<reference path='module.ts' />
-///<reference path='options.ts' />
+///<reference path='settings.ts' />
 ///<reference path='frameScheduler.ts' />
 ///<reference path='remotingPlayer.ts' />
-///<reference path='settings.ts' />
+///<reference path='player.ts' />
 ///<reference path='avmLoader.ts' />
 ///<reference path='external.ts' />
 
