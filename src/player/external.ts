@@ -325,7 +325,7 @@ module Shumway.Player {
 
     _sendMessage(connectionName: string, methodName: string, argsBuffer: ArrayBuffer,
                  sender: ILocalConnectionSender, senderURL: string) {
-      return null;
+      return;
     }
 
     send(connectionName: string, methodName: string, argsBuffer: ArrayBuffer,
@@ -350,29 +350,7 @@ module Shumway.Player {
           return;
         }
         release || Debug.assert(typeof senderURL === 'string');
-        var receiverError = self._sendMessage(connectionName, methodName, argsBuffer, sender,
-                                              senderURL);
-        if (receiverError === null) {
-          return;
-        }
-        var translatedError = createErrorFromUnknownObject(sender.sec, receiverError, 'Error',
-                                                           AVMX.Errors.InternalErrorIV);
-        var asyncErrorEventCtor = sender.sec.flash.events.AsyncErrorEvent;
-        var errorEvent = new asyncErrorEventCtor('asyncError', false, false,
-                                                 'flash.net.LocalConnection was unable to invoke' +
-                                                 ' callback ' + methodName, translatedError);
-        if (sender.hasEventListener('asyncError')) {
-          try {
-            sender.dispatchEvent(errorEvent);
-          } catch (e) {
-            console.warn("Exception encountered during asyncErrorEvent handling in " +
-                         "LocalConnection sender.");
-          }
-        } else {
-          // TODO: add the error to the LoaderInfo#uncaughtErrorEvents list.
-          console.warn('No handler for asyncError on LocalConnection sender, not sending event',
-                       errorEvent);
-        }
+        self._sendMessage(connectionName, methodName, argsBuffer, sender, senderURL);
       }
       Promise.resolve(true).then(invokeMessageHandler);
     }
@@ -426,8 +404,8 @@ module Shumway.Player {
 
     _sendMessage(connectionName: string, methodName: string, argsBuffer: ArrayBuffer,
                  sender: ILocalConnectionSender, senderURL: string) {
-      return ShumwayCom.sendLocalConnectionMessage(connectionName, methodName, argsBuffer,
-                                                   sender, senderURL);
+      ShumwayCom.sendLocalConnectionMessage(connectionName, methodName, argsBuffer, sender,
+                                            senderURL);
     }
 
     allowDomains(connectionName: string, receiver: ILocalConnectionReceiver, domains: string[],
@@ -473,9 +451,8 @@ module Shumway.Player {
       release || Debug.assert(receiver);
       try {
         receiver.handleMessage(methodName, argsBuffer);
-        return null;
       } catch (e) {
-        return e;
+        Debug.warning('Unexpected error encountered while sending LocalConnection message.');
       }
     }
   }
