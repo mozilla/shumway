@@ -438,11 +438,11 @@ module Shumway.Shell {
 
     var player = null;
     var asyncLoading = true;
+    // TODO: resolve absolute file path for the base URL.
+    (<any>Shumway.FileLoadingService.instance).setBaseUrl('file://' + file);
     if (asyncLoading) {
-      (<any>Shumway.FileLoadingService.instance).setBaseUrl(file);
       player = runSWF(file);
     } else {
-      (<any>Shumway.FileLoadingService.instance).setBaseUrl(file);
       player = runSWF(read(file, 'binary'));
     }
 
