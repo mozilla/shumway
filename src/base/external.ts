@@ -49,7 +49,7 @@ declare var ShumwayCom: {
   closeLocalConnection: (connectionName: string) => Shumway.LocalConnectionCloseResult;
   sendLocalConnectionMessage: (connectionName: string, methodName: string,
                                argsBuffer: ArrayBuffer, sender: Shumway.ILocalConnectionSender,
-                               senderURL: string) => any;
+                               senderURL: string) => void;
   allowDomainsForLocalConnection: (connectionName: string, domains: string[],
                                    secure: boolean) => void;
 };

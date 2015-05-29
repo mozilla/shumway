@@ -175,24 +175,52 @@ module Shumway.AVMX.AS.flash.net {
 
     public handleMessage(methodName: string, argsBuffer: ArrayBuffer): void {
       var client = this._client;
+      var error: ASError;
       if (!client.axHasPublicProperty(methodName) || forbiddenNames.indexOf(methodName) > -1) {
         // Forbidden names really shouldn't reach this point, but should everything else fail,
         // we just pretend not to have found them here.
-        this.sec.throwError('ReferenceError', Errors.ReadSealedError, methodName,
-                            client.axClass.name.name);
+        error = <any>this.sec.createError('ReferenceError', Errors.ReadSealedError, methodName,
+                                          client.axClass.name.name);
+      } else {
+        var handler = client.axGetPublicProperty(methodName);
+        if (!axIsCallable(handler)) {
+          // Non-callable handlers are just ignored.
+          return;
+        }
+
+        var ba: ByteArray = new this.sec.flash.utils.ByteArray(argsBuffer);
+        var args: ASArray = ba.readObject();
+        if (!this.sec.AXArray.axIsType(args)) {
+          error =
+            <any>this.sec.createError('TypeError', Errors.CheckTypeFailedError, args, 'Array');
+        } else {
+          try {
+            handler.apply(client, args.value);
+          } catch (e) {
+            error = e;
+          }
+        }
       }
-      var handler = client.axGetPublicProperty(methodName);
-      if (!axIsCallable(handler)) {
-        // Non-callable handlers are just ignored.
+      if (!error) {
         return;
       }
-
-      var ba: ByteArray = new this.sec.flash.utils.ByteArray(argsBuffer);
-      var args: ASArray = ba.readObject();
-      if (!this.sec.AXArray.axIsType(args)) {
-        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, args, 'Array');
+      var asyncErrorEventCtor = this.sec.flash.events.AsyncErrorEvent;
+      var errorEvent = new asyncErrorEventCtor('asyncError', false, false,
+                                               'Error #2095: flash.net.LocalConnection was' +
+                                               ' unable to invoke' +
+                                               ' callback ' + methodName + '.', error);
+      if (this.hasEventListener('asyncError')) {
+        try {
+          this.dispatchEvent(errorEvent);
+        } catch (e) {
+          console.warn("Exception encountered during asyncErrorEvent handling in " +
+                       "LocalConnection sender.");
+        }
+      } else {
+        // TODO: add the error to the LoaderInfo#uncaughtErrorEvents list.
+        console.warn('No handler for asyncError on LocalConnection sender, not sending event',
+                     errorEvent);
       }
-      handler.apply(client, args.value);
     }
 
     get domain(): string {
