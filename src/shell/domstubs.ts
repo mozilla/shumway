@@ -107,8 +107,9 @@ this.Image = function () {};
 this.Image.prototype = {
 };
 
-this.URL = function (url, baseURL) {
+this.URL = function (url, baseURL = '') {
   url = url + '';
+  baseURL = baseURL + '';
   if (url.indexOf('://') >= 0 || baseURL === url) {
     this._setURL(url);
     return;

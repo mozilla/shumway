@@ -69,6 +69,7 @@ function setupServices() {
   Shumway.ClipboardService.instance = new Shumway.Player.ShumwayComClipboardService();
   Shumway.FileLoadingService.instance = new Shumway.Player.ShumwayComFileLoadingService();
   Shumway.SystemResourcesLoadingService.instance = new Shumway.Player.ShumwayComResourcesLoadingService(true);
+  Shumway.LocalConnectionService.instance = new Shumway.Player.ShumwayComLocalConnectionService();
 }
 
 function playerStarted() {

@@ -267,4 +267,193 @@ module Shumway.Player {
       });
     }
   }
+
+  function qualifyLocalConnectionName(connectionName: string): string {
+    release || Debug.assert(typeof connectionName === 'string');
+    release || Debug.assert(connectionName.indexOf(':') === -1);
+    if (connectionName[0] !== '_') {
+      var currentURL = new jsGlobal.URL(Shumway.AVMX.getCurrentABC().env.url);
+      connectionName = currentURL.hostname + ':' + connectionName;
+    }
+    return connectionName;
+  }
+
+  /**
+   * Creates a proper error object in the given SecurityDomain and fills it with information in
+   * a way that makes it resemble the given (probably error) object as closely as possible while
+   * at the same time guaranteeing that no code will be executed as a result of reading
+   * properties of the object. Additionally, the created object can only be one of the builtin
+   * Error classes.
+   */
+  function createErrorFromUnknownObject(sec: ISecurityDomain, obj: any,
+                                        defaultErrorClassName: string,
+                                        defaultErrorInfo: AVMX.ErrorInfo): AVMX.AXObject {
+    if (!obj || typeof obj !== 'object') {
+      return sec.createError(defaultErrorClassName, defaultErrorInfo, obj);
+    }
+    var mn = obj.axClass ?
+             obj.axClass.name :
+             AVMX.Multiname.FromFQNString('Error', AVMX.NamespaceType.Public);
+    var axClass: AVMX.AXClass = <AVMX.AXClass>sec.system.getProperty(mn, true, true);
+    if (!sec.AXClass.axIsType(axClass)) {
+      mn = AVMX.Multiname.FromFQNString('Error', AVMX.NamespaceType.Public);
+      axClass = <AVMX.AXClass>sec.system.getProperty(mn, true, true);
+      release || Debug.assert(sec.AXClass.axIsType(axClass));
+    }
+    var messagePropDesc = ObjectUtilities.getPropertyDescriptor(obj, '$Bgmessage');
+    var message = messagePropDesc && messagePropDesc.value || '';
+    var idPropDesc = ObjectUtilities.getPropertyDescriptor(obj, '_errorID');
+    var id = idPropDesc && idPropDesc.value || 0;
+    return axClass.axConstruct([message, id]);
+  }
+
+  export class BaseLocalConnectionService implements ILocalConnectionService {
+    protected _localConnections = Object.create(null);
+    createConnection(connectionName: string,
+                     receiver: ILocalConnectionReceiver): LocalConnectionConnectResult {
+      return undefined;
+    }
+
+    closeConnection(connectionName: string,
+                    receiver: ILocalConnectionReceiver): LocalConnectionCloseResult {
+      return undefined;
+    }
+
+    hasConnection(connectionName: string): boolean {
+      return false;
+    }
+
+    _sendMessage(connectionName: string, methodName: string, argsBuffer: ArrayBuffer,
+                 sender: ILocalConnectionSender, senderURL: string) {
+      return;
+    }
+
+    send(connectionName: string, methodName: string, argsBuffer: ArrayBuffer,
+         sender: ILocalConnectionSender, senderURL: string): void {
+      connectionName = qualifyLocalConnectionName(connectionName);
+      release || Debug.assert(typeof methodName === 'string');
+      release || Debug.assert(argsBuffer instanceof ArrayBuffer);
+      var self = this;
+      function invokeMessageHandler() {
+        var status = self.hasConnection(connectionName) ? 'status' : 'error';
+        var statusEvent = new sender.sec.flash.events.StatusEvent('status', false, false, null,
+                                                                  status);
+        try {
+          sender.dispatchEvent(statusEvent);
+        } catch (e) {
+          console.warn("Exception encountered during statusEvent handling in LocalConnection" +
+                       " sender.", e);
+        }
+
+        if (status === 'error') {
+          // If no receiver is found for the connectionName, we're done.
+          return;
+        }
+        release || Debug.assert(typeof senderURL === 'string');
+        self._sendMessage(connectionName, methodName, argsBuffer, sender, senderURL);
+      }
+      Promise.resolve(true).then(invokeMessageHandler);
+    }
+
+    allowDomains(connectionName: string, receiver: ILocalConnectionReceiver, domains: string[],
+                 secure: boolean) {
+      Debug.somewhatImplemented('LocalConnection#allowDomain');
+    }
+  }
+
+  export class ShumwayComLocalConnectionService extends BaseLocalConnectionService {
+
+    createConnection(connectionName: string,
+                     receiver: ILocalConnectionReceiver): LocalConnectionConnectResult {
+      connectionName = qualifyLocalConnectionName(connectionName);
+      release || Debug.assert(receiver);
+      if (this.hasConnection(connectionName)) {
+        return LocalConnectionConnectResult.AlreadyTaken;
+      }
+
+      function callback(methodName: string, argsBuffer: ArrayBuffer): any {
+        try {
+          receiver.handleMessage(methodName, argsBuffer);
+          return null;
+        } catch (e) {
+          console.log('error under handleMessage: ', e);
+          return e;
+        }
+      }
+      var result = ShumwayCom.createLocalConnection(connectionName, callback);
+      if (result !== LocalConnectionConnectResult.Success) {
+        return result;
+      }
+      this._localConnections[connectionName] = receiver;
+      return LocalConnectionConnectResult.Success;
+    }
+    closeConnection(connectionName: string,
+                    receiver: ILocalConnectionReceiver): LocalConnectionCloseResult {
+      connectionName = qualifyLocalConnectionName(connectionName);
+      if (this._localConnections[connectionName] !== receiver) {
+        return LocalConnectionCloseResult.NotConnected;
+      }
+      ShumwayCom.closeLocalConnection(connectionName);
+      delete this._localConnections[connectionName];
+      return LocalConnectionCloseResult.Success;
+    }
+
+    hasConnection(connectionName: string): boolean {
+      return ShumwayCom.hasLocalConnection(connectionName);
+    }
+
+    _sendMessage(connectionName: string, methodName: string, argsBuffer: ArrayBuffer,
+                 sender: ILocalConnectionSender, senderURL: string) {
+      ShumwayCom.sendLocalConnectionMessage(connectionName, methodName, argsBuffer, sender,
+                                            senderURL);
+    }
+
+    allowDomains(connectionName: string, receiver: ILocalConnectionReceiver, domains: string[],
+                 secure: boolean) {
+      connectionName = qualifyLocalConnectionName(connectionName);
+      if (this._localConnections[connectionName] !== receiver) {
+        console.warn('Trying to allow domains for invalid connection ' + connectionName);
+        return;
+      }
+      ShumwayCom.allowDomainsForLocalConnection(connectionName, domains, secure);
+    }
+  }
+
+  export class PlayerInternalLocalConnectionService extends BaseLocalConnectionService {
+    createConnection(connectionName: string,
+                     receiver: ILocalConnectionReceiver): LocalConnectionConnectResult {
+      connectionName = qualifyLocalConnectionName(connectionName);
+      release || Debug.assert(receiver);
+      if (this._localConnections[connectionName]) {
+        return LocalConnectionConnectResult.AlreadyTaken;
+      }
+      this._localConnections[connectionName] = receiver;
+      return LocalConnectionConnectResult.Success;
+    }
+    closeConnection(connectionName: string,
+                    receiver: ILocalConnectionReceiver): LocalConnectionCloseResult {
+      connectionName = qualifyLocalConnectionName(connectionName);
+      if (this._localConnections[connectionName] !== receiver) {
+        return LocalConnectionCloseResult.NotConnected;
+      }
+      delete this._localConnections[connectionName];
+      return LocalConnectionCloseResult.Success;
+    }
+
+
+    hasConnection(connectionName: string): boolean {
+      return connectionName in this._localConnections;
+    }
+
+    _sendMessage(connectionName: string, methodName: string, argsBuffer: ArrayBuffer,
+                 sender: ILocalConnectionSender, senderURL: string) {
+      var receiver: ILocalConnectionReceiver = this._localConnections[connectionName];
+      release || Debug.assert(receiver);
+      try {
+        receiver.handleMessage(methodName, argsBuffer);
+      } catch (e) {
+        Debug.warning('Unexpected error encountered while sending LocalConnection message.');
+      }
+    }
+  }
 }

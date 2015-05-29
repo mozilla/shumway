@@ -226,5 +226,12 @@
         "swfs/movieclip/empty-mc-scenes.swf"
       ],
       "type": "stas"
+    },
+    {  "id": "LocalConnection",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/localconnection/lc-send.swf"
+      ],
+      "type": "stas"
     }
 ]

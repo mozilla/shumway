@@ -16,15 +16,17 @@
 
 var EXPORTED_SYMBOLS = ['ShumwayCom'];
 
-Components.utils.import('resource://gre/modules/XPCOMUtils.jsm');
-Components.utils.import('resource://gre/modules/Services.jsm');
+Components.utils.import('resource://gre/modules/NetUtil.jsm');
 Components.utils.import('resource://gre/modules/Promise.jsm');
+Components.utils.import('resource://gre/modules/Services.jsm');
+Components.utils.import('resource://gre/modules/XPCOMUtils.jsm');
 
 Components.utils.import('chrome://shumway/content/SpecialInflate.jsm');
 Components.utils.import('chrome://shumway/content/SpecialStorage.jsm');
 Components.utils.import('chrome://shumway/content/RtmpUtils.jsm');
 Components.utils.import('chrome://shumway/content/ExternalInterface.jsm');
 Components.utils.import('chrome://shumway/content/FileLoader.jsm');
+Components.utils.import('chrome://shumway/content/LocalConnection.jsm');
 
 XPCOMUtils.defineLazyModuleGetter(this, 'ShumwayTelemetry',
   'resource://shumway/ShumwayTelemetry.jsm');
@@ -115,6 +117,8 @@ function sanitizeExternalComArgs(args) {
   }
   return request;
 }
+
+
 
 var cloneIntoFromContent = (function () {
   // waiveXrays are used due to bug 1150771, checking if we are affected
@@ -293,8 +297,88 @@ var ShumwayCom = {
           return;
         }
         onSystemResourceCallback = callback;
+      },
+      createLocalConnection: function(connectionName, callback) {
+        if (typeof connectionName !== 'string') {
+          return -1; // LocalConnectionConnectResult.InvalidName
+        }
+        if (callback !== null && typeof callback !== 'function') {
+          return -3;
+        }
+        var environment = callbacks.getEnvironment();
+        return localConnectionService.createLocalConnection(environment.swfUrl, connectionName,
+                                                            callback);
+      },
+      hasLocalConnection: function(connectionName) {
+        connectionName = connectionName + '';
+        return localConnectionService.hasLocalConnection(connectionName);
+      },
+      closeLocalConnection: function(connectionName) {
+        connectionName = connectionName + '';
+        if (!_getLocalConnection(connectionName)) {
+          return -1; // LocalConnectionCloseResult.NotConnected
+        }
+        delete localConnectionsRegistry[connectionName];
+        return 0; // LocalConnectionCloseResult.Success
+      },
+      sendLocalConnectionMessage: function(connectionName, methodName, argsBuffer, sender,
+                                           senderURL) {
+        connectionName = connectionName + '';
+        methodName = methodName + '';
+        senderURL = senderURL + '';
+        // TODO: sanitize argsBuffer argument.
+
+        var senderDomain;
+        try {
+          var parsedURL = NetUtil.newURI(senderURL);
+          senderDomain = parsedURL.host;
+        } catch (e) {
+          // The sender URL should always be valid. If it's not, warn and ignore the message.
+          log('Warning: Invalid senderURL encountered while sending LocalConnection message.');
+          return;
+        }
+
+        localConnectionService.sendLocalConnectionMessage(connectionName, methodName, argsBuffer,
+                                                          senderDomain);
+
+      },
+      allowDomainsForLocalConnection: function(connectionName, domains, secure) {
+        // TODO: activate this and use the whitelisted domains in sendLocalConnectionMessage.
+        //var connection = _getLocalConnection(connectionName);
+        //if (!connection) {
+        //  return;
+        //}
+        //try {
+        //  domains = Components.utils.cloneInto(domains, connection);
+        //} catch (e) {
+        //  log('error in allowDomainsForLocalConnection: ' + e);
+        //  return;
+        //}
+        //function validateDomain(domain) {
+        //  if (typeof domain !== 'string') {
+        //    return false;
+        //  }
+        //  if (domain === '*') {
+        //    return true;
+        //  }
+        //  try {
+        //    var uri = NetUtil.newURI('http://' + domain);
+        //    return uri.host === domain;
+        //  } catch (e) {
+        //    return false;
+        //  }
+        //}
+        //if (!Array.isArray(domains) || !domains.every(validateDomain)) {
+        //  return;
+        //}
+        //var allowedDomains = secure ?
+        //                     connection.allowedSecureDomains :
+        //                     connection.allowedInsecureDomains;
+        //domains.forEach(domain => allowedDomains[domain] = true);
       }
     };
+
+    var localConnectionService = new LocalConnectionService();
 
     // Exposing createSpecialInflate function for DEFLATE stream decoding using
     // Gecko API.
