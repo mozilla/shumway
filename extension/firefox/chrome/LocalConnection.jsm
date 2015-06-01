@@ -25,7 +25,7 @@ function _getLocalConnection(connectionName) {
   // Treat invalid connection names as non-existent.
   if (typeof connectionName !== 'string' ||
       connectionName[0] !== '_' && connectionName.split(':').length !== 2) {
-    return false;
+    return null;
   }
   var connection = localConnectionsRegistry[connectionName];
   if (connection && Components.utils.isDeadWrapper(connection.callback)) {
@@ -42,7 +42,7 @@ LocalConnectionService.prototype = {
     if (connectionName[0] !== '_' && connectionName.split(':').length !== 2) {
       return -1; // LocalConnectionConnectResult.InvalidName
     }
-    if (localConnectionsRegistry[connectionName]) {
+    if (this.hasLocalConnection(connectionName)) {
       return -2; // LocalConnectionConnectResult.AlreadyTaken
     }
 

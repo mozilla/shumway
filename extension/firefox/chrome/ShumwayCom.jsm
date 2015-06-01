@@ -313,11 +313,7 @@ var ShumwayCom = {
       },
       closeLocalConnection: function(connectionName) {
         connectionName = connectionName + '';
-        if (!_getLocalConnection(connectionName)) {
-          return -1; // LocalConnectionCloseResult.NotConnected
-        }
-        delete localConnectionsRegistry[connectionName];
-        return 0; // LocalConnectionCloseResult.Success
+        return localConnectionService.closeLocalConnection(connectionName);
       },
       sendLocalConnectionMessage: function(connectionName, methodName, argsBuffer, sender,
                                            senderURL) {
