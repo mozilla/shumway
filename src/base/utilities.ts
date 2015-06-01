@@ -3615,6 +3615,7 @@ module Shumway {
   }
 
   export enum LocalConnectionConnectResult {
+    InvalidCallback = -3,
     AlreadyTaken = -2,
     InvalidName = -1,
     Success = 0

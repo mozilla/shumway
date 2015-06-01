@@ -42,16 +42,7 @@ declare var ShumwayCom: {
   setSystemResourceCallback: (callback: (id: number, data: any) => void) => void;
   setSyncMessageCallback: (callback: (data: any) => any) => void;
 
-  createLocalConnection: (connectionName: string,
-                          callback: (methodName: string, argsBuffer: ArrayBuffer) => any
-                         ) => Shumway.LocalConnectionConnectResult;
-  hasLocalConnection: (connectionName: string) => boolean;
-  closeLocalConnection: (connectionName: string) => Shumway.LocalConnectionCloseResult;
-  sendLocalConnectionMessage: (connectionName: string, methodName: string,
-                               argsBuffer: ArrayBuffer, sender: Shumway.ILocalConnectionSender,
-                               senderURL: string) => void;
-  allowDomainsForLocalConnection: (connectionName: string, domains: string[],
-                                   secure: boolean) => void;
+  getLocalConnectionService: () => LocalConnectionService;
 };
 
 interface SpecialStorage {
@@ -64,6 +55,19 @@ interface SpecialInflate {
   setDataCallback(callback: (data: Uint8Array) => void): void;
   push(data: Uint8Array);
   close();
+}
+
+interface LocalConnectionService {
+  createLocalConnection: (connectionName: string,
+                          callback: (methodName: string, argsBuffer: ArrayBuffer) => any
+                         ) => Shumway.LocalConnectionConnectResult;
+  hasLocalConnection: (connectionName: string) => boolean;
+  closeLocalConnection: (connectionName: string) => Shumway.LocalConnectionCloseResult;
+  sendLocalConnectionMessage: (connectionName: string, methodName: string,
+                               argsBuffer: ArrayBuffer, sender: Shumway.ILocalConnectionSender,
+                               senderURL: string) => void;
+  allowDomainsForLocalConnection: (connectionName: string, domains: string[],
+                                   secure: boolean) => void;
 }
 
 interface RtmpSocket {

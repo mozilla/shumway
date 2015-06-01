@@ -380,7 +380,8 @@ module Shumway.Player {
           return e;
         }
       }
-      var result = ShumwayCom.createLocalConnection(connectionName, callback);
+      var result = ShumwayCom.getLocalConnectionService().createLocalConnection(connectionName,
+                                                                                callback);
       if (result !== LocalConnectionConnectResult.Success) {
         return result;
       }
@@ -393,19 +394,20 @@ module Shumway.Player {
       if (this._localConnections[connectionName] !== receiver) {
         return LocalConnectionCloseResult.NotConnected;
       }
-      ShumwayCom.closeLocalConnection(connectionName);
+      ShumwayCom.getLocalConnectionService().closeLocalConnection(connectionName);
       delete this._localConnections[connectionName];
       return LocalConnectionCloseResult.Success;
     }
 
     hasConnection(connectionName: string): boolean {
-      return ShumwayCom.hasLocalConnection(connectionName);
+      return ShumwayCom.getLocalConnectionService().hasLocalConnection(connectionName);
     }
 
     _sendMessage(connectionName: string, methodName: string, argsBuffer: ArrayBuffer,
                  sender: ILocalConnectionSender, senderURL: string) {
-      ShumwayCom.sendLocalConnectionMessage(connectionName, methodName, argsBuffer, sender,
-                                            senderURL);
+      ShumwayCom.getLocalConnectionService().sendLocalConnectionMessage(connectionName, methodName,
+                                                                        argsBuffer, sender,
+                                                                        senderURL);
     }
 
     allowDomains(connectionName: string, receiver: ILocalConnectionReceiver, domains: string[],
@@ -415,7 +417,8 @@ module Shumway.Player {
         console.warn('Trying to allow domains for invalid connection ' + connectionName);
         return;
       }
-      ShumwayCom.allowDomainsForLocalConnection(connectionName, domains, secure);
+      ShumwayCom.getLocalConnectionService().allowDomainsForLocalConnection(connectionName, domains,
+                                                                            secure);
     }
   }
 

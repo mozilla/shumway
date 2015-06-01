@@ -296,83 +296,16 @@ var ShumwayCom = {
         }
         onSystemResourceCallback = callback;
       },
-      createLocalConnection: function(connectionName, callback) {
-        if (typeof connectionName !== 'string') {
-          return -1; // LocalConnectionConnectResult.InvalidName
-        }
-        if (callback !== null && typeof callback !== 'function') {
-          return -3;
-        }
-        var environment = callbacks.getEnvironment();
-        return localConnectionService.createLocalConnection(environment.swfUrl, connectionName,
-                                                            callback);
-      },
-      hasLocalConnection: function(connectionName) {
-        connectionName = connectionName + '';
-        return localConnectionService.hasLocalConnection(connectionName);
-      },
-      closeLocalConnection: function(connectionName) {
-        connectionName = connectionName + '';
-        return localConnectionService.closeLocalConnection(connectionName);
-      },
-      sendLocalConnectionMessage: function(connectionName, methodName, argsBuffer, sender,
-                                           senderURL) {
-        connectionName = connectionName + '';
-        methodName = methodName + '';
-        senderURL = senderURL + '';
-        // TODO: sanitize argsBuffer argument.
 
-        var senderDomain;
-        try {
-          var parsedURL = NetUtil.newURI(senderURL);
-          senderDomain = parsedURL.host;
-        } catch (e) {
-          // The sender URL should always be valid. If it's not, warn and ignore the message.
-          log('Warning: Invalid senderURL encountered while sending LocalConnection message.');
-          return;
+      getLocalConnectionService: function() {
+        if (!wrappedLocalConnectionService) {
+          wrappedLocalConnectionService = new LocalConnectionService(content,
+                                                                     callbacks.getEnvironment());
         }
-
-        localConnectionService.sendLocalConnectionMessage(connectionName, methodName, argsBuffer,
-                                                          senderDomain);
-
-      },
-      allowDomainsForLocalConnection: function(connectionName, domains, secure) {
-        // TODO: activate this and use the whitelisted domains in sendLocalConnectionMessage.
-        //var connection = _getLocalConnection(connectionName);
-        //if (!connection) {
-        //  return;
-        //}
-        //try {
-        //  domains = Components.utils.cloneInto(domains, connection);
-        //} catch (e) {
-        //  log('error in allowDomainsForLocalConnection: ' + e);
-        //  return;
-        //}
-        //function validateDomain(domain) {
-        //  if (typeof domain !== 'string') {
-        //    return false;
-        //  }
-        //  if (domain === '*') {
-        //    return true;
-        //  }
-        //  try {
-        //    var uri = NetUtil.newURI('http://' + domain);
-        //    return uri.host === domain;
-        //  } catch (e) {
-        //    return false;
-        //  }
-        //}
-        //if (!Array.isArray(domains) || !domains.every(validateDomain)) {
-        //  return;
-        //}
-        //var allowedDomains = secure ?
-        //                     connection.allowedSecureDomains :
-        //                     connection.allowedInsecureDomains;
-        //domains.forEach(domain => allowedDomains[domain] = true);
+        return wrappedLocalConnectionService;
       }
     };
 
-    var localConnectionService = new LocalConnectionService();
 
     // Exposing createSpecialInflate function for DEFLATE stream decoding using
     // Gecko API.
@@ -396,6 +329,8 @@ var ShumwayCom = {
     var onSystemResourceCallback = null;
     var onExternalCallback = null;
     var onLoadFileCallback = null;
+
+    var wrappedLocalConnectionService = null;
 
     hooks.onLoadFileCallback = function (arg) {
       if (onLoadFileCallback) {
