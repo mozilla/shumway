@@ -118,8 +118,6 @@ function sanitizeExternalComArgs(args) {
   return request;
 }
 
-
-
 var cloneIntoFromContent = (function () {
   // waiveXrays are used due to bug 1150771, checking if we are affected
   // TODO remove workaround after Firefox 40 is released (2015-08-11)

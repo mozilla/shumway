@@ -231,12 +231,8 @@ module Shumway.Player {
    * This class brings everything together. Loads the swf, runs the event loop and
    * synchronizes the frame tree with the display list.
    */
-  export class Player implements IBitmapDataSerializer,
-                                 IFSCommandListener,
-                                 IVideoElementService,
-                                 IAssetResolver,
-                                 IRootElementService,
-                                 ICrossDomainSWFLoadingWhitelist {
+  export class Player implements IBitmapDataSerializer, IFSCommandListener, IVideoElementService,
+                                 IAssetResolver, IRootElementService, ICrossDomainSWFLoadingWhitelist {
     public sec: ISecurityDomain;
 
     _stage: flash.display.Stage;

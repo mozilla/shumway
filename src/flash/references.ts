@@ -61,7 +61,7 @@
 // ///<reference path='events/DataEvent.ts' />
 ///<reference path='events/TextEvent.ts' />
 ///<reference path='events/ErrorEvent.ts' />
- ///<reference path='events/AsyncErrorEvent.ts' />
+///<reference path='events/AsyncErrorEvent.ts' />
 // ///<reference path='events/FocusEvent.ts' />
 // ///<reference path='events/FullScreenEvent.ts' />
 ///<reference path='events/GameInputEvent.ts' />
@@ -88,7 +88,7 @@
 // ///<reference path='events/SoftKeyboardTrigger.ts' />
 // ///<reference path='events/StageVideoAvailabilityEvent.ts' />
 // ///<reference path='events/StageVideoEvent.ts' />
- ///<reference path='events/StatusEvent.ts' />
+///<reference path='events/StatusEvent.ts' />
 // ///<reference path='events/SyncEvent.ts' />
 // ///<reference path='events/ThrottleEvent.ts' />
 // ///<reference path='events/ThrottleType.ts' />
