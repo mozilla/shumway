@@ -216,17 +216,20 @@ module Shumway.ArrayUtilities {
       return this._u8[this._position++];
     }
 
-    readBytes(bytes: DataBuffer, offset: number /*uint*/ = 0, length: number /*uint*/ = 0): void {
+    readBytes(bytes: DataBuffer, offset?: number /*uint*/, length?: number /*uint*/): void {
       var position = this._position;
-      if (!offset) {
-        offset = 0;
-      }
-      if (!length) {
+      offset = offset >>> 0;
+      length = length >>> 0;
+      if (length === 0) {
         length = this._length - position;
       }
       if (position + length > this._length) {
         release || assert((<any>this).sec);
         (<any>this).sec.throwError('flash.errors.EOFError', Errors.EOFError);
+      }
+      if (offset + length > 0xFFFFFFFF) {
+        release || assert((<any>this).sec);
+        (<any>this).sec.throwError('RangeError', Errors.ParamRangeError);
       }
       if (bytes.length < offset + length) {
         bytes._ensureCapacity(offset + length);
