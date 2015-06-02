@@ -140,107 +140,139 @@ var ShumwayCom = {
     // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
     // up Xray wrappers.
     var wrapped = {
-      enableDebug: function enableDebug() {
+      enableDebug: function () {
         callbacks.enableDebug()
       },
 
-      setFullscreen: function setFullscreen(value) {
-        value = !!value;
-        callbacks.sendMessage('setFullscreen', value, false);
-      },
-
-      fallback: function fallback() {
+      fallback: function () {
         callbacks.sendMessage('fallback', null, false);
       },
 
-      getSettings: function getSettings() {
+      getSettings: function () {
         return Components.utils.cloneInto(
           callbacks.sendMessage('getSettings', null, true), content);
       },
 
-      getPluginParams: function getPluginParams() {
+      getPluginParams: function () {
         return Components.utils.cloneInto(
           callbacks.sendMessage('getPluginParams', null, true), content);
       },
 
-      reportIssue: function reportIssue() {
+      reportIssue: function () {
         callbacks.sendMessage('reportIssue', null, false);
       },
 
-      reportTelemetry: function reportTelemetry(args) {
+      reportTelemetry: function (args) {
         var request = sanitizeTelemetryArgs(args);
         callbacks.sendMessage('reportTelemetry', request, false);
       },
 
-      userInput: function userInput() {
-        callbacks.sendMessage('userInput', null, true);
+      setupGfxComBridge: function (gfxWindow) {
+        // Creates ShumwayCom adapter for the gfx iframe exposing only subset
+        // of the privileged function. Removing Xrays to setup the ShumwayCom
+        // property and for usage as a sandbox for cloneInto operations.
+        var gfxContent = gfxWindow.contentWindow.wrappedJSObject;
+        ShumwayCom.createGfxAdapter(gfxContent, callbacks, hooks);
       },
 
-      setupComBridge: function setupComBridge(playerWindow) {
-        // postSyncMessage helper function to relay messages from the secondary
-        // window to the primary one.
-        function postSyncMessage(msg) {
-          if (onSyncMessageCallback) {
-            // the msg came from other content window
-            var reclonedMsg = cloneIntoFromContent(msg, content);
-            var result = onSyncMessageCallback(reclonedMsg);
-            // the result will be sent later to other content window
-            return result;
-          }
-        }
-
-        // Creates secondary ShumwayCom adapter.
+      setupPlayerComBridge: function (playerWindow) {
+        // Creates ShumwayCom adapter for the player iframe exposing only subset
+        // of the privileged function. Removing Xrays to setup the ShumwayCom
+        // property and for usage as a sandbox for cloneInto operations.
         var playerContent = playerWindow.contentWindow.wrappedJSObject;
-        ShumwayCom.createPlayerAdapter(playerContent, postSyncMessage, callbacks, hooks);
-      },
-
-      setSyncMessageCallback: function (callback) {
-        if (callback !== null && typeof callback !== 'function') {
-          return;
-        }
-        onSyncMessageCallback = callback;
+        ShumwayCom.createPlayerAdapter(playerContent, callbacks, hooks);
       }
     };
-
-    var onSyncMessageCallback = null;
 
     var shumwayComAdapter = Components.utils.cloneInto(wrapped, content, {cloneFunctions:true});
     content.ShumwayCom = shumwayComAdapter;
   },
 
-  createPlayerAdapter: function (content, postSyncMessage, callbacks, hooks) {
+  createGfxAdapter: function (content, callbacks, hooks) {
     // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
     // up Xray wrappers.
     var wrapped = {
-      externalCom: function externalCom(args) {
+      userInput: function () {
+        callbacks.sendMessage('userInput', null, true);
+      },
+
+      setFullscreen: function (value) {
+        value = !!value;
+        callbacks.sendMessage('setFullscreen', value, false);
+      },
+
+      reportTelemetry: function (args) {
+        var request = sanitizeTelemetryArgs(args);
+        callbacks.sendMessage('reportTelemetry', request, false);
+      },
+
+      postAsyncMessage: function (msg) {
+        if (hooks.onPlayerAsyncMessageCallback) {
+          hooks.onPlayerAsyncMessageCallback(msg);
+        }
+      },
+
+      setSyncMessageCallback: function (callback) {
+        if (typeof callback !== 'function') {
+          log('error: attempt to set non-callable as callback in setSyncMessageCallback');
+          return;
+        }
+        hooks.onGfxSyncMessageCallback = function (msg, sandbox) {
+          var reclonedMsg = cloneIntoFromContent(msg, content);
+          var result = callback(reclonedMsg);
+          return cloneIntoFromContent(result, sandbox);
+        };
+      },
+
+      setAsyncMessageCallback: function (callback) {
+        if (typeof callback !== 'function') {
+          log('error: attempt to set non-callable as callback in setAsyncMessageCallback');
+          return;
+        }
+        hooks.onGfxAsyncMessageCallback = function (msg) {
+          var reclonedMsg = cloneIntoFromContent(msg, content);
+          callback(reclonedMsg);
+        };
+      }
+    };
+
+    var shumwayComAdapter = Components.utils.cloneInto(wrapped, content, {cloneFunctions:true});
+    content.ShumwayCom = shumwayComAdapter;
+  },
+
+  createPlayerAdapter: function (content, callbacks, hooks) {
+    // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
+    // up Xray wrappers.
+    var wrapped = {
+      externalCom: function (args) {
         var request = sanitizeExternalComArgs(args);
         var result = String(callbacks.sendMessage('externalCom', request, true));
         return result;
       },
 
-      loadFile: function loadFile(args) {
+      loadFile: function (args) {
         var request = sanitizeLoadFileArgs(args);
         callbacks.sendMessage('loadFile', request, false);
       },
 
-      abortLoad: function abortLoad(sessionId) {
+      abortLoad: function (sessionId) {
         sessionId = sessionId|0;
         callbacks.sendMessage('abortLoad', sessionId, false);
       },
 
-      reportTelemetry: function reportTelemetry(args) {
+      reportTelemetry: function (args) {
         var request = sanitizeTelemetryArgs(args);
         callbacks.sendMessage('reportTelemetry', request, false);
       },
 
-      setClipboard: function setClipboard(args) {
+      setClipboard: function (args) {
         if (typeof args !== 'string') {
           return; // ignore non-string argument
         }
         callbacks.sendMessage('setClipboard', args, false);
       },
 
-      navigateTo: function navigateTo(args) {
+      navigateTo: function (args) {
         var request = {
           url: String(args.url || ''),
           target: String(args.target || '')
@@ -248,7 +280,7 @@ var ShumwayCom = {
         callbacks.sendMessage('navigateTo', request, false);
       },
 
-      loadSystemResource: function loadSystemResource(id) {
+      loadSystemResource: function (id) {
         loadShumwaySystemResource(id).then(function (data) {
           if (onSystemResourceCallback) {
             onSystemResourceCallback(id, Components.utils.cloneInto(data, content));
@@ -256,9 +288,29 @@ var ShumwayCom = {
         });
       },
 
-      postSyncMessage: function (msg) {
-        var result = postSyncMessage(msg);
-        return cloneIntoFromContent(result, content)
+      sendSyncMessage: function (msg) {
+        var result;
+        if (hooks.onGfxSyncMessageCallback) {
+          result = hooks.onGfxSyncMessageCallback(msg, content);
+        }
+        return result;
+      },
+
+      postAsyncMessage: function (msg) {
+        if (hooks.onGfxAsyncMessageCallback) {
+          hooks.onGfxAsyncMessageCallback(msg);
+        }
+      },
+
+      setAsyncMessageCallback: function (callback) {
+        if (typeof callback !== 'function') {
+          log('error: attempt to set non-callable as callback in setAsyncMessageCallback');
+          return;
+        }
+        hooks.onPlayerAsyncMessageCallback = function (msg) {
+          var reclonedMsg = cloneIntoFromContent(msg, content);
+          callback(reclonedMsg);
+        };
       },
 
       createSpecialStorage: function () {

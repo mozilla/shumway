@@ -38,8 +38,9 @@ function createEasel(backgroundColor) {
 }
 
 var easelHost;
-function createEaselHost(playerWindow) {
-  easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWindow, window);
+function createEaselHost() {
+  var peer = new Shumway.Remoting.ShumwayComTransportPeer();
+  easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, peer);
   return easelHost;
 }
 
@@ -47,6 +48,75 @@ function setHudVisible(visible) {
   Shumway.GFX.hud.value = !!visible;
 }
 
-Object.defineProperty(window, 'ShumwayCom', {
-  get: function() { return parent.ShumwayCom; }
-});
+function fallback() {
+  parent.postMessage({callback: 'fallback'}, '*');
+}
+
+function showURL() {
+  parent.postMessage({callback: 'showURL'}, '*' );
+}
+
+function showInInspector() {
+  parent.postMessage({callback: 'showInInspector'}, '*');
+}
+
+function reportIssue() {
+  parent.postMessage({callback: 'reportIssue'}, '*');
+}
+
+function showAbout() {
+  parent.postMessage({callback: 'showAbout'}, '*');
+}
+
+function enableDebug() {
+  parent.postMessage({callback: 'enableDebug'}, '*');
+}
+
+function prepareUI(params) {
+  if (params.isOverlay) {
+    var fallbackMenu = document.getElementById('fallbackMenu');
+    fallbackMenu.removeAttribute('hidden');
+    fallbackMenu.addEventListener('click', fallback);
+  }
+  document.getElementById('showURLMenu').addEventListener('click', showURL);
+  document.getElementById('inspectorMenu').addEventListener('click', showInInspector);
+  document.getElementById('reportMenu').addEventListener('click', reportIssue);
+  document.getElementById('aboutMenu').addEventListener('click', showAbout);
+
+  var version = Shumway.version || '';
+  document.getElementById('aboutMenu').label =
+    document.getElementById('aboutMenu').label.replace('%version%', version);
+
+  if (params.isDebuggerEnabled) {
+    document.getElementById('debugMenu').addEventListener('click', enableDebug);
+  } else {
+    document.getElementById('debugMenu').remove();
+  }
+
+  setHudVisible(params.isHudOn);
+
+  createEasel(params.backgroundColor);
+  createEaselHost();
+
+  var displayParameters = easel.getDisplayParameters();
+  window.parent.postMessage({
+    callback: 'displayParameters',
+    params: displayParameters
+  }, '*');
+}
+
+window.addEventListener('message', function onWindowMessage(e) {
+  var data = e.data;
+  if (typeof data !== 'object' || data === null) {
+    console.error('Unexpected message for gfx frame.');
+    return;
+  }
+  switch (data.type) {
+    case "prepareUI":
+      prepareUI(data.params);
+      break;
+    default:
+      console.error('Unexpected message for gfx frame: ' + args.callback);
+      break;
+  }
+}, true);

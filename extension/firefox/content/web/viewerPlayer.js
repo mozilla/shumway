@@ -18,7 +18,7 @@ window.print = function(msg) {
   console.log(msg);
 };
 
-function runSwfPlayer(flashParams, settings, gfxWindow) {
+function runSwfPlayer(flashParams, settings) {
   console.info('Time from init start to SWF player start: ' + (Date.now() - flashParams.initStartTime));
   if (settings) {
     Shumway.Settings.setSettings(settings);
@@ -34,7 +34,8 @@ function runSwfPlayer(flashParams, settings, gfxWindow) {
 
   Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal).then(function (securityDomain) {
     function runSWF(file, buffer, baseUrl) {
-      var gfxService = new Shumway.Player.Window.WindowGFXService(securityDomain, window, gfxWindow);
+      var peer = new Shumway.Remoting.ShumwayComTransportPeer();
+      var gfxService = new Shumway.Player.Window.WindowGFXService(securityDomain, peer);
       var player = new Shumway.Player.Player(securityDomain, gfxService, flashParams.env);
       player.defaultStageColor = flashParams.bgcolor;
       player.movieParams = flashParams.movieParams;
@@ -81,6 +82,7 @@ function playerStarted() {
 window.addEventListener('message', function onWindowMessage(e) {
   var data = e.data;
   if (typeof data !== 'object' || data === null) {
+    console.error('Unexpected message for player frame.');
     return;
   }
   switch (data.type) {
@@ -89,7 +91,10 @@ window.addEventListener('message', function onWindowMessage(e) {
         Shumway.Settings.setSettings(data.settings);
       }
       setupServices();
-      runSwfPlayer(data.flashParams, data.settings, window.parent);
+      runSwfPlayer(data.flashParams, data.settings);
+      break;
+    default:
+      console.error('Unexpected message for player frame: ' + args.callback);
       break;
   }
 }, true);
