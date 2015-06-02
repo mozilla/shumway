@@ -175,24 +175,29 @@ module Shumway.ArrayUtilities {
 
     private _ensureCapacity(length: number) {
       var currentBuffer = this._buffer;
-      if (currentBuffer.byteLength < length) {
-        var newLength = Math.max(currentBuffer.byteLength, 1);
-        while (newLength < length) {
-          newLength *= 2;
-        }
-        var newBuffer = DataBuffer._arrayBufferPool.acquire(newLength);
-        var curentView = this._u8;
-        this._buffer = newBuffer;
-        this._resetViews();
-        this._u8.set(curentView);
-        var u8 = this._u8;
-        // Zero out the rest of the buffer, since the arrayBufferPool doesn't
-        // always give us a empty buffer.
-        for (var i = curentView.length; i < u8.length; i++) {
-          u8[i] = 0;
-        }
-        DataBuffer._arrayBufferPool.release(currentBuffer);
+      if (currentBuffer.byteLength >= length) {
+        return;
       }
+      var newLength = Math.max(currentBuffer.byteLength, 1);
+      while (newLength < length) {
+        newLength *= 2;
+      }
+      if (newLength > 0xFFFFFFFF) {
+        release || assert((<any>this).sec);
+        (<any>this).sec.throwError('RangeError', Errors.ParamRangeError);
+      }
+      var newBuffer = DataBuffer._arrayBufferPool.acquire(newLength);
+      var curentView = this._u8;
+      this._buffer = newBuffer;
+      this._resetViews();
+      this._u8.set(curentView);
+      var u8 = this._u8;
+      // Zero out the rest of the buffer, since the arrayBufferPool doesn't
+      // always give us a empty buffer.
+      for (var i = curentView.length; i < u8.length; i++) {
+        u8[i] = 0;
+      }
+      DataBuffer._arrayBufferPool.release(currentBuffer);
     }
 
     clear() {
@@ -226,10 +231,6 @@ module Shumway.ArrayUtilities {
       if (position + length > this._length) {
         release || assert((<any>this).sec);
         (<any>this).sec.throwError('flash.errors.EOFError', Errors.EOFError);
-      }
-      if (offset + length > 0xFFFFFFFF) {
-        release || assert((<any>this).sec);
-        (<any>this).sec.throwError('RangeError', Errors.ParamRangeError);
       }
       if (bytes.length < offset + length) {
         bytes._ensureCapacity(offset + length);
