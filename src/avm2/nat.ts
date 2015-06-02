@@ -1852,7 +1852,14 @@ module Shumway.AVMX.AS {
         }
         pattern = this._parse(source);
       }
-      this.value = new RegExp(pattern, flags);
+      try {
+        this.value = new RegExp(pattern, flags);
+      } catch (e) {
+        // Our pattern pre-parser should have eliminated most errors, but in some cases we can't
+        // meaningfully detect them. If that happens, just catch the error and substitute an
+        // unmatchable pattern here.
+        this.value = new RegExp(ASRegExp.UNMATCHABLE_PATTERN, flags);
+      }
       this._source = source;
     }
 
