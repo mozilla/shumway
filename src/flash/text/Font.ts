@@ -819,23 +819,20 @@ module Shumway.AVMX.AS.flash.text {
       // Font symbols without any glyphs describe device fonts.
       this._fontType = metrics ? FontType.EMBEDDED : FontType.DEVICE;
 
-      var fontProp = Object.getOwnPropertyDescriptor(fontClass._fontsBySymbolId, symbol.syncId + '');
-      // Define mapping or replace lazy getter with value.
-      if (!fontProp || !fontProp.value) {
-        // Keeping resolverProp.configurable === true, some old movies might
-        // have fonts with non-unique names.
-        var resolverProp = {
-          value: this,
-          configurable: true
-        };
-        Object.defineProperty(fontClass._fontsBySymbolId, symbol.id + '', resolverProp);
-        Object.defineProperty(fontClass._fontsByName, symbol.name.toLowerCase() + this._fontStyle, resolverProp);
-        if (this._fontType === FontType.EMBEDDED) {
-          Object.defineProperty(fontClass._fontsByName, 'swffont' + symbol.syncId + this._fontStyle, resolverProp);
-        }
+      // Keeping fontProp.configurable === true, some old movies have fonts with non-unique
+      // names.
+      var fontProp = {
+        value: this,
+        configurable: true
+      };
+      Object.defineProperty(fontClass._fontsBySymbolId, symbol.id + '', fontProp);
+      Object.defineProperty(fontClass._fontsByName, symbol.name.toLowerCase() + this._fontStyle,
+                            fontProp);
+      if (this._fontType === FontType.EMBEDDED) {
+        Object.defineProperty(fontClass._fontsByName, 'swffont' + symbol.syncId + this._fontStyle,
+                              fontProp);
       }
     }
-
     constructor() {
       super();
       if (!this._symbol) {
@@ -931,12 +928,13 @@ module Shumway.AVMX.AS.flash.text {
       Object.defineProperty(this._fontsByName, key, resolverProp);
       Object.defineProperty(this._fontsByName, 'swffont' + syncId + fontMapping.style,
                             resolverProp);
-      Object.defineProperty(this._fontsBySymbolId, syncId + '', resolverProp);
+      Object.defineProperty(this._fontsBySymbolId, fontMapping.id + '', resolverProp);
     }
 
     static resolveFontSymbol(loaderInfo: flash.display.LoaderInfo, id: number, syncId: number,
                              key: string) {
       // Force font resolution and installation in _fontsByName and _fontsBySymbolId.
+      release || assert('get' in Object.getOwnPropertyDescriptor(this._fontsBySymbolId, id + ''));
       var symbol = <FontSymbol>loaderInfo.getSymbolById(id);
       symbol.syncId = syncId;
       release || assert('value' in Object.getOwnPropertyDescriptor(this._fontsBySymbolId, id + ''));
