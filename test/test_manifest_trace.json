@@ -213,10 +213,11 @@
       ],
       "type": "stas"
     },
-    {  "id": "avm1-textfield-html",
+    {  "id": "avm1-textfield",
       "stas": "swfs/trace.stas",
       "filenames": [
-        "swfs/avm1/textfield-html/textfield-html.swf"
+        "swfs/avm1/textfield/textfield-html.swf",
+        "swfs/avm1/textfield/textfield-text-setters.swf"
       ],
       "type": "stas"
     },
