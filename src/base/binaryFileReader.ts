@@ -124,10 +124,17 @@ module Shumway {
         xhr.responseType = 'arraybuffer';
       }
       xhr.onprogress = function (e) {
-        if (isNotProgressive) return;
+        if (isNotProgressive) {
+          return;
+        }
         loaded = e.loaded;
         total = e.total;
-        ondata(new Uint8Array(xhr.response), { loaded: loaded, total: total });
+        var bytes = new Uint8Array(xhr.response);
+        // The event's `loaded` and `total` properties are sometimes lower than the actual
+        // number of loaded bytes. In that case, increase them to that value.
+        loaded = Math.max(loaded, bytes.byteLength);
+        total = Math.max(total, bytes.byteLength);
+        ondata(bytes, { loaded: loaded, total: total });
       };
       xhr.onreadystatechange = function (event) {
         if (xhr.readyState === 2 && onhttpstatus) {
