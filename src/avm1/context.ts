@@ -35,7 +35,6 @@ module Shumway.AVM1 {
   export interface AVM1ExportedSymbol {
     symbolId: number;
     symbolProps;
-    theClass;
   }
 
   export interface IAVM1RuntimeUtils {
@@ -162,6 +161,9 @@ module Shumway.AVM1 {
       }
       this.assetsClasses[symbolId] = theClass;
     }
+    public getSymbolClass(symbolId: number) : AVM1Object {
+      return this.assetsClasses[symbolId] || null;
+    }
     public getAsset(className: string) : AVM1ExportedSymbol {
       className = alCoerceString(this, className);
       if (className === null) {
@@ -182,8 +184,7 @@ module Shumway.AVM1 {
       }
       return {
         symbolId: symbolId,
-        symbolProps: symbol,
-        theClass: this.assetsClasses[symbolId]
+        symbolProps: symbol
       };
     }
 

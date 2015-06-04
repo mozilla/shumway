@@ -602,8 +602,10 @@ module Shumway.AVM1.Lib {
     }
     var sec = context.sec;
     if (sec.flash.display.MovieClip.axClass.axIsType(as3Object)) {
-      if (<flash.display.MovieClip>as3Object._avm1SymbolClass) {
-        return createAVM1NativeObject(<flash.display.MovieClip>as3Object._avm1SymbolClass, as3Object, context);
+      var theClass = as3Object._symbol &&
+                     context.getSymbolClass(as3Object._symbol.data.id);
+      if (theClass) {
+        return createAVM1NativeObject(theClass, as3Object, context);
       }
       return createAVM1NativeObject(context.globals.MovieClip, as3Object, context);
     }
