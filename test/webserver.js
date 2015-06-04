@@ -20,6 +20,8 @@
 'use strict';
 
 var http = require('http');
+var https = require('https');
+var crypto = require('crypto');
 var path = require('path');
 var fs = require('fs');
 
@@ -46,6 +48,7 @@ function WebServer() {
   this.root = '.';
   this.host = 'localhost';
   this.port = 8000;
+  this.port_ssl = 8443;
   this.server = null;
   this.verbose = false;
   this.cacheExpirationTime = 0;
@@ -62,10 +65,26 @@ WebServer.prototype = {
     this.server.listen(this.port, this.host, callback);
     console.log(
       'Server running at http://' + this.host + ':' + this.port + '/');
+
+    if (fs.existsSync(path.join(__dirname, 'ssl', 'cacert.pem'))) {
+      var keys = {
+        key: fs.readFileSync(path.join(__dirname, 'ssl', 'privkey.pem')),
+        cert: fs.readFileSync(path.join(__dirname, 'ssl', 'cacert.pem'))
+      };
+
+      this.server_ssl = https.createServer(keys, this._handler.bind(this));
+      this.server_ssl.listen(this.port_ssl, this.host, callback);
+      console.log(
+        'SSL server running at https://' + this.host + ':' + this.port_ssl + '/');
+    }
   },
   stop: function (callback) {
     this.server.close(callback);
     this.server = null;
+    if (this.server_ssl) {
+      this.server_ssl.close();
+      this.server_ssl = null;
+    }
   },
   _handler: function (req, res) {
     var url = req.url;

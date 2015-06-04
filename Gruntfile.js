@@ -519,6 +519,15 @@ module.exports = function(grunt) {
     var WebServer = require('./test/webserver.js').WebServer;
     var done = this.async();
     var server = new WebServer();
+    if (grunt.option('host')) {
+      server.host = grunt.option('host');
+    }
+    if (grunt.option('port')) {
+      server.port = +grunt.option('port');
+    }
+    if (grunt.option('port_ssl')) {
+      server.port_ssl = +grunt.option('port_ssl');
+    }
     var url = require('url'), fs = require('fs');
     server.hooks['POST'].push(function (req, res) {
       var parsedUrl = url.parse(req.url, true);
