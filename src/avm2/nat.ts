@@ -1841,6 +1841,7 @@ module Shumway.AVMX.AS {
                 // With the x flag set, spaces in the regular expression, will be ignored as part of
                 // the pattern.
                 this._extended = true;
+                break;
               case 'g':
               case 'i':
               case 'm':
