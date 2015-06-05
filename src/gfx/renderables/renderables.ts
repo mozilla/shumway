@@ -1661,13 +1661,19 @@ module Shumway.GFX {
       var lines = this.lines;
       var coords = this._coords;
       coords.position = 0;
+      var font = '';
+      var fillStyle = '';
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
         var runs = line.runs;
         for (var j = 0; j < runs.length; j++) {
           var run = runs[j];
-          context.font = run.font;
-          context.fillStyle = run.fillStyle;
+          if (run.font !== font) {
+            context.font = font = run.font;
+          }
+          if (run.fillStyle !== fillStyle) {
+            context.fillStyle = fillStyle = run.fillStyle;
+          }
           var text = run.text;
           for (var k = 0; k < text.length; k++) {
             var x = coords.readInt() / 20;
@@ -1688,6 +1694,10 @@ module Shumway.GFX {
       var lines = this.lines;
       var scrollV = this._scrollV;
       var scrollY = 0;
+      var font = '';
+      var fillStyle = '';
+      context.textAlign = "left";
+      context.textBaseline = "alphabetic";
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
         var x = line.x;
@@ -1706,13 +1716,15 @@ module Shumway.GFX {
         var runs = line.runs;
         for (var j = 0; j < runs.length; j++) {
           var run = runs[j];
-          context.font = run.font;
-          context.fillStyle = run.fillStyle;
+          if (run.font !== font) {
+            context.font = font = run.font;
+          }
+          if (run.fillStyle !== fillStyle) {
+            context.fillStyle = fillStyle = run.fillStyle;
+          }
           if (run.underline) {
             context.fillRect(x, (y + (line.descent / 2)) | 0, run.width, 1);
           }
-          context.textAlign = "left";
-          context.textBaseline = "alphabetic";
           context.fillText(run.text, x, y);
           x += run.width;
         }
