@@ -1408,7 +1408,7 @@ module Shumway.GFX {
       var maxWidth = 0;
       var maxAscent = 0;
       var maxDescent = 0;
-      var maxLeading = 0;
+      var maxLeading = -0xffffffff;
       var firstAlign = -1;
 
       var finishLine = function () {
@@ -1520,7 +1520,7 @@ module Shumway.GFX {
           if (eof) {
             maxAscent = 0;
             maxDescent = 0;
-            maxLeading = 0;
+            maxLeading = -0xffffffff;
             firstAlign = -1;
             break;
           }
