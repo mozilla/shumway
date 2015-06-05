@@ -202,9 +202,13 @@ module Shumway {
               var color = ColorUtilities.isValidHexColor(attributes.color) ? ColorUtilities.hexToRGB(attributes.color) : textFormat.color;
               var font = attributes.face || textFormat.font;
               var size = isNaN(attributes.size) ? textFormat.size : +attributes.size;
+              var letterSpacing = isNaN(attributes.letterspacing) ? textFormat.letterSpacing : +attributes.letterspacing;
+              var kerning = isNaN(attributes.kerning) ? textFormat.kerning : +attributes.kerning;
               if (color !== textFormat.color ||
                   font !== textFormat.font ||
-                  size !== textFormat.size)
+                  size !== textFormat.size ||
+                  letterSpacing !== textFormat.letterSpacing ||
+                  kerning !== textFormat.kerning)
               {
                 if (!hasStyle) {
                   textFormat = textFormat.clone();
@@ -212,6 +216,8 @@ module Shumway {
                 textFormat.color = color;
                 textFormat.font = font;
                 textFormat.size = size;
+                textFormat.letterSpacing = letterSpacing;
+                textFormat.kerning = kerning;
               }
               break;
             case 'img':

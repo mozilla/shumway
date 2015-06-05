@@ -31,19 +31,25 @@ module Shumway.AVMX.AS.flash.text {
                 leftMargin: Object = null, rightMargin: Object = null, indent: Object = null,
                 leading: Object = null) {
       super();
-      this.font = font;
-      this.size = size;
-      this.color = color;
-      this.bold = bold;
-      this.italic = italic;
-      this.underline = underline;
-      this.url = url;
-      this.target = target;
-      this.align = align;
-      this.leftMargin = leftMargin;
-      this.rightMargin = rightMargin;
-      this.indent = indent;
-      this.leading = leading;
+      this._font = font;
+      this._size = size;
+      this._color = color;
+      this._bold = bold;
+      this._italic = italic;
+      this._underline = underline;
+      this._url = url;
+      this._target = target;
+      this._align = align;
+      this._leftMargin = leftMargin;
+      this._rightMargin = rightMargin;
+      this._indent = indent;
+      this._leading = leading;
+      this._blockIndent = null;
+      this._bullet = null;
+      this._display = TextFormatDisplay.BLOCK;
+      this._kerning = null;
+      this._letterSpacing = null;
+      this._tabStops = null;
     }
 
     private static measureTextField: flash.text.TextField;
@@ -186,7 +192,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set letterSpacing(value: Object) {
-      this._letterSpacing = TextFormat.coerceBoolean(value);
+      this._letterSpacing = TextFormat.coerceNumber(value);
     }
 
     get rightMargin(): Object {
@@ -271,21 +277,28 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     clone(): TextFormat {
-      return new this.sec.flash.text.TextFormat(
-        this.font,
-        this.size,
-        this.color,
-        this.bold,
-        this.italic,
-        this.underline,
-        this.url,
-        this.target,
-        this.align,
-        this.leftMargin,
-        this.rightMargin,
-        this.indent,
-        this.leading
+      var tf = new this.sec.flash.text.TextFormat(
+        this._font,
+        this._size,
+        this._color,
+        this._bold,
+        this._italic,
+        this._underline,
+        this._url,
+        this._target,
+        this._align,
+        this._leftMargin,
+        this._rightMargin,
+        this._indent,
+        this._leading
       );
+      tf._blockIndent = this._blockIndent;
+      tf._bullet = this._bullet;
+      tf._display = this._display;
+      tf._kerning = this._kerning;
+      tf._letterSpacing = this._letterSpacing;
+      tf._tabStops = this._tabStops;
+      return tf;
     }
 
     public equals(other: TextFormat): boolean {

@@ -128,6 +128,8 @@ module Shumway.AVMX.AS.flash.text {
         '',
         TextFormatAlign.LEFT
       );
+      defaultTextFormat.letterSpacing = 0;
+      defaultTextFormat.kerning = 0;
       this._textContent = new Shumway.TextContent(this.sec, defaultTextFormat);
     }
 

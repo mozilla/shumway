@@ -1238,12 +1238,13 @@ module Shumway.GFX {
       return TextLine._measureContext;
     }
 
-    addRun(font: string, fillStyle: string, text: string, underline: boolean) {
+    addRun(font: string, fillStyle: string, text: string,
+           letterSpacing: number, underline: boolean) {
       if (text) {
         var measureContext = TextLine._getMeasureContext();
         measureContext.font = font;
-        var width = measureContext.measureText(text).width | 0;
-        this.runs.push(new TextRun(font, fillStyle, text, width, underline));
+        var width = measureText(measureContext, text, letterSpacing);
+        this.runs.push(new TextRun(font, fillStyle, text, width, letterSpacing, underline));
         this.width += width;
       }
     }
@@ -1270,13 +1271,14 @@ module Shumway.GFX {
         for (var j = 0; j < words.length; j++) {
           var word = words[j];
           var chunk = text.substr(offset, word.length + 1);
-          var wordWidth = measureContext.measureText(chunk).width | 0;
+          var letterSpacing = run.letterSpacing;
+          var wordWidth = measureText(measureContext, chunk, letterSpacing);
           if (wordWidth > spaceLeft) {
             do {
               if (run.text) {
                 currentLine.runs.push(run);
                 currentLine.width += run.width;
-                run = new TextRun(run.font, run.fillStyle, '', 0, run.underline);
+                run = new TextRun(run.font, run.fillStyle, '', 0, run.letterSpacing, run.underline);
                 var newLine = new TextLine();
                 newLine.y = (currentLine.y + currentLine.descent + currentLine.leading + currentLine.ascent) | 0;
                 newLine.ascent = currentLine.ascent;
@@ -1294,7 +1296,7 @@ module Shumway.GFX {
                 while (k > 1) {
                   k--;
                   t = chunk.substr(0, k);
-                  w = measureContext.measureText(t).width | 0;
+                  w = measureText(measureContext, t, letterSpacing);
                   if (w <= maxWidth) {
                     break;
                   }
@@ -1302,7 +1304,7 @@ module Shumway.GFX {
                 run.text = t;
                 run.width = w;
                 chunk = chunk.substr(k);
-                wordWidth = measureContext.measureText(chunk).width | 0;
+                wordWidth = measureText(measureContext, chunk, letterSpacing);
               }
             } while (chunk && spaceLeft < 0);
           } else {
@@ -1330,10 +1332,20 @@ module Shumway.GFX {
                 public fillStyle: string = '',
                 public text: string = '',
                 public width: number = 0,
+                public letterSpacing: number = 0,
                 public underline: boolean = false)
     {
 
     }
+  }
+  
+  function measureText(context: CanvasRenderingContext2D, text: string,
+                       letterSpacing: number): number {
+    var width = context.measureText(text).width | 0;
+    if (letterSpacing > 0) {
+      width += text.length * letterSpacing;
+    }
+    return width;
   }
 
   export class RenderableText extends Renderable {
@@ -1513,7 +1525,7 @@ module Shumway.GFX {
               continue;
             }
           }
-          currentLine.addRun(font, fillStyle, text, underline);
+          currentLine.addRun(font, fillStyle, text, letterSpacing, underline);
           finishLine();
           text = '';
 
@@ -1529,7 +1541,7 @@ module Shumway.GFX {
             i++;
           }
         }
-        currentLine.addRun(font, fillStyle, text, underline);
+        currentLine.addRun(font, fillStyle, text, letterSpacing, underline);
       }
 
       // Append an additional empty line if we find a line break character at the end of the text.
@@ -1725,8 +1737,18 @@ module Shumway.GFX {
           if (run.underline) {
             context.fillRect(x, (y + (line.descent / 2)) | 0, run.width, 1);
           }
-          context.fillText(run.text, x, y);
-          x += run.width;
+          context.textAlign = "left";
+          context.textBaseline = "alphabetic";
+          if (run.letterSpacing > 0) {
+            var text = run.text;
+            for (var k = 0; k < text.length; k++) {
+              context.fillText(text[k], x, y);
+              x += measureText(context, text[k], run.letterSpacing);
+            }
+          } else {
+            context.fillText(run.text, x, y);
+            x += run.width;
+          }
         }
       }
     }
