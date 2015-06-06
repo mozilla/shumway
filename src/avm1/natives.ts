@@ -1227,32 +1227,160 @@ module Shumway.AVM1.Natives {
           value: this._toString,
           writable: true
         },
-        getDate: {
-          value: this.getDate,
+        toLocaleString: {
+          value: this._toLocaleString,
+          writable: true
+        },
+        toDateString: {
+          value: this.toDateString,
+          writable: true
+        },
+        toTimeString: {
+          value: this.toTimeString,
+          writable: true
+        },
+        toLocaleDateString: {
+          value: this.toLocaleDateString,
+          writable: true
+        },
+        toLocaleTimeString: {
+          value: this.toLocaleTimeString,
+          writable: true
+        },
+        getTime: {
+          value: this.getTime,
           writable: true
         },
         getFullYear: {
           value: this.getFullYear,
           writable: true
         },
-        getHours: {
-          value: this.getHours,
-          writable: true
-        },
-        getMinutes: {
-          value: this.getMinutes,
+        getUTCFullYear: {
+          value: this.getUTCFullYear,
           writable: true
         },
         getMonth: {
           value: this.getMonth,
           writable: true
         },
+        getUTCMonth: {
+          value: this.getUTCMonth,
+          writable: true
+        },
+        getDate: {
+          value: this.getDate,
+          writable: true
+        },
+        getUTCDate: {
+          value: this.getUTCDate,
+          writable: true
+        },
+        getDay: {
+          value: this.getDay,
+          writable: true
+        },
+        getUTCDay: {
+          value: this.getUTCDay,
+          writable: true
+        },
+        getHours: {
+          value: this.getHours,
+          writable: true
+        },
+        getUTCHours: {
+          value: this.getUTCHours,
+          writable: true
+        },
+        getMinutes: {
+          value: this.getMinutes,
+          writable: true
+        },
+        getUTCMinutes: {
+          value: this.getUTCMinutes,
+          writable: true
+        },
         getSeconds: {
           value: this.getSeconds,
           writable: true
         },
-        getTime: {
-          value: this.getTime,
+        getUTCSeconds: {
+          value: this.getUTCSeconds,
+          writable: true
+        },
+        getMilliseconds: {
+          value: this.getMilliseconds,
+          writable: true
+        },
+        getUTCMilliseconds: {
+          value: this.getUTCMilliseconds,
+          writable: true
+        },
+        getTimezoneOffset: {
+          value: this.getTimezoneOffset,
+          writable: true
+        },
+        setTime: {
+          value: this.setTime,
+          writable: true
+        },
+        setMilliseconds: {
+          value: this.setMilliseconds,
+          writable: true
+        },
+        setUTCMilliseconds: {
+          value: this.setUTCMilliseconds,
+          writable: true
+        },
+        setSeconds: {
+          value: this.setSeconds,
+          writable: true
+        },
+        setUTCSeconds: {
+          value: this.setUTCSeconds,
+          writable: true
+        },
+        setMinutes: {
+          value: this.setMinutes,
+          writable: true
+        },
+        setUTCMinutes: {
+          value: this.setUTCMinutes,
+          writable: true
+        },
+        setHours: {
+          value: this.setHours,
+          writable: true
+        },
+        setUTCHours: {
+          value: this.setUTCHours,
+          writable: true
+        },
+        setDate: {
+          value: this.setDate,
+          writable: true
+        },
+        setUTCDate: {
+          value: this.setUTCDate,
+          writable: true
+        },
+        setMonth: {
+          value: this.setMonth,
+          writable: true
+        },
+        setUTCMonth: {
+          value: this.setUTCMonth,
+          writable: true
+        },
+        setFullYear: {
+          value: this.setFullYear,
+          writable: true
+        },
+        setUTCFullYear: {
+          value: this.setUTCFullYear,
+          writable: true
+        },
+        toUTCString: {
+          value: this.toUTCString,
           writable: true
         }
       });
@@ -1268,32 +1396,266 @@ module Shumway.AVM1.Natives {
       return native.value.toString();
     }
 
-    public getDate(): number {
-      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getDate();
+    public _toLocaleString(): string {
+      var native = alEnsureType<AVM1DateNative>(this, AVM1DateNative);
+      return native.value.toLocaleString();
+    }
+
+    public toDateString(): string {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.toDateString();
+    }
+
+    public toTimeString(): string {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.toTimeString();
+    }
+
+    public toLocaleDateString(): string {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.toLocaleDateString();
+    }
+
+    public toLocaleTimeString(): string {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.toLocaleTimeString();
+    }
+
+    public getTime(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getTime();
     }
 
     public getFullYear(): number {
       return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getFullYear();
     }
 
-    public getHours(): number {
-      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getHours();
-    }
-
-    public getMinutes(): number {
-      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getMinutes();
+    public getUTCFullYear(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getUTCFullYear();
     }
 
     public getMonth(): number {
       return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getMonth();
     }
 
+    public getUTCMonth(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getUTCMonth();
+    }
+
+    public getDate(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getDate();
+    }
+
+    public getUTCDate(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getUTCDate();
+    }
+
+    public getDay(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getDay();
+    }
+
+    public getUTCDay(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getUTCDay();
+    }
+
+    public getHours(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getHours();
+    }
+
+    public getUTCHours(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getUTCHours();
+    }
+
+    public getMinutes(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getMinutes();
+    }
+
+    public getUTCMinutes(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getUTCMinutes();
+    }
+
     public getSeconds(): number {
       return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getSeconds();
     }
 
-    public getTime(): number {
-      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getTime();
+    public getUTCSeconds(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getUTCSeconds();
+    }
+
+    public getMilliseconds(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getMilliseconds();
+    }
+
+    public getUTCMilliseconds(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getUTCMilliseconds();
+    }
+
+    public getTimezoneOffset(): number {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.getTimezoneOffset();
+    }
+
+    public setTime(time: number): number {
+      time = alToNumber(this.context, time);
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setTime(time);
+    }
+
+    public setMilliseconds(ms: number): number {
+      ms = alToNumber(this.context, ms);
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setMilliseconds(ms);
+    }
+
+    public setUTCMilliseconds(ms: number): number {
+      ms = alToNumber(this.context, ms);
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setUTCMilliseconds(ms) ;
+    }
+
+    public setSeconds(sec: number, ms?: number): number {
+      sec = alToNumber(this.context, sec);
+      if (arguments.length <= 1) {
+        return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setSeconds(sec);
+      } else {
+        ms = alToNumber(this.context, ms);
+        return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setSeconds(sec, ms);
+      }
+    }
+
+    public setUTCSeconds(sec: number, ms?: number): number {
+      sec = alToNumber(this.context, sec);
+      if (arguments.length <= 1) {
+        return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setUTCSeconds(sec);
+      } else {
+        ms = alToNumber(this.context, ms);
+        return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setUTCSeconds(sec, ms);
+      }
+    }
+
+    public setMinutes(min: number, sec?: number, ms?: number): number {
+      min = alToNumber(this.context, min);
+      if (arguments.length <= 1) {
+        return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setMinutes(min);
+      } else {
+        sec = alToNumber(this.context, sec);
+        if (arguments.length <= 2) {
+          return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setMinutes(min, sec);
+        } else {
+          ms = alToNumber(this.context, ms);
+          return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setMinutes(min, sec, ms);
+        }
+      }
+    }
+
+    public setUTCMinutes(min: number, sec?: number, ms?: number): number {
+      min = alToNumber(this.context, min);
+      if (arguments.length <= 1) {
+        return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setUTCMinutes(min);
+      } else {
+        sec = alToNumber(this.context, sec);
+        if (arguments.length <= 2) {
+          return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setUTCMinutes(min, sec);
+        } else {
+          ms = alToNumber(this.context, ms);
+          return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setUTCMinutes(min, sec, ms);
+        }
+      }
+    }
+
+    public setHours(hour: number, min?: number, sec?: number, ms?: number): number {
+      hour = alToNumber(this.context, hour);
+      if (arguments.length <= 1) {
+        return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setHours(hour);
+      } else {
+        min = alToNumber(this.context, min);
+        if (arguments.length <= 2) {
+          return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setHours(hour, min);
+        } else {
+          sec = alToNumber(this.context, sec);
+          if (arguments.length <= 3) {
+            return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setHours(hour, min, sec);
+          } else {
+            ms = alToNumber(this.context, ms);
+            return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setHours(hour, min, sec, ms);
+          }
+        }
+      }
+    }
+
+    public setUTCHours(hour: number, min?: number, sec?: number, ms?: number): number {
+      hour = alToNumber(this.context, hour);
+      if (arguments.length <= 1) {
+        return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setUTCHours(hour);
+      } else {
+        min = alToNumber(this.context, min);
+        if (arguments.length <= 2) {
+          return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setUTCHours(hour, min);
+        } else {
+          sec = alToNumber(this.context, sec);
+          if (arguments.length <= 3) {
+            return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setUTCHours(hour, min, sec);
+          } else {
+            ms = alToNumber(this.context, ms);
+            return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setUTCHours(hour, min, sec, ms);
+          }
+        }
+      }
+    }
+
+    public setDate(date: number): number {
+      date = alToNumber(this.context, date);
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setDate(date) ;
+    }
+
+    public setUTCDate(date: number): number {
+      date = alToNumber(this.context, date);
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setUTCDate(date) ;
+    }
+
+    public setMonth(month: number, date?: number): number {
+      month = alToNumber(this.context, month);
+      if (arguments.length <= 1) {
+        return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setMonth(month);
+      } else {
+        date = alToNumber(this.context, date);
+        return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setMonth(month, date);
+      }
+    }
+
+    public setUTCMonth(month: number, date?: number): number {
+      month = alToNumber(this.context, month);
+      if (arguments.length <= 1) {
+        return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setUTCMonth(month);
+      } else {
+        date = alToNumber(this.context, date);
+        return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setUTCMonth(month, date);
+      }
+    }
+
+    public setFullYear(year: number, month?: number, date?: number): number {
+      year = alToNumber(this.context, year);
+      if (arguments.length <= 1) {
+        return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setFullYear(year);
+      } else {
+        month = alToNumber(this.context, month);
+        if (arguments.length <= 2) {
+          return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setFullYear(year, month);
+        } else {
+          date = alToNumber(this.context, date);
+          return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setFullYear(year, month, date);
+        }
+      }
+    }
+
+    public setUTCFullYear(year: number, month?: number, date?: number): number {
+      year = alToNumber(this.context, year);
+      if (arguments.length <= 1) {
+        return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setUTCFullYear(year);
+      } else {
+        month = alToNumber(this.context, month);
+        if (arguments.length <= 2) {
+          return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setUTCFullYear(year, month);
+        } else {
+          date = alToNumber(this.context, date);
+          return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.setUTCFullYear(year, month, date);
+        }
+      }
+    }
+
+    public toUTCString(): string {
+      return alEnsureType<AVM1DateNative>(this, AVM1DateNative).value.toUTCString();
     }
   }
 
