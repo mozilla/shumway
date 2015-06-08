@@ -588,14 +588,16 @@ module Shumway {
       var shift = newEndIndex - endIndex;
       for (var i = 0; i < textRuns.length; i++) {
         var run = textRuns[i];
+        var isLast = i >= textRuns.length - 1;
         if (beginIndex < run.endIndex) {
           // Skip all following steps (including adding the current run to the new list of runs) if
           // the inserted text overlaps the current run.
-          if (beginIndex <= run.beginIndex && newEndIndex >= run.endIndex) {
+          if (!isLast && beginIndex <= run.beginIndex && newEndIndex >= run.endIndex) {
             continue;
           }
           var containsBeginIndex = run.containsIndex(beginIndex);
-          var containsEndIndex = run.containsIndex(endIndex);
+          var containsEndIndex = run.containsIndex(endIndex) ||
+                                 (isLast && endIndex >= run.endIndex);
           if (containsBeginIndex && containsEndIndex) {
             // The current run spans over the inserted text.
             if (format) {
@@ -628,7 +630,9 @@ module Shumway {
             run.endIndex += shift;
           }
         }
-        newTextRuns.push(run);
+        if (run.endIndex > run.beginIndex) {
+          newTextRuns.push(run);
+        }
       }
 
       this._plainText = plainText.substring(0, beginIndex) + newText + plainText.substring(endIndex);
