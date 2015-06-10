@@ -31,19 +31,20 @@ module Shumway.AVMX.AS.flash.text {
                 leftMargin: Object = null, rightMargin: Object = null, indent: Object = null,
                 leading: Object = null) {
       super();
-      this._font = font;
-      this._size = size;
-      this._color = color;
-      this._bold = bold;
-      this._italic = italic;
-      this._underline = underline;
-      this._url = url;
-      this._target = target;
-      this._align = align;
-      this._leftMargin = leftMargin;
-      this._rightMargin = rightMargin;
-      this._indent = indent;
-      this._leading = leading;
+      this.font = font;
+      this.size = size;
+      this.color = color;
+      this.bold = bold;
+      this.italic = italic;
+      this.underline = underline;
+      this.url = url;
+      this.target = target;
+      this.align = align;
+      this.leftMargin = leftMargin;
+      this.rightMargin = rightMargin;
+      this.indent = indent;
+      this.leading = leading;
+      
       this._blockIndent = null;
       this._bullet = null;
       this._display = TextFormatDisplay.BLOCK;

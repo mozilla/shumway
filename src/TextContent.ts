@@ -591,7 +591,7 @@ module Shumway {
         var isLast = i >= textRuns.length - 1;
         if (beginIndex < run.endIndex) {
           // Skip all following steps (including adding the current run to the new list of runs) if
-          // the inserted text overlaps the current run.
+          // the inserted text overlaps the current run, which is not the last one.
           if (!isLast && beginIndex <= run.beginIndex && newEndIndex >= run.endIndex) {
             continue;
           }
@@ -630,6 +630,7 @@ module Shumway {
             run.endIndex += shift;
           }
         }
+        // Ignore empty runs.
         if (run.endIndex > run.beginIndex) {
           newTextRuns.push(run);
         }
