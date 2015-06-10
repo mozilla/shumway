@@ -202,9 +202,13 @@ module Shumway {
               var color = ColorUtilities.isValidHexColor(attributes.color) ? ColorUtilities.hexToRGB(attributes.color) : textFormat.color;
               var font = attributes.face || textFormat.font;
               var size = isNaN(attributes.size) ? textFormat.size : +attributes.size;
+              var letterSpacing = isNaN(attributes.letterspacing) ? textFormat.letterSpacing : +attributes.letterspacing;
+              var kerning = isNaN(attributes.kerning) ? textFormat.kerning : +attributes.kerning;
               if (color !== textFormat.color ||
                   font !== textFormat.font ||
-                  size !== textFormat.size)
+                  size !== textFormat.size ||
+                  letterSpacing !== textFormat.letterSpacing ||
+                  kerning !== textFormat.kerning)
               {
                 if (!hasStyle) {
                   textFormat = textFormat.clone();
@@ -212,6 +216,8 @@ module Shumway {
                 textFormat.color = color;
                 textFormat.font = font;
                 textFormat.size = size;
+                textFormat.letterSpacing = letterSpacing;
+                textFormat.kerning = kerning;
               }
               break;
             case 'img':
@@ -582,14 +588,16 @@ module Shumway {
       var shift = newEndIndex - endIndex;
       for (var i = 0; i < textRuns.length; i++) {
         var run = textRuns[i];
+        var isLast = i >= textRuns.length - 1;
         if (beginIndex < run.endIndex) {
           // Skip all following steps (including adding the current run to the new list of runs) if
-          // the inserted text overlaps the current run.
-          if (beginIndex <= run.beginIndex && newEndIndex >= run.endIndex) {
+          // the inserted text overlaps the current run, which is not the last one.
+          if (!isLast && beginIndex <= run.beginIndex && newEndIndex >= run.endIndex) {
             continue;
           }
           var containsBeginIndex = run.containsIndex(beginIndex);
-          var containsEndIndex = run.containsIndex(endIndex);
+          var containsEndIndex = run.containsIndex(endIndex) ||
+                                 (isLast && endIndex >= run.endIndex);
           if (containsBeginIndex && containsEndIndex) {
             // The current run spans over the inserted text.
             if (format) {
@@ -622,7 +630,10 @@ module Shumway {
             run.endIndex += shift;
           }
         }
-        newTextRuns.push(run);
+        // Ignore empty runs.
+        if (run.endIndex > run.beginIndex) {
+          newTextRuns.push(run);
+        }
       }
 
       this._plainText = plainText.substring(0, beginIndex) + newText + plainText.substring(endIndex);
