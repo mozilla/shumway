@@ -740,7 +740,8 @@ module Shumway.AVM1.Lib {
       var actionsData;
       if (swfEvent.actionsBlock) {
         actionsData = context.actionsDataFactory.createActionsData(
-          swfEvent.actionsBlock, 's' + placeObjectTag.symbolId + 'e' + j);
+          swfEvent.actionsBlock,
+          's' + placeObjectTag.symbolId + 'd' + placeObjectTag.depth + 'e' + j);
         swfEvent.actionsBlock = null;
         swfEvent.compiled = actionsData;
       } else {

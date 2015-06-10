@@ -48,6 +48,7 @@ module Shumway.SWF.Parser.LowLevel {
   function placeObject($bytes, $stream, $, swfVersion, tagCode, tagEnd) {
     var flags;
     $ || ($ = {});
+    $.actionBlocksPrecedence = $stream.pos;
     if (tagCode === SwfTag.CODE_PLACE_OBJECT) {
       $.symbolId = readUi16($bytes, $stream);
       $.depth = readUi16($bytes, $stream);
