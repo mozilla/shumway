@@ -81,7 +81,19 @@ module Shumway.AVMX.AS.flash.external {
 
       this._addCallback(functionName, function (request: string, args: any[]) {
         var returnAsJS: Boolean = true;
-        if (args == null) {
+        if (args) {
+          var wrappedArgs = [];
+          for (var i = 0; i < args.length; i++) {
+            var arg = args[i];
+            // Objects have to be converted into proper AS objects in the current security domain.
+            if (typeof arg === 'object' && arg) {
+              wrappedArgs.push(self.sec.createObjectFromJS(arg, true));
+            } else {
+              wrappedArgs.push(arg);
+            }
+          }
+          args = wrappedArgs;
+        } else {
           var xml = this.convertToXML(request);
           var returnTypeAttr = xml.attribute('returntype');
           returnAsJS = returnTypeAttr && returnTypeAttr._value == 'javascript';
