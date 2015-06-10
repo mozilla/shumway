@@ -120,10 +120,7 @@ module Shumway.AVMX.AS.flash.display {
           }
           if (child.hasEventListener(events.Event.AVM1_LOAD)) {
             child._setFlags(DisplayObjectFlags.NeedsLoadEvent);
-            if (child._hasAnyFlags(DisplayObjectFlags.HasFrameScriptPending |
-                                   DisplayObjectFlags.ContainsFrameScriptPendingChildren)) {
-              this._setFlags(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
-            }
+            this._propagateFlagsUp(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
           }
         }
 
