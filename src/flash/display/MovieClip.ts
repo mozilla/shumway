@@ -116,8 +116,26 @@ module Shumway.AVMX.AS.flash.display {
 
   export interface FrameScript {
     (any?): any;
-    precedence?: number;
+    precedence?: number[];
     context?: MovieClip;
+  }
+
+  function compareFrameScripts(a: FrameScript, b: FrameScript): number {
+    if (!a.precedence) {
+      return !b.precedence ? 0 : -1;
+    } else if (!b.precedence) {
+      return 1;
+    }
+    var i = 0;
+    while (i < a.precedence.length && i < b.precedence.length &&
+    a.precedence[i] === b.precedence[i]) {
+      i++;
+    }
+    if (i >= a.precedence.length) {
+      return a.precedence.length === b.precedence.length ? 0 : -1;
+    } else {
+      return i >= b.precedence.length ? 1 : a.precedence[i] - b.precedence[i];
+    }
   }
   
   function callFrameScripts(frameScripts: FrameScript [], context: MovieClip) {
@@ -187,7 +205,7 @@ module Shumway.AVMX.AS.flash.display {
             var handler = function () {
               this.dispatchEvent(eventClass.getInstance(events.Event.AVM1_LOAD));
             }.bind(instance);
-            handler.precedence = instance._symbol.data.actionBlocksPrecedence;
+            handler.precedence = instance._getScriptPrecedence();
             handler.context = instance;
             unsortedScripts.push(handler);
             continue;
@@ -221,9 +239,7 @@ module Shumway.AVMX.AS.flash.display {
       }
       
       if (unsortedScripts.length) {
-        unsortedScripts.sort(function (a: FrameScript, b: FrameScript) {
-          return a.precedence - b.precedence;
-        });
+        unsortedScripts.sort(compareFrameScripts);
         callFrameScripts(unsortedScripts, null);
       }
       
@@ -293,7 +309,7 @@ module Shumway.AVMX.AS.flash.display {
           var as2MovieClip = AVM1.Lib.getAVM1Object(this, avm1Context);
           avm1Context.executeActions(actionsData, as2MovieClip);
         }.bind(this, actionsData);
-        script.precedence = actionsBlock.precedence;
+        script.precedence = this._getScriptPrecedence().concat(actionsBlock.precedence);
         this.addFrameScript(frameIndex, script);
       }
     }

@@ -2087,6 +2087,22 @@ module Shumway.AVMX.AS.flash.display {
       }
     }
 
+    /**
+     * Returns script precedence sequence based on placeObjectTag. Creates every
+     * time a new array, so it's safe to modify it.
+     * @private
+     */
+    _getScriptPrecedence(): number[] {
+      if (!this._parent) {
+        return [];
+      }
+      var result = this._parent._getScriptPrecedence();
+      if (this._placeObjectTag) {
+        result.push(this._placeObjectTag.actionBlocksPrecedence);
+      }
+      return result;
+    }
+
     get accessibilityProperties(): flash.accessibility.AccessibilityProperties {
       return this._accessibilityProperties;
     }
