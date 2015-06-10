@@ -475,7 +475,12 @@ module Shumway.AVMX.AS.flash.display {
         this._stage._enqueueFrameScripts();
         leaveTimeline();
         enterTimeline("DisplayObject.RunFrameScript");
-        this.sec.flash.display.MovieClip.axClass.runFrameScripts();
+        var movieClipClass = this.sec.flash.display.MovieClip.axClass;
+        if (movieClipClass.frameNavigationModel === FrameNavigationModel.SWF1) {
+          movieClipClass.runAvm1FrameScripts();
+        } else {
+          movieClipClass.runFrameScripts();
+        }
         leaveTimeline();
         // Step 6: Dispatch EXIT_FRAME.
         enterTimeline("DisplayObject.ExitFrame");

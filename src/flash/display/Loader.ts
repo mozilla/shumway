@@ -717,12 +717,6 @@ module Shumway.AVMX.AS.flash.display {
       }
 
       var avm1Context = this._contentLoaderInfo._avm1Context;
-
-      root.addEventListener('frameConstructed',
-                            avm1Context.flushPendingScripts.bind(avm1Context),
-                            false,
-                            Number.MAX_VALUE);
-
       var avm1MovieClip = <AVM1.Lib.AVM1MovieClip>AVM1.Lib.getAVM1Object(root, avm1Context);
       var parameters = this._contentLoaderInfo._parameters;
       avm1MovieClip.setParameters(parameters);

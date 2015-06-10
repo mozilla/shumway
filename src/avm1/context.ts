@@ -96,10 +96,8 @@ module Shumway.AVM1 {
 
     public static create: (loaderInfo: Shumway.AVMX.AS.flash.display.LoaderInfo) => AVM1Context;
 
-    public flushPendingScripts() {}
     public resolveTarget(target): any {}
     public resolveRoot(): any {}
-    public addToPendingScripts(fn, defaultTarget) {}
     public checkTimeout() {}
 
     public executeActions(actionsData: AVM1ActionsData, scopeObj): void {}

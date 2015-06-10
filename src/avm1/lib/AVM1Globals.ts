@@ -337,34 +337,23 @@ module Shumway.AVM1.Lib {
       Shumway.AVMX.AS.FlashNetScript_navigateToURL(sec, request, target);
     }
 
-    _addToPendingScripts(subject: any, fn: Function, args: any [] = null): any {
-      release || assert(fn, 'invalid function in _addToPendingScripts');
-      var currentContext = this.context;
-      var defaultTarget = currentContext.resolveTarget(undefined);
-      currentContext.addToPendingScripts(function () {
-        try {
-          fn.apply(subject, args);
-        } catch (ex) {
-          currentContext.utils.warn('AVM1 pending script error: ' + ex.message);
-        }
-      }, defaultTarget);
-    }
-
     public gotoAndPlay(scene, frame?) {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
+      var as3Object = nativeTarget.as3Object;
       if (arguments.length < 2) {
-        this._addToPendingScripts(nativeTarget, nativeTarget.gotoAndPlay, [arguments[0]]);
+        as3Object.gotoAndPlay(arguments[0]);
       } else {
-        this._addToPendingScripts(nativeTarget, nativeTarget.gotoAndPlay, [arguments[1], arguments[0]]); // scene and frame are swapped for AS3
+        as3Object.gotoAndPlay(arguments[1], arguments[0]); // scene and frame are swapped for AS3
       }
     }
 
     public gotoAndStop(scene, frame?) {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
+      var as3Object = nativeTarget.as3Object;
       if (arguments.length < 2) {
-        this._addToPendingScripts(nativeTarget, nativeTarget.gotoAndStop, [arguments[0]]);
+        as3Object.gotoAndStop(arguments[0]);
       } else {
-        this._addToPendingScripts(nativeTarget, nativeTarget.gotoAndStop, [arguments[1], arguments[0]]); // scene and frame are swapped for AS3
+        as3Object.gotoAndStop(arguments[1], arguments[0]); // scene and frame are swapped for AS3
       }
     }
 
@@ -492,12 +481,12 @@ module Shumway.AVM1.Lib {
 
     public nextFrame() {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
-      this._addToPendingScripts(nativeTarget, nativeTarget.nextFrame);
+      nativeTarget.as3Object.nextFrame();
     }
 
     public nextScene() {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
-      this._addToPendingScripts(nativeTarget, nativeTarget.nextScene);
+      nativeTarget.as3Object.nextScene();
     }
 
     public ord(character) {
@@ -511,12 +500,12 @@ module Shumway.AVM1.Lib {
 
     public prevFrame() {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
-      this._addToPendingScripts(nativeTarget, nativeTarget.prevFrame);
+      nativeTarget.as3Object.prevFrame();
     }
 
     public prevScene() {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
-      this._addToPendingScripts(nativeTarget, nativeTarget.prevScene);
+      nativeTarget.as3Object.prevScene();
     }
 
     public print(target, boundingBox) {
