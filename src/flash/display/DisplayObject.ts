@@ -1534,6 +1534,12 @@ module Shumway.AVMX.AS.flash.display {
 
     set name(value: string) {
       checkNullParameter(value, "name", this.sec);
+      if (this._hasFlags(DisplayObjectFlags.OwnedByTimeline)) {
+        if (this._symbol && !this._symbol.isAVM1Object) { // fail only in AVM2
+          this.sec.throwError('IllegalOperationError', Errors.TimelineObjectNameSealedError);
+        }
+        return;
+      }
       this._name = axCoerceString(value);
     }
 
