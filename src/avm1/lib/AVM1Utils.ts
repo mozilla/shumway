@@ -565,6 +565,12 @@ module Shumway.AVM1.Lib {
       level = +level;
       return context.resolveLevel(level);
     }
+
+    static resolveLevelOrTarget(context: AVM1Context, target: any): AVM1MovieClip {
+      return typeof target === 'number' ?
+             <AVM1MovieClip>context.resolveLevel(target) :
+             context.resolveTarget(target);
+    }
   }
 
   function createAVM1NativeObject(ctor, nativeObject: flash.display.DisplayObject, context: AVM1Context) {
