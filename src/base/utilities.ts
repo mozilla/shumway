@@ -3642,7 +3642,7 @@ module Shumway {
     closeConnection(connectionName: string,
                          receiver: ILocalConnectionReceiver): LocalConnectionCloseResult;
     send(connectionName: string, methodName: string, args: ArrayBuffer,
-         sender: ILocalConnectionSender, senderURL: string): void;
+         sender: ILocalConnectionSender, senderDomain: string, senderIsSecure: boolean): void;
     allowDomains(connectionName: string, receiver: ILocalConnectionReceiver, domains: string[],
                  secure: boolean);
   }

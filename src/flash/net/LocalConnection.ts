@@ -37,19 +37,21 @@ module Shumway.AVMX.AS.flash.net {
       this._connectionName = null;
       this._allowedInsecureDomains = [];
       this._allowedSecureDomains = [];
-      this._url = Shumway.AVMX.getCurrentABC().env.url;
-      if (this._url.indexOf('https') === 0) {
-        this.allowDomain(this.domain);
-      } else {
-        this.allowInsecureDomain(this.domain);
-      }
+
+      // tsc contains a definition for URL that's non-constructible.
+      var urlCtor: any = URL;
+      var url = new urlCtor(Shumway.AVMX.getCurrentABC().env.url);
+      this._domain = url.hostname;
+      this._secure = url.protocol === 'https:';
     }
     
     static get isSupported() {
       return true;
     }
 
-    private _url: string;
+    private _domain: string;
+    private _secure: boolean;
+
     private _client: ASObject;
     private _connectionName: string;
 
@@ -125,9 +127,9 @@ module Shumway.AVMX.AS.flash.net {
         this.sec.throwError('ArgumentError', Errors.ArgumentSizeError);
       }
       var argsBuffer = serializedArgs.getBytes().buffer;
-      var url = this._url;
       try {
-        LocalConnectionService.instance.send(connectionName, methodName, argsBuffer, this, url);
+        LocalConnectionService.instance.send(connectionName, methodName, argsBuffer, this,
+                                             this._domain, this._secure);
       } catch (e) {
         // Not sure what to do here, this shouldn't happen. We'll just ignore it with a warning.
         Debug.warning('Unknown error occurred in LocalConnection#send', e);
@@ -150,11 +152,13 @@ module Shumway.AVMX.AS.flash.net {
     }
 
     allowInsecureDomain(...domains: string[]): void {
+      // allowInsecureDomain also allows secure domains.
+      this._allowDomains(domains, true);
       this._allowDomains(domains, false);
     }
 
     private _allowDomains(domains: string[], secure: boolean) {
-      var result = [];
+      var result: string[] = [];
       // If no connection has been made yet, store the domains for later retrieval.
       if (!this._connectionName) {
         result = secure ? this._allowedSecureDomains : this._allowedInsecureDomains;
@@ -224,11 +228,7 @@ module Shumway.AVMX.AS.flash.net {
     }
 
     get domain(): string {
-      somewhatImplemented("public flash.net.LocalConnection::get domain");
-      // HACK some SWFs want to know where they are hosted
-      // TODO: change this to use URL.
-      var m = /:\/\/(.+?)[:?#\/]/.exec(this._url);
-      return m && m[1];
+      return this._domain;
     }
 
     get isPerUser(): boolean {

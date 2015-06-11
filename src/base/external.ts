@@ -65,7 +65,7 @@ interface LocalConnectionService {
   closeLocalConnection: (connectionName: string) => Shumway.LocalConnectionCloseResult;
   sendLocalConnectionMessage: (connectionName: string, methodName: string,
                                argsBuffer: ArrayBuffer, sender: Shumway.ILocalConnectionSender,
-                               senderURL: string) => void;
+                               senderDomain: string, senderIsSecure: boolean) => void;
   allowDomainsForLocalConnection: (connectionName: string, domains: string[],
                                    secure: boolean) => void;
 }

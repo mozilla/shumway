@@ -268,12 +268,25 @@ module Shumway.Player {
     }
   }
 
-  function qualifyLocalConnectionName(connectionName: string): string {
+  function qualifyLocalConnectionName(connectionName: string,
+                                      assertValidity: boolean): string {
     release || Debug.assert(typeof connectionName === 'string');
-    release || Debug.assert(connectionName.indexOf(':') === -1);
+    // Connection names that don't start with "_" must be qualified with a domain prefix,
+    // followed by ":". The prefix is supplied automatically based on the currently running
+    // script. Only for LocalConnection#send is it allowed to already be contained in the name.
+    if (!release && assertValidity) {
+      Debug.assert(connectionName.indexOf(':') === -1);
+    }
     if (connectionName[0] !== '_') {
-      var currentURL = new jsGlobal.URL(Shumway.AVMX.getCurrentABC().env.url);
-      connectionName = currentURL.hostname + ':' + connectionName;
+      if (connectionName.indexOf(':') === -1) {
+        var currentURL = new jsGlobal.URL(Shumway.AVMX.getCurrentABC().env.url);
+        connectionName = currentURL.hostname + ':' + connectionName;
+      }
+      // Note: for LocalConnection#send, the name can contain an arbitrary number of ":" chars,
+      // so no validity check is required.
+      if (!release && assertValidity) {
+        Debug.assert(connectionName.split(':').length === 2);
+      }
     }
     return connectionName;
   }
@@ -324,13 +337,13 @@ module Shumway.Player {
     }
 
     _sendMessage(connectionName: string, methodName: string, argsBuffer: ArrayBuffer,
-                 sender: ILocalConnectionSender, senderURL: string) {
-      return;
+                 sender: ILocalConnectionSender, senderDomain: string, senderIsSecure: boolean) {
+      return undefined;
     }
 
     send(connectionName: string, methodName: string, argsBuffer: ArrayBuffer,
-         sender: ILocalConnectionSender, senderURL: string): void {
-      connectionName = qualifyLocalConnectionName(connectionName);
+         sender: ILocalConnectionSender, senderDomain: string, senderIsSecure: boolean): void {
+      connectionName = qualifyLocalConnectionName(connectionName, false);
       release || Debug.assert(typeof methodName === 'string');
       release || Debug.assert(argsBuffer instanceof ArrayBuffer);
       var self = this;
@@ -349,8 +362,10 @@ module Shumway.Player {
           // If no receiver is found for the connectionName, we're done.
           return;
         }
-        release || Debug.assert(typeof senderURL === 'string');
-        self._sendMessage(connectionName, methodName, argsBuffer, sender, senderURL);
+        release || Debug.assert(typeof senderDomain === 'string');
+        release || Debug.assert(typeof senderIsSecure === 'boolean');
+        self._sendMessage(connectionName, methodName, argsBuffer, sender, senderDomain,
+                          senderIsSecure);
       }
       Promise.resolve(true).then(invokeMessageHandler);
     }
@@ -365,7 +380,7 @@ module Shumway.Player {
 
     createConnection(connectionName: string,
                      receiver: ILocalConnectionReceiver): LocalConnectionConnectResult {
-      connectionName = qualifyLocalConnectionName(connectionName);
+      connectionName = qualifyLocalConnectionName(connectionName, true);
       release || Debug.assert(receiver);
       if (this.hasConnection(connectionName)) {
         return LocalConnectionConnectResult.AlreadyTaken;
@@ -390,7 +405,7 @@ module Shumway.Player {
     }
     closeConnection(connectionName: string,
                     receiver: ILocalConnectionReceiver): LocalConnectionCloseResult {
-      connectionName = qualifyLocalConnectionName(connectionName);
+      connectionName = qualifyLocalConnectionName(connectionName, true);
       if (this._localConnections[connectionName] !== receiver) {
         return LocalConnectionCloseResult.NotConnected;
       }
@@ -404,15 +419,15 @@ module Shumway.Player {
     }
 
     _sendMessage(connectionName: string, methodName: string, argsBuffer: ArrayBuffer,
-                 sender: ILocalConnectionSender, senderURL: string) {
-      ShumwayCom.getLocalConnectionService().sendLocalConnectionMessage(connectionName, methodName,
-                                                                        argsBuffer, sender,
-                                                                        senderURL);
+                 sender: ILocalConnectionSender, senderDomain: string, senderIsSecure: boolean) {
+      var service = ShumwayCom.getLocalConnectionService();
+      service.sendLocalConnectionMessage(connectionName, methodName, argsBuffer, sender,
+                                         senderDomain, senderIsSecure);
     }
 
     allowDomains(connectionName: string, receiver: ILocalConnectionReceiver, domains: string[],
                  secure: boolean) {
-      connectionName = qualifyLocalConnectionName(connectionName);
+      connectionName = qualifyLocalConnectionName(connectionName, true);
       if (this._localConnections[connectionName] !== receiver) {
         console.warn('Trying to allow domains for invalid connection ' + connectionName);
         return;
@@ -425,7 +440,7 @@ module Shumway.Player {
   export class PlayerInternalLocalConnectionService extends BaseLocalConnectionService {
     createConnection(connectionName: string,
                      receiver: ILocalConnectionReceiver): LocalConnectionConnectResult {
-      connectionName = qualifyLocalConnectionName(connectionName);
+      connectionName = qualifyLocalConnectionName(connectionName, true);
       release || Debug.assert(receiver);
       if (this._localConnections[connectionName]) {
         return LocalConnectionConnectResult.AlreadyTaken;
@@ -435,7 +450,7 @@ module Shumway.Player {
     }
     closeConnection(connectionName: string,
                     receiver: ILocalConnectionReceiver): LocalConnectionCloseResult {
-      connectionName = qualifyLocalConnectionName(connectionName);
+      connectionName = qualifyLocalConnectionName(connectionName, true);
       if (this._localConnections[connectionName] !== receiver) {
         return LocalConnectionCloseResult.NotConnected;
       }
