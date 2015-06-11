@@ -268,9 +268,11 @@ module Shumway.AVMX.AS.flash.display {
     private _initAvm1Data() {
       var symbol = this._symbol;
       var frames = symbol.frames;
-      for (var i = 0; i < frames.length; i++) {
-        var frameInfo = frames[i];
-        this._initAvm1FrameData(i, frameInfo);
+      if (frames) {
+        for (var i = 0; i < frames.length; i++) {
+          var frameInfo = frames[i];
+          this._initAvm1FrameData(i, frameInfo);
+        }
       }
     }
 
