@@ -24,6 +24,8 @@
         "swfs/avm1/array/arraygeneric.swf",
         "swfs/avm1/propertycase/propertycase.swf",
         "swfs/avm1/scope/avm1-scope-1.swf",
+        "swfs/avm1/loadevent/loadevent.swf",
+        "swfs/avm1/doactionorder/symbolclass.swf",
         "swfs/avm1/doactionorder/doactionorder.swf"
       ],
       "type": "stas"
@@ -213,10 +215,11 @@
       ],
       "type": "stas"
     },
-    {  "id": "avm1-textfield-html",
+    {  "id": "avm1-textfield",
       "stas": "swfs/trace.stas",
       "filenames": [
-        "swfs/avm1/textfield-html/textfield-html.swf"
+        "swfs/avm1/textfield/textfield-html.swf",
+        "swfs/avm1/textfield/textfield-text-setters.swf"
       ],
       "type": "stas"
     },

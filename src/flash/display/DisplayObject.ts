@@ -180,6 +180,12 @@ module Shumway.AVMX.AS.flash.display {
     CacheAsBitmap                             = 0x010000,
 
     /**
+     * Indicates whether an AVM1 timeline needs to initialize an object after place object
+     * occurred.
+     */
+    HasPlaceObjectInitPending                 = 0x020000,
+
+    /**
      * Indicates whether this display object's matrix has changed since the last time it was
      * synchronized.
      */
@@ -788,6 +794,7 @@ module Shumway.AVMX.AS.flash.display {
     _mouseDown: boolean;
 
     _symbol: Shumway.Timeline.DisplaySymbol;
+    _placeObjectTag: Shumway.SWF.PlaceObjectTag;
     _graphics: flash.display.Graphics;
 
     /**
@@ -2078,6 +2085,22 @@ module Shumway.AVMX.AS.flash.display {
       for (var i = 0; i < children.length; i++) {
         children[i]._removeReference();
       }
+    }
+
+    /**
+     * Returns script precedence sequence based on placeObjectTag. Creates every
+     * time a new array, so it's safe to modify it.
+     * @private
+     */
+    _getScriptPrecedence(): number[] {
+      if (!this._parent) {
+        return [];
+      }
+      var result = this._parent._getScriptPrecedence();
+      if (this._placeObjectTag) {
+        result.push(this._placeObjectTag.actionBlocksPrecedence);
+      }
+      return result;
     }
 
     get accessibilityProperties(): flash.accessibility.AccessibilityProperties {

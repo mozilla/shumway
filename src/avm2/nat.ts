@@ -1841,6 +1841,7 @@ module Shumway.AVMX.AS {
                 // With the x flag set, spaces in the regular expression, will be ignored as part of
                 // the pattern.
                 this._extended = true;
+                break;
               case 'g':
               case 'i':
               case 'm':
@@ -1852,7 +1853,14 @@ module Shumway.AVMX.AS {
         }
         pattern = this._parse(source);
       }
-      this.value = new RegExp(pattern, flags);
+      try {
+        this.value = new RegExp(pattern, flags);
+      } catch (e) {
+        // Our pattern pre-parser should have eliminated most errors, but in some cases we can't
+        // meaningfully detect them. If that happens, just catch the error and substitute an
+        // unmatchable pattern here.
+        this.value = new RegExp(ASRegExp.UNMATCHABLE_PATTERN, flags);
+      }
       this._source = source;
     }
 

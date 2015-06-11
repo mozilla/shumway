@@ -102,7 +102,12 @@ module Shumway.AVMX.AS.flash.display {
         child._setFlags(DisplayObjectFlags.Constructed);
 
         var eventClass = this.sec.flash.events.Event.axClass;
-        if (child._symbol && child._symbol.isAVM1Object) {
+        if (child._hasFlags(DisplayObjectFlags.HasPlaceObjectInitPending)) {
+          child._removeFlags(DisplayObjectFlags.HasPlaceObjectInitPending);
+
+          var avm1Context = child._symbol.avm1Context;
+          Shumway.AVM1.Lib.initializeAVM1Object(child, avm1Context, child._placeObjectTag);
+
           try {
             child.dispatchEvent(eventClass.getInstance(events.Event.AVM1_INIT));
           } catch (e) {
@@ -115,10 +120,7 @@ module Shumway.AVMX.AS.flash.display {
           }
           if (child.hasEventListener(events.Event.AVM1_LOAD)) {
             child._setFlags(DisplayObjectFlags.NeedsLoadEvent);
-            if (child._hasAnyFlags(DisplayObjectFlags.HasFrameScriptPending |
-                                   DisplayObjectFlags.ContainsFrameScriptPendingChildren)) {
-              this._setFlags(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
-            }
+            this._propagateFlagsUp(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
           }
         }
 

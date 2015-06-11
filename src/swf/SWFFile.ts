@@ -564,9 +564,8 @@ module Shumway.SWF {
       var timeline: any = {
         id: spriteTag.id,
         type: 'sprite',
-        frames: [],
-        actionBlocksPrecedence: spriteTag.byteOffset
-      }
+        frames: []
+      };
       var spriteTagEnd = spriteTag.byteOffset + spriteTag.byteLength;
       var frames = timeline.frames;
       var label: string = null;
@@ -728,8 +727,9 @@ module Shumway.SWF {
       var symbol = new EagerlyParsedDictionaryEntry(definition.id, unparsed, 'font', definition,
                                                     this.env);
       if (!release && traceLevel.value > 0) {
-        console.info("Decoding embedded font " + definition.id + " with name '" +
-                     definition.name + "'", definition);
+        var style = flagsToFontStyle(definition.bold, definition.italic);
+        console.info("Decoding embedded font " + definition.id + " with name '" + definition.name +
+                     "' and style " + style, definition);
       }
       this.eagerlyParsedSymbolsMap[symbol.id] = symbol;
       this.eagerlyParsedSymbolsList.push(symbol);
@@ -754,7 +754,7 @@ module Shumway.SWF {
         style = 'regular';
       } else {
         var flags = this.data[stream.pos + 2];
-        style = flagsToFontStyle(!!(flags & 0x2), !!(flags & 0x1));
+        style = flagsToFontStyle(!!(flags & 0x1), !!(flags & 0x2));
         var nameLength = this.data[stream.pos + 4];
         // Skip language code.
         stream.pos += 5;
@@ -762,7 +762,8 @@ module Shumway.SWF {
       }
       this.fonts.push({name: name, id: id, style: style});
       if (!release && traceLevel.value > 0) {
-        console.info("Registering embedded font " + id + " with name '" + name + "'");
+        console.info("Registering embedded font " + id + " with name '" + name + "' and style " +
+                     style);
       }
       stream.pos = unparsed.byteOffset + unparsed.byteLength;
     }
@@ -935,5 +936,6 @@ module Shumway.SWF {
     blendMode?: number;
     bmpCache?: number;
     visibility?: number;
+    actionBlocksPrecedence?: number;
   }
 }

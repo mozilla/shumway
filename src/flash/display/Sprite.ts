@@ -207,7 +207,8 @@ module Shumway.AVMX.AS.flash.display {
               child = this.createAnimatedDisplayObject(symbol, placeObjectTag, false);
               this.addTimelineObjectAtDepth(child, depth);
               if (symbol.isAVM1Object) {
-                Shumway.AVM1.Lib.initializeAVM1Object(child, symbol.avm1Context, placeObjectTag);
+                child._placeObjectTag = placeObjectTag;
+                child._setFlags(DisplayObjectFlags.HasPlaceObjectInitPending);
               }
             }
             break;
@@ -388,10 +389,8 @@ module Shumway.AVMX.AS.flash.display {
     numFrames: number = 1;
     frames: any[] = [];
     labels: flash.display.FrameLabel[] = [];
-    frameScripts: any[] = [];
     isRoot: boolean;
     avm1Name: string;
-    avm1SymbolClass;
     loaderInfo: flash.display.LoaderInfo;
 
     constructor(data: Timeline.SymbolData, loaderInfo: flash.display.LoaderInfo) {
@@ -406,18 +405,10 @@ module Shumway.AVMX.AS.flash.display {
         symbol.isAVM1Object = true;
         symbol.avm1Context = loaderInfo._avm1Context;
       }
-      symbol.frameScripts = [];
       var frames = data.frames;
       var frameLabelCtor = loaderInfo.app.sec.flash.display.FrameLabel;
       for (var i = 0; i < frames.length; i++) {
         var frame = loaderInfo.getFrame(data, i);
-        var actionBlocks = frame.actionBlocks;
-        if (actionBlocks) {
-          for (var j = 0; j < actionBlocks.length; j++) {
-            symbol.frameScripts.push(i);
-            symbol.frameScripts.push(actionBlocks[j]);
-          }
-        }
         if (frame.labelName) {
           symbol.labels.push(new frameLabelCtor(frame.labelName, i + 1));
         }

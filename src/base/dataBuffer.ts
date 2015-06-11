@@ -175,24 +175,29 @@ module Shumway.ArrayUtilities {
 
     private _ensureCapacity(length: number) {
       var currentBuffer = this._buffer;
-      if (currentBuffer.byteLength < length) {
-        var newLength = Math.max(currentBuffer.byteLength, 1);
-        while (newLength < length) {
-          newLength *= 2;
-        }
-        var newBuffer = DataBuffer._arrayBufferPool.acquire(newLength);
-        var curentView = this._u8;
-        this._buffer = newBuffer;
-        this._resetViews();
-        this._u8.set(curentView);
-        var u8 = this._u8;
-        // Zero out the rest of the buffer, since the arrayBufferPool doesn't
-        // always give us a empty buffer.
-        for (var i = curentView.length; i < u8.length; i++) {
-          u8[i] = 0;
-        }
-        DataBuffer._arrayBufferPool.release(currentBuffer);
+      if (currentBuffer.byteLength >= length) {
+        return;
       }
+      var newLength = Math.max(currentBuffer.byteLength, 1);
+      while (newLength < length) {
+        newLength *= 2;
+      }
+      if (newLength > 0xFFFFFFFF) {
+        release || assert((<any>this).sec);
+        (<any>this).sec.throwError('RangeError', Errors.ParamRangeError);
+      }
+      var newBuffer = DataBuffer._arrayBufferPool.acquire(newLength);
+      var curentView = this._u8;
+      this._buffer = newBuffer;
+      this._resetViews();
+      this._u8.set(curentView);
+      var u8 = this._u8;
+      // Zero out the rest of the buffer, since the arrayBufferPool doesn't
+      // always give us a empty buffer.
+      for (var i = curentView.length; i < u8.length; i++) {
+        u8[i] = 0;
+      }
+      DataBuffer._arrayBufferPool.release(currentBuffer);
     }
 
     clear() {
@@ -216,12 +221,11 @@ module Shumway.ArrayUtilities {
       return this._u8[this._position++];
     }
 
-    readBytes(bytes: DataBuffer, offset: number /*uint*/ = 0, length: number /*uint*/ = 0): void {
+    readBytes(bytes: DataBuffer, offset?: number /*uint*/, length?: number /*uint*/): void {
       var position = this._position;
-      if (!offset) {
-        offset = 0;
-      }
-      if (!length) {
+      offset = offset >>> 0;
+      length = length >>> 0;
+      if (length === 0) {
         length = this._length - position;
       }
       if (position + length > this._length) {

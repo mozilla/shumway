@@ -208,6 +208,10 @@ module.exports = function(grunt) {
         maxBuffer: Infinity,
         cmd: 'mongo ats --eval \'db.swfs.find({}).forEach(function (x) { print("test/ats/swfs/" + x.file); })\' | parallel --gnu -k -X -N10 --timeout 200% utils/jsshell/js build/ts/shell.js -x -det -fc 10 {} | tee test/ats/test_swf_all.run;'
       },
+      test_swf_ads: {
+        maxBuffer: Infinity,
+        cmd: 'mongo ats --eval \'db.swfs.find({"parse_result.file_size":{$lt:204800},ad_result:{$ne:null}}).forEach(function (x) { print("test/ats/swfs/" + x.file); })\' | parallel --gnu -k -X -N10 --timeout 200% utils/jsshell/js build/ts/shell.js -x -det -fc 10 {} | tee test/ats/test_swf_ads.run;'
+      },
       test_mock: {
         maxBuffer: Infinity,
         cmd: 'mkdir -p build/test;' +
@@ -519,6 +523,15 @@ module.exports = function(grunt) {
     var WebServer = require('./test/webserver.js').WebServer;
     var done = this.async();
     var server = new WebServer();
+    if (grunt.option('host')) {
+      server.host = grunt.option('host');
+    }
+    if (grunt.option('port')) {
+      server.port = +grunt.option('port');
+    }
+    if (grunt.option('port_ssl')) {
+      server.port_ssl = +grunt.option('port_ssl');
+    }
     var url = require('url'), fs = require('fs');
     server.hooks['POST'].push(function (req, res) {
       var parsedUrl = url.parse(req.url, true);

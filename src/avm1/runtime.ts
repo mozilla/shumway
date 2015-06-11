@@ -630,6 +630,12 @@ module Shumway.AVM1 {
     return 'Object';
   }
 
+  /**
+   * Non-standard string coercion function roughly matching the behavior of AVM2's axCoerceString.
+   *
+   * This is useful when dealing with AVM2 objects in the implementation of AVM1 builtins: they
+   * frequently expect either a string or `null`, but not `undefined`.
+   */
   export function alCoerceString(context: IAVM1Context, x): string {
     if (x instanceof AVM1Object) {
       return alToString(context, x);

@@ -21,18 +21,15 @@ module Shumway.Player.Window {
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
 
   export class WindowGFXService extends GFXServiceBase {
-    private _window;
-    private _parent;
+    private _peer: Shumway.Remoting.ITransportPeer;
     private _assetDecodingRequests: PromiseWrapper<any>[];
 
-    constructor(sec: ISecurityDomain, window, parent?) {
+    constructor(sec: ISecurityDomain, peer: Shumway.Remoting.ITransportPeer) {
       super(sec);
-
-      this._window = window;
-      this._parent = parent || window.parent;
-      this._window.addEventListener('message', function (e) {
-        this.onWindowMessage(e.data);
-      }.bind(this));
+      this._peer = peer;
+      this._peer.onAsyncMessage = function (msg) {
+        this.onWindowMessage(msg);
+      }.bind(this);
       this._assetDecodingRequests = [];
     }
 
@@ -45,7 +42,7 @@ module Shumway.Player.Window {
         result: undefined
       };
       var transferList = [bytes.buffer];
-      this._parent.postMessage(message, '*', transferList);
+      this._peer.postAsyncMessage(message, transferList);
     }
 
     updateAndGet(updates: DataBuffer, assets: any[]): any {
@@ -56,14 +53,14 @@ module Shumway.Player.Window {
         assets: assets,
         result: undefined
       };
-      var result = this._sendSyncMessage(message);
+      var result = this._peer.sendSyncMessage(message);
       return DataBuffer.FromPlainObject(result);
     }
 
     frame(): void {
-      this._parent.postMessage({
+      this._peer.postAsyncMessage({
         type: 'frame'
-      }, '*');
+      });
     }
 
     videoControl(id: number, eventType: VideoControlEvent, data: any): any {
@@ -74,18 +71,7 @@ module Shumway.Player.Window {
         data: data,
         result: undefined
       };
-      return this._sendSyncMessage(message);
-    }
-
-    private _sendSyncMessage(message) {
-      if (typeof ShumwayCom !== 'undefined' && ShumwayCom.postSyncMessage) {
-        return ShumwayCom.postSyncMessage(message);
-      }
-
-      var event = this._parent.document.createEvent('CustomEvent');
-      event.initCustomEvent('syncmessage', false, false, message);
-      this._parent.dispatchEvent(event);
-      return message.result;
+      return this._peer.sendSyncMessage(message);
     }
 
     registerFont(syncId: number, data: Uint8Array): Promise<any> {
@@ -101,7 +87,7 @@ module Shumway.Player.Window {
       // Unfortunately we have to make this message synchronously since scripts in the same frame
       // might rely on it being available in the gfx backend when requesting text measurements.
       // Just another disadvantage of not doing our our own text shaping.
-      this._sendSyncMessage(message);
+      this._peer.sendSyncMessage(message);
       return result.promise;
     }
 
@@ -119,16 +105,16 @@ module Shumway.Player.Window {
         alphaData: alphaData,
         requestId: requestId
       };
-      this._parent.postMessage(message, '*');
+      this._peer.postAsyncMessage(message);
       return result.promise;
     }
 
     fscommand(command: string, args: string): void {
-      this._parent.postMessage({
+      this._peer.postAsyncMessage({
         type: 'fscommand',
         command: command,
         args: args
-      }, '*');
+      });
     }
 
     private onWindowMessage(data) {

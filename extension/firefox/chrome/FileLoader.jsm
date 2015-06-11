@@ -93,11 +93,17 @@ FileLoader.prototype = {
       var lastPosition = 0;
       xhr.onprogress = function (e) {
         var position = e.loaded;
+        var total = e.total;
         var data = new Uint8Array(xhr.response);
+        // The event's `loaded` and `total` properties are sometimes lower than the actual
+        // number of loaded bytes. In that case, increase them to that value.
+        position = Math.max(position, data.byteLength);
+        total = Math.max(total, data.byteLength);
+
         notifyLoadFileListener({callback:"loadFile", sessionId: sessionId,
-          topic: "progress", array: data, loaded: position, total: e.total});
+          topic: "progress", array: data, loaded: position, total: total});
         lastPosition = position;
-        if (limit && e.total >= limit) {
+        if (limit && total >= limit) {
           xhr.abort();
         }
       };

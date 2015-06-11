@@ -31,7 +31,7 @@ module Shumway.AVMX.AS {
     export class ASProxy extends ASObject {
 
       static classInitializer() {
-        var proto: any = this.tPrototype;
+        var proto: any = this.dPrototype;
         var asProto: any = ASProxy.prototype;
 
         defineNonEnumerableProperty(proto, proxyPrefix + 'getProperty', asProto.native_getProperty);
@@ -46,39 +46,47 @@ module Shumway.AVMX.AS {
       }
 
       native_getProperty() {
-        this.sec.throwError("IllegalOperationError", Errors.ProxyGetPropertyError);
+        this.sec.throwError("flash.errors.IllegalOperationError", Errors.ProxyGetPropertyError);
       }
 
       native_setProperty() {
-        this.sec.throwError("IllegalOperationError", Errors.ProxySetPropertyError);
+        this.sec.throwError("flash.errors.IllegalOperationError", Errors.ProxySetPropertyError);
       }
 
       native_callProperty() {
-        this.sec.throwError("IllegalOperationError", Errors.ProxyCallPropertyError);
+        this.sec.throwError("flash.errors.IllegalOperationError", Errors.ProxyCallPropertyError);
       }
 
       native_hasProperty() {
-        this.sec.throwError("IllegalOperationError", Errors.ProxyHasPropertyError);
+        this.sec.throwError("flash.errors.IllegalOperationError", Errors.ProxyHasPropertyError);
       }
 
       native_deleteProperty() {
-        this.sec.throwError("IllegalOperationError", Errors.ProxyDeletePropertyError);
+        this.sec.throwError("flash.errors.IllegalOperationError", Errors.ProxyDeletePropertyError);
       }
 
       native_getDescendants() {
-        this.sec.throwError("IllegalOperationError", Errors.ProxyGetDescendantsError);
+        this.sec.throwError("flash.errors.IllegalOperationError", Errors.ProxyGetDescendantsError);
       }
 
       native_nextNameIndex() {
-        this.sec.throwError("IllegalOperationError", Errors.ProxyNextNameIndexError);
+        // Enumeration traverses the prototype chain. For proxies, this causes problems
+        // because a Proxy-extending class has the MOP override for `axNextNameIndex`, but can't
+        // have the `nextNameIndex` hook defined and thus hits this default hook. In that case,
+        // we'd incorrectly throw an error instead of just returning null if we didn't
+        // special-case here.
+        if (this === <any>this.axClass.dPrototype) {
+          return;
+        }
+        this.sec.throwError("flash.errors.IllegalOperationError", Errors.ProxyNextNameIndexError);
       }
 
       native_nextName() {
-        this.sec.throwError("IllegalOperationError", Errors.ProxyNextNameError);
+        this.sec.throwError("flash.errors.IllegalOperationError", Errors.ProxyNextNameError);
       }
 
       native_nextValue() {
-        this.sec.throwError("IllegalOperationError", Errors.ProxyNextValueError);
+        this.sec.throwError("flash.errors.IllegalOperationError", Errors.ProxyNextValueError);
       }
 
       public axGetProperty(mn: Multiname) {

@@ -1512,10 +1512,12 @@ module Shumway {
 
   export class WeakList<T extends IReferenceCountable> {
     private _map: WeakMap<T, T>;
+    private _newAdditions: Array<Array<T>>;
     private _list: T [];
     constructor() {
       if (typeof ShumwayCom !== "undefined" && ShumwayCom.getWeakMapKeys) {
         this._map = new WeakMap<T, T>();
+        this._newAdditions = [];
       } else {
         this._list = [];
       }
@@ -1531,6 +1533,9 @@ module Shumway {
       if (this._map) {
         release || Debug.assert(!this._map.has(value));
         this._map.set(value, null);
+        this._newAdditions.forEach(function (additions: Array<T>) {
+          additions.push(value);
+        });
       } else {
         release || Debug.assert(this._list.indexOf(value) === -1);
         this._list.push(value);
@@ -1548,12 +1553,22 @@ module Shumway {
     }
     forEach(callback: (value: T) => void) {
       if (this._map) {
+        var newAdditionsToKeys : Array<T> = [];
+        this._newAdditions.push(newAdditionsToKeys);
         var keys: Array<T> = ShumwayCom.getWeakMapKeys(this._map);
         keys.forEach(function (value: T) {
           if (value._referenceCount !== 0) {
             callback(value);
           }
         });
+        // ShumwayCom.getWeakMapKeys take snapshot of the keys, but we are also
+        // interested in new added keys while keys.forEach was run.
+        newAdditionsToKeys.forEach(function (value: T) {
+          if (value._referenceCount !== 0) {
+            callback(value);
+          }
+        });
+        this._newAdditions.splice(this._newAdditions.indexOf(newAdditionsToKeys), 1);
         return;
       }
       var list = this._list;

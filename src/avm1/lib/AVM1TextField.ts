@@ -183,7 +183,8 @@ module Shumway.AVM1.Lib {
     }
 
     public setHtmlText(value: string) {
-      value = alCoerceString(this.context, value);
+      // alToString turns `undefined` into an empty string, but we really do want "undefined" here.
+      value = value === undefined ? 'undefined' : alToString(this.context, value);
       if (this._html) {
         this._as3Object.htmlText = value;
       } else {
@@ -286,7 +287,8 @@ module Shumway.AVM1.Lib {
     }
 
     public setText(value: string) {
-      value = alCoerceString(this.context, value);
+      // alToString turns `undefined` into an empty string, but we really do want "undefined" here.
+      value = value === undefined ? 'undefined' : alToString(this.context, value);
       this._as3Object.text = value;
     }
 

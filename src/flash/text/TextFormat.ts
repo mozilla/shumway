@@ -44,6 +44,13 @@ module Shumway.AVMX.AS.flash.text {
       this.rightMargin = rightMargin;
       this.indent = indent;
       this.leading = leading;
+      
+      this._blockIndent = null;
+      this._bullet = null;
+      this._display = TextFormatDisplay.BLOCK;
+      this._kerning = null;
+      this._letterSpacing = null;
+      this._tabStops = null;
     }
 
     private static measureTextField: flash.text.TextField;
@@ -186,7 +193,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set letterSpacing(value: Object) {
-      this._letterSpacing = TextFormat.coerceBoolean(value);
+      this._letterSpacing = TextFormat.coerceNumber(value);
     }
 
     get rightMargin(): Object {
@@ -271,21 +278,28 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     clone(): TextFormat {
-      return new this.sec.flash.text.TextFormat(
-        this.font,
-        this.size,
-        this.color,
-        this.bold,
-        this.italic,
-        this.underline,
-        this.url,
-        this.target,
-        this.align,
-        this.leftMargin,
-        this.rightMargin,
-        this.indent,
-        this.leading
+      var tf = new this.sec.flash.text.TextFormat(
+        this._font,
+        this._size,
+        this._color,
+        this._bold,
+        this._italic,
+        this._underline,
+        this._url,
+        this._target,
+        this._align,
+        this._leftMargin,
+        this._rightMargin,
+        this._indent,
+        this._leading
       );
+      tf._blockIndent = this._blockIndent;
+      tf._bullet = this._bullet;
+      tf._display = this._display;
+      tf._kerning = this._kerning;
+      tf._letterSpacing = this._letterSpacing;
+      tf._tabStops = this._tabStops;
+      return tf;
     }
 
     public equals(other: TextFormat): boolean {

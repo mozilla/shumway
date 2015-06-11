@@ -279,7 +279,6 @@ declare module Shumway.AVMX.AS.flash {
     }
     class SpriteSymbol extends DisplaySymbol {
       avm1Name: string;
-      avm1SymbolClass;
     }
 
     enum LookupChildOptions {

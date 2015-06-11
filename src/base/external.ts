@@ -35,12 +35,14 @@ declare var ShumwayCom: {
   loadSystemResource: (id: number) => void;
   navigateTo: (args: any) => void;
   setupComBridge: (playerWindow: any) => void;
-  postSyncMessage: (data: any) => any;
+  sendSyncMessage: (data: any) => any;
+  postAsyncMessage: (data: any) => void;
 
   setLoadFileCallback: (callback: (data) => void) => void;
   setExternalCallback: (callback: (call) => any) => void;
   setSystemResourceCallback: (callback: (id: number, data: any) => void) => void;
   setSyncMessageCallback: (callback: (data: any) => any) => void;
+  setAsyncMessageCallback: (callback: (data: any) => void) => void;
 
   getLocalConnectionService: () => LocalConnectionService;
 };

@@ -55,6 +55,8 @@ function parseOptions() {
       'test failures, if there are any.')
     .describe('port', 'The port the HTTP server should listen on.')
     .default('port', 8080)
+    .describe('port_ssl', 'The port the HTTPS server should listen on.')
+    .default('port_ssl', 0)
     .describe('statsFile', 'The file where to store stats.')
     .describe('statsDelay', 'The amount of time in milliseconds the browser ' +
       'should wait before starting stats.')
@@ -567,6 +569,7 @@ function startServer() {
   server = new WebServer();
   server.host = host;
   server.port = options.port;
+  server.port_ssl = options.port_ssl;
   server.root = '..';
   server.cacheExpirationTime = 3600;
   server.start();

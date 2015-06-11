@@ -55,7 +55,8 @@ function runSwfPlayer(flashParams, settings, gfxWindow) {
     new Shumway.Player.BrowserSystemResourcesLoadingService(builtinPath, viewerPlayerglobalInfo);
   Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal).then(function (securityDomain) {
     function runSWF(file) {
-      var gfxService = new Shumway.Player.Window.WindowGFXService(securityDomain, window, gfxWindow);
+      var peer = new Shumway.Remoting.WindowTransportPeer(window, gfxWindow);
+      var gfxService = new Shumway.Player.Window.WindowGFXService(securityDomain, peer);
       var player = new Shumway.Player.Player(securityDomain, gfxService);
       player.stageAlign = 'tl';
       player.stageScale = 'noscale';
