@@ -32,7 +32,7 @@ module Shumway.AVM1.Lib {
 
     public static createAVM1Class(context: AVM1Context): AVM1Object {
       var wrapped = wrapAVM1NativeClass(context, false, AVM1Key,
-        ['DOWN', 'LEFT', 'RIGHT', 'UP', 'isDown'],
+        ['DOWN', 'LEFT', 'RIGHT', 'UP', 'isDown', 'getCode'],
         []);
       return wrapped;
     }
@@ -65,5 +65,9 @@ module Shumway.AVM1.Lib {
       return !!staticState._keyStates[code];
     }
 
+    public static getCode(context: AVM1Context): number {
+      var staticState: typeof AVM1Key = context.getStaticState(AVM1Key);
+      return staticState._lastKeyCode;
+    }
   }
 }
