@@ -1057,7 +1057,10 @@ module Shumway.AVM1.Natives {
     }
 
     public alConstruct(args?: any[]): AVM1Object {
-      if (args && typeof args[0] === 'number') {
+      if (!args) {
+        return new AVM1ArrayNative(this.context, []);
+      }
+      if (args.length === 1 && typeof args[0] === 'number') {
         var len = args[0];
         if (len >>> 0 !== len) {
           throw new Error('Range error'); // TODO avm1 native
