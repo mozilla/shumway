@@ -755,20 +755,23 @@ module Shumway.AVM1.Lib {
         if (!(flags & (eventFlag | 0))) {
           continue;
         }
-        var eventName = ClipEventMappings[eventFlag];
-        if (eventName === 'mouseDown' || eventName === 'mouseUp' || eventName === 'mouseMove') {
+        var eventMapping = ClipEventMappings[eventFlag];
+        var eventName = eventMapping.name;
+        if (!eventName) {
+          Debug.warning(AVM1ClipEvents[eventFlag] + ' ClipEvent not implemented');
+          continue;
+        }
+
+        // AVM1 MovieClips are set to button mode if one of the button-related event listeners is
+        // set. This behaviour is triggered regardless of the actual value they are set to.
+        if (eventMapping.button) {
+          as3Object.buttonMode = true;
+        }
+
+        if (eventMapping.stage) {
           stageListeners.push({eventName: eventName, handler: handler});
           as3Stage.addEventListener(eventName, handler);
         } else {
-          // AVM1 MovieClips are set to button mode if one of the button-related event listeners is
-          // set. This behaviour is triggered regardless of the actual value they are set to.
-          switch (eventFlag) {
-            case AVM1ClipEvents.Release:
-            case AVM1ClipEvents.ReleaseOutside:
-            case AVM1ClipEvents.RollOver:
-            case AVM1ClipEvents.RollOut:
-              as3Object.buttonMode = true;
-          }
           as3Object.addEventListener(eventName, handler);
         }
       }
@@ -788,26 +791,26 @@ module Shumway.AVM1.Lib {
   }
 
   import AVM1ClipEvents = SWF.Parser.AVM1ClipEvents;
-  var ClipEventMappings = Object.create(null);
-  ClipEventMappings[AVM1ClipEvents.Load] = 'load';
+  var ClipEventMappings: Map<number, {name: string; stage: boolean; button: boolean}> = Object.create(null);
+  ClipEventMappings[AVM1ClipEvents.Load] = {name: 'load', stage: false, button: false};
   // AVM1's enterFrame happens at the same point in the cycle as AVM2's frameConstructed.
-  ClipEventMappings[AVM1ClipEvents.EnterFrame] = 'frameConstructed';
-  ClipEventMappings[AVM1ClipEvents.Unload] = 'unload';
-  ClipEventMappings[AVM1ClipEvents.MouseMove] = 'mouseMove';
-  ClipEventMappings[AVM1ClipEvents.MouseDown] = 'mouseDown';
-  ClipEventMappings[AVM1ClipEvents.MouseUp] = 'mouseUp';
-  ClipEventMappings[AVM1ClipEvents.KeyDown] = 'keyDown';
-  ClipEventMappings[AVM1ClipEvents.KeyUp] = 'keyUp';
-  ClipEventMappings[AVM1ClipEvents.Data] = {toString: function() {Debug.warning('Data ClipEvent not implemented');}};
-  ClipEventMappings[AVM1ClipEvents.Initialize] = 'initialize';
-  ClipEventMappings[AVM1ClipEvents.Press] = 'mouseDown';
-  ClipEventMappings[AVM1ClipEvents.Release] = 'click';
-  ClipEventMappings[AVM1ClipEvents.ReleaseOutside] = 'releaseOutside';
-  ClipEventMappings[AVM1ClipEvents.RollOver] = 'mouseOver';
-  ClipEventMappings[AVM1ClipEvents.RollOut] = 'mouseOut';
-  ClipEventMappings[AVM1ClipEvents.DragOver] = {toString: function() {Debug.warning('DragOver ClipEvent not implemented');}};
-  ClipEventMappings[AVM1ClipEvents.DragOut] =  {toString: function() {Debug.warning('DragOut ClipEvent not implemented');}};
-  ClipEventMappings[AVM1ClipEvents.KeyPress] =  {toString: function() {Debug.warning('KeyPress ClipEvent not implemented');}};
-  ClipEventMappings[AVM1ClipEvents.Construct] =  'construct';
+  ClipEventMappings[AVM1ClipEvents.EnterFrame] = {name: 'frameConstructed', stage: false, button: false};
+  ClipEventMappings[AVM1ClipEvents.Unload] = {name: 'unload', stage: false, button: false};
+  ClipEventMappings[AVM1ClipEvents.MouseMove] = {name: 'mouseMove', stage: true, button: false};
+  ClipEventMappings[AVM1ClipEvents.MouseDown] = {name: 'mouseDown', stage: true, button: false};
+  ClipEventMappings[AVM1ClipEvents.MouseUp] = {name: 'mouseUp', stage: true, button: false};
+  ClipEventMappings[AVM1ClipEvents.KeyDown] = {name: 'keyDown', stage: true, button: false};
+  ClipEventMappings[AVM1ClipEvents.KeyUp] = {name: 'keyUp', stage: true, button: false};
+  ClipEventMappings[AVM1ClipEvents.Data] = {name: null, stage: false, button: false};
+  ClipEventMappings[AVM1ClipEvents.Initialize] = {name: 'initialize', stage: false, button: false};
+  ClipEventMappings[AVM1ClipEvents.Press] = {name: 'mouseDown', stage: true, button: true};
+  ClipEventMappings[AVM1ClipEvents.Release] = {name: 'click', stage: false, button: true};
+  ClipEventMappings[AVM1ClipEvents.ReleaseOutside] = {name: 'releaseOutside', stage: false, button: true};
+  ClipEventMappings[AVM1ClipEvents.RollOver] = {name: 'mouseOver', stage: true, button: true};
+  ClipEventMappings[AVM1ClipEvents.RollOut] = {name: 'mouseOut', stage: true, button: true};
+  ClipEventMappings[AVM1ClipEvents.DragOver] = {name: null, stage: false, button: false};
+  ClipEventMappings[AVM1ClipEvents.DragOut] =  {name: null, stage: false, button: false};
+  ClipEventMappings[AVM1ClipEvents.KeyPress] =  {name: null, stage: true, button: false};
+  ClipEventMappings[AVM1ClipEvents.Construct] =  {name: 'construct', stage: false, button: false};
 
 }
