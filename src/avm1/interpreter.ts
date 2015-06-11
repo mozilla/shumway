@@ -1291,8 +1291,8 @@ module Shumway.AVM1 {
     }
     function avm1_0x18_ActionToInteger(ectx: ExecutionContext) {
       var stack = ectx.stack;
-
-      stack.push(ectx.actions.int(stack.pop()));
+      var value = alToInt32(ectx.context, stack.pop());
+      stack.push(value);
     }
     function avm1_0x32_ActionCharToAscii(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1633,6 +1633,11 @@ module Shumway.AVM1 {
 
       var name = stack.pop();
       var obj = stack.pop();
+      if (Shumway.isNullOrUndefined(obj)) {
+        // AVM1 just ignores delete on non-existant containers.
+        avm1Warn("AVM1 warning: cannot delete member '" + name + "' on undefined object");
+        return;
+      }
       stack.push(as2DeleteProperty(ectx.context, obj, name));
       as2SyncEvents(ectx.context, name);
     }
@@ -1679,7 +1684,7 @@ module Shumway.AVM1 {
       stack.push(undefined);
 
       if (isNullOrUndefined(obj)) {
-        // AVM1 just ignores gets on non-existant containers
+        // AVM1 just ignores gets on non-existant containers.
         avm1Warn("AVM1 warning: cannot get member '" + name + "' on undefined object");
         return;
       }
