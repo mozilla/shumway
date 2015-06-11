@@ -332,7 +332,7 @@ module Shumway.AVMX.AS.flash.display {
         return;
       }
       var enterFrameListener = function () {
-        if (this.currentFrame !== frameIndex + 1) {
+        if (self.currentFrame !== frameIndex + 1) {
           return;
         }
         self.removeEventListener('enterFrame', enterFrameListener);
