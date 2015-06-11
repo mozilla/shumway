@@ -369,10 +369,6 @@ module Shumway.AVM1.Lib {
       return Math.min(frameNum + 1, totalFrames) <= framesLoaded;
     }
 
-    public int(value: any): number {
-      return value | 0;
-    }
-
     public length_(expression): number {
       return ('' + expression).length; // ASCII Only?
     }
