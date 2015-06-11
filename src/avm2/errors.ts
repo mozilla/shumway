@@ -248,7 +248,7 @@ module Shumway.AVMX {
   //  ProductManagerStageError                                  : { code: 2074, message: "The stage is too small to fit the download ui."},
   //  ProductManagerVerifyError                                 : { code: 2075, message: "The downloaded file is invalid."},
   //  FilterFailedError                                         : { code: 2077, message: "This filter operation cannot be performed with the specified input parameters."},
-  //  TimelineObjectNameSealedError                             : { code: 2078, message: "The name property of a Timeline-placed object cannot be modified."},
+    TimelineObjectNameSealedError                             : { code: 2078, message: "The name property of a Timeline-placed object cannot be modified."},
   //  BitmapNotAssociatedWithBitsCharError                      : { code: 2079, message: "Classes derived from Bitmap can only be associated with defineBits characters (bitmaps)."},
   //  AlreadyConnectedError                                     : { code: 2082, message: "Connect failed because the object is already connected."},
   //  CloseNotConnectedError                                    : { code: 2083, message: "Close failed because the object is not connected."},

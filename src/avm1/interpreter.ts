@@ -148,7 +148,6 @@ module Shumway.AVM1 {
     isTryCatchListening: boolean;
     errorsIgnored: number;
     deferScriptExecution: boolean;
-    pendingScripts;
     actions: Lib.AVM1NativeActions;
 
     constructor(loaderInfo: Shumway.AVMX.AS.flash.display.LoaderInfo) {
@@ -170,7 +169,6 @@ module Shumway.AVM1 {
       this.isTryCatchListening = false;
       this.errorsIgnored = 0;
       this.deferScriptExecution = true;
-      this.pendingScripts = [];
     }
     _getExecutionContext(): ExecutionContext {
       // We probably entering this function from some native function,
@@ -189,39 +187,6 @@ module Shumway.AVM1 {
       if (Date.now() >= this.abortExecutionAt) {
         throw new AVM1CriticalError('long running script -- AVM1 instruction hang timeout');
       }
-    }
-    addToPendingScripts(fn: Function) {
-      var runner = function () {
-        var savedIsActive = this.isActive;
-        if (!savedIsActive) {
-          this.isActive = true;
-          this.abortExecutionAt = avm1TimeoutDisabled.value ?
-            Number.MAX_VALUE : Date.now() + MAX_AVM1_HANG_TIMEOUT;
-          this.errorsIgnored = 0;
-        }
-        var caughtError;
-        try {
-          fn();
-        } catch (e) {
-          caughtError = e;
-        }
-        if (caughtError) {
-          // Note: this doesn't use `finally` because that's a no-go for performance.
-          throw caughtError;
-        }
-      }.bind(this);
-      if (!this.deferScriptExecution) {
-        runner();
-        return;
-      }
-      this.pendingScripts.push(runner);
-    }
-    flushPendingScripts() {
-      var scripts = this.pendingScripts;
-      while (scripts.length) {
-        scripts.shift()();
-      }
-      this.deferScriptExecution = false;
     }
     pushCallFrame(thisArg: AVM1Object, fn: AVM1Function, args: any[], ectx: ExecutionContext) : AVM1CallFrame {
       var nextFrame = new AVM1CallFrame(this.frame, thisArg, fn, args, ectx);

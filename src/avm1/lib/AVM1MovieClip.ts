@@ -355,11 +355,11 @@ module Shumway.AVM1.Lib {
     }
 
     public gotoAndPlay(frame) {
-      return this.as3Object.gotoAndPlay(frame);
+      this.as3Object.gotoAndPlay(frame);
     }
 
     public gotoAndStop(frame) {
-      return this.as3Object.gotoAndStop(frame);
+      this.as3Object.gotoAndStop(frame);
     }
 
     public getHitArea() {
