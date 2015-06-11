@@ -28,7 +28,7 @@ module Shumway.AVM1.Lib {
     }
 
     private _loader: flash.display.Loader;
-    private _target: IAVM1SymbolBase;
+    private _target: AVM1MovieClip;
 
     public avm1Constructor() {
       this._loader = new this.context.sec.flash.display.Loader();
@@ -36,10 +36,12 @@ module Shumway.AVM1.Lib {
     }
 
     public loadClip(url: string, target):Boolean {
-      this._target = typeof target === 'number' ?
-        AVM1Utils.resolveLevel(this.context, target) : AVM1Utils.resolveTarget(this.context, target);
+      this._target = AVM1Utils.resolveLevelOrTarget(this.context, target);
+      if (!this._target) {
+        return false; // target was not found -- doing nothing
+      }
 
-      (<flash.display.DisplayObjectContainer>this._target.as3Object).addChild(this._loader);
+      this._target.as3Object.addChild(this._loader);
 
       this._loader.contentLoaderInfo.addEventListener(flash.events.Event.OPEN, this.openHandler.bind(this));
       this._loader.contentLoaderInfo.addEventListener(flash.events.ProgressEvent.PROGRESS, this.progressHandler.bind(this));
@@ -53,10 +55,12 @@ module Shumway.AVM1.Lib {
     }
 
     public unloadClip(target):Boolean {
-      var nativeTarget: IAVM1SymbolBase = typeof target === 'number' ?
-        AVM1Utils.resolveLevel(this.context, target) : AVM1Utils.resolveTarget(this.context, target);
+      var nativeTarget = AVM1Utils.resolveLevelOrTarget(this.context, target);
+      if (!nativeTarget) {
+        return false; // target was not found -- doing nothing
+      }
 
-      (<flash.display.DisplayObjectContainer>nativeTarget.as3Object).removeChild(this._loader);
+      nativeTarget.as3Object.removeChild(this._loader);
       // TODO: find out under which conditions unloading a clip can fail
       return true;
     }
