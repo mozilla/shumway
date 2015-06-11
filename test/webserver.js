@@ -66,7 +66,8 @@ WebServer.prototype = {
     console.log(
       'Server running at http://' + this.host + ':' + this.port + '/');
 
-    if (fs.existsSync(path.join(__dirname, 'ssl', 'cacert.pem'))) {
+    if (this.port_ssl &&
+        fs.existsSync(path.join(__dirname, 'ssl', 'cacert.pem'))) {
       var keys = {
         key: fs.readFileSync(path.join(__dirname, 'ssl', 'privkey.pem')),
         cert: fs.readFileSync(path.join(__dirname, 'ssl', 'cacert.pem'))
