@@ -269,12 +269,12 @@ module Shumway.Player {
   }
 
   function qualifyLocalConnectionName(connectionName: string,
-                                      assertValidity: boolean): string {
+                                      assertNoPrefix: boolean): string {
     release || Debug.assert(typeof connectionName === 'string');
     // Connection names that don't start with "_" must be qualified with a domain prefix,
     // followed by ":". The prefix is supplied automatically based on the currently running
     // script. Only for LocalConnection#send is it allowed to already be contained in the name.
-    if (!release && assertValidity) {
+    if (!release && assertNoPrefix) {
       Debug.assert(connectionName.indexOf(':') === -1);
     }
     if (connectionName[0] !== '_') {
@@ -284,7 +284,7 @@ module Shumway.Player {
       }
       // Note: for LocalConnection#send, the name can contain an arbitrary number of ":" chars,
       // so no validity check is required.
-      if (!release && assertValidity) {
+      if (!release && assertNoPrefix) {
         Debug.assert(connectionName.split(':').length === 2);
       }
     }

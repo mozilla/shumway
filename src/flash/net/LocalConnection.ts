@@ -39,8 +39,7 @@ module Shumway.AVMX.AS.flash.net {
       this._allowedSecureDomains = [];
 
       // tsc contains a definition for URL that's non-constructible.
-      var urlCtor: any = URL;
-      var url = new urlCtor(Shumway.AVMX.getCurrentABC().env.url);
+      var url = new (<any>URL)(Shumway.AVMX.getCurrentABC().env.url);
       this._domain = url.hostname;
       this._secure = url.protocol === 'https:';
     }

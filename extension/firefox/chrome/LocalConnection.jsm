@@ -21,6 +21,11 @@ Components.utils.import('resource://gre/modules/Services.jsm');
 
 const localConnectionsRegistry = Object.create(null);
 
+function isConnectionNameValid(connectionName) {
+  return typeof connectionName === 'string' &&
+         (connectionName[0] === '_' || connectionName.split(':').length === 2);
+}
+
 /**
  * Creates a trusted qualified connection name from an already qualified name and a swfUrl.
  *
@@ -31,8 +36,7 @@ const localConnectionsRegistry = Object.create(null);
  */
 function _getQualifiedConnectionName(connectionName, swfUrl) {
   // Already syntactically invalid connection names mustn't get here.
-  if (typeof connectionName !== 'string' ||
-      connectionName[0] !== '_' && connectionName.split(':').length !== 2) {
+  if (!isConnectionNameValid(connectionName)) {
     // TODO: add telemetry
     throw new Error('Syntactically invalid local-connection name encountered', connectionName,
                     swfUrl);
@@ -50,8 +54,7 @@ function _getQualifiedConnectionName(connectionName, swfUrl) {
 function _getLocalConnection(connectionName) {
   // Treat invalid connection names as non-existent. This can only happen if player code
   // misbehaves, though.
-  if (typeof connectionName !== 'string' ||
-      connectionName[0] !== '_' && connectionName.split(':').length !== 2) {
+  if (!isConnectionNameValid(connectionName)) {
     // TODO: add telemetry
     return null;
   }
@@ -71,7 +74,7 @@ function LocalConnectionService(content, environment) {
       traceLocalConnection && content.console.log(`Creating local connection "${connectionName}" ` +
                                                   `for SWF with URL ${environment.swfUrl}`);
 
-      if (connectionName[0] !== '_' && connectionName.split(':').length !== 2) {
+      if (!isConnectionNameValid(connectionName)) {
         // TODO: add telemetry
         traceLocalConnection && content.console.warn(`Invalid localConnection name `);
         return -1; // LocalConnectionConnectResult.InvalidName
@@ -143,12 +146,13 @@ function LocalConnectionService(content, environment) {
       // Since we don't currently trust the sender information passed in here, we use the
       // currently running SWF's URL instead.
       var parsedURL = NetUtil.newURI(environment.swfUrl);
-      if (parsedURL.host !== senderDomain || (parsedURL.protocol === 'https:') !== senderIsSecure) {
+      var parsedURLIsSecure = parsedURL.protocol === 'https:';
+      if (parsedURL.host !== senderDomain || parsedURLIsSecure !== senderIsSecure) {
         traceLocalConnection && content.console.warn(`sending localConnection message ` +
                                                      `"${methodName}" to "${connectionName}"`);
       }
       senderDomain = parsedURL.host;
-      senderIsSecure = parsedURL.protocol === 'https:';
+      senderIsSecure = parsedURLIsSecure;
 
       var connection = _getLocalConnection(connectionName);
       if (!connection) {
@@ -164,14 +168,12 @@ function LocalConnectionService(content, environment) {
           if (senderIsSecure) {
             if (senderDomain === connection.domain ||
                 senderDomain in connection.allowedSecureDomains ||
-                '*' in connection.allowedSecureDomains)
-            {
+                '*' in connection.allowedSecureDomains) {
               allowed = true;
             }
           } else {
             if (senderDomain in connection.allowedInsecureDomains ||
-                '*' in connection.allowedInsecureDomains)
-            {
+                '*' in connection.allowedInsecureDomains) {
               allowed = true;
             }
           }
@@ -180,8 +182,7 @@ function LocalConnectionService(content, environment) {
           // domains, secure on non-secure, so we don't have to check both.
           if (senderDomain === connection.domain ||
               senderDomain in connection.allowedSecureDomains ||
-              '*' in connection.allowedSecureDomains)
-          {
+              '*' in connection.allowedSecureDomains) {
             allowed = true;
           }
         }
