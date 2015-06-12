@@ -57,7 +57,7 @@ module Shumway.AVM1.Lib {
 
     static fromAS3BitmapData(context: AVM1Context, as3Object: flash.display.BitmapData): AVM1Object {
       var as2Object = new AVM1BitmapData(context);
-      as2Object.alPrototype = context.globals.alGet('flash').alGet('display').alGet('BitmapData').alGetPrototypeProperty();
+      as2Object.alPrototype = context.globals.BitmapData.alGetPrototypeProperty();
       as2Object._as3Object = as3Object;
       return as2Object;
     }
@@ -71,7 +71,7 @@ module Shumway.AVM1.Lib {
       if (symbol && (bitmapClass === symbolClass ||
           bitmapClass.dPrototype.isPrototypeOf((<any>symbolClass).dPrototype))) {
         var as3Object = Shumway.AVMX.AS.constructClassFromSymbol(symbol.symbolProps, bitmapClass);
-        var BitmapData: AVM1Object = context.globals.alGet('flash').alGet('display').alGet('BitmapData');
+        var BitmapData: AVM1Object = context.globals.BitmapData;
         var bitmap = new AVM1BitmapData(context);
         bitmap.alPrototype = BitmapData.alGetPrototypeProperty();
         bitmap._as3Object = as3Object;
@@ -110,7 +110,7 @@ module Shumway.AVM1.Lib {
 
     public clone(): AVM1BitmapData {
       var bitmap = new AVM1BitmapData(this.context);
-      var BitmapData: AVM1Object = this.context.globals.alGet('flash').alGet('display').alGet('BitmapData');
+      var BitmapData: AVM1Object = this.context.globals.BitmapData;
       bitmap.alPrototype = BitmapData.alGetPrototypeProperty();
       bitmap._as3Object = this._as3Object.clone();
       return bitmap;

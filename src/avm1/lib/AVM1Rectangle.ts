@@ -41,7 +41,7 @@ module Shumway.AVM1.Lib {
   export class AVM1Rectangle extends AVM1Object {
     constructor(context: AVM1Context, x?: number, y?: number, width?: number, height?: number) {
       super(context);
-      this.alPrototype = context.globals.alGet('flash').alGet('geom').alGet('Rectangle').alGetPrototypeProperty();
+      this.alPrototype = context.globals.Rectangle.alGetPrototypeProperty();
       this.alPut('x', x);
       this.alPut('y', y);
       this.alPut('width', width);
