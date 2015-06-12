@@ -55,7 +55,7 @@ module Shumway.AVM1.Lib {
                 redMultiplier: number = 1, greenMultiplier: number = 1, blueMultiplier: number = 1, alphaMultiplier: number = 1,
                 redOffset: number = 0, greenOffset: number = 0, blueOffset: number = 0, alphaOffset: number = 0) {
       super(context);
-      this.alPrototype = context.globals.alGet('flash').alGet('geom').alGet('ColorTransform').alGetPrototypeProperty();
+      this.alPrototype = context.globals.ColorTransform.alGetPrototypeProperty();
       this.alPut('redMultiplier', redMultiplier);
       this.alPut('greenMultiplier', greenMultiplier);
       this.alPut('blueMultiplier', blueMultiplier);

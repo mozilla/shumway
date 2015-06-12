@@ -396,8 +396,8 @@ module Shumway.AVM1.Lib {
     }
 
     public getTransform(): AVM1Object {
-      var TransformClass: AVM1Function = this.context.globals.alGet('flash').alGet('geom').alGet('Transform');
-      return TransformClass.alConstruct([this]);
+      var transformCtor = <AVM1Function>this.context.globals.Transform;
+      return transformCtor.alConstruct([this]);
     }
 
     public setTransform(value: AVM1Transform) {
