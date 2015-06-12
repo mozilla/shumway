@@ -413,12 +413,19 @@ module Shumway.AVM1.Lib {
       this.as3Object.hitArea = obj;
     }
 
-    public hitTest(x, y, shapeFlag) {
-      if (x.isAVM1Instance) {
-        return this.as3Object.hitTestObject((<AVM1MovieClip>x).as3Object);
-      } else {
-        return this.as3Object.hitTestPoint(x, y, shapeFlag);
+    public hitTest(x: number, y: number, shapeFlag: boolean): boolean {
+      if (arguments.length <= 1) {
+        // Alternative method signature: hitTest(target: AVM1Object): boolean
+        var target: IAVM1SymbolBase = arguments[0];
+        if (Shumway.isNullOrUndefined(target) || !target.isAVM1Instance) {
+          return false; // target is undefined or not a AVM1 display object, returning false.
+        }
+        return this.as3Object.hitTestObject(target.as3Object);
       }
+      x = alToNumber(this.context, x);
+      y = alToNumber(this.context, y);
+      shapeFlag = alToBoolean(this.context, shapeFlag);
+      return this.as3Object.hitTestPoint(x, y, shapeFlag);
     }
 
     public lineGradientStyle(fillType: string, colors: AVM1Object, alphas: AVM1Object,
