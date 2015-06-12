@@ -94,7 +94,14 @@ module Shumway.AVM1.Lib {
       return target != '/' ? prefix + target.replace(/\//g, '.') : prefix;
     }
 
-    public attachAudio(id) {
+    public attachAudio(id: any): void {
+      if (Shumway.isNullOrUndefined(id)) {
+        return; // ignoring all undefined objects, probably nothing to attach
+      }
+      if (id === false) {
+        return; // TODO stop playing all attached audio source (when implemented).
+      }
+      // TODO implement NetStream and Microphone objects to make this work.
       Debug.notImplemented('AVM1MovieClip.attachAudio');
     }
 
