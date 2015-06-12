@@ -495,10 +495,13 @@ module Shumway.AVM1.Lib {
     }
 
     public swapDepths(target:Object) {
+      var target_mc = AVM1Utils.resolveLevelOrTarget(this.context, target);
+      if (!target_mc) {
+        // Don't swap with non-existent target.
+        return;
+      }
       var child1 = this.as3Object;
-      var child2 = typeof target === 'number' ?
-        AVM1Utils.resolveLevel(this.context, Number(target)).as3Object :
-        AVM1Utils.resolveTarget(this.context, target).as3Object;
+      var child2 = target_mc.as3Object;
       if (child1.parent !== child2.parent) {
         return; // must be the same parent
       }

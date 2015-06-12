@@ -270,7 +270,7 @@ module Shumway.AVM1.Lib {
     var arr = [];
     if (as3Filters) {
 
-      var classes = context.globals.alGet('flash').alGet('filters');
+      var classes = context.globals.filters;
       for (var i = 0, length = as3Filters.axGetPublicProperty('length'); i < length; i++) {
         var as3Filter = as3Filters.axGetPublicProperty(i);
         // TODO inefficient search, refactor

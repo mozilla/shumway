@@ -396,8 +396,8 @@ module Shumway.AVM1.Lib {
     }
 
     public getTransform(): AVM1Object {
-      var TransformClass: AVM1Function = this.context.globals.alGet('flash').alGet('geom').alGet('Transform');
-      return TransformClass.alConstruct([this]);
+      var transformCtor = <AVM1Function>this.context.globals.Transform;
+      return transformCtor.alConstruct([this]);
     }
 
     public setTransform(value: AVM1Transform) {
@@ -564,6 +564,12 @@ module Shumway.AVM1.Lib {
     static resolveLevel(context: AVM1Context, level: number): AVM1MovieClip {
       level = +level;
       return context.resolveLevel(level);
+    }
+
+    static resolveLevelOrTarget(context: AVM1Context, target: any): AVM1MovieClip {
+      return typeof target === 'number' ?
+             <AVM1MovieClip>context.resolveLevel(target) :
+             context.resolveTarget(target);
     }
   }
 

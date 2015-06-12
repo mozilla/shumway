@@ -37,7 +37,7 @@ module Shumway.AVM1.Lib {
   export class AVM1Point extends AVM1Object {
     constructor(context: AVM1Context, x?: number, y?: number) {
       super(context);
-      this.alPrototype = context.globals.alGet('flash').alGet('geom').alGet('Point').alGetPrototypeProperty();
+      this.alPrototype = context.globals.Point.alGetPrototypeProperty();
       this.alPut('x', x);
       this.alPut('y', y);
     }

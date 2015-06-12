@@ -222,6 +222,14 @@ module Shumway.AVM1.Lib {
     public XMLNode: AVM1Object;
     public XML: AVM1Object;
 
+    public filters: AVM1Object;
+    public BitmapData: AVM1Object;
+    public Matrix: AVM1Object;
+    public Point: AVM1Object;
+    public Rectangle: AVM1Object;
+    public Transform: AVM1Object;
+    public ColorTransform: AVM1Object;
+
     private _initBuiltins(context: AVM1Context) {
       var builtins = context.builtins;
 
@@ -256,6 +264,13 @@ module Shumway.AVM1.Lib {
       this.XMLNode = new AVM1XMLNodeFunction(context);
       this.XML = new AVM1XMLFunction(context, <AVM1XMLNodeFunction>this.XMLNode);
 
+      this.BitmapData = AVM1BitmapData.createAVM1Class(context);
+      this.Matrix = new AVM1MatrixFunction(context);
+      this.Point = new AVM1PointFunction(context);
+      this.Rectangle = new AVM1RectangleFunction(context);
+      this.Transform = AVM1Transform.createAVM1Class(context);
+      this.ColorTransform = new AVM1ColorTransformFunction(context);
+
       AVM1Broadcaster.initialize(context, this.Stage);
       AVM1Broadcaster.initialize(context, this.Key);
       AVM1Broadcaster.initialize(context, this.Mouse);
@@ -264,19 +279,20 @@ module Shumway.AVM1.Lib {
     private _initializeFlashObject(context: AVM1Context): void {
       this.flash = alNewObject(context);
       var display: AVM1Object = alNewObject(context);
-      display.alPut('BitmapData', AVM1BitmapData.createAVM1Class(context));
+      display.alPut('BitmapData', this.BitmapData);
       this.flash.alPut('display', display);
       var external: AVM1Object = alNewObject(context);
       external.alPut('ExternalInterface', AVM1ExternalInterface.createAVM1Class(context));
       this.flash.alPut('external', external);
       var filters: AVM1Object = createFiltersClasses(context);
       this.flash.alPut('filters', filters);
+      this.filters = filters;
       var geom: AVM1Object = alNewObject(context);
-      geom.alPut('ColorTransform', new AVM1ColorTransformFunction(context));
-      geom.alPut('Matrix', new AVM1MatrixFunction(context));
-      geom.alPut('Point', new AVM1PointFunction(context));
-      geom.alPut('Rectangle', new AVM1RectangleFunction(context));
-      geom.alPut('Transform', AVM1Transform.createAVM1Class(context));
+      geom.alPut('ColorTransform', this.ColorTransform);
+      geom.alPut('Matrix', this.Matrix);
+      geom.alPut('Point', this.Point);
+      geom.alPut('Rectangle', this.Rectangle);
+      geom.alPut('Transform', this.Transform);
       this.flash.alPut('geom', geom);
       var text: AVM1Object = alNewObject(context);
       this.flash.alPut('text', text);
@@ -367,10 +383,6 @@ module Shumway.AVM1.Lib {
       // I.e., asking if frame 20 is loaded in a timline with only 10 frames returns true if all
       // frames have been loaded.
       return Math.min(frameNum + 1, totalFrames) <= framesLoaded;
-    }
-
-    public int(value: any): number {
-      return value | 0;
     }
 
     public length_(expression): number {
