@@ -660,6 +660,21 @@ module Shumway.AVM1.Natives {
       }
       return itemIndices.concat(keys);
     }
+
+    public static mapToNative(arr: AVM1Object, fn: (item: any, index?: number) => any, thisArg?): any[] {
+      if (arr instanceof AVM1ArrayNative) {
+        return (<AVM1ArrayNative>arr).value.map(fn, thisArg);
+      }
+      // We made this method generic, so array like objects can use it.
+      if (!(arr instanceof AVM1Object) || !alIsArrayObject(arr.context, arr)) {
+        throw new Error('Invalid type');
+      }
+      var result = [];
+      alIterateArray(arr.context, arr, (item: any, index: number) => {
+        result.push(fn.call(thisArg, item, index));
+      });
+      return result;
+    }
   }
 
   enum AVM1ArraySortOnOptions {
