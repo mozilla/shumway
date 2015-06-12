@@ -385,12 +385,13 @@ module Shumway.Player {
       } else {
         this._enterRootLoadingLoop();
       }
-      this.addToSWFLoadingWhitelist(FileLoadingService.instance.resolveUrl(url), false, true);
+      var resolvedURL = FileLoadingService.instance.resolveUrl(url);
+      this.addToSWFLoadingWhitelist(resolvedURL, false, true);
       var context = this.createLoaderContext();
       if (buffer) {
         var byteArray = new this.sec.flash.utils.ByteArray(buffer);
         this._loader.loadBytes(byteArray, context);
-        this._loader.contentLoaderInfo._url = url;
+        this._loader.contentLoaderInfo._url = resolvedURL;
       } else {
         this._loader.load(new this.sec.flash.net.URLRequest(url), context);
       }

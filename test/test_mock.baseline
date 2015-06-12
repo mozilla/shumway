@@ -14,7 +14,7 @@ eval(try {__flash__toXML(jwplayer.embed.flash.getVars("jwplayerObjectId"));} cat
 [91msomewhatImplemented: public flash.display.InteractiveObject::set contextMenu[0m
 [91msomewhatImplemented: public flash.ui.ContextMenu::get customItems[0m
 [91msomewhatImplemented: public flash.system.Capabilities::get version[0m
-[91mLoading error encountered:, Can't read examples/jwplayer/../examples/image-loading/firefox.png[0m
+[91mLoading error encountered:, Can't read file://examples/jwplayer/../examples/image-loading/firefox.png[0m
 [91msomewhatImplemented: public flash.text.TextField::getCharBoundaries[0m
 [91msomewhatImplemented: public flash.net.SharedObject::flush[0m
 HASHCODE: examples/jwplayer/jwplayer.flash.swf: 0xe79658d0

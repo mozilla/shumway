@@ -16,15 +16,17 @@
 
 var EXPORTED_SYMBOLS = ['ShumwayCom'];
 
-Components.utils.import('resource://gre/modules/XPCOMUtils.jsm');
-Components.utils.import('resource://gre/modules/Services.jsm');
+Components.utils.import('resource://gre/modules/NetUtil.jsm');
 Components.utils.import('resource://gre/modules/Promise.jsm');
+Components.utils.import('resource://gre/modules/Services.jsm');
+Components.utils.import('resource://gre/modules/XPCOMUtils.jsm');
 
 Components.utils.import('chrome://shumway/content/SpecialInflate.jsm');
 Components.utils.import('chrome://shumway/content/SpecialStorage.jsm');
 Components.utils.import('chrome://shumway/content/RtmpUtils.jsm');
 Components.utils.import('chrome://shumway/content/ExternalInterface.jsm');
 Components.utils.import('chrome://shumway/content/FileLoader.jsm');
+Components.utils.import('chrome://shumway/content/LocalConnection.jsm');
 
 XPCOMUtils.defineLazyModuleGetter(this, 'ShumwayTelemetry',
   'resource://shumway/ShumwayTelemetry.jsm');
@@ -345,8 +347,17 @@ var ShumwayCom = {
           return;
         }
         onSystemResourceCallback = callback;
+      },
+
+      getLocalConnectionService: function() {
+        if (!wrappedLocalConnectionService) {
+          wrappedLocalConnectionService = new LocalConnectionService(content,
+                                                                     callbacks.getEnvironment());
+        }
+        return wrappedLocalConnectionService;
       }
     };
+
 
     // Exposing createSpecialInflate function for DEFLATE stream decoding using
     // Gecko API.
@@ -370,6 +381,8 @@ var ShumwayCom = {
     var onSystemResourceCallback = null;
     var onExternalCallback = null;
     var onLoadFileCallback = null;
+
+    var wrappedLocalConnectionService = null;
 
     hooks.onLoadFileCallback = function (arg) {
       if (onLoadFileCallback) {

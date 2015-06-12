@@ -350,7 +350,8 @@ module Shumway.AVMX.AS.flash.display {
     load(request: flash.net.URLRequest, context?: LoaderContext): void {
       this.close();
       // TODO: clean up contentloaderInfo.
-      this._contentLoaderInfo._url = request.url;
+      var resolvedURL = FileLoadingService.instance.resolveUrl(request.url);
+      this._contentLoaderInfo._url = resolvedURL;
       this._applyLoaderContext(context);
       this._loadingType = LoadingType.External;
       this._fileLoader = new FileLoader(this, this._contentLoaderInfo);

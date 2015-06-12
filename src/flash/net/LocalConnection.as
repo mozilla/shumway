@@ -19,11 +19,8 @@ import flash.events.EventDispatcher;
 
 [native(cls="LocalConnectionClass")]
 public class LocalConnection extends EventDispatcher {
-  public function LocalConnection() {
-  }
-  public static function get isSupported():Boolean {
-    return true;
-  }
+  public native function LocalConnection();
+  public static native function get isSupported():Boolean;
   public native function close():void;
   public native function connect(connectionName:String):void;
   public native function get domain():String;

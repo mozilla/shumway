@@ -24,8 +24,12 @@ module Shumway.Player {
   import IVideoElementService = flash.net.IVideoElementService;
   import IRootElementService = flash.display.IRootElementService;
   import ICrossDomainSWFLoadingWhitelist = flash.system.ICrossDomainSWFLoadingWhitelist;
-  export interface SWFPlayer extends IBitmapDataSerializer, IFSCommandListener, IVideoElementService,
-                                     IAssetResolver, IRootElementService, ICrossDomainSWFLoadingWhitelist {
+  export interface SWFPlayer extends IBitmapDataSerializer,
+                                     IFSCommandListener,
+                                     IVideoElementService,
+                                     IAssetResolver,
+                                     IRootElementService,
+                                     ICrossDomainSWFLoadingWhitelist {
     syncDisplayObject(displayObject: flash.display.DisplayObject, async: boolean);
     requestRendering();
   }

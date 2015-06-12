@@ -56,6 +56,7 @@ function runSwfPlayer(data, gfxWindow) {
     Shumway.FileLoadingService.instance = new Shumway.Player.ShumwayComFileLoadingService();
     Shumway.FileLoadingService.instance.init(file);
   } else {
+    Shumway.LocalConnectionService.instance = new Shumway.Player.PlayerInternalLocalConnectionService();
     Shumway.FileLoadingService.instance = new Shumway.Player.BrowserFileLoadingService();
     Shumway.FileLoadingService.instance.init(file, data.fileReadChunkSize);
   }
