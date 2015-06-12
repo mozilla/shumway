@@ -690,7 +690,7 @@ module Shumway.AVM1 {
     return alInstanceOf(context, v, context.builtins.Array);
   }
 
-  export function alIsArrayObject(context: IAVM1Context, v): boolean {
+  export function alIsArrayLike(context: IAVM1Context, v): boolean {
     if (!(v instanceof AVM1Object)) {
       return false;
     }

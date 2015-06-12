@@ -149,21 +149,46 @@ module Shumway.AVM1.Lib {
       return as2mc;
     }
 
-    public beginFill(color, alpha) {
-      this.graphics.beginFill(color, alpha);
+    public beginFill(color: number, alpha: number = 100): void {
+      color = alToInt32(this.context, color);
+      alpha = alToNumber(this.context, alpha);
+      this.graphics.beginFill(color, alpha / 100.0);
     }
 
-    public beginBitmapFill(bmp, matrix, repeat, smoothing) {
-      if (!(bmp instanceof flash.display.BitmapData))
-      {
-        return;
+    public beginBitmapFill(bmp: AVM1BitmapData, matrix: AVM1Object = null,
+                           repeat: boolean = false, smoothing: boolean = false): void {
+      if (!alInstanceOf(this.context, bmp, this.context.globals.BitmapData)) {
+        return; // skipping operation if first parameter is not a BitmapData.
       }
+      var bmpNative = toAS3BitmapData(bmp);
+      var matrixNative = Shumway.isNullOrUndefined(matrix) ? null : toAS3Matrix(matrix);
+      repeat = alToBoolean(this.context, repeat);
+      smoothing = alToBoolean(this.context, smoothing);
 
-      this.graphics.beginBitmapFill(bmp, matrix, repeat, smoothing);
+      this.graphics.beginBitmapFill(bmpNative, matrixNative, repeat, smoothing);
     }
 
-    public beginGradientFill(fillType, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPointRatio) {
-      this.graphics.beginGradientFill(fillType, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPointRatio);
+    public beginGradientFill(fillType: string, colors: AVM1Object, alphas: AVM1Object,
+                             ratios: AVM1Object, matrix: AVM1Object,
+                             spreadMethod: string = 'pad', interpolationMethod: string = 'rgb',
+                             focalPointRatio: number = 0.0): void {
+      var context = this.context, sec = context.sec;
+      fillType = alToString(this.context, fillType);
+      var colorsNative = sec.createArray(
+        Natives.AVM1ArrayNative.mapToJSArray(colors, (item) => alToInt32(this.context, item)));
+      var alphasNative = sec.createArray(
+        Natives.AVM1ArrayNative.mapToJSArray(alphas, (item) => alToNumber(this.context, item) / 100.0));
+      var ratiosNative = sec.createArray(
+        Natives.AVM1ArrayNative.mapToJSArray(ratios, (item) => alToNumber(this.context, item)));
+      var matrixNative = null;
+      if (Shumway.isNullOrUndefined(matrix)) {
+        Debug.somewhatImplemented('AVM1MovieClip.beginGradientFill');
+      }
+      spreadMethod = alToString(this.context, spreadMethod);
+      interpolationMethod = alToString(this.context, interpolationMethod);
+      focalPointRatio = alToNumber(this.context, focalPointRatio);
+      this.graphics.beginGradientFill(fillType, colorsNative, alphasNative, ratiosNative, matrixNative,
+                                      spreadMethod, interpolationMethod, focalPointRatio);
     }
 
     public _callFrame(frame:any):any {
@@ -171,7 +196,7 @@ module Shumway.AVM1.Lib {
       nativeAS3Object._callFrame(frame);
     }
 
-    public clear() {
+    public clear(): void {
       this.graphics.clear();
     }
 
@@ -211,7 +236,11 @@ module Shumway.AVM1.Lib {
       return this.as3Object.currentFrame;
     }
 
-    public curveTo(controlX, controlY, anchorX, anchorY) {
+    public curveTo(controlX: number, controlY: number, anchorX: number, anchorY: number): void {
+      controlX = alToNumber(this.context, controlX);
+      controlY = alToNumber(this.context, controlY);
+      anchorX = alToNumber(this.context, anchorX);
+      anchorY = alToNumber(this.context, anchorY);
       this.graphics.curveTo(controlX, controlY, anchorX, anchorY);
     }
 
@@ -264,7 +293,7 @@ module Shumway.AVM1.Lib {
       this.as3ObjectOrTemplate.enabled = value;
     }
 
-    public endFill() {
+    public endFill(): void {
       this.graphics.endFill();
     }
 
@@ -392,15 +421,47 @@ module Shumway.AVM1.Lib {
       }
     }
 
-    public lineGradientStyle(fillType, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPointRatio) {
-      this.graphics.lineGradientStyle(fillType, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPointRatio);
+    public lineGradientStyle(fillType: string, colors: AVM1Object, alphas: AVM1Object,
+                             ratios: AVM1Object, matrix: AVM1Object,
+                             spreadMethod: string = 'pad', interpolationMethod: string = 'rgb',
+                             focalPointRatio: number = 0.0): void {
+      var context = this.context, sec = context.sec;
+      fillType = alToString(this.context, fillType);
+      var colorsNative = sec.createArray(
+        Natives.AVM1ArrayNative.mapToJSArray(colors, (item) => alToInt32(this.context, item)));
+      var alphasNative = sec.createArray(
+        Natives.AVM1ArrayNative.mapToJSArray(alphas, (item) => alToNumber(this.context, item) / 100.0));
+      var ratiosNative = sec.createArray(
+        Natives.AVM1ArrayNative.mapToJSArray(ratios, (item) => alToNumber(this.context, item)));
+      var matrixNative = null;
+      if (Shumway.isNullOrUndefined(matrix)) {
+        Debug.somewhatImplemented('AVM1MovieClip.lineGradientStyle');
+      }
+      spreadMethod = alToString(this.context, spreadMethod);
+      interpolationMethod = alToString(this.context, interpolationMethod);
+      focalPointRatio = alToNumber(this.context, focalPointRatio);
+      this.graphics.lineGradientStyle(fillType, colorsNative, alphasNative, ratiosNative, matrixNative,
+                                      spreadMethod, interpolationMethod, focalPointRatio);
     }
 
-    public lineStyle(thickness, rgb, alpha, pixelHinting, noScale, capsStyle, jointStyle, miterLimit) {
-      this.graphics.lineStyle(thickness, rgb, alpha, pixelHinting, noScale, capsStyle, jointStyle, miterLimit);
+    public lineStyle(thickness: number = NaN, rgb: number = 0x000000,
+                     alpha: number = 100, pixelHinting: boolean = false,
+                     noScale: string = 'normal', capsStyle: string = 'round',
+                     jointStyle: string = 'round', miterLimit: number = 3): void {
+      thickness = alToNumber(this.context, thickness);
+      rgb = alToInt32(this.context, rgb);
+      pixelHinting = alToBoolean(this.context, pixelHinting);
+      noScale = alToString(this.context, noScale);
+      capsStyle = alToString(this.context, capsStyle);
+      jointStyle = alToString(this.context, jointStyle);
+      miterLimit = alToNumber(this.context, miterLimit);
+      this.graphics.lineStyle(thickness, rgb, alpha / 100.0, pixelHinting,
+                              noScale, capsStyle, jointStyle, miterLimit);
     }
 
-    public lineTo(x, y) {
+    public lineTo(x: number, y: number): void {
+      x = alToNumber(this.context, x);
+      y = alToNumber(this.context, y);
       this.graphics.lineTo(x, y);
     }
 
@@ -440,7 +501,9 @@ module Shumway.AVM1.Lib {
       this._lockroot = alToBoolean(this.context, value);
     }
 
-    public moveTo(x, y) {
+    public moveTo(x: number, y: number): void {
+      x = alToNumber(this.context, x);
+      y = alToNumber(this.context, y);
       this.graphics.moveTo(x, y);
     }
 
