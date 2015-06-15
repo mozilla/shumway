@@ -203,13 +203,6 @@
       "swf": "swfs/acid/acid-morph.swf",
       "type": "eq"
     },
-    {  "id": "acid-morph-stas",
-      "stas": "swfs/trace.stas",
-      "filenames": [
-        "swfs/acid/acid-morph.swf"
-      ],
-      "type": "stas"
-    },
     {  "id": "getObjectsUnderPoint",
       "stas": "swfs/trace.stas",
       "filenames": [
