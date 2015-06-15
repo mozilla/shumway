@@ -660,6 +660,29 @@ module Shumway.AVM1.Natives {
       }
       return itemIndices.concat(keys);
     }
+
+    /**
+     * Creates a JavaScript array from the AVM1 list object.
+     * @param arr     An array-like AVM1 object.
+     * @param fn      A function that converts AVM1 list object item to JavaScript object.
+     * @param thisArg Optional. Value to use as this when executing fn.
+     * @returns {any[]} A JavaScript array.
+     */
+    public static mapToJSArray(arr: AVM1Object, fn: (item: any, index?: number) => any, thisArg?): any[] {
+      if (arr instanceof AVM1ArrayNative) {
+        return (<AVM1ArrayNative>arr).value.map(fn, thisArg);
+      }
+      // This method is generic, so array-like objects can use it.
+      if (!alIsArrayLike(arr.context, arr)) {
+        // TODO generate proper AVM1 exception.
+        throw new Error('Invalid type'); // Interpreter will catch this.
+      }
+      var result = [];
+      alIterateArray(arr.context, arr, (item: any, index: number) => {
+        result.push(fn.call(thisArg, item, index));
+      });
+      return result;
+    }
   }
 
   enum AVM1ArraySortOnOptions {
@@ -767,7 +790,7 @@ module Shumway.AVM1.Natives {
       // Generic behavior
       var a = [];
       var e: any = this;
-      var isArrayObject = alIsArrayObject(this.context, this);
+      var isArrayObject = alIsArrayLike(this.context, this);
       var i = 0;
       while (true) {
         if (isArrayObject) {

@@ -46,12 +46,16 @@ module Shumway.Shell {
         case  6: return new RealDate(yearOrTimevalue, month, date, hour, minute, second); break;
         default: return new RealDate(yearOrTimevalue, month, date, hour, minute, second, millisecond); break;
       }
-    }
+    };
 
     // Make date now deterministic.
     jsGlobal.Date.now = function () {
       return fakeTime += 10; // Advance time.
-    }
+    };
+
+    jsGlobal.Date.UTC = function () {
+      return RealDate.UTC.apply(RealDate, arguments);
+    };
   }
 
   export class MicroTasksQueue {
