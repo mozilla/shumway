@@ -936,7 +936,7 @@ module Shumway.AVMX.AS {
       thisArg = ensureBoxedReceiver(this.sec, thisArg, callbackfn);
       var o = this.value;
       for (var i = 0; i < o.length; i++) {
-        if (callbackfn.value.call(thisArg, o[i], i, o) !== true) {
+        if (callbackfn.value.call(thisArg, o[i], i, this) !== true) {
           return false;
         }
       }
@@ -996,7 +996,7 @@ module Shumway.AVMX.AS {
       var result = [];
       var o = this.value;
       for (var i = 0; i < o.length; i++) {
-        if (callbackfn.value.call(thisArg, o[i], i, o) === true) {
+        if (callbackfn.value.call(thisArg, o[i], i, this) === true) {
           result.push(o[i]);
         }
       }
