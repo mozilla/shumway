@@ -194,7 +194,8 @@
     {  "id": "avm1-duplicate-movieclip",
       "stas": "swfs/trace.stas",
       "filenames": [
-        "swfs/avm1/duplicateMovieClip/duplicateMovieClip.swf"
+        "swfs/avm1/duplicateMovieClip/duplicateMovieClip.swf",
+        "swfs/avm1/duplicateMovieClip/name-coercion.swf"
       ],
       "type": "stas"
     },
