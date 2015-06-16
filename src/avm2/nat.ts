@@ -506,7 +506,11 @@ module Shumway.AVMX.AS {
       if (trait.kind === TRAIT.Getter || trait.kind === TRAIT.GetterSetter) {
         value = trait.get.call(this);
       } else {
-        value = this[trait.name.getMangledName()];
+        var mangledName = trait.name.getMangledName();
+        value = this[mangledName];
+        if (typeof value === 'function') {
+          return this.axGetMethod(mangledName);
+        }
       }
       release || checkValue(value);
       return value;
