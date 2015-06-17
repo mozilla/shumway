@@ -59,7 +59,8 @@
     {  "id": "flash_events_Event trace",
        "stas": "swfs/trace.stas",
        "filenames": [
-         "swfs/flash_events_Event.swf"
+         "swfs/flash_events_Event.swf",
+         "swfs/avm2/event-dispatching/event-handler-exceptions.swf"
        ],
        "type": "stas"
     },
