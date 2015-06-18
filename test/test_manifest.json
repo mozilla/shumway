@@ -1,4 +1,9 @@
 [
+    {  "id": "bitmapdata-clone",
+       "frames": [1],
+       "swf": "swfs/avm2/flash/display/bitmapdata/bitmapdata-clone.swf",
+       "type": "eq"
+    },
     {  "id": "acid-bitmapData-copyPixels",
        "frames": [1],
        "swf": "swfs/acid/acid-bitmapData-copyPixels.swf",
