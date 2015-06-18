@@ -62,6 +62,12 @@ function runSwfPlayer(flashParams, settings) {
       });
     }
   });
+  
+  if (flashParams.env === 'test') {
+    window.print = function(msg) {
+      ShumwayCom.print(msg);
+    };
+  }
 }
 
 function setupServices() {

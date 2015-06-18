@@ -27,8 +27,8 @@ module Shumway.GFX.Window {
   export class WindowEaselHost extends EaselHost {
     private _peer: Shumway.Remoting.ITransportPeer;
 
-    public constructor(easel: Easel, peer: Shumway.Remoting.ITransportPeer) {
-      super(easel);
+    public constructor(easel: Easel, peer: Shumway.Remoting.ITransportPeer, env: string = 'dev') {
+      super(easel, env);
       this._peer = peer;
       this._peer.onSyncMessage = function (msg) {
         return this._onWindowMessage(msg, false);

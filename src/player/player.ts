@@ -508,7 +508,7 @@ module Shumway.Player {
      * Update the frame container with the latest changes from the display list.
      */
     private _pumpUpdates() {
-      if (!dontSkipFramesOption.value) {
+      if (this._env !== 'test' && !dontSkipFramesOption.value) {
         if (this._shouldThrottleDownRendering()) {
           return;
         }
@@ -540,23 +540,7 @@ module Shumway.Player {
 
     private _enterEventLoop(): void {
       this._eventLoopIsRunning = true;
-      // this._eventLoopTick = this._eventLoopTick.bind(this);
-
       var self = this;
-
-      if (this._env === 'test') {
-        flash.external.ExternalInterface.ensureInitialized();
-        flash.external.ExternalInterface._addCallback('__tick__', function () {
-          console.log('tick');
-          self._eventLoopTick();
-        });
-        flash.external.ExternalInterface._addCallback('__takeScreenshot__', function () {
-          // TODO
-        });
-        this._eventLoopTick();
-        return;
-      }
-
       function tick() {
         // TODO: change this to the mode described in
         // http://www.craftymind.com/2008/04/18/updated-elastic-racetrack-for-flash-9-and-avm2/
@@ -583,11 +567,6 @@ module Shumway.Player {
       function rootLoadingLoop() {
         var loaderInfo = rootLoader.contentLoaderInfo;
         if (!loaderInfo._file) {
-          setTimeout(rootLoadingLoop, self._getFrameInterval());
-          return;
-        }
-        if (self._env === 'test' && !Loader.getRootLoader().content) {
-          Loader.processEvents();
           setTimeout(rootLoadingLoop, self._getFrameInterval());
           return;
         }

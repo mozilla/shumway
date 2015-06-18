@@ -26,21 +26,30 @@ document.addEventListener('keydown', notifyUserInput, true);
 document.addEventListener('keyup', notifyUserInput, true);
 
 var easel;
-function createEasel(backgroundColor) {
+function createEasel(backgroundColor, env) {
   var Stage = Shumway.GFX.Stage;
   var Easel = Shumway.GFX.Easel;
   var Canvas2DRenderer = Shumway.GFX.Canvas2DRenderer;
 
   Shumway.GFX.WebGL.SHADER_ROOT = SHUMWAY_ROOT + "gfx/gl/shaders/";
-  easel = new Easel(document.getElementById("easelContainer"), false, backgroundColor);
+  easel = new Easel(document.getElementById("easelContainer"), false, backgroundColor, env);
+  
+  if (env === 'test') {
+    ShumwayCom.setScreenShotCallback(function () {
+      // flush rendering buffers
+      easel.render();
+      return easel.screenShot(null, true, false).dataURL;
+    });
+  }
+  
   easel.startRendering();
   return easel;
 }
 
 var easelHost;
-function createEaselHost() {
+function createEaselHost(env) {
   var peer = new Shumway.Remoting.ShumwayComTransportPeer();
-  easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, peer);
+  easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, peer, env);
   return easelHost;
 }
 
@@ -95,8 +104,8 @@ function prepareUI(params) {
 
   setHudVisible(params.isHudOn);
 
-  createEasel(params.backgroundColor);
-  createEaselHost();
+  createEasel(params.backgroundColor, params.env);
+  createEaselHost(params.env);
 
   var displayParameters = easel.getDisplayParameters();
   window.parent.postMessage({
