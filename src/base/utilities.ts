@@ -794,11 +794,10 @@ module Shumway {
     }
 
     // https://gist.github.com/958841
-    export function base64ArrayBuffer(arrayBuffer: ArrayBuffer) {
+    export function base64EncodeBytes(bytes: Uint8Array) {
       var base64 = '';
       var encodings = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
-      var bytes = new Uint8Array(arrayBuffer);
       var byteLength = bytes.byteLength;
       var byteRemainder = byteLength % 3;
       var mainLength = byteLength - byteRemainder;
@@ -844,6 +843,53 @@ module Shumway {
         base64 += concat4(encodings[a], encodings[b], encodings[c], '=');
       }
       return base64;
+    }
+
+    var base64DecodeMap = [ // starts at 0x2B
+      62, 0, 0, 0, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,
+      0, 0, 0, 0, 0, 0, 0, // 0x3A-0x40
+      0,  1,  2,  3,  4,  5,  6, 7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+      19, 20, 21, 22, 23, 24, 25, 0, 0, 0, 0, 0, 0, // 0x5B-0x0x60
+      26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43,
+      44, 45, 46, 47, 48, 49, 50, 51];
+    var base64DecodeMapOffset = 0x2B;
+    var base64EOF = 0x3D;
+
+    /**
+     * Decodes the result of encoding with base64EncodeBytes, but not necessarily any other
+     * base64-encoded data. Note that this also doesn't do any error checking.
+     */
+    export function decodeRestrictedBase64ToBytes(encoded: string): Uint8Array {
+      var ch: number;
+      var code: number;
+      var code2: number;
+
+      var len = encoded.length;
+      var padding = encoded.charAt(len - 2) === '=' ? 2 : encoded.charAt(len - 1) === '=' ? 1 : 0;
+      var decoded = new Uint8Array(encoded.length / 4 * 3 - padding);
+
+      for (var i = 0, j = 0; i < encoded.length;) {
+        ch = encoded.charCodeAt(i++);
+        code = base64DecodeMap[ch - base64DecodeMapOffset];
+        ch = encoded.charCodeAt(i++);
+        code2 = base64DecodeMap[ch - base64DecodeMapOffset];
+        decoded[j++] = (code << 2) | ((code2 & 0x30) >> 4);
+
+        ch = encoded.charCodeAt(i++);
+        if (ch == base64EOF) {
+          return decoded;
+        }
+        code = base64DecodeMap[ch - base64DecodeMapOffset];
+        decoded[j++] = ((code2 & 0x0f) << 4) | ((code & 0x3c) >> 2);
+
+        ch = encoded.charCodeAt(i++);
+        if (ch == base64EOF) {
+          return decoded;
+        }
+        code2 = base64DecodeMap[ch - base64DecodeMapOffset];
+        decoded[j++] = ((code & 0x03) << 6) | code2;
+      }
+      return decoded;
     }
 
     export function escapeString(str: string) {
@@ -2689,7 +2735,7 @@ module Shumway {
     head.insertBefore(document.createElement('style'), head.firstChild);
     var style = <CSSStyleSheet>document.styleSheets[0];
     var rule = '@font-face{font-family:swffont' + id + ';src:url(data:font/opentype;base64,' +
-               Shumway.StringUtilities.base64ArrayBuffer(data.buffer) + ')' + '}';
+               Shumway.StringUtilities.base64EncodeBytes(data) + ')' + '}';
     style.insertRule(rule, style.cssRules.length);
     // In at least Chrome, the browser only decodes a font once it's used in the page at all.
     // Because it still does so asynchronously, we create a with some text using the font, take
