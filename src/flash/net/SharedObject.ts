@@ -60,8 +60,10 @@ module Shumway.AVMX.AS.flash.net {
     }
     static getDiskUsage(url: string): number /*int*/ {
       url = axCoerceString(url);
-      notImplemented("public flash.net.SharedObject::static getDiskUsage"); return;
+      somewhatImplemented("public flash.net.SharedObject::static getDiskUsage");
+      return 0;
     }
+
     static _create(path: string, data: any): SharedObject {
       var obj = new this.sec.flash.net.SharedObject();
       obj._path = path;
@@ -70,24 +72,42 @@ module Shumway.AVMX.AS.flash.net {
       Telemetry.instance.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.SHAREDOBJECT_FEATURE});
       return obj;
     }
-    static getLocal(name: string, localPath: string = null, secure: boolean = false): flash.net.SharedObject {
-      name = axCoerceString(name); localPath = axCoerceString(localPath); secure = !!secure;
+
+    static getLocal(name: string, localPath: string = null, secure: boolean = false): SharedObject {
+      name = axCoerceString(name);
+      localPath = axCoerceString(localPath);
+      secure = !!secure;
       var path = (localPath || '') + '/' + name;
       if (this._sharedObjects[path]) {
         return this._sharedObjects[path];
       }
-      var data = getSharedObjectStorage().getItem(path);
-      var so = this._create(path, data ?
-                                  transformJSValueToAS(this.sec, JSON.parse(data), true) :
-                                  this.sec.createObject());
+      var encodedData = getSharedObjectStorage().getItem(path);
+      var data;
+      if (encodedData) {
+        try {
+          var bytes = StringUtilities.decodeRestrictedBase64ToBytes(encodedData);
+          var serializedData = new this.sec.flash.utils.ByteArray(bytes);
+          data = serializedData.readObject();
+        } catch (e) {
+          Debug.warning('Error encountered while decoding LocalStorage entry. Resetting data.');
+        }
+        if (!data) {
+          data = this.sec.createObject();
+        }
+      } else {
+        data = this.sec.createObject();
+      }
+      var so = this._create(path, data);
       this._sharedObjects[path] = so;
       return so;
     }
+
     static getRemote(name: string, remotePath: string = null, persistence: any = false,
                      secure: boolean = false): flash.net.SharedObject {
       name = axCoerceString(name); remotePath = axCoerceString(remotePath); secure = !!secure;
       notImplemented("public flash.net.SharedObject::static getRemote"); return;
     }
+
     static get defaultObjectEncoding(): number /*uint*/ {
       return this._defaultObjectEncoding;
     }
@@ -138,17 +158,29 @@ module Shumway.AVMX.AS.flash.net {
     }
 
     send(): void {
-      notImplemented("send");
+      notImplemented("public flash.net.SharedObject::send");
     }
 
     close(): void {
       somewhatImplemented("public flash.net.SharedObject::close");
     }
 
-    flush(minDiskSpace: number = 0): string {
+    flush(minDiskSpace?: number): string {
+      minDiskSpace = minDiskSpace | 0;
       somewhatImplemented("public flash.net.SharedObject::flush");
-      var value = JSON.stringify(transformASValueToJS(this.sec, this._data, true));
-      getSharedObjectStorage().setItem(this._path, value);
+      var serializedData = new this.sec.flash.utils.ByteArray();
+      serializedData.objectEncoding = this._objectEncoding;
+      serializedData.writeObject(this._data);
+      var bytes = serializedData.getBytes();
+      var encodedData = StringUtilities.base64EncodeBytes(bytes);
+      if (!release) {
+        var decoded = StringUtilities.decodeRestrictedBase64ToBytes(encodedData);
+        Debug.assert(decoded.byteLength === bytes.byteLength);
+        for (var i = 0; i < decoded.byteLength; i++) {
+          Debug.assert(decoded[i] === bytes[i]);
+        }
+      }
+      getSharedObjectStorage().setItem(this._path, encodedData);
       return 'flushed';
     }
 
@@ -160,7 +192,8 @@ module Shumway.AVMX.AS.flash.net {
 
     get size(): number {
       somewhatImplemented("public flash.net.SharedObject::get size");
-      return JSON.stringify(this._data).length - 2;
+      this.flush(0);
+      return getSharedObjectStorage().getItem(this._path).length;
     }
 
     set fps(updatesPerSecond: number) {
