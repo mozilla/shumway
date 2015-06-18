@@ -235,7 +235,19 @@ var ShumwayCom = {
           var reclonedMsg = cloneIntoFromContent(msg, content);
           callback(reclonedMsg);
         };
-      }
+      },
+      
+      processFrame() {
+        callbacks.sendMessage('processFrame');
+      },
+      
+      processFSCommand(command, args) {
+        callbacks.sendMessage('processFSCommand', command, args);
+      },
+      
+      setScreenShotCallback: function (callback) {
+        callbacks.sendMessage('setScreenShotCallback', callback);
+      },
     };
 
     var shumwayComAdapter = Components.utils.cloneInto(wrapped, content, {cloneFunctions:true});
@@ -355,6 +367,10 @@ var ShumwayCom = {
                                                                      callbacks.getEnvironment());
         }
         return wrappedLocalConnectionService;
+      },
+      
+      print: function(msg) {
+        callbacks.sendMessage('print', msg);
       }
     };
 
@@ -670,6 +686,34 @@ ShumwayChromeActions.prototype = {
     }
 
     return this.externalInterface.processAction(data);
+  },
+  
+  processFrame: function () {
+    if (this.embedTag.wrappedJSObject.processFrame) {
+      this.embedTag.wrappedJSObject.processFrame();
+    }
+  },
+  
+  processFSCommand: function (command, data) {
+    var embedTag = this.embedTag;
+    if (embedTag.wrappedJSObject.processFSCommand) {
+      embedTag.wrappedJSObject.processFSCommand(command, data);
+    }
+  },
+  
+  print: function (msg) {
+    var embedTag = this.embedTag;
+    if (embedTag.wrappedJSObject.print) {
+      embedTag.wrappedJSObject.print(
+        Components.utils.cloneInto(msg, embedTag.ownerDocument.defaultView));
+    }
+  },
+  
+  setScreenShotCallback: function (callback) {
+    var embedTag = this.embedTag;
+    Components.utils.exportFunction(function () {
+      return Components.utils.cloneInto(callback(), embedTag.ownerDocument);
+    }, embedTag.wrappedJSObject, {defineAs: 'getCanvasData'});
   }
 };
 

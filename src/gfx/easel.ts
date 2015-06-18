@@ -271,6 +271,7 @@ module Shumway.GFX {
     private _renderer: Renderer;
 
     private _disableHiDPI: boolean;
+    private _env: string;
     private _state: UIState = new StartState();
     private _persistentState: UIState = new PersistentState();
 
@@ -290,7 +291,8 @@ module Shumway.GFX {
     constructor(
       container: HTMLDivElement,
       disableHiDPI: boolean = false,
-      backgroundColor: number = undefined
+      backgroundColor: number = undefined,
+      env: string = 'dev'
     ) {
       release || assert(container && container.children.length === 0,
                         "Easel container must be empty.");
@@ -300,6 +302,7 @@ module Shumway.GFX {
       this._world = new Group();
       this._worldView.addChild(this._world);
       this._disableHiDPI = disableHiDPI;
+      this._env = env;
 
       // Create stage container.
       var stageContainer = document.createElement("div");

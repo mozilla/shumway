@@ -45,6 +45,10 @@ declare var ShumwayCom: {
   setAsyncMessageCallback: (callback: (data: any) => void) => void;
 
   getLocalConnectionService: () => LocalConnectionService;
+  
+  processFrame: () => void;
+  processFSCommand: (command: string, args: any) => void;
+  print: (msg: string) => void;
 };
 
 interface SpecialStorage {

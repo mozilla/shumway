@@ -27,8 +27,8 @@ module Shumway.GFX.Window {
   export class WindowEaselHost extends EaselHost {
     private _peer: Shumway.Remoting.ITransportPeer;
 
-    public constructor(easel: Easel, peer: Shumway.Remoting.ITransportPeer) {
-      super(easel);
+    public constructor(easel: Easel, peer: Shumway.Remoting.ITransportPeer, env: string = 'dev') {
+      super(easel, env);
       this._peer = peer;
       this._peer.onSyncMessage = function (msg) {
         return this._onWindowMessage(msg, false);
@@ -92,7 +92,11 @@ module Shumway.GFX.Window {
             result = output.toPlainObject();
           }
         } else if (data.type === 'frame') {
-          this.processFrame();
+          if (this._env === 'test') {
+            ShumwayCom.processFrame();
+          } else {
+            this.processFrame();
+          }
         } else if (data.type === 'videoControl') {
           result = this.processVideoControl(data.id, data.eventType, data.data);
         } else if (data.type === 'registerFont') {
@@ -102,7 +106,11 @@ module Shumway.GFX.Window {
           this.processRegisterImage(data.syncId, data.symbolId, data.imageType, data.data, data.alphaData,
                                     this._sendRegisterImageResponse.bind(this, data.requestId));
         } else if (data.type === 'fscommand') {
-          this.processFSCommand(data.command, data.args);
+          if (this._env === 'test') {
+            ShumwayCom.processFSCommand(data.command, data.args);
+          } else {
+            this.processFSCommand(data.command, data.args);
+          }
         } else {
           // release || Debug.assertUnreachable("Unhandled remoting event " + data.type);
         }

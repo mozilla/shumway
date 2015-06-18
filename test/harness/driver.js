@@ -24,7 +24,7 @@ function postInfoMessage(message) {
   postData('/info', JSON.stringify({message: message}));
 }
 
-function execManifest(path, bundle) {
+function execManifest(path, extension) {
   function exec(manifest) {
     var i = 0;
     function next() {
@@ -39,7 +39,8 @@ function execManifest(path, bundle) {
       }));
 
 
-      TestContext._slavePath = 'harness/slave.html';
+      TestContext._slavePath = extension ? 'harness/slave.extension.html' :
+                                           'harness/slave.html';
 
       switch (test.type) {
       case 'stas':
@@ -117,8 +118,8 @@ function getQueryVariable(variable) {
 var manifestFile = getQueryVariable("manifestFile");
 var browser = getQueryVariable("browser");
 var path = getQueryVariable("path");
-var bundle = getQueryVariable("bundle") === "true";
+var extension = getQueryVariable("extension") === "true";
 
 postInfoMessage('Browser \'' + browser + '\': ' + navigator.userAgent);
-execManifest(manifestFile, bundle);
+execManifest(manifestFile, extension);
 

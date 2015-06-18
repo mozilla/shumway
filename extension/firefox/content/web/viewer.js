@@ -82,7 +82,8 @@ function runViewer() {
         isOverlay: isOverlay,
         isDebuggerEnabled: isDebuggerEnabled,
         isHudOn: playerSettings.hud,
-        backgroundColor: backgroundColor
+        backgroundColor: backgroundColor,
+        env: playerSettings.env
       }
     }, '*')
   });

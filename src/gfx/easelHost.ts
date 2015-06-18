@@ -33,13 +33,15 @@ module Shumway.GFX {
     private static _keyboardEvents = Shumway.Remoting.KeyboardEventNames;
 
     private _easel: Easel;
+    protected _env: string;
     private _group: Group;
     private _context: Shumway.Remoting.GFX.GFXChannelDeserializerContext;
     private _content: Group;
     private _fullscreen: boolean;
 
-    constructor(easel: Easel) {
+    constructor(easel: Easel, env: string = 'dev') {
       this._easel = easel;
+      this._env = env;
       var group = easel.world;
       var transparent = easel.transparent;
       this._group = group;

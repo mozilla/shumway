@@ -91,7 +91,8 @@ function sendResponse(data) {
 var mouseOutside = true;
 
 function sendMouseEvent(type, x, y) {
-  gfxWindow.sendMouseEvent(type, x, y);
+  var event = { type: type };
+  SpecialPowers.synthesizeMouse(gfxWindow, x, y, event);
 }
 
 var advanceTimeout = null, ignoreAdanvances = false;
