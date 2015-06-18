@@ -252,8 +252,6 @@ module Shumway.Player {
     private _gfxService: IGFXService;
     private _gfxServiceObserver: GFXServiceObserver;
 
-    private _env: string;
-
     /**
      * If set, overrides SWF file background color.
      */
@@ -319,7 +317,7 @@ module Shumway.Player {
      */
     private _loaderUrl: string = null;
 
-    constructor(sec: ISecurityDomain, gfxService: IGFXService, env: string = 'dev') {
+    constructor(sec: ISecurityDomain, gfxService: IGFXService) {
       this.sec = sec;
       sec.player = this;
       // Freeze in debug builds.
@@ -329,7 +327,6 @@ module Shumway.Player {
       this._gfxService = gfxService;
       this._gfxServiceObserver = new GFXServiceObserver(this);
       this._gfxService.addObserver(this._gfxServiceObserver);
-      this._env = env;
     }
 
     /**
@@ -540,23 +537,7 @@ module Shumway.Player {
 
     private _enterEventLoop(): void {
       this._eventLoopIsRunning = true;
-      // this._eventLoopTick = this._eventLoopTick.bind(this);
-
       var self = this;
-
-      if (this._env === 'test') {
-        flash.external.ExternalInterface.ensureInitialized();
-        flash.external.ExternalInterface._addCallback('__tick__', function () {
-          console.log('tick');
-          self._eventLoopTick();
-        });
-        flash.external.ExternalInterface._addCallback('__takeScreenshot__', function () {
-          // TODO
-        });
-        this._eventLoopTick();
-        return;
-      }
-
       function tick() {
         // TODO: change this to the mode described in
         // http://www.craftymind.com/2008/04/18/updated-elastic-racetrack-for-flash-9-and-avm2/
@@ -583,11 +564,6 @@ module Shumway.Player {
       function rootLoadingLoop() {
         var loaderInfo = rootLoader.contentLoaderInfo;
         if (!loaderInfo._file) {
-          setTimeout(rootLoadingLoop, self._getFrameInterval());
-          return;
-        }
-        if (self._env === 'test' && !Loader.getRootLoader().content) {
-          Loader.processEvents();
           setTimeout(rootLoadingLoop, self._getFrameInterval());
           return;
         }

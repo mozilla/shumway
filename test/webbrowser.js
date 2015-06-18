@@ -102,8 +102,9 @@ WebBrowser.prototype = {
 };
 
 var firefoxResourceDir = path.join(__dirname, 'resources', 'firefox');
+var firefoxExtensionDir = path.join(__dirname, '..', 'build', 'firefox');
 
-function FirefoxBrowser(name, path) {
+function FirefoxBrowser(name, path, extension) {
   if (os.platform() === 'darwin') {
     var m = /([^.\/]+)\.app(\/?)$/.exec(path);
     if (m) {
@@ -111,6 +112,7 @@ function FirefoxBrowser(name, path) {
     }
   }
   WebBrowser.call(this, name, path);
+  this.extension = extension;
 }
 FirefoxBrowser.prototype = Object.create(WebBrowser.prototype);
 FirefoxBrowser.prototype.buildArguments = function (url) {
@@ -124,6 +126,10 @@ FirefoxBrowser.prototype.buildArguments = function (url) {
 };
 FirefoxBrowser.prototype.setupProfileDir = function (dir) {
   testUtils.copySubtreeSync(firefoxResourceDir, dir);
+  if (this.extension) {
+    testUtils.copySubtreeSync(firefoxExtensionDir,
+                              path.join(dir, 'extensions', 'shumway@research.mozilla.org'));
+  }
 };
 
 function ChromiumBrowser(name, path) {
@@ -143,10 +149,10 @@ ChromiumBrowser.prototype.buildArguments = function (url) {
     '--no-first-run', '--disable-sync', url];
 };
 
-WebBrowser.create = function (desc) {
+WebBrowser.create = function (desc, extension) {
   var name = desc.name;
   if (/firefox/i.test(name)) {
-    return new FirefoxBrowser(desc.name, desc.path);
+    return new FirefoxBrowser(desc.name, desc.path, extension);
   }
   if (/(chrome|chromium|opera)/i.test(name)) {
     return new ChromiumBrowser(desc.name, desc.path);

@@ -13,8 +13,8 @@
     <em:targetApplication>
       <Description>
         <em:id>toolkit@mozilla.org</em:id>
-       <em:minVersion>3.0</em:minVersion>
-       <em:maxVersion>13.0a1</em:maxVersion>
+       <em:minVersion>35.0a1</em:minVersion>
+       <em:maxVersion>35.0a1</em:maxVersion>
       </Description>
     </em:targetApplication>
 
