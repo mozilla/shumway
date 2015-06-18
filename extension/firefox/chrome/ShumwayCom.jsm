@@ -195,6 +195,12 @@ var ShumwayCom = {
     // up Xray wrappers.
     var wrapped = {
       userInput: function () {
+        // We don't trust events in the non-trusted code, the isHandlingUserInput shall
+        // actually verify if the event is not a synthesized one. The additional check
+        // will also happen in ShumwayChromeActions.isUserInputInProgress below.
+        if (!callbacks.isHandlingUserInput()) {
+          return;
+        }
         callbacks.sendMessage('userInput', null, true);
       },
 
@@ -547,20 +553,11 @@ ShumwayChromeActions.prototype = {
   },
 
   userInput: function() {
-    var win = this.window;
-    var winUtils = win.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-                      .getInterface(Components.interfaces.nsIDOMWindowUtils);
-    if (winUtils.isHandlingUserInput) {
-      this.lastUserInput = Date.now();
-    }
+    // Recording time of last user input for isUserInputInProgress below.
+    this.lastUserInput = Date.now();
   },
 
   isUserInputInProgress: function () {
-    // TODO userInput does not work for OOP
-    if (!getBoolPref('shumway.userInputSecurity', true)) {
-      return true;
-    }
-
     // We don't trust our Shumway non-privileged code just yet to verify the
     // user input -- using userInput function above to track that.
     if ((Date.now() - this.lastUserInput) > MAX_USER_INPUT_TIMEOUT) {

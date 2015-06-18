@@ -44,6 +44,12 @@ function enableDebug() {
   sendAsyncMessage('Shumway:enableDebug', null);
 }
 
+function isHandlingUserInput() {
+  var winUtils = content.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                        .getInterface(Components.interfaces.nsIDOMWindowUtils);
+  return winUtils.isHandlingUserInput;
+}
+
 addMessageListener('Shumway:init', function (message) {
   var environment = message.data;
 
@@ -54,6 +60,7 @@ addMessageListener('Shumway:init', function (message) {
   ShumwayCom.createAdapter(content.wrappedJSObject, {
     sendMessage: sendMessage,
     enableDebug: enableDebug,
+    isHandlingUserInput: isHandlingUserInput,
     getEnvironment: function () { return environment; }
   }, shumwayComAdapterHooks);
 

@@ -41,6 +41,7 @@ function runViewer() {
       sendMessage: sendMessage,
       enableDebug: enableDebug,
       getEnvironment: getEnvironment,
+      isHandlingUserInput: isHandlingUserInput
     }, shumwayComAdapterHooks);
 
     shumwayActions.onExternalCallback = function (call) {
@@ -136,6 +137,12 @@ function runViewer() {
     setTimeout(function () {
       window.top.location.reload();
     }, 1000);
+  }
+
+  function isHandlingUserInput() {
+    var winUtils = window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                         .getInterface(Components.interfaces.nsIDOMWindowUtils);
+    return winUtils.isHandlingUserInput;
   }
 
   var startupInfo = window.shumwayStartupInfo;
