@@ -3426,7 +3426,6 @@ module Shumway.AVMX.AS {
       release || assert(V.axClass === this.sec.AXXML);
       // Step 4.
       children[i] = V;
-      this._targetProperty = V._name;
       // Step 5 (implicit).
     }
 
