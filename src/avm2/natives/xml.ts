@@ -3768,11 +3768,11 @@ module Shumway.AVMX.AS {
           // Step 2.g.i. (implemented above.)
           // Step 2.g.ii.
           if (parent !== null) {
-            // Step 2.g.iii.1.
+            // Step 2.g.ii.1.
             var q = parent._children.indexOf(currentChild);
-            // Step 2.g.iii.2.
-            parent.replace(q, c);
-            // Step 2.g.iii.3.
+            // Step 2.g.ii.2.
+            parent.replace(q, value);
+            // Step 2.g.ii.3.
             value = parent._children[q];
           }
           // Step 2.g.iii.
