@@ -124,7 +124,6 @@ RUNNING:  test/ats/swfs/020d8502a81923c24e2ab8848305057ed65c4d81f3efdc4849a2e53a
 [91msomewhatImplemented: public flash.filters.DisplacementMapFilter::set color[0m
 [91msomewhatImplemented: public flash.filters.DisplacementMapFilter::set alpha[0m
 [91msomewhatImplemented: [object DisplacementMapFilter][0m
-[91msomewhatImplemented: public flash.display.BitmapData::clone[0m
 [91msomewhatImplemented: public flash.display.BitmapData::applyFilter [object ConvolutionFilter][0m
 [91msomewhatImplemented: public flash.display.BitmapData::draw[0m
 HASHCODE: test/ats/swfs/020d8502a81923c24e2ab8848305057ed65c4d81f3efdc4849a2e53ada695fe15aacb4c8009038855d51b001b7728aa00486fc068928b1225a6d9d158a732a8b.swf: 0x08bb0e00
@@ -204,7 +203,7 @@ RUNNING:  test/ats/swfs/03398183f32bcf40113d61d80ff73c7ebae01eaf79e94c2e4ebe3c1c
 [91mLoading error encountered:, Can't read http://disney.ff0000-cdn.net/2014/FY15__Disney_Side/core_family_160x600_ext.swf[0m
 HASHCODE: test/ats/swfs/03398183f32bcf40113d61d80ff73c7ebae01eaf79e94c2e4ebe3c1c17c8fdb4432bcbc656e6e6b814b4539c81c644f0c661c0ab6bcbf274b134a96621a6b4ad.swf: 0x44d5a648
 RUNNING:  test/ats/swfs/03399686f91091308d71649ff45cf6e9620fafcfe4d18524c982fe5ab5f2f89e568af61304997c34f0ee0869b0b808107be6de66db1304ee74207413744ce1c7.swf
-[91mcaught error under Timer TIMER event: , Error: Error #2067: The ExternalInterface is not available in this container. ExternalInterface requires Internet Explorer ActiveX, Firefox, Mozilla 1.7.5 and greater, or other browsers that support NPRuntime.[0m
+[91mUncaught error in handler for event timer: , Error: Error #2067: The ExternalInterface is not available in this container. ExternalInterface requires Internet Explorer ActiveX, Firefox, Mozilla 1.7.5 and greater, or other browsers that support NPRuntime.[0m
 HASHCODE: test/ats/swfs/03399686f91091308d71649ff45cf6e9620fafcfe4d18524c982fe5ab5f2f89e568af61304997c34f0ee0869b0b808107be6de66db1304ee74207413744ce1c7.swf: 0x0d05f888
 [91mTag not handled by the parser: 60: CODE_DEFINE_VIDEO_STREAM[0m
 [91mTag not handled by the parser: 61: CODE_VIDEO_FRAME[0m
