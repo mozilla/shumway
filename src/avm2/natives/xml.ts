@@ -3287,6 +3287,9 @@ module Shumway.AVMX.AS {
       return this._children.length;
     }
     name(): Object {
+      if (this._children.length !== 1) {
+        this.sec.throwError('TypeError', Errors.XMLOnlyWorksWithOneItemLists, 'name');
+      }
       return this._children[0].name();
     }
 
