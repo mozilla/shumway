@@ -3678,9 +3678,10 @@ module Shumway.AVMX.AS {
               // Step 2.c.viii.1.a.
               if (i > 0) {
                 var lastChild = this._children[i - 1];
-                for (j = 0; j < r.length - 1; j++) {
+                var rLength = r._children.length - 1;
+                for (j = 0; j < rLength; j++) {
                   if (r._children[j] === lastChild) {
-                    assert(r._children[0]);
+                    release || assert(r._children[0]);
                     break;
                   }
                 }
