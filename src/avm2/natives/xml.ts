@@ -385,7 +385,7 @@ module Shumway.AVMX.AS {
         } else {
           out.name = name.substr(1);
         }
-        out.kind = CONSTANT.QNameA;
+        out.kind = out.namespaces.length === 1 ? CONSTANT.QNameA : CONSTANT.MultinameA;
       } else {
         out.name = name;
       }
@@ -2642,9 +2642,7 @@ module Shumway.AVMX.AS {
       }
       // Step 2 (implicit).
       // Step 3.
-      var list = this.sec.AXXMLList.CreateList(this, this._name);
-      list._targetObject = this;
-      list._targetProperty = mn;
+      var list = this.sec.AXXMLList.CreateList(this, mn);
       var length = 0;
       var anyName = mn.isAnyName();
       var anyNamespace = mn.isAnyNamespace();
