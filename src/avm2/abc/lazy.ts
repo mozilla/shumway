@@ -1117,7 +1117,7 @@ module Shumway.AVMX {
     }
 
     public isAnyName(): boolean {
-      return !this.isRuntimeName() && this.name === null;
+      return this.name === null;
     }
 
     public isAnyNamespace(): boolean {
