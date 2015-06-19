@@ -2491,8 +2491,9 @@ module Shumway.AVMX.AS {
     setProperty(mn: Multiname, v) {
       release || assert(mn instanceof Multiname);
       // Step 1. (Step 3 in Tamarin source.)
+      var sec = this.sec;
       if (!mn.isAnyName() && !mn.isAttribute() && mn.name === mn.name >>> 0) {
-        this.sec.throwError('TypeError', Errors.XMLAssignmentToIndexedXMLNotAllowed);
+        sec.throwError('TypeError', Errors.XMLAssignmentToIndexedXMLNotAllowed);
       }
       // Step 2. (Step 4 in Tamarin source.)
       if (this._kind === ASXMLKind.Text || this._kind === ASXMLKind.Comment ||
@@ -2501,30 +2502,30 @@ module Shumway.AVMX.AS {
       }
       // Step 3.
       var c;
-      if (!isXMLType(v, this.sec) || v._kind === ASXMLKind.Text ||
+      if (!isXMLType(v, sec) || v._kind === ASXMLKind.Text ||
           v._kind === ASXMLKind.Attribute)
       {
-        c = toString(v, this.sec);
+        c = toString(v, sec);
         // Step 4.
       } else {
         c = v._deepCopy();
       }
-      // Step 5 (implicit).
-      // Step 6.
+      // Step 5 (implicit, mn is always a Multiname here).
+      // Step 6 (7 in Tamarin).
       if (mn.isAttribute()) {
-        // Step 6.a. (Omitted, the name was just created by toXMLName.)
+        // Step 6.a (omitted, as in Tamarin).
         // Step 6.b.
-        if (c && c.axClass === this.sec.AXXMLList) {
+        if (c && c.axClass === sec.AXXMLList) {
           // Step 6.b.i.
           if (c._children.length === 0) {
             c = '';
             // Step 6.b.ii.
           } else {
             // Step 6.b.ii.1.
-            var s = toString(c._children[0], this.sec);
+            var s = toString(c._children[0], sec);
             // Step 6.b.ii.2.
             for (var j = 1; j < c._children.length; j++) {
-              s += ' ' + toString(c._children[j], this.sec);
+              s += ' ' + toString(c._children[j], sec);
             }
             // Step 6.b.ii.3.
             c = s;
@@ -2540,7 +2541,7 @@ module Shumway.AVMX.AS {
         var newAttributes = this._attributes = [];
         for (var j = 0; attributes && j < attributes.length; j++) {
           var attribute = attributes[j];
-          if (attribute._name.equalsQName(mn)) {
+          if (attribute._name.matches(mn)) {
             // Step 6.e.1.
             if (!a) {
               a = attribute;
@@ -2554,11 +2555,17 @@ module Shumway.AVMX.AS {
         }
         // Step 6.f.
         if (!a) {
+          // Wildcard attribute names shouldn't cause any attributes to be *added*, so we can bail
+          // here. Tamarin doesn't do this, and it's not entirely clear to me how they avoid
+          // adding attributes, but this works and doesn't regress any tests.
+          if (mn.isAnyName()) {
+            return;
+          }
           var uri = '';
           if (mn.namespaces.length === 1) {
             uri = mn.namespaces[0].uri;
           }
-          a = createXML(this.sec, ASXMLKind.Attribute, uri, mn.name);
+          a = createXML(sec, ASXMLKind.Attribute, uri, mn.name);
           a._parent = this;
           newAttributes.push(a);
           // TODO: implement the namespace parts of step f.
@@ -2571,7 +2578,7 @@ module Shumway.AVMX.AS {
 
       var i;
       var isAny = mn.isAnyName();
-      var primitiveAssign = !isXMLType(c, this.sec) && !isAny && mn.name !== '*';
+      var primitiveAssign = !isXMLType(c, sec) && !isAny && mn.name !== '*';
       var isAnyNamespace = mn.isAnyNamespace();
       for (var k = this._children.length - 1; k >= 0; k--) {
         if ((isAny || this._children[k]._kind === ASXMLKind.Element &&
@@ -2596,11 +2603,11 @@ module Shumway.AVMX.AS {
             prefix = ns.prefix;
           }
           if (uri === null) {
-            var defaultNamespace = getDefaultNamespace(this.sec);
+            var defaultNamespace = getDefaultNamespace(sec);
             uri = defaultNamespace.uri;
             prefix = defaultNamespace.prefix;
           }
-          var y = createXML(this.sec, ASXMLKind.Element, uri, mn.name, prefix);
+          var y = createXML(sec, ASXMLKind.Element, uri, mn.name, prefix);
           y._parent = this;
           this.replace(String(i), y);
           var ns = y._name.namespace;
@@ -2609,7 +2616,7 @@ module Shumway.AVMX.AS {
       }
       if (primitiveAssign) {
         this._children[i]._children = [];   // blow away kids of x[i]
-        var s = toString(c, this.sec);
+        var s = toString(c, sec);
         if (s !== "") {
           this._children[i].replace("0", s);
         }
