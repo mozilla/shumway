@@ -3650,23 +3650,25 @@ module Shumway.AVMX.AS {
           // Step 2.c.iii.
           var y = this.sec.AXXML.Create();
           y._parent = r;
-          y._name = this._targetProperty;
+          var yName = this._targetProperty;
+          var yKind = ASXMLKind.Text;
           // Step 2.c.iv.
           if (this._targetProperty && this._targetProperty.isAttribute()) {
             if (r.hasProperty(this._targetProperty)) {
               return;
             }
-            y._kind = ASXMLKind.Attribute;
+            yKind = ASXMLKind.Attribute;
           }
           // Step 2.c.v.
           else if (!this._targetProperty || this._targetProperty.name === null) {
-            y._name = null;
-            y._kind = ASXMLKind.Text;
+            yName = null;
+            yKind = ASXMLKind.Text;
           }
           // Step 2.c.vi.
           else {
-            y._kind = ASXMLKind.Element;
+            yKind = ASXMLKind.Element;
           }
+          y.init(yKind, yName);
           // Step 2.c.vii.
           i = length;
           // Step 2.c.viii.
