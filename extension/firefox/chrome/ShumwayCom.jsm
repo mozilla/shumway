@@ -175,6 +175,8 @@ var ShumwayCom = {
         // property and for usage as a sandbox for cloneInto operations.
         var gfxContent = gfxWindow.contentWindow.wrappedJSObject;
         ShumwayCom.createGfxAdapter(gfxContent, callbacks, hooks);
+
+        setupUserInput(gfxWindow.contentWindow, callbacks);
       },
 
       setupPlayerComBridge: function (playerWindow) {
@@ -194,10 +196,6 @@ var ShumwayCom = {
     // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
     // up Xray wrappers.
     var wrapped = {
-      userInput: function () {
-        callbacks.sendMessage('userInput', null, true);
-      },
-
       setFullscreen: function (value) {
         value = !!value;
         callbacks.sendMessage('setFullscreen', value, false);
@@ -437,6 +435,18 @@ function loadShumwaySystemResource(id) {
   return deferred.promise;
 }
 
+function setupUserInput(contentWindow, callbacks) {
+  function notifyUserInput() {
+    callbacks.sendMessage('userInput', null, true);
+  }
+
+  // Ignoring the untrusted events by providing the 4th argument for addEventListener.
+  contentWindow.document.addEventListener('mousedown', notifyUserInput, true, false);
+  contentWindow.document.addEventListener('mouseup', notifyUserInput, true, false);
+  contentWindow.document.addEventListener('keydown', notifyUserInput, true, false);
+  contentWindow.document.addEventListener('keyup', notifyUserInput, true, false);
+}
+
 // All the privileged actions.
 function ShumwayChromeActions(startupInfo, window, document) {
   this.url = startupInfo.url;
@@ -547,20 +557,11 @@ ShumwayChromeActions.prototype = {
   },
 
   userInput: function() {
-    var win = this.window;
-    var winUtils = win.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-                      .getInterface(Components.interfaces.nsIDOMWindowUtils);
-    if (winUtils.isHandlingUserInput) {
-      this.lastUserInput = Date.now();
-    }
+    // Recording time of last user input for isUserInputInProgress below.
+    this.lastUserInput = Date.now();
   },
 
   isUserInputInProgress: function () {
-    // TODO userInput does not work for OOP
-    if (!getBoolPref('shumway.userInputSecurity', true)) {
-      return true;
-    }
-
     // We don't trust our Shumway non-privileged code just yet to verify the
     // user input -- using userInput function above to track that.
     if ((Date.now() - this.lastUserInput) > MAX_USER_INPUT_TIMEOUT) {
