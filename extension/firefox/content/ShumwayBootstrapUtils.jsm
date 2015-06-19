@@ -106,23 +106,32 @@ var ShumwayBootstrapUtils = {
     this.isRegistered = true;
 
     // Register the components.
-    converterFactory.register(ShumwayStreamConverter);
-    overlayConverterFactory.register(ShumwayStreamOverlayConverter);
+    //converterFactory.register(ShumwayStreamConverter);
+    //overlayConverterFactory.register(ShumwayStreamOverlayConverter);
 
-    if (registerOverlayPreview) {
-      var ignoreCTP = getBoolPref(PREF_IGNORE_CTP, true);
-      var whitelist = getStringPref(PREF_WHITELIST);
-      // Some platforms cannot support video playback, and our whitelist targets
-      // only video players atm. We need to disable Shumway for those platforms.
-      if (whitelist && !Services.prefs.prefHasUserValue(PREF_WHITELIST) &&
-          !allowedPlatformForMedia()) {
-        log('Default SWF whitelist is used on an unsupported platform -- ' +
-            'using demo whitelist.');
-        whitelist = 'http://www.areweflashyet.com/*.swf';
-      }
-      Ph.registerPlayPreviewMimeType(SWF_CONTENT_TYPE, ignoreCTP,
-                                     undefined, whitelist);
-    }
+    let pluginHost = Cc["@mozilla.org/plugin/host;1"].getService(Ci.nsIPluginHost);
+    let plugin = pluginHost.createFakePlugin("chrome://shumway/content/content.html");
+    plugin.niceName = "Shumway plugin";
+    plugin.registerMode = Ci.nsIFakePluginTag.MIME_REGISTER_ALL;
+    plugin.supersedeExisting = true;
+    plugin.addMimeType("application/x-shockwave-flash");
+    plugin.sandboxScript = "chrome://shumway/content/plugin.js";
+    plugin.enabledState = Ci.nsIPluginTag.STATE_ENABLED;
+
+    //if (registerOverlayPreview) {
+    //  var ignoreCTP = getBoolPref(PREF_IGNORE_CTP, true);
+    //  var whitelist = getStringPref(PREF_WHITELIST);
+    //  // Some platforms cannot support video playback, and our whitelist targets
+    //  // only video players atm. We need to disable Shumway for those platforms.
+    //  if (whitelist && !Services.prefs.prefHasUserValue(PREF_WHITELIST) &&
+    //      !allowedPlatformForMedia()) {
+    //    log('Default SWF whitelist is used on an unsupported platform -- ' +
+    //        'using demo whitelist.');
+    //    whitelist = 'http://www.areweflashyet.com/*.swf';
+    //  }
+    //  Ph.registerPlayPreviewMimeType(SWF_CONTENT_TYPE, ignoreCTP,
+    //                                 undefined, whitelist);
+    //}
   },
 
   unregister: function () {
@@ -133,11 +142,11 @@ var ShumwayBootstrapUtils = {
     this.isRegistered = false;
 
     // Remove the contract/component.
-    converterFactory.unregister();
-    overlayConverterFactory.unregister();
-
-    if (registerOverlayPreview) {
-      Ph.unregisterPlayPreviewMimeType(SWF_CONTENT_TYPE);
-    }
+    //converterFactory.unregister();
+    //overlayConverterFactory.unregister();
+    //
+    //if (registerOverlayPreview) {
+    //  Ph.unregisterPlayPreviewMimeType(SWF_CONTENT_TYPE);
+    //}
   }
 };
