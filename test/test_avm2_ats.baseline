@@ -112,6 +112,7 @@ HASHCODE: test/ats/swfs/01da8aa0a11f67be4364bae32c074da8272a0d558b99bb18a52c5896
 RUNNING:  test/ats/swfs/01edb59b775504030a0b9ed4712dbe11e77e8aa128b4d94177ceaef0ce759b069d8ec6f3c375ee8a417657c111ea952cea8857732431c453d32e3923d998ac15.swf
 [91msomewhatImplemented: public flash.system.Security::static allowDomain ["*.vidyoda.com"][0m
 [91msomewhatImplemented: public flash.system.Security::static allowInsecureDomain[0m
+[91mSWF running in Shell or Inspector uses ExternalInterface, might not work correctly[0m
 HASHCODE: test/ats/swfs/01edb59b775504030a0b9ed4712dbe11e77e8aa128b4d94177ceaef0ce759b069d8ec6f3c375ee8a417657c111ea952cea8857732431c453d32e3923d998ac15.swf: 0x00000000
 RUNNING:  test/ats/swfs/020d8502a81923c24e2ab8848305057ed65c4d81f3efdc4849a2e53ada695fe15aacb4c8009038855d51b001b7728aa00486fc068928b1225a6d9d158a732a8b.swf
 [91msomewhatImplemented: public flash.filters.DisplacementMapFilter::set mapBitmap[0m
@@ -190,6 +191,7 @@ RUNNING:  test/ats/swfs/03398183f32bcf40113d61d80ff73c7ebae01eaf79e94c2e4ebe3c1c
 [video-main][v1.0][ClickTag]  - urlMode:      	urlModeVendor 
 [video-main][v1.0][ClickTag] ------------------------------------------------------------------------------------------------------------- 
 [video-main][v1.0][MainBase] launch() 
+[91mSWF running in Shell or Inspector uses ExternalInterface, might not work correctly[0m
 [video-main][v1.0][MainBase] -- RED POLITE AD SETTINGS ------------------------------------------------------------------------------------------- 
 [video-main][v1.0][MainBase]  environment:	EmbeddedSWF via Browser 
 [video-main][v1.0][MainBase]  externalPath:	LIVE -> http://disney.ff0000-cdn.net/2014/FY15__Disney_Side/core_family_160x600_ext.swf 
@@ -204,7 +206,7 @@ RUNNING:  test/ats/swfs/03398183f32bcf40113d61d80ff73c7ebae01eaf79e94c2e4ebe3c1c
 [91mLoading error encountered:, Can't read http://disney.ff0000-cdn.net/2014/FY15__Disney_Side/core_family_160x600_ext.swf[0m
 HASHCODE: test/ats/swfs/03398183f32bcf40113d61d80ff73c7ebae01eaf79e94c2e4ebe3c1c17c8fdb4432bcbc656e6e6b814b4539c81c644f0c661c0ab6bcbf274b134a96621a6b4ad.swf: 0x44d5a648
 RUNNING:  test/ats/swfs/03399686f91091308d71649ff45cf6e9620fafcfe4d18524c982fe5ab5f2f89e568af61304997c34f0ee0869b0b808107be6de66db1304ee74207413744ce1c7.swf
-[91mcaught error under Timer TIMER event: , Error: Error #2067: The ExternalInterface is not available in this container. ExternalInterface requires Internet Explorer ActiveX, Firefox, Mozilla 1.7.5 and greater, or other browsers that support NPRuntime.[0m
+[91mSWF running in Shell or Inspector uses ExternalInterface, might not work correctly[0m
 HASHCODE: test/ats/swfs/03399686f91091308d71649ff45cf6e9620fafcfe4d18524c982fe5ab5f2f89e568af61304997c34f0ee0869b0b808107be6de66db1304ee74207413744ce1c7.swf: 0x0d05f888
 [91mTag not handled by the parser: 60: CODE_DEFINE_VIDEO_STREAM[0m
 [91mTag not handled by the parser: 61: CODE_VIDEO_FRAME[0m

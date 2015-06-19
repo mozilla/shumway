@@ -56,6 +56,44 @@ module Shumway.Player {
     }
   }
 
+  /**
+   * Implementation of IExternalInterfaceService that just does the minimal amount of work
+   * required to pretend that ExternalInterface is available.
+   *
+   * Doesn't actually execute anything when `call` is used and never invokes registered callbacks.
+   */
+  export class PlayerInternalExternalInterface implements IExternalInterfaceService {
+
+    get enabled() {
+      return true;
+    }
+
+    initJS(callback: (functionName: string, args: any[]) => any) {
+      Debug.warnOnce('SWF running in Shell or Inspector uses ExternalInterface, might not work' +
+                     ' correctly');
+    }
+
+    registerCallback(functionName: string) {
+      // Empty stub.
+    }
+
+    unregisterCallback(functionName: string) {
+      // Empty stub.
+    }
+
+    eval(expression: string): any {
+      return undefined;
+    }
+
+    call(request: string): any {
+      return undefined;
+    }
+
+    getId(): string {
+      return '';
+    }
+  }
+
   export class ShumwayComFileLoadingService implements IFileLoadingService {
     private _baseUrl: string = null;
     private _nextSessionId: number = 1; // 0 - is reserved

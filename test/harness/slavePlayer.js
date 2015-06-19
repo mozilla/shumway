@@ -30,6 +30,7 @@ Shumway.Telemetry.instance = {
 };
 
 Shumway.FileLoadingService.instance = new Shumway.Player.BrowserFileLoadingService();
+Shumway.ExternalInterfaceService.instance = new Shumway.Player.PlayerInternalExternalInterface();
 Shumway.LocalConnectionService.instance = new Shumway.Player.PlayerInternalLocalConnectionService();
 
 function runSwfPlayer(flashParams, settings, gfxWindow) {

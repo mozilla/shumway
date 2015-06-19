@@ -100,6 +100,7 @@ module Shumway.Shell {
     Shumway.BinaryFileReader = <typeof BinaryFileReader><any>ShellBinaryFileReader;
     Shumway.Telemetry.instance = shellTelemetry;
     Shumway.FileLoadingService.instance = shellFileLoadingService;
+    Shumway.ExternalInterfaceService.instance = new Player.PlayerInternalExternalInterface();
     Shumway.LocalConnectionService.instance = new Player.PlayerInternalLocalConnectionService();
   }
 }

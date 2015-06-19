@@ -331,6 +331,19 @@ module Shumway {
       console.warn.apply(console, arguments);
     }
 
+    export function warnOnce(message: any, arg1?: any, arg2?: any/*...messages: any[]*/) {
+      if (release) {
+        return;
+      }
+      var key = argumentsToString(arguments);
+      if (_warnedCounts[key]) {
+        _warnedCounts[key]++;
+        return;
+      }
+      _warnedCounts[key] = 1;
+      console.warn.apply(console, arguments);
+    }
+
     export function warnCounts() {
       var list = [];
       for (var key in _warnedCounts) {
@@ -1818,7 +1831,8 @@ module Shumway {
     export function pointInPolygon(x: number, y: number, polygon: Float32Array): boolean {
       // release || assert (((polygon.length & 1) === 0) && polygon.length >= 8);
       // release || assert (polygon[0] === polygon[polygon.length - 2] &&
-      //        polygon[1] === polygon[polygon.length - 1], "First and last points should be equal.");
+      //        polygon[1] === polygon[polygon.length - 1], "First and last points should be
+      // equal.");
       var crosses = 0;
       var n = polygon.length - 2;
       var p = polygon;
@@ -1857,7 +1871,8 @@ module Shumway {
     export function pointInPolygonInt32(x: number, y: number, polygon: Int32Array): boolean {
       // release || assert (((polygon.length & 1) === 0) && polygon.length >= 8);
       // release || assert (polygon[0] === polygon[polygon.length - 2] &&
-      //        polygon[1] === polygon[polygon.length - 1], "First and last points should be equal.");
+      //        polygon[1] === polygon[polygon.length - 1], "First and last points should be
+      // equal.");
       x = x | 0;
       y = y | 0;
       var crosses = 0;
@@ -2145,8 +2160,9 @@ module Shumway {
     }
 
     /**
-     * Visitors can return RETURN if they wish to stop the iteration or DELETE if they need to delete the current node.
-     * NOTE: DELETE most likley doesn't work if there are multiple active iterations going on.
+     * Visitors can return RETURN if they wish to stop the iteration or DELETE if they need to
+     * delete the current node. NOTE: DELETE most likley doesn't work if there are multiple active
+     * iterations going on.
      */
     public forEach(visitor: (value: T) => any) {
       var curr = this._head;
@@ -3368,7 +3384,8 @@ module Shumway {
         }
         return;
       }
-      // enterTimeline("convertImage", ImageType[sourceFormat] + " to " + ImageType[targetFormat] + " (" + memorySizeToString(source.length));
+      // enterTimeline("convertImage", ImageType[sourceFormat] + " to " + ImageType[targetFormat] +
+      // " (" + memorySizeToString(source.length));
       if (sourceFormat === ImageType.PremultipliedAlphaARGB &&
           targetFormat === ImageType.StraightAlphaRGBA) {
         Shumway.ColorUtilities.ensureUnpremultiplyTable();
