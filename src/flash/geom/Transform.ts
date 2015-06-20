@@ -21,8 +21,6 @@ module Shumway.AVMX.AS.flash.geom {
 
   export class Transform extends ASObject {
     static classInitializer: any = null;
-    static classSymbols: string [] = null; // [];
-    static instanceSymbols: string [] = null; // [];
 
     private _displayObject: flash.display.DisplayObject;
 
@@ -52,6 +50,7 @@ module Shumway.AVMX.AS.flash.geom {
 
     get concatenatedMatrix(): flash.geom.Matrix {
       var matrix = this._displayObject._getConcatenatedMatrix().clone().toPixelsInPlace();
+      // For some reason, all dimensions are scale 5x for off-stage objects.
       if (!this._displayObject._stage) {
         matrix.scale(5, 5);
       }
@@ -63,8 +62,17 @@ module Shumway.AVMX.AS.flash.geom {
     }
 
     get pixelBounds(): flash.geom.Rectangle {
-      notImplemented("public flash.geom.Transform::get pixelBounds"); return;
-      // return this._pixelBounds;
+      // Only somewhat implemented because this is largely untested.
+      somewhatImplemented("public flash.geom.Transform::get pixelBounds");
+      var stage = this._displayObject.stage;
+      var targetCoordinateSpace = stage || this._displayObject;
+      var rect = this._displayObject.getRect(targetCoordinateSpace);
+      // For some reason, all dimensions are scale 5x for off-stage objects.
+      if (!stage) {
+        rect.width *= 5;
+        rect.height *= 5;
+      }
+      return rect;
     }
 
     get matrix3D(): flash.geom.Matrix3D {
@@ -74,8 +82,7 @@ module Shumway.AVMX.AS.flash.geom {
 
     set matrix3D(m: flash.geom.Matrix3D) {
       if (!(this.sec.flash.geom.Matrix3D.axIsType(m))) {
-        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, m,
-                                       'flash.geom.Matrix3D');
+        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, m, 'flash.geom.Matrix3D');
       }
 
       var raw = m.rawData;

@@ -71,6 +71,13 @@
       ],
       "type": "stas"
     },
+    {  "id": "flash_geom_Transform trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm2/flash/geom/transform/pixelBounds.swf"
+      ],
+      "type": "stas"
+    },
     {  "id": "flash_net_classes trace",
        "stas": "swfs/trace.stas",
        "filenames": [
