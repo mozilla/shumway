@@ -18,6 +18,7 @@ module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import axCoerceString = Shumway.AVMX.axCoerceString;
+  import checkNullParameter = Shumway.AVMX.checkNullParameter;
 
   export class Transform extends ASObject {
     static classInitializer: any = null;
@@ -33,10 +34,17 @@ module Shumway.AVMX.AS.flash.geom {
     }
 
     get matrix(): flash.geom.Matrix {
+      if (this._displayObject._matrix3D) {
+        return null;
+      }
       return this._displayObject._getMatrix().clone().toPixelsInPlace();
     }
 
     set matrix(value: flash.geom.Matrix) {
+      if (this._displayObject._matrix3D) {
+        this._displayObject._matrix3D.resetTargetDisplayObject();
+        this._displayObject._matrix3D = null;
+      }
       this._displayObject._setMatrix(value, true);
     }
 
@@ -76,8 +84,9 @@ module Shumway.AVMX.AS.flash.geom {
     }
 
     get matrix3D(): flash.geom.Matrix3D {
-      var m = this._displayObject._matrix3D;
-      return m && m.clone();
+      somewhatImplemented("public flash.geom.Transform::get matrix3D");
+      // Note: matrix3D returns the original object, *not* a clone.
+      return this._displayObject._matrix3D;
     }
 
     set matrix3D(m: flash.geom.Matrix3D) {
@@ -85,25 +94,19 @@ module Shumway.AVMX.AS.flash.geom {
         this.sec.throwError('TypeError', Errors.CheckTypeFailedError, m, 'flash.geom.Matrix3D');
       }
 
-      var raw = m.rawData;
-      // TODO why is this not a 3D matrix?
-      this.matrix = new this.sec.flash.geom.Matrix (
-        raw.axGetPublicProperty(0),
-        raw.axGetPublicProperty(1),
-        raw.axGetPublicProperty(4),
-        raw.axGetPublicProperty(5),
-        raw.axGetPublicProperty(12),
-        raw.axGetPublicProperty(13)
-      );
-      // this.matrix will reset this._target._matrix3D
-      // TODO: Must make sure to also deal with the _rotateXYZ properties.
       somewhatImplemented("public flash.geom.Transform::set matrix3D");
-      // this._displayObject._matrix3D = m;
+      // Setting the displayObject on the matrix can throw an error, so do that first.
+      m.setTargetDisplayObject(this._displayObject);
+      // Note: matrix3D stores the original object, *not* a clone.
+      this._displayObject._matrix3D = m;
     }
 
     getRelativeMatrix3D(relativeTo: flash.display.DisplayObject): flash.geom.Matrix3D {
-      relativeTo = relativeTo;
-      notImplemented("public flash.geom.Transform::getRelativeMatrix3D"); return;
+      checkNullParameter(relativeTo, "relativeTo", this.sec);
+      somewhatImplemented("public flash.geom.Transform::getRelativeMatrix3D");
+      var matrix3D = this._displayObject._matrix3D;
+      // TODO: actually calculate the relative matrix.
+      return matrix3D ? matrix3D.clone() : null;
     }
 
     get perspectiveProjection(): flash.geom.PerspectiveProjection {

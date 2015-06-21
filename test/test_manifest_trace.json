@@ -67,7 +67,8 @@
     {  "id": "flash_geom_Matrix3D trace",
       "stas": "swfs/trace.stas",
       "filenames": [
-        "swfs/avm2/flash/geom/matrix3d/Matrix3DClass.swf"
+        "swfs/avm2/flash/geom/matrix3d/Matrix3DClass.swf",
+        "swfs/avm2/flash/geom/matrix3d/TransformBasics.swf"
       ],
       "type": "stas"
     },

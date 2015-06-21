@@ -341,7 +341,7 @@ module Shumway.AVMX {
   //  PerspectiveFocalLengthInvalid                             : { code: 2186, message: "Invalid focalLength %1."},
   //  Matrix3DDecomposeTypeInvalid                              : { code: 2187, message: "Invalid orientation style %1.  Value must be one of 'Orientation3D.EULER_ANGLES', 'Orientation3D.AXIS_ANGLE', or 'Orientation3D.QUATERNION'."},
   //  MatrixNonInvertibleError                                  : { code: 2188, message: "Invalid raw matrix. Matrix must be invertible."},
-  //  Matrix3DRefCannontBeShared                                : { code: 2189, message: "A Matrix3D can not be assigned to more than one DisplayObject."},
+    Matrix3DRefCannontBeShared                                : { code: 2189, message: "A Matrix3D can not be assigned to more than one DisplayObject."},
   //  ForceDownloadSecurityError                                : { code: 2190, message: "The attempted load of %1 failed as it had a Content-Disposition of attachment set."},
   //  ClipboardDisallowedWrite                                  : { code: 2191, message: "The Clipboard.generalClipboard object may only be written to as the result of user interaction, for example by a mouse click or button press."},
   //  MalformedUnicodeError                                     : { code: 2192, message: "An unpaired Unicode surrogate was encountered in the input."},
