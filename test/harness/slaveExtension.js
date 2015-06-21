@@ -15,12 +15,29 @@
  */
 
 var swfContainer = document.getElementById('swfContainer');
+var onFrameCallback, terminate;
+
+swfContainer.addEventListener('message', function (e) {
+  switch (e.detail.type) {
+    case 'processFrame':
+      onFrameCallback();
+      break;
+    case 'processFSCommand':
+      if (e.detail.data.command === 'quit') {
+        terminate();
+      }
+      break;
+    case 'print':
+      print(e.detail);
+      break;
+  }
+});
 
 function loadMovie(path, reportFrames) {
   path = combineUrl(document.location.href, path);
 
   var expectedFrameIndex = 0, currentFrame = -1;
-  function onFrameCallback() {
+  onFrameCallback = function () {
     if (currentFrame < 0) {
       sendResponse();
     }
@@ -37,9 +54,9 @@ function loadMovie(path, reportFrames) {
       }
     }
     currentFrame++;
-  }
+  };
 
-  function terminate() {
+  terminate = function () {
     ignoreAdanvances = true;
     // cleaning up
     if (advanceTimeout) { // invoke current timeout
@@ -50,15 +67,9 @@ function loadMovie(path, reportFrames) {
     while (reportFrames && i < reportFrames.length) {
       onFrameCallback();
     }
-  }
+  };
 
   swfContainer.src = path;
-  swfContainer.processFrame = onFrameCallback;
-  swfContainer.processFSCommand = function (command) {
-    if (command === 'quit') {
-      terminate();
-    }
-  };
 }
 
 var traceMessages = '';
@@ -66,10 +77,10 @@ function addTraceMessage(msg) {
   traceMessages += msg + '\n';
 }
 
-swfContainer.print = function (msg) {
+function print(msg) {
   addTraceMessage(msg);
   console.log(msg);
-};
+}
 
 function sendResponse(data) {
   window.parent.postMessage({

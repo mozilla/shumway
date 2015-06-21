@@ -33,15 +33,13 @@ module Shumway.GFX {
     private static _keyboardEvents = Shumway.Remoting.KeyboardEventNames;
 
     private _easel: Easel;
-    protected _env: string;
     private _group: Group;
     private _context: Shumway.Remoting.GFX.GFXChannelDeserializerContext;
     private _content: Group;
     private _fullscreen: boolean;
 
-    constructor(easel: Easel, env: string = 'dev') {
+    constructor(easel: Easel) {
       this._easel = easel;
-      this._env = env;
       var group = easel.world;
       var transparent = easel.transparent;
       this._group = group;
@@ -184,13 +182,13 @@ module Shumway.GFX {
     }
 
     processFSCommand(command: string, args: string) {
-      if (this._env === 'test') {
+      if (ShumwayCom.environment === ShumwayCom.ENV_TEST) {
         ShumwayCom.processFSCommand(command, args);
       }
     }
 
     processFrame() {
-      if (this._env === 'test') {
+      if (ShumwayCom.environment === ShumwayCom.ENV_TEST) {
         ShumwayCom.processFrame();
       } 
     }

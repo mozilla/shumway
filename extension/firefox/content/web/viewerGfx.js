@@ -26,15 +26,15 @@ document.addEventListener('keydown', notifyUserInput, true);
 document.addEventListener('keyup', notifyUserInput, true);
 
 var easel;
-function createEasel(backgroundColor, env) {
+function createEasel(backgroundColor) {
   var Stage = Shumway.GFX.Stage;
   var Easel = Shumway.GFX.Easel;
   var Canvas2DRenderer = Shumway.GFX.Canvas2DRenderer;
 
   Shumway.GFX.WebGL.SHADER_ROOT = SHUMWAY_ROOT + "gfx/gl/shaders/";
-  easel = new Easel(document.getElementById("easelContainer"), false, backgroundColor, env);
+  easel = new Easel(document.getElementById("easelContainer"), false, backgroundColor);
   
-  if (env === 'test') {
+  if (ShumwayCom.environment === ShumwayCom.ENV_TEST) {
     ShumwayCom.setScreenShotCallback(function () {
       // flush rendering buffers
       easel.render();
@@ -47,9 +47,9 @@ function createEasel(backgroundColor, env) {
 }
 
 var easelHost;
-function createEaselHost(env) {
+function createEaselHost() {
   var peer = new Shumway.Remoting.ShumwayComTransportPeer();
-  easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, peer, env);
+  easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, peer);
   return easelHost;
 }
 
@@ -104,8 +104,8 @@ function prepareUI(params) {
 
   setHudVisible(params.isHudOn);
 
-  createEasel(params.backgroundColor, params.env);
-  createEaselHost(params.env);
+  createEasel(params.backgroundColor);
+  createEaselHost();
 
   var displayParameters = easel.getDisplayParameters();
   window.parent.postMessage({

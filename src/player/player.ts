@@ -252,8 +252,6 @@ module Shumway.Player {
     private _gfxService: IGFXService;
     private _gfxServiceObserver: GFXServiceObserver;
 
-    private _env: string;
-
     /**
      * If set, overrides SWF file background color.
      */
@@ -319,7 +317,7 @@ module Shumway.Player {
      */
     private _loaderUrl: string = null;
 
-    constructor(sec: ISecurityDomain, gfxService: IGFXService, env: string = 'dev') {
+    constructor(sec: ISecurityDomain, gfxService: IGFXService) {
       this.sec = sec;
       sec.player = this;
       // Freeze in debug builds.
@@ -329,7 +327,6 @@ module Shumway.Player {
       this._gfxService = gfxService;
       this._gfxServiceObserver = new GFXServiceObserver(this);
       this._gfxService.addObserver(this._gfxServiceObserver);
-      this._env = env;
     }
 
     /**
@@ -508,7 +505,7 @@ module Shumway.Player {
      * Update the frame container with the latest changes from the display list.
      */
     private _pumpUpdates() {
-      if (this._env !== 'test' && !dontSkipFramesOption.value) {
+      if (!dontSkipFramesOption.value) {
         if (this._shouldThrottleDownRendering()) {
           return;
         }

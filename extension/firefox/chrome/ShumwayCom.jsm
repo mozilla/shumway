@@ -138,6 +138,13 @@ var cloneIntoFromContent = (function () {
 })();
 
 var ShumwayCom = {
+  ENV_DEBUG: 'debug',
+  ENV_DEVELOPMENT: 'dev',
+  ENV_RELEASE: 'release',
+  ENV_TEST: 'test',
+  
+  environment: getCharPref('shumway.environment', 'dev'),
+  
   createAdapter: function (content, callbacks, hooks) {
     // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
     // up Xray wrappers.
@@ -235,20 +242,22 @@ var ShumwayCom = {
           var reclonedMsg = cloneIntoFromContent(msg, content);
           callback(reclonedMsg);
         };
-      },
-      
-      processFrame() {
-        callbacks.sendMessage('processFrame');
-      },
-      
-      processFSCommand(command, args) {
-        callbacks.sendMessage('processFSCommand', command, args);
-      },
-      
-      setScreenShotCallback: function (callback) {
-        callbacks.sendMessage('setScreenShotCallback', callback);
-      },
+      }
     };
+    
+    if (ShumwayCom.environment === ShumwayCom.ENV_TEST) {
+      wrapped.processFrame = function () {
+        callbacks.sendMessage('processFrame');
+      };
+      
+      wrapped.processFSCommand = function (command, args) {
+        callbacks.sendMessage('processFSCommand', command, args);
+      };
+      
+      wrapped.setScreenShotCallback = function (callback) {
+        callbacks.sendMessage('setScreenShotCallback', callback);
+      };
+    }
 
     var shumwayComAdapter = Components.utils.cloneInto(wrapped, content, {cloneFunctions:true});
     content.ShumwayCom = shumwayComAdapter;
@@ -367,13 +376,8 @@ var ShumwayCom = {
                                                                      callbacks.getEnvironment());
         }
         return wrappedLocalConnectionService;
-      },
-      
-      print: function(msg) {
-        callbacks.sendMessage('print', msg);
       }
     };
-
 
     // Exposing createSpecialInflate function for DEFLATE stream decoding using
     // Gecko API.
@@ -392,6 +396,12 @@ var ShumwayCom = {
       wrapped.createRtmpXHR = function () {
         return RtmpUtils.createXHR(content);
       };
+    }
+
+    if (ShumwayCom.environment === ShumwayCom.ENV_TEST) {
+      wrapped.print = function(msg) {
+        callbacks.sendMessage('print', msg);
+      }
     }
 
     var onSystemResourceCallback = null;
@@ -507,8 +517,7 @@ ShumwayChromeActions.prototype = {
       playerSettings: {
         turboMode: getBoolPref('shumway.turboMode', false),
         hud: getBoolPref('shumway.hud', false),
-        forceHidpi: getBoolPref('shumway.force_hidpi', false),
-        env: getCharPref('shumway.environment', 'dev')
+        forceHidpi: getBoolPref('shumway.force_hidpi', false)
       }
     }
   },
@@ -686,36 +695,37 @@ ShumwayChromeActions.prototype = {
     }
 
     return this.externalInterface.processAction(data);
-  },
-  
-  processFrame: function () {
-    if (this.embedTag.wrappedJSObject.processFrame) {
-      this.embedTag.wrappedJSObject.processFrame();
-    }
-  },
-  
-  processFSCommand: function (command, data) {
+  }
+};
+
+if (ShumwayCom.environment === ShumwayCom.ENV_TEST) {
+  ShumwayChromeActions.prototype.postMessage = function (type, data) {
     var embedTag = this.embedTag;
-    if (embedTag.wrappedJSObject.processFSCommand) {
-      embedTag.wrappedJSObject.processFSCommand(command, data);
-    }
-  },
+    var event = embedTag.ownerDocument.createEvent('CustomEvent');
+    var detail = Components.utils.cloneInto({ type: type, data: data }, embedTag.ownerDocument.wrappedJSObject);
+    event.initCustomEvent('message', false, false, detail);
+    embedTag.dispatchEvent(event);
+  };
   
-  print: function (msg) {
-    var embedTag = this.embedTag;
-    if (embedTag.wrappedJSObject.print) {
-      embedTag.wrappedJSObject.print(
-        Components.utils.cloneInto(msg, embedTag.ownerDocument.defaultView));
-    }
-  },
-  
-  setScreenShotCallback: function (callback) {
+  ShumwayChromeActions.prototype.processFrame = function () {
+    this.postMessage('processFrame');
+  };
+
+  ShumwayChromeActions.prototype.processFSCommand = function (command, data) {
+    this.postMessage('processFSCommand', { command: command, data: data });
+  };
+
+  ShumwayChromeActions.prototype.print = function (msg) {
+    this.postMessage('print', msg);
+  };
+
+  ShumwayChromeActions.prototype.setScreenShotCallback = function (callback) {
     var embedTag = this.embedTag;
     Components.utils.exportFunction(function () {
       return Components.utils.cloneInto(callback(), embedTag.ownerDocument);
     }, embedTag.wrappedJSObject, {defineAs: 'getCanvasData'});
-  }
-};
+  };
+}
 
 function getVersionInfo() {
   var deferred = Promise.defer();

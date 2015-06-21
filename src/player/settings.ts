@@ -55,7 +55,7 @@ module Shumway {
   );
 
   export var dontSkipFramesOption = playerOptions.register (
-    new Shumway.Options.Option("", "Disables Frame Skipping", "boolean", true, "Play all frames, e.g. no skipping frame during throttle.")
+    new Shumway.Options.Option("", "Disables Frame Skipping", "boolean", false, "Play all frames, e.g. no skipping frame during throttle.")
   );
 
   export var playAllSymbolsOption = playerOptions.register (

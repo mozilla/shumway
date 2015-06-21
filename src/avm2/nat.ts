@@ -105,9 +105,6 @@ module Shumway.AVMX.AS {
     export function print(sec: AXSecurityDomain, expression: any, arg1?: any, arg2?: any,
                           arg3?: any, arg4?: any) {
       var args = Array.prototype.slice.call(arguments, 1);
-      for (var i = 0; i < args.length; i++) {
-        args[i] = args[i].toString();
-      }
       jsGlobal.print.apply(null, args);
     }
 

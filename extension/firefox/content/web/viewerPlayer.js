@@ -30,7 +30,12 @@ function runSwfPlayer(flashParams, settings) {
   var objectParams = flashParams.objectParams;
   var movieUrl = flashParams.url;
 
-  Shumway.frameRateOption.value = flashParams.turboMode ? 60 : -1;
+  if (ShumwayCom.environment === ShumwayCom.ENV_TEST) {
+    Shumway.frameRateOption.value = 60;
+    Shumway.dontSkipFramesOption.value = true;
+  } else {
+    Shumway.frameRateOption.value = flashParams.turboMode ? 60 : -1;
+  }
 
   Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal).then(function (securityDomain) {
     function runSWF(file, buffer, baseUrl) {
@@ -63,7 +68,7 @@ function runSwfPlayer(flashParams, settings) {
     }
   });
   
-  if (flashParams.env === 'test') {
+  if (ShumwayCom.environment === ShumwayCom.ENV_TEST) {
     window.print = function(msg) {
       ShumwayCom.print(msg);
     };

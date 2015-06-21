@@ -15,9 +15,17 @@
  */
 
 declare var ShumwayCom: {
-  createSpecialInflate: () => SpecialInflate;
-  createRtmpSocket: (options: {host: string; port: number; ssl: boolean}) => RtmpSocket;
-  createRtmpXHR: () => RtmpXHR;
+  ENV_DEBUG: string;
+  ENV_DEVELOPMENT: string;
+  ENV_RELEASE: string;
+  ENV_TEST: string;
+
+  environment: string;
+  
+  createSpecialInflate?: () => SpecialInflate;
+  createRtmpSocket?: (options: {host: string; port: number; ssl: boolean}) => RtmpSocket;
+  createRtmpXHR?: () => RtmpXHR;
+  
   createSpecialStorage: () => SpecialStorage;
   getWeakMapKeys: (weakMap) => Array<any>;
   userInput: () => void;
@@ -46,9 +54,9 @@ declare var ShumwayCom: {
 
   getLocalConnectionService: () => LocalConnectionService;
   
-  processFrame: () => void;
-  processFSCommand: (command: string, args: any) => void;
-  print: (msg: string) => void;
+  processFrame?: () => void;
+  processFSCommand?: (command: string, args: any) => void;
+  print?: (msg: string) => void;
 };
 
 interface SpecialStorage {
