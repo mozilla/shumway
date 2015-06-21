@@ -1315,7 +1315,8 @@ module Shumway.AVMX.AS.flash.display {
 
     set scaleZ(value: number) {
       value = +value;
-      notImplemented("public DisplayObject::set scaleZ"); return;
+      somewhatImplemented("public DisplayObject::set scaleZ");
+      this._scaleZ = value;
     }
 
     get rotation(): number {
@@ -1343,7 +1344,8 @@ module Shumway.AVMX.AS.flash.display {
 
     set rotationX(value: number) {
       value = +value;
-      notImplemented("public DisplayObject::set rotationX"); return;
+      somewhatImplemented("public DisplayObject::set rotationX");
+      this._rotationZ = value;
     }
 
     get rotationY(): number {
@@ -1352,7 +1354,8 @@ module Shumway.AVMX.AS.flash.display {
 
     set rotationY(value: number) {
       value = +value;
-      notImplemented("public DisplayObject::set rotationY"); return;
+      somewhatImplemented("public DisplayObject::set rotationY");
+      this._rotationY = value;
     }
 
     get rotationZ(): number {
@@ -1361,7 +1364,8 @@ module Shumway.AVMX.AS.flash.display {
 
     set rotationZ(value: number) {
       value = +value;
-      notImplemented("public DisplayObject::set rotationZ"); return;
+      somewhatImplemented("public DisplayObject::set rotationZ");
+      this._rotationZ = value;
     }
 
     /**
@@ -1677,7 +1681,7 @@ module Shumway.AVMX.AS.flash.display {
     set z(value: number) {
       value = +value;
       this._z = value;
-      notImplemented("public DisplayObject::set z"); return;
+      somewhatImplemented("public DisplayObject::set z");
     }
 
     getBounds(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
@@ -2128,7 +2132,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     set blendShader(value: any /* flash.display.Shader */) {
-      notImplemented("public DisplayObject::set blendShader");
+      somewhatImplemented("public DisplayObject::set blendShader");
     }
   }
 }
