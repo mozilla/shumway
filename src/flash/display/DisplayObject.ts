@@ -568,6 +568,7 @@ module Shumway.AVMX.AS.flash.display {
       this._matrix = new matrixClass();
       this._invertedMatrix = new matrixClass();
       this._matrix3D = null;
+      this._perspectiveProjection = null;
       var colorTransformClass = this.sec.flash.geom.ColorTransform;
       this._colorTransform = new colorTransformClass();
       this._concatenatedColorTransform = new colorTransformClass();
@@ -786,6 +787,7 @@ module Shumway.AVMX.AS.flash.display {
     _colorTransform: flash.geom.ColorTransform;
     _concatenatedColorTransform: flash.geom.ColorTransform;
     _matrix3D: flash.geom.Matrix3D;
+    _perspectiveProjection: flash.geom.PerspectiveProjection;
     _depth: number;
     _ratio: number;
 
