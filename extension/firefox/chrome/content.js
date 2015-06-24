@@ -15,7 +15,30 @@
  */
 
 Components.utils.import('resource://gre/modules/Services.jsm');
+Components.utils.import('resource://gre/modules/Promise.jsm');
+
 Components.utils.import('chrome://shumway/content/ShumwayCom.jsm');
+
+var winmm, viewerReady;
+if (typeof document === 'undefined') {
+  winmm = this;
+  viewerReady = Promise.resolve(content);
+  winmm.sendAsyncMessage('Shumway:constructed', null);
+} else {
+  winmm = window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                .getInterface(Components.interfaces.nsIDocShell)
+                .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                .getInterface(Components.interfaces.nsIContentFrameMessageManager);
+
+  var viewer = document.getElementById('viewer');
+  viewerReady = new Promise(function (resolve) {
+    viewer.addEventListener('load', function () {
+      winmm.sendAsyncMessage('Shumway:constructed', null);
+      resolve(viewer.contentWindow);
+    });
+  });
+}
+
 
 var externalInterfaceWrapper = {
   callback: function (call) {
@@ -32,35 +55,37 @@ var shumwayComAdapterHooks = {};
 function sendMessage(action, data, sync) {
   var detail = {action: action, data: data, sync: sync};
   if (!sync) {
-    sendAsyncMessage('Shumway:message', detail);
+    winmm.sendAsyncMessage('Shumway:message', detail);
     return;
   }
-  var result = String(sendSyncMessage('Shumway:message', detail));
+  var result = String(winmm.sendSyncMessage('Shumway:message', detail));
   result = result == 'undefined' ? undefined : JSON.parse(result);
   return Components.utils.cloneInto(result, content);
 }
 
 function enableDebug() {
-  sendAsyncMessage('Shumway:enableDebug', null);
+  winmm.sendAsyncMessage('Shumway:enableDebug', null);
 }
 
-addMessageListener('Shumway:init', function (message) {
+winmm.addMessageListener('Shumway:init', function (message) {
   var environment = message.data;
 
-  sendAsyncMessage('Shumway:running', {}, {
+  winmm.sendAsyncMessage('Shumway:running', {}, {
     externalInterface: externalInterfaceWrapper
   });
 
-  ShumwayCom.createAdapter(content.wrappedJSObject, {
-    sendMessage: sendMessage,
-    enableDebug: enableDebug,
-    getEnvironment: function () { return environment; }
-  }, shumwayComAdapterHooks);
+  viewerReady.then(function (viewerWindow) {
+    ShumwayCom.createAdapter(viewerWindow.wrappedJSObject, {
+      sendMessage: sendMessage,
+      enableDebug: enableDebug,
+      getEnvironment: function () { return environment; }
+    }, shumwayComAdapterHooks);
 
-  content.wrappedJSObject.runViewer();
+    viewerWindow.wrappedJSObject.runViewer();
+  });
 });
 
-addMessageListener('Shumway:loadFile', function (message) {
+winmm.addMessageListener('Shumway:loadFile', function (message) {
   if (!shumwayComAdapterHooks.onLoadFileCallback) {
     return;
   }
