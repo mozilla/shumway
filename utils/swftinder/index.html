@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SWF Tinder</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/swfobject/2.2/swfobject.min.js"></script>
+  <style>
+    textarea {
+      width: 800px;
+      height: 100px;
+      display: block;
+      white-space: pre-line;
+    }
+    #swfDisplay {
+      width: 800px;
+      height: 400px;
+      display: block;
+    }
+    #swfContainer {
+      width: 800px;
+      height: 400px;
+      display: block;
+    }
+    label {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+<div id="swfContainer"><div id="swfDisplay"></div></div>
+<button id="good" title="<left arrow>">Good</button>
+<button id="bad" title="<right arrow>">Bad</button>
+<label>Heap:</label>
+<textarea id="heap"></textarea>
+<div id="current"></div>
+<label>Good:</label>
+<textarea id="goodEntries"></textarea>
+<label>Bad:</label>
+<textarea id="badEntries"></textarea>
+<script>
+
+  function sortGood() {
+    addCurrentToList(state.good, 'good');
+    goodDisplay.value = state.good.map(index => entries[index]).join('\n');
+  }
+
+  function sortBad() {
+    addCurrentToList(state.bad, 'bad');
+    badDisplay.value = state.bad.map(index => entries[index]).join('\n');
+  }
+
+  function addCurrentToList(list, listName) {
+    console.log(listName + ': ' + entries[state.index], state.index);
+    list.push(state.index);
+    localStorage.setItem('swftinder-' + listName, list.join(','));
+    showNext();
+  }
+
+  document.body.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowLeft') {
+      sortGood();
+    } else if (e.key === 'ArrowRight') {
+      sortBad();
+    }
+  });
+  document.getElementById('good').addEventListener('click', sortGood);
+  document.getElementById('bad').addEventListener('click', sortBad);
+  var heapDisplay = document.getElementById('heap');
+  var goodDisplay = document.getElementById('goodEntries');
+  var badDisplay = document.getElementById('badEntries');
+  heapDisplay.addEventListener('input', function() {
+    resetState(heapDisplay.value);
+  });
+
+  var entries;
+  var state;
+  loadState();
+  if (state.index < entries.length) {
+    showIndex(state.index);
+  }
+
+  function resetState(heap = '') {
+    state = {
+      heap: heap,
+      index: -1,
+      good: [],
+      bad: []
+    };
+    saveState();
+    entries = heap.split('\n');
+    if (entries.length) {
+      showNext();
+    }
+  }
+
+  function showNext() {
+    localStorage.setItem('swftinder-index', ++state.index);
+    if (state.index >= entries.length) {
+      alert('done!');
+      console.log('Good entries:\n' + state.good.map(index => entries[index]).join('\n'));
+      return;
+    }
+
+    showIndex(state.index);
+  }
+
+  function showIndex(index) {
+    var entry = entries[index];
+    document.getElementById('current').innerText = `Index: ${index}, URL: ${entry}`;
+    swfobject.embedSWF('../../' + entry, "swfDisplay", '800', '500', '15', null, null, null,
+        {allownetworking: false, allowscriptaccess: false, scale: 'noScale'});
+  }
+
+  function loadState() {
+    var goodStr = localStorage.getItem('swftinder-good');
+    var badStr = localStorage.getItem('swftinder-bad');
+    var heapStr = localStorage.getItem('swftinder-heap') || '';
+    state = {
+      heap,
+      index: localStorage.getItem('swftinder-index') | 0,
+      good: goodStr ? goodStr.split(',').map(e => e|0) : [],
+      bad: badStr ? badStr.split(',').map(e => e|0) : []
+    };
+    entries = heapStr.split('\n');
+    heapDisplay.value = heapStr;
+    goodDisplay.value = state.good.map(index => entries[index]).join('\n');
+    badDisplay.value = state.bad.map(index => entries[index]).join('\n');
+  }
+
+  function saveState() {
+    localStorage.setItem('swftinder-heap', state.heap);
+    localStorage.setItem('swftinder-index', state.index);
+    localStorage.setItem('swftinder-good', state.good.join(','));
+    localStorage.setItem('swftinder-bad', state.bad.join(','));
+  }
+</script>
+</body>
+</html>
