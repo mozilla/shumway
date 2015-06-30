@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-declare var ShumwayCom: {
-  ENV_DEBUG: string;
-  ENV_DEVELOPMENT: string;
-  ENV_RELEASE: string;
-  ENV_TEST: string;
+var ShumwayEnvironment = {
+  DEBUG: 'test',
+  DEVELOPMENT: 'dev',
+  RELEASE: 'release',
+  TEST: 'test'
+};
 
-  environment: string;
+declare var ShumwayCom: {
+  environment: string // ShumwayEnvironment;
   
   createSpecialInflate?: () => SpecialInflate;
   createRtmpSocket?: (options: {host: string; port: number; ssl: boolean}) => RtmpSocket;

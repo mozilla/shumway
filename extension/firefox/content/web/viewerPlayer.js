@@ -30,7 +30,7 @@ function runSwfPlayer(flashParams, settings) {
   var objectParams = flashParams.objectParams;
   var movieUrl = flashParams.url;
 
-  if (ShumwayCom.environment === ShumwayCom.ENV_TEST) {
+  if (ShumwayCom.environment === 'test') {
     Shumway.frameRateOption.value = 60;
     Shumway.dontSkipFramesOption.value = true;
   } else {
@@ -68,9 +68,9 @@ function runSwfPlayer(flashParams, settings) {
     }
   });
   
-  if (ShumwayCom.environment === ShumwayCom.ENV_TEST) {
+  if (ShumwayCom.environment === 'test') {
     window.print = function(msg) {
-      ShumwayCom.print(msg);
+      ShumwayCom.print(msg.toString());
     };
   }
 }

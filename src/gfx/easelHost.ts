@@ -182,13 +182,13 @@ module Shumway.GFX {
     }
 
     processFSCommand(command: string, args: string) {
-      if (ShumwayCom.environment === ShumwayCom.ENV_TEST) {
+      if (ShumwayCom.environment === ShumwayEnvironment.TEST) {
         ShumwayCom.processFSCommand(command, args);
       }
     }
 
     processFrame() {
-      if (ShumwayCom.environment === ShumwayCom.ENV_TEST) {
+      if (ShumwayCom.environment === ShumwayEnvironment.TEST) {
         ShumwayCom.processFrame();
       } 
     }

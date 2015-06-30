@@ -137,18 +137,22 @@ var cloneIntoFromContent = (function () {
   };
 })();
 
+var ShumwayEnvironment = {
+  DEBUG: 'debug',
+  DEVELOPMENT: 'dev',
+  RELEASE: 'release',
+  TEST: 'test'
+};
+
 var ShumwayCom = {
-  ENV_DEBUG: 'debug',
-  ENV_DEVELOPMENT: 'dev',
-  ENV_RELEASE: 'release',
-  ENV_TEST: 'test',
-  
   environment: getCharPref('shumway.environment', 'dev'),
   
   createAdapter: function (content, callbacks, hooks) {
     // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
     // up Xray wrappers.
     var wrapped = {
+      environment: ShumwayCom.environment,
+    
       enableDebug: function () {
         callbacks.enableDebug()
       },
@@ -201,6 +205,8 @@ var ShumwayCom = {
     // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
     // up Xray wrappers.
     var wrapped = {
+      environment: ShumwayCom.environment,
+      
       userInput: function () {
         callbacks.sendMessage('userInput', null, true);
       },
@@ -245,7 +251,7 @@ var ShumwayCom = {
       }
     };
     
-    if (ShumwayCom.environment === ShumwayCom.ENV_TEST) {
+    if (ShumwayCom.environment === ShumwayEnvironment.TEST) {
       wrapped.processFrame = function () {
         callbacks.sendMessage('processFrame');
       };
@@ -267,6 +273,8 @@ var ShumwayCom = {
     // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
     // up Xray wrappers.
     var wrapped = {
+      environment: ShumwayCom.environment,
+    
       externalCom: function (args) {
         var request = sanitizeExternalComArgs(args);
         var result = String(callbacks.sendMessage('externalCom', request, true));
@@ -398,7 +406,7 @@ var ShumwayCom = {
       };
     }
 
-    if (ShumwayCom.environment === ShumwayCom.ENV_TEST) {
+    if (ShumwayCom.environment === ShumwayEnvironment.TEST) {
       wrapped.print = function(msg) {
         callbacks.sendMessage('print', msg);
       }
@@ -695,37 +703,37 @@ ShumwayChromeActions.prototype = {
     }
 
     return this.externalInterface.processAction(data);
-  }
-};
-
-if (ShumwayCom.environment === ShumwayCom.ENV_TEST) {
-  ShumwayChromeActions.prototype.postMessage = function (type, data) {
+  },
+  
+  postMessage: function (type, data) {
     var embedTag = this.embedTag;
     var event = embedTag.ownerDocument.createEvent('CustomEvent');
     var detail = Components.utils.cloneInto({ type: type, data: data }, embedTag.ownerDocument.wrappedJSObject);
     event.initCustomEvent('message', false, false, detail);
     embedTag.dispatchEvent(event);
-  };
+  },
   
-  ShumwayChromeActions.prototype.processFrame = function () {
+  processFrame: function () {
     this.postMessage('processFrame');
-  };
+  },
 
-  ShumwayChromeActions.prototype.processFSCommand = function (command, data) {
+  processFSCommand: function (command, data) {
     this.postMessage('processFSCommand', { command: command, data: data });
-  };
+  },
 
-  ShumwayChromeActions.prototype.print = function (msg) {
+  print: function (msg) {
     this.postMessage('print', msg);
-  };
+  },
 
-  ShumwayChromeActions.prototype.setScreenShotCallback = function (callback) {
+  setScreenShotCallback: function (callback) {
     var embedTag = this.embedTag;
     Components.utils.exportFunction(function () {
-      return Components.utils.cloneInto(callback(), embedTag.ownerDocument);
+      // `callback` can be wrapped in a CPOW and thus cause a slow synchronous cross-process operation.
+      var result = callback();
+      return Components.utils.cloneInto(result, embedTag.ownerDocument);
     }, embedTag.wrappedJSObject, {defineAs: 'getCanvasData'});
-  };
-}
+  }
+};
 
 function getVersionInfo() {
   var deferred = Promise.defer();

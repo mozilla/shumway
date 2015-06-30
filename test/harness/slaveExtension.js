@@ -28,7 +28,7 @@ swfContainer.addEventListener('message', function (e) {
       }
       break;
     case 'print':
-      print(e.detail);
+      print(e.detail.data);
       break;
   }
 });
