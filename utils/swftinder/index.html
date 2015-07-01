@@ -3,37 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <title>SWF Tinder</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/swfobject/2.2/swfobject.min.js"></script>
   <style>
     textarea {
-      width: 800px;
-      height: 100px;
+      width: 100%;
+      height: 200px;
       display: block;
       white-space: pre-line;
     }
-    #swfDisplay {
-      width: 800px;
-      height: 400px;
+    #swfDisplay0, #swfDisplay1 {
       display: block;
     }
-    #swfContainer {
-      width: 800px;
-      height: 400px;
+    .swfContainer {
+      width: 500px;
       display: block;
+      padding: 4px;
+      border: 2px solid #0066c0;
     }
     label {
       display: block;
     }
+    body {
+      font-size: 10px;
+    }
   </style>
 </head>
 <body>
-<div id="swfContainer"><div id="swfDisplay"></div></div>
+<div class="swfContainer">Shumway<div id="swfDisplay0"></div></div>
+<div class="swfContainer">Flash<div id="swfDisplay1"></div></div><br>
+<div id="current"></div><br>
 <button id="good" title="<left arrow>">Good</button>
 <button id="bad" title="<right arrow>">Bad</button>
-<button id="clear" title="">Clear</button>
+<button id="clear" title="">Clear</button><br>
 <label>Heap:</label>
 <textarea id="heap"></textarea>
-<div id="current"></div>
 <label>Good:</label>
 <textarea id="goodEntries"></textarea>
 <label>Bad:</label>
@@ -64,8 +66,10 @@
   document.body.addEventListener('keydown', function(e) {
     if (e.key === 'ArrowLeft') {
       sortGood();
+      e.preventDefault();
     } else if (e.key === 'ArrowRight') {
       sortBad();
+      e.preventDefault();
     }
   });
   document.getElementById('good').addEventListener('click', sortGood);
@@ -110,12 +114,19 @@
     showIndex(state.index);
   }
 
+  function getParameterHTMLString(parameters) {
+    var parametersHTML = "";
+    for (var name in parameters) {
+      parametersHTML += `<param name="${name}" value="${parameters[name]}" />`;
+    }
+    return parametersHTML;
+  }
+
   function showIndex(index) {
     var entry = entries[index];
-    document.getElementById('current').innerHTML = `Index: ${index}, URL: ${entry}`;
-    var att = {data:'../../' + entry, width: '800', height: '500'};
-    var par = {allownetworking: false, allowscriptaccess: false, scale: 'noScale'};
-    swfobject.createSWF(att, par, "swfDisplay");
+    document.getElementById('current').innerHTML = `<a href="http://localhost:8000/examples/inspector/inspector.html?rfile=../../${entry}">Index: ${index}, URL: ${entry}</a>`;
+    document.getElementById('swfDisplay0').innerHTML = '<object type="application/x-shockwave-flash" data="' + '../../' + entry + '" width="500" height="300">' + getParameterHTMLString({allownetworking: false, allowscriptaccess: false}) + '</object>';
+    document.getElementById('swfDisplay1').innerHTML = '<object type="application/x-shockwave-flash" data="' + '../../' + entry + '" width="500" height="300">' + getParameterHTMLString({allownetworking: false, allowscriptaccess: false, shumwaymode: 'off'}) + '</object>';
   }
 
   function loadState() {
