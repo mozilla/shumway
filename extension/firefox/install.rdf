@@ -1,12 +1,13 @@
 <?xml version="1.0"?>
 
 <RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+     xmlns:em="http://www.mozilla.org/2004/em-rdf#"
+     xmlns:html="http://www.w3.org/1999/xhtml">
 
   <Description about="urn:mozilla:install-manifest">
     <em:id>shumway@research.mozilla.org</em:id>
     <em:name>Shumway</em:name>
-    <em:version>(SHUMWAY_VERSION)</em:version>
+    <em:version>0.11.348</em:version>
 
     <!-- Firefox -->
     <em:targetApplication>
@@ -29,7 +30,7 @@
     <em:bootstrap>true</em:bootstrap>
     <em:unpack>true</em:unpack>
     <em:creator>Mozilla Research</em:creator>
-    <em:description>Shumway is an HTML5 technology experiment that explores building a faithful and efficient renderer for the SWF file format without native code assistance.</em:description>
+    <em:description>Shumway is an HTML5 technology experiment that explores building a faithful and efficient renderer for the SWF file format without native code assistance. See http://areweflashyet.com/extension/license.txt for license information.</em:description>
     <em:homepageURL>https://github.com/mozilla/shumway/</em:homepageURL>
     <em:type>2</em:type>
     <!-- Use the raw link for updates so we we can use SSL. -->
