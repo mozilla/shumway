@@ -30,6 +30,7 @@
 <div id="swfContainer"><div id="swfDisplay"></div></div>
 <button id="good" title="<left arrow>">Good</button>
 <button id="bad" title="<right arrow>">Bad</button>
+<button id="clear" title="">Clear</button>
 <label>Heap:</label>
 <textarea id="heap"></textarea>
 <div id="current"></div>
@@ -49,6 +50,10 @@
     badDisplay.value = state.bad.map(index => entries[index]).join('\n');
   }
 
+  function clear() {
+    localStorage.clear();
+  }
+
   function addCurrentToList(list, listName) {
     console.log(listName + ': ' + entries[state.index], state.index);
     list.push(state.index);
@@ -65,6 +70,7 @@
   });
   document.getElementById('good').addEventListener('click', sortGood);
   document.getElementById('bad').addEventListener('click', sortBad);
+  document.getElementById('clear').addEventListener('click', clear);
   var heapDisplay = document.getElementById('heap');
   var goodDisplay = document.getElementById('goodEntries');
   var badDisplay = document.getElementById('badEntries');
@@ -106,9 +112,10 @@
 
   function showIndex(index) {
     var entry = entries[index];
-    document.getElementById('current').innerText = `Index: ${index}, URL: ${entry}`;
-    swfobject.embedSWF('../../' + entry, "swfDisplay", '800', '500', '15', null, null, null,
-        {allownetworking: false, allowscriptaccess: false, scale: 'noScale'});
+    document.getElementById('current').innerHTML = `Index: ${index}, URL: ${entry}`;
+    var att = {data:'../../' + entry, width: '800', height: '500'};
+    var par = {allownetworking: false, allowscriptaccess: false, scale: 'noScale'};
+    swfobject.createSWF(att, par, "swfDisplay");
   }
 
   function loadState() {
