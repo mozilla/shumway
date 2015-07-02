@@ -69,6 +69,7 @@ function loadMovie(path, reportFrames) {
     }
   };
 
+  swfContainer.setAttribute('base', path);
   swfContainer.src = path;
 }
 
