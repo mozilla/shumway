@@ -102,7 +102,7 @@ WebBrowser.prototype = {
 };
 
 var firefoxResourceDir = path.join(__dirname, 'resources', 'firefox');
-var firefoxRestartlessDir = path.join(__dirname, '..', 'build', 'firefox-restartless');
+var firefoxExtensionDir = path.join(__dirname, '..', 'build', 'firefox');
 
 function FirefoxBrowser(name, path) {
   if (os.platform() === 'darwin') {
@@ -125,8 +125,7 @@ FirefoxBrowser.prototype.buildArguments = function (url) {
 };
 FirefoxBrowser.prototype.setupProfileDir = function (dir) {
   testUtils.copySubtreeSync(firefoxResourceDir, dir);
-  fs.writeFileSync(path.join(dir, 'extensions', 'shumway@research.mozilla.org'),
-                   firefoxRestartlessDir);
+  testUtils.copySubtreeSync(firefoxExtensionDir, path.join(dir, 'extensions', 'shumway@research.mozilla.org'));
 };
 
 function ChromiumBrowser(name, path) {
