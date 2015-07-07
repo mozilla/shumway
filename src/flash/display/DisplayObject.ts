@@ -498,8 +498,9 @@ module Shumway.AVMX.AS.flash.display {
      * Dispatches a frame event on all instances of DisplayObjects.
      */
     static _broadcastFrameEvent(type: string): void {
-      var event = this.sec.flash.events.Event.axClass.getBroadcastInstance(type);
-      this.sec.flash.events.EventDispatcher.axClass.broadcastEventDispatchQueue.dispatchEvent(event);
+      var eventsPackage = this.sec.flash.events;
+      var event = eventsPackage.Event.axClass.getBroadcastInstance(type);
+      eventsPackage.EventDispatcher.axClass.broadcastEventDispatchQueue.dispatchEvent(event);
     }
 
     constructor () {

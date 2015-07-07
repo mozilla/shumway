@@ -506,7 +506,11 @@ module Shumway.AVMX.AS {
       if (trait.kind === TRAIT.Getter || trait.kind === TRAIT.GetterSetter) {
         value = trait.get.call(this);
       } else {
-        value = this[trait.name.getMangledName()];
+        var mangledName = trait.name.getMangledName();
+        value = this[mangledName];
+        if (typeof value === 'function') {
+          return this.axGetMethod(mangledName);
+        }
       }
       release || checkValue(value);
       return value;
@@ -932,7 +936,7 @@ module Shumway.AVMX.AS {
       thisArg = ensureBoxedReceiver(this.sec, thisArg, callbackfn);
       var o = this.value;
       for (var i = 0; i < o.length; i++) {
-        if (callbackfn.value.call(thisArg, o[i], i, o) !== true) {
+        if (callbackfn.value.call(thisArg, o[i], i, this) !== true) {
           return false;
         }
       }
@@ -992,7 +996,7 @@ module Shumway.AVMX.AS {
       var result = [];
       var o = this.value;
       for (var i = 0; i < o.length; i++) {
-        if (callbackfn.value.call(thisArg, o[i], i, o) === true) {
+        if (callbackfn.value.call(thisArg, o[i], i, this) === true) {
           result.push(o[i]);
         }
       }

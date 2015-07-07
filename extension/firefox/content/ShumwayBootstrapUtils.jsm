@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Mozilla Foundation
+ * Copyright 2015 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,7 @@ let Cu = Components.utils;
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
 
-Cu.import('resource://shumway/ShumwayStreamConverter.jsm');
-
 let Ph = Cc["@mozilla.org/plugin/host;1"].getService(Ci.nsIPluginHost);
-let registerOverlayPreview = 'registerPlayPreviewMimeType' in Ph;
 
 function getBoolPref(pref, def) {
   try {
@@ -79,9 +76,6 @@ Factory.prototype = {
   }
 };
 
-let converterFactory = new Factory();
-let overlayConverterFactory = new Factory();
-
 function allowedPlatformForMedia() {
   var oscpu = Cc["@mozilla.org/network/protocol;1?name=http"]
                 .getService(Ci.nsIHttpProtocolHandler).oscpu;
@@ -97,6 +91,7 @@ function allowedPlatformForMedia() {
 
 var ShumwayBootstrapUtils = {
   isRegistered: false,
+  isJSPluginsSupported: false,
 
   register: function () {
     if (this.isRegistered) {
@@ -106,22 +101,42 @@ var ShumwayBootstrapUtils = {
     this.isRegistered = true;
 
     // Register the components.
-    converterFactory.register(ShumwayStreamConverter);
-    overlayConverterFactory.register(ShumwayStreamOverlayConverter);
+    this.isJSPluginsSupported = !!Ph.createFakePlugin;
 
-    if (registerOverlayPreview) {
-      var ignoreCTP = getBoolPref(PREF_IGNORE_CTP, true);
-      var whitelist = getStringPref(PREF_WHITELIST);
-      // Some platforms cannot support video playback, and our whitelist targets
-      // only video players atm. We need to disable Shumway for those platforms.
-      if (whitelist && !Services.prefs.prefHasUserValue(PREF_WHITELIST) &&
-          !allowedPlatformForMedia()) {
-        log('Default SWF whitelist is used on an unsupported platform -- ' +
-            'using demo whitelist.');
-        whitelist = 'http://www.areweflashyet.com/*.swf';
+    if (this.isJSPluginsSupported) {
+      let plugin = Ph.createFakePlugin("chrome://shumway/content/content.html");
+      plugin.niceName = "Shumway plugin";
+      plugin.registerMode = Ci.nsIFakePluginTag.MIME_REGISTER_ALL;
+      plugin.supersedeExisting = true;
+      plugin.addMimeType("application/x-shockwave-flash");
+      plugin.sandboxScript = "chrome://shumway/content/plugin.js";
+      plugin.enabledState = Ci.nsIPluginTag.STATE_ENABLED;
+      this.plugin = plugin;
+    } else {
+      Cu.import('resource://shumway/ShumwayStreamConverter.jsm');
+
+      let converterFactory = new Factory();
+      converterFactory.register(ShumwayStreamConverter);
+      this.converterFactory = converterFactory;
+      let overlayConverterFactory = new Factory();
+      overlayConverterFactory.register(ShumwayStreamOverlayConverter);
+      this.overlayConverterFactory = overlayConverterFactory;
+
+      let registerOverlayPreview = 'registerPlayPreviewMimeType' in Ph;
+      if (registerOverlayPreview) {
+        var ignoreCTP = getBoolPref(PREF_IGNORE_CTP, true);
+        var whitelist = getStringPref(PREF_WHITELIST);
+        // Some platforms cannot support video playback, and our whitelist targets
+        // only video players atm. We need to disable Shumway for those platforms.
+        if (whitelist && !Services.prefs.prefHasUserValue(PREF_WHITELIST) && !allowedPlatformForMedia()) {
+          log('Default SWF whitelist is used on an unsupported platform -- ' +
+          'using demo whitelist.');
+          whitelist = 'http://www.areweflashyet.com/*.swf';
+        }
+        Ph.registerPlayPreviewMimeType(SWF_CONTENT_TYPE, ignoreCTP,
+          undefined, whitelist);
       }
-      Ph.registerPlayPreviewMimeType(SWF_CONTENT_TYPE, ignoreCTP,
-                                     undefined, whitelist);
+      this.registerOverlayPreview = registerOverlayPreview;
     }
   },
 
@@ -133,11 +148,18 @@ var ShumwayBootstrapUtils = {
     this.isRegistered = false;
 
     // Remove the contract/component.
-    converterFactory.unregister();
-    overlayConverterFactory.unregister();
+    if (this.isJSPluginsSupported) {
+      // TODO jsplugin unregistration
+      this.plugin = null;
+    } else {
+      this.converterFactory.unregister();
+      this.converterFactory = null;
+      this.overlayConverterFactory.unregister();
+      this.overlayConverterFactory = null;
 
-    if (registerOverlayPreview) {
-      Ph.unregisterPlayPreviewMimeType(SWF_CONTENT_TYPE);
+      if (this.registerOverlayPreview) {
+        Ph.unregisterPlayPreviewMimeType(SWF_CONTENT_TYPE);
+      }
     }
   }
 };

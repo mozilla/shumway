@@ -115,7 +115,9 @@ module Shumway.AVM1.Lib {
     }
 
     public colorTransform(rect: AVM1Object, colorTransform: AVM1Object): void {
-      Debug.notImplemented('AVM1BitmapData.colorTransform');
+      var as3Rect = toAS3Rectangle(rect);
+      var as3ColorTransform = toAS3ColorTransform(colorTransform);
+      this._as3Object.colorTransform(as3Rect, as3ColorTransform);
     }
 
     public compare(other: AVM1BitmapData): boolean {

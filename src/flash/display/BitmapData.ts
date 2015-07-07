@@ -188,7 +188,6 @@ module Shumway.AVMX.AS.flash.display {
      */
     _isRemoteDirty: boolean;
 
-
     /**
      * If non-null then this value indicates that the bitmap is filled with a solid color. This is
      * useful for optimizations.
@@ -201,7 +200,7 @@ module Shumway.AVMX.AS.flash.display {
     private static _temporaryRectangle: flash.geom.Rectangle;
 
     private _getTemporaryRectangleFrom(rect: flash.geom.Rectangle): flash.geom.Rectangle {
-      var r = this.axClass._temporaryRectangle;
+      var r = this.sec.flash.display.BitmapData.axClass._temporaryRectangle;
       r.copyFrom(rect);
       return r;
     }
@@ -290,11 +289,14 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     clone(): flash.display.BitmapData {
-      somewhatImplemented("public flash.display.BitmapData::clone");
-      // This should be coping the buffer not the view.
-      var bd = new this.sec.flash.display.BitmapData(this._rect.width, this._rect.height, this._transparent,
-                                                                this._solidFillColorPBGRA);
-      bd._view.set(this._view);
+      var bd: BitmapData = Object.create(this.sec.flash.display.BitmapData.axClass.tPrototype);
+      bd._rect = this._rect.clone();
+      bd._transparent = this._transparent;
+      bd._solidFillColorPBGRA = this._solidFillColorPBGRA;
+      bd._bitmapReferrers = [];
+      this._ensureBitmapData();
+      bd._id = flash.display.DisplayObject.getNextSyncID();
+      bd._setData(new Uint8Array(this._data), this._type);
       return bd;
     }
 
@@ -427,7 +429,7 @@ module Shumway.AVMX.AS.flash.display {
       if (sourceRect) {
         sRect = this._getTemporaryRectangleFrom(sourceRect).roundInPlace();
       } else {
-        sRect = this.axClass._temporaryRectangle.setEmpty();
+        sRect = this.sec.flash.display.BitmapData.axClass._temporaryRectangle.setEmpty();
       }
 
       var tBRect = this._rect;

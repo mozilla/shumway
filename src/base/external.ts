@@ -30,7 +30,6 @@ declare var ShumwayCom: {
   
   createSpecialStorage: () => SpecialStorage;
   getWeakMapKeys: (weakMap) => Array<any>;
-  userInput: () => void;
   fallback: () => void;
   reportIssue: (details?: string) => void;
   reportTelemetry: (data) => void;

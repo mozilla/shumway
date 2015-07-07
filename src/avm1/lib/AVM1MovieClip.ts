@@ -79,7 +79,7 @@ module Shumway.AVM1.Lib {
     }
 
     _lookupChildByName(name: string): AVM1Object {
-      name = alCoerceString(this.context, name);
+      name = alToString(this.context, name);
       var lookupOptions = flash.display.LookupChildOptions.INCLUDE_NON_INITIALIZED;
       if (!this.context.isPropertyCaseSensitive) {
         lookupOptions |= flash.display.LookupChildOptions.IGNORE_CASE;
@@ -114,8 +114,8 @@ module Shumway.AVM1.Lib {
     }
 
     public _constructMovieClipSymbol(symbolId:string, name:string): flash.display.MovieClip {
-      symbolId = alCoerceString(this.context, symbolId);
-      name = alCoerceString(this.context, name);
+      symbolId = alToString(this.context, symbolId);
+      name = alToString(this.context, name);
 
       var symbol = this.context.getAsset(symbolId);
       if (!symbol) {
@@ -217,12 +217,14 @@ module Shumway.AVM1.Lib {
     }
 
     public createEmptyMovieClip(name, depth): AVM1MovieClip {
+      name = alToString(this.context, name);
       var mc: flash.display.MovieClip = new this.context.sec.flash.display.MovieClip();
       mc.name = name;
       return <AVM1MovieClip>this._insertChildAtDepth(mc, depth);
     }
 
     public createTextField(name, depth, x, y, width, height): AVM1TextField {
+      name = alToString(this.context, name);
       var text: flash.text.TextField = new this.context.sec.flash.text.TextField();
       text.name = name;
       text.x = x;
@@ -249,6 +251,7 @@ module Shumway.AVM1.Lib {
     }
 
     public duplicateMovieClip(name, depth, initObject): AVM1MovieClip {
+      name = alToString(this.context, name);
       var parent = this.context.resolveTarget(null);
       var nativeAS3Object = <any> this.as3Object;
       var mc: flash.display.MovieClip;
@@ -257,7 +260,7 @@ module Shumway.AVM1.Lib {
       } else {
         mc = new this.context.sec.flash.display.MovieClip();
       }
-      mc.name = alCoerceString(this.context, name);
+      mc.name = name;
 
       // These are all properties that get copied over when duplicating a movie clip.
       // Examined by testing.
@@ -638,6 +641,7 @@ module Shumway.AVM1.Lib {
     // Special and children names properties resolutions
 
     private _resolveLevelNProperty(name: string): AVM1MovieClip {
+      name = alToString(this.context, name);
       if (!this.context.isPropertyCaseSensitive) {
         name = name.toLowerCase();
       }

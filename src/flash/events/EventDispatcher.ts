@@ -168,14 +168,9 @@ module Shumway.AVMX.AS.flash.events {
         if (target === null) {
           nullCount++;
         } else {
-          try {
-            target.dispatchEvent(event);
-          } catch (e) {
-            Debug.warning('caught error under broadcast event ' + event._type + ': ', e);
-          }
+          target.dispatchEvent(event);
         }
       }
-
       // Compact the queue if there are too many holes in it.
       if (nullCount > 16 && nullCount > (queue.length >> 1)) {
         var compactedQueue = [];
@@ -493,17 +488,21 @@ module Shumway.AVMX.AS.flash.events {
         event = event.axCallPublicProperty('clone', null);
       }
       var snapshot = list.snapshot();
-      for (var i = 0; i < snapshot.length; i++) {
-        var entry = snapshot[i];
-        event._target = target;
-        event._currentTarget = currentTarget;
-        event._eventPhase = eventPhase;
-        typeof entry.listener === 'function' ?
-                                              entry.listener(event) :
-                                              entry.listener.call(entry.listener, event);
-        if (event._stopImmediatePropagation) {
-          break;
+      try {
+        for (var i = 0; i < snapshot.length; i++) {
+          var entry = snapshot[i];
+          event._target = target;
+          event._currentTarget = currentTarget;
+          event._eventPhase = eventPhase;
+          typeof entry.listener === 'function' ?
+                                                entry.listener(event) :
+                                                entry.listener.call(entry.listener, event);
+          if (event._stopImmediatePropagation) {
+            break;
+          }
         }
+      } catch (e) {
+        Debug.warning('Uncaught error in handler for event ' + event._type + ': ', e);
       }
       list.releaseSnapshot(snapshot);
       return !event._stopPropagation;

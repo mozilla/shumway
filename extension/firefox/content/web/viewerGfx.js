@@ -16,15 +16,6 @@
 
 var SHUMWAY_ROOT = "resource://shumway/";
 
-function notifyUserInput() {
-  ShumwayCom.userInput();
-}
-
-document.addEventListener('mousedown', notifyUserInput, true);
-document.addEventListener('mouseup', notifyUserInput, true);
-document.addEventListener('keydown', notifyUserInput, true);
-document.addEventListener('keyup', notifyUserInput, true);
-
 var easel;
 function createEasel(backgroundColor) {
   var Stage = Shumway.GFX.Stage;

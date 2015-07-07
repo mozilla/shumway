@@ -229,6 +229,7 @@ declare module Shumway.AVMX.AS.flash {
       constructor(width: number, height: number, trasparent: boolean, fillColor: number);
       applyFilter(sourceBitmap: BitmapData, sourceRect: geom.Rectangle, destPoint: geom.Point, filter): void;
       clone();
+      colorTransform(rect: flash.geom.Rectangle, colorTransform: flash.geom.ColorTransform): void;
       compare(otherBitmapData: BitmapData): boolean;
       copyChannel(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle, destPoint: flash.geom.Point, sourceChannel: number, destChannel: number): void;
       copyPixels(sourceBitmap: BitmapData, sourceRect: geom.Rectangle, destPoint: geom.Point, alphaBitmap: BitmapData, alphaPoint: geom.Point, mergeAlpha: boolean): void;
