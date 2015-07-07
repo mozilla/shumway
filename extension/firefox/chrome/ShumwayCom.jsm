@@ -207,6 +207,8 @@ var ShumwayCom = {
     // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
     // up Xray wrappers.
     var wrapped = {
+      environment: ShumwayCom.environment,
+    
       setFullscreen: function (value) {
         value = !!value;
         callbacks.sendMessage('setFullscreen', value, false);

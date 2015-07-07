@@ -143,7 +143,7 @@ function getStartupInfo(element) {
     try {
       // Verifying base URL, passed in object parameters. It shall be okay to
       // ignore bad/corrupted base.
-      var parsedPageUrl = Services.io.newURI(pageUrl);
+      var parsedPageUrl = Services.io.newURI(pageUrl, null, null);
       baseUrl = Services.io.newURI(objectParams.base, null, parsedPageUrl).spec;
     } catch (e) { /* it's okay to ignore any exception */ }
   }
