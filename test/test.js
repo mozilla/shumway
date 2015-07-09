@@ -541,7 +541,7 @@ function startBrowsers(url, initSessionCallback) {
   }
   sessions = [];
   browsers.forEach(function (b) {
-    var browser = WebBrowser.create(b);
+    var browser = WebBrowser.create(b, options.extension);
     var startUrl = getServerBaseAddress() + url +
       '?browser=' + encodeURIComponent(b.name) +
       '&manifestFile=' + encodeURIComponent('/test/' + options.manifestFile) +
