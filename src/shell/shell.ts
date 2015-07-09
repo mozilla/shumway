@@ -419,7 +419,7 @@ module Shumway.Shell {
       microTaskQueue.clear();
       if (deterministicOption.value) {
         Shumway.Random.reset();
-        Shumway.Shell.installTimeWarper();
+        Shumway.installTimeWarper();
       }
 
       var sec = createSecurityDomain(builtinABCPath, null, null);

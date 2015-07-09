@@ -21,42 +21,8 @@ module Shumway.Shell {
                 public interval: number, public repeat: boolean) {
     }
   }
-
-  var RealDate = Date;
-  var fakeTime = 1428107694580; // 3-Apr-2015
+  
   var jsGlobal = (function() { return this || (1, eval)('this//# sourceURL=jsGlobal-getter'); })();
-
-  /**
-   * This should only be called if you need fake time.
-   */
-  export function installTimeWarper() {
-
-    // Go back in time.
-    fakeTime = 1428107694580; // 3-Apr-2015
-
-    // Overload
-    jsGlobal.Date = function (yearOrTimevalue, month, date, hour, minute, second, millisecond) {
-      switch (arguments.length) {
-        case  0: return new RealDate(fakeTime); break;
-        case  1: return new RealDate(yearOrTimevalue); break;
-        case  2: return new RealDate(yearOrTimevalue, month); break;
-        case  3: return new RealDate(yearOrTimevalue, month, date); break;
-        case  4: return new RealDate(yearOrTimevalue, month, date, hour); break;
-        case  5: return new RealDate(yearOrTimevalue, month, date, hour, minute); break;
-        case  6: return new RealDate(yearOrTimevalue, month, date, hour, minute, second); break;
-        default: return new RealDate(yearOrTimevalue, month, date, hour, minute, second, millisecond); break;
-      }
-    };
-
-    // Make date now deterministic.
-    jsGlobal.Date.now = function () {
-      return fakeTime += 10; // Advance time.
-    };
-
-    jsGlobal.Date.UTC = function () {
-      return RealDate.UTC.apply(RealDate, arguments);
-    };
-  }
 
   export class MicroTasksQueue {
     private tasks: MicroTask[] = [];

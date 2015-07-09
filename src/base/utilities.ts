@@ -1471,6 +1471,39 @@ module Shumway {
     return Random.next();
   };
 
+  /**
+   * This should only be called if you need fake time.
+   */
+  export function installTimeWarper() {
+    var RealDate = Date;
+
+    // Go back in time.
+    var fakeTime = 1428107694580; // 3-Apr-2015
+
+    // Overload
+    jsGlobal.Date = function (yearOrTimevalue, month, date, hour, minute, second, millisecond) {
+      switch (arguments.length) {
+        case  0: return new RealDate(fakeTime);
+        case  1: return new RealDate(yearOrTimevalue);
+        case  2: return new RealDate(yearOrTimevalue, month);
+        case  3: return new RealDate(yearOrTimevalue, month, date);
+        case  4: return new RealDate(yearOrTimevalue, month, date, hour);
+        case  5: return new RealDate(yearOrTimevalue, month, date, hour, minute);
+        case  6: return new RealDate(yearOrTimevalue, month, date, hour, minute, second);
+        default: return new RealDate(yearOrTimevalue, month, date, hour, minute, second, millisecond);
+      }
+    };
+
+    // Make date now deterministic.
+    jsGlobal.Date.now = function () {
+      return fakeTime += 10; // Advance time.
+    };
+
+    jsGlobal.Date.UTC = function () {
+      return RealDate.UTC.apply(RealDate, arguments);
+    };
+  }
+
   function polyfillWeakMap() {
     if (typeof jsGlobal.WeakMap === 'function') {
       return; // weak map is supported
