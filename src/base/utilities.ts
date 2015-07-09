@@ -1511,12 +1511,14 @@ module Shumway {
   var useReferenceCounting = true;
 
   export class WeakList<T extends IReferenceCountable> {
-    private _map: WeakMap<T, T>;
+    private _map: WeakMap<T, number>;
     private _newAdditions: Array<Array<T>>;
     private _list: T [];
+    private _id: number;
     constructor() {
       if (typeof ShumwayCom !== "undefined" && ShumwayCom.getWeakMapKeys) {
-        this._map = new WeakMap<T, T>();
+        this._map = new WeakMap<T, number>();
+        this._id = 0;
         this._newAdditions = [];
       } else {
         this._list = [];
@@ -1532,7 +1534,8 @@ module Shumway {
     push(value: T) {
       if (this._map) {
         release || Debug.assert(!this._map.has(value));
-        this._map.set(value, null);
+        // We store an increasing id as the value so that keys can be sorted by it.
+        this._map.set(value, this._id++);
         this._newAdditions.forEach(function (additions: Array<T>) {
           additions.push(value);
         });
@@ -1555,7 +1558,13 @@ module Shumway {
       if (this._map) {
         var newAdditionsToKeys : Array<T> = [];
         this._newAdditions.push(newAdditionsToKeys);
-        var keys: Array<T> = ShumwayCom.getWeakMapKeys(this._map);
+        var map = this._map;
+        var keys: Array<T> = ShumwayCom.getWeakMapKeys(map);
+        // The keys returned by ShumwayCom.getWeakMapKeys are not guaranteed to
+        // be in insertion order. Therefore we have to sort them manually.
+        keys.sort(function (a: T, b: T) {
+          return map.get(a) - map.get(b);
+        });
         keys.forEach(function (value: T) {
           if (value._referenceCount !== 0) {
             callback(value);
