@@ -219,6 +219,7 @@ module Shumway.Remoting {
     registerImage(syncId: number, symbolId: number, imageType: ImageType,
                   data: Uint8Array, alphaData: Uint8Array): Promise<any>;
     fscommand(command: string, args: string): void;
+    sendVP6StreamData(url: string, data: Uint8Array): void;
   }
 
   /**

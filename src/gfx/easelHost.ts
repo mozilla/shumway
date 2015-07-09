@@ -185,6 +185,10 @@ module Shumway.GFX {
       arguments.length; // keeping from closure removal
     }
 
+    processVP6StreamData(url: string, data: Uint8Array) {
+      VP6Player.addVP6StreamData(url, data);
+    }
+
     processFrame() {
       arguments.length; // keeping from closure removal
     }

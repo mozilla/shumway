@@ -42,6 +42,7 @@ build: ensureoutputdir
 	mkdir -p $(BUILD_DIR)/content/libs
 	cp ../../build/libs/builtin.abc $(BUILD_DIR)/content/libs/
 	cp ../../build/libs/relooper.js $(BUILD_DIR)/content/libs/
+	cp ../../utils/vp6player/vp6player.swf $(BUILD_DIR)/content/
 	# Copying closure optimized shumway.js files
 	cp $(BUNDLES_DIR)/shumway*.js $(BUILD_DIR)/content/
 	cp ../../build/version/version.txt $(BUILD_DIR)/content/version.txt
@@ -71,6 +72,7 @@ restartless:
 	ln -s ../../../build/libs $(RESTARTLESS_DIR)/content/libs
 	ln -s ../../../build/bundles/shumway.gfx.js $(RESTARTLESS_DIR)/content/shumway.gfx.js
 	ln -s ../../../build/bundles/shumway.player.js $(RESTARTLESS_DIR)/content/shumway.player.js
+	ln -s ../../../utils/vp6player/vp6player.swf $(RESTARTLESS_DIR)/content/vp6player.swf
 	ln -s ../../../build/version/version.txt $(RESTARTLESS_DIR)/content/version.txt
 	cd $(RESTARTLESS_DIR); pwd > "$(PROFILE)/extensions/shumway@research.mozilla.org"
 	grep "nglayout.debug.disable_xul_cache\", true" "$(PROFILE)/prefs.js" 1>/dev/null || echo "Set create 'nglayout.debug.disable_xul_cache' boolean preference to 'true'."

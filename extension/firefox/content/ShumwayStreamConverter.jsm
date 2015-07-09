@@ -76,6 +76,11 @@ function isShumwayEnabledFor(startupInfo) {
   var url = startupInfo.url;
   var baseUrl = startupInfo.baseUrl;
 
+  if (/^resource:\/\/shumway\//i.test(url)) {
+    // disabled for internal Shumway SWFs
+    return false;
+  }
+
   // blacklisting well known sites with issues
   if (/\.ytimg\.com\//i.test(url) /* youtube movies */ ||
     /\/vui.swf\b/i.test(url) /* vidyo manager */  ||

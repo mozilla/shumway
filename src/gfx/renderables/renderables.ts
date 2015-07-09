@@ -212,7 +212,23 @@ module Shumway.GFX {
       this._assetId = assetId;
       this._eventSerializer = eventSerializer;
 
-      var element: HTMLVideoElement = document.createElement('video');
+      RenderableVideo._renderableVideos.push(this);
+
+      if (typeof registerInspectorAsset !== "undefined") {
+        registerInspectorAsset(-1, -1, this);
+      }
+
+      this._state = RenderableVideoState.Idle;
+    }
+
+    private _setupVideoElement(useFlash: boolean): HTMLVideoElement {
+      var element: HTMLVideoElement;
+      if (useFlash) {
+        element = <HTMLVideoElement>VP6Player.createDOMElement();
+      } else {
+        element = document.createElement('video');
+      }
+
       var elementEventHandler = this._handleVideoEvent.bind(this);
       element.preload = 'metadata'; // for mobile devices
       element.addEventListener("play", elementEventHandler);
@@ -230,14 +246,7 @@ module Shumway.GFX {
 
       this._video = element;
       this._videoEventHandler = elementEventHandler;
-
-      RenderableVideo._renderableVideos.push(this);
-
-      if (typeof registerInspectorAsset !== "undefined") {
-        registerInspectorAsset(-1, -1, this);
-      }
-
-      this._state = RenderableVideoState.Idle;
+      return element;
     }
 
     public get video(): HTMLVideoElement {
@@ -342,7 +351,9 @@ module Shumway.GFX {
       var ESTIMATED_VIDEO_SECOND_SIZE: number = 500;
       switch (type) {
         case VideoControlEvent.Init:
-          videoElement.src = data.url;
+          var useVP6Player = data.url && data.url.indexOf('vp6:') === 0;
+          videoElement = this._setupVideoElement(useVP6Player);
+          videoElement.src = useVP6Player ? data.url.substring('vp6:'.length) : data.url;
           this.play();
           this._notifyNetStream(VideoPlaybackEvent.Initialized, null);
           break;
@@ -405,6 +416,9 @@ module Shumway.GFX {
     }
 
     public checkForUpdate() {
+      if (!this._video) {
+        return;
+      }
       if (this._lastTimeInvalidated !== this._video.currentTime) {
         // Videos composited using DOM elements don't need to invalidate parents.
         if (!this._isDOMElement) {
@@ -422,10 +436,13 @@ module Shumway.GFX {
         if (renderable.willRender()) {
           // If the nodes video element isn't already on the video layer, mark the node as invalid to
           // make sure the video element will be added the next time the renderer reaches it.
-          if (!renderable._video.parentElement) {
+          if (!renderable._video || !renderable._video.parentElement ||
+              renderable._video.parentElement === VP6Player.hiddenLayer) {
             renderable.invalidate();
           }
-          renderable._video.style.zIndex = renderable.parents[0].depth + '';
+          if (renderable._video) {
+            renderable._video.style.zIndex = renderable.parents[0].depth + '';
+          }
         } else if (renderable._video.parentElement) {
           // The nodes video element should be removed if no longer visible.
           renderable._dispatchEvent(NodeEventType.RemovedFromStage);

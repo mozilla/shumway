@@ -107,6 +107,10 @@ module Shumway.Player {
       throw new Error('This method is abstract');
     }
 
+    sendVP6StreamData(url: string, data: Uint8Array): void {
+      throw new Error('This method is abstract');
+    }
+
     public processUpdates(updates: DataBuffer, assets: any []) {
       var deserializer = new Remoting.Player.PlayerChannelDeserializer(
         this.sec, updates, assets);
@@ -498,6 +502,10 @@ module Shumway.Player {
           somewhatImplemented('FSCommand ' + command);
       }
       this._gfxService.fscommand(command, args);
+    }
+
+    public sendVP6StreamData(url: string, data: Uint8Array): void {
+      this._gfxService.sendVP6StreamData(url, data);
     }
 
     public requestRendering(): void {

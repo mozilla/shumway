@@ -23,6 +23,7 @@
 /// <reference path='geometry.ts'/>
 /// <reference path='regionAllocator.ts'/>
 /// <reference path='nodes.ts'/>
+/// <reference path='vp6player.ts' />
 /// <reference path='renderables/renderables.ts'/>
 /// <reference path='filters.ts'/>
 

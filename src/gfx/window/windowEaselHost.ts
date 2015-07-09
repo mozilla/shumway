@@ -103,6 +103,8 @@ module Shumway.GFX.Window {
                                     this._sendRegisterImageResponse.bind(this, data.requestId));
         } else if (data.type === 'fscommand') {
           this.processFSCommand(data.command, data.args);
+        } else if (data.type === 'vp6data') {
+          this.processVP6StreamData(data.url, data.data);
         } else {
           // release || Debug.assertUnreachable("Unhandled remoting event " + data.type);
         }

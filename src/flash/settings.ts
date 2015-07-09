@@ -30,6 +30,10 @@ module Shumway.AVMX.AS {
     new Shumway.Options.Option(null, "Use Media Source for Video", "boolean", false, "Enables Media Source Extension API for NetStream.")
   );
 
+  export var vp6PlayerOption = flashOptions.register (
+    new Shumway.Options.Option(null, "Use VP6Player for Video", "boolean", false, "Always use VP6Player for media playback.")
+  );
+
   export var mediaSourceMP3Option = flashOptions.register (
     new Shumway.Options.Option(null, "Use Media Source for MP3", "boolean", true, "Enables Media Source Extension API for MP3 streams.")
   );

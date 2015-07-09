@@ -24,6 +24,7 @@ function createPlaybackEaselHost(file) {
 
 var easel;
 function createEasel() {
+  Shumway.GFX.VP6Player.SWFPath = "../../utils/vp6player/vp6player.swf";
   Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
   easel = new Easel(document.getElementById("easelContainer"));
   easel.startRendering();

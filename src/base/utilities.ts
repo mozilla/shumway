@@ -1471,6 +1471,32 @@ module Shumway {
     return Random.next();
   };
 
+  function formatUint16(n): string {
+    var s = n.toString(16);
+    switch (n.length) {
+      case 1:
+        return '000' + s;
+      case 2:
+        return '00' + s;
+      case 3:
+        return '0' + s;
+      default:
+        return s;
+    }
+  }
+
+  export function generateRandomUUID(): string {
+    var data = new Uint16Array(8);
+    (<any>window).crypto.getRandomValues(data);
+    // See rfc 4122, section 4.4
+    data[3] = (data[3] & 0x0FFF) | 0x4000; // time_hi_and_version bits 12-15 set to 0100
+    data[4] = (data[4] & 0x3FFF) | 0x8000; // clock_seq_hi_and_reserved bits 6-7 to 10
+    return formatUint16(data[0]) + formatUint16(data[1]) + '-' +
+           formatUint16(data[2]) + '-' + formatUint16(data[3]) + '-' +
+           formatUint16(data[4]) + '-' + formatUint16(data[5]) +
+           formatUint16(data[6]) + formatUint16(data[7]);
+  }
+
   function polyfillWeakMap() {
     if (typeof jsGlobal.WeakMap === 'function') {
       return; // weak map is supported

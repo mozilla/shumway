@@ -178,6 +178,10 @@ module Shumway.Shell {
         microTaskQueue.stop();
       }
     }
+
+    sendVP6StreamData(url: string, data: Uint8Array): void {
+      // console.log('vp6PlayerData');
+    }
   }
 
   export var verbose = false;
