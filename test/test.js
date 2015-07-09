@@ -37,14 +37,15 @@ function parseOptions() {
 
   var yargs = require('yargs')
     .usage('Usage: $0')
-    .boolean(['help', 'masterMode', 'reftest', 'noPrompts'])
+    .boolean(['help', 'masterMode', 'reftest', 'noPrompts', 'extension'])
     .string(['manifestFile', 'browser', 'browserManifestFile',
              'port', 'statsFile', 'statsDelay'])
-    .alias('browser', 'b').alias('help', 'h').alias('masterMode', 'm')
+    .alias('browser', 'b').alias('help', 'h').alias('masterMode', 'm').alias('extension', 'e')
     .describe('help', 'Show this help message')
     .describe('masterMode', 'Run the script in master mode.')
     .describe('noPrompts',
       'Uses default answers (intended for CLOUD TESTS only!).')
+    .describe('extension', 'Run tests in the extension.')
     .describe('manifestFile',
       'A path to JSON file in the form of test_manifest.json')
     .default('manifestFile', 'test_manifest.json')
@@ -540,13 +541,14 @@ function startBrowsers(url, initSessionCallback) {
   }
   sessions = [];
   browsers.forEach(function (b) {
-    var browser = WebBrowser.create(b);
+    var browser = WebBrowser.create(b, options.extension);
     var startUrl = getServerBaseAddress() + url +
       '?browser=' + encodeURIComponent(b.name) +
       '&manifestFile=' + encodeURIComponent('/test/' + options.manifestFile) +
       '&path=' + encodeURIComponent(b.path) +
       '&delay=' + options.statsDelay +
-      '&masterMode=' + options.masterMode;
+      '&masterMode=' + options.masterMode +
+      '&extension=' + options.extension;
     browser.start(startUrl);
     var session = {
       name: b.name,

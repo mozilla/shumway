@@ -14,20 +14,37 @@
  * limitations under the License.
  */
 
-var gfxWindow, playerWindow;
+var swfContainer = document.getElementById('swfContainer');
+var onFrameCallback, terminate;
+
+swfContainer.addEventListener('message', function (e) {
+  switch (e.detail.type) {
+    case 'processFrame':
+      onFrameCallback();
+      break;
+    case 'processFSCommand':
+      if (e.detail.data.command === 'quit') {
+        terminate();
+      }
+      break;
+    case 'print':
+      print(e.detail.data);
+      break;
+  }
+});
 
 function loadMovie(path, reportFrames) {
   path = combineUrl(document.location.href, path);
 
   var expectedFrameIndex = 0, currentFrame = -1;
-  function onFrameCallback() {
+  onFrameCallback = function () {
     if (currentFrame < 0) {
       sendResponse();
     }
     if (reportFrames) {
       while (expectedFrameIndex < reportFrames.length &&
         currentFrame >= reportFrames[expectedFrameIndex]) {
-        var snapshot = gfxWindow.getCanvasData();
+        var snapshot = swfContainer.getCanvasData();
         sendResponse({
           index: expectedFrameIndex,
           frame: currentFrame,
@@ -37,9 +54,9 @@ function loadMovie(path, reportFrames) {
       }
     }
     currentFrame++;
-  }
+  };
 
-  function terminate() {
+  terminate = function () {
     ignoreAdanvances = true;
     // cleaning up
     if (advanceTimeout) { // invoke current timeout
@@ -50,35 +67,20 @@ function loadMovie(path, reportFrames) {
     while (reportFrames && i < reportFrames.length) {
       onFrameCallback();
     }
-  }
-
-  var easel = gfxWindow.createEasel();
-  var flashParams = {
-    url: path,
-    baseUrl: path,
-    movieParams: {},
-    objectParams: {},
-    compilerSettings: {
-      sysCompiler: true,
-      appCompiler: true,
-      verifier: true
-    },
-    displayParameters: easel.getDisplayParameters()
   };
-  playerWindow.runSwfPlayer(flashParams, null, gfxWindow);
 
-  var easelHost = gfxWindow.createEaselHost(playerWindow);
-  easelHost.processFrame = onFrameCallback;
-  easelHost.processFSCommand = function (command) {
-    if (command === 'quit') {
-      terminate();
-    }
-  };
+  swfContainer.setAttribute('base', path);
+  swfContainer.src = path;
 }
 
 var traceMessages = '';
 function addTraceMessage(msg) {
   traceMessages += msg + '\n';
+}
+
+function print(msg) {
+  addTraceMessage(msg);
+  console.log(msg);
 }
 
 function sendResponse(data) {
@@ -91,8 +93,13 @@ function sendResponse(data) {
 var mouseOutside = true;
 
 function sendMouseEvent(type, x, y) {
+  var event = { type: type === 'click' ? null : type };
+  SpecialPowers.synthesizeMouse(swfContainer, x, y, event, window);
+}
+
+function sendMouseEvent(type, x, y) {
   var event = { type: type };
-  SpecialPowers.synthesizeMouse(gfxWindow, x, y, event);
+  SpecialPowers.synthesizeMouse(window, x, y, event);
 }
 
 var advanceTimeout = null, ignoreAdanvances = false;
@@ -109,28 +116,6 @@ function advanceCallback() {
   sendResponse();
 }
 
-var playerReady = new Promise(function (resolve) {
-  function iframeLoaded() {
-    if (--iframesToLoad > 0) {
-      return;
-    }
-
-    gfxWindow = document.getElementById('gfxIframe').contentWindow;
-    playerWindow = document.getElementById('playerIframe').contentWindow;
-
-    playerWindow.print = function (msg) {
-      addTraceMessage(msg);
-      console.log(msg);
-    };
-
-    resolve();
-  }
-
-  var iframesToLoad = 2;
-  document.getElementById('gfxIframe').addEventListener('load', iframeLoaded);
-  document.getElementById('playerIframe').addEventListener('load', iframeLoaded);
-});
-
 window.addEventListener('message', function (e) {
   var data = e.data;
   if (typeof data !== 'object' || data === null) {
@@ -144,9 +129,7 @@ window.addEventListener('message', function (e) {
   case 'load':
     var path = data.path;
     var reportFrames = data.reportFrames;
-    playerReady.then(function () {
-      loadMovie(path, reportFrames);
-    });
+    loadMovie(path, reportFrames);
     break;
   case 'advance':
     if (ignoreAdanvances) {
@@ -179,7 +162,7 @@ window.addEventListener('message', function (e) {
   case 'get-image':
     // we need to flush pending gfx/player requests
     setTimeout(function () {
-      sendResponse(gfxWindow.getCanvasData());
+      sendResponse(swfContainer.getCanvasData());
     });
     break;
   }

@@ -1471,6 +1471,39 @@ module Shumway {
     return Random.next();
   };
 
+  /**
+   * This should only be called if you need fake time.
+   */
+  export function installTimeWarper() {
+    var RealDate = Date;
+
+    // Go back in time.
+    var fakeTime = 1428107694580; // 3-Apr-2015
+
+    // Overload
+    jsGlobal.Date = function (yearOrTimevalue, month, date, hour, minute, second, millisecond) {
+      switch (arguments.length) {
+        case  0: return new RealDate(fakeTime);
+        case  1: return new RealDate(yearOrTimevalue);
+        case  2: return new RealDate(yearOrTimevalue, month);
+        case  3: return new RealDate(yearOrTimevalue, month, date);
+        case  4: return new RealDate(yearOrTimevalue, month, date, hour);
+        case  5: return new RealDate(yearOrTimevalue, month, date, hour, minute);
+        case  6: return new RealDate(yearOrTimevalue, month, date, hour, minute, second);
+        default: return new RealDate(yearOrTimevalue, month, date, hour, minute, second, millisecond);
+      }
+    };
+
+    // Make date now deterministic.
+    jsGlobal.Date.now = function () {
+      return fakeTime += 10; // Advance time.
+    };
+
+    jsGlobal.Date.UTC = function () {
+      return RealDate.UTC.apply(RealDate, arguments);
+    };
+  }
+
   function polyfillWeakMap() {
     if (typeof jsGlobal.WeakMap === 'function') {
       return; // weak map is supported
@@ -1511,12 +1544,14 @@ module Shumway {
   var useReferenceCounting = true;
 
   export class WeakList<T extends IReferenceCountable> {
-    private _map: WeakMap<T, T>;
+    private _map: WeakMap<T, number>;
     private _newAdditions: Array<Array<T>>;
     private _list: T [];
+    private _id: number;
     constructor() {
       if (typeof ShumwayCom !== "undefined" && ShumwayCom.getWeakMapKeys) {
-        this._map = new WeakMap<T, T>();
+        this._map = new WeakMap<T, number>();
+        this._id = 0;
         this._newAdditions = [];
       } else {
         this._list = [];
@@ -1532,7 +1567,8 @@ module Shumway {
     push(value: T) {
       if (this._map) {
         release || Debug.assert(!this._map.has(value));
-        this._map.set(value, null);
+        // We store an increasing id as the value so that keys can be sorted by it.
+        this._map.set(value, this._id++);
         this._newAdditions.forEach(function (additions: Array<T>) {
           additions.push(value);
         });
@@ -1555,7 +1591,13 @@ module Shumway {
       if (this._map) {
         var newAdditionsToKeys : Array<T> = [];
         this._newAdditions.push(newAdditionsToKeys);
-        var keys: Array<T> = ShumwayCom.getWeakMapKeys(this._map);
+        var map = this._map;
+        var keys: Array<T> = ShumwayCom.getWeakMapKeys(map);
+        // The keys returned by ShumwayCom.getWeakMapKeys are not guaranteed to
+        // be in insertion order. Therefore we have to sort them manually.
+        keys.sort(function (a: T, b: T) {
+          return map.get(a) - map.get(b);
+        });
         keys.forEach(function (value: T) {
           if (value._referenceCount !== 0) {
             callback(value);

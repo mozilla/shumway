@@ -14,10 +14,20 @@
  * limitations under the License.
  */
 
+var ShumwayEnvironment = {
+  DEBUG: 'test',
+  DEVELOPMENT: 'dev',
+  RELEASE: 'release',
+  TEST: 'test'
+};
+
 declare var ShumwayCom: {
-  createSpecialInflate: () => SpecialInflate;
-  createRtmpSocket: (options: {host: string; port: number; ssl: boolean}) => RtmpSocket;
-  createRtmpXHR: () => RtmpXHR;
+  environment: string // ShumwayEnvironment;
+  
+  createSpecialInflate?: () => SpecialInflate;
+  createRtmpSocket?: (options: {host: string; port: number; ssl: boolean}) => RtmpSocket;
+  createRtmpXHR?: () => RtmpXHR;
+  
   createSpecialStorage: () => SpecialStorage;
   getWeakMapKeys: (weakMap) => Array<any>;
   fallback: () => void;
@@ -44,6 +54,10 @@ declare var ShumwayCom: {
   setAsyncMessageCallback: (callback: (data: any) => void) => void;
 
   getLocalConnectionService: () => LocalConnectionService;
+  
+  processFrame?: () => void;
+  processFSCommand?: (command: string, args: any) => void;
+  print?: (msg: string) => void;
 };
 
 interface SpecialStorage {

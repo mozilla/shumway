@@ -580,8 +580,8 @@ module.exports = function(grunt) {
     var testManifestFile = grunt.option('manifestFile') || defaultTestsManifestFile;
     var done = this.async();
     var params = [];
-    if (grunt.option('bundle')) {
-      params.push('--bundle');
+    if (grunt.option('extension')) {
+      params.push('--extension');
     }
     if (grunt.option('noPrompts')) {
       params.push('--noPrompts');
@@ -594,6 +594,11 @@ module.exports = function(grunt) {
     }, function () {
       done();
     });
+  });
+  
+  grunt.registerTask('reftest-extension', function () {
+    grunt.option('extension', true);
+    grunt.task.run('firefox', 'reftest');
   });
 
   grunt.registerTask('reftest-swfdec', function () {
@@ -608,8 +613,8 @@ module.exports = function(grunt) {
     var testManifestFile = 'swfdec_reftest_manifest.json';
     var done = this.async();
     var params = [];
-    if (grunt.option('bundle')) {
-      params.push('--bundle');
+    if (grunt.option('extension')) {
+      params.push('--extension');
     }
     if (grunt.option('noPrompts')) {
       params.push('--noPrompts');
@@ -631,8 +636,8 @@ module.exports = function(grunt) {
     var browserManifestFile = grunt.option('browserManifestFile') || defaultBrowserManifestFile;
     var done = this.async();
     var params = [];
-    if (grunt.option('bundle')) {
-      params.push('--bundle');
+    if (grunt.option('extension')) {
+      params.push('--extension');
     }
     if (grunt.option('noPrompts')) {
       params.push('--noPrompts');

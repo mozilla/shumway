@@ -24,6 +24,15 @@ function createEasel(backgroundColor) {
 
   Shumway.GFX.WebGL.SHADER_ROOT = SHUMWAY_ROOT + "gfx/gl/shaders/";
   easel = new Easel(document.getElementById("easelContainer"), false, backgroundColor);
+  
+  if (ShumwayCom.environment === 'test') {
+    ShumwayCom.setScreenShotCallback(function () {
+      // flush rendering buffers
+      easel.render();
+      return easel.screenShot(null, true, false).dataURL;
+    });
+  }
+  
   easel.startRendering();
   return easel;
 }
