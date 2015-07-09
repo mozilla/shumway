@@ -595,6 +595,11 @@ module.exports = function(grunt) {
       done();
     });
   });
+  
+  grunt.registerTask('reftest-extension', function () {
+    grunt.option('extension', true);
+    grunt.task.run('firefox', 'reftest');
+  });
 
   grunt.registerTask('reftest-swfdec', function () {
     if (grunt.file.exists('test/tmp')) {
