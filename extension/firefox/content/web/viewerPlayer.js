@@ -33,6 +33,13 @@ function runSwfPlayer(flashParams, settings) {
   if (ShumwayCom.environment === 'test') {
     Shumway.frameRateOption.value = 60;
     Shumway.dontSkipFramesOption.value = true;
+    
+    window.print = function(msg) {
+      ShumwayCom.print(msg.toString());
+    };
+    
+    Shumway.Random.reset();
+    Shumway.installTimeWarper();
   } else {
     Shumway.frameRateOption.value = flashParams.turboMode ? 60 : -1;
   }
@@ -67,12 +74,6 @@ function runSwfPlayer(flashParams, settings) {
       });
     }
   });
-  
-  if (ShumwayCom.environment === 'test') {
-    window.print = function(msg) {
-      ShumwayCom.print(msg.toString());
-    };
-  }
 }
 
 function setupServices() {
