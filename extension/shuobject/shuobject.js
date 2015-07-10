@@ -320,6 +320,7 @@ var shuobject = (function () {
     }
 
     var objectParams = {};
+    var flashBase;
     if (params) {
       Object.keys(params).forEach(function (name) {
         name = name.toLowerCase();
@@ -327,6 +328,9 @@ var shuobject = (function () {
           if (!flashvars) {
             flashvars = parseQueryString(params[name]);
           }
+        } else if (name === 'base') {
+          // Base param, send as baseUrl in pluginParams below
+          flashBase = combineUrl(getDocumentBase(), params[name]);
         }
         objectParams[name] = params[name];
       });
@@ -344,7 +348,7 @@ var shuobject = (function () {
     }
 
     var pluginParams = {
-      baseUrl: getDocumentBase(),
+      baseUrl: flashBase || getDocumentBase(),
       url: absoluteSwfUrl,
       movieParams: movieParams,
       objectParams: objectParams,
