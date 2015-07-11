@@ -208,4 +208,426 @@ module Shumway.SWF.Parser {
     KeyPress =        0x20000,
     Construct =       0x40000
   }
+  
+  export interface Bbox {
+    xMin: number;
+    xMax: number;
+    yMin: number;
+    yMax: number;
+  }
+  
+  export interface Matrix {
+    a: number;
+    b: number;
+    c: number;
+    d: number;
+    tx: number;
+    ty: number;
+  }
+  
+  export interface Cxform {
+    redMultiplier: number;
+    greenMultiplier: number;
+    blueMultiplier: number;
+    alphaMultiplier: number;
+    redOffset: number;
+    greenOffset: number;
+    blueOffset: number;
+    alphaOffset: number;
+  }
+  
+  export interface Tag {
+    code: number;
+  }
+
+  export interface DisplayListTag extends Tag {
+    depth: number;
+  }
+
+  export interface PlaceObjectTag extends DisplayListTag {
+    actionBlocksPrecedence?: number;
+    symbolId?: number;
+    depth: number;
+    flags: number;
+    matrix?: Matrix;
+    cxform?: Cxform;
+    className?: string;
+    ratio?: number;
+    name?: string;
+    clipDepth?: number;
+    filters?: any[];
+    blendMode?: number;
+    bmpCache?: number;
+    visibility?: boolean;
+    backgroundColor?: number;
+    events?: Events[];
+  }
+  
+  export interface Events {
+    flags: number;
+    keyCode?: number;
+    actionsBlock: Uint8Array;
+  }
+  
+  export interface Filter {
+    type: number;
+  }
+  
+  export interface GlowFilter extends Filter {
+    colors: number[];
+    ratios?: number[];
+    blurX: number;
+    blurY: number;
+    angle?: number;
+    distance?: number;
+    strength: number;
+    inner: boolean;
+    knockout: boolean;
+    compositeSource: boolean;
+    onTop?: boolean;
+    quality: number;
+  }
+  
+  export interface BlurFilter extends Filter {
+    blurX: number;
+    blurY: number;
+    quality: number;
+  }
+  
+  export interface ConvolutionFilter extends Filter {
+    matrixX: number;
+    matrixY: number;
+    divisor: number;
+    bias: number;
+    matrix: number[];
+    color: number;
+    clamp: boolean;
+    preserverAlpha: boolean;
+  }
+  
+  export interface ColorMatrixFilter extends Filter {
+     matrix: number[];
+  }
+  
+  export interface RemoveObjectTag extends DisplayListTag {
+    symbolId?: number;
+    depth: number;
+  }
+
+  export interface ImageTag extends Tag {
+    id: number;
+    deblock?: number;
+    imgData: Uint8Array;
+    alphaData?: Uint8Array;
+    mimeType: string;
+    jpegTables?: { data: Uint8Array };
+  }
+  
+  export interface ButtonTag extends Tag {
+    id: number;
+    characters?: ButtonCharacter[];
+    actionsData?: Uint8Array;
+    trackAsMenu?: boolean;
+    buttonActions?: ButtonCondAction[];
+  }
+ 
+  export interface ButtonCharacter {
+    flags: number;
+    stateHitTest: boolean;
+    stateDown: boolean;
+    stateOver: boolean;
+    stateUp: boolean;
+    symbolId?: number;
+    depth?: number;
+    matrix?: Matrix;
+    cxform?: Cxform;
+    filters?: Filter[];
+    buttonActions?: ButtonCondAction[];
+  }
+  
+  export interface ButtonCondAction {
+    keyCode: number;
+    stateTransitionFlags: number;
+    actionsData: Uint8Array;
+  }
+  
+  export interface BinaryDataTag extends Tag {
+    id: number;
+    data: Uint8Array;
+  }
+
+  export interface FontTag extends Tag {
+    id: number;
+    // TODO: Turn all these boolean fields into flags.
+    hasLayout?: boolean;
+    shiftJis?: boolean;
+    smallText?: boolean;
+    ansi?: boolean;
+    italic?: boolean;
+    bold?: boolean;
+    language?: number;
+    name?: string;
+    copyright?: string;
+    resolution?: number;
+    offsets?: number[];
+    mapOffset?: number;
+    glyphs?: Glyph[];
+    codes?: number[];
+    ascent?: number;
+    descent?: number;
+    leading?: number;
+    advance?: number[];
+    bbox?: Bbox[];
+    kerning?: Kerning[];
+    data?: Uint8Array;
+  }
+  
+  export interface Glyph {
+    records: ShapeRecord[];
+  }
+  
+  export interface StaticTextTag extends Tag {
+    id: number;
+    bbox: Bbox;
+    matrix: Matrix;
+    records: TextRecord[];
+  }
+  
+  export interface TextRecord {
+    flags: number;
+    // TODO: Turn all these boolean fields into flags.
+    hasFont: boolean;
+    hasColor: boolean;
+    hasMoveY: boolean;
+    hasMoveX: boolean;
+    fontId?: number;
+    color?: number;
+    moveX?: number;
+    moveY?: number;
+    fontHeight?: number;
+    glyphCount?: number;
+    entries?: TextEntry[];
+  }
+  
+  export interface TextEntry {
+    glyphIndex: number;
+    advance: number;
+  }
+  
+  export interface SoundTag extends Tag {
+    id: number;
+    soundFormat: number;
+    soundRate: number;
+    soundSize: number;
+    soundType: number;
+    samplesCount: number;
+    soundData: Uint8Array;
+  }
+  
+  export interface StartSoundTag extends Tag {
+    soundId?: number;
+    soundClassName?: string;
+    soundInfo: SoundInfo;
+  }
+  
+  export interface SoundInfo {
+    // TODO: Turn all these boolean fields into flags.
+    stop: boolean;
+    noMultiple: boolean;
+    hasEnvelope: boolean;
+    hasLoops: boolean;
+    hasOutPoint: boolean;
+    hasInPoint: boolean;
+    inPoint?: number;
+    outPoint?: number;
+    loopCount?: number;
+    envelopes?: SoundEnvelope[];
+  }
+  
+  export interface SoundEnvelope {
+    pos44: number;
+    volumeLeft: number;
+    volumeRight: number;
+  }
+  
+  export interface SoundStreamHeadTag {
+    playbackRate: number;
+    playbackSize: number;
+    playbackType: number;
+    streamCompression: number;
+    streamRate: number;
+    streamSize: number;
+    streamType: number;
+    samplesCount: number;
+    latencySeek?: number;
+  }
+
+  export interface BitmapTag extends Tag {
+    id: number;
+    format: number;
+    width: number;
+    height: number;
+    hasAlpha: boolean;
+    // Number of color table entries - 1, not size in bytes.
+    colorTableSize?: number;
+    bmpData: Uint8Array;
+  }
+  
+  export interface TextTag extends Tag {
+    id: number;
+    bbox: Bbox;
+    // TODO: Turn all these boolean fields into flags.
+    hasText: boolean;
+    wordWrap: boolean;
+    multiline: boolean;
+    password: boolean;
+    readonly: boolean;
+    hasColor: boolean;
+    hasMaxLength: boolean;
+    hasFont: boolean;
+    hasFontClass: boolean;
+    autoSize: boolean;
+    hasLayout: boolean;
+    noSelect: boolean;
+    border: boolean;
+    wasStatic: boolean;
+    html: boolean;
+    useOutlines: boolean;
+    fontId?: number;
+    fontClass?: string;
+    fontHeight?: number;
+    color?: number;
+    maxLength?: number;
+    align?: number;
+    leftMargin?: number;
+    rightMargin?: number;
+    indent?: number;
+    leading?: number;
+    variableName: string;
+    initialText?: string;
+  }
+  
+  export interface Kerning {
+    code1: number;
+    code2: number;
+    adjustment: number;
+  }
+  
+  export interface ScalingGridTag extends Tag {
+    symbolId: number;
+    splitter: Bbox;
+  }
+  
+  export interface SceneTag extends Tag {
+    scenes: Scene[];
+    labels: Label[];
+  }
+  
+  export interface Scene {
+    offset: number;
+    name: string;
+  }
+  
+  export interface Label {
+    frame: number;
+    name: string;
+  }
+  
+  export interface ShapeTag extends Tag {
+    id: number;
+    lineBounds: Bbox;
+    isMorph: boolean;
+    lineBoundsMorph?: Bbox;
+    canHaveStrokes: boolean;
+    fillBounds?: Bbox;
+    fillBoundsMorph?: Bbox;
+    flags?: number;
+    fillStyles: FillStyle[];
+    lineStyles: LineStyle[];
+    records: ShapeRecord[];
+    recordsMorph?: ShapeRecord[];
+  }
+  
+  export interface FillStyle {
+    type: number;
+  }
+  
+  export interface SolidFill extends FillStyle {
+    color: number;
+    colorMorph?: number;
+  }
+  
+  export interface GradientFill extends FillStyle {
+    matrix: Matrix;
+    matrixMorph?: Matrix;
+    spreadMode?: number;
+    interpolationMode?: number;
+    records: GradientRecord[];
+    focalPoint?: number;
+    focalPointMorph?: number;
+  }
+  
+  export interface GradientRecord {
+    ratio: number;
+    color: number;
+    ratioMorph?: number;
+    colorMorph?: number;
+  }
+
+  export interface BitmapFill extends FillStyle {
+    bitmapId: number;
+    condition: boolean;
+    matrix: Matrix;
+    matrixMorph?: Matrix;
+  }
+  
+  export interface LineStyle {
+    width: number;
+    widthMorph?: number;
+    startCapsStyle?: number;
+    jointStyle?: number;
+    hasFill?: number;
+    noHscale?: boolean;
+    noVscale?: boolean;
+    pixelHinting?: boolean;
+    noClose?: boolean;
+    endCapsStyle?: number;
+    miterLimitFactor?: number;
+    fillStyle?: FillStyle;
+    color?: number;
+    colorMorph?: number;
+  }
+  
+  export interface ShapeRecord {
+    type: number;
+  }
+  
+  export interface ShapeEdgeRecord extends ShapeRecord {
+    isStraight?: boolean;
+    isGeneral?: boolean;
+    deltaX?: number;
+    deltaY?: number;
+    controlDeltaX?: number;
+    controlDeltaY?: number;
+    anchorDeltaX?: number;
+    anchorDeltaY?: number;
+  }
+  
+  export interface ShapeSetupRecord extends ShapeRecord {
+    hasNewStyles: boolean;
+    hasLineStyle: boolean;
+    hasFillStyle1: boolean;
+    hasFillStyle0: boolean;
+    move: boolean;
+    bits?: number;
+    moveX?: number;
+    moveY?: number;
+    fillStyle0?: number;
+    fillStyle1?: number;
+    lineStyle?: number;
+    fillStyles?: FillStyle[];
+    lineStyles?: LineStyle[];
+    lineBits?: number;
+    fillBits?: number;
+  }
 }

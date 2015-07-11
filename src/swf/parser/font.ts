@@ -71,9 +71,6 @@ module Shumway.SWF.Parser {
             y += -record.anchorDeltaY;
           }
         } else {
-          if (record.eos) {
-            break;
-          }
           if (record.move) {
             x = record.moveX;
             y = -record.moveY;
@@ -98,7 +95,7 @@ module Shumway.SWF.Parser {
     return maxDimension > 5000;
   }
 
-  export function defineFont(tag) {
+  export function defineFont(tag: FontTag) {
     var uniqueName = 'swf-font-' + tag.id;
     var fontName = tag.name || uniqueName;
 
@@ -106,8 +103,8 @@ module Shumway.SWF.Parser {
       type: 'font',
       id: tag.id,
       name: fontName,
-      bold: tag.bold === 1,
-      italic: tag.italic === 1,
+      bold: !!tag.bold,
+      italic: !!tag.italic,
       codes: null,
       metrics: null,
       data: tag.data,
@@ -115,7 +112,7 @@ module Shumway.SWF.Parser {
     };
 
     var glyphs = tag.glyphs;
-    var glyphCount = glyphs ? tag.glyphCount = glyphs.length : 0;
+    var glyphCount = glyphs ? glyphs.length : 0;
 
     if (!glyphCount) {
       return font;
@@ -129,8 +126,8 @@ module Shumway.SWF.Parser {
     var originalCode;
     var generateAdvancement = !('advance' in tag);
     var correction = 0;
-    var isFont2 = (tag.code === 48);
-    var isFont3 = (tag.code === 75);
+    var isFont2 = tag.code === SwfTag.CODE_DEFINE_FONT2;
+    var isFont3 = tag.code === SwfTag.CODE_DEFINE_FONT3;
 
     if (generateAdvancement) {
       tag.advance = [];
@@ -158,7 +155,7 @@ module Shumway.SWF.Parser {
         return a - b;
       });
       var i = 0;
-      var code;
+      var code: number;
       var indices;
       while ((code = codes[i++]) !== undefined) {
         var start = code;
@@ -202,9 +199,9 @@ module Shumway.SWF.Parser {
     var i = 0;
     var range;
     while ((range = ranges[i++])) {
-      var start = range[0];
-      var end = range[1];
-      var code = range[2][0];
+      var start: number = range[0];
+      var end: number = range[1];
+      var code: number = range[2][0];
       startCount += toString16(start);
       endCount += toString16(end);
       idDelta += toString16(((code - start) + 1) & 0xffff);
@@ -250,7 +247,7 @@ module Shumway.SWF.Parser {
     var yMaxs = [];
     var maxContours = 0;
     var i = 0;
-    var code;
+    var code: number;
     var rawData = {};
     while ((code = codes[i++]) !== undefined) {
       var glyph = glyphs[glyphIndex[code]];
@@ -292,9 +289,6 @@ module Shumway.SWF.Parser {
             segments[segmentIndex].data.push(x, y);
           }
         } else {
-          if (record.eos) {
-            break;
-          }
           if (record.move) {
             segmentIndex++;
             segments[segmentIndex] = { data: [], commands: [], xMin: 0, xMax: 0, yMin: 0, yMax: 0 };

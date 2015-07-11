@@ -184,11 +184,10 @@ module Shumway.SWF {
       SWF.enterTimeline('Parse tag ' + SWFTag[unparsed.tagCode]);
       this._dataStream.align();
       this._dataStream.pos = unparsed.byteOffset;
-      var tag: any = {code: unparsed.tagCode};
-      var handler = Parser.LowLevel.tagHandlers[unparsed.tagCode];
+      var handler = Parser.tagHandlers[unparsed.tagCode];
       release || Debug.assert(handler, 'handler shall exists here');
       var tagEnd = Math.min(unparsed.byteOffset + unparsed.byteLength, this._dataStream.end);
-      handler(this.data, this._dataStream, tag, this.swfVersion, unparsed.tagCode, tagEnd, this._jpegTables);
+      var tag = handler(this._dataStream, this.swfVersion, unparsed.tagCode, tagEnd, this._jpegTables);
       var finalPos = this._dataStream.pos;
       if (finalPos !== tagEnd) {
         this.emitTagSlopWarning(unparsed, tagEnd);
@@ -218,7 +217,7 @@ module Shumway.SWF {
                                  this.bytesTotal : this._uncompressedLength);
       this._dataStream = new Stream(this.data.buffer);
       this._dataStream.pos = 8;
-      this._dataView = <DataView><any>this._dataStream;
+      this._dataView = this._dataStream.view;
       if (isDeflateCompressed) {
         this.data.set(initialBytes.subarray(0, 8));
         this._uncompressedLoadedLength = 8;
@@ -252,7 +251,7 @@ module Shumway.SWF {
     }
 
     private parseHeaderContents() {
-      var obj = Parser.LowLevel.readHeader(this.data, this._dataStream);
+      var obj = Parser.parseHeader(this._dataStream);
       this.bounds = obj.bounds;
       this.frameRate = obj.frameRate;
       this.frameCount = obj.frameCount;
@@ -398,7 +397,7 @@ module Shumway.SWF {
           this.setSceneAndFrameLabelData(tagLength);
           break;
         case SWFTag.CODE_SET_BACKGROUND_COLOR:
-          this.backgroundColor = Parser.LowLevel.rgb(this.data, this._dataStream);
+          this.backgroundColor = Parser.parseRgb(this._dataStream);
           break;
         case SWFTag.CODE_JPEG_TABLES:
           // Only use the first JpegTables tag, ignore any following.
@@ -416,8 +415,8 @@ module Shumway.SWF {
             var tagEnd = byteOffset + tagLength;
             var abcBlock = new ABCBlock();
             if (tagCode === SWFTag.CODE_DO_ABC) {
-              abcBlock.flags = Parser.readUi32(this.data, stream);
-              abcBlock.name = Parser.readString(this.data, stream, -1);
+              abcBlock.flags = stream.readUi32();
+              abcBlock.name = stream.readString(-1);
             }
             else {
               abcBlock.flags = 0;
@@ -432,11 +431,11 @@ module Shumway.SWF {
           break;
         case SWFTag.CODE_SYMBOL_CLASS:
           var tagEnd = byteOffset + tagLength;
-          var symbolCount = Parser.readUi16(this.data, stream);
+          var symbolCount = stream.readUi16();
           // TODO: check if symbols can be reassociated after instances have been created.
           while (symbolCount--) {
-            var symbolId = Parser.readUi16(this.data, stream);
-            var symbolClassName = Parser.readString(this.data, stream, -1);
+            var symbolId = stream.readUi16();
+            var symbolClassName = stream.readString(-1);
             if (!release && traceLevel.value > 0) {
               console.log('Registering symbol class ' + symbolClassName + ' to symbol ' + symbolId);
             }
@@ -466,7 +465,7 @@ module Shumway.SWF {
           break;
         case SWFTag.CODE_SOUND_STREAM_HEAD:
         case SWFTag.CODE_SOUND_STREAM_HEAD2:
-          var soundStreamTag = Parser.LowLevel.soundStreamHead(this.data, this._dataStream, byteOffset + tagLength);
+          var soundStreamTag = Parser.parseSoundStreamHeadTag(this._dataStream, byteOffset + tagLength);
           this._currentSoundStreamHead = Parser.SoundStream.FromTag(soundStreamTag);
           break;
         case SWFTag.CODE_SOUND_STREAM_BLOCK:
@@ -474,7 +473,7 @@ module Shumway.SWF {
           break;
         case SWFTag.CODE_FRAME_LABEL:
           var tagEnd = stream.pos + tagLength;
-          this._currentFrameLabel = Parser.readString(this.data, stream, -1);
+          this._currentFrameLabel = stream.readString(-1);
           // TODO: support SWF6+ anchors.
           stream.pos = tagEnd;
           break;
@@ -485,11 +484,11 @@ module Shumway.SWF {
           return;
         case SWFTag.CODE_EXPORT_ASSETS:
           var tagEnd = stream.pos + tagLength;
-          var exportsCount = Parser.readUi16(this.data, stream);
+          var exportsCount = stream.readUi16();
           var exports = this._currentExports || (this._currentExports = []);
           while (exportsCount--) {
-            var symbolId = Parser.readUi16(this.data, stream);
-            var className = Parser.readString(this.data, stream, -1);
+            var symbolId = stream.readUi16();
+            var className = stream.readString(-1);
             if (stream.pos > tagEnd) {
               stream.pos = tagEnd;
               break;
@@ -618,7 +617,7 @@ module Shumway.SWF {
             break;
           case SWFTag.CODE_FRAME_LABEL:
             var tagEnd = stream.pos + tagLength;
-            label = Parser.readString(data, stream, -1);
+            label = stream.readString(-1);
             // TODO: support SWF6+ anchors.
             stream.pos = tagEnd;
             tagLength = 0;
@@ -703,7 +702,8 @@ module Shumway.SWF {
         this.jumpToNextTag(tagLength);
         return;
       }
-      this.sceneAndFrameLabelData = Parser.LowLevel.defineScene(this.data, this._dataStream, null);
+      this.sceneAndFrameLabelData = Parser.parseDefineSceneTag(
+        this._dataStream, SWFTag.CODE_DEFINE_SCENE_AND_FRAME_LABEL_DATA);
     }
 
     private addControlTag(tagCode: number, byteOffset: number, tagLength: number) {
@@ -713,7 +713,7 @@ module Shumway.SWF {
 
     }
     private addLazySymbol(tagCode: number, byteOffset: number, tagLength: number) {
-      var id = this._dataStream.getUint16(this._dataStream.pos, true);
+      var id = this._dataView.getUint16(this._dataStream.pos, true);
       var symbol = new DictionaryEntry(id, tagCode, byteOffset, tagLength);
       this.dictionary[id] = symbol;
       if (!release && traceLevel.value > 0) {
@@ -744,7 +744,7 @@ module Shumway.SWF {
         return;
       }
       var stream = this._dataStream;
-      var id = stream.getUint16(stream.pos, true);
+      var id = this._dataView.getUint16(stream.pos, true);
       var style: string;
       var name: string;
       // DefineFont only specifies a symbol ID, no font name or style.
@@ -758,7 +758,7 @@ module Shumway.SWF {
         var nameLength = this.data[stream.pos + 4];
         // Skip language code.
         stream.pos += 5;
-        name = Parser.readString(this.data, stream, nameLength);
+        name = stream.readString(nameLength);
       }
       this.fonts.push({name: name, id: id, style: style});
       if (!release && traceLevel.value > 0) {
@@ -918,24 +918,5 @@ module Shumway.SWF {
       default:
         return swfTag;
     }
-  }
-
-  export interface DisplayListTag {
-    depth: number;
-  }
-
-  export interface PlaceObjectTag extends DisplayListTag {
-    flags: number;
-    symbolId?: number;
-    matrix?: any; // TODO: type strongly
-    cxform?: any; // TODO: type strongly
-    ratio?: number;
-    name?: string;
-    clipDepth?: number;
-    filters?: any[]; // TODO: type strongly
-    blendMode?: number;
-    bmpCache?: number;
-    visibility?: number;
-    actionBlocksPrecedence?: number;
   }
 }

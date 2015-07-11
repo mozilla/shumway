@@ -67,7 +67,7 @@ module Shumway.SWF.Parser {
     };
   }
 
-  export function defineSound(tag) {
+  export function defineSound(tag: SoundTag) {
     var channels = tag.soundType == SOUND_TYPE_STEREO ? 2 : 1;
     var samplesCount = tag.samplesCount;
     var sampleRate = SOUND_RATES[tag.soundRate];

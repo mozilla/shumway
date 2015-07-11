@@ -288,7 +288,8 @@ module Shumway.AVMX.AS.flash.display {
   }
 
   export class ButtonState {
-    constructor(public symbol: Timeline.DisplaySymbol, public placeObjectTag: SWF.PlaceObjectTag) {
+    constructor(public symbol: Timeline.DisplaySymbol,
+                public placeObjectTag: SWF.Parser.PlaceObjectTag) {
     }
   }
 
@@ -311,7 +312,7 @@ module Shumway.AVMX.AS.flash.display {
       }
       var states = data.states;
       var character: Shumway.Timeline.DisplaySymbol = null;
-      var placeObjectTag: Shumway.SWF.PlaceObjectTag;
+      var placeObjectTag: Shumway.SWF.Parser.PlaceObjectTag;
       for (var stateName in states) {
         var controlTags = states[stateName];
         if (controlTags.length === 1) {
@@ -321,7 +322,11 @@ module Shumway.AVMX.AS.flash.display {
             continue;
           }
         } else {
-          placeObjectTag = {flags: Shumway.SWF.Parser.PlaceObjectFlags.Move, depth: 1};
+          placeObjectTag = {
+            code:Shumway.SWF.Parser.SwfTag.CODE_PLACE_OBJECT,
+            flags: Shumway.SWF.Parser.PlaceObjectFlags.Move,
+            depth: 1
+          };
           character = new flash.display.SpriteSymbol({id: -1, className: null, env: null},
                                                      loaderInfo);
           (<flash.display.SpriteSymbol>character).frames.push(new Shumway.SWF.SWFFrame(controlTags));

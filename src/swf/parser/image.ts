@@ -28,7 +28,7 @@ module Shumway.SWF.Parser {
   }
 
   /**
-   * Reads the next two bytes at the specified position.
+   * Reads the next four bytes at the specified position.
    */
   function readInt32(bytes: Uint8Array, position: number) {
     return (bytes[position] << 24) | (bytes[position + 1] << 16) |
@@ -128,14 +128,6 @@ module Shumway.SWF.Parser {
     parsedChunks?: Uint8Array[]; // Cached parsing results
   }
 
-  export interface DefineImageTag {
-    id: number;
-    imgData: Uint8Array;
-    mimeType: string;
-    alphaData: boolean;
-    jpegTables: JPEGTablesState;
-  }
-
   function injectJPEGTables(chunks: Uint8Array[], state: JPEGTablesState): void {
     if (!state.parsedChunks) {
       var parsedChunks: Uint8Array[] = [];
@@ -155,7 +147,7 @@ module Shumway.SWF.Parser {
   var JPEG_SOI = new Uint8Array([0xff, 0xd8]);
   var JPEG_EOI = new Uint8Array([0xff, 0xd9]);
 
-  export function defineImage(tag: DefineImageTag): ImageDefinition {
+  export function defineImage(tag: ImageTag): ImageDefinition {
     enterTimeline("defineImage");
     var image: any = {
       type: 'image',
@@ -185,7 +177,7 @@ module Shumway.SWF.Parser {
       image.data = joinChunks(chunks);
       image.dataType = ImageType.JPEG;
       
-      var alphaData: Uint8Array = <any>tag.alphaData;
+      var alphaData: Uint8Array = tag.alphaData;
       if (alphaData) {
         var length = image.width * image.height;
         try {

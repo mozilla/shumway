@@ -984,9 +984,6 @@ module Shumway.AVMX.AS.flash.text {
       var codes: number[];
       for (var i = 0; i < records.length; i++) {
         var record = records[i];
-        if (record.eot) {
-          break;
-        }
         if (record.hasFont) {
           var fontSymbol = <flash.text.FontSymbol>loaderInfo.getSymbolById(record.fontId);
           if (fontSymbol) {

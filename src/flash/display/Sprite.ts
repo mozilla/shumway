@@ -160,7 +160,7 @@ module Shumway.AVMX.AS.flash.display {
           case SwfTag.CODE_PLACE_OBJECT:
           case SwfTag.CODE_PLACE_OBJECT2:
           case SwfTag.CODE_PLACE_OBJECT3:
-            var placeObjectTag = <Shumway.SWF.PlaceObjectTag>tag;
+            var placeObjectTag = <Shumway.SWF.Parser.PlaceObjectTag>tag;
             var depth = placeObjectTag.depth;
             var child = this.getTimelineObjectAtDepth(depth);
             var hasCharacter = placeObjectTag.symbolId > -1;

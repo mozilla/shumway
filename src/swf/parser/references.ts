@@ -15,8 +15,7 @@
  */
 
 ///<reference path='../references.ts' />
-///<reference path='templates.ts' />
-///<reference path='handlers.ts' />
+///<reference path='module.ts' />
 
 ///<reference path='bitmap.ts' />
 ///<reference path='button.ts' />

@@ -99,8 +99,7 @@ module Shumway.SWF.Parser {
     // If no style is set for a segment of a path, a 1px transparent line is used.
     var defaultPath: SegmentedPath;
 
-    //TODO: remove the `- 1` once we stop even parsing the EOS record
-    var numRecords = records.length - 1;
+    var numRecords = records.length;
     var x: number = 0;
     var y: number = 0;
     var morphX: number = 0;
@@ -476,7 +475,7 @@ module Shumway.SWF.Parser {
     return paths;
   }
 
-  export function defineShape(tag) {
+  export function defineShape(tag: ShapeTag) {
     var dependencies = [];
     var fillPaths = createPathsList(tag.fillStyles, false, !!tag.recordsMorph, dependencies);
     var linePaths = createPathsList(tag.lineStyles, true, !!tag.recordsMorph, dependencies);
