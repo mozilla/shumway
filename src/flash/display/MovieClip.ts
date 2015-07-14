@@ -26,6 +26,7 @@ module Shumway.AVMX.AS.flash.display {
   import Multiname = Shumway.AVMX.Multiname;
 
   import SwfTag = Shumway.SWF.Parser.SwfTag;
+  import SoundInfoFlags = Shumway.SWF.Parser.SoundInfoFlags;
 
   /**
    * Controls how to behave on inter-frame navigation.
@@ -90,14 +91,14 @@ module Shumway.AVMX.AS.flash.display {
             var soundObj = constructClassFromSymbol(symbolInfo, symbolClass);
             sounds[symbolId] = sound = { object: soundObj };
           }
-          if (sound.channel && info.stop) {
+          var stop = !!(info.flags & SoundInfoFlags.Stop);
+          if (sound.channel && stop) {
             sound.channel.stop();
             sound.channel = null;
           }
-          if (!info.stop &&
-              (!sound.channel || !sound.channel.playing)) {
+          if (!stop && (!sound.channel || !sound.channel.playing)) {
             // TODO envelope, in/out point
-            var loops = info.hasLoops ? info.loopCount : 0;
+            var loops = info.flags & SoundInfoFlags.HasLoops ? info.loopCount : 0;
             sound.channel = sound.object.play(0, loops);
           }
         }

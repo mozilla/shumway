@@ -82,9 +82,9 @@ module Shumway.SWF.Parser {
    * See http://blogs.msdn.com/b/mswanson/archive/2006/02/27/539749.aspx and
    * http://wahlers.com.br/claus/blog/hacking-swf-1-shapes-in-flash/ for details.
    */
-  function convertRecordsToShapeData(records, fillPaths: SegmentedPath[],
+  function convertRecordsToShapeData(records: ShapeRecord[], fillPaths: SegmentedPath[],
                                      linePaths: SegmentedPath[], dependencies: number[],
-                                     recordsMorph): ShapeData
+                                     recordsMorph: ShapeRecord[]): ShapeData
   {
     var isMorph = recordsMorph !== null;
     var styles = {fill0: 0, fill1: 0, line: 0};
@@ -107,7 +107,7 @@ module Shumway.SWF.Parser {
     var path: SegmentedPath;
     for (var i = 0, j = 0; i < numRecords; i++) {
       var record = records[i];
-      var morphRecord;
+      var morphRecord: ShapeRecord;
       if (isMorph) {
         morphRecord = recordsMorph[j++];
       }
@@ -118,7 +118,7 @@ module Shumway.SWF.Parser {
           applySegmentToStyles(segment, styles, linePaths, fillPaths);
         }
 
-        if (record.hasNewStyles) {
+        if (record.flags & ShapeRecordFlags.HasNewStyles) {
           if (!allPaths) {
             allPaths = [];
           }
@@ -133,13 +133,13 @@ module Shumway.SWF.Parser {
           styles = {fill0: 0, fill1: 0, line: 0};
         }
 
-        if (record.hasFillStyle0) {
+        if (record.flags & ShapeRecordFlags.HasFillStyle0) {
           styles.fill0 = record.fillStyle0;
         }
-        if (record.hasFillStyle1) {
+        if (record.flags & ShapeRecordFlags.HasFillStyle1) {
           styles.fill1 = record.fillStyle1;
         }
-        if (record.hasLineStyle) {
+        if (record.flags & ShapeRecordFlags.HasLineStyle) {
           styles.line = record.lineStyle;
         }
         if (styles.fill1) {
@@ -150,7 +150,7 @@ module Shumway.SWF.Parser {
           path = fillPaths[styles.fill0 - 1];
         }
 
-        if (record.move) {
+        if (record.flags & ShapeRecordFlags.Move) {
           x = record.moveX | 0;
           y = record.moveY | 0;
           // When morphed, StyleChangeRecords/MoveTo might not have a
@@ -213,7 +213,8 @@ module Shumway.SWF.Parser {
           }
         }
 
-        if (record.isStraight && (!isMorph || morphRecord.isStraight)) {
+        if ((record.flags & ShapeRecordFlags.IsStraight) &&
+            (!isMorph || (morphRecord.flags & ShapeRecordFlags.IsStraight))) {
           x += record.deltaX | 0;
           y += record.deltaY | 0;
           if (!isMorph) {
@@ -226,7 +227,7 @@ module Shumway.SWF.Parser {
         } else {
           var cx, cy;
           var deltaX, deltaY;
-          if (!record.isStraight) {
+          if (!(record.flags & ShapeRecordFlags.IsStraight)) {
             cx = x + record.controlDeltaX | 0;
             cy = y + record.controlDeltaY | 0;
             x = cx + record.anchorDeltaX | 0;
@@ -242,7 +243,7 @@ module Shumway.SWF.Parser {
           if (!isMorph) {
             segment.curveTo(cx, cy, x, y);
           } else {
-            if (!morphRecord.isStraight) {
+            if (!(morphRecord.flags & ShapeRecordFlags.IsStraight)) {
               var morphCX = morphX + morphRecord.controlDeltaX | 0;
               var morphCY = morphY + morphRecord.controlDeltaY | 0;
               morphX = morphCX + morphRecord.anchorDeltaX | 0;

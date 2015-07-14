@@ -61,7 +61,7 @@ module Shumway.SWF.Parser {
       for (var j = 0; j < records.length; j++) {
         record = records[j];
         if (record.type) {
-          if (record.isStraight) {
+          if (record.flags & ShapeRecordFlags.IsStraight) {
             x += (record.deltaX || 0);
             y += -(record.deltaY || 0);
           } else {
@@ -71,7 +71,7 @@ module Shumway.SWF.Parser {
             y += -record.anchorDeltaY;
           }
         } else {
-          if (record.move) {
+          if (record.flags & ShapeRecordFlags.Move) {
             x = record.moveX;
             y = -record.moveY;
           }
@@ -103,8 +103,8 @@ module Shumway.SWF.Parser {
       type: 'font',
       id: tag.id,
       name: fontName,
-      bold: !!tag.bold,
-      italic: !!tag.italic,
+      bold: !!(tag.flags & FontFlags.Bold),
+      italic: !!(tag.flags & FontFlags.Italic),
       codes: null,
       metrics: null,
       data: tag.data,
@@ -268,7 +268,7 @@ module Shumway.SWF.Parser {
             segmentIndex = 0;
             segments[segmentIndex] = { data: [], commands: [], xMin: 0, xMax: 0, yMin: 0, yMax: 0 };
           }
-          if (record.isStraight) {
+          if (record.flags & ShapeRecordFlags.IsStraight) {
             segments[segmentIndex].commands.push(2);
             var dx = (record.deltaX || 0) / resolution;
             var dy = -(record.deltaY || 0) / resolution;
@@ -289,7 +289,7 @@ module Shumway.SWF.Parser {
             segments[segmentIndex].data.push(x, y);
           }
         } else {
-          if (record.move) {
+          if (record.flags & ShapeRecordFlags.Move) {
             segmentIndex++;
             segments[segmentIndex] = { data: [], commands: [], xMin: 0, xMax: 0, yMin: 0, yMax: 0 };
             segments[segmentIndex].commands.push(1);
@@ -490,7 +490,7 @@ module Shumway.SWF.Parser {
     tables['OS/2'] =
       '\x00\x01' + // version
       '\x00\x00' + // xAvgCharWidth
-      toString16(tag.bold ? 700 : 400) + // usWeightClass
+      toString16(font.bold ? 700 : 400) + // usWeightClass
       '\x00\x05' + // usWidthClass
       '\x00\x00' + // fstype
       '\x00\x00' + // ySubscriptXSize
@@ -510,7 +510,7 @@ module Shumway.SWF.Parser {
       '\x00\x00\x00\x00' + // ulUnicodeRange3
       '\x00\x00\x00\x00' + // ulUnicodeRange4
       'ALF ' + // achVendID
-      toString16((tag.italic ? 0x01 : 0) | (tag.bold ? 0x20 : 0)) + // fsSelection
+      toString16((font.italic ? 0x01 : 0) | (font.bold ? 0x20 : 0)) + // fsSelection
       toString16(codes[0]) + // usFirstCharIndex
       toString16(codes[codes.length - 1]) + // usLastCharIndex
       toString16(ascent) + // sTypoAscender
@@ -535,7 +535,7 @@ module Shumway.SWF.Parser {
       toString16(min.apply(null, yMins)) + // yMin
       toString16(max.apply(null, xMaxs)) + // xMax
       toString16(max.apply(null, yMaxs)) + // yMax
-      toString16((tag.italic ? 2 : 0) | (tag.bold ? 1 : 0)) + // macStyle
+      toString16((font.italic ? 2 : 0) | (font.bold ? 1 : 0)) + // macStyle
       '\x00\x08' + // lowestRecPPEM
       '\x00\x02' + // fontDirectionHint
       '\x00\x00' + // indexToLocFormat

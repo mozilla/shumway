@@ -470,27 +470,23 @@ module Shumway.SWF.Parser {
                            advanceBits: number): TextRecord {
     var record: any = {};
     stream.align();
-    var flags = stream.readUb(8);
+    var flags = record.flags = stream.readUb(8);
     if (!flags) {
       return null;
     }
-    var hasFont = record.hasFont = !!(flags >> 3 & 1);
-    var hasColor = record.hasColor = !!(flags >> 2 & 1);
-    var hasMoveY = record.hasMoveY = !!(flags >> 1 & 1);
-    var hasMoveX = record.hasMoveX = !!(flags & 1);
-    if (hasFont) {
+    if (flags & TextRecordFlags.HasFont) {
       record.fontId = stream.readUi16();
     }
-    if (hasColor) {
+    if (flags & TextRecordFlags.HasColor) {
       record.color = tagCode === SwfTag.CODE_DEFINE_TEXT2 ? parseRgba(stream) : parseRgb(stream);
     }
-    if (hasMoveX) {
+    if (flags & TextRecordFlags.HasMoveX) {
       record.moveX = stream.readSi16();
     }
-    if (hasMoveY) {
+    if (flags & TextRecordFlags.HasMoveY) {
       record.moveY = stream.readSi16();
     }
-    if (hasFont) {
+    if (flags & TextRecordFlags.HasFont) {
       record.fontHeight = stream.readUi16();
     }
     var glyphCount = stream.readUi8();
@@ -538,23 +534,17 @@ module Shumway.SWF.Parser {
 
   function parseSoundInfo(stream: Stream): SoundInfo {
     var info: any = {};
-    var flags = stream.readUi8();
-    info.stop = !!(flags >> 5 & 1);
-    info.noMultiple = !!(flags >> 4 & 1);
-    var hasEnvelope = info.hasEnvelope = !!(flags >> 3 & 1);
-    var hasLoops = info.hasLoops = !!(flags >> 2 & 1);
-    var hasOutPoint = info.hasOutPoint = !!(flags >> 1 & 1);
-    var hasInPoint = info.hasInPoint = !!(flags & 1);
-    if (hasInPoint) {
+    var flags = info.tag = stream.readUi8();
+    if (flags & SoundInfoFlags.HasInPoint) {
       info.inPoint = stream.readUi32();
     }
-    if (hasOutPoint) {
+    if (flags & SoundInfoFlags.HasOutPoint) {
       info.outPoint = stream.readUi32();
     }
-    if (hasLoops) {
+    if (flags & SoundInfoFlags.HasLoops) {
       info.loopCount = stream.readUi16();
     }
-    if (hasEnvelope) {
+    if (flags & SoundInfoFlags.HasEnvelope) {
       var envelopeCount = info.envelopeCount = stream.readUi8();
       var envelopes: SoundEnvelope[] = info.envelopes = [];
       var i = envelopeCount;
@@ -607,39 +597,23 @@ module Shumway.SWF.Parser {
     var tag: TextTag = <any>{ code: tagCode };
     tag.id = stream.readUi16();
     tag.bbox = parseBbox(stream);
-    var flags = stream.readUi16();
-    var hasText = tag.hasText = !!(flags >> 7 & 1);
-    tag.wordWrap = !!(flags >> 6 & 1);
-    tag.multiline = !!(flags >> 5 & 1);
-    tag.password = !!(flags >> 4 & 1);
-    tag.readonly = !!(flags >> 3 & 1);
-    var hasColor = tag.hasColor = !!(flags >> 2 & 1);
-    var hasMaxLength = tag.hasMaxLength = !!(flags >> 1 & 1);
-    var hasFont = tag.hasFont = !!(flags & 1);
-    var hasFontClass = tag.hasFontClass = !!(flags >> 15 & 1);
-    tag.autoSize = !!(flags >> 14 & 1);
-    var hasLayout = tag.hasLayout = !!(flags >> 13 & 1);
-    tag.noSelect = !!(flags >> 12 & 1);
-    tag.border = !!(flags >> 11 & 1);
-    tag.wasStatic = !!(flags >> 10 & 1);
-    tag.html = !!(flags >> 9 & 1);
-    tag.useOutlines = !!(flags >> 8 & 1);
-    if (hasFont) {
+    var flags = tag.flags = stream.readUi16();
+    if (flags & TextFlags.HasFont) {
       tag.fontId = stream.readUi16();
     }
-    if (hasFontClass) {
+    if (flags & TextFlags.HasFontClass) {
       tag.fontClass = stream.readString(-1);
     }
-    if (hasFont) {
+    if (flags & TextFlags.HasFont) {
       tag.fontHeight = stream.readUi16();
     }
-    if (hasColor) {
+    if (flags & TextFlags.HasColor) {
       tag.color = parseRgba(stream);
     }
-    if (hasMaxLength) {
+    if (flags & TextFlags.HasMaxLength) {
       tag.maxLength = stream.readUi16();
     }
-    if (hasLayout) {
+    if (flags & TextFlags.HasLayout) {
       tag.align = stream.readUi8();
       tag.leftMargin = stream.readUi16();
       tag.rightMargin = stream.readUi16();
@@ -647,7 +621,7 @@ module Shumway.SWF.Parser {
       tag.leading = stream.readSi16();
     }
     tag.variableName = stream.readString(-1);
-    if (hasText) {
+    if (flags & TextFlags.HasText) {
       tag.initialText = stream.readString(-1);
     }
     return tag;
@@ -657,18 +631,13 @@ module Shumway.SWF.Parser {
                                       tagEnd: number): FontTag {
     var tag: FontTag = <any>{ code: tagCode };
     tag.id = stream.readUi16();
-    var flags = stream.readUi8();
-    var hasLayout = tag.hasLayout = !!(flags & 0x80);
-    tag.shiftJis = !!(swfVersion > 5 && flags & 0x40);
-    tag.smallText = !!(flags & 0x20);
-    tag.ansi = !!(flags & 0x10);
-    var wideOffset = !!(flags & 0x08);
-    var wide = !!(flags & 0x04);
-    tag.italic = !!(flags & 0x02);
-    tag.bold = !!(flags & 0x01);
+    var flags = tag.flags = stream.readUi8();
+    var wide = !!(flags & FontFlags.WideOrHasFontData);
     if (swfVersion > 5) {
       tag.language = stream.readUi8();
     } else {
+      // Clear ShiftJis flag.
+      flags = tag.flags = flags & ~FontFlags.ShiftJis;
       // Skip reserved byte.
       stream.pos += 1;
       tag.language = 0;
@@ -686,7 +655,7 @@ module Shumway.SWF.Parser {
     var startpos = stream.pos;
     var offsets: number[] = tag.offsets = [];
     var i = glyphCount;
-    if (wideOffset) {
+    if (flags & FontFlags.WideOffset) {
       while (i--) {
         offsets.push(stream.readUi32());
       }
@@ -714,7 +683,7 @@ module Shumway.SWF.Parser {
     while (i--) {
       codes.push(wide ? stream.readUi16() : stream.readUi8());
     }
-    if (hasLayout) {
+    if (flags & FontFlags.HasLayout) {
       tag.ascent = stream.readUi16();
       tag.descent = stream.readUi16();
       tag.leading = stream.readSi16();
@@ -759,12 +728,9 @@ module Shumway.SWF.Parser {
                                       tagEnd: number): FontTag {
     var tag: FontTag = <any>{ code: tagCode };
     tag.id = stream.readUi16();
-    var flags = stream.readUi8();
-    var hasFontData = !!(flags & 0x4);
-    tag.italic = !!(flags & 0x2);
-    tag.bold = !!(flags & 0x1);
+    var flags = tag.flags = stream.readUi8();
     tag.name = stream.readString(-1);
-    if (hasFontData) {
+    if (flags & FontFlags.WideOrHasFontData) {
       tag.data = stream.bytes.subarray(stream.pos, tagEnd);
       stream.pos = tagEnd;
     }
@@ -848,21 +814,23 @@ module Shumway.SWF.Parser {
     do {
       var record: any = {};
       var type = record.type = stream.readUb(1);
-      var flags = record.flags = stream.readUb(5);
+      var flags = stream.readUb(5);
       if (!(type || flags)) {
         break;
       }
       if (type) {
         var bits = (flags & 0x0f) + 2;
-        var isStraight = record.isStraight = flags >> 4;
-        if (isStraight) {
+        flags = (flags & 0xf0) << 1;
+        if (flags & ShapeRecordFlags.IsStraight) {
           var isGeneral = record.isGeneral = stream.readUb(1);
           if (isGeneral) {
+            flags |= ShapeRecordFlags.IsGeneral;
             record.deltaX = stream.readSb(bits);
             record.deltaY = stream.readSb(bits);
           } else {
             var isVertical = record.isVertical = stream.readUb(1);
             if (isVertical) {
+              flags |= ShapeRecordFlags.IsVertical;
               record.deltaY = stream.readSb(bits);
             } else {
               record.deltaX = stream.readSb(bits);
@@ -875,27 +843,25 @@ module Shumway.SWF.Parser {
           record.anchorDeltaY = stream.readSb(bits);
         }
       } else {
-        var hasNewStyles = record.hasNewStyles = tagCode > SwfTag.CODE_DEFINE_SHAPE ?
-                                                 !!(flags >> 4) : false;
-        var hasLineStyle = record.hasLineStyle = !!(flags >> 3 & 1);
-        var hasFillStyle1 = record.hasFillStyle1 = !!(flags >> 2 & 1);
-        var hasFillStyle0 = record.hasFillStyle0 = !!(flags >> 1 & 1);
-        var move = record.move = !!(flags & 1);
-        if (move) {
+        if (tagCode <= SwfTag.CODE_DEFINE_SHAPE) {
+          // Clear HasNewStyles flag.
+          flags &= ~ShapeRecordFlags.HasNewStyles;
+        }
+        if (flags & ShapeRecordFlags.Move) {
           bits = stream.readUb(5);
           record.moveX = stream.readSb(bits);
           record.moveY = stream.readSb(bits);
         }
-        if (hasFillStyle0) {
+        if (flags & ShapeRecordFlags.HasFillStyle0) {
           record.fillStyle0 = stream.readUb(fillBits);
         }
-        if (hasFillStyle1) {
+        if (flags & ShapeRecordFlags.HasFillStyle1) {
           record.fillStyle1 = stream.readUb(fillBits);
         }
-        if (hasLineStyle) {
+        if (flags & ShapeRecordFlags.HasLineStyle) {
           record.lineStyle = stream.readUb(lineBits);
         }
-        if (hasNewStyles) {
+        if (flags & ShapeRecordFlags.HasNewStyles) {
           record.fillStyles = parseFillStyles(stream, swfVersion, tagCode, isMorph);
           record.lineStyles = parseLineStyles(stream, swfVersion, tagCode, isMorph, hasStrokes);
           stream.align();
@@ -903,6 +869,7 @@ module Shumway.SWF.Parser {
           lineBits = stream.readUb(4);
         }
       }
+      record.flags = flags;
       records.push(record);
     } while (true);
     return records;

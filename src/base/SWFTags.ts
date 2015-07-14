@@ -167,7 +167,65 @@ module Shumway.SWF.Parser {
     // parser log a message if such a tag is encountered.
     // CODE_VIDEO_FRAME                       = 61,
   }
+  
+  export interface Bbox {
+    xMin: number;
+    xMax: number;
+    yMin: number;
+    yMax: number;
+  }
+  
+  export interface Matrix {
+    a: number;
+    b: number;
+    c: number;
+    d: number;
+    tx: number;
+    ty: number;
+  }
+  
+  export interface Cxform {
+    redMultiplier: number;
+    greenMultiplier: number;
+    blueMultiplier: number;
+    alphaMultiplier: number;
+    redOffset: number;
+    greenOffset: number;
+    blueOffset: number;
+    alphaOffset: number;
+  }
+  
+  export interface Tag {
+    code: number;
+  }
 
+  export interface DefinitionTag extends Tag {
+    id: number;
+  }
+
+  export interface DisplayListTag extends Tag {
+    depth: number;
+  }
+
+  export interface PlaceObjectTag extends DisplayListTag {
+    actionBlocksPrecedence?: number;
+    symbolId?: number;
+    depth: number;
+    flags: number;
+    matrix?: Matrix;
+    cxform?: Cxform;
+    className?: string;
+    ratio?: number;
+    name?: string;
+    clipDepth?: number;
+    filters?: any[];
+    blendMode?: number;
+    bmpCache?: number;
+    visibility?: boolean;
+    backgroundColor?: number;
+    events?: Events[];
+  }
+  
   export enum PlaceObjectFlags {
     Move              = 0x0001,
     HasCharacter      = 0x0002,
@@ -207,60 +265,6 @@ module Shumway.SWF.Parser {
     DragOut =         0x10000,
     KeyPress =        0x20000,
     Construct =       0x40000
-  }
-  
-  export interface Bbox {
-    xMin: number;
-    xMax: number;
-    yMin: number;
-    yMax: number;
-  }
-  
-  export interface Matrix {
-    a: number;
-    b: number;
-    c: number;
-    d: number;
-    tx: number;
-    ty: number;
-  }
-  
-  export interface Cxform {
-    redMultiplier: number;
-    greenMultiplier: number;
-    blueMultiplier: number;
-    alphaMultiplier: number;
-    redOffset: number;
-    greenOffset: number;
-    blueOffset: number;
-    alphaOffset: number;
-  }
-  
-  export interface Tag {
-    code: number;
-  }
-
-  export interface DisplayListTag extends Tag {
-    depth: number;
-  }
-
-  export interface PlaceObjectTag extends DisplayListTag {
-    actionBlocksPrecedence?: number;
-    symbolId?: number;
-    depth: number;
-    flags: number;
-    matrix?: Matrix;
-    cxform?: Cxform;
-    className?: string;
-    ratio?: number;
-    name?: string;
-    clipDepth?: number;
-    filters?: any[];
-    blendMode?: number;
-    bmpCache?: number;
-    visibility?: boolean;
-    backgroundColor?: number;
-    events?: Events[];
   }
   
   export interface Events {
@@ -314,8 +318,7 @@ module Shumway.SWF.Parser {
     depth: number;
   }
 
-  export interface ImageTag extends Tag {
-    id: number;
+  export interface ImageTag extends DefinitionTag {
     deblock?: number;
     imgData: Uint8Array;
     alphaData?: Uint8Array;
@@ -323,8 +326,7 @@ module Shumway.SWF.Parser {
     jpegTables?: { data: Uint8Array };
   }
   
-  export interface ButtonTag extends Tag {
-    id: number;
+  export interface ButtonTag extends DefinitionTag {
     characters?: ButtonCharacter[];
     actionsData?: Uint8Array;
     trackAsMenu?: boolean;
@@ -351,20 +353,12 @@ module Shumway.SWF.Parser {
     actionsData: Uint8Array;
   }
   
-  export interface BinaryDataTag extends Tag {
-    id: number;
+  export interface BinaryDataTag extends DefinitionTag {
     data: Uint8Array;
   }
 
-  export interface FontTag extends Tag {
-    id: number;
-    // TODO: Turn all these boolean fields into flags.
-    hasLayout?: boolean;
-    shiftJis?: boolean;
-    smallText?: boolean;
-    ansi?: boolean;
-    italic?: boolean;
-    bold?: boolean;
+  export interface FontTag extends DefinitionTag {
+    flags: number;
     language?: number;
     name?: string;
     copyright?: string;
@@ -382,12 +376,22 @@ module Shumway.SWF.Parser {
     data?: Uint8Array;
   }
   
+  export enum FontFlags {
+    Bold              = 0x01,
+    Italic            = 0x02,
+    WideOrHasFontData = 0x04,
+    WideOffset        = 0x08,
+    Ansi              = 0x10,
+    SmallText         = 0x20,
+    ShiftJis          = 0x40,
+    HasLayout         = 0x80
+  }
+  
   export interface Glyph {
     records: ShapeRecord[];
   }
   
-  export interface StaticTextTag extends Tag {
-    id: number;
+  export interface StaticTextTag extends DefinitionTag {
     bbox: Bbox;
     matrix: Matrix;
     records: TextRecord[];
@@ -395,11 +399,6 @@ module Shumway.SWF.Parser {
   
   export interface TextRecord {
     flags: number;
-    // TODO: Turn all these boolean fields into flags.
-    hasFont: boolean;
-    hasColor: boolean;
-    hasMoveY: boolean;
-    hasMoveX: boolean;
     fontId?: number;
     color?: number;
     moveX?: number;
@@ -409,13 +408,19 @@ module Shumway.SWF.Parser {
     entries?: TextEntry[];
   }
   
+  export enum TextRecordFlags {
+    HasMoveX = 0x01,
+    HasMoveY = 0x02,
+    HasColor = 0x04,
+    HasFont =  0x08
+  }
+  
   export interface TextEntry {
     glyphIndex: number;
     advance: number;
   }
   
-  export interface SoundTag extends Tag {
-    id: number;
+  export interface SoundTag extends DefinitionTag {
     soundFormat: number;
     soundRate: number;
     soundSize: number;
@@ -431,17 +436,20 @@ module Shumway.SWF.Parser {
   }
   
   export interface SoundInfo {
-    // TODO: Turn all these boolean fields into flags.
-    stop: boolean;
-    noMultiple: boolean;
-    hasEnvelope: boolean;
-    hasLoops: boolean;
-    hasOutPoint: boolean;
-    hasInPoint: boolean;
+    flags: number;
     inPoint?: number;
     outPoint?: number;
     loopCount?: number;
     envelopes?: SoundEnvelope[];
+  }
+  
+  export enum SoundInfoFlags {
+    HasInPoint  = 0x01,
+    HasOutPoint = 0x02,
+    HasLoops    = 0x04,
+    HasEnvelope = 0x08,
+    NoMultiple  = 0x10,
+    Stop        = 0x20
   }
   
   export interface SoundEnvelope {
@@ -462,8 +470,7 @@ module Shumway.SWF.Parser {
     latencySeek?: number;
   }
 
-  export interface BitmapTag extends Tag {
-    id: number;
+  export interface BitmapTag extends DefinitionTag {
     format: number;
     width: number;
     height: number;
@@ -473,26 +480,9 @@ module Shumway.SWF.Parser {
     bmpData: Uint8Array;
   }
   
-  export interface TextTag extends Tag {
-    id: number;
+  export interface TextTag extends DefinitionTag {
     bbox: Bbox;
-    // TODO: Turn all these boolean fields into flags.
-    hasText: boolean;
-    wordWrap: boolean;
-    multiline: boolean;
-    password: boolean;
-    readonly: boolean;
-    hasColor: boolean;
-    hasMaxLength: boolean;
-    hasFont: boolean;
-    hasFontClass: boolean;
-    autoSize: boolean;
-    hasLayout: boolean;
-    noSelect: boolean;
-    border: boolean;
-    wasStatic: boolean;
-    html: boolean;
-    useOutlines: boolean;
+    flags: number;
     fontId?: number;
     fontClass?: string;
     fontHeight?: number;
@@ -505,6 +495,25 @@ module Shumway.SWF.Parser {
     leading?: number;
     variableName: string;
     initialText?: string;
+  }
+  
+  export enum TextFlags {
+    HasFont      = 0x0001,
+    HasMaxLength = 0x0002,
+    HasColor     = 0x0004,
+    ReadOnly     = 0x0008,
+    Password     = 0x0010,
+    Multiline    = 0x0020,
+    WordWrap     = 0x0040,
+    HasText      = 0x0080,
+    UseOutlines  = 0x0100,
+    Html         = 0x0200,
+    WasStatic    = 0x0400,
+    Border       = 0x0800,
+    NoSelect     = 0x1000,
+    HasLayout    = 0x2000,
+    AutoSize     = 0x4000,
+    HasFontClass = 0x8000
   }
   
   export interface Kerning {
@@ -533,8 +542,7 @@ module Shumway.SWF.Parser {
     name: string;
   }
   
-  export interface ShapeTag extends Tag {
-    id: number;
+  export interface ShapeTag extends DefinitionTag {
     lineBounds: Bbox;
     isMorph: boolean;
     lineBoundsMorph?: Bbox;
@@ -600,26 +608,13 @@ module Shumway.SWF.Parser {
   
   export interface ShapeRecord {
     type: number;
-  }
-  
-  export interface ShapeEdgeRecord extends ShapeRecord {
-    isStraight?: boolean;
-    isGeneral?: boolean;
+    flags: number;
     deltaX?: number;
     deltaY?: number;
     controlDeltaX?: number;
     controlDeltaY?: number;
     anchorDeltaX?: number;
     anchorDeltaY?: number;
-  }
-  
-  export interface ShapeSetupRecord extends ShapeRecord {
-    hasNewStyles: boolean;
-    hasLineStyle: boolean;
-    hasFillStyle1: boolean;
-    hasFillStyle0: boolean;
-    move: boolean;
-    bits?: number;
     moveX?: number;
     moveY?: number;
     fillStyle0?: number;
@@ -629,5 +624,16 @@ module Shumway.SWF.Parser {
     lineStyles?: LineStyle[];
     lineBits?: number;
     fillBits?: number;
+  }
+  
+  export enum ShapeRecordFlags {
+    Move = 0x01,
+    HasFillStyle0 = 0x02,
+    HasFillStyle1 = 0x04,
+    HasLineStyle = 0x08,
+    HasNewStyles = 0x10,
+    IsStraight = 0x20,
+    IsGeneral = 0x40,
+    IsVertical = 0x80
   }
 }
