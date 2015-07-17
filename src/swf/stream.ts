@@ -106,13 +106,13 @@ module Shumway.SWF {
 
     readUi16(): number {
       var r = this.view.getUint16(this.pos, true);
-      this.pos += 2
+      this.pos += 2;
       return r;
     }
 
     readUi32(): number {
       var r = this.view.getUint32(this.pos, true);
-      this.pos += 4
+      this.pos += 4;
       return r;
     }
 
@@ -124,7 +124,7 @@ module Shumway.SWF {
 
     readFixed8(): number {
       var r = this.view.getInt16(this.pos, true) / 256;
-      this.pos += 2
+      this.pos += 2;
       return r;
     }
 

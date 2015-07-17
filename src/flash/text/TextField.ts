@@ -930,7 +930,8 @@ module Shumway.AVMX.AS.flash.text {
         var fontSymbol = <flash.text.FontSymbol>loaderInfo.getSymbolById(tag.fontId);
         if (fontSymbol) {
           symbol.face = tag.flags & TextFlags.UseOutlines ?
-                        fontSymbol.name : 'swffont' + fontSymbol.syncId;
+                        fontSymbol.name :
+                        'swffont' + fontSymbol.syncId;
           symbol.bold = fontSymbol.bold;
           symbol.italic = fontSymbol.italic;
         } else {
@@ -976,7 +977,7 @@ module Shumway.AVMX.AS.flash.text {
      */
     static FromLabelData(data: any, loaderInfo: flash.display.LoaderInfo): TextSymbol {
       var bounds = data.fillBounds;
-      var records = data.records;
+      var records: TextRecord[] = data.records;
       var coords = data.coords = [];
       var htmlText = '';
       var size = 12;
@@ -988,7 +989,7 @@ module Shumway.AVMX.AS.flash.text {
       var y = 0;
       var codes: number[];
       for (var i = 0; i < records.length; i++) {
-        var record = <TextRecord>records[i];
+        var record = records[i];
         if (record.flags & TextRecordFlags.HasFont) {
           var fontSymbol = <flash.text.FontSymbol>loaderInfo.getSymbolById(record.fontId);
           if (fontSymbol) {

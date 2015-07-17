@@ -49,11 +49,10 @@ module Shumway.SWF.Parser {
   function isScaledFont2(glyphs) {
     var xMin = 0, yMin = 0, xMax = 0, yMax = 0;
     for (var i = 0; i < glyphs.length; i++) {
-      var glyph = glyphs[i];
-      if (!glyph) {
+      var records = glyphs[i];
+      if (!records) {
         continue;
       }
-      var records = glyph.records;
       var record;
       var x = 0;
       var y = 0;
@@ -126,8 +125,8 @@ module Shumway.SWF.Parser {
     var originalCode;
     var generateAdvancement = !('advance' in tag);
     var correction = 0;
-    var isFont2 = tag.code === SwfTag.CODE_DEFINE_FONT2;
-    var isFont3 = tag.code === SwfTag.CODE_DEFINE_FONT3;
+    var isFont2 = tag.code === SwfTagCode.CODE_DEFINE_FONT2;
+    var isFont3 = tag.code === SwfTagCode.CODE_DEFINE_FONT3;
 
     if (generateAdvancement) {
       tag.advance = [];
@@ -250,8 +249,7 @@ module Shumway.SWF.Parser {
     var code: number;
     var rawData = {};
     while ((code = codes[i++]) !== undefined) {
-      var glyph = glyphs[glyphIndex[code]];
-      var records = glyph.records;
+      var records = glyphs[glyphIndex[code]];
       var x = 0;
       var y = 0;
 
@@ -330,8 +328,7 @@ module Shumway.SWF.Parser {
 
     i = 0;
     while ((code = codes[i++]) !== undefined) {
-      var glyph = glyphs[glyphIndex[code]];
-      var records = glyph.records;
+      var records = glyphs[glyphIndex[code]];
       segments = rawData[code];
       var numberOfContours = 1;
       var endPoint = 0;

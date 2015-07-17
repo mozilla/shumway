@@ -20,7 +20,7 @@ module Shumway.AVMX.AS.flash.display {
   import axCoerceString = Shumway.AVMX.axCoerceString;
 
   import Timeline = Shumway.Timeline;
-  import SwfTag = Shumway.SWF.Parser.SwfTag;
+  import SwfTagCode = Shumway.SWF.Parser.SwfTagCode;
   import PlaceObjectFlags = Shumway.SWF.Parser.PlaceObjectFlags;
   import clamp = Shumway.NumberUtilities.clamp;
 
@@ -150,16 +150,16 @@ module Shumway.AVMX.AS.flash.display {
         var tag = parsedOrUnparsedTag.tagCode === undefined ?
                   parsedOrUnparsedTag : <any>loaderInfo._file.getParsedTag(parsedOrUnparsedTag);
         switch (tag.code) {
-          case SwfTag.CODE_REMOVE_OBJECT:
-          case SwfTag.CODE_REMOVE_OBJECT2:
+          case SwfTagCode.CODE_REMOVE_OBJECT:
+          case SwfTagCode.CODE_REMOVE_OBJECT2:
             var child = this.getTimelineObjectAtDepth(tag.depth | 0);
             if (child) {
               this._removeAnimatedChild(child);
             }
             break;
-          case SwfTag.CODE_PLACE_OBJECT:
-          case SwfTag.CODE_PLACE_OBJECT2:
-          case SwfTag.CODE_PLACE_OBJECT3:
+          case SwfTagCode.CODE_PLACE_OBJECT:
+          case SwfTagCode.CODE_PLACE_OBJECT2:
+          case SwfTagCode.CODE_PLACE_OBJECT3:
             var placeObjectTag = <Shumway.SWF.Parser.PlaceObjectTag>tag;
             var depth = placeObjectTag.depth;
             var child = this.getTimelineObjectAtDepth(depth);

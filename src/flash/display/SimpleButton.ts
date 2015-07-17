@@ -323,7 +323,7 @@ module Shumway.AVMX.AS.flash.display {
           }
         } else {
           placeObjectTag = {
-            code:Shumway.SWF.Parser.SwfTag.CODE_PLACE_OBJECT,
+            code: Shumway.SWF.Parser.SwfTagCode.CODE_PLACE_OBJECT,
             flags: Shumway.SWF.Parser.PlaceObjectFlags.Move,
             depth: 1
           };

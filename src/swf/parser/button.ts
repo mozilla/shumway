@@ -34,18 +34,18 @@ module Shumway.SWF.Parser {
       if (characterItem) {
         var cmd = {
           symbolId: characterItem.id,
-          code: SwfTag.CODE_PLACE_OBJECT,
+          code: SwfTagCode.CODE_PLACE_OBJECT,
           depth: character.depth,
           flags: character.matrix ? PlaceObjectFlags.HasMatrix : 0,
           matrix: character.matrix
         };
-        if (character.stateUp)
+        if (character.flags & ButtonCharacterFlags.StateUp)
           states.up.push(cmd);
-        if (character.stateOver)
+        if (character.flags & ButtonCharacterFlags.StateOver)
           states.over.push(cmd);
-        if (character.stateDown)
+        if (character.flags & ButtonCharacterFlags.StateDown)
           states.down.push(cmd);
-        if (character.stateHitTest)
+        if (character.flags & ButtonCharacterFlags.StateHitTest)
           states.hitTest.push(cmd);
       } else {
         release || Debug.warning('undefined character in button ' + tag.id);

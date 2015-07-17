@@ -213,7 +213,7 @@ module Shumway.SWF.Parser {
           }
         }
 
-        if ((record.flags & ShapeRecordFlags.IsStraight) &&
+        if (record.flags & ShapeRecordFlags.IsStraight &&
             (!isMorph || (morphRecord.flags & ShapeRecordFlags.IsStraight))) {
           x += record.deltaX | 0;
           y += record.deltaY | 0;
@@ -483,7 +483,7 @@ module Shumway.SWF.Parser {
     var shape = convertRecordsToShapeData(tag.records, fillPaths, linePaths,
                                           dependencies, tag.recordsMorph || null);
     return {
-      type: tag.isMorph ? 'morphshape' : 'shape',
+      type: tag.flags & ShapeFlags.IsMorph ? 'morphshape' : 'shape',
       id: tag.id,
       fillBounds: tag.fillBounds,
       lineBounds: tag.lineBounds,

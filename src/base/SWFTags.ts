@@ -15,7 +15,7 @@
  */
 
 module Shumway.SWF.Parser {
-  export enum SwfTag {
+  export enum SwfTagCode {
     CODE_END                               = 0,
     CODE_SHOW_FRAME                        = 1,
     CODE_DEFINE_SHAPE                      = 2,
@@ -184,7 +184,7 @@ module Shumway.SWF.Parser {
     ty: number;
   }
   
-  export interface Cxform {
+  export interface ColorTransform {
     redMultiplier: number;
     greenMultiplier: number;
     blueMultiplier: number;
@@ -195,25 +195,24 @@ module Shumway.SWF.Parser {
     alphaOffset: number;
   }
   
-  export interface Tag {
+  export interface SwfTag {
     code: number;
   }
 
-  export interface DefinitionTag extends Tag {
+  export interface DefinitionTag extends SwfTag {
     id: number;
   }
 
-  export interface DisplayListTag extends Tag {
+  export interface DisplayListTag extends SwfTag {
     depth: number;
   }
 
   export interface PlaceObjectTag extends DisplayListTag {
     actionBlocksPrecedence?: number;
     symbolId?: number;
-    depth: number;
     flags: number;
     matrix?: Matrix;
-    cxform?: Cxform;
+    cxform?: ColorTransform;
     className?: string;
     ratio?: number;
     name?: string;
@@ -223,7 +222,7 @@ module Shumway.SWF.Parser {
     bmpCache?: number;
     visibility?: boolean;
     backgroundColor?: number;
-    events?: Events[];
+    events?: ClipEvents[];
   }
   
   export enum PlaceObjectFlags {
@@ -267,7 +266,7 @@ module Shumway.SWF.Parser {
     Construct =       0x40000
   }
   
-  export interface Events {
+  export interface ClipEvents {
     flags: number;
     keyCode?: number;
     actionsBlock: Uint8Array;
@@ -306,7 +305,7 @@ module Shumway.SWF.Parser {
     matrix: number[];
     color: number;
     clamp: boolean;
-    preserverAlpha: boolean;
+    preserveAlpha: boolean;
   }
   
   export interface ColorMatrixFilter extends Filter {
@@ -314,8 +313,8 @@ module Shumway.SWF.Parser {
   }
   
   export interface RemoveObjectTag extends DisplayListTag {
-    symbolId?: number;
     depth: number;
+    symbolId?: number;
   }
 
   export interface ImageTag extends DefinitionTag {
@@ -335,16 +334,22 @@ module Shumway.SWF.Parser {
  
   export interface ButtonCharacter {
     flags: number;
-    stateHitTest: boolean;
-    stateDown: boolean;
-    stateOver: boolean;
-    stateUp: boolean;
     symbolId?: number;
     depth?: number;
     matrix?: Matrix;
-    cxform?: Cxform;
+    cxform?: ColorTransform;
     filters?: Filter[];
+    blendMode?: number;
     buttonActions?: ButtonCondAction[];
+  }
+  
+  export enum ButtonCharacterFlags {
+    StateUp       = 0x01,
+    StateOver     = 0x02,
+    StateDown     = 0x04,
+    StateHitTest  = 0x08,
+    HasFilterList = 0x10,
+    HasBlendMode  = 0x20
   }
   
   export interface ButtonCondAction {
@@ -387,9 +392,7 @@ module Shumway.SWF.Parser {
     HasLayout         = 0x80
   }
   
-  export interface Glyph {
-    records: ShapeRecord[];
-  }
+  export type Glyph = ShapeRecord[];
   
   export interface StaticTextTag extends DefinitionTag {
     bbox: Bbox;
@@ -429,7 +432,7 @@ module Shumway.SWF.Parser {
     soundData: Uint8Array;
   }
   
-  export interface StartSoundTag extends Tag {
+  export interface StartSoundTag extends SwfTag {
     soundId?: number;
     soundClassName?: string;
     soundInfo: SoundInfo;
@@ -522,12 +525,12 @@ module Shumway.SWF.Parser {
     adjustment: number;
   }
   
-  export interface ScalingGridTag extends Tag {
+  export interface ScalingGridTag extends SwfTag {
     symbolId: number;
     splitter: Bbox;
   }
   
-  export interface SceneTag extends Tag {
+  export interface SceneTag extends SwfTag {
     scenes: Scene[];
     labels: Label[];
   }
@@ -544,16 +547,21 @@ module Shumway.SWF.Parser {
   
   export interface ShapeTag extends DefinitionTag {
     lineBounds: Bbox;
-    isMorph: boolean;
     lineBoundsMorph?: Bbox;
-    canHaveStrokes: boolean;
     fillBounds?: Bbox;
     fillBoundsMorph?: Bbox;
-    flags?: number;
+    flags: number;
     fillStyles: FillStyle[];
     lineStyles: LineStyle[];
     records: ShapeRecord[];
     recordsMorph?: ShapeRecord[];
+  }
+  
+  export enum ShapeFlags {
+    UsesScalingStrokes    = 0x01,
+    UsesNonScalingStrokes = 0x02,
+    UsesFillWindingRule   = 0x04,
+    IsMorph               = 0x08
   }
   
   export interface FillStyle {
