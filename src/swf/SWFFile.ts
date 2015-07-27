@@ -23,7 +23,7 @@ module Shumway.SWF {
   import Inflate = ArrayUtilities.Inflate;
   import LzmaDecoder = ArrayUtilities.LzmaDecoder;
 
-  import SWFTag = Parser.SwfTag;
+  import SwfTagCode = Parser.SwfTagCode;
 
   import DefinitionTags = Parser.DefinitionTags;
   import ImageDefinitionTags = Parser.ImageDefinitionTags;
@@ -169,7 +169,7 @@ module Shumway.SWF {
         return null;
       }
       var symbol;
-      if (unparsed.tagCode === SWFTag.CODE_DEFINE_SPRITE) {
+      if (unparsed.tagCode === SwfTagCode.CODE_DEFINE_SPRITE) {
         // TODO: replace this whole silly `type` business with tagCode checking.
         symbol = this.parseSpriteTimeline(unparsed);
       } else {
@@ -181,14 +181,13 @@ module Shumway.SWF {
     }
 
     getParsedTag(unparsed: UnparsedTag): any {
-      SWF.enterTimeline('Parse tag ' + SWFTag[unparsed.tagCode]);
+      SWF.enterTimeline('Parse tag ' + SwfTagCode[unparsed.tagCode]);
       this._dataStream.align();
       this._dataStream.pos = unparsed.byteOffset;
-      var tag: any = {code: unparsed.tagCode};
       var handler = Parser.LowLevel.tagHandlers[unparsed.tagCode];
       release || Debug.assert(handler, 'handler shall exists here');
       var tagEnd = Math.min(unparsed.byteOffset + unparsed.byteLength, this._dataStream.end);
-      handler(this.data, this._dataStream, tag, this.swfVersion, unparsed.tagCode, tagEnd, this._jpegTables);
+      var tag = handler(this._dataStream, this.swfVersion, unparsed.tagCode, tagEnd, this._jpegTables);
       var finalPos = this._dataStream.pos;
       if (finalPos !== tagEnd) {
         this.emitTagSlopWarning(unparsed, tagEnd);
@@ -218,7 +217,7 @@ module Shumway.SWF {
                                  this.bytesTotal : this._uncompressedLength);
       this._dataStream = new Stream(this.data.buffer);
       this._dataStream.pos = 8;
-      this._dataView = <DataView><any>this._dataStream;
+      this._dataView = this._dataStream.view;
       if (isDeflateCompressed) {
         this.data.set(initialBytes.subarray(0, 8));
         this._uncompressedLoadedLength = 8;
@@ -252,7 +251,7 @@ module Shumway.SWF {
     }
 
     private parseHeaderContents() {
-      var obj = Parser.LowLevel.readHeader(this.data, this._dataStream);
+      var obj = Parser.LowLevel.parseHeader(this._dataStream);
       this.bounds = obj.bounds;
       this.frameRate = obj.frameRate;
       this.frameCount = obj.frameCount;
@@ -290,7 +289,7 @@ module Shumway.SWF {
         if (!this.parseNextTagHeader(tempTag)) {
           break;
         }
-        if (tempTag.tagCode === SWFTag.CODE_END) {
+        if (tempTag.tagCode === SwfTagCode.CODE_END) {
           if (rootTimelineMode) {
             this._endTagEncountered = true;
           }
@@ -340,11 +339,11 @@ module Shumway.SWF {
       var tagCode = tag.tagCode;
       var tagLength = tag.byteLength;
       if (!release && traceLevel.value > 1) {
-        console.info("Scanning tag " + SWFTag[tagCode] + " (start: " + byteOffset +
+        console.info("Scanning tag " + SwfTagCode[tagCode] + " (start: " + byteOffset +
                      ", end: " + (byteOffset + tagLength) + ")");
       }
 
-      if (tagCode === SWFTag.CODE_DEFINE_SPRITE) {
+      if (tagCode === SwfTagCode.CODE_DEFINE_SPRITE) {
         // According to Chapter 13 of the SWF format spec, no nested definition tags are
         // allowed within DefineSprite. However, they're added to the symbol dictionary
         // anyway, and some tools produce them. Notably swfmill.
@@ -380,7 +379,7 @@ module Shumway.SWF {
       }
 
       if (!rootTimelineMode &&
-          !(tagCode === SWFTag.CODE_SYMBOL_CLASS || tagCode === SWFTag.CODE_EXPORT_ASSETS)) {
+          !(tagCode === SwfTagCode.CODE_SYMBOL_CLASS || tagCode === SwfTagCode.CODE_EXPORT_ASSETS)) {
         this.jumpToNextTag(tagLength);
         return;
       }
@@ -391,16 +390,16 @@ module Shumway.SWF {
       }
 
       switch (tagCode) {
-        case SWFTag.CODE_FILE_ATTRIBUTES:
+        case SwfTagCode.CODE_FILE_ATTRIBUTES:
           this.setFileAttributes(tagLength);
           break;
-        case SWFTag.CODE_DEFINE_SCENE_AND_FRAME_LABEL_DATA:
+        case SwfTagCode.CODE_DEFINE_SCENE_AND_FRAME_LABEL_DATA:
           this.setSceneAndFrameLabelData(tagLength);
           break;
-        case SWFTag.CODE_SET_BACKGROUND_COLOR:
-          this.backgroundColor = Parser.LowLevel.rgb(this.data, this._dataStream);
+        case SwfTagCode.CODE_SET_BACKGROUND_COLOR:
+          this.backgroundColor = Parser.LowLevel.parseRgb(this._dataStream);
           break;
-        case SWFTag.CODE_JPEG_TABLES:
+        case SwfTagCode.CODE_JPEG_TABLES:
           // Only use the first JpegTables tag, ignore any following.
           // TODO test it, swfdec is using the last one
           if (!this._jpegTables) {
@@ -410,14 +409,14 @@ module Shumway.SWF {
           }
           this.jumpToNextTag(tagLength);
           break;
-        case SWFTag.CODE_DO_ABC:
-        case SWFTag.CODE_DO_ABC_DEFINE:
+        case SwfTagCode.CODE_DO_ABC:
+        case SwfTagCode.CODE_DO_ABC_DEFINE:
           if (!this.useAVM1) {
             var tagEnd = byteOffset + tagLength;
             var abcBlock = new ABCBlock();
-            if (tagCode === SWFTag.CODE_DO_ABC) {
-              abcBlock.flags = Parser.readUi32(this.data, stream);
-              abcBlock.name = Parser.readString(this.data, stream, -1);
+            if (tagCode === SwfTagCode.CODE_DO_ABC) {
+              abcBlock.flags = stream.readUi32();
+              abcBlock.name = stream.readString(-1);
             }
             else {
               abcBlock.flags = 0;
@@ -430,13 +429,13 @@ module Shumway.SWF {
             this.jumpToNextTag(tagLength);
           }
           break;
-        case SWFTag.CODE_SYMBOL_CLASS:
+        case SwfTagCode.CODE_SYMBOL_CLASS:
           var tagEnd = byteOffset + tagLength;
-          var symbolCount = Parser.readUi16(this.data, stream);
+          var symbolCount = stream.readUi16();
           // TODO: check if symbols can be reassociated after instances have been created.
           while (symbolCount--) {
-            var symbolId = Parser.readUi16(this.data, stream);
-            var symbolClassName = Parser.readString(this.data, stream, -1);
+            var symbolId = stream.readUi16();
+            var symbolClassName = stream.readString(-1);
             if (!release && traceLevel.value > 0) {
               console.log('Registering symbol class ' + symbolClassName + ' to symbol ' + symbolId);
             }
@@ -446,7 +445,7 @@ module Shumway.SWF {
           // Make sure we move to end of tag even if the content is invalid.
           stream.pos = tagEnd;
           break;
-        case SWFTag.CODE_DO_INIT_ACTION:
+        case SwfTagCode.CODE_DO_INIT_ACTION:
           if (this.useAVM1) {
             var initActionBlocks = this._currentInitActionBlocks ||
                                    (this._currentInitActionBlocks = []);
@@ -456,7 +455,7 @@ module Shumway.SWF {
           }
           this.jumpToNextTag(tagLength);
           break;
-        case SWFTag.CODE_DO_ACTION:
+        case SwfTagCode.CODE_DO_ACTION:
           if (this.useAVM1) {
             var actionBlocks = this._currentActionBlocks || (this._currentActionBlocks = []);
             var actionsData = this.data.subarray(stream.pos, stream.pos + tagLength);
@@ -464,32 +463,32 @@ module Shumway.SWF {
           }
           this.jumpToNextTag(tagLength);
           break;
-        case SWFTag.CODE_SOUND_STREAM_HEAD:
-        case SWFTag.CODE_SOUND_STREAM_HEAD2:
-          var soundStreamTag = Parser.LowLevel.soundStreamHead(this.data, this._dataStream, byteOffset + tagLength);
+        case SwfTagCode.CODE_SOUND_STREAM_HEAD:
+        case SwfTagCode.CODE_SOUND_STREAM_HEAD2:
+          var soundStreamTag = Parser.LowLevel.parseSoundStreamHeadTag(this._dataStream, byteOffset + tagLength);
           this._currentSoundStreamHead = Parser.SoundStream.FromTag(soundStreamTag);
           break;
-        case SWFTag.CODE_SOUND_STREAM_BLOCK:
+        case SwfTagCode.CODE_SOUND_STREAM_BLOCK:
           this._currentSoundStreamBlock = this.data.subarray(stream.pos, stream.pos += tagLength);
           break;
-        case SWFTag.CODE_FRAME_LABEL:
+        case SwfTagCode.CODE_FRAME_LABEL:
           var tagEnd = stream.pos + tagLength;
-          this._currentFrameLabel = Parser.readString(this.data, stream, -1);
+          this._currentFrameLabel = stream.readString(-1);
           // TODO: support SWF6+ anchors.
           stream.pos = tagEnd;
           break;
-        case SWFTag.CODE_SHOW_FRAME:
+        case SwfTagCode.CODE_SHOW_FRAME:
           this.finishFrame();
           break;
-        case SWFTag.CODE_END:
+        case SwfTagCode.CODE_END:
           return;
-        case SWFTag.CODE_EXPORT_ASSETS:
+        case SwfTagCode.CODE_EXPORT_ASSETS:
           var tagEnd = stream.pos + tagLength;
-          var exportsCount = Parser.readUi16(this.data, stream);
+          var exportsCount = stream.readUi16();
           var exports = this._currentExports || (this._currentExports = []);
           while (exportsCount--) {
-            var symbolId = Parser.readUi16(this.data, stream);
-            var className = Parser.readString(this.data, stream, -1);
+            var symbolId = stream.readUi16();
+            var className = stream.readString(-1);
             if (stream.pos > tagEnd) {
               stream.pos = tagEnd;
               break;
@@ -498,51 +497,51 @@ module Shumway.SWF {
           }
           stream.pos = tagEnd;
           break;
-        case SWFTag.CODE_DEFINE_BUTTON_CXFORM:
-        case SWFTag.CODE_DEFINE_BUTTON_SOUND:
-        case SWFTag.CODE_DEFINE_FONT_INFO:
-        case SWFTag.CODE_DEFINE_FONT_INFO2:
-        case SWFTag.CODE_DEFINE_SCALING_GRID:
-        case SWFTag.CODE_IMPORT_ASSETS:
-        case SWFTag.CODE_IMPORT_ASSETS2:
-          Debug.warning('Unsupported tag encountered ' + tagCode + ': ' + SWFTag[tagCode]);
+        case SwfTagCode.CODE_DEFINE_BUTTON_CXFORM:
+        case SwfTagCode.CODE_DEFINE_BUTTON_SOUND:
+        case SwfTagCode.CODE_DEFINE_FONT_INFO:
+        case SwfTagCode.CODE_DEFINE_FONT_INFO2:
+        case SwfTagCode.CODE_DEFINE_SCALING_GRID:
+        case SwfTagCode.CODE_IMPORT_ASSETS:
+        case SwfTagCode.CODE_IMPORT_ASSETS2:
+          Debug.warning('Unsupported tag encountered ' + tagCode + ': ' + SwfTagCode[tagCode]);
           this.jumpToNextTag(tagLength);
           break;
         // These tags should be supported at some point, but for now, we ignore them.
-        case SWFTag.CODE_CSM_TEXT_SETTINGS:
-        case SWFTag.CODE_DEFINE_FONT_ALIGN_ZONES:
-        case SWFTag.CODE_SCRIPT_LIMITS:
-        case SWFTag.CODE_SET_TAB_INDEX:
+        case SwfTagCode.CODE_CSM_TEXT_SETTINGS:
+        case SwfTagCode.CODE_DEFINE_FONT_ALIGN_ZONES:
+        case SwfTagCode.CODE_SCRIPT_LIMITS:
+        case SwfTagCode.CODE_SET_TAB_INDEX:
         // These tags are used by the player, but not relevant to us.
-        case SWFTag.CODE_ENABLE_DEBUGGER:
-        case SWFTag.CODE_ENABLE_DEBUGGER2:
-        case SWFTag.CODE_DEBUG_ID:
-        case SWFTag.CODE_DEFINE_FONT_NAME:
-        case SWFTag.CODE_NAME_CHARACTER:
-        case SWFTag.CODE_PRODUCT_INFO:
-        case SWFTag.CODE_METADATA:
-        case SWFTag.CODE_PROTECT:
-        case SWFTag.CODE_PATHS_ARE_POSTSCRIPT:
-        case SWFTag.CODE_TELEMETRY:
+        case SwfTagCode.CODE_ENABLE_DEBUGGER:
+        case SwfTagCode.CODE_ENABLE_DEBUGGER2:
+        case SwfTagCode.CODE_DEBUG_ID:
+        case SwfTagCode.CODE_DEFINE_FONT_NAME:
+        case SwfTagCode.CODE_NAME_CHARACTER:
+        case SwfTagCode.CODE_PRODUCT_INFO:
+        case SwfTagCode.CODE_METADATA:
+        case SwfTagCode.CODE_PROTECT:
+        case SwfTagCode.CODE_PATHS_ARE_POSTSCRIPT:
+        case SwfTagCode.CODE_TELEMETRY:
         // These are obsolete Generator-related tags.
-        case SWFTag.CODE_GEN_TAG_OBJECTS:
-        case SWFTag.CODE_GEN_COMMAND:
+        case SwfTagCode.CODE_GEN_TAG_OBJECTS:
+        case SwfTagCode.CODE_GEN_COMMAND:
           this.jumpToNextTag(tagLength);
           break;
         // These tags aren't used in the player.
-        case SWFTag.CODE_CHARACTER_SET:
-        case SWFTag.CODE_DEFINE_BEHAVIOUR:
-        case SWFTag.CODE_DEFINE_COMMAND_OBJECT:
-        case SWFTag.CODE_DEFINE_FUNCTION:
-        case SWFTag.CODE_DEFINE_TEXT_FORMAT:
-        case SWFTag.CODE_DEFINE_VIDEO:
-        case SWFTag.CODE_EXTERNAL_FONT:
-        case SWFTag.CODE_FREE_CHARACTER:
-        case SWFTag.CODE_FREE_ALL:
-        case SWFTag.CODE_GENERATE_FRAME:
-        case SWFTag.CODE_STOP_SOUND:
-        case SWFTag.CODE_SYNC_FRAME:
-          console.info("Ignored tag (these shouldn't occur) " + tagCode + ': ' + SWFTag[tagCode]);
+        case SwfTagCode.CODE_CHARACTER_SET:
+        case SwfTagCode.CODE_DEFINE_BEHAVIOUR:
+        case SwfTagCode.CODE_DEFINE_COMMAND_OBJECT:
+        case SwfTagCode.CODE_DEFINE_FUNCTION:
+        case SwfTagCode.CODE_DEFINE_TEXT_FORMAT:
+        case SwfTagCode.CODE_DEFINE_VIDEO:
+        case SwfTagCode.CODE_EXTERNAL_FONT:
+        case SwfTagCode.CODE_FREE_CHARACTER:
+        case SwfTagCode.CODE_FREE_ALL:
+        case SwfTagCode.CODE_GENERATE_FRAME:
+        case SwfTagCode.CODE_STOP_SOUND:
+        case SwfTagCode.CODE_SYNC_FRAME:
+          console.info("Ignored tag (these shouldn't occur) " + tagCode + ': ' + SwfTagCode[tagCode]);
           this.jumpToNextTag(tagLength);
           break;
         default:
@@ -550,7 +549,7 @@ module Shumway.SWF {
             Debug.warning("Encountered undefined tag " + tagCode + ", probably used for AVM1 " +
                           "obfuscation. See http://ijs.mtasa.com/files/swfdecrypt.cpp.");
           } else {
-            Debug.warning('Tag not handled by the parser: ' + tagCode + ': ' + SWFTag[tagCode]);
+            Debug.warning('Tag not handled by the parser: ' + tagCode + ': ' + SwfTagCode[tagCode]);
           }
           this.jumpToNextTag(tagLength);
       }
@@ -596,7 +595,7 @@ module Shumway.SWF {
         }
 
         switch (tagCode) {
-          case SWFTag.CODE_DO_ACTION:
+          case SwfTagCode.CODE_DO_ACTION:
             if (this.useAVM1) {
               if (!actionBlocks) {
                 actionBlocks = [];
@@ -605,7 +604,7 @@ module Shumway.SWF {
               actionBlocks.push({actionsData: actionsData, precedence: stream.pos});
             }
             break;
-          case SWFTag.CODE_DO_INIT_ACTION:
+          case SwfTagCode.CODE_DO_INIT_ACTION:
             if (this.useAVM1) {
               if (!initActionBlocks) {
                 initActionBlocks = [];
@@ -616,14 +615,14 @@ module Shumway.SWF {
               initActionBlocks.push({spriteId: spriteId, actionsData: actionsData});
             }
             break;
-          case SWFTag.CODE_FRAME_LABEL:
+          case SwfTagCode.CODE_FRAME_LABEL:
             var tagEnd = stream.pos + tagLength;
-            label = Parser.readString(data, stream, -1);
+            label = stream.readString(-1);
             // TODO: support SWF6+ anchors.
             stream.pos = tagEnd;
             tagLength = 0;
             break;
-          case SWFTag.CODE_SHOW_FRAME:
+          case SwfTagCode.CODE_SHOW_FRAME:
             frames.push(new SWFFrame(controlTags, label, soundStreamHead, soundStreamBlock,
                                      actionBlocks, initActionBlocks, null));
             label = null;
@@ -633,7 +632,7 @@ module Shumway.SWF {
             actionBlocks = null;
             initActionBlocks = null;
             break;
-          case SWFTag.CODE_END:
+          case SwfTagCode.CODE_END:
             stream.pos = spriteTagEnd;
             tagLength = 0;
             break;
@@ -653,7 +652,7 @@ module Shumway.SWF {
 
     private emitTagSlopWarning(tag: UnparsedTag, tagEnd: number) {
       var consumedBytes = this._dataStream.pos - tag.byteOffset;
-      Debug.warning('Scanning ' + SWFTag[tag.tagCode] + ' at offset ' + tag.byteOffset +
+      Debug.warning('Scanning ' + SwfTagCode[tag.tagCode] + ' at offset ' + tag.byteOffset +
                     ' consumed ' + consumedBytes + ' of ' + tag.byteLength + ' bytes. (' +
                     (tag.byteLength - consumedBytes) + ' left)');
       this._dataStream.pos = tagEnd;
@@ -703,7 +702,8 @@ module Shumway.SWF {
         this.jumpToNextTag(tagLength);
         return;
       }
-      this.sceneAndFrameLabelData = Parser.LowLevel.defineScene(this.data, this._dataStream, null);
+      this.sceneAndFrameLabelData = Parser.LowLevel.parseDefineSceneTag(
+        this._dataStream, SwfTagCode.CODE_DEFINE_SCENE_AND_FRAME_LABEL_DATA);
     }
 
     private addControlTag(tagCode: number, byteOffset: number, tagLength: number) {
@@ -713,11 +713,11 @@ module Shumway.SWF {
 
     }
     private addLazySymbol(tagCode: number, byteOffset: number, tagLength: number) {
-      var id = this._dataStream.getUint16(this._dataStream.pos, true);
+      var id = this._dataView.getUint16(this._dataStream.pos, true);
       var symbol = new DictionaryEntry(id, tagCode, byteOffset, tagLength);
       this.dictionary[id] = symbol;
       if (!release && traceLevel.value > 0) {
-        console.info("Registering symbol " + id + " of type " + SWFTag[tagCode]);
+        console.info("Registering symbol " + id + " of type " + SwfTagCode[tagCode]);
       }
       return symbol;
     }
@@ -744,11 +744,11 @@ module Shumway.SWF {
         return;
       }
       var stream = this._dataStream;
-      var id = stream.getUint16(stream.pos, true);
+      var id = this._dataView.getUint16(stream.pos, true);
       var style: string;
       var name: string;
       // DefineFont only specifies a symbol ID, no font name or style.
-      if (unparsed.tagCode === SWFTag.CODE_DEFINE_FONT) {
+      if (unparsed.tagCode === SwfTagCode.CODE_DEFINE_FONT) {
         // Assigning some unique name to simplify font registration and look ups.
         name = '__autofont__' + unparsed.byteOffset;
         style = 'regular';
@@ -758,7 +758,7 @@ module Shumway.SWF {
         var nameLength = this.data[stream.pos + 4];
         // Skip language code.
         stream.pos += 5;
-        name = Parser.readString(this.data, stream, nameLength);
+        name = stream.readString(nameLength);
       }
       this.fonts.push({name: name, id: id, style: style});
       if (!release && traceLevel.value > 0) {
@@ -774,7 +774,7 @@ module Shumway.SWF {
                                                     this.env);
       if (!release && traceLevel.value > 0) {
         console.info("Decoding embedded image " + definition.id + " of type " +
-                     SWFTag[unparsed.tagCode] + " (start: " + unparsed.byteOffset +
+                     SwfTagCode[unparsed.tagCode] + " (start: " + unparsed.byteOffset +
                      ", end: " + (unparsed.byteOffset + unparsed.byteLength) + ")");
       }
       this.eagerlyParsedSymbolsMap[symbol.id] = symbol;
@@ -876,66 +876,47 @@ module Shumway.SWF {
 
   function defineSymbol(swfTag, symbols) {
     switch (swfTag.code) {
-      case SWFTag.CODE_DEFINE_BITS:
-      case SWFTag.CODE_DEFINE_BITS_JPEG2:
-      case SWFTag.CODE_DEFINE_BITS_JPEG3:
-      case SWFTag.CODE_DEFINE_BITS_JPEG4:
+      case SwfTagCode.CODE_DEFINE_BITS:
+      case SwfTagCode.CODE_DEFINE_BITS_JPEG2:
+      case SwfTagCode.CODE_DEFINE_BITS_JPEG3:
+      case SwfTagCode.CODE_DEFINE_BITS_JPEG4:
         return Shumway.SWF.Parser.defineImage(swfTag);
-      case SWFTag.CODE_DEFINE_BITS_LOSSLESS:
-      case SWFTag.CODE_DEFINE_BITS_LOSSLESS2:
+      case SwfTagCode.CODE_DEFINE_BITS_LOSSLESS:
+      case SwfTagCode.CODE_DEFINE_BITS_LOSSLESS2:
         return Shumway.SWF.Parser.defineBitmap(swfTag);
-      case SWFTag.CODE_DEFINE_BUTTON:
-      case SWFTag.CODE_DEFINE_BUTTON2:
+      case SwfTagCode.CODE_DEFINE_BUTTON:
+      case SwfTagCode.CODE_DEFINE_BUTTON2:
         return Shumway.SWF.Parser.defineButton(swfTag, symbols);
-      case SWFTag.CODE_DEFINE_EDIT_TEXT:
+      case SwfTagCode.CODE_DEFINE_EDIT_TEXT:
         return Shumway.SWF.Parser.defineText(swfTag);
-      case SWFTag.CODE_DEFINE_FONT:
-      case SWFTag.CODE_DEFINE_FONT2:
-      case SWFTag.CODE_DEFINE_FONT3:
-      case SWFTag.CODE_DEFINE_FONT4:
+      case SwfTagCode.CODE_DEFINE_FONT:
+      case SwfTagCode.CODE_DEFINE_FONT2:
+      case SwfTagCode.CODE_DEFINE_FONT3:
+      case SwfTagCode.CODE_DEFINE_FONT4:
         return Shumway.SWF.Parser.defineFont(swfTag);
-      case SWFTag.CODE_DEFINE_MORPH_SHAPE:
-      case SWFTag.CODE_DEFINE_MORPH_SHAPE2:
-      case SWFTag.CODE_DEFINE_SHAPE:
-      case SWFTag.CODE_DEFINE_SHAPE2:
-      case SWFTag.CODE_DEFINE_SHAPE3:
-      case SWFTag.CODE_DEFINE_SHAPE4:
+      case SwfTagCode.CODE_DEFINE_MORPH_SHAPE:
+      case SwfTagCode.CODE_DEFINE_MORPH_SHAPE2:
+      case SwfTagCode.CODE_DEFINE_SHAPE:
+      case SwfTagCode.CODE_DEFINE_SHAPE2:
+      case SwfTagCode.CODE_DEFINE_SHAPE3:
+      case SwfTagCode.CODE_DEFINE_SHAPE4:
         return Shumway.SWF.Parser.defineShape(swfTag);
-      case SWFTag.CODE_DEFINE_SOUND:
+      case SwfTagCode.CODE_DEFINE_SOUND:
         return Shumway.SWF.Parser.defineSound(swfTag);
-      case SWFTag.CODE_DEFINE_SPRITE:
+      case SwfTagCode.CODE_DEFINE_SPRITE:
         // Sprites are fully defined at this point.
         return swfTag;
-      case SWFTag.CODE_DEFINE_BINARY_DATA:
+      case SwfTagCode.CODE_DEFINE_BINARY_DATA:
         return {
           type: 'binary',
           id: swfTag.id,
           data: swfTag.data
         };
-      case SWFTag.CODE_DEFINE_TEXT:
-      case SWFTag.CODE_DEFINE_TEXT2:
+      case SwfTagCode.CODE_DEFINE_TEXT:
+      case SwfTagCode.CODE_DEFINE_TEXT2:
         return Shumway.SWF.Parser.defineLabel(swfTag);
       default:
         return swfTag;
     }
-  }
-
-  export interface DisplayListTag {
-    depth: number;
-  }
-
-  export interface PlaceObjectTag extends DisplayListTag {
-    flags: number;
-    symbolId?: number;
-    matrix?: any; // TODO: type strongly
-    cxform?: any; // TODO: type strongly
-    ratio?: number;
-    name?: string;
-    clipDepth?: number;
-    filters?: any[]; // TODO: type strongly
-    blendMode?: number;
-    bmpCache?: number;
-    visibility?: number;
-    actionBlocksPrecedence?: number;
   }
 }

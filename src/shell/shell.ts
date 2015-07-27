@@ -122,7 +122,7 @@ module Shumway.Shell {
   import OptionSet = Shumway.Options.OptionSet;
   import ArgumentParser = Shumway.Options.ArgumentParser;
 
-  import SwfTag = Shumway.SWF.Parser.SwfTag;
+  import SwfTagCode = Shumway.SWF.Parser.SwfTagCode;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
   import Compiler = Shumway.AVM2.Compiler;
@@ -617,7 +617,7 @@ module Shumway.Shell {
       return false;
     }
     for (var i = 0; i < symbolFilters.length; i++) {
-      var filterCode = SwfTag[symbolFilters[i]];
+      var filterCode = SwfTagCode[symbolFilters[i]];
       if (filterCode !== undefined && filterCode === code) {
         return false;
       }
@@ -670,8 +670,8 @@ module Shumway.Shell {
     var buffers = [];
     if (file.endsWith(".swf")) {
       var fileNameWithoutExtension = fileName.substr(0, fileName.length - 4);
-      var SWF_TAG_CODE_DO_ABC = SwfTag.CODE_DO_ABC;
-      var SWF_TAG_CODE_DO_ABC_ = SwfTag.CODE_DO_ABC_DEFINE;
+      var SWF_TAG_CODE_DO_ABC = SwfTagCode.CODE_DO_ABC;
+      var SWF_TAG_CODE_DO_ABC_ = SwfTagCode.CODE_DO_ABC_DEFINE;
       try {
         var buffer = read(file, "binary");
         if (!((buffer[0] === 'Z'.charCodeAt(0) ||

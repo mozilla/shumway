@@ -15,7 +15,7 @@
  */
 
 module Shumway.SWF.Parser {
-  export enum SwfTag {
+  export enum SwfTagCode {
     CODE_END                               = 0,
     CODE_SHOW_FRAME                        = 1,
     CODE_DEFINE_SHAPE                      = 2,
@@ -167,7 +167,64 @@ module Shumway.SWF.Parser {
     // parser log a message if such a tag is encountered.
     // CODE_VIDEO_FRAME                       = 61,
   }
+  
+  export interface Bbox {
+    xMin: number;
+    xMax: number;
+    yMin: number;
+    yMax: number;
+  }
+  
+  export interface Matrix {
+    a: number;
+    b: number;
+    c: number;
+    d: number;
+    tx: number;
+    ty: number;
+  }
+  
+  export interface ColorTransform {
+    redMultiplier: number;
+    greenMultiplier: number;
+    blueMultiplier: number;
+    alphaMultiplier: number;
+    redOffset: number;
+    greenOffset: number;
+    blueOffset: number;
+    alphaOffset: number;
+  }
+  
+  export interface SwfTag {
+    code: number;
+  }
 
+  export interface DefinitionTag extends SwfTag {
+    id: number;
+  }
+
+  export interface DisplayListTag extends SwfTag {
+    depth: number;
+  }
+
+  export interface PlaceObjectTag extends DisplayListTag {
+    actionBlocksPrecedence?: number;
+    symbolId?: number;
+    flags: number;
+    matrix?: Matrix;
+    cxform?: ColorTransform;
+    className?: string;
+    ratio?: number;
+    name?: string;
+    clipDepth?: number;
+    filters?: any[];
+    blendMode?: number;
+    bmpCache?: number;
+    visibility?: boolean;
+    backgroundColor?: number;
+    events?: ClipEvents[];
+  }
+  
   export enum PlaceObjectFlags {
     Move              = 0x0001,
     HasCharacter      = 0x0002,
@@ -207,5 +264,384 @@ module Shumway.SWF.Parser {
     DragOut =         0x10000,
     KeyPress =        0x20000,
     Construct =       0x40000
+  }
+  
+  export interface ClipEvents {
+    flags: number;
+    keyCode?: number;
+    actionsBlock: Uint8Array;
+  }
+  
+  export interface Filter {
+    type: number;
+  }
+  
+  export interface GlowFilter extends Filter {
+    colors: number[];
+    ratios?: number[];
+    blurX: number;
+    blurY: number;
+    angle?: number;
+    distance?: number;
+    strength: number;
+    inner: boolean;
+    knockout: boolean;
+    compositeSource: boolean;
+    onTop?: boolean;
+    quality: number;
+  }
+  
+  export interface BlurFilter extends Filter {
+    blurX: number;
+    blurY: number;
+    quality: number;
+  }
+  
+  export interface ConvolutionFilter extends Filter {
+    matrixX: number;
+    matrixY: number;
+    divisor: number;
+    bias: number;
+    matrix: number[];
+    color: number;
+    clamp: boolean;
+    preserveAlpha: boolean;
+  }
+  
+  export interface ColorMatrixFilter extends Filter {
+     matrix: number[];
+  }
+  
+  export interface RemoveObjectTag extends DisplayListTag {
+    depth: number;
+    symbolId?: number;
+  }
+
+  export interface ImageTag extends DefinitionTag {
+    deblock?: number;
+    imgData: Uint8Array;
+    alphaData?: Uint8Array;
+    mimeType: string;
+    jpegTables?: { data: Uint8Array };
+  }
+  
+  export interface ButtonTag extends DefinitionTag {
+    characters?: ButtonCharacter[];
+    actionsData?: Uint8Array;
+    trackAsMenu?: boolean;
+    buttonActions?: ButtonCondAction[];
+  }
+ 
+  export interface ButtonCharacter {
+    flags: number;
+    symbolId?: number;
+    depth?: number;
+    matrix?: Matrix;
+    cxform?: ColorTransform;
+    filters?: Filter[];
+    blendMode?: number;
+    buttonActions?: ButtonCondAction[];
+  }
+  
+  export enum ButtonCharacterFlags {
+    StateUp       = 0x01,
+    StateOver     = 0x02,
+    StateDown     = 0x04,
+    StateHitTest  = 0x08,
+    HasFilterList = 0x10,
+    HasBlendMode  = 0x20
+  }
+  
+  export interface ButtonCondAction {
+    keyCode: number;
+    stateTransitionFlags: number;
+    actionsData: Uint8Array;
+  }
+  
+  export interface BinaryDataTag extends DefinitionTag {
+    data: Uint8Array;
+  }
+
+  export interface FontTag extends DefinitionTag {
+    flags: number;
+    language?: number;
+    name?: string;
+    copyright?: string;
+    resolution?: number;
+    offsets?: number[];
+    mapOffset?: number;
+    glyphs?: Glyph[];
+    codes?: number[];
+    ascent?: number;
+    descent?: number;
+    leading?: number;
+    advance?: number[];
+    bbox?: Bbox[];
+    kerning?: Kerning[];
+    data?: Uint8Array;
+  }
+  
+  export enum FontFlags {
+    Bold              = 0x01,
+    Italic            = 0x02,
+    WideOrHasFontData = 0x04,
+    WideOffset        = 0x08,
+    Ansi              = 0x10,
+    SmallText         = 0x20,
+    ShiftJis          = 0x40,
+    HasLayout         = 0x80
+  }
+  
+  export type Glyph = ShapeRecord[];
+  
+  export interface StaticTextTag extends DefinitionTag {
+    bbox: Bbox;
+    matrix: Matrix;
+    records: TextRecord[];
+  }
+  
+  export interface TextRecord {
+    flags: number;
+    fontId?: number;
+    color?: number;
+    moveX?: number;
+    moveY?: number;
+    fontHeight?: number;
+    glyphCount?: number;
+    entries?: TextEntry[];
+  }
+  
+  export enum TextRecordFlags {
+    HasMoveX = 0x01,
+    HasMoveY = 0x02,
+    HasColor = 0x04,
+    HasFont =  0x08
+  }
+  
+  export interface TextEntry {
+    glyphIndex: number;
+    advance: number;
+  }
+  
+  export interface SoundTag extends DefinitionTag {
+    soundFormat: number;
+    soundRate: number;
+    soundSize: number;
+    soundType: number;
+    samplesCount: number;
+    soundData: Uint8Array;
+  }
+  
+  export interface StartSoundTag extends SwfTag {
+    soundId?: number;
+    soundClassName?: string;
+    soundInfo: SoundInfo;
+  }
+  
+  export interface SoundInfo {
+    flags: number;
+    inPoint?: number;
+    outPoint?: number;
+    loopCount?: number;
+    envelopes?: SoundEnvelope[];
+  }
+  
+  export enum SoundInfoFlags {
+    HasInPoint  = 0x01,
+    HasOutPoint = 0x02,
+    HasLoops    = 0x04,
+    HasEnvelope = 0x08,
+    NoMultiple  = 0x10,
+    Stop        = 0x20
+  }
+  
+  export interface SoundEnvelope {
+    pos44: number;
+    volumeLeft: number;
+    volumeRight: number;
+  }
+  
+  export interface SoundStreamHeadTag {
+    playbackRate: number;
+    playbackSize: number;
+    playbackType: number;
+    streamCompression: number;
+    streamRate: number;
+    streamSize: number;
+    streamType: number;
+    samplesCount: number;
+    latencySeek?: number;
+  }
+
+  export interface BitmapTag extends DefinitionTag {
+    format: number;
+    width: number;
+    height: number;
+    hasAlpha: boolean;
+    // Number of color table entries - 1, not size in bytes.
+    colorTableSize?: number;
+    bmpData: Uint8Array;
+  }
+  
+  export interface TextTag extends DefinitionTag {
+    bbox: Bbox;
+    flags: number;
+    fontId?: number;
+    fontClass?: string;
+    fontHeight?: number;
+    color?: number;
+    maxLength?: number;
+    align?: number;
+    leftMargin?: number;
+    rightMargin?: number;
+    indent?: number;
+    leading?: number;
+    variableName: string;
+    initialText?: string;
+  }
+  
+  export enum TextFlags {
+    HasFont      = 0x0001,
+    HasMaxLength = 0x0002,
+    HasColor     = 0x0004,
+    ReadOnly     = 0x0008,
+    Password     = 0x0010,
+    Multiline    = 0x0020,
+    WordWrap     = 0x0040,
+    HasText      = 0x0080,
+    UseOutlines  = 0x0100,
+    Html         = 0x0200,
+    WasStatic    = 0x0400,
+    Border       = 0x0800,
+    NoSelect     = 0x1000,
+    HasLayout    = 0x2000,
+    AutoSize     = 0x4000,
+    HasFontClass = 0x8000
+  }
+  
+  export interface Kerning {
+    code1: number;
+    code2: number;
+    adjustment: number;
+  }
+  
+  export interface ScalingGridTag extends SwfTag {
+    symbolId: number;
+    splitter: Bbox;
+  }
+  
+  export interface SceneTag extends SwfTag {
+    scenes: Scene[];
+    labels: Label[];
+  }
+  
+  export interface Scene {
+    offset: number;
+    name: string;
+  }
+  
+  export interface Label {
+    frame: number;
+    name: string;
+  }
+  
+  export interface ShapeTag extends DefinitionTag {
+    lineBounds: Bbox;
+    lineBoundsMorph?: Bbox;
+    fillBounds?: Bbox;
+    fillBoundsMorph?: Bbox;
+    flags: number;
+    fillStyles: FillStyle[];
+    lineStyles: LineStyle[];
+    records: ShapeRecord[];
+    recordsMorph?: ShapeRecord[];
+  }
+  
+  export enum ShapeFlags {
+    UsesScalingStrokes    = 0x01,
+    UsesNonScalingStrokes = 0x02,
+    UsesFillWindingRule   = 0x04,
+    IsMorph               = 0x08
+  }
+  
+  export interface FillStyle {
+    type: number;
+  }
+  
+  export interface SolidFill extends FillStyle {
+    color: number;
+    colorMorph?: number;
+  }
+  
+  export interface GradientFill extends FillStyle {
+    matrix: Matrix;
+    matrixMorph?: Matrix;
+    spreadMode?: number;
+    interpolationMode?: number;
+    records: GradientRecord[];
+    focalPoint?: number;
+    focalPointMorph?: number;
+  }
+  
+  export interface GradientRecord {
+    ratio: number;
+    color: number;
+    ratioMorph?: number;
+    colorMorph?: number;
+  }
+
+  export interface BitmapFill extends FillStyle {
+    bitmapId: number;
+    condition: boolean;
+    matrix: Matrix;
+    matrixMorph?: Matrix;
+  }
+  
+  export interface LineStyle {
+    width: number;
+    widthMorph?: number;
+    startCapsStyle?: number;
+    jointStyle?: number;
+    hasFill?: number;
+    noHscale?: boolean;
+    noVscale?: boolean;
+    pixelHinting?: boolean;
+    noClose?: boolean;
+    endCapsStyle?: number;
+    miterLimitFactor?: number;
+    fillStyle?: FillStyle;
+    color?: number;
+    colorMorph?: number;
+  }
+  
+  export interface ShapeRecord {
+    type: number;
+    flags: number;
+    deltaX?: number;
+    deltaY?: number;
+    controlDeltaX?: number;
+    controlDeltaY?: number;
+    anchorDeltaX?: number;
+    anchorDeltaY?: number;
+    moveX?: number;
+    moveY?: number;
+    fillStyle0?: number;
+    fillStyle1?: number;
+    lineStyle?: number;
+    fillStyles?: FillStyle[];
+    lineStyles?: LineStyle[];
+    lineBits?: number;
+    fillBits?: number;
+  }
+  
+  export enum ShapeRecordFlags {
+    Move = 0x01,
+    HasFillStyle0 = 0x02,
+    HasFillStyle1 = 0x04,
+    HasLineStyle = 0x08,
+    HasNewStyles = 0x10,
+    IsStraight = 0x20,
+    IsGeneral = 0x40,
+    IsVertical = 0x80
   }
 }

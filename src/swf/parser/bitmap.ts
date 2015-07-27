@@ -40,18 +40,6 @@ module Shumway.SWF.Parser {
 
   /** @const */ var FACTOR_5BBP = 255 / 31;
 
-  interface DefineBitsLosslessTag {
-    width: number;
-    height: number;
-    hasAlpha: boolean;
-
-    /**
-     * Number of color table entries - 1, not size in bytes.
-     */
-    colorTableSize: number;
-    bmpData: Uint8Array;
-  }
-
   /*
    * Returns a Uint8Array of ARGB values. The source image is color mapped meaning
    * that the buffer is first prefixed with a color table:
@@ -68,7 +56,7 @@ module Shumway.SWF.Parser {
    * well as the end of each row may be padded so that the next row of pixels
    * is aligned.
    */
-  function parseColorMapped(tag: DefineBitsLosslessTag): Uint8Array {
+  function parseColorMapped(tag: BitmapTag): Uint8Array {
     var width = tag.width, height = tag.height;
     var hasAlpha = tag.hasAlpha;
 
@@ -122,7 +110,7 @@ module Shumway.SWF.Parser {
    * Returns a Uint8Array of ARGB values. The data is already stored in premultiplied ARGB
    * so there's not much to do unless there's no alpha in which case we expand it here.
    */
-  function parse24BPP(tag: DefineBitsLosslessTag): Uint8Array {
+  function parse24BPP(tag: BitmapTag): Uint8Array {
     var width = tag.width, height = tag.height;
     var hasAlpha = tag.hasAlpha;
 
@@ -148,20 +136,18 @@ module Shumway.SWF.Parser {
     return new Uint8Array(view.buffer);
   }
 
-  function parse15BPP(tag: DefineBitsLosslessTag): Uint8Array {
+  function parse15BPP(tag: BitmapTag): Uint8Array {
     Shumway.Debug.notImplemented("parse15BPP");
     /*
       case FORMAT_15BPP:
         var colorType = 0x02;
         var bytesPerLine = ((width * 2) + 3) & ~3;
         var stream = createInflatedStream(bmpData, bytesPerLine * height);
-        var pos = 0;
 
         for (var y = 0, i = 0; y < height; ++y) {
           stream.ensure(bytesPerLine);
           for (var x = 0; x < width; ++x, i += 4) {
-            var word = stream.getUint16(pos);
-            pos += 2;
+            var word = stream.readUi16();
             // Extracting RGB color components and changing values range
             // from 0..31 to 0..255.
             data[i] = 0 | (FACTOR_5BBP * ((word >> 10) & 0x1f));
@@ -169,14 +155,14 @@ module Shumway.SWF.Parser {
             data[i + 2] = 0 | (FACTOR_5BBP * (word & 0x1f));
             data[i + 3] = 255;
           }
-          pos = stream.pos += bytesPerLine;
+          stream += bytesPerLine;
         }
         break;
       */
     return null;
   }
 
-  export function defineBitmap(tag: any): {definition: ImageDefinition; type: string} {
+  export function defineBitmap(tag: BitmapTag): {definition: ImageDefinition; type: string} {
     enterTimeline("defineBitmap");
     var data: Uint32Array;
     var type = ImageType.None;
@@ -212,5 +198,3 @@ module Shumway.SWF.Parser {
     };
   }
 }
-
-

@@ -379,7 +379,7 @@ module Shumway.AVMX.AS.flash.display {
      * phase.
      */
     createAnimatedDisplayObject(symbol: Shumway.Timeline.DisplaySymbol,
-                                placeObjectTag: Shumway.SWF.PlaceObjectTag,
+                                placeObjectTag: Shumway.SWF.Parser.PlaceObjectTag,
                                 callConstructor: boolean): DisplayObject {
       var symbolClass = symbol.symbolClass;
 
@@ -800,7 +800,7 @@ module Shumway.AVMX.AS.flash.display {
     _mouseDown: boolean;
 
     _symbol: Shumway.Timeline.DisplaySymbol;
-    _placeObjectTag: Shumway.SWF.PlaceObjectTag;
+    _placeObjectTag: Shumway.SWF.Parser.PlaceObjectTag;
     _graphics: flash.display.Graphics;
 
     /**
@@ -1100,7 +1100,7 @@ module Shumway.AVMX.AS.flash.display {
     /**
      * Animates this object's display properties.
      */
-    _animate(placeObjectTag: Shumway.SWF.PlaceObjectTag): void {
+    _animate(placeObjectTag: Shumway.SWF.Parser.PlaceObjectTag): void {
       release || assert(this._hasFlags(DisplayObjectFlags.AnimatedByTimeline));
 
       var reset = !(placeObjectTag.flags & PlaceObjectFlags.Move) &&
@@ -1201,7 +1201,7 @@ module Shumway.AVMX.AS.flash.display {
       }
 
       if (placeObjectTag.flags & PlaceObjectFlags.HasVisible || reset) {
-        var visible = placeObjectTag.visibility !== 0;
+        var visible = placeObjectTag.visibility === undefined || placeObjectTag.visibility;
         if (visible !== this._hasFlags(DisplayObjectFlags.Visible)) {
           this._toggleFlags(DisplayObjectFlags.Visible, visible);
           this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);

@@ -36,7 +36,7 @@ declare module Shumway.AVM1 {
   export module Lib {
     function getAVM1Object(as3Object:flash.display.DisplayObject, context: AVM1Context): AVM1Object;
     function initializeAVM1Object(as3Object: flash.display.DisplayObject, context: AVM1Context,
-                                  placeObjectTag: Shumway.SWF.PlaceObjectTag): void;
+                                  placeObjectTag: Shumway.SWF.Parser.PlaceObjectTag): void;
     class AVM1MovieClip extends AVM1Object {
       setParameters(parameters: any): void;
     }

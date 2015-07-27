@@ -24,6 +24,10 @@ module Shumway.AVMX.AS.flash.text {
   import clamp = Shumway.NumberUtilities.clamp;
 
   import DisplayObjectFlags = flash.display.DisplayObjectFlags;
+  import TextTag = Shumway.SWF.Parser.TextTag;
+  import TextFlags = Shumway.SWF.Parser.TextFlags;
+  import TextRecord = Shumway.SWF.Parser.TextRecord;
+  import TextRecordFlags = Shumway.SWF.Parser.TextRecordFlags;
 
   export class TextField extends flash.display.InteractiveObject {
 
@@ -903,7 +907,7 @@ module Shumway.AVMX.AS.flash.text {
       var sec = loaderInfo.sec;
       var symbol = new TextSymbol(data, sec);
       symbol._setBoundsFromData(data);
-      var tag = data.tag;
+      var tag = <TextTag>data.tag;
       if (data.static) {
         symbol.dynamic = false;
         symbol.symbolClass = sec.flash.text.StaticText.axClass;
@@ -917,45 +921,47 @@ module Shumway.AVMX.AS.flash.text {
           symbol.textContent = textContent;
         }
       }
-      if (tag.hasColor) {
+      if (tag.flags & TextFlags.HasColor) {
         symbol.color = tag.color >>> 8;
       }
-      if (tag.hasFont) {
+      if (tag.flags & TextFlags.HasFont) {
         symbol.size = tag.fontHeight;
         // Requesting the font symbol guarantees that it's loaded and initialized.
         var fontSymbol = <flash.text.FontSymbol>loaderInfo.getSymbolById(tag.fontId);
         if (fontSymbol) {
-          symbol.face = tag.useOutlines ? fontSymbol.name : 'swffont' + fontSymbol.syncId;
+          symbol.face = tag.flags & TextFlags.UseOutlines ?
+                        fontSymbol.name :
+                        'swffont' + fontSymbol.syncId;
           symbol.bold = fontSymbol.bold;
           symbol.italic = fontSymbol.italic;
         } else {
           warning("Font " + tag.fontId + " is not defined.");
         }
       }
-      if (tag.hasLayout) {
+      if (tag.flags & TextFlags.HasLayout) {
         symbol.align = flash.text.TextFormatAlign.fromNumber(tag.align);
         symbol.leftMargin = tag.leftMargin;
         symbol.rightMargin = tag.rightMargin;
         symbol.indent = tag.indent;
         symbol.leading = tag.leading;
       }
-      symbol.multiline = !!tag.multiline;
-      symbol.wordWrap = !!tag.wordWrap;
-      symbol.embedFonts = !!tag.useOutlines;
-      symbol.selectable = !tag.noSelect;
-      symbol.border = !!tag.border;
-      if (tag.hasText) {
+      symbol.multiline = !!(tag.flags & TextFlags.Multiline);
+      symbol.wordWrap = !!(tag.flags & TextFlags.WordWrap);
+      symbol.embedFonts = !!(tag.flags & TextFlags.UseOutlines);
+      symbol.selectable = !(tag.flags & TextFlags.NoSelect);
+      symbol.border = !!(tag.flags & TextFlags.Border);
+      if (tag.flags & TextFlags.HasText) {
         symbol.initialText = tag.initialText;
       }
-      symbol.html = !!tag.html;
-      symbol.displayAsPassword = !!tag.password;
-      symbol.type = tag.readonly ?
+      symbol.html = !!(tag.flags & TextFlags.Html);
+      symbol.displayAsPassword = !!(tag.flags & TextFlags.Password);
+      symbol.type = tag.flags & TextFlags.ReadOnly ?
                     flash.text.TextFieldType.DYNAMIC :
                     flash.text.TextFieldType.INPUT;
-      if (tag.hasMaxLength) {
+      if (tag.flags & TextFlags.HasMaxLength) {
         symbol.maxChars = tag.maxLength;
       }
-      symbol.autoSize = tag.autoSize ?
+      symbol.autoSize = tag.flags & TextFlags.AutoSize ?
                         flash.text.TextFieldAutoSize.LEFT :
                         flash.text.TextFieldAutoSize.NONE;
       symbol.variableName = tag.variableName;
@@ -971,7 +977,7 @@ module Shumway.AVMX.AS.flash.text {
      */
     static FromLabelData(data: any, loaderInfo: flash.display.LoaderInfo): TextSymbol {
       var bounds = data.fillBounds;
-      var records = data.records;
+      var records: TextRecord[] = data.records;
       var coords = data.coords = [];
       var htmlText = '';
       var size = 12;
@@ -984,10 +990,7 @@ module Shumway.AVMX.AS.flash.text {
       var codes: number[];
       for (var i = 0; i < records.length; i++) {
         var record = records[i];
-        if (record.eot) {
-          break;
-        }
-        if (record.hasFont) {
+        if (record.flags & TextRecordFlags.HasFont) {
           var fontSymbol = <flash.text.FontSymbol>loaderInfo.getSymbolById(record.fontId);
           if (fontSymbol) {
             codes = fontSymbol.codes;
@@ -1002,16 +1005,16 @@ module Shumway.AVMX.AS.flash.text {
             Debug.warning('Label ' + data.id + 'refers to undefined font symbol ' + record.fontId);
           }
         }
-        if (record.hasColor) {
+        if (record.flags & TextRecordFlags.HasColor) {
           color = record.color >>> 8;
         }
-        if (record.hasMoveX) {
+        if (record.flags & TextRecordFlags.HasMoveX) {
           x = record.moveX;
           if (x < bounds.xMin) {
             bounds.xMin = x;
           }
         }
-        if (record.hasMoveY) {
+        if (record.flags & TextRecordFlags.HasMoveY) {
           y = record.moveY;
           if (y < bounds.yMin) {
             bounds.yMin = y;

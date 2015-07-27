@@ -25,7 +25,8 @@ module Shumway.AVMX.AS.flash.display {
   import events = flash.events;
   import Multiname = Shumway.AVMX.Multiname;
 
-  import SwfTag = Shumway.SWF.Parser.SwfTag;
+  import SwfTagCode = Shumway.SWF.Parser.SwfTagCode;
+  import SoundInfoFlags = Shumway.SWF.Parser.SoundInfoFlags;
 
   /**
    * Controls how to behave on inter-frame navigation.
@@ -90,14 +91,14 @@ module Shumway.AVMX.AS.flash.display {
             var soundObj = constructClassFromSymbol(symbolInfo, symbolClass);
             sounds[symbolId] = sound = { object: soundObj };
           }
-          if (sound.channel && info.stop) {
+          var stop = info.flags & SoundInfoFlags.Stop;
+          if (sound.channel && stop) {
             sound.channel.stop();
             sound.channel = null;
           }
-          if (!info.stop &&
-              (!sound.channel || !sound.channel.playing)) {
+          if (!stop && (!sound.channel || !sound.channel.playing)) {
             // TODO envelope, in/out point
-            var loops = info.hasLoops ? info.loopCount : 0;
+            var loops = info.flags & SoundInfoFlags.HasLoops ? info.loopCount : 0;
             sound.channel = sound.object.play(0, loops);
           }
         }
@@ -672,11 +673,11 @@ module Shumway.AVMX.AS.flash.display {
           for (var i = 0; i < tags.length; i++) {
             var tag: any = tags[i];
             // controlTags might contain parsed and unparsed tags.
-            if (tag.tagCode === SwfTag.CODE_START_SOUND) {
+            if (tag.tagCode === SwfTagCode.CODE_START_SOUND) {
               var loaderInfo = (<SpriteSymbol>this._symbol).loaderInfo;
               tag = <any>loaderInfo._file.getParsedTag(tag);
             }
-            if (tag.code === SwfTag.CODE_START_SOUND) {
+            if (tag.code === SwfTagCode.CODE_START_SOUND) {
               if (!soundStarts) {
                 soundStarts = [];
               }
@@ -738,8 +739,8 @@ module Shumway.AVMX.AS.flash.display {
           var tag = parsedOrUnparsedTag.tagCode === undefined ?
                     parsedOrUnparsedTag : <any>loaderInfo._file.getParsedTag(parsedOrUnparsedTag);
           switch (tag.code) {
-            case SwfTag.CODE_REMOVE_OBJECT:
-            case SwfTag.CODE_REMOVE_OBJECT2:
+            case SwfTagCode.CODE_REMOVE_OBJECT:
+            case SwfTagCode.CODE_REMOVE_OBJECT2:
               if (!removedObjects) {
                 removedObjects = Object.create(null);
               }
@@ -748,9 +749,9 @@ module Shumway.AVMX.AS.flash.display {
                 controlTags.push(tag);
               }
               break;
-            case SwfTag.CODE_PLACE_OBJECT:
-            case SwfTag.CODE_PLACE_OBJECT2:
-            case SwfTag.CODE_PLACE_OBJECT3:
+            case SwfTagCode.CODE_PLACE_OBJECT:
+            case SwfTagCode.CODE_PLACE_OBJECT2:
+            case SwfTagCode.CODE_PLACE_OBJECT3:
               if (!(removedObjects && removedObjects[tag.depth])) {
                 controlTags.push(tag);
               }

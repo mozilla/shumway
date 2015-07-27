@@ -49,11 +49,10 @@ module Shumway.SWF.Parser {
   function isScaledFont2(glyphs) {
     var xMin = 0, yMin = 0, xMax = 0, yMax = 0;
     for (var i = 0; i < glyphs.length; i++) {
-      var glyph = glyphs[i];
-      if (!glyph) {
+      var records = glyphs[i];
+      if (!records) {
         continue;
       }
-      var records = glyph.records;
       var record;
       var x = 0;
       var y = 0;
@@ -61,7 +60,7 @@ module Shumway.SWF.Parser {
       for (var j = 0; j < records.length; j++) {
         record = records[j];
         if (record.type) {
-          if (record.isStraight) {
+          if (record.flags & ShapeRecordFlags.IsStraight) {
             x += (record.deltaX || 0);
             y += -(record.deltaY || 0);
           } else {
@@ -71,10 +70,7 @@ module Shumway.SWF.Parser {
             y += -record.anchorDeltaY;
           }
         } else {
-          if (record.eos) {
-            break;
-          }
-          if (record.move) {
+          if (record.flags & ShapeRecordFlags.Move) {
             x = record.moveX;
             y = -record.moveY;
           }
@@ -98,7 +94,7 @@ module Shumway.SWF.Parser {
     return maxDimension > 5000;
   }
 
-  export function defineFont(tag) {
+  export function defineFont(tag: FontTag) {
     var uniqueName = 'swf-font-' + tag.id;
     var fontName = tag.name || uniqueName;
 
@@ -106,8 +102,8 @@ module Shumway.SWF.Parser {
       type: 'font',
       id: tag.id,
       name: fontName,
-      bold: tag.bold === 1,
-      italic: tag.italic === 1,
+      bold: !!(tag.flags & FontFlags.Bold),
+      italic: !!(tag.flags & FontFlags.Italic),
       codes: null,
       metrics: null,
       data: tag.data,
@@ -115,7 +111,7 @@ module Shumway.SWF.Parser {
     };
 
     var glyphs = tag.glyphs;
-    var glyphCount = glyphs ? tag.glyphCount = glyphs.length : 0;
+    var glyphCount = glyphs ? glyphs.length : 0;
 
     if (!glyphCount) {
       return font;
@@ -129,8 +125,8 @@ module Shumway.SWF.Parser {
     var originalCode;
     var generateAdvancement = !('advance' in tag);
     var correction = 0;
-    var isFont2 = (tag.code === 48);
-    var isFont3 = (tag.code === 75);
+    var isFont2 = tag.code === SwfTagCode.CODE_DEFINE_FONT2;
+    var isFont3 = tag.code === SwfTagCode.CODE_DEFINE_FONT3;
 
     if (generateAdvancement) {
       tag.advance = [];
@@ -158,7 +154,7 @@ module Shumway.SWF.Parser {
         return a - b;
       });
       var i = 0;
-      var code;
+      var code: number;
       var indices;
       while ((code = codes[i++]) !== undefined) {
         var start = code;
@@ -202,9 +198,9 @@ module Shumway.SWF.Parser {
     var i = 0;
     var range;
     while ((range = ranges[i++])) {
-      var start = range[0];
-      var end = range[1];
-      var code = range[2][0];
+      var start: number = range[0];
+      var end: number = range[1];
+      var code: number = range[2][0];
       startCount += toString16(start);
       endCount += toString16(end);
       idDelta += toString16(((code - start) + 1) & 0xffff);
@@ -250,11 +246,10 @@ module Shumway.SWF.Parser {
     var yMaxs = [];
     var maxContours = 0;
     var i = 0;
-    var code;
+    var code: number;
     var rawData = {};
     while ((code = codes[i++]) !== undefined) {
-      var glyph = glyphs[glyphIndex[code]];
-      var records = glyph.records;
+      var records = glyphs[glyphIndex[code]];
       var x = 0;
       var y = 0;
 
@@ -271,7 +266,7 @@ module Shumway.SWF.Parser {
             segmentIndex = 0;
             segments[segmentIndex] = { data: [], commands: [], xMin: 0, xMax: 0, yMin: 0, yMax: 0 };
           }
-          if (record.isStraight) {
+          if (record.flags & ShapeRecordFlags.IsStraight) {
             segments[segmentIndex].commands.push(2);
             var dx = (record.deltaX || 0) / resolution;
             var dy = -(record.deltaY || 0) / resolution;
@@ -292,10 +287,7 @@ module Shumway.SWF.Parser {
             segments[segmentIndex].data.push(x, y);
           }
         } else {
-          if (record.eos) {
-            break;
-          }
-          if (record.move) {
+          if (record.flags & ShapeRecordFlags.Move) {
             segmentIndex++;
             segments[segmentIndex] = { data: [], commands: [], xMin: 0, xMax: 0, yMin: 0, yMax: 0 };
             segments[segmentIndex].commands.push(1);
@@ -336,8 +328,7 @@ module Shumway.SWF.Parser {
 
     i = 0;
     while ((code = codes[i++]) !== undefined) {
-      var glyph = glyphs[glyphIndex[code]];
-      var records = glyph.records;
+      var records = glyphs[glyphIndex[code]];
       segments = rawData[code];
       var numberOfContours = 1;
       var endPoint = 0;
@@ -496,7 +487,7 @@ module Shumway.SWF.Parser {
     tables['OS/2'] =
       '\x00\x01' + // version
       '\x00\x00' + // xAvgCharWidth
-      toString16(tag.bold ? 700 : 400) + // usWeightClass
+      toString16(font.bold ? 700 : 400) + // usWeightClass
       '\x00\x05' + // usWidthClass
       '\x00\x00' + // fstype
       '\x00\x00' + // ySubscriptXSize
@@ -516,7 +507,7 @@ module Shumway.SWF.Parser {
       '\x00\x00\x00\x00' + // ulUnicodeRange3
       '\x00\x00\x00\x00' + // ulUnicodeRange4
       'ALF ' + // achVendID
-      toString16((tag.italic ? 0x01 : 0) | (tag.bold ? 0x20 : 0)) + // fsSelection
+      toString16((font.italic ? 0x01 : 0) | (font.bold ? 0x20 : 0)) + // fsSelection
       toString16(codes[0]) + // usFirstCharIndex
       toString16(codes[codes.length - 1]) + // usLastCharIndex
       toString16(ascent) + // sTypoAscender
@@ -541,7 +532,7 @@ module Shumway.SWF.Parser {
       toString16(min.apply(null, yMins)) + // yMin
       toString16(max.apply(null, xMaxs)) + // xMax
       toString16(max.apply(null, yMaxs)) + // yMax
-      toString16((tag.italic ? 2 : 0) | (tag.bold ? 1 : 0)) + // macStyle
+      toString16((font.italic ? 2 : 0) | (font.bold ? 1 : 0)) + // macStyle
       '\x00\x08' + // lowestRecPPEM
       '\x00\x02' + // fontDirectionHint
       '\x00\x00' + // indexToLocFormat
