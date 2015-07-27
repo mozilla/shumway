@@ -361,6 +361,9 @@ module Shumway.AVMX.AS.flash.display {
         case 'sound':
           symbol = flash.media.SoundSymbol.FromData(data, this);
           break;
+        case 'video':
+          symbol = flash.media.VideoSymbol.FromData(data, this);
+          break;
         case 'binary':
           symbol = Timeline.BinarySymbol.FromData(data, this);
           break;

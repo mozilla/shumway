@@ -903,6 +903,16 @@ module Shumway.SWF {
         return Shumway.SWF.Parser.defineShape(swfTag);
       case SwfTagCode.CODE_DEFINE_SOUND:
         return Shumway.SWF.Parser.defineSound(swfTag);
+      case SwfTagCode.CODE_DEFINE_VIDEO_STREAM:
+        return {
+          type: 'video',
+          id: swfTag.id,
+          width: swfTag.width,
+          height: swfTag.height,
+          deblocking: swfTag.deblocking,
+          smoothing: swfTag.smoothing,
+          codec: swfTag.codecId
+        };
       case SwfTagCode.CODE_DEFINE_SPRITE:
         // Sprites are fully defined at this point.
         return swfTag;
