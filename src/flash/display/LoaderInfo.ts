@@ -47,6 +47,8 @@ module Shumway.AVMX.AS.flash.display {
       this._bytesTotal = 0;
       this._applicationDomain = null;
       this._parameters = null;
+      this._allowCodeImport = true;
+      this._checkPolicyFile = false;
       this._width = 0;
       this._height = 0;
       this._sharedEvents = null;
@@ -89,6 +91,8 @@ module Shumway.AVMX.AS.flash.display {
     _bytesTotal: number /*uint*/;
     _applicationDomain: system.ApplicationDomain;
     _parameters: Object;
+    _allowCodeImport: boolean;
+    _checkPolicyFile: boolean;
     _width: number /*int*/;
     _height: number /*int*/;
     _sharedEvents: flash.events.EventDispatcher;
