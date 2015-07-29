@@ -137,7 +137,6 @@ module Shumway.Player {
 
   export class ShumwayComTelemetryService implements ITelemetryService {
     reportTelemetry(data: any): void {
-      arguments.length; // protection from removal by closure
       ShumwayCom.reportTelemetry(data);
     }
   }

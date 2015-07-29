@@ -182,17 +182,15 @@ module Shumway.GFX {
     }
 
     processFSCommand(command: string, args: string) {
-      arguments.length; // keeping from closure removal
       if (typeof ShumwayCom !== 'undefined' && ShumwayCom.environment === ShumwayEnvironment.TEST) {
         ShumwayCom.processFSCommand(command, args);
       }
     }
 
     processFrame() {
-      arguments.length; // keeping from closure removal
       if (typeof ShumwayCom !== 'undefined' && ShumwayCom.environment === ShumwayEnvironment.TEST) {
         ShumwayCom.processFrame();
-      } 
+      }
     }
 
     onVideoPlaybackEvent(id: number, eventType: VideoPlaybackEvent, data: any) {
