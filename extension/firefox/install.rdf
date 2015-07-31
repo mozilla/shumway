@@ -29,7 +29,7 @@
     <em:bootstrap>true</em:bootstrap>
     <em:unpack>true</em:unpack>
     <em:creator>Mozilla Research</em:creator>
-    <em:description>Shumway is an HTML5 technology experiment that explores building a faithful and efficient renderer for the SWF file format without native code assistance.</em:description>
+    <em:description>Shumway is an HTML5 technology experiment that explores building a faithful and efficient renderer for the SWF file format without native code assistance. See http://areweflashyet.com/extension/license.txt for license information.</em:description>
     <em:homepageURL>https://github.com/mozilla/shumway/</em:homepageURL>
     <em:type>2</em:type>
     <!-- Use the raw link for updates so we we can use SSL. -->

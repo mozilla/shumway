@@ -26,7 +26,7 @@ VERSION = `head -n 1 ../../build/version/version.txt`
 build: ensureoutputdir
 	# Copying extension files
 	echo "Creating extension version: $(VERSION)"
-	cp -R ../../LICENSE content chrome bootstrap.js chrome.manifest icon.png icon64.png $(BUILD_DIR)/
+	cp -R ../../LICENSE ../../LICENSE-OFL.txt ../../README-LICENSE.txt content chrome bootstrap.js chrome.manifest icon.png icon64.png $(BUILD_DIR)/
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ install.rdf > $(BUILD_DIR)/install.rdf
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ update.rdf > $(BUILD_DIR)/update.rdf
 	cp ../../examples/inspector/debug/pingpong.js $(BUILD_DIR)/chrome/
