@@ -174,7 +174,7 @@ module Shumway.AVMX.AS.flash.ui {
             break;
           }
           var nodeEntered = target;
-          while (nodeEntered !== commonAncestor) {
+          while (nodeEntered && nodeEntered !== commonAncestor) {
             this._dispatchMouseEvent(nodeEntered, events.MouseEvent.ROLL_OVER, data, currentTarget);
             nodeEntered = nodeEntered.parent;
           }
