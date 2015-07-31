@@ -1041,7 +1041,7 @@ module.exports = function(grunt) {
 
     grunt.file.copy('build/version/version.txt', outputDir + '/version.txt');
     grunt.file.copy('LICENSE', outputDir + '/LICENSE');
-    grunt.file.copy('LICENSE-OFL', outputDir + '/LICENSE-OFL');
+    grunt.file.copy('LICENSE-OFL.txt', outputDir + '/LICENSE-OFL.txt');
     grunt.file.copy('README-LICENSE.txt', outputDir + '/README-LICENSE.txt');
   });
 

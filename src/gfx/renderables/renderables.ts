@@ -1492,7 +1492,7 @@ module Shumway.GFX {
         if (bold) {
           boldItalic += 'bold ';
         }
-        var font = boldItalic + size + 'px ' + fontName + ',AdobeBlank';
+        var font = boldItalic + size + 'px ' + fontName + ', AdobeBlank';
 
         var color = textRunData.readInt();
         var fillStyle = ColorUtilities.rgbToHex(color);
