@@ -181,12 +181,19 @@ module Shumway.SWF {
     readUb(size: number): number {
       var buffer = this.bitBuffer;
       var bitlen = this.bitLength;
+      var val = 0;
       while (size > bitlen) {
+        if (bitlen > 24) {
+          // Avoid overflow. Save current buffer in val and add remaining bits later.
+          size -= bitlen;
+          val = buffer << size;
+          bitlen = 0;
+        }
         buffer = (buffer << 8) | this.bytes[this.pos++];
         bitlen += 8;
       }
       bitlen -= size;
-      var val = (buffer >>> bitlen) & masks[size];
+      val |= (buffer >>> bitlen) & masks[size];
       this.bitBuffer = buffer;
       this.bitLength = bitlen;
       return val;
