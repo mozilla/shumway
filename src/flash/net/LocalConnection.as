@@ -29,7 +29,7 @@ public class LocalConnection extends EventDispatcher {
   public native function set client(client:Object):void;
   public native function get isPerUser():Boolean;
   public native function set isPerUser(newValue:Boolean):void;
-  public native function allowDomain():void;
-  public native function allowInsecureDomain():void;
+  public native function allowDomain(...domains):void;
+  public native function allowInsecureDomain(...domains):void;
 }
 }

@@ -508,6 +508,7 @@ module Shumway.AVM1.Lib {
     }
 
     public set_lockroot(value: boolean) {
+      Debug.somewhatImplemented('AVM1MovieClip._lockroot');
       this._lockroot = alToBoolean(this.context, value);
     }
 
