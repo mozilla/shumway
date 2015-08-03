@@ -53,8 +53,9 @@ module Shumway.Remoting.Player {
     public phase: RemotingPhase = RemotingPhase.Objects;
     public roots: DisplayObject [] = null;
 
-    begin(displayObject: DisplayObject) {
-      this.roots = [displayObject];
+    constructor() {
+      this.output = new DataBuffer();
+      this.outputAssets = [];
     }
 
     remoteObjects() {
@@ -75,6 +76,10 @@ module Shumway.Remoting.Player {
         this.writeDirtyDisplayObjects(roots[i], true);
         Shumway.Player.leaveTimeline("remoting references");
       }
+    }
+
+    writeEOF() {
+      this.output.writeInt(Remoting.MessageTag.EOF);
     }
 
     /**
@@ -169,6 +174,13 @@ module Shumway.Remoting.Player {
         this._writeRectangle(bounds);
         netStream._isDirty = false;
       }
+    }
+
+    writeDisplayObjectRoot(displayObject: DisplayObject) {
+      release || assert(!this.roots);
+      this.roots = [displayObject];
+      this.remoteObjects();
+      this.remoteReferences();
     }
 
     writeBitmapData(bitmapData: BitmapData) {
