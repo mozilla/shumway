@@ -1018,6 +1018,30 @@ module Shumway.SWF.Parser.LowLevel {
     return styles;
   }
   
+  function parseDefineVideoStreamTag(stream: Stream, swfVersion: number,
+                                     tagCode: number): VideoStreamTag {
+    var tag: VideoStreamTag = <any>{ code: tagCode };
+    tag.id = stream.readUi16();
+    tag.numFrames = stream.readUi16();
+    tag.width = stream.readUi16();
+    tag.height = stream.readUi16();
+    stream.readUb(4);
+    tag.deblocking = stream.readUb(3);
+    tag.smoothing = !!stream.readUb(1);
+    tag.codecId = stream.readUi8();
+    return tag;
+  }
+  
+  function parseVideoFrameTag(stream: Stream, swfVersion: number,
+                              tagCode: number, tagEnd: number): VideoFrameTag {
+    var tag: VideoFrameTag = <any>{ code: tagCode };
+    tag.streamId = stream.readUi16();
+    tag.frameNum = stream.readUi16();
+    tag.videoData = stream.bytes.subarray(stream.pos, tagEnd);
+    stream.pos = tagEnd;
+    return tag;
+  }
+  
   export var tagHandlers: any = {
     /* End */                            0: undefined,
     /* ShowFrame */                      1: undefined,
@@ -1059,8 +1083,8 @@ module Shumway.SWF.Parser.LowLevel {
     /* ImportAssets */                  57: undefined,
     /* EnableDebugger */                58: undefined,
     /* DoInitAction */                  59: undefined,
-    /* DefineVideoStream */             60: undefined,
-    /* VideoFrame */                    61: undefined,
+    /* DefineVideoStream */             60: parseDefineVideoStreamTag,
+    /* VideoFrame */                    61: parseVideoFrameTag,
     /* DefineFontInfo2 */               62: undefined,
     /* EnableDebugger2 */               64: undefined,
     /* ScriptLimits */                  65: undefined,
@@ -1085,7 +1109,6 @@ module Shumway.SWF.Parser.LowLevel {
     /* DefineBitsJPEG4 */               90: parseDefineImageTag,
     /* DefineFont4 */                   91: parseDefineFont4Tag
   };
-
 
   export function parseHeader(stream: Stream) {
     var bits = stream.readUb(5);

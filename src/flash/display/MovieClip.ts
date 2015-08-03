@@ -673,7 +673,8 @@ module Shumway.AVMX.AS.flash.display {
           for (var i = 0; i < tags.length; i++) {
             var tag: any = tags[i];
             // controlTags might contain parsed and unparsed tags.
-            if (tag.tagCode === SwfTagCode.CODE_START_SOUND) {
+            if (tag.tagCode === SwfTagCode.CODE_START_SOUND ||
+                tag.tagCode === SwfTagCode.CODE_VIDEO_FRAME) {
               var loaderInfo = (<SpriteSymbol>this._symbol).loaderInfo;
               tag = <any>loaderInfo._file.getParsedTag(tag);
             }
@@ -682,6 +683,9 @@ module Shumway.AVMX.AS.flash.display {
                 soundStarts = [];
               }
               soundStarts.push(new Shumway.Timeline.SoundStart(tag.soundId, tag.soundInfo));
+            } else if (tag.tagCode === SwfTagCode.CODE_VIDEO_FRAME) {
+              // tag.videoData contains a video frame for the video stream symbol with id == tag.streamId.
+              // TODO: Do something useful with that information :).
             }
           }
           if (soundStarts) {

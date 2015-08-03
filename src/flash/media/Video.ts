@@ -19,18 +19,44 @@ module Shumway.AVMX.AS.flash.media {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import axCoerceString = Shumway.AVMX.axCoerceString;
   import assert = Shumway.Debug.assert;
+  
   export class Video extends flash.display.DisplayObject {
     static classInitializer: any = null;
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
     
+    _symbol: VideoSymbol;
+    applySymbol() {
+      this._initializeFields();
+      var symbol = this._symbol;
+      this._deblocking = symbol.deblocking;
+      this._smoothing = symbol.smoothing;
+      this._setFillAndLineBoundsFromWidthAndHeight(symbol.width * 20, symbol.height * 20);
+    }
+    
+    protected _initializeFields() {
+      super._initializeFields();
+      this._deblocking = 0;
+      this._smoothing = false;
+      this._videoWidth = 0;
+      this._videoHeight = 0;
+    }
+    
     constructor (width: number /*int*/ = 320, height: number /*int*/ = 240) {
-      super();
       width |= 0;
       height |= 0;
-      width = width || 320;
-      height = height || 240;
-      this._setFillAndLineBoundsFromWidthAndHeight(width * 20, height * 20);
+      if (this._symbol && !this._fieldsInitialized) {
+        this.applySymbol();
+      }
+      super();
+      if (!this._fieldsInitialized) {
+        this._initializeFields();
+      }
+      if (!this._symbol) {
+        width = width || 320;
+        height = height || 240;
+        this._setFillAndLineBoundsFromWidthAndHeight(width * 20, height * 20);
+      }
     }
     
     _deblocking: number;
@@ -93,6 +119,28 @@ module Shumway.AVMX.AS.flash.media {
 
     attachCamera(camera: flash.media.Camera): void {
       notImplemented("public flash.media.Video::attachCamera"); return;
+    }
+  }
+  
+  export class VideoSymbol extends Timeline.DisplaySymbol {
+    width: number;
+    height: number;
+    deblocking: number;
+    smoothing: boolean;
+    codec: number;
+    
+    constructor(data: Timeline.SymbolData, sec: ISecurityDomain) {
+      super(data, sec.flash.media.Video.axClass, true);
+    }
+
+    static FromData(data: any, loaderInfo: display.LoaderInfo): VideoSymbol {
+      var symbol = new VideoSymbol(data, loaderInfo.sec);
+      symbol.width = data.width;
+      symbol.height = data.height;
+      symbol.deblocking = data.deblocking;
+      symbol.smoothing = data.smoothing;
+      symbol.codec = data.codec;
+      return symbol;
     }
   }
 }
