@@ -29,8 +29,8 @@ public final class Security {
   public static native function set disableAVM1Loading(value:Boolean):void;
   public static native function get sandboxType():String;
   public static native function get pageDomain():String;
-  public static native function allowDomain():void;
-  public static native function allowInsecureDomain():void;
+  public static native function allowDomain(...domains):void;
+  public static native function allowInsecureDomain(...domains):void;
   public static native function loadPolicyFile(url:String):void;
   public static native function showSettings(panel:String = "default"):void;
   internal static native function duplicateSandboxBridgeInputArguments(toplevel:Object,
