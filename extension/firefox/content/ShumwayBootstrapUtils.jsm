@@ -22,6 +22,7 @@ const PREF_PREFIX = 'shumway.';
 const PREF_IGNORE_CTP = PREF_PREFIX + 'ignoreCTP';
 const PREF_WHITELIST = PREF_PREFIX + 'swf.whitelist';
 const SWF_CONTENT_TYPE = 'application/x-shockwave-flash';
+const PLUGIN_HANLDER_URI = 'chrome://shumway/content/content.html';
 
 let Cc = Components.classes;
 let Ci = Components.interfaces;
@@ -101,17 +102,26 @@ var ShumwayBootstrapUtils = {
     this.isRegistered = true;
 
     // Register the components.
-    this.isJSPluginsSupported = !!Ph.createFakePlugin;
+    this.isJSPluginsSupported = !!Ph.registerFakePlugin &&
+                                getBoolPref('shumway.jsplugins', false);
 
     if (this.isJSPluginsSupported) {
-      let plugin = Ph.createFakePlugin("chrome://shumway/content/content.html");
-      plugin.niceName = "Shumway plugin";
-      plugin.registerMode = Ci.nsIFakePluginTag.MIME_REGISTER_ALL;
-      plugin.supersedeExisting = true;
-      plugin.addMimeType("application/x-shockwave-flash");
-      plugin.sandboxScript = "chrome://shumway/content/plugin.js";
-      plugin.enabledState = Ci.nsIPluginTag.STATE_ENABLED;
-      this.plugin = plugin;
+      let initPluginDict = {
+        handlerURI: PLUGIN_HANLDER_URI,
+        mimeEntries: [
+          {
+            type: SWF_CONTENT_TYPE,
+            description: 'Shockwave Flash',
+            extension: 'swf'
+          }
+        ],
+        niceName: 'Shumway plugin',
+        name: 'Shumway',
+        supersedeExisting: true, // TODO verify when jsplugins (bug 558184) is implemented
+        sandboxScript: 'chrome://shumway/content/plugin.js', // TODO verify when jsplugins (bug 558184) is implemented
+        version: '10.0.0.0'
+      };
+      Ph.registerFakePlugin(initPluginDict);
     } else {
       Cu.import('resource://shumway/ShumwayStreamConverter.jsm');
 
@@ -149,8 +159,7 @@ var ShumwayBootstrapUtils = {
 
     // Remove the contract/component.
     if (this.isJSPluginsSupported) {
-      // TODO jsplugin unregistration
-      this.plugin = null;
+      Ph.unregisterFakePlugin(PLUGIN_HANLDER_URI);
     } else {
       this.converterFactory.unregister();
       this.converterFactory = null;
