@@ -354,35 +354,11 @@ module Shumway.AVMX.AS.flash.display {
       this._contentLoaderInfo._url = resolvedURL;
       this._applyLoaderContext(context);
       this._loadingType = LoadingType.External;
-      this._fileLoader = new FileLoader(this, this._contentLoaderInfo);
+      var fileLoader = this._fileLoader = new FileLoader(this, this._contentLoaderInfo);
       if (!release && traceLoaderOption.value) {
         console.log("Loading url " + request.url);
       }
-      // Starts loading on the next script execution turn, in case if allowDomain
-      // will be called. This is a very simplified heuristic to restrict
-      // unwanted SWFs that can break the loading one.
-      Promise.resolve<any>(undefined).then(function (fileLoader: FileLoader, fileRequest) {
-        var whitelistResult = this._canLoadSWFFromDomain(fileRequest.url);
-
-        switch (whitelistResult) {
-          case CrossDomainSWFLoadingWhitelistResult.OwnDomain:
-            Telemetry.instance.reportTelemetry({topic: 'loadResource', resultType: Telemetry.LoadResource.LoadSource});
-            break;
-          case CrossDomainSWFLoadingWhitelistResult.Remote:
-            Telemetry.instance.reportTelemetry({topic: 'loadResource', resultType: Telemetry.LoadResource.LoadWhitelistAllowed});
-            break;
-          case CrossDomainSWFLoadingWhitelistResult.Failed:
-            Telemetry.instance.reportTelemetry({topic: 'loadResource', resultType: Telemetry.LoadResource.LoadWhitelistDenied});
-            break;
-        }
-
-        if (whitelistResult !== CrossDomainSWFLoadingWhitelistResult.Failed) {
-          fileLoader.loadFile(fileRequest);
-        } else {
-          console.error('Loading of ' + fileRequest.url + ' was rejected based on allowDomain heuristic.');
-          // TODO trigger some loading error
-        }
-      }.bind(this, this._fileLoader, request._toFileRequest()));
+      fileLoader.loadFile(request._toFileRequest());
 
       this._queuedLoadUpdate = null;
       var loaderClass = this.sec.flash.display.Loader.axClass;
@@ -457,6 +433,8 @@ module Shumway.AVMX.AS.flash.display {
         this._contentLoaderInfo._applicationDomain = new this.sec.flash.system.ApplicationDomain();
       }
       this._contentLoaderInfo._parameters = parameters;
+      this._contentLoaderInfo._allowCodeImport = context ? context.allowCodeImport : true;
+      this._contentLoaderInfo._checkPolicyFile = context ? context.checkPolicyFile : false;
     }
 
     onLoadOpen(file: any) {
@@ -468,6 +446,74 @@ module Shumway.AVMX.AS.flash.display {
         ));
         return;
       }
+      // For child SWF files, only continue loading and interpreting the loaded data if the
+      // either
+      // - it is loaded from the same origin as the parent, or
+      // - the parent has called `system.Security.allowDomain` with the loadees origin whitelisted
+      // This is a mitigation against the loadee breaking our SecurityDomain sandbox and
+      // reaching into the parent's SecurityDomain, reading data it's not supposed to have
+      // access to.
+      //
+      // We perform this check only once loading has started for two reasons: one is that only
+      // at that point do we know that we're loading a SWF instead of an image (or some invalid
+      // file, in which case none of this matters). The other is that the parent might call
+      // `allowDomain` only after the load has started, in which case we still want to allow the
+      // operation to continue.
+      //
+      // Additionally, all the normal cross-domain checks apply as per usual.
+      if (file._file instanceof SWFFile) {
+        var whitelistResult = this._canLoadSWFFromDomain(this._fileLoader._url);
+        var resultType: Telemetry.LoadResource;
+
+        switch (whitelistResult) {
+          case CrossDomainSWFLoadingWhitelistResult.OwnDomain:
+            resultType = Telemetry.LoadResource.LoadSource;
+            break;
+          case CrossDomainSWFLoadingWhitelistResult.Remote:
+            resultType = Telemetry.LoadResource.LoadWhitelistAllowed;
+            break;
+          case CrossDomainSWFLoadingWhitelistResult.Failed:
+            resultType = Telemetry.LoadResource.LoadWhitelistDenied;
+            break;
+          default:
+            assertUnreachable("Invalid whitelistResult");
+        }
+        Telemetry.instance.reportTelemetry({topic: 'loadResource', resultType: resultType});
+
+        if (whitelistResult === CrossDomainSWFLoadingWhitelistResult.Failed) {
+          console.error('Loading of SWF file from ' + this._fileLoader._url +
+                        ' was rejected based on allowDomain heuristic.');
+          this._fileLoader.abortLoad();
+          var message = "Security sandbox violation: SWF " + this._loaderInfo._url +
+                        " cannot load SWF " + this._fileLoader._url + ". This may be worked" +
+                        " around by calling Security.allowDomain.";
+          try {
+            this._contentLoaderInfo.dispatchEvent(
+              new this.sec.flash.events.IOErrorEvent(events.SecurityErrorEvent.SECURITY_ERROR,
+                                                     false, false, message,
+                                                     Errors.SecuritySwfNotAllowedError.code
+              ));
+          } catch (_) {
+            // Ignore error during event handling.
+          }
+          return;
+        }
+        if (!this._contentLoaderInfo._allowCodeImport) {
+          this._fileLoader.abortLoad();
+          try {
+            this._contentLoaderInfo.dispatchEvent(
+              new this.sec.flash.events.IOErrorEvent(events.SecurityErrorEvent.SECURITY_ERROR,
+                                                     false, false,
+                                                     Errors.AllowCodeImportError.message,
+                                                     Errors.AllowCodeImportError.code
+              ));
+          } catch (_) {
+            // Ignore error during event handling.
+          }
+          return;
+        }
+      }
+
       this._contentLoaderInfo.setFile(file);
     }
 

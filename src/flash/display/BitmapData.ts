@@ -225,6 +225,7 @@ module Shumway.AVMX.AS.flash.display {
       var xMax = r.x + r.width;
       var yMin = r.y;
       var yMax = r.y + r.height;
+      this._ensureBitmapData();
       var view = this._view;
       var width = this._rect.width;
       var output = new Int32Array(r.area);
@@ -254,6 +255,7 @@ module Shumway.AVMX.AS.flash.display {
       var xMax = r.x + r.width;
       var yMin = r.y;
       var yMax = r.y + r.height;
+      this._ensureBitmapData();
       var view = this._view;
       var width = this._rect.width;
       var p = (rect.width * rect.height - r.height) + (xMin - rect.x);
@@ -294,6 +296,7 @@ module Shumway.AVMX.AS.flash.display {
       bd._transparent = this._transparent;
       bd._solidFillColorPBGRA = this._solidFillColorPBGRA;
       bd._bitmapReferrers = [];
+      // TODO: clone without reading back bitmapdata. There's no need for that.
       this._ensureBitmapData();
       bd._id = flash.display.DisplayObject.getNextSyncID();
       bd._setData(new Uint8Array(this._data), this._type);
@@ -334,6 +337,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     setPixel(x: number /*int*/, y: number /*int*/, uARGB: number /*uint*/): void {
+      // TODO: implement this as a wrapper for setPixel32.
       x = x | 0;
       y = y | 0;
       uARGB = uARGB | 0;
