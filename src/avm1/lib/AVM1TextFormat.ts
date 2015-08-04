@@ -21,13 +21,24 @@ module Shumway.AVM1.Lib {
 
   export class AVM1TextFormat extends AVM1Object implements IHasAS3ObjectReference {
     static createAVM1Class(context: AVM1Context): AVM1Object {
-      return wrapAVM1NativeClass(context, true, AVM1TextFormat,
+      var members = ['align#', 'blockIndent#', 'bold#', 'bullet#', 'color#', 'font#',
+                     'getTextExtent', 'indent#', 'italic#', 'kerning#', 'leading#',
+                     'leftMargin#', 'letterSpacing#', 'rightMargin#', 'size#', 'tabStops#',
+                     'target#', 'underline#', 'url#'];
+      var wrapped = wrapAVM1NativeClass(context, true, AVM1TextFormat,
         [],
-        ['align#', 'blockIndent#', 'bold#', 'bullet#', 'color#', 'font#',
-         'getTextExtent', 'indent#', 'italic#', 'kerning#', 'leading#',
-         'leftMargin#', 'letterSpacing#', 'rightMargin#', 'size#', 'tabStops#',
-         'target#', 'underline#', 'url#'],
+        members,
         null, AVM1TextFormat.prototype.avm1Constructor);
+      var proto = wrapped.alGetPrototypeProperty();
+      members.forEach((x) => {
+         if (x[x.length - 1] === '#') {
+           x = x.slice(0, -1);
+         }
+         var p = proto.alGetOwnProperty(x);
+         p.flags &= ~AVM1PropertyFlags.DONT_ENUM;
+         proto.alSetOwnProperty(x, p);
+       });
+      return wrapped;
     }
 
     static createFromNative(context: AVM1Context, as3Object: flash.text.TextFormat): AVM1Object {
