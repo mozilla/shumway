@@ -655,9 +655,9 @@ module Shumway.AVMX.AS.flash.text {
       var offsetX = lineMetricsData.readInt();
       var bounds = this._lineBounds;
       if (this._autoSize !== TextFieldAutoSize.NONE) {
-        bounds.xMin = bounds.xMin = offsetX;
-        bounds.xMax = bounds.xMax = offsetX + textWidth + 80;
-        bounds.yMax = bounds.yMax = bounds.yMin + textHeight + 80;
+        bounds.xMin = offsetX;
+        bounds.xMax = offsetX + textWidth + 80;
+        bounds.yMax = bounds.yMin + textHeight + 80;
       }
       this._textWidth = textWidth;
       this._textHeight = textHeight;
@@ -1012,15 +1012,9 @@ module Shumway.AVMX.AS.flash.text {
         }
         if (record.flags & TextRecordFlags.HasMoveX) {
           x = record.moveX;
-          if (x < bounds.xMin) {
-            bounds.xMin = x;
-          }
         }
         if (record.flags & TextRecordFlags.HasMoveY) {
           y = record.moveY;
-          if (y < bounds.yMin) {
-            bounds.yMin = y;
-          }
         }
         var text = '';
         var entries = record.entries;
