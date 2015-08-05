@@ -136,7 +136,7 @@ module Shumway.AVMX {
     }
   }
   export function checkNullParameter(argument: any, name: string, sec: AXSecurityDomain) {
-    if (!argument) {
+    if (argument == null) {
       sec.throwError('TypeError', Errors.NullPointerError, name);
     }
   }
