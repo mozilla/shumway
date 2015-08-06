@@ -243,7 +243,7 @@ module Shumway.AVM1.Lib {
     'GradientBevelFilter', 'GradientGlowFilter'];
 
   export function convertToAS3Filter(context: AVM1Context, as2Filter: AVM1Object): ASObject {
-    var proto = as2Filter.alPrototype;
+    var proto = as2Filter ? as2Filter.alPrototype : null;
     while (proto && !(<AVM1BitmapFilterPrototype>proto).asFilterConverter) {
       proto = proto.alPrototype;
     }
@@ -263,7 +263,7 @@ module Shumway.AVM1.Lib {
         }
       }
     }
-    return context.sec.createArray(arr);
+    return context.sec.createArrayUnsafe(arr);
   }
 
   export function convertFromAS3Filters(context: AVM1Context, as3Filters: ASObject): AVM1Object {
