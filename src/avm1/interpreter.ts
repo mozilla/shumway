@@ -40,7 +40,9 @@ module Shumway.AVM1 {
         throw new Error(message); // using throw as a way to break in browsers debugger
       } catch (e) { /* ignoring since handled */ }
     }
-    Debug.warning.apply(console, arguments);
+    if (avm1WarningsEnabled.value) {
+      Debug.warning.apply(console, arguments);
+    }
   }
 
   export var MAX_AVM1_HANG_TIMEOUT = 1000;
