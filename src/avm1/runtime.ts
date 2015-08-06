@@ -62,7 +62,7 @@ module Shumway.AVM1 {
     }
   }
 
-  var ESCAPED_PROPERTY_PREFIX = '__avm1';
+  export var ESCAPED_PROPERTY_PREFIX = '__avm1';
   var DEBUG_PROPERTY_PREFIX = '$Bg';
 
   export interface IAVM1Builtins {
@@ -158,19 +158,11 @@ module Shumway.AVM1 {
     }
 
     _escapeProperty(p: any): string  {
-      var context = this.context;
-      var name = alToString(context, p);
-      if (!context.isPropertyCaseSensitive) {
-        name = name.toLowerCase();
-      }
-      if (name[0] === '_') {
-        name = ESCAPED_PROPERTY_PREFIX + name
-      }
-      return name;
+      return alToName(this.context, p);
     }
 
     _unescapeProperty(name: string): string {
-      if (name[0] === '_' && name.indexOf(ESCAPED_PROPERTY_PREFIX) === 0) {
+      if (name[0] === '_' && name[1] === '_' && name.indexOf(ESCAPED_PROPERTY_PREFIX) === 0) {
         name = name.substring(ESCAPED_PROPERTY_PREFIX.length);
       }
       return name;
@@ -185,8 +177,8 @@ module Shumway.AVM1 {
       return DEBUG_PROPERTY_PREFIX + name;
     }
 
-    public alGetOwnProperty(p): AVM1PropertyDescriptor {
-      var name = this._escapeProperty(p);
+    public alGetOwnProperty(name): AVM1PropertyDescriptor {
+      release || Debug.assert(alIsName(this.context, name));
       // TODO __resolve
       return this._ownProperties[name];
     }
@@ -273,6 +265,7 @@ module Shumway.AVM1 {
     }
 
     public alPut(p, v) {
+      p = alToName(this.context, p);
       if (!this.alCanPut(p)) {
         return;
       }
@@ -352,24 +345,24 @@ module Shumway.AVM1 {
 
     public alDefaultValue(hint: AVM1DefaultValueHint = AVM1DefaultValueHint.NUMBER): any {
       if (hint === AVM1DefaultValueHint.STRING) {
-        var toString = this.alGet('toString');
+        var toString = this.alGet(alToName(this.context, 'toString'));
         if (alIsFunction(toString)) {
           var str = toString.alCall(this);
           return str;
         }
-        var valueOf = this.alGet('valueOf');
+        var valueOf = this.alGet(alToName(this.context, 'valueOf'));
         if (alIsFunction(valueOf)) {
           var val = valueOf.alCall(this);
           return val;
         }
       } else {
         release || Debug.assert(hint === AVM1DefaultValueHint.NUMBER);
-        var valueOf = this.alGet('valueOf');
+        var valueOf = this.alGet(alToName(this.context, 'valueOf'));
         if (alIsFunction(valueOf)) {
           var val = valueOf.alCall(this);
           return val;
         }
-        var toString = this.alGet('toString');
+        var toString = this.alGet(alToName(this.context, 'toString'));
         if (alIsFunction(toString)) {
           var str = toString.alCall(this);
           return str;
@@ -590,6 +583,33 @@ module Shumway.AVM1 {
       default:
         release || Debug.assert(false);
     }
+  }
+
+  var nameCache = Object.create(null);
+
+  export function alToName(context: IAVM1Context, v): string {
+    var name;
+    if (typeof v === 'string' && (name = nameCache[v])) {
+      return name;
+    }
+    name = alToString(context, v);
+    if (!context.isPropertyCaseSensitive) {
+      name = name.toLowerCase();
+    }
+    if (name[0] === '_' && name[1] === '_' && name.indexOf(ESCAPED_PROPERTY_PREFIX) !== 0) {
+      name = ESCAPED_PROPERTY_PREFIX + name;
+    }
+    if (typeof v === 'string') {
+      nameCache[v] = name;
+    }
+    return name;
+  }
+
+  export function alIsName(context: IAVM1Context, v): boolean {
+    return typeof v === 'number' ||
+           typeof v === 'string' &&
+           (v[0] !== '_' || v[1] !== '_' || v.indexOf(ESCAPED_PROPERTY_PREFIX) === 0) &&
+           (context.isPropertyCaseSensitive || v === v.toLowerCase());
   }
 
   export function alToObject(context: IAVM1Context, v): AVM1Object {

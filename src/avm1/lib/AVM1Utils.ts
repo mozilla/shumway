@@ -126,7 +126,9 @@ module Shumway.AVM1.Lib {
       var observer = this;
       var context: AVM1Context = (<any>this).context;
       events.forEach(function (event: AVM1EventHandler) {
-        var propertyName = normalizeEventName(context, event.propertyName);
+        // Normalization will always stay valid in a player instance, so we can safely modify
+        // the event itself, here.
+        var propertyName = event.propertyName = normalizeEventName(context, event.propertyName);
         eventsMap[propertyName] = event;
         context.registerEventPropertyObserver(propertyName, observer);
         observer._updateEvent(event);

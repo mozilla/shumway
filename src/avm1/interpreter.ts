@@ -410,22 +410,26 @@ module Shumway.AVM1 {
 
   function as2HasProperty(context: AVM1Context, obj: any, name: any): boolean {
     var avm1Obj: AVM1Object = alToObject(context, obj);
+    name = alToName(context, name);
     return avm1Obj.alHasProperty(name);
   }
 
   function as2GetProperty(context: AVM1Context, obj: any, name: any): any {
     var avm1Obj: AVM1Object = alToObject(context, obj);
+    name = alToName(context, name);
     return avm1Obj.alGet(name);
   }
 
   function as2SetProperty(context: AVM1Context, obj: any, name: any, value: any): void {
     var avm1Obj: AVM1Object = alToObject(context, obj);
+    name = alToName(context, name);
     avm1Obj.alPut(name, value);
     as2SyncEvents(context, name);
   }
 
   function as2DeleteProperty(context: AVM1Context, obj: any, name: any): any {
     var avm1Obj: AVM1Object = alToObject(context, obj);
+    name = alToName(context, name);
     var result = avm1Obj.alDeleteProperty(name);
     as2SyncEvents(context, name);
     return result;
@@ -904,6 +908,7 @@ module Shumway.AVM1 {
     }
 
     function avm1ResolveSimpleVariable(scopeList: AVM1ScopeListItem, variableName: string, flags: AVM1ResolveVariableFlags): IAVM1ResolvedVariableResult {
+      release || Debug.assert(alIsName(scopeList.scope.context, variableName));
       var currentTarget;
       var resolved = cachedResolvedVariableResult;
       for (var p = scopeList; p; p = p.previousScopeItem) {
@@ -947,6 +952,7 @@ module Shumway.AVM1 {
       // For now it is just very much magical -- designed to pass some of the swfdec tests
       // FIXME refactor
       release || Debug.assert(variableName);
+      variableName = alToName(ectx.context, variableName);
       if (!avm1VariableNameHasPath(variableName)) {
         return avm1ResolveSimpleVariable(ectx.scopeList, variableName, flags);
       }
@@ -1614,9 +1620,10 @@ module Shumway.AVM1 {
       if (isNullOrUndefined(methodName) || methodName === '') {
         if (obj instanceof AVM1SuperWrapper) {
           var superFrame = (<AVM1SuperWrapper>obj).callFrame;
-          superArg = avm1FindSuperPropertyOwner(ectx.context, superFrame, '__constructor__');
+          superArg = avm1FindSuperPropertyOwner(ectx.context, superFrame,
+                                                ESCAPED_PROPERTY_PREFIX + '__constructor__');
           if (superArg) {
-            fn = superArg.alGet('__constructor__');
+            fn = superArg.alGet(ESCAPED_PROPERTY_PREFIX + '__constructor__');
             target = superFrame.currentThis;
           }
         } else {
