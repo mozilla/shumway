@@ -74,12 +74,20 @@ module Shumway.AVM1.Lib {
     }
 
     public initAVM1SymbolInstance(context: AVM1Context, as3Object: flash.display.MovieClip) {
+      this._childrenByName = Object.create(null);
       super.initAVM1SymbolInstance(context, as3Object);
       this._initEventsHandlers();
     }
 
     _lookupChildByName(name: string): AVM1Object {
-      name = alToString(this.context, name);
+      release || assert(typeof name === 'string');
+      if (!this.context.isPropertyCaseSensitive) {
+        name = name.toLowerCase();
+      }
+      return this._childrenByName[name];
+    }
+
+    private _lookupChildInAS3Object(name: string): AVM1Object {
       var lookupOptions = flash.display.LookupChildOptions.INCLUDE_NON_INITIALIZED;
       if (!this.context.isPropertyCaseSensitive) {
         lookupOptions |= flash.display.LookupChildOptions.IGNORE_CASE;
@@ -200,6 +208,16 @@ module Shumway.AVM1.Lib {
       this.graphics.clear();
     }
 
+    /**
+     * This map stores the AVM1MovieClip's children keyed by their names. It's updated by all
+     * operations that can cause different results for name-based lookups. these are
+     * addition/removal of children and swapDepths.
+     *
+     * Using this map instead of always relaying lookups to the AVM2 MovieClip substantially
+     * reduces the time spent in looking up children. In some cases by two orders of magnitude.
+     */
+    private _childrenByName: Map<string, AVM1MovieClip>;
+
     private _insertChildAtDepth<T extends flash.display.DisplayObject>(mc: T, depth:number): AVM1Object {
       var oldChild = this.getInstanceAtDepth(depth);
       if (oldChild) {
@@ -214,6 +232,39 @@ module Shumway.AVM1.Lib {
         return null;
       }
       return getAVM1Object(mc, this.context);
+    }
+
+    public _updateChildName(child: AVM1MovieClip, oldName: string, newName: string) {
+      oldName && this._removeChildName(child, oldName);
+      newName && this._addChildName(child, newName);
+    }
+    _removeChildName(child: IAVM1SymbolBase, name: string) {
+      release || assert(name);
+      if (!this.context.isPropertyCaseSensitive) {
+        name = name.toLowerCase();
+      }
+      release || assert(this._childrenByName[name]);
+      if (this._childrenByName[name] !== child) {
+        return;
+      }
+      var newChildForName = this._lookupChildInAS3Object(name);
+      if (newChildForName) {
+        this._childrenByName[name] = newChildForName;
+      } else {
+        delete this._childrenByName[name];
+      }
+    }
+
+    _addChildName(child: IAVM1SymbolBase, name: string) {
+      release || assert(name);
+      if (!this.context.isPropertyCaseSensitive) {
+        name = name.toLowerCase();
+      }
+      release || assert(this._childrenByName[name] !== child);
+      var currentChild = this._childrenByName[name];
+      if (!currentChild || currentChild.getDepth() > child.getDepth()) {
+        this._childrenByName[name] = child;
+      }
     }
 
     public createEmptyMovieClip(name, depth): AVM1MovieClip {
@@ -543,6 +594,7 @@ module Shumway.AVM1.Lib {
       if (!as2Parent) {
         return; // let's not remove root symbol
       }
+      as2Parent._removeChildName(this, this.as3Object.name);
       as2Parent.as3Object.removeChild(this.as3Object);
     }
 
@@ -587,6 +639,21 @@ module Shumway.AVM1.Lib {
         return; // must be the same parent
       }
       child1.parent.swapChildren(child1, child2);
+      var lower;
+      var higher;
+      if (this.getDepth() < target_mc.getDepth()) {
+        lower = this;
+        higher = target_mc;
+      } else {
+        lower = target_mc;
+        higher = this;
+      }
+      if (this._lookupChildInAS3Object(lower.as3Object.name) !== lower) {
+        this._removeChildName(lower, lower.as3Object.name);
+      }
+      if (this._lookupChildInAS3Object(higher.as3Object.name) !== higher) {
+        this._addChildName(higher, higher.as3Object.name);
+      }
     }
 
     public getTabChildren(): boolean {

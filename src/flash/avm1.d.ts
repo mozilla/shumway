@@ -39,6 +39,8 @@ declare module Shumway.AVM1 {
                                   placeObjectTag: Shumway.SWF.Parser.PlaceObjectTag): void;
     class AVM1MovieClip extends AVM1Object {
       setParameters(parameters: any): void;
+      _removeChildName(child: AVM1Object, name: string): void;
+      context: AVM1Context;
     }
   }
 }
