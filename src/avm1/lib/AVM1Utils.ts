@@ -29,6 +29,7 @@ module Shumway.AVM1.Lib {
     context: AVM1Context;
     initAVM1SymbolInstance(context: AVM1Context, as3Object: flash.display.InteractiveObject);
     updateAllEvents();
+    getDepth(): number;
   }
 
   export class AVM1EventHandler {
@@ -65,6 +66,11 @@ module Shumway.AVM1.Lib {
 
       release || Debug.assert(as3Object);
       this._as3Object = as3Object;
+      var name = this.as3Object.name;
+      var parent = this.get_parent();
+      if (name && parent) {
+        parent._addChildName(this, name);
+      }
     }
 
     private _getAS3ObjectTemplate(): T {
@@ -270,7 +276,9 @@ module Shumway.AVM1.Lib {
 
     public set_name(value: string) {
       value = alCoerceString(this.context, value);
+      var oldName = this.as3Object.name;
       this.as3Object.name = value;
+      this.get_parent()._updateChildName(<AVM1MovieClip><any>this, oldName, value);
     }
 
     public get_parent(): AVM1MovieClip {

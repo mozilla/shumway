@@ -342,6 +342,24 @@ module Shumway.AVMX.AS.flash.display {
       this.addEventListener('enterFrame', enterFrameListener);
     }
 
+    /**
+     * Field holding the as2 object associated with this MovieClip instance.
+     *
+     * This field is only ever populated by the AVM1 runtime, so can only be used for MovieClips
+     * used in the implementation of an AVM1 display list.
+     */
+    private _as2Object: AVM1.Lib.AVM1MovieClip;
+
+    removeChildAt(index: number): DisplayObject {
+      var child = super.removeChildAt(index);
+      if (this._as2Object && child._name) {
+        var avm1Child = AVM1.Lib.getAVM1Object(child, this._as2Object.context);
+        // Not all display objects are reflected in AVM1, so not all need to be removed.
+        avm1Child && this._as2Object._removeChildName(avm1Child, child._name);
+      }
+      return child;
+    }
+
     constructor () {
       super();
       if (!this._fieldsInitialized) {
