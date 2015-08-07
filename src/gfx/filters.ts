@@ -123,9 +123,11 @@ module Shumway.GFX {
     }
     
     public expandBounds(bounds: Rectangle) {
-      if (this.inner) {
-        return;
-      }
+      // TODO: Once we support inset drop shadows, bounds don't expand.
+      //       For now, they will be rendered as normal drop shadows.
+      // if (this.inner) {
+      //   return;
+      // }
       expandBlurBounds(bounds, this.quality, this.blurX, this.blurY, false);
       if (this.distance) {
         var a = this.angle * Math.PI / 180;
