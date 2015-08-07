@@ -120,6 +120,12 @@ module Shumway.GFX.Canvas2D {
       feColorMatrix.setAttribute("in", "SourceGraphic");
       feColorMatrix.setAttribute("type", "matrix");
       colorMatrixFilter.appendChild(feColorMatrix);
+      
+      var feComposite = document.createElementNS("http://www.w3.org/2000/svg", "feComposite");
+      feComposite.setAttribute("in2", "SourceAlpha");
+      feComposite.setAttribute("operator", "in");
+      colorMatrixFilter.appendChild(feComposite);
+      
       defs.appendChild(colorMatrixFilter);
       Filters._svgColorMatrixFilter = feColorMatrix;
       svg.appendChild(defs);
@@ -178,10 +184,12 @@ module Shumway.GFX.Canvas2D {
         context.globalColorMatrix = null;
       } else {
         context.globalAlpha = 1;
-        // TODO: We should reconsider using SVG color matrix filters once we found out how to deal
-        // withe the fact that they always get applied to the whole canvas, not just the covered
-        // pixels of drawn images/shapes/text.
-        context.globalColorMatrix = colorMatrix;
+        if (Filters._svgFiltersAreSupported) {
+          Filters._applyFilter(1, context, colorMatrix);
+          context.globalColorMatrix = null;
+        } else {
+          context.globalColorMatrix = colorMatrix;
+        }
       }
     }
   }
@@ -325,6 +333,9 @@ module Shumway.GFX.Canvas2D {
       this.context.globalCompositeOperation = getCompositeOperation(blendMode);
       
       if (filters) {
+        if (colorMatrix) {
+          filters = filters.concat(colorMatrix);
+        }
         var i = 0;
         if (filters.length > 1) {
           // If there are more than one filter defined on this node, we create another temporary
