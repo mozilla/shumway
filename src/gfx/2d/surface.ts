@@ -333,7 +333,7 @@ module Shumway.GFX.Canvas2D {
       this.context.globalCompositeOperation = getCompositeOperation(blendMode);
       
       if (filters) {
-        if (colorMatrix) {
+        if (colorMatrix && !colorMatrix.isIdentity()) {
           filters = filters.concat(colorMatrix);
         }
         var i = 0;
