@@ -19,6 +19,11 @@
       "swf": "swfs/acid/acid-filter.swf",
       "type": "eq"
     },
+    { "id": "acid-filter-2",
+      "frames": [1],
+      "swf": "swfs/acid/acid-filter-2.swf",
+      "type": "eq"
+    },
     {  "id": "acid",
       "frames": [10],
       "swf": "swfs/acid/acid.swf",
