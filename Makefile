@@ -31,7 +31,7 @@ check-system:
 	fi
 	echo "The environment is good"
 
-bootstrap: check-system install-libs install-utils build-libs
+bootstrap: check-system install-libs install-utils show-welcome
 
 install-libs:
 	git submodule init
@@ -63,6 +63,9 @@ run-tamarin-sanity-tests:
 
 run-tamarin-tests:
 	make -C utils/ run-tamarin-tests
+
+show-welcome:
+	echo "Everything's in order, now run \`grunt build\` to compile."
 
 build-libs:
 	grunt shu
@@ -105,5 +108,5 @@ server:
 .PHONY: check-system install-libs install-utils build-tamarin-tests \
         build-playerglobal build-extension build-web default \
         reftest makeref check-browser-manifest test-avm2 \
-        link-utils clone-build bootstrap
+        link-utils clone-build bootstrap show-welcome
 
