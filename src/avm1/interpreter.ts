@@ -290,7 +290,11 @@ module Shumway.AVM1 {
     return alToPrimitive(context, value);
   }
 
-  function as2Compare(context: AVM1Context, x, y): boolean {
+  /**
+   * Performs "less" comparison of two arugments.
+   * @returns {boolean} Returns true if x is less than y, otherwise false
+   */
+  function as2Compare(context: AVM1Context, x: any, y: any): boolean {
     var x2 = alToPrimitive(context, x);
     var y2 = alToPrimitive(context, y);
     if (typeof x2 === 'string' && typeof y2 === 'string') {
@@ -300,6 +304,69 @@ module Shumway.AVM1 {
       var xn = alToNumber(context, x2), yn = alToNumber(context, y2);
       return isNaN(xn) || isNaN(yn) ? undefined : xn < yn;
     }
+  }
+
+  /**
+   * Performs equality comparison of two arugments. The equality comparison
+   * algorithm from EcmaScript 3, Section 11.9.3 is applied.
+   * http://ecma-international.org/publications/files/ECMA-ST-ARCH/ECMA-262,%203rd%20edition,%20December%201999.pdf#page=67
+   * @returns {boolean} Coerces x and y to the same type and returns true if they're equal, false otherwise.
+   */
+  function as2Equals(context: AVM1Context, x: any, y: any): boolean {
+    // Spec steps 1 through 13 can be condensed to ...
+    if (typeof x === typeof y) {
+      return x === y;
+    }
+    // Spec steps 14 and 15.
+    if (x == null && y == null) {
+      return true;
+    }
+    // Spec steps 16 and 17.
+    if (typeof x === 'number' && typeof y === 'string') {
+      // Unfolding the recursion for `as2Equals(context, x, alToNumber(y))`
+      return y === '' ? false : x === +y; // in AVM1, ToNumber('') === NaN
+    }
+    if (typeof x === 'string' && typeof y === 'number') {
+      // Unfolding the recursion for `as2Equals(context, alToNumber(x), y)`
+      return x === '' ? false : +x === y; // in AVM1, ToNumber('') === NaN
+    }
+    // Spec step 18.
+    if (typeof x === 'boolean') {
+      // Unfolding the recursion for `as2Equals(context, alToNumber(x), y)`
+      x = +x; // typeof x === 'number'
+      if (typeof y === 'number' || typeof y === 'string') {
+        return y === '' ? false : x === +y;
+      }
+      // Fall through for typeof y === 'object', 'boolean', 'undefined' cases
+    }
+    // Spec step 19.
+    if (typeof y === 'boolean') {
+      // Unfolding the recursion for `as2Equals(context, x, alToNumber(y))`
+      y = +y; // typeof y === 'number'
+      if (typeof x === 'number' || typeof x === 'string') {
+        return x === '' ? false : +x === y;
+      }
+      // Fall through for typeof x === 'object', 'undefined' cases
+    }
+    // Spec step 20.
+    if ((typeof x === 'number' || typeof x === 'string') &&
+        typeof y === 'object' && y !== null) {
+      y = alToPrimitive(context, y);
+      if (typeof y === 'object') {
+        return false; // avoiding infinite recursion
+      }
+      return as2Equals(context, x, y);
+    }
+    // Spec step 21.
+    if (typeof x === 'object' && x !== null &&
+        (typeof y === 'number' || typeof y === 'string')) {
+      x = alToPrimitive(context, x);
+      if (typeof x === 'object') {
+        return false; // avoiding infinite recursion
+      }
+      return as2Equals(context, x, y);
+    }
+    return false;
   }
 
   function as2InstanceOf(obj, constructor): boolean {
@@ -1674,7 +1741,7 @@ module Shumway.AVM1 {
 
       var a = stack.pop();
       var b = stack.pop();
-      stack.push(a == b);
+      stack.push(as2Equals(ectx.context, a, b));
     }
     function avm1_0x4E_ActionGetMember(ectx: ExecutionContext) {
       var stack = ectx.stack;

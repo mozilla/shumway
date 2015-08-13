@@ -16,6 +16,7 @@
       "stas": "swfs/trace.stas",
       "filenames": [
         "swfs/add.swf",
+        "swfs/avm1/operations/actionequals2.swf",
         "swfs/avm1/undefined/undefined-swf6.swf",
         "swfs/avm1/undefined/undefined-swf7.swf",
         "swfs/avm1/super/super.swf",
