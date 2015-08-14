@@ -62,9 +62,8 @@ module Shumway.AVM1.Lib {
           value: fn,
           writable: true
         },
-        rgb: {
-          get: this.getData,
-          set: this.setData
+        data: {
+          get: this.getData
         },
         clear: {
           value: this.clear,
@@ -86,19 +85,13 @@ module Shumway.AVM1.Lib {
       return data;
     }
 
-    public setData(data: any): void {
-      // TODO implement transform from AVM1 -> AVM2 objects
-      Debug.somewhatImplemented('AVM1SharedObject.setData');
-      (<any>this).__data = data;
-    }
-
     public clear(): void {
       this._as3SharedObject.clear();
     }
 
     public flush(minDiskSpace?: number): any {
       minDiskSpace = alCoerceNumber(this.context, minDiskSpace);
-      this._as3SharedObject.flush(alCoerceNumber(this.context, minDiskSpace));
+      this._as3SharedObject.flush(minDiskSpace);
       Debug.somewhatImplemented('AVM1SharedObject.flush');
       return false; // can be a string 'pending' or boolean
     }
