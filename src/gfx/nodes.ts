@@ -230,12 +230,14 @@ module Shumway.GFX {
 
   export class PreRenderState extends State {
     private static _dirtyStack: PreRenderState [] = [];
+    private static _doNotCallCtorDirectly = Object.create(null);
 
     matrix: Matrix = Matrix.createIdentity();
     depth: number = 0;
 
-    constructor() {
+    constructor(unlock: any) {
       super();
+      release || assert(unlock === PreRenderState._doNotCallCtorDirectly);
     }
 
     transform(transform: Transform): PreRenderState {
@@ -249,15 +251,15 @@ module Shumway.GFX {
       var state = null;
       if (dirtyStack.length) {
         state = dirtyStack.pop();
+      } else {
+        state = new PreRenderState(this._doNotCallCtorDirectly);
       }
       return state;
     }
 
     public clone(): PreRenderState {
       var state = PreRenderState.allocate();
-      if (!state) {
-        state = new PreRenderState();
-      }
+      release || assert(state);
       state.set(this);
       return state;
     }
@@ -281,7 +283,7 @@ module Shumway.GFX {
 
     start(node: Group, dirtyRegion: DirtyRegion) {
       this._dirtyRegion = dirtyRegion;
-      var state = new PreRenderState();
+      var state = PreRenderState.allocate();
       state.matrix.setIdentity();
       node.visit(this, state);
       state.free();
