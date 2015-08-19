@@ -1734,6 +1734,11 @@ module Shumway.AVM1 {
         return;
       }
       var obj = resolved.value;
+      if (isNullOrUndefined(obj)) {
+        avm1Warn("AVM1 warning: cannot iterate over undefined object");
+        return;
+      }
+
       as2Enumerate(obj, function (name) {
         stack.push(name);
       }, null);
