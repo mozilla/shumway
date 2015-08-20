@@ -484,7 +484,7 @@ module Shumway.AVMX.AS.flash.display {
             !(options & LookupChildOptions.INCLUDE_NON_INITIALIZED)) {
           continue;
         }
-        if (child.name === name) {
+        if (child._name === name) {
           return child;
         }
       }
@@ -501,7 +501,7 @@ module Shumway.AVMX.AS.flash.display {
           !(options & LookupChildOptions.INCLUDE_NON_INITIALIZED)) {
           continue;
         }
-        if (child.name.toLowerCase() === name) {
+        if (child._name.toLowerCase() === name) {
           return child;
         }
       }
