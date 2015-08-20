@@ -403,16 +403,8 @@ ShumwayStreamConverter.prototype = new ShumwayStreamConverterBase();
 copyProperties(ShumwayStreamConverter.prototype, {
   classID: Components.ID('{4c6030f7-e20a-264f-5b0e-ada3a9e97384}'),
   classDescription: 'Shumway Content Converter Component',
-  contractID: '@mozilla.org/streamconv;1?from=application/x-shockwave-flash&to=*/*'
-});
+  contractID: '@mozilla.org/streamconv;1?from=application/x-shockwave-flash&to=*/*',
 
-function ShumwayStreamOverlayConverter() {}
-ShumwayStreamOverlayConverter.prototype = new ShumwayStreamConverterBase();
-copyProperties(ShumwayStreamOverlayConverter.prototype, {
-  classID: Components.ID('{4c6030f7-e20a-264f-5f9b-ada3a9e97384}'),
-  classDescription: 'Shumway PlayPreview Component',
-  contractID: '@mozilla.org/streamconv;1?from=application/x-moz-playpreview&to=*/*'
+  classID2: Components.ID('{4c6030f8-e20a-264f-5b0e-ada3a9e97384}'),
+  contractID2: '@mozilla.org/streamconv;1?from=application/x-shockwave-flash&to=text/html'
 });
-ShumwayStreamOverlayConverter.prototype.getUrlHint = function (requestUrl) {
-  return '';
-};
