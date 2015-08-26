@@ -597,14 +597,11 @@ module Shumway.Remoting.GFX {
       if (hasBits & MessageBits.HasMiscellaneousProperties) {
         ratio = input.readInt() / 0xffff;
         release || assert(ratio >= 0 && ratio <= 1);
-        var blendMode = input.readInt();
-        if (blendMode !== BlendMode.Normal) {
-          node.getLayer().blendMode = blendMode;
-        }
+        node.getLayer().blendMode = input.readInt();
         this._readFilters(node);
         node.toggleFlags(NodeFlags.Visible, input.readBoolean());
         node.toggleFlags(NodeFlags.CacheAsBitmap, input.readBoolean());
-        node.toggleFlags(NodeFlags.PixelSnapping, !!input.readInt());
+        node.toggleFlags(NodeFlags.PixelSnapping, !!input.readInt()); // TODO: support `auto`.
         node.toggleFlags(NodeFlags.ImageSmoothing, !!input.readInt());
       }
       if (hasBits & MessageBits.HasChildren) {

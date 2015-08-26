@@ -47,11 +47,9 @@ module Shumway.GFX {
   export enum NodeFlags {
     None                              = 0x00000,
 
-    /**
-     * Whether this node's bounding box is automatically computed from its children. If this
-     * flag is |false| then this node's bounding box can only be set via |setBounds|.
-     */
-    BoundsAutoCompute                 = 0x00002,
+    Visible                           = 0x00001,
+
+    Transparent                       = 0x00002,
 
     /**
      * Whether this node acts as a mask for another node.
@@ -59,32 +57,71 @@ module Shumway.GFX {
     IsMask                            = 0x00004,
 
     /**
+     * Whether this node is marked to be cached as a bitmap. This isn't just a performance optimization,
+     * but also affects the way masking is performed.
+     */
+    CacheAsBitmap                     = 0x00010,
+
+    /**
+     * Whether this node's contents should be drawn snapped to pixel boundaries.
+     * Only relevant for bitmaps.
+     */
+    PixelSnapping                     = 0x00020,
+
+    /**
+     * Whether this node's contents should use higher quality image smoothing.
+     * Only relevant for bitmaps.
+     */
+    ImageSmoothing                    = 0x00040,
+
+    /**
+     * Whether source has dynamic content.
+     */
+    Dynamic                           = 0x00100,
+
+    /**
+     * Whether the source's content can be scaled and drawn at a higher resolution.
+     */
+    Scalable                          = 0x00200,
+
+    /**
+     * Whether the source's content should be tiled.
+     */
+    Tileable                          = 0x00400,
+
+    /**
+     * Whether this node's bounding box is automatically computed from its children. If this
+     * flag is |false| then this node's bounding box can only be set via |setBounds|.
+     */
+    BoundsAutoCompute                 = 0x00800,
+
+    /**
      * Whether this node needs to be repainted.
      */
-    Dirty                             = 0x00010,
+    Dirty                             = 0x01000,
 
     /**
      * Whether this node's bounds is invalid and needs to be recomputed. Only nodes that have the
      * |BoundsAutoCompute| flag set can have this flag set.
      */
-    InvalidBounds                     = 0x00100,
+    InvalidBounds                     = 0x02000,
 
     /**
      * Whether this node's concatenated matrix is invalid. This happens whenever a node's ancestor
      * is moved in the node tree.
      */
-    InvalidConcatenatedMatrix         = 0x00200,
+    InvalidConcatenatedMatrix         = 0x04000,
 
     /**
      * Whether this node's inverted concatenated matrix is invalid. This happens whenever a node's ancestor
      * is moved in the node tree.
      */
-    InvalidInvertedConcatenatedMatrix = 0x00400,
+    InvalidInvertedConcatenatedMatrix = 0x08000,
 
     /**
      * Same as above, but for colors.
      */
-    InvalidConcatenatedColorMatrix    = 0x00800,
+    InvalidConcatenatedColorMatrix    = 0x10000,
 
     /**
      * Flags to propagate upwards when a node is added or removed from a group.
@@ -92,19 +129,19 @@ module Shumway.GFX {
     UpOnAddedOrRemoved                = InvalidBounds | Dirty,
 
     /**
+     * Flags to propagate downwards when a node is added or removed from a group.
+     */
+    DownOnAddedOrRemoved              = InvalidConcatenatedMatrix | InvalidInvertedConcatenatedMatrix | InvalidConcatenatedColorMatrix,
+
+    /**
      * Flags to propagate upwards when a node is moved.
      */
     UpOnMoved                         = InvalidBounds | Dirty,
 
     /**
-     * Flags to propagate downwards when a mode is added or removed from a group.
-     */
-    DownOnAddedOrRemoved              = InvalidConcatenatedMatrix | InvalidInvertedConcatenatedMatrix | InvalidConcatenatedColorMatrix,
-
-    /**
      * Flags to propagate downwards when a node is moved.
      */
-    DownOnMoved                       = InvalidConcatenatedMatrix | InvalidInvertedConcatenatedMatrix | InvalidConcatenatedColorMatrix,
+    DownOnMoved                       = InvalidConcatenatedMatrix | InvalidInvertedConcatenatedMatrix,
 
     /**
      * Flags to propagate upwards when a node's color matrix is changed.
@@ -115,8 +152,6 @@ module Shumway.GFX {
      * Flags to propagate downwards when a node's color matrix is changed.
      */
     DownOnColorMatrixChanged          = InvalidConcatenatedColorMatrix,
-
-    Visible                           = 0x10000,
 
     /**
      * Flags to propagate upwards when a node is invalidated.
@@ -131,40 +166,6 @@ module Shumway.GFX {
                                         InvalidConcatenatedMatrix |
                                         InvalidInvertedConcatenatedMatrix |
                                         Visible,
-
-    /**
-     * Whether this node is marked to be cached as a bitmap. This isn't just a performance optimization,
-     * but also affects the way masking is performed.
-     */
-    CacheAsBitmap                     = 0x20000,
-
-    /**
-     * Whether this node's contents should be drawn snapped to pixel boundaries.
-     */
-    PixelSnapping                     = 0x40000,
-
-    /**
-     * Whether this node's contents should use higher quality image smoothing.
-     */
-    ImageSmoothing                    = 0x80000,
-
-    /**
-     * Whether source has dynamic content.
-     */
-    Dynamic                           = 0x100000,
-
-    /**
-     * Whether the source's content can be scaled and drawn at a higher resolution.
-     */
-    Scalable                          = 0x200000,
-
-    /**
-     * Whether the source's content should be tiled.
-     */
-    Tileable                          = 0x400000,
-
-    // Delete These
-    Transparent                       = 0x08000,
   }
 
   /**

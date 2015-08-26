@@ -412,27 +412,19 @@ module Shumway.Player {
 
     public syncDisplayObject(displayObject: flash.display.DisplayObject,
                              async: boolean): DataBuffer {
-      var updates = new DataBuffer();
-      var assets = [];
       var serializer = new Remoting.Player.PlayerChannelSerializer();
-      serializer.output = updates;
-      serializer.outputAssets = assets;
-
       if (this.sec.flash.display.Stage.axClass.axIsType(displayObject)) {
         serializer.writeStage(<flash.display.Stage>displayObject, this._currentMouseTarget);
       }
-
-      serializer.begin(displayObject);
-      serializer.remoteObjects();
-      serializer.remoteReferences();
-      updates.writeInt(Remoting.MessageTag.EOF);
+      serializer.writeDisplayObjectRoot(displayObject);
+      serializer.writeEOF();
 
       enterTimeline("remoting assets");
       var output;
       if (async) {
-        this._gfxService.update(updates, assets);
+        this._gfxService.update(serializer.output, serializer.outputAssets);
       } else {
-        output = this._gfxService.updateAndGet(updates, assets);
+        output = this._gfxService.updateAndGet(serializer.output, serializer.outputAssets);
       }
       leaveTimeline("remoting assets");
 
@@ -440,41 +432,31 @@ module Shumway.Player {
     }
 
     public requestBitmapData(bitmapData: BitmapData): DataBuffer {
-      var output = new DataBuffer();
-      var assets = [];
       var serializer = new Remoting.Player.PlayerChannelSerializer();
-      serializer.output = output;
-      serializer.outputAssets = assets;
       serializer.writeRequestBitmapData(bitmapData);
-      output.writeInt(Remoting.MessageTag.EOF);
-      return this._gfxService.updateAndGet(output, assets);
+      serializer.writeEOF();
+      return this._gfxService.updateAndGet(serializer.output, serializer.outputAssets);
     }
 
-    public drawToBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
-      var updates = new DataBuffer();
-      var assets = [];
+    public drawToBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable,
+                        matrix: flash.geom.Matrix = null,
+                        colorTransform: flash.geom.ColorTransform = null, blendMode: string = null,
+                        clipRect: flash.geom.Rectangle = null, smoothing: boolean = false)
+    {
       var serializer = new Shumway.Remoting.Player.PlayerChannelSerializer();
-      serializer.output = updates;
-      serializer.outputAssets = assets;
-
       serializer.writeBitmapData(bitmapData);
 
       if (this.sec.flash.display.BitmapData.axClass.axIsType(source)) {
         serializer.writeBitmapData(<flash.display.BitmapData>source);
       } else {
-        var displayObject = <flash.display.DisplayObject>source;
-
-        serializer.begin(displayObject);
-        serializer.remoteObjects();
-        serializer.remoteReferences();
+        serializer.writeDisplayObjectRoot(<flash.display.DisplayObject>source);
       }
 
       serializer.writeDrawToBitmap(bitmapData, source, matrix, colorTransform, blendMode, clipRect, smoothing);
-
-      updates.writeInt(Shumway.Remoting.MessageTag.EOF);
+      serializer.writeEOF();
 
       enterTimeline("sendUpdates");
-      this._gfxService.updateAndGet(updates, assets); // TODO replace to update() ?
+      this._gfxService.update(serializer.output, serializer.outputAssets);
       leaveTimeline("sendUpdates");
     }
 

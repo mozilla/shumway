@@ -124,8 +124,8 @@ module Shumway.AVMX {
   export function validateConstruct(sec: AXSecurityDomain, axClass: AXClass, argc: number) {
     if (!axClass || !axClass.axConstruct) {
       var name = axClass && axClass.classInfo ?
-                         axClass.classInfo.instanceInfo.getName().name :
-                         'value';
+                 axClass.classInfo.instanceInfo.getName().name :
+                 'value';
       sec.throwError('TypeError', Errors.ConstructOfNonFunctionError, name);
     }
     var methodInfo = axClass.classInfo.getInitializer();
@@ -141,17 +141,13 @@ module Shumway.AVMX {
     }
   }
   // REDUX: check if we need this now that we do arg checking at callsites.
-  export function checkParameterType(argument: any, name: string, type: AS.ASClass,
-                                     allowNull: boolean) {
+  export function checkParameterType(argument: any, name: string, type: AS.ASClass) {
     if (argument == null) {
-      if (allowNull) {
-        return;
-      }
       type.sec.throwError('TypeError', Errors.NullPointerError, name);
     }
     if (!type.axIsType(argument)) {
       type.sec.throwError('TypeError', Errors.CheckTypeFailedError, argument,
-                                     type.classInfo.instanceInfo.getClassName());
+                          type.classInfo.instanceInfo.getClassName());
     }
   }
 

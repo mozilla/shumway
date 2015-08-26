@@ -53,8 +53,9 @@ module Shumway.Remoting.Player {
     public phase: RemotingPhase = RemotingPhase.Objects;
     public roots: DisplayObject [] = null;
 
-    begin(displayObject: DisplayObject) {
-      this.roots = [displayObject];
+    constructor() {
+      this.output = new DataBuffer();
+      this.outputAssets = [];
     }
 
     remoteObjects() {
@@ -62,7 +63,7 @@ module Shumway.Remoting.Player {
       var roots = this.roots;
       for (var i = 0; i < roots.length; i++) {
         Shumway.Player.enterTimeline("remoting objects");
-        this.writeDirtyDisplayObjects(roots[i]);
+        this.writeDirtyDisplayObjects(roots[i], false);
         Shumway.Player.leaveTimeline("remoting objects");
       }
     }
@@ -77,10 +78,14 @@ module Shumway.Remoting.Player {
       }
     }
 
+    writeEOF() {
+      this.output.writeInt(Remoting.MessageTag.EOF);
+    }
+
     /**
      * Serializes dirty display objects starting at the specified root |displayObject| node.
      */
-    writeDirtyDisplayObjects(displayObject: DisplayObject, clearDirtyDescendentsFlag: boolean = false) {
+    writeDirtyDisplayObjects(displayObject: DisplayObject, clearDirtyDescendentsFlag: boolean) {
       var self = this;
       var roots = this.roots;
       displayObject.visit(function (displayObject) {
@@ -169,6 +174,13 @@ module Shumway.Remoting.Player {
         this._writeRectangle(bounds);
         netStream._isDirty = false;
       }
+    }
+
+    writeDisplayObjectRoot(displayObject: DisplayObject) {
+      release || assert(!this.roots);
+      this.roots = [displayObject];
+      this.remoteObjects();
+      this.remoteReferences();
     }
 
     writeBitmapData(bitmapData: BitmapData) {
@@ -310,8 +322,9 @@ module Shumway.Remoting.Player {
           this.output.writeInt(PixelSnapping.toNumber(bitmap.pixelSnapping));
           this.output.writeInt(bitmap.smoothing ? 1 : 0);
         } else {
-          this.output.writeInt(PixelSnapping.toNumber(PixelSnapping.AUTO));
-          this.output.writeInt(1);
+          // For non-bitmaps, write null-defaults that cause flags not to be set in the GFX backend.
+          this.output.writeInt(PixelSnapping.toNumber(PixelSnapping.NEVER));
+          this.output.writeInt(0);
         }
       }
 
