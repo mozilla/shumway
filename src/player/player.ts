@@ -432,7 +432,7 @@ module Shumway.Player {
       if (async) {
         this._gfxService.update(updates, assets);
       } else {
-        output = this._gfxService.updateAndGet(updates, assets);
+        output = this._gfxService.updateAndGet(updates, assets).clone();
       }
       leaveTimeline("remoting assets");
 
@@ -447,7 +447,7 @@ module Shumway.Player {
       serializer.outputAssets = assets;
       serializer.writeRequestBitmapData(bitmapData);
       output.writeInt(Remoting.MessageTag.EOF);
-      return this._gfxService.updateAndGet(output, assets);
+      return this._gfxService.updateAndGet(output, assets).clone();
     }
 
     public drawToBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
