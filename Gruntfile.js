@@ -139,21 +139,21 @@ module.exports = function(grunt) {
              // Between each run, emit the test name as "::: test :::" so it's easy to identify where things go wrong.
              'rm test/test_avm2_shumway.baseline; cat test/avm2/shumway.txt | grep -v @ | xargs -L 1 -I \'{}\' sh -c \'echo "::: {} :::" >> test/test_avm2_shumway.baseline; utils/tamarin-redux/bin/shell/avmshell {} >> test/test_avm2_shumway.baseline;\'; ' +
              // Diff results.
-             'diff build/test/test_avm2_shumway.run test/test_avm2_shumway.baseline'
+             'diff test/test_avm2_shumway.baseline build/test/test_avm2_shumway.run'
       },
       // Runs tamarin acceptance tests and tests against the current baseline. If you get more tests to pass, update the baseline.
       test_avm2_acceptance: {
         maxBuffer: Infinity,
         cmd: 'mkdir -p build/test; ' +
              'utils/jsshell/js build/ts/shell.js -x -det -v test/avm2/acceptance.json | tee build/test/test_avm2_acceptance_stdout.run | node test/avm2/count_totals.js | tee build/test/test_avm2_acceptance.run && ' +
-             'diff build/test/test_avm2_acceptance.run test/test_avm2_acceptance.baseline'
+             'diff test/test_avm2_acceptance.baseline build/test/test_avm2_acceptance.run'
       },
       // Runs the pypy tests and tests against the current baseline. If you get more tests to pass, update the baseline.
       test_avm2_pypy: {
         maxBuffer: Infinity,
         cmd: 'mkdir -p build/test; ' +
              'find -L test/avm2/pypy -name "*.abc" | xargs -I {} utils/jsshell/js build/ts/shell.js -x -det -v {} | tee build/test/test_avm2_pypy.run &&' +
-             'diff build/test/test_avm2_pypy.run test/test_avm2_pypy.baseline'
+             'diff test/test_avm2_pypy.baseline build/test/test_avm2_pypy.run'
       },
       // Runs archive SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
       // TODO: We need to pass the -k flag to parallel to keep the output in the right order, do what once we're ready
@@ -163,13 +163,13 @@ module.exports = function(grunt) {
         cmd: 'mkdir -p build/test/; ' +
              'find -L test/arch/swfs -name "*.swf" | parallel --gnu -X -N1 utils/jsshell/js build/ts/shell.js -x -det -fc 10 {} | tee build/test_arch.run;' +
              'echo "Output saved to build/test_arch.run, at some point create a baseline and stick to it."'
-          // 'diff build/test/arch/arch.run test/arch/arch.baseline'
+          // 'diff test/arch/arch.baseline build/test/arch/arch.run'
       },
       // Runs SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
       test_swf: {
         maxBuffer: Infinity,
         cmd: 'find -L test/swf -name "*.swf" | parallel -k --gnu -X -N1 utils/jsshell/js build/ts/shell.js -x -det -fc 10 {} | LC_ALL=C sort > build/test/test_swf.run && ' +
-             'diff build/test/test_swf.run test/test_swf.baseline'
+             'diff test/test_swf.baseline build/test/test_swf.run'
       },
       // Runs SWF trace tests.
       test_trace: {
@@ -187,7 +187,7 @@ module.exports = function(grunt) {
         cmd: 'mkdir -p build/test; ' +
              'cat test/ats/test_swf_avm2.txt | parallel -k --gnu -X -N50 utils/jsshell/js build/ts/shell.js -x -det -fc 10 {} > build/test/test_avm2_ats.run; ' +
              'if [ ! -f "test/test_avm2_ats.baseline" ]; then echo "Creating Baseline"; cp build/test/test_avm2_ats.run test/test_avm2_ats.baseline; fi;' +
-             'diff build/test/test_avm2_ats.run test/test_avm2_ats.baseline;'
+             'diff test/test_avm2_ats.baseline build/test/test_avm2_ats.run;'
       },
       // Run this to make sure the SWF parser still works.
       test_avm2_ats_parse: {
@@ -216,7 +216,7 @@ module.exports = function(grunt) {
         maxBuffer: Infinity,
         cmd: 'mkdir -p build/test;' +
              'utils/jsshell/js build/ts/shell.js -x -det test/mock/jwplayer.js examples/jwplayer/jwplayer.flash.swf -fc 10 > build/test/test_mock.run;' +
-             'diff build/test/test_mock.run test/test_mock.baseline;'
+             'diff test/test_mock.baseline build/test/test_mock.run;'
       },
       bench_avm2: {
         maxBuffer: Infinity,
