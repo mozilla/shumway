@@ -270,7 +270,7 @@ ShumwayStreamConverterBase.prototype = {
     startupInfo.embedTag = null;
     startupInfo.isPausedAtStart = /\bpaused=true$/.test(url);
     startupInfo.initStartTime = initStartTime;
-    startupInfo.allowScriptAccess = false;
+    startupInfo.allowScriptAccess = true;
     return startupInfo;
   },
 
