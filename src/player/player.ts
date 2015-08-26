@@ -424,7 +424,7 @@ module Shumway.Player {
       if (async) {
         this._gfxService.update(serializer.output, serializer.outputAssets);
       } else {
-        output = this._gfxService.updateAndGet(serializer.output, serializer.outputAssets);
+        output = this._gfxService.updateAndGet(serializer.output, serializer.outputAssets).clone();
       }
       leaveTimeline("remoting assets");
 
@@ -435,7 +435,7 @@ module Shumway.Player {
       var serializer = new Remoting.Player.PlayerChannelSerializer();
       serializer.writeRequestBitmapData(bitmapData);
       serializer.writeEOF();
-      return this._gfxService.updateAndGet(serializer.output, serializer.outputAssets);
+      return this._gfxService.updateAndGet(serializer.output, serializer.outputAssets).clone();
     }
 
     public drawToBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable,
