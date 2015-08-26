@@ -45,11 +45,8 @@ RUNNING:  test/ats/swfs/00b1704fb0217fa5ca312ad60ace29955fb912e3e3ec10043cc49ecd
 HASHCODE: test/ats/swfs/00b1704fb0217fa5ca312ad60ace29955fb912e3e3ec10043cc49ecd3ed24cb315b9f91598f89cc5b8a97e0e80f86cda8aabd733bb6d7847c0922f05baa0780e.swf: 0xdd57a675
 RUNNING:  test/ats/swfs/00ba005c46a541adbc89db4df33db6582f3f14d1a2312945ffd5983cefc8ab837d8a9ae83e035565fcdefa2996e674f70b8cb5f08863f199706bc9361d6c0641.swf
 HASHCODE: test/ats/swfs/00ba005c46a541adbc89db4df33db6582f3f14d1a2312945ffd5983cefc8ab837d8a9ae83e035565fcdefa2996e674f70b8cb5f08863f199706bc9361d6c0641.swf: 0xd46ccb00
-[91mTag not handled by the parser: 60: CODE_DEFINE_VIDEO_STREAM[0m
-[91mTag not handled by the parser: 61: CODE_VIDEO_FRAME[0m
 RUNNING:  test/ats/swfs/00bc2764dee534e7abb68991e510407f683ba687f1012ca5422c7aa2bf796076be8b1799c1a1b1938168a4fe24c48e1bc052fffe199af1e3eccf221d4394439b.swf
-[91mUnknown symbol requested: 1[0m
-HASHCODE: test/ats/swfs/00bc2764dee534e7abb68991e510407f683ba687f1012ca5422c7aa2bf796076be8b1799c1a1b1938168a4fe24c48e1bc052fffe199af1e3eccf221d4394439b.swf: 0x00000000
+HASHCODE: test/ats/swfs/00bc2764dee534e7abb68991e510407f683ba687f1012ca5422c7aa2bf796076be8b1799c1a1b1938168a4fe24c48e1bc052fffe199af1e3eccf221d4394439b.swf: 0x87cb05e0
 RUNNING:  test/ats/swfs/00c724a2af04aeecd2e7bb1d377d39e07b4710d667dbac78edeab0cf81bd938d6859ab3991052b17e3a597a76cd2376ada926ea6964f75c006a79fc916bdd96c.swf
 HASHCODE: test/ats/swfs/00c724a2af04aeecd2e7bb1d377d39e07b4710d667dbac78edeab0cf81bd938d6859ab3991052b17e3a597a76cd2376ada926ea6964f75c006a79fc916bdd96c.swf: 0xef5cc7ed
 RUNNING:  test/ats/swfs/00d6bec0bd9992485f10902251b028902d15d63eb5ff0cd3f63cb12f815efe35da31270ef538e39163794eede85cb5db4b43d72a536305c46834dc358278139d.swf
@@ -151,6 +148,7 @@ RUNNING:  test/ats/swfs/028b6c3ae47d7ca2bf150632dd491bb986401e2081fdbda1e29e77d5
 [91msomewhatImplemented: public flash.net.NetStream::set client[0m
 [91msomewhatImplemented: NetStream._invoke (4)[0m
 [91msomewhatImplemented: public flash.net.NetStream::play[0m
+[91msomewhatImplemented: NetStream._invoke (300)[0m
 [91msomewhatImplemented: NetStream._invoke (305)[0m
 [91msomewhatImplemented: NetStream._invoke (306)[0m
 HASHCODE: test/ats/swfs/028b6c3ae47d7ca2bf150632dd491bb986401e2081fdbda1e29e77d5c1015e2f2cd0e8ca896684748aa9daff0c92d553516be50d05305e33c3d8ebd6a3b0804b.swf: 0x7e055a73
@@ -205,11 +203,8 @@ HASHCODE: test/ats/swfs/03398183f32bcf40113d61d80ff73c7ebae01eaf79e94c2e4ebe3c1c
 RUNNING:  test/ats/swfs/03399686f91091308d71649ff45cf6e9620fafcfe4d18524c982fe5ab5f2f89e568af61304997c34f0ee0869b0b808107be6de66db1304ee74207413744ce1c7.swf
 [91mUncaught error in handler for event timer: , Error: Error #2067: The ExternalInterface is not available in this container. ExternalInterface requires Internet Explorer ActiveX, Firefox, Mozilla 1.7.5 and greater, or other browsers that support NPRuntime.[0m
 HASHCODE: test/ats/swfs/03399686f91091308d71649ff45cf6e9620fafcfe4d18524c982fe5ab5f2f89e568af61304997c34f0ee0869b0b808107be6de66db1304ee74207413744ce1c7.swf: 0x0d05f888
-[91mTag not handled by the parser: 60: CODE_DEFINE_VIDEO_STREAM[0m
-[91mTag not handled by the parser: 61: CODE_VIDEO_FRAME[0m
 RUNNING:  test/ats/swfs/0340b8929ffac5516f73c9ef94d354dac59bfce74c8c2965d52d0bcc7d0f64df2c46e1afad8dcbb642b16bb5396c907ef4357dfb8e198877a128c4cd4ac19368.swf
-[91mUnknown symbol requested: 1[0m
-HASHCODE: test/ats/swfs/0340b8929ffac5516f73c9ef94d354dac59bfce74c8c2965d52d0bcc7d0f64df2c46e1afad8dcbb642b16bb5396c907ef4357dfb8e198877a128c4cd4ac19368.swf: 0x00000000
+HASHCODE: test/ats/swfs/0340b8929ffac5516f73c9ef94d354dac59bfce74c8c2965d52d0bcc7d0f64df2c46e1afad8dcbb642b16bb5396c907ef4357dfb8e198877a128c4cd4ac19368.swf: 0xaa6215e0
 RUNNING:  test/ats/swfs/03432c64529fbb73ff6098ac8d0223d254b317f5ffd3cd039663ccb04e61bab8ae0448b5f7464977c04ed401ad039f8151f51c7a879344ecb73897b55c14b799.swf
 [91mFont metrics for "Adobe Clean" unknown. Fallback to default.[0m
 HASHCODE: test/ats/swfs/03432c64529fbb73ff6098ac8d0223d254b317f5ffd3cd039663ccb04e61bab8ae0448b5f7464977c04ed401ad039f8151f51c7a879344ecb73897b55c14b799.swf: 0x3c0656c0
