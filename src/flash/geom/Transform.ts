@@ -111,16 +111,23 @@ module Shumway.AVMX.AS.flash.geom {
 
     get perspectiveProjection(): flash.geom.PerspectiveProjection {
       somewhatImplemented("public flash.geom.Transform::get perspectiveProjection");
-      var projection = this._displayObject._perspectiveProjection;
-      return projection && projection.clone();
+      if (!this._displayObject._hasFlags(display.DisplayObjectFlags.HasPerspectiveProjection)) {
+        return null;
+      }
+      var PerspectiveProjectionClass = this.sec.flash.geom.PerspectiveProjection.axClass;
+      return PerspectiveProjectionClass.FromDisplayObject(this._displayObject);
     }
 
     set perspectiveProjection(projection: flash.geom.PerspectiveProjection) {
       somewhatImplemented("public flash.geom.Transform::set perspectiveProjection");
-      if (projection) {
-        projection = projection.clone();
+      if (!projection) {
+        this._displayObject._removeFlags(display.DisplayObjectFlags.HasPerspectiveProjection);
+        return;
       }
-      this._displayObject._perspectiveProjection = projection;
+      this._displayObject._setFlags(display.DisplayObjectFlags.HasPerspectiveProjection);
+      this._displayObject._perspectiveProjectionCenterX = +projection._centerX;
+      this._displayObject._perspectiveProjectionCenterY = +projection._centerY;
+      this._displayObject._perspectiveProjectionFOV = +projection._fieldOfView;
     }
   }
 }

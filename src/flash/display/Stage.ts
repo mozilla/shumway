@@ -62,6 +62,8 @@ module Shumway.AVMX.AS.flash.display {
       this._stageContainerWidth = -1;
       this._stageContainerHeight = -1;
 
+      this._setFlags(DisplayObjectFlags.HasPerspectiveProjection);
+
       /**
        * Indicates if a Render event was requested by calling the |invalid| function.
        */
