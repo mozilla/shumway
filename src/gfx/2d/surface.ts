@@ -39,6 +39,7 @@ module Shumway.GFX.Canvas2D {
     static _svgDropshadowFilterBlur: Element;
     static _svgDropshadowFilterFlood: Element;
     static _svgDropshadowFilterOffset: Element;
+    static _svgDropshadowMergeNode: Element;
 
     /**
      * Reusable colormatrix filter SVG element.
@@ -94,14 +95,18 @@ module Shumway.GFX.Canvas2D {
       feComposite.setAttribute("in2", "offsetblur");
       feComposite.setAttribute("operator", "in");
       dropShadowFilter.appendChild(feComposite);
+      var feComposite = document.createElementNS("http://www.w3.org/2000/svg", "feComposite");
+      feComposite.setAttribute("in2", "SourceAlpha");
+      feComposite.setAttribute("operator", "out");
+      feComposite.setAttribute("result", "outer");
+      dropShadowFilter.appendChild(feComposite);
 
       var feMerge = document.createElementNS("http://www.w3.org/2000/svg", "feMerge");
       var feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode");
       feMerge.appendChild(feMergeNode);
-
       var feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode");
-      feMergeNode.setAttribute("in", "SourceGraphic");
       feMerge.appendChild(feMergeNode);
+      Filters._svgDropshadowMergeNode = feMergeNode;
       dropShadowFilter.appendChild(feMerge);
       defs.appendChild(dropShadowFilter);
 
@@ -113,6 +118,12 @@ module Shumway.GFX.Canvas2D {
       feColorMatrix.setAttribute("in", "SourceGraphic");
       feColorMatrix.setAttribute("type", "matrix");
       colorMatrixFilter.appendChild(feColorMatrix);
+      
+      var feComposite = document.createElementNS("http://www.w3.org/2000/svg", "feComposite");
+      feComposite.setAttribute("in2", "SourceAlpha");
+      feComposite.setAttribute("operator", "in");
+      colorMatrixFilter.appendChild(feComposite);
+      
       defs.appendChild(colorMatrixFilter);
       Filters._svgColorMatrixFilter = feColorMatrix;
       svg.appendChild(defs);
@@ -146,6 +157,8 @@ module Shumway.GFX.Canvas2D {
           String(Math.sin(dropshadowFilter.angle * Math.PI / 180) * dropshadowFilter.distance * scale));
         Filters._svgDropshadowFilterFlood.setAttribute("flood-color",
           ColorUtilities.rgbaToCSSStyle(((dropshadowFilter.color << 8) | Math.round(255 * dropshadowFilter.alpha))));
+        Filters._svgDropshadowMergeNode.setAttribute("in",
+          dropshadowFilter.knockout ? "outer" : "SourceGraphic");
         context.filter = "url(#svgDropShadowFilter)";
       } else if (filter instanceof ColorMatrix) {
         var colorMatrix = <ColorMatrix>filter;
@@ -169,10 +182,12 @@ module Shumway.GFX.Canvas2D {
         context.globalColorMatrix = null;
       } else {
         context.globalAlpha = 1;
-        // TODO: We should reconsider using SVG color matrix filters once we found out how to deal
-        // withe the fact that they always get applied to the whole canvas, not just the covered
-        // pixels of drawn images/shapes/text.
-        context.globalColorMatrix = colorMatrix;
+        if (Filters._svgFiltersAreSupported) {
+          Filters._applyFilter(1, context, colorMatrix);
+          context.globalColorMatrix = null;
+        } else {
+          context.globalColorMatrix = colorMatrix;
+        }
       }
     }
   }
@@ -316,6 +331,9 @@ module Shumway.GFX.Canvas2D {
       this.context.globalCompositeOperation = getCompositeOperation(blendMode);
       
       if (filters) {
+        if (colorMatrix && !colorMatrix.isIdentity()) {
+          filters = filters.concat(colorMatrix);
+        }
         var i = 0;
         if (filters.length > 1) {
           // If there are more than one filter defined on this node, we create another temporary
