@@ -562,22 +562,68 @@ ShumwayChromeActions.prototype = {
   },
 
   navigateTo: function (data) {
-    // Our restrictions are a little bit different from Flash's: let's enable
-    // only http(s) and only when script execution is allowed.
+    // navigation is only allowed under these conditions:
+    // - for "javascript:foo()"-type URLs, script access has to be granted to the SWF
+    // - for all other protocols, either script access has to be granted, or the `target`
+    // parameter must *not* be "_top" or "_parent".
+    // See the following document for more, if confusingly worded, information:
     // See https://helpx.adobe.com/flash/kb/control-access-scripts-host-web.html
     var url = data.url || 'about:blank';
     var target = data.target || '_self';
-    var isWhitelistedProtocol = /^(http|https):\/\//i.test(url);
-    if (!isWhitelistedProtocol || !this.allowScriptAccess) {
+    // Deviating from what Flash does, we only support a restricted set of URL schemes.
+    var scheme;
+    try {
+      var baseURI = Services.io.newURI(this.baseUrl, null, null);
+      scheme = Services.io.newURI(url, null, baseURI).scheme;
+    } catch (e) {
+      log("Warning, attempt to navigate to invalid URI '" + url + "'");
+      return;
+    }
+    switch (scheme) {
+      case 'http':
+      case 'https':
+      case 'ftp':
+      case 'mailto':
+      case 'sms':
+      case 'tel':
+      case 'facetime':
+      case 'gopher':
+      case 'irc':
+      case 'skype':
+      case 'javascript':
+        break;
+      default:
+        log("Warning, URL ignored because it has the unsupported scheme '" + scheme + "'.");
+        return;
+    }
+    var isJavaScriptURL = scheme === "javascript";
+    if (!this.allowScriptAccess &&
+        isJavaScriptURL ||
+        (target === '_top' || target === '_parent')) {
       return;
     }
     // ...and only when user input is in-progress.
     if (!this.isUserInputInProgress()) {
       return;
     }
-    var embedTag = this.embedTag;
-    var window = embedTag ? embedTag.ownerDocument.defaultView : this.window;
-    window.open(url, target);
+    // For full conformance, we'd need to support evaluating the contents of "javascript:" urls
+    // in other iframes, if the security settings allow it. We punt on that for now, because
+    // it's non-trivial, and we haven't seen it used in the wild at all.
+    if (isJavaScriptURL) {
+      if (target === '_self') {
+        // Ensure the externalInterface system is initialized.
+        this.externalCom({action: 'init'});
+        // Then use it to evaluate the JS in the URL.
+        this.externalCom({action: 'eval', expression: url.trimLeft().substr("javascript:".length)});
+      } else {
+        log("Warning, 'javascript:' url ignored because it'd execute in another iframe.");
+      }
+    } else {
+      var embedTag = this.embedTag;
+      // TODO: check what the opener should be here. Probably the embedding page, not the iframe.
+      var window = embedTag ? embedTag.ownerDocument.defaultView : this.window;
+      window.open(url, target);
+    }
   },
 
   fallback: function(automatic) {
