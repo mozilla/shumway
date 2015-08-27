@@ -17,50 +17,101 @@
 module Shumway.AVMX.AS.flash.geom {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
+  export enum DefaultPerspectiveProjection {
+    FOV = 55,
+    CenterX = 250,
+    CenterY = 250,
+  }
+
   export class PerspectiveProjection extends ASObject {
-    
+
+    static axClass: typeof PerspectiveProjection;
     static classInitializer: any = null;
     
     constructor () {
       super();
-      this._fieldOfView = 55;
-      this._focalLength = 480.24554443359375;
-      this._projectionCenter = new this.sec.flash.geom.Point(250, 250);
+      this._fieldOfView = DefaultPerspectiveProjection.FOV;
+      this._centerX = DefaultPerspectiveProjection.CenterX;
+      this._centerY = DefaultPerspectiveProjection.CenterY;
     }
 
-    private _fieldOfView: number;
-    private _focalLength: number;
-    private _projectionCenter: flash.geom.Point;
+
+    static FromDisplayObject(displayObject: flash.display.DisplayObject) {
+      release || Debug.assert(displayObject);
+      var projection: PerspectiveProjection = this.axConstruct();
+      projection._displayObject = displayObject;
+      return projection;
+    }
+
+    private _displayObject: flash.display.DisplayObject;
+    _fieldOfView: number;
+    _centerX: number;
+    _centerY: number;
 
     get fieldOfView(): number {
       somewhatImplemented("public flash.geom.PerspectiveProjection::get fieldOfView");
-      return this._fieldOfView;
+      return this._displayObject ?
+             this._displayObject._perspectiveProjectionFOV :
+             this._fieldOfView;
     }
     set fieldOfView(fieldOfViewAngleInDegrees: number) {
       fieldOfViewAngleInDegrees = +fieldOfViewAngleInDegrees;
       somewhatImplemented("public flash.geom.PerspectiveProjection::set fieldOfView");
-      this._fieldOfView = fieldOfViewAngleInDegrees;
+      if (this._displayObject) {
+        this._displayObject._perspectiveProjectionFOV = fieldOfViewAngleInDegrees;
+      } else {
+        this._fieldOfView = fieldOfViewAngleInDegrees;
+      }
     }
     get projectionCenter(): flash.geom.Point {
       somewhatImplemented("public flash.geom.PerspectiveProjection::get projectionCenter");
-      return this._projectionCenter;
+      var centerX: number;
+      var centerY: number;
+      if (this._displayObject) {
+        centerX = this._displayObject._perspectiveProjectionCenterX;
+        centerY = this._displayObject._perspectiveProjectionCenterY;
+      } else {
+        centerX = this._centerX;
+        centerY = this._centerY;
+      }
+      return new this.sec.flash.geom.Point(centerX, centerY);
     }
     set projectionCenter(p: flash.geom.Point) {
       somewhatImplemented("public flash.geom.PerspectiveProjection::set projectionCenter");
-      this._setProjectionCenterNoWarn(p);
-    }
-    // The Loader sets an initial projectionCenter, and we don't want to warn about that.
-    _setProjectionCenterNoWarn(p: flash.geom.Point) {
-      this._projectionCenter = p;
+      if (this._displayObject) {
+        this._displayObject._perspectiveProjectionCenterX = +p.x;
+        this._displayObject._perspectiveProjectionCenterY = +p.y;
+      } else {
+        this._centerX = +p.x;
+        this._centerY = +p.y;
+      }
     }
     get focalLength(): number {
       somewhatImplemented("public flash.geom.PerspectiveProjection::get focalLength");
-      return this._focalLength;
+      var fov: number;
+      var centerX: number;
+
+      if (this._displayObject) {
+        fov = this._displayObject._perspectiveProjectionFOV;
+        centerX = this._displayObject._perspectiveProjectionCenterX;
+      } else {
+        fov = this._fieldOfView;
+        centerX = this._centerX;
+      }
+      return 1 / Math.tan(fov * Math.PI / 180 / 2) * centerX;
     }
     set focalLength(value: number) {
       value = +value;
       somewhatImplemented("public flash.geom.PerspectiveProjection::set focalLength");
-      this._focalLength = value;
+      var centerX = this._displayObject ?
+                    this._displayObject._perspectiveProjectionCenterX :
+                    this._centerX;
+      var fov = 2 * Math.atan(centerX / value);
+      if (this._displayObject) {
+        this._displayObject._perspectiveProjectionFOV = fov;
+      } else {
+        this._fieldOfView = fov;
+      }
     }
     toMatrix3D(): flash.geom.Matrix3D {
       somewhatImplemented("public flash.geom.PerspectiveProjection::toMatrix3D");
@@ -68,10 +119,11 @@ module Shumway.AVMX.AS.flash.geom {
     }
     
     clone(): PerspectiveProjection {
-      var clone = new this.sec.flash.geom.PerspectiveProjection();
+      var clone: PerspectiveProjection = Object.create(this.axClass.tPrototype);
       clone._fieldOfView = this._fieldOfView;
-      clone._focalLength = this._focalLength;
-      clone._projectionCenter = this._projectionCenter;
+      clone._centerX = this._centerX;
+      clone._centerY = this._centerY;
+      clone._displayObject = this._displayObject;
       return clone;
     }
   }

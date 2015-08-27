@@ -32,6 +32,8 @@ public class PerspectiveProjectionClass extends MovieClip {
     mc.graphics.beginFill(0x0044aa);
     mc.graphics.drawRect(0, 0, 100, 100);
     addChild(mc);
+    trace('Initial stage projectionCenter: ' + stage.transform.perspectiveProjection.projectionCenter);
+
     trace('matrix is initially set: ' + mc.transform.matrix);
     trace('matrix3D is initially null: ' + mc.transform.matrix3D);
     trace(mc.transform.perspectiveProjection);
@@ -39,7 +41,7 @@ public class PerspectiveProjectionClass extends MovieClip {
 
     var projection:PerspectiveProjection = new PerspectiveProjection();
     trace('Initial fieldOfView: ' + projection.fieldOfView);
-    trace('Initial focalLength: ' + projection.focalLength);
+    trace('Initial focalLength: ' + projection.focalLength.toFixed(10));
     trace('Initial projectionCenter: ' + projection.projectionCenter);
     mc.transform.perspectiveProjection = projection;
     trace('perspectiveProjection is set: ' + mc.transform.perspectiveProjection);
@@ -54,8 +56,17 @@ public class PerspectiveProjectionClass extends MovieClip {
     projection = root.transform.perspectiveProjection;
     trace('root has a default projection: ' + projection);
     trace('Initial root fieldOfView: ' + projection.fieldOfView);
-//trace('Initial root focalLength: ' + projection.focalLength);
+    trace('Initial root focalLength: ' + projection.focalLength.toFixed(10));
     trace('Initial root projectionCenter: ' + projection.projectionCenter);
+
+    projection.fieldOfView = 100;
+    trace('changed root fieldOfView: ' + projection.fieldOfView);
+    trace('changed root focalLength: ' + projection.focalLength.toFixed(10));
+    projection = root.transform.perspectiveProjection;
+    trace('changed root fieldOfView: ' + projection.fieldOfView);
+    trace('changed root focalLength: ' + projection.focalLength.toFixed(10));
+
+
   }
 }
 

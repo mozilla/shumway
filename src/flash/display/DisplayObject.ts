@@ -186,6 +186,11 @@ module Shumway.AVMX.AS.flash.display {
     HasPlaceObjectInitPending                 = 0x020000,
 
     /**
+     * Indicates whether a transform.perspectiveProjection was set.
+     */
+    HasPerspectiveProjection                  = 0x040000,
+
+    /**
      * Indicates whether this display object's matrix has changed since the last time it was
      * synchronized.
      */
@@ -568,7 +573,9 @@ module Shumway.AVMX.AS.flash.display {
       this._matrix = new matrixClass();
       this._invertedMatrix = new matrixClass();
       this._matrix3D = null;
-      this._perspectiveProjection = null;
+      this._perspectiveProjectionFOV = geom.DefaultPerspectiveProjection.FOV;
+      this._perspectiveProjectionCenterX = geom.DefaultPerspectiveProjection.CenterX;
+      this._perspectiveProjectionCenterY = geom.DefaultPerspectiveProjection.CenterY;
       var colorTransformClass = this.sec.flash.geom.ColorTransform;
       this._colorTransform = new colorTransformClass();
       this._concatenatedColorTransform = new colorTransformClass();
@@ -787,6 +794,9 @@ module Shumway.AVMX.AS.flash.display {
     _colorTransform: flash.geom.ColorTransform;
     _concatenatedColorTransform: flash.geom.ColorTransform;
     _matrix3D: flash.geom.Matrix3D;
+    _perspectiveProjectionFOV: number;
+    _perspectiveProjectionCenterX: number;
+    _perspectiveProjectionCenterY: number;
     _perspectiveProjection: flash.geom.PerspectiveProjection;
     _depth: number;
     _ratio: number;
