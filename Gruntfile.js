@@ -1080,6 +1080,7 @@ module.exports = function(grunt) {
       // shuobject packaging
       copyFilesUsingPattern('web/iframe/*', outputDir + '/iframe');
       grunt.file.copy('extension/shuobject/shuobject.js', outputDir + '/shuobject.js');
+      grunt.file.copy('src/compatibility.js', outputDir + '/src/compatibility.js');
 
       // shell packaging
       grunt.file.copy('build/ts/shell.js', outputDir + '/build/ts/shell.js');
