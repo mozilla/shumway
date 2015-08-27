@@ -145,6 +145,22 @@ module Shumway.ArrayUtilities {
     }
 
     /**
+     * Clone the DataBuffer in a way that guarantees the underlying ArrayBuffer to be copied
+     * into an instance of the current global's ArrayBuffer.
+     *
+     * Important if the underlying buffer comes from a different global, in which case accessing
+     * its elements is excruiciatingly slow.
+     */
+    clone(): DataBuffer {
+      var clone = DataBuffer.FromArrayBuffer(new Uint8Array(this._u8).buffer, this._length);
+      clone._position = this._position;
+      clone._littleEndian = this._littleEndian;
+      clone._bitBuffer = this._bitBuffer;
+      clone._bitLength = this._bitLength;
+      return clone;
+    }
+
+    /**
      * By default, we only have a byte view. All other views are |null|.
      */
     private _resetViews() {
