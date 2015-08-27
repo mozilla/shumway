@@ -17,6 +17,10 @@
 module Shumway.AVMX.AS.flash.geom {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
+  /**
+   * Initial values for the projection as used in Flash. Only for `root` will a different center
+   * be used: constructing an instance manually will get 250,250.
+   */
   export enum DefaultPerspectiveProjection {
     FOV = 55,
     CenterX = 250,
