@@ -64,7 +64,7 @@ histogramNames.forEach(function (n) {
   print();
   print(n + " Count: " + h.length);
   print();
-  histogram(h, 10).forEach(function (v) {
+  histogram(h, n === "Not Implemented" ? 1 : 10).forEach(function (v) {
     print(v[1] + ": " + v[0]);
   });
 });
