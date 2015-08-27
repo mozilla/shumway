@@ -721,6 +721,9 @@ module Shumway.AVMX.AS.flash.display {
         movieClipClass.frameNavigationModel = loaderInfo.swfVersion < 10 ?
                                               flash.display.FrameNavigationModel.SWF9 :
                                               flash.display.FrameNavigationModel.SWF10;
+        root._perspectiveProjectionCenterX = this._stage.stageWidth / 2;
+        root._perspectiveProjectionCenterY = this._stage.stageHeight / 2;
+        root._setFlags(DisplayObjectFlags.HasPerspectiveProjection);
       }
       this._content = root;
       if (this === loaderClass.getRootLoader()) {

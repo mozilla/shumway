@@ -90,6 +90,7 @@ interface ISecurityDomain {
       Vector3D: typeof flashPackage.geom.Vector3D;
       ColorTransform: typeof flashPackage.geom.ColorTransform;
       Transform: typeof flashPackage.geom.Transform;
+      PerspectiveProjection: typeof flashPackage.geom.PerspectiveProjection;
     }
     net: {
       URLRequest: typeof flashPackage.net.URLRequest;
@@ -170,6 +171,7 @@ module Shumway.AVMX.AS {
   M("flash.geom.Vector3D", flash.geom.Vector3D);
   M("flash.geom.Transform", flash.geom.Transform);
   M("flash.geom.ColorTransform", flash.geom.ColorTransform);
+  M("flash.geom.PerspectiveProjection", flash.geom.PerspectiveProjection);
 
   M("flash.events.EventDispatcher", flash.events.EventDispatcher);
   M("flash.events.Event", flash.events.Event);

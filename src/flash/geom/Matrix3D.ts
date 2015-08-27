@@ -72,7 +72,9 @@ module Shumway.AVMX.AS.flash.geom {
       return result;
     }
 
-    _matrix: Float32Array;
+    private _matrix: Float32Array;
+    private _displayObject: flash.display.DisplayObject;
+
     constructor (v: any = null) {
       super();
       this._matrix = new Float32Array(16);
@@ -83,18 +85,23 @@ module Shumway.AVMX.AS.flash.geom {
       }
     }
     
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
     static interpolate(thisMat: flash.geom.Matrix3D, toMat: flash.geom.Matrix3D, percent: number): flash.geom.Matrix3D {
       thisMat = thisMat; toMat = toMat; percent = +percent;
       notImplemented("public flash.geom.Matrix3D::static interpolate"); return;
     }
-    
-    // _rawData: ASVector<any>;
-    // _position: flash.geom.Vector3D;
-    // _determinant: number;
+
+    setTargetDisplayObject(object: flash.display.DisplayObject): void {
+      if (this._displayObject) {
+        this.sec.throwError('ArgumentError', Errors.Matrix3DRefCannontBeShared);
+      }
+      this._displayObject = object;
+    }
+
+    resetTargetDisplayObject(): void {
+      release || Debug.assert(this._displayObject);
+      this._displayObject = null;
+    }
+
     get rawData(): any {
       var result = new this.sec.Float64Vector();
       this.copyRawDataTo(result, 0, false);
