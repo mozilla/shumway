@@ -95,7 +95,6 @@ module Shumway.GFX.Canvas2D {
       feComposite.setAttribute("in2", "offsetblur");
       feComposite.setAttribute("operator", "in");
       dropShadowFilter.appendChild(feComposite);
-      
       var feComposite = document.createElementNS("http://www.w3.org/2000/svg", "feComposite");
       feComposite.setAttribute("in2", "SourceAlpha");
       feComposite.setAttribute("operator", "out");
@@ -105,7 +104,6 @@ module Shumway.GFX.Canvas2D {
       var feMerge = document.createElementNS("http://www.w3.org/2000/svg", "feMerge");
       var feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode");
       feMerge.appendChild(feMergeNode);
-
       var feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode");
       feMerge.appendChild(feMergeNode);
       Filters._svgDropshadowMergeNode = feMergeNode;
