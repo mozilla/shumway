@@ -746,8 +746,10 @@ module Shumway.AVMX.AS.flash.display {
         context = Shumway.AVM1.AVM1Context.create(contentLoaderInfo);
         contentLoaderInfo._avm1Context = context;
         var display = this.sec.flash.display;
-        if (this === display.Loader.axClass.getRootLoader()) {
-          context.setStage(this._stage);
+        var as2LoadedFromAS3 = this.loaderInfo && !this.loaderInfo._avm1Context;
+        var rootLoader = display.Loader.axClass.getRootLoader();
+        if (as2LoadedFromAS3 || this === rootLoader) {
+          context.setStage(rootLoader._stage);
           display.MovieClip.axClass.frameNavigationModel = flash.display.FrameNavigationModel.SWF1;
         }
       }
