@@ -368,7 +368,7 @@ module Shumway.AVM1.Lib {
     public getBounds(bounds): AVM1Object {
       var obj = <flash.display.InteractiveObject>getAS3Object(bounds);
       if (!obj) {
-        throw new Error('Unsupported object type for AVM1MovieClip.getBounds');
+        return undefined;
       }
       return convertAS3RectangeToBounds(this._as3Object.getBounds(obj));
     }
@@ -417,7 +417,7 @@ module Shumway.AVM1.Lib {
     public getRect(bounds): AVM1Object {
       var obj = <flash.display.InteractiveObject>getAS3Object(bounds);
       if (!obj) {
-        throw new Error('Unsupported object type for AVM1MovieClip.getRect');
+        return undefined;
       }
       return convertAS3RectangeToBounds(this._as3Object.getRect(obj));
     }
