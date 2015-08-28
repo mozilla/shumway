@@ -232,6 +232,20 @@ module Shumway.AVMX.AS.flash.geom {
       return this;
     }
 
+    public equals(other: ColorTransform): boolean {
+      if (this === other) {
+        return true;
+      }
+      return this.redMultiplier === other.redMultiplier &&
+             this.greenMultiplier === other.greenMultiplier &&
+             this.blueMultiplier === other.blueMultiplier &&
+             this.alphaMultiplier === other.alphaMultiplier &&
+             this.redOffset === other.redOffset &&
+             this.greenOffset === other.greenOffset &&
+             this.blueOffset === other.blueOffset &&
+             this.alphaOffset === other.alphaOffset;
+    }
+
     public toString(): string {
       return "(redMultiplier=" + this.redMultiplier +
         ", greenMultiplier=" + this.greenMultiplier +

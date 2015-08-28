@@ -103,17 +103,47 @@ module Shumway.Remoting {
     /**
      * Identity, no need to serialize all the fields.
      */
-    Identity               = 0,
+    Identity = 0,
 
     /**
      * Identity w/ AlphaMultiplier, only the alpha multiplier is serialized.
      */
-    AlphaMultiplierOnly    = 1,
+    AlphaMultiplierOnly = 1,
+
+    /**
+     * Offsets w/ AlphaMultiplier.
+     */
+    AlphaMultiplierWithOffsets = 2,
 
     /**
      * All fields are serialized.
      */
-    All                    = 2
+    All = 3
+  }
+
+  /**
+   * Dictates how matrices are encoded.
+   */
+  export enum MatrixEncoding {
+    /**
+     * Translation only.
+     */
+    TranslationOnly = 0,
+
+    /**
+     * Scale and translation only.
+     */
+    ScaleAndTranslationOnly = 1,
+
+    /**
+     * Uniform scale in the x and y direction and translation only.
+     */
+    UniformScaleAndTranslationOnly = 2,
+
+    /**
+     * All fields are serialized.
+     */
+    All = 3
   }
 
   export enum VideoPlaybackEvent {

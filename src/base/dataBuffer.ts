@@ -539,6 +539,24 @@ module Shumway.ArrayUtilities {
       }
     }
 
+    write2Floats(a: number, b: number): void {
+      var position = this._position;
+      this._ensureCapacity(position + 8);
+      this._requestViews(TypedArrayViewFlags.F32);
+      if (this._littleEndian === DataBuffer._nativeLittleEndian && (position & 0x3) === 0 && this._f32) {
+        this._f32[(position >> 2) + 0] = a;
+        this._f32[(position >> 2) + 1] = b;
+        position += 8;
+        this._position = position;
+        if (position > this._length) {
+          this._length = position;
+        }
+      } else {
+        this.writeFloat(a);
+        this.writeFloat(b);
+      }
+    }
+
     write6Floats(a: number, b: number, c: number, d: number, e: number, f: number): void {
       var position = this._position;
       this._ensureCapacity(position + 24);

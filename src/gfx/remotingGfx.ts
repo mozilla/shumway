@@ -313,14 +313,30 @@ module Shumway.Remoting.GFX {
     private _readMatrix(): Matrix {
       var input = this.input;
       var matrix = GFXChannelDeserializer._temporaryReadMatrix;
-      matrix.setElements (
-        input.readFloat(),
-        input.readFloat(),
-        input.readFloat(),
-        input.readFloat(),
-        input.readFloat() / 20,
-        input.readFloat() / 20
-      );
+      var a = 1, b = 0, c = 0, d = 1, tx = 0, ty = 0;
+      switch (input.readInt()) {
+        case MatrixEncoding.ScaleAndTranslationOnly:
+          a = input.readFloat();
+          d = input.readFloat(); // Fallthrough
+        case MatrixEncoding.TranslationOnly:
+          tx = input.readFloat() / 20;
+          ty = input.readFloat() / 20;
+          break;
+        case MatrixEncoding.UniformScaleAndTranslationOnly:
+          a = d = input.readFloat();
+          tx = input.readFloat() / 20;
+          ty = input.readFloat() / 20;
+          break;
+        case MatrixEncoding.All:
+          a = input.readFloat();
+          b = input.readFloat();
+          c = input.readFloat();
+          d = input.readFloat();
+          tx = input.readFloat() / 20;
+          ty = input.readFloat() / 20;
+          break;
+      }
+      matrix.setElements(a, b, c, d, tx, ty);
       return matrix;
     }
 
@@ -347,6 +363,16 @@ module Shumway.Remoting.GFX {
           break;
         case ColorTransformEncoding.AlphaMultiplierOnly:
           am = input.readFloat();
+          break;
+        case ColorTransformEncoding.AlphaMultiplierWithOffsets:
+          rm = 0;
+          gm = 0;
+          bm = 0;
+          am = input.readFloat();
+          ro = input.readInt();
+          go = input.readInt();
+          bo = input.readInt();
+          ao = input.readInt();
           break;
         case ColorTransformEncoding.All:
           rm = input.readFloat();

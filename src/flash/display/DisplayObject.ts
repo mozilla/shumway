@@ -995,6 +995,9 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     _setColorTransform(colorTransform: flash.geom.ColorTransform) {
+      if (this._colorTransform.equals(colorTransform)) {
+        return;
+      }
       this._colorTransform.copyFrom(colorTransform);
       this._colorTransform.convertToFixedPoint();
       this._propagateFlagsDown(DisplayObjectFlags.InvalidConcatenatedColorTransform);
