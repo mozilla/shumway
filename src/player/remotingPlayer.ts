@@ -160,7 +160,6 @@ module Shumway.Remoting.Player {
       if (!graphics._isDirty) {
         return;
       }
-      Shumway.Player.debugWriter && Shumway.Player.debugWriter.writeLn("Sending Graphics: " + graphics._id);
       var textures = graphics.getUsedTextures();
       var numTextures = textures.length;
       for (var i = 0; i < numTextures; i++) {
