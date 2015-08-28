@@ -261,14 +261,10 @@ module Shumway.AVM1.Lib {
       fractalNoise = alToBoolean(this.context, fractalNoise);
       channelOptions = channelOptions === undefined ? 7 : alCoerceNumber(this.context, channelOptions);
       grayScale = alToBoolean(this.context, grayScale);
-      var as3Offsets = null;
-      if (!isNullOrUndefined(offsets)) {
-        for (var i = 0, length = offsets.alGet('length'); i < length; i++) {
-          as3Offsets.push(alCoerceNumber(this.context, offsets.alGet(i)));
-        }
-      }
+      var as3Offsets = isNullOrUndefined(offsets) ? null : this.context.sec.createArray(
+        Natives.AVM1ArrayNative.mapToJSArray(offsets, (item) => alCoerceNumber(this.context, item), this));
 
-      this.perlinNoise(baseX, baseY, numOctaves, randomSeed, stitch, fractalNoise, channelOptions, grayScale, as3Offsets);
+      this.as3BitmapData.perlinNoise(baseX, baseY, numOctaves, randomSeed, stitch, fractalNoise, channelOptions, grayScale, as3Offsets);
     }
 
     pixelDissolve(sourceBitmap: AVM1BitmapData, sourceRect: AVM1Object, destPoint: AVM1Object,
