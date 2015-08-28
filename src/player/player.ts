@@ -217,7 +217,7 @@ module Shumway.Player {
           target.debugTrace();
         }
       }
-      this._player._currentMouseTarget = this._mouseEventDispatcher.currentTarget;
+      this._player.currentMouseTarget = this._mouseEventDispatcher.currentTarget;
     }
 
     registerEventListener(id: number, listener: (eventType: VideoPlaybackEvent, data: any)=>void) {
@@ -300,7 +300,19 @@ module Shumway.Player {
     /**
      * Stage current mouse target.
      */
-    _currentMouseTarget: flash.display.InteractiveObject = null;
+    private _currentMouseTarget: flash.display.InteractiveObject = null;
+
+    /**
+     * Indicates whether the |currentMouseTarget| has changed since the last time it was synchronized.
+     */
+    private _currentMouseTargetIsDirty = true;
+
+    set currentMouseTarget(value: flash.display.InteractiveObject) {
+      if (this._currentMouseTarget !== value) {
+        this._currentMouseTargetIsDirty = true;
+      }
+      this._currentMouseTarget = value;
+    }
 
     /**
      * Page URL that hosts SWF.
@@ -414,7 +426,12 @@ module Shumway.Player {
                              async: boolean): DataBuffer {
       var serializer = new Remoting.Player.PlayerChannelSerializer();
       if (this.sec.flash.display.Stage.axClass.axIsType(displayObject)) {
-        serializer.writeStage(<flash.display.Stage>displayObject, this._currentMouseTarget);
+        var stage = <flash.display.Stage>displayObject;
+        serializer.writeStage(stage);
+        if (this._currentMouseTargetIsDirty) {
+          serializer.writeCurrentMouseTarget(stage, this._currentMouseTarget);
+          this._currentMouseTargetIsDirty = false;
+        }
       }
       serializer.writeDisplayObjectRoot(displayObject);
       serializer.writeEOF();

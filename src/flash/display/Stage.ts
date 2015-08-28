@@ -27,6 +27,11 @@ module Shumway.AVMX.AS.flash.display {
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null;
 
+    /**
+     * Indicates whether the stage object has changed since the last time it was synchronized.
+     */
+    _isDirty: boolean;
+
     constructor () {
       super();
       this._root = this;
@@ -133,6 +138,9 @@ module Shumway.AVMX.AS.flash.display {
       if (flash.display.StageScaleMode.toNumber(value) < 0) {
         this.sec.throwError("ArgumentError", Errors.InvalidEnumError, "scaleMode");
       }
+      if (this._scaleMode !== value) {
+        this._isDirty = true;
+      }
       this._scaleMode = value;
     }
 
@@ -144,7 +152,11 @@ module Shumway.AVMX.AS.flash.display {
       value = axCoerceString(value);
       var n = flash.display.StageAlign.toNumber(value);
       release || assert (n >= 0);
-      this._align = flash.display.StageAlign.fromNumber(n);
+      var newValue = flash.display.StageAlign.fromNumber(n);
+      if (this._align !== newValue) {
+        this._isDirty = true;
+      }
+      this._align = newValue;
     }
 
     get stageWidth(): number /*int*/ {
@@ -170,7 +182,11 @@ module Shumway.AVMX.AS.flash.display {
      */
     setStageWidth(value: number) {
       release || assert ((value | 0) === value);
-      this._stageWidth = (value * 20) | 0;
+      var newValue = (value * 20) | 0;
+      if (this._stageWidth !== newValue) {
+        this._isDirty = true;
+      }
+      this._stageWidth = newValue;
     }
 
     get stageHeight(): number /*int*/ {
@@ -192,7 +208,11 @@ module Shumway.AVMX.AS.flash.display {
      */
     setStageHeight(value: number) {
       release || assert ((value | 0) === value);
-      this._stageHeight = (value * 20) | 0;
+      var newValue = (value * 20) | 0;
+      if (this._stageHeight !== newValue) {
+        this._isDirty = true;
+      }
+      this._stageHeight = newValue;
     }
 
     /**
@@ -200,6 +220,9 @@ module Shumway.AVMX.AS.flash.display {
      * @param value
      */
     setStageColor(value: number) {
+      if (this._colorARGB !== value) {
+        this._isDirty = true;
+      }
       this._colorARGB = value;
     }
 
@@ -281,6 +304,9 @@ module Shumway.AVMX.AS.flash.display {
       if (flash.display.StageDisplayState.toNumber(value) < 0) {
         value = flash.display.StageDisplayState.NORMAL;
       }
+      if (this._displayState !== value) {
+        this._isDirty = true;
+      }
       this._displayState = value;
     }
 
@@ -317,6 +343,9 @@ module Shumway.AVMX.AS.flash.display {
 
     set color(rgb: number /*uint*/) {
       // Flash player forces the alpha channel to 0xff.
+      if (this._colorARGB !== (rgb | 0xff000000)) {
+        this._isDirty = true;
+      }
       this._colorARGB = rgb | 0xff000000;
     }
 

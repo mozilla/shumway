@@ -111,27 +111,37 @@ module Shumway.Remoting.Player {
       }, VisitorFlags.None);
     }
 
-    writeStage(stage: Stage, currentMouseTarget: flash.display.InteractiveObject) {
-      writer && writer.writeLn("Sending Stage");
-      var serializer = this;
-      this.output.writeInt(MessageTag.UpdateStage);
-      this.output.writeInt(stage._id);
-      this.output.writeInt(stage.color);
-      this._writeRectangle(new Bounds(0, 0, stage.stageWidth * 20, stage.stageHeight * 20));
-      this.output.writeInt(flash.display.StageAlign.toNumber(stage.align));
-      this.output.writeInt(flash.display.StageScaleMode.toNumber(stage.scaleMode));
-      this.output.writeInt(flash.display.StageDisplayState.toNumber(stage.displayState));
+    writeStage(stage: Stage) {
+      if (stage._isDirty) {
+        writer && writer.writeLn("Sending Stage");
+        var serializer = this;
+        this.output.writeInt(MessageTag.UpdateStage);
+        this.output.writeInt(stage._id);
+        this.output.writeInt(stage.color);
+        this._writeRectangle(new Bounds(0, 0, stage.stageWidth * 20, stage.stageHeight * 20));
+        this.output.writeInt(flash.display.StageAlign.toNumber(stage.align));
+        this.output.writeInt(flash.display.StageScaleMode.toNumber(stage.scaleMode));
+        this.output.writeInt(flash.display.StageDisplayState.toNumber(stage.displayState));
+        stage._isDirty = false;
+      }
+    }
 
-      var cursor = stage.sec.flash.ui.Mouse.axClass.cursor;
+    writeCurrentMouseTarget(stage: Stage, currentMouseTarget: flash.display.InteractiveObject) {
+      this.output.writeInt(MessageTag.UpdateCurrentMouseTarget);
+
+      var sec = stage.sec;
+      var Mouse = sec.flash.ui.Mouse.axClass;
+      var cursor = Mouse.cursor;
       if (currentMouseTarget) {
+        var SimpleButton = sec.flash.display.SimpleButton.axClass;
+        var Sprite = sec.flash.display.Sprite.axClass;
         this.output.writeInt(currentMouseTarget._id);
         if (cursor === MouseCursor.AUTO) {
           var node = currentMouseTarget;
           do {
-            if (stage.sec.flash.display.SimpleButton.axClass.axIsType(node) ||
-                (stage.sec.flash.display.Sprite.axClass.axIsType(node) &&
-                 (<flash.display.Sprite>node).buttonMode) &&
-                 (<any>currentMouseTarget).useHandCursor)
+            if (SimpleButton.axIsType(node) ||
+                (Sprite.axIsType(node) && (<flash.display.Sprite>node).buttonMode) &&
+                (<any>currentMouseTarget).useHandCursor)
             {
               cursor = MouseCursor.BUTTON;
               break;

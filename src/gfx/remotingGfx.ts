@@ -252,6 +252,7 @@ module Shumway.Remoting.GFX {
         updateTextContent: 0,
         updateFrame: 0,
         updateStage: 0,
+        updateCurrentMouseTarget: 0,
         updateNetStream: 0,
         registerFont: 0,
         drawToBitmap: 0,
@@ -284,6 +285,10 @@ module Shumway.Remoting.GFX {
           case MessageTag.UpdateStage:
             data.updateStage ++;
             this._readUpdateStage();
+            break;
+          case MessageTag.UpdateCurrentMouseTarget:
+            data.updateCurrentMouseTarget ++;
+            this._readUpdateCurrentMouseTarget();
             break;
           case MessageTag.UpdateNetStream:
             data.updateNetStream ++;
@@ -489,10 +494,14 @@ module Shumway.Remoting.GFX {
       context.stage.align = this.input.readInt();
       context.stage.scaleMode = this.input.readInt();
       var displayState = this.input.readInt();
+      context._easelHost.fullscreen = displayState === 0 || displayState === 1;
+    }
+
+    private _readUpdateCurrentMouseTarget() {
+      var context = this.context;
       var currentMouseTarget = this.input.readInt();
       var cursor = this.input.readInt();
       context._easelHost.cursor = Shumway.UI.toCSSCursor(cursor);
-      context._easelHost.fullscreen = displayState === 0 || displayState === 1;
     }
 
     private _readUpdateNetStream() {

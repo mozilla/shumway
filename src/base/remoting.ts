@@ -79,6 +79,7 @@ module Shumway.Remoting {
     UpdateStage                 = 104,
     UpdateNetStream             = 105,
     RequestBitmapData           = 106,
+    UpdateCurrentMouseTarget    = 107,
 
     DrawToBitmap                = 200,
 
