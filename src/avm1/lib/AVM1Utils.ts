@@ -23,9 +23,11 @@ module Shumway.AVM1.Lib {
 
   export var DEPTH_OFFSET = 16384;
 
-  export interface IAVM1SymbolBase {
-    isAVM1Instance: boolean;
-    as3Object: flash.display.InteractiveObject;
+  export interface IHasAS3ObjectReference {
+    _as3Object: ASObject;
+  }
+
+  export interface IAVM1SymbolBase extends IHasAS3ObjectReference{
     context: AVM1Context;
     initAVM1SymbolInstance(context: AVM1Context, as3Object: flash.display.InteractiveObject);
     updateAllEvents();
@@ -45,48 +47,71 @@ module Shumway.AVM1.Lib {
     return context.isPropertyCaseSensitive ? eventName : eventName.toLowerCase();
   }
 
-  export class AVM1SymbolBase<T extends flash.display.InteractiveObject> extends AVM1Object implements IAVM1SymbolBase, IAVM1EventPropertyObserver {
-    public get isAVM1Instance(): boolean {
-      return !!this._as3Object;
-    }
+  /**
+   * Checks if an object contains a reference to a native AS3 object.
+   * Returns false for MovieClip instances or instances of constructors with
+   * MovieClip on their prototype chain that were created in script using,
+   * e.g. new MovieClip(). Those lack the part of their internal structure
+   * that makes them displayable.
+   */
+  export function hasAS3ObjectReference(obj: any): boolean {
+    return !!obj._as3Object;
+  }
 
+  /**
+   * Returns obj's reference to a native AS3 object. If the reference
+   * does not exist, returns undefined.
+   */
+  export function getAS3Object(obj: IHasAS3ObjectReference): ASObject {
+    return obj._as3Object;
+  }
+
+  /**
+   * Returns obj's reference to a native AS3 object. If the reference
+   * doesn't exist, obj was created in script, e.g. with new MovieClip(),
+   * and doesn't reflect a real, displayable display object. In that case,
+   * an empty null-proto object is created and returned. This is used for
+   * classes that are linked to embedded symbols that extend MovieClip. Their
+   * inheritance chain is built by assigning new MovieClip to their prototype.
+   * When a proper, displayable, instance of such a class is created via
+   * attachMovie, initial values for properties such as tabEnabled
+   * can be initialized from values set on the template object.
+   */
+  export function getAS3ObjectOrTemplate<T extends flash.display.InteractiveObject>(obj: AVM1SymbolBase<T>): T {
+    if (obj._as3Object) {
+      return <T>obj._as3Object;
+    }
+    // The _as3ObjectTemplate is not really an ASObject type, but we will fake
+    // that for AVM1SymbolBase's properties transfers.
+    if (!obj._as3ObjectTemplate) {
+      var template;
+      var proto = obj.alPrototype;
+      while (proto && !(<any>proto).initAVM1SymbolInstance) {
+        template = (<any>proto)._as3ObjectTemplate;
+        if (template) {
+          break;
+        }
+        proto = proto.alPrototype;
+      }
+      obj._as3ObjectTemplate = Object.create(template || null);
+    }
+    return <T>obj._as3ObjectTemplate;
+  }
+
+  export class AVM1SymbolBase<T extends flash.display.InteractiveObject> extends AVM1Object implements IAVM1SymbolBase, IAVM1EventPropertyObserver {
     _as3Object: T;
     _as3ObjectTemplate: any;
-
-    public get as3Object(): T {
-      return this._as3Object;
-    }
-
-    public get as3ObjectOrTemplate(): T {
-      return this._as3Object || this._getAS3ObjectTemplate();
-    }
 
     public initAVM1SymbolInstance(context: AVM1Context, as3Object: T) {
       AVM1Object.call(this, context);
 
       release || Debug.assert(as3Object);
       this._as3Object = as3Object;
-      var name = this.as3Object.name;
+      var name = as3Object.name;
       var parent = this.get_parent();
       if (name && parent) {
         parent._addChildName(this, name);
       }
-    }
-
-    private _getAS3ObjectTemplate(): T {
-      if (!this._as3ObjectTemplate) {
-        var template;
-        var proto = this.alPrototype;
-        while (proto && !(<any>proto).initAVM1SymbolInstance) {
-          template = (<any>proto)._as3ObjectTemplate;
-          if (template) {
-            break;
-          }
-          proto = proto.alPrototype;
-        }
-        this._as3ObjectTemplate = Object.create(template || null);
-      }
-      return this._as3ObjectTemplate;
     }
 
     private _eventsMap: MapObject<AVM1EventHandler>;
@@ -108,8 +133,8 @@ module Shumway.AVM1.Lib {
       });
 
       if (autoUnbind) {
-        observer.as3Object.addEventListener('removedFromStage', function removedHandler() {
-          observer.as3Object.removeEventListener('removedFromStage', removedHandler);
+        observer._as3Object.addEventListener('removedFromStage', function removedHandler() {
+          observer._as3Object.removeEventListener('removedFromStage', removedHandler);
           observer.unbindEvents();
         });
       }
@@ -150,7 +175,7 @@ module Shumway.AVM1.Lib {
           var args = event.argsConverter ? event.argsConverter.apply(null, arguments) : null;
           avm1BroadcastNativeEvent(this.context, this, propertyName, args);
         }.bind(this);
-        this.as3Object.addEventListener(event.eventName, listener);
+        this._as3Object.addEventListener(event.eventName, listener);
         event.onBind(this);
         this._eventsListeners[propertyName] = listener;
       }
@@ -161,7 +186,7 @@ module Shumway.AVM1.Lib {
       var listener: any = this._eventsListeners[propertyName];
       if (listener) {
         event.onUnbind(this);
-        this.as3Object.removeEventListener(event.eventName, listener);
+        this._as3Object.removeEventListener(event.eventName, listener);
         this._eventsListeners[propertyName] = null;
       }
     }
@@ -175,7 +200,7 @@ module Shumway.AVM1.Lib {
     // Common DisplayObject properties
 
     public get_alpha(): number {
-      return this.as3Object.alpha * 100;
+      return this._as3Object.alpha * 100;
     }
 
     public set_alpha(value: number) {
@@ -183,46 +208,46 @@ module Shumway.AVM1.Lib {
       if (isNaN(value)) {
         return;
       }
-      this.as3Object.alpha = value / 100;
+      this._as3Object.alpha = value / 100;
     }
 
     public getBlendMode(): string {
-      return this.as3Object.blendMode;
+      return this._as3Object.blendMode;
     }
 
     public setBlendMode(value: string) {
       value = typeof value === 'number' ? BlendModesMap[value] : alCoerceString(this.context, value);
-      this.as3Object.blendMode = value || null;
+      this._as3Object.blendMode = value || null;
     }
 
     public getCacheAsBitmap(): boolean {
-      return this.as3Object.cacheAsBitmap;
+      return this._as3Object.cacheAsBitmap;
     }
 
     public setCacheAsBitmap(value: boolean) {
       value = alToBoolean(this.context, value);
-      this.as3Object.cacheAsBitmap = value;
+      this._as3Object.cacheAsBitmap = value;
     }
 
     public getFilters(): AVM1Object {
-      return convertFromAS3Filters(this.context, this.as3Object.filters);
+      return convertFromAS3Filters(this.context, this._as3Object.filters);
     }
 
     public setFilters(value) {
-      this.as3Object.filters = convertToAS3Filters(this.context, value);
+      this._as3Object.filters = convertToAS3Filters(this.context, value);
     }
 
     public get_focusrect(): boolean {
-      return this.as3Object.focusRect || false; // suppressing null
+      return this._as3Object.focusRect || false; // suppressing null
     }
 
     public set_focusrect(value: boolean) {
       value = alToBoolean(this.context, value);
-      this.as3Object.focusRect = value;
+      this._as3Object.focusRect = value;
     }
 
     public get_height() {
-      return this.as3Object.height;
+      return this._as3Object.height;
     }
 
     public set_height(value: number) {
@@ -230,7 +255,7 @@ module Shumway.AVM1.Lib {
       if (isNaN(value)) {
         return;
       }
-      this.as3Object.height = value;
+      this._as3Object.height = value;
     }
 
     public get_highquality(): number {
@@ -262,27 +287,27 @@ module Shumway.AVM1.Lib {
 
     public getMenu() {
       Debug.somewhatImplemented('AVM1SymbolBase.getMenu');
-      // return this.as3Object.contextMenu;
+      // return this._as3Object.contextMenu;
     }
 
     public setMenu(value) {
       Debug.somewhatImplemented('AVM1SymbolBase.setMenu');
-      // this.as3Object.contextMenu = value;
+      // this._as3Object.contextMenu = value;
     }
 
     public get_name(): string {
-      return this.as3Object.name;
+      return this._as3Object ? this._as3Object.name : undefined;
     }
 
     public set_name(value: string) {
       value = alCoerceString(this.context, value);
-      var oldName = this.as3Object.name;
-      this.as3Object.name = value;
+      var oldName = this._as3Object.name;
+      this._as3Object.name = value;
       this.get_parent()._updateChildName(<AVM1MovieClip><any>this, oldName, value);
     }
 
     public get_parent(): AVM1MovieClip {
-      var parent = getAVM1Object(this.as3Object.parent, this.context);
+      var parent = getAVM1Object(this._as3Object.parent, this.context);
       // In AVM1, the _parent property is `undefined`, not `null` if the element has no parent.
       return <AVM1MovieClip>parent || undefined;
     }
@@ -292,14 +317,14 @@ module Shumway.AVM1.Lib {
     }
 
     public getOpaqueBackground(): number {
-      return this.as3Object.opaqueBackground;
+      return this._as3Object.opaqueBackground;
     }
 
     public setOpaqueBackground(value: number) {
       if (isNullOrUndefined(value)) {
-        this.as3Object.opaqueBackground = null;
+        this._as3Object.opaqueBackground = null;
       } else {
-        this.as3Object.opaqueBackground = alToInt32(this.context, value);
+        this._as3Object.opaqueBackground = alToInt32(this.context, value);
       }
     }
 
@@ -313,7 +338,7 @@ module Shumway.AVM1.Lib {
     }
 
     public get_root(): AVM1MovieClip {
-      var as3Object: flash.display.InteractiveObject = this.as3Object;
+      var as3Object: flash.display.InteractiveObject = this._as3Object;
       while (as3Object && as3Object !== as3Object.root) {
         var as2Object = <AVM1MovieClip>getAVM1Object(as3Object, this.context);
         if (as2Object.get_lockroot()) {
@@ -328,7 +353,7 @@ module Shumway.AVM1.Lib {
     }
 
     public get_rotation(): number {
-      return this.as3Object.rotation;
+      return this._as3Object.rotation;
     }
 
     public set_rotation(value: number) {
@@ -336,23 +361,23 @@ module Shumway.AVM1.Lib {
       if (isNaN(value)) {
         return;
       }
-      this.as3Object.rotation = value;
+      this._as3Object.rotation = value;
     }
 
     public getScale9Grid(): AVM1Rectangle {
-      return AVM1Rectangle.fromAS3Rectangle(this.context, this.as3Object.scale9Grid);
+      return AVM1Rectangle.fromAS3Rectangle(this.context, this._as3Object.scale9Grid);
     }
 
     public setScale9Grid(value: AVM1Rectangle) {
-      this.as3Object.scale9Grid = isNullOrUndefined(value) ? null : toAS3Rectangle(value);
+      this._as3Object.scale9Grid = isNullOrUndefined(value) ? null : toAS3Rectangle(value);
     }
 
     public getScrollRect(): AVM1Rectangle {
-      return AVM1Rectangle.fromAS3Rectangle(this.context, this.as3Object.scrollRect);
+      return AVM1Rectangle.fromAS3Rectangle(this.context, this._as3Object.scrollRect);
     }
 
     public setScrollRect(value: AVM1Rectangle) {
-      this.as3Object.scrollRect = isNullOrUndefined(value) ? null : toAS3Rectangle(value);
+      this._as3Object.scrollRect = isNullOrUndefined(value) ? null : toAS3Rectangle(value);
     }
 
     public get_soundbuftime(): number {
@@ -365,29 +390,29 @@ module Shumway.AVM1.Lib {
     }
 
     public getTabEnabled(): boolean {
-      return this.as3ObjectOrTemplate.tabEnabled;
+      return getAS3ObjectOrTemplate(this).tabEnabled;
     }
 
     public setTabEnabled(value: boolean) {
       value = alToBoolean(this.context, value);
-      this.as3ObjectOrTemplate.tabEnabled = value;
+      getAS3ObjectOrTemplate(this).tabEnabled = value;
     }
 
     public getTabIndex(): number {
-      var tabIndex = this.as3Object.tabIndex;
+      var tabIndex = this._as3Object.tabIndex;
       return tabIndex < 0 ? undefined : tabIndex;
     }
 
     public setTabIndex(value: number) {
       if (isNullOrUndefined(value)) {
-        this.as3Object.tabIndex = -1;
+        this._as3Object.tabIndex = -1;
       } else {
-        this.as3Object.tabIndex = alToInteger(this.context, value);
+        this._as3Object.tabIndex = alToInteger(this.context, value);
       }
     }
 
     public get_target(): string {
-      var nativeObject: flash.display.DisplayObject = this.as3Object;
+      var nativeObject: flash.display.DisplayObject = this._as3Object;
       if (nativeObject === nativeObject.root) {
         return '/';
       }
@@ -413,24 +438,24 @@ module Shumway.AVM1.Lib {
         return;
       }
       var as3Transform = value.as3Transform;
-      this.as3Object.transform = as3Transform;
+      this._as3Object.transform = as3Transform;
     }
 
     public get_visible(): boolean {
-      return this.as3Object.visible;
+      return this._as3Object.visible;
     }
 
     public set_visible(value: boolean) {
       value = alToBoolean(this.context, value);
-      this.as3Object.visible = value;
+      this._as3Object.visible = value;
     }
 
     public get_url(): string {
-      return this.as3Object.loaderInfo.url;
+      return this._as3Object.loaderInfo.url;
     }
 
     public get_width(): number {
-      return this.as3Object.width;
+      return this._as3Object.width;
     }
 
     public set_width(value: number) {
@@ -438,11 +463,11 @@ module Shumway.AVM1.Lib {
       if (isNaN(value)) {
         return;
       }
-      this.as3Object.width = value;
+      this._as3Object.width = value;
     }
 
     public get_x(): number {
-      return this.as3Object.x;
+      return this._as3Object.x;
     }
 
     public set_x(value: number) {
@@ -450,15 +475,15 @@ module Shumway.AVM1.Lib {
       if (isNaN(value)) {
         return;
       }
-      this.as3Object.x = value;
+      this._as3Object.x = value;
     }
 
     public get_xmouse(): number {
-      return this.as3Object.mouseX;
+      return this._as3Object.mouseX;
     }
 
     public get_xscale(): number {
-      return this.as3Object.scaleX * 100;
+      return this._as3Object.scaleX * 100;
     }
 
     public set_xscale(value: number) {
@@ -466,11 +491,11 @@ module Shumway.AVM1.Lib {
       if (isNaN(value)) {
         return;
       }
-      this.as3Object.scaleX = value / 100;
+      this._as3Object.scaleX = value / 100;
     }
 
     public get_y(): number {
-      return this.as3Object.y;
+      return this._as3Object.y;
     }
 
     public set_y(value: number) {
@@ -478,15 +503,15 @@ module Shumway.AVM1.Lib {
       if (isNaN(value)) {
         return;
       }
-      this.as3Object.y = value;
+      this._as3Object.y = value;
     }
 
     public get_ymouse(): number {
-      return this.as3Object.mouseY;
+      return this._as3Object.mouseY;
     }
 
     public get_yscale(): number {
-      return this.as3Object.scaleY * 100;
+      return this._as3Object.scaleY * 100;
     }
 
     public set_yscale(value: number) {
@@ -494,11 +519,11 @@ module Shumway.AVM1.Lib {
       if (isNaN(value)) {
         return;
       }
-      this.as3Object.scaleY = value / 100;
+      this._as3Object.scaleY = value / 100;
     }
 
     public getDepth() {
-      return this.as3Object._depth - DEPTH_OFFSET;
+      return this._as3Object._depth - DEPTH_OFFSET;
     }
   }
 

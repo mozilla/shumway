@@ -18,8 +18,7 @@
 
 module Shumway.AVM1.Lib {
   function _updateAllSymbolEvents(symbolInstance: IAVM1SymbolBase) {
-    // REDUX
-    if (!symbolInstance.isAVM1Instance) {
+    if (!hasAS3ObjectReference(symbolInstance)) {
       return;
     }
     symbolInstance.updateAllEvents();

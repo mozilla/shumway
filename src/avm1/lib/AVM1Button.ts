@@ -120,19 +120,19 @@ module Shumway.AVM1.Lib {
     }
 
     public getTrackAsMenu(): boolean {
-      return this.as3ObjectOrTemplate.trackAsMenu;
+      return getAS3ObjectOrTemplate(this).trackAsMenu;
     }
 
     public setTrackAsMenu(value: boolean) {
-      this.as3ObjectOrTemplate.trackAsMenu = alToBoolean(this.context, value);
+      getAS3ObjectOrTemplate(this).trackAsMenu = alToBoolean(this.context, value);
     }
 
     public getUseHandCursor(): boolean {
-      return this._as3Object.useHandCursor;
+      return getAS3ObjectOrTemplate(this).useHandCursor;
     }
 
     public setUseHandCursor(value: boolean) {
-      this._as3Object.useHandCursor = alToBoolean(this.context, value);
+      getAS3ObjectOrTemplate(this).useHandCursor = alToBoolean(this.context, value);
     }
 
 
