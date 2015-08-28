@@ -27,43 +27,45 @@ module Shumway.AVM1.Lib {
         null, AVM1Transform.prototype.avm1Constructor);
     }
 
-    private _target:IAVM1SymbolBase;
+    private _target: IAVM1SymbolBase;
+    private _targetAS3Object: flash.display.DisplayObject;
 
     get as3Transform(): flash.geom.Transform {
-      return this._target.as3Object.transform;
+      return this._targetAS3Object.transform;
     }
 
     public avm1Constructor(target_mc) {
       this._target = AVM1Utils.resolveTarget(this.context, target_mc);
+      this._targetAS3Object = <flash.display.InteractiveObject>getAS3Object(this._target);
     }
 
     public getMatrix(): AVM1Object {
-      var transform = this._target.as3Object.transform;
+      var transform = this._targetAS3Object.transform;
       return AVM1Matrix.fromAS3Matrix(this.context, transform.matrix);
     }
 
     public setMatrix(value: AVM1Matrix) {
-      var transform = this._target.as3Object.transform;
+      var transform = this._targetAS3Object.transform;
       transform.matrix = toAS3Matrix(value);
     }
 
     public getConcatenatedMatrix(): AVM1Matrix {
-      var transform = this._target.as3Object.transform;
+      var transform = this._targetAS3Object.transform;
       return AVM1Matrix.fromAS3Matrix(this.context, transform.concatenatedMatrix);
     }
 
     public getColorTransform(): AVM1ColorTransform {
-      var transform = this._target.as3Object.transform;
+      var transform = this._targetAS3Object.transform;
       return AVM1ColorTransform.fromAS3ColorTransform(this.context, transform.colorTransform);
     }
 
     public setColorTransform(value: AVM1ColorTransform) {
-      var transform = this._target.as3Object.transform;
+      var transform = this._targetAS3Object.transform;
       transform.colorTransform = toAS3ColorTransform(value);
     }
 
     public getPixelBounds(): AVM1Rectangle {
-      var transform = this._target.as3Object.transform;
+      var transform = this._targetAS3Object.transform;
       return AVM1Rectangle.fromAS3Rectangle(this.context, transform.pixelBounds);
     }
   }

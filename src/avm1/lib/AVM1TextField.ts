@@ -336,7 +336,7 @@ module Shumway.AVM1.Lib {
         return;
       }
 
-      var instance = this.as3Object;
+      var instance = this._as3Object;
       if (this._exitFrameHandler && !name) {
         instance.removeEventListener('exitFrame', this._exitFrameHandler);
         this._exitFrameHandler = null;
@@ -349,7 +349,7 @@ module Shumway.AVM1.Lib {
     }
 
     private _onAS3ObjectExitFrame() {
-      this._syncTextFieldValue(this.as3Object, this._variable);
+      this._syncTextFieldValue(this._as3Object, this._variable);
     }
 
     private _syncTextFieldValue(instance, name) {

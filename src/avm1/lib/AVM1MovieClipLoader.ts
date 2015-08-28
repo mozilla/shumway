@@ -41,7 +41,8 @@ module Shumway.AVM1.Lib {
         return false; // target was not found -- doing nothing
       }
 
-      this._target.as3Object.addChild(this._loader);
+      var targetAS3Object = <flash.display.MovieClip>getAS3Object(this._target);
+      targetAS3Object.addChild(this._loader);
 
       this._loader.contentLoaderInfo.addEventListener(flash.events.Event.OPEN, this.openHandler.bind(this));
       this._loader.contentLoaderInfo.addEventListener(flash.events.ProgressEvent.PROGRESS, this.progressHandler.bind(this));
@@ -60,7 +61,8 @@ module Shumway.AVM1.Lib {
         return false; // target was not found -- doing nothing
       }
 
-      nativeTarget.as3Object.removeChild(this._loader);
+      var targetAS3Object = <flash.display.MovieClip>getAS3Object(nativeTarget);
+      targetAS3Object.removeChild(this._loader);
       // TODO: find out under which conditions unloading a clip can fail
       return true;
     }
@@ -91,12 +93,13 @@ module Shumway.AVM1.Lib {
 
     private initHandler(event: flash.events.Event):void {
       var exitFrameCallback = function () {
-        this._target.as3Object.removeEventListener(flash.events.Event.EXIT_FRAME, exitFrameCallback);
+        this._targetAS3Object.removeEventListener(flash.events.Event.EXIT_FRAME, exitFrameCallback);
         this._broadcastMessage('onLoadInit', [this._target]);
       }.bind(this);
       // MovieClipLoader's init event is dispatched after all frame scripts of the AVM1 instance
       // have run for one additional iteration.
-      this._target.as3Object.addEventListener(flash.events.Event.EXIT_FRAME, exitFrameCallback)
+      var targetAS3Object = <flash.display.MovieClip>getAS3Object(this._target);
+      targetAS3Object.addEventListener(flash.events.Event.EXIT_FRAME, exitFrameCallback)
     }
   }
 }

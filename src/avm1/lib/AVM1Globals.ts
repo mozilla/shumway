@@ -310,7 +310,7 @@ module Shumway.AVM1.Lib {
 
     public call(frame) {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
-      var as3Object = nativeTarget.as3Object;
+      var as3Object = <flash.display.MovieClip>getAS3Object(nativeTarget);
       var frameNum = as3Object._getAbsFrameNumber(<any>frame, null);
       if (frameNum === undefined) {
         return;
@@ -355,7 +355,7 @@ module Shumway.AVM1.Lib {
 
     public gotoAndPlay(scene, frame?) {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
-      var as3Object = nativeTarget.as3Object;
+      var as3Object = <flash.display.MovieClip>getAS3Object(nativeTarget);;
       if (arguments.length < 2) {
         as3Object.gotoAndPlay(arguments[0]);
       } else {
@@ -365,7 +365,7 @@ module Shumway.AVM1.Lib {
 
     public gotoAndStop(scene, frame?) {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
-      var as3Object = nativeTarget.as3Object;
+      var as3Object = <flash.display.MovieClip>getAS3Object(nativeTarget);;
       if (arguments.length < 2) {
         as3Object.gotoAndStop(arguments[0]);
       } else {
@@ -493,12 +493,14 @@ module Shumway.AVM1.Lib {
 
     public nextFrame() {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
-      nativeTarget.as3Object.nextFrame();
+      var as3Object = <flash.display.MovieClip>getAS3Object(nativeTarget);
+      as3Object.nextFrame();
     }
 
     public nextScene() {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
-      nativeTarget.as3Object.nextScene();
+      var as3Object = <flash.display.MovieClip>getAS3Object(nativeTarget);
+      as3Object.nextScene();
     }
 
     public ord(character) {
@@ -512,12 +514,14 @@ module Shumway.AVM1.Lib {
 
     public prevFrame() {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
-      nativeTarget.as3Object.prevFrame();
+      var as3Object = <flash.display.MovieClip>getAS3Object(nativeTarget);
+      as3Object.prevFrame();
     }
 
     public prevScene() {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
-      nativeTarget.as3Object.prevScene();
+      var as3Object = <flash.display.MovieClip>getAS3Object(nativeTarget);
+      as3Object.prevScene();
     }
 
     public print(target, boundingBox) {

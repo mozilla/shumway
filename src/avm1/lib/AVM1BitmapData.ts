@@ -26,7 +26,7 @@ module Shumway.AVM1.Lib {
     return as2Object.as3BitmapData;
   }
 
-  export class AVM1BitmapData extends AVM1Object {
+  export class AVM1BitmapData extends AVM1Object implements IHasAS3ObjectReference {
     static createAVM1Class(context: AVM1Context): AVM1Object {
       return wrapAVM1NativeClass(context, true, AVM1BitmapData,
         ['loadBitmap'],
@@ -40,7 +40,7 @@ module Shumway.AVM1.Lib {
         null, AVM1BitmapData.prototype.avm1Constructor);
     }
 
-    private _as3Object: flash.display.BitmapData;
+    _as3Object: flash.display.BitmapData;
 
     get as3BitmapData(): flash.display.BitmapData {
       return this._as3Object;
