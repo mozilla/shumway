@@ -140,8 +140,8 @@ module Shumway.AVMX.AS.flash.display {
       }
       if (this._scaleMode !== value) {
         this._isDirty = true;
+        this._scaleMode = value;
       }
-      this._scaleMode = value;
     }
 
     get align(): string {
@@ -155,8 +155,8 @@ module Shumway.AVMX.AS.flash.display {
       var newValue = flash.display.StageAlign.fromNumber(n);
       if (this._align !== newValue) {
         this._isDirty = true;
+        this._align = newValue;
       }
-      this._align = newValue;
     }
 
     get stageWidth(): number /*int*/ {
@@ -185,8 +185,8 @@ module Shumway.AVMX.AS.flash.display {
       var newValue = (value * 20) | 0;
       if (this._stageWidth !== newValue) {
         this._isDirty = true;
+        this._stageWidth = newValue;
       }
-      this._stageWidth = newValue;
     }
 
     get stageHeight(): number /*int*/ {
@@ -211,8 +211,8 @@ module Shumway.AVMX.AS.flash.display {
       var newValue = (value * 20) | 0;
       if (this._stageHeight !== newValue) {
         this._isDirty = true;
+        this._stageHeight = newValue;
       }
-      this._stageHeight = newValue;
     }
 
     /**
@@ -222,8 +222,8 @@ module Shumway.AVMX.AS.flash.display {
     setStageColor(value: number) {
       if (this._colorARGB !== value) {
         this._isDirty = true;
+        this._colorARGB = value;
       }
-      this._colorARGB = value;
     }
 
     /**
@@ -306,8 +306,8 @@ module Shumway.AVMX.AS.flash.display {
       }
       if (this._displayState !== value) {
         this._isDirty = true;
+        this._displayState = value;
       }
-      this._displayState = value;
     }
 
     get fullScreenSourceRect(): flash.geom.Rectangle {
@@ -342,11 +342,12 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     set color(rgb: number /*uint*/) {
+      var newValue = rgb | 0xff000000;
       // Flash player forces the alpha channel to 0xff.
-      if (this._colorARGB !== (rgb | 0xff000000)) {
+      if (this._colorARGB !== newValue) {
         this._isDirty = true;
+        this._colorARGB = newValue;
       }
-      this._colorARGB = rgb | 0xff000000;
     }
 
     set alpha(alpha: number) {
