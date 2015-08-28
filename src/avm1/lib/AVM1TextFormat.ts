@@ -19,7 +19,7 @@
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
 
-  export class AVM1TextFormat extends AVM1Object {
+  export class AVM1TextFormat extends AVM1Object implements IHasAS3ObjectReference {
     static createAVM1Class(context: AVM1Context): AVM1Object {
       return wrapAVM1NativeClass(context, true, AVM1TextFormat,
         [],

@@ -29,7 +29,7 @@ module Shumway.AVM1.Lib {
 
     public onBind(target: IAVM1SymbolBase): void {
       var mc: AVM1MovieClip = <any>target;
-      mc.as3Object.buttonMode = true;
+      mc._as3Object.buttonMode = true;
     }
   }
 
@@ -70,7 +70,7 @@ module Shumway.AVM1.Lib {
     private _lockroot: boolean;
 
     private get graphics() : flash.display.Graphics {
-      return this.as3Object.graphics;
+      return this._as3Object.graphics;
     }
 
     public initAVM1SymbolInstance(context: AVM1Context, as3Object: flash.display.MovieClip) {
@@ -92,7 +92,7 @@ module Shumway.AVM1.Lib {
       if (!this.context.isPropertyCaseSensitive) {
         lookupOptions |= flash.display.LookupChildOptions.IGNORE_CASE;
       }
-      var as3Child = this.as3Object._lookupChildByName(name, lookupOptions);
+      var as3Child = this._as3Object._lookupChildByName(name, lookupOptions);
       return getAVM1Object(as3Child, this.context);
     }
 
@@ -200,7 +200,7 @@ module Shumway.AVM1.Lib {
     }
 
     public _callFrame(frame:any):any {
-      var nativeAS3Object = <any> this.as3Object;
+      var nativeAS3Object = this._as3Object;
       nativeAS3Object._callFrame(frame);
     }
 
@@ -221,11 +221,11 @@ module Shumway.AVM1.Lib {
     private _insertChildAtDepth<T extends flash.display.DisplayObject>(mc: T, depth:number): AVM1Object {
       var oldChild = this.getInstanceAtDepth(depth);
       if (oldChild) {
-        var oldAS3Object = oldChild.as3Object;
+        var oldAS3Object = oldChild._as3Object;
         oldAS3Object.parent.removeChild(oldAS3Object);
       }
       var symbolDepth = alCoerceNumber(this.context, depth) + DEPTH_OFFSET;
-      var nativeAS3Object = this.as3Object;
+      var nativeAS3Object = this._as3Object;
       nativeAS3Object.addTimelineObjectAtDepth(mc, symbolDepth);
       // Bitmaps aren't reflected in AVM1, so the rest here doesn't apply.
       if (this.context.sec.flash.display.Bitmap.axIsType(mc)) {
@@ -286,7 +286,7 @@ module Shumway.AVM1.Lib {
     }
 
     public get_currentframe() {
-      return this.as3Object.currentFrame;
+      return this._as3Object.currentFrame;
     }
 
     public curveTo(controlX: number, controlY: number, anchorX: number, anchorY: number): void {
@@ -298,13 +298,13 @@ module Shumway.AVM1.Lib {
     }
 
     public get_droptarget() {
-      return this.as3Object.dropTarget;
+      return this._as3Object.dropTarget;
     }
 
     public duplicateMovieClip(name, depth, initObject): AVM1MovieClip {
       name = alToString(this.context, name);
       var parent = this.context.resolveTarget(null);
-      var nativeAS3Object = <any> this.as3Object;
+      var nativeAS3Object = this._as3Object;
       var mc: flash.display.MovieClip;
       if (nativeAS3Object._symbol) {
         mc = Shumway.AVMX.AS.constructClassFromSymbol(nativeAS3Object._symbol, nativeAS3Object.axClass);
@@ -340,11 +340,11 @@ module Shumway.AVM1.Lib {
     }
 
     public getEnabled() {
-      return this.as3ObjectOrTemplate.enabled;
+      return getAS3ObjectOrTemplate(this).enabled;
     }
 
     public setEnabled(value) {
-      this.as3ObjectOrTemplate.enabled = value;
+      getAS3ObjectOrTemplate(this).enabled = value;
     }
 
     public endFill(): void {
@@ -362,30 +362,30 @@ module Shumway.AVM1.Lib {
     }
 
     public get_framesloaded() {
-      return this.as3Object.framesLoaded;
+      return this._as3Object.framesLoaded;
     }
 
     public getBounds(bounds): AVM1Object {
-      var obj = bounds.as3Object;
+      var obj = <flash.display.InteractiveObject>getAS3Object(bounds);
       if (!obj) {
         throw new Error('Unsupported object type for AVM1MovieClip.getBounds');
       }
-      return convertAS3RectangeToBounds(this.as3Object.getBounds(obj));
+      return convertAS3RectangeToBounds(this._as3Object.getBounds(obj));
     }
 
     public getBytesLoaded(): number {
-      var loaderInfo = this.as3Object.loaderInfo;
+      var loaderInfo = this._as3Object.loaderInfo;
       return loaderInfo.bytesLoaded;
     }
 
     public getBytesTotal() {
-      var loaderInfo = this.as3Object.loaderInfo;
+      var loaderInfo = this._as3Object.loaderInfo;
       return loaderInfo.bytesTotal;
     }
 
     public getInstanceAtDepth(depth: number): AVM1MovieClip {
       var symbolDepth = alCoerceNumber(this.context, depth) + DEPTH_OFFSET;
-      var nativeObject = this.as3Object;
+      var nativeObject = this._as3Object;
       var lookupChildOptions = flash.display.LookupChildOptions.INCLUDE_NON_INITIALIZED;
       for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
         var child = nativeObject._lookupChildByIndex(i, lookupChildOptions);
@@ -402,7 +402,7 @@ module Shumway.AVM1.Lib {
     }
 
     public getNextHighestDepth(): number {
-      var nativeObject = this.as3Object;
+      var nativeObject = this._as3Object;
       var maxDepth = DEPTH_OFFSET;
       var lookupChildOptions = flash.display.LookupChildOptions.INCLUDE_NON_INITIALIZED;
       for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
@@ -415,15 +415,15 @@ module Shumway.AVM1.Lib {
     }
 
     public getRect(bounds): AVM1Object {
-      var obj = bounds.as3Object;
+      var obj = <flash.display.InteractiveObject>getAS3Object(bounds);
       if (!obj) {
         throw new Error('Unsupported object type for AVM1MovieClip.getRect');
       }
-      return convertAS3RectangeToBounds(this.as3Object.getRect(obj));
+      return convertAS3RectangeToBounds(this._as3Object.getRect(obj));
     }
 
     public getSWFVersion(): number {
-      var loaderInfo = this.as3Object.loaderInfo;
+      var loaderInfo = this._as3Object.loaderInfo;
       return loaderInfo.swfVersion;
     }
 
@@ -440,16 +440,16 @@ module Shumway.AVM1.Lib {
     }
 
     public globalToLocal(pt) {
-      var tmp = this.as3Object.globalToLocal(toAS3Point(pt));
+      var tmp = this._as3Object.globalToLocal(toAS3Point(pt));
       copyAS3PointTo(tmp, pt);
     }
 
     public gotoAndPlay(frame) {
-      this.as3Object.gotoAndPlay(frame);
+      this._as3Object.gotoAndPlay(frame);
     }
 
     public gotoAndStop(frame) {
-      this.as3Object.gotoAndStop(frame);
+      this._as3Object.gotoAndStop(frame);
     }
 
     public getHitArea() {
@@ -459,27 +459,27 @@ module Shumway.AVM1.Lib {
     public setHitArea(value) {
       // The hitArea getter always returns exactly the value set here, so we have to store that.
       this._hitArea = value;
-      var obj = value ? value.as3Object : null;
+      var obj = value ? <flash.display.InteractiveObject>getAS3Object(value) : null;
       // If the passed-in value isn't a MovieClip, reset the hitArea.
       if (!this.context.sec.flash.display.MovieClip.axIsType(obj)) {
         obj = null;
       }
-      this.as3Object.hitArea = obj;
+      this._as3Object.hitArea = obj;
     }
 
     public hitTest(x: number, y: number, shapeFlag: boolean): boolean {
       if (arguments.length <= 1) {
         // Alternative method signature: hitTest(target: AVM1Object): boolean
-        var target: IAVM1SymbolBase = arguments[0];
-        if (Shumway.isNullOrUndefined(target) || !target.isAVM1Instance) {
+        var target = arguments[0];
+        if (Shumway.isNullOrUndefined(target) || !hasAS3ObjectReference(target)) {
           return false; // target is undefined or not a AVM1 display object, returning false.
         }
-        return this.as3Object.hitTestObject(target.as3Object);
+        return this._as3Object.hitTestObject(<flash.display.InteractiveObject>getAS3Object(target));
       }
       x = alToNumber(this.context, x);
       y = alToNumber(this.context, y);
       shapeFlag = alToBoolean(this.context, shapeFlag);
-      return this.as3Object.hitTestPoint(x, y, shapeFlag);
+      return this._as3Object.hitTestPoint(x, y, shapeFlag);
     }
 
     public lineGradientStyle(fillType: string, colors: AVM1Object, alphas: AVM1Object,
@@ -535,9 +535,9 @@ module Shumway.AVM1.Lib {
       loader.load(request);
       function completeHandler(event: flash.events.Event):void {
         loader.removeEventListener(flash.events.Event.COMPLETE, completeHandler);
-        var parent: flash.display.MovieClip = this.as3Object.parent;
-        var depth = parent.getChildIndex(this.as3Object);
-        parent.removeChild(this.as3Object);
+        var parent: flash.display.MovieClip = this._as3Object.parent;
+        var depth = parent.getChildIndex(this._as3Object);
+        parent.removeChild(this._as3Object);
         parent.addChildAt(loader.content, depth);
       }
 
@@ -550,7 +550,7 @@ module Shumway.AVM1.Lib {
     }
 
     public localToGlobal(pt) {
-      var tmp = this.as3Object.localToGlobal(toAS3Point(pt));
+      var tmp = this._as3Object.localToGlobal(toAS3Point(pt));
       copyAS3PointTo(tmp, pt);
     }
 
@@ -570,23 +570,23 @@ module Shumway.AVM1.Lib {
     }
 
     public nextFrame() {
-      this.as3Object.nextFrame();
+      this._as3Object.nextFrame();
     }
 
     public nextScene() {
-      this.as3Object.nextScene();
+      this._as3Object.nextScene();
     }
 
     public play() {
-      this.as3Object.play();
+      this._as3Object.play();
     }
 
     public prevFrame() {
-      this.as3Object.prevFrame();
+      this._as3Object.prevFrame();
     }
 
     public prevScene() {
-      this.as3Object.prevScene();
+      this._as3Object.prevScene();
     }
 
     public removeMovieClip() {
@@ -594,15 +594,15 @@ module Shumway.AVM1.Lib {
       if (!as2Parent) {
         return; // let's not remove root symbol
       }
-      as2Parent._removeChildName(this, this.as3Object.name);
-      as2Parent.as3Object.removeChild(this.as3Object);
+      as2Parent._removeChildName(this, this._as3Object.name);
+      as2Parent._as3Object.removeChild(this._as3Object);
     }
 
     public setMask(mc:Object) {
-      var nativeObject = this.as3Object;
+      var nativeObject = this._as3Object;
       var mask = AVM1Utils.resolveMovieClip(this.context, mc);
       if (mask) {
-        nativeObject.mask = mask.as3Object;
+        nativeObject.mask = <flash.display.InteractiveObject>getAS3Object(mask);
       }
     }
 
@@ -616,15 +616,15 @@ module Shumway.AVM1.Lib {
         bottom = alToNumber(this.context, bottom);
         bounds = new this.context.sec.flash.geom.Rectangle(left, top, right - left, bottom - top);
       }
-      this.as3Object.startDrag(lock, bounds);
+      this._as3Object.startDrag(lock, bounds);
     }
 
     public stop() {
-      return this.as3Object.stop();
+      return this._as3Object.stop();
     }
 
     public stopDrag() {
-      return this.as3Object.stopDrag();
+      return this._as3Object.stopDrag();
     }
 
     public swapDepths(target:Object) {
@@ -633,8 +633,8 @@ module Shumway.AVM1.Lib {
         // Don't swap with non-existent target.
         return;
       }
-      var child1 = this.as3Object;
-      var child2 = target_mc.as3Object;
+      var child1 = this._as3Object;
+      var child2 = target_mc._as3Object;
       if (child1.parent !== child2.parent) {
         return; // must be the same parent
       }
@@ -648,32 +648,34 @@ module Shumway.AVM1.Lib {
         lower = target_mc;
         higher = this;
       }
-      if (this._lookupChildInAS3Object(lower.as3Object.name) !== lower) {
-        this._removeChildName(lower, lower.as3Object.name);
+      var lowerName = (<flash.display.InteractiveObject>getAS3Object(lower)).name;
+      var higherName = (<flash.display.InteractiveObject>getAS3Object(higher)).name;
+      if (this._lookupChildInAS3Object(lowerName) !== lower) {
+        this._removeChildName(lower, lowerName);
       }
-      if (this._lookupChildInAS3Object(higher.as3Object.name) !== higher) {
-        this._addChildName(higher, higher.as3Object.name);
+      if (this._lookupChildInAS3Object(higherName) !== higher) {
+        this._addChildName(higher, higherName);
       }
     }
 
     public getTabChildren(): boolean {
-      return this.as3ObjectOrTemplate.tabChildren;
+      return getAS3ObjectOrTemplate(this).tabChildren;
     }
 
     public setTabChildren(value: boolean) {
-      this.as3ObjectOrTemplate.tabChildren = alToBoolean(this.context, value);
+      getAS3ObjectOrTemplate(this).tabChildren = alToBoolean(this.context, value);
     }
 
     public get_totalframes(): number {
-      return this.as3Object.totalFrames;
+      return this._as3Object.totalFrames;
     }
 
     public getTrackAsMenu(): boolean {
-      return this.as3ObjectOrTemplate.trackAsMenu;
+      return getAS3ObjectOrTemplate(this).trackAsMenu;
     }
 
     public setTrackAsMenu(value: boolean) {
-      this.as3ObjectOrTemplate.trackAsMenu = alToBoolean(this.context, value);
+      getAS3ObjectOrTemplate(this).trackAsMenu = alToBoolean(this.context, value);
     }
 
     public toString() {
@@ -681,7 +683,7 @@ module Shumway.AVM1.Lib {
     }
 
     public unloadMovie() {
-      var nativeObject = this.as3Object;
+      var nativeObject = this._as3Object;
       // TODO remove movie clip content
       var loader = nativeObject.loaderInfo.loader;
       if (loader.parent) {
@@ -691,11 +693,11 @@ module Shumway.AVM1.Lib {
     }
 
     public getUseHandCursor() {
-      return this.as3Object.useHandCursor;
+      getAS3ObjectOrTemplate(this).useHandCursor;
     }
 
     public setUseHandCursor(value) {
-      this.as3Object.useHandCursor = value;
+      getAS3ObjectOrTemplate(this).useHandCursor = value;
     }
 
     public setParameters(parameters: any): any {
@@ -756,7 +758,7 @@ module Shumway.AVM1.Lib {
           return super.alGetOwnProperty(name.toLowerCase());
         }
       }
-      if (this.isAVM1Instance) {
+      if (hasAS3ObjectReference(this)) {
         var child = this._lookupChildByName(name);
         if (child) {
           return this._getCachedPropertyResult(child);
@@ -768,11 +770,11 @@ module Shumway.AVM1.Lib {
     public alGetOwnPropertiesKeys(): any [] {
       var keys = super.alGetOwnPropertiesKeys();
       // if it's a movie listing the children as well
-      if (!this.isAVM1Instance) {
+      if (!hasAS3ObjectReference(this)) {
         return keys; // not initialized yet
       }
 
-      var as3MovieClip = this.as3Object;
+      var as3MovieClip = this._as3Object;
       if (as3MovieClip._children.length === 0) {
         return keys; // no children
       }

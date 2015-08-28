@@ -28,9 +28,11 @@ module Shumway.AVM1.Lib {
     }
 
     private _target: IAVM1SymbolBase;
+    private _targetAS3Object: flash.display.InteractiveObject;
 
     public avm1Constructor(target_mc) {
       this._target = AVM1Utils.resolveTarget(this.context, target_mc);
+      this._targetAS3Object = <flash.display.InteractiveObject>getAS3Object(this._target);
     }
 
     public getRGB(): number {
@@ -40,7 +42,7 @@ module Shumway.AVM1.Lib {
 
     public getTransform(): AVM1ColorTransform {
       return AVM1ColorTransform.fromAS3ColorTransform(this.context,
-        this._target.as3Object.transform.colorTransform);
+        this._targetAS3Object.transform.colorTransform);
     }
 
     public setRGB(offset): void {
@@ -50,7 +52,7 @@ module Shumway.AVM1.Lib {
     }
 
     public setTransform(transform: AVM1Object): void {
-      this._target.as3Object.transform.colorTransform = toAS3ColorTransform(transform);
+      this._targetAS3Object.transform.colorTransform = toAS3ColorTransform(transform);
     }
   }
 }
