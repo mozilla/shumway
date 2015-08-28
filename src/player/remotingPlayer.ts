@@ -111,7 +111,10 @@ module Shumway.Remoting.Player {
       }, VisitorFlags.None);
     }
 
-    writeStage(stage: Stage, currentMouseTarget: flash.display.InteractiveObject) {
+    writeStage(stage: Stage) {
+      if (!stage._isDirty) {
+        return;
+      }
       writer && writer.writeLn("Sending Stage");
       var serializer = this;
       this.output.writeInt(MessageTag.UpdateStage);
@@ -121,17 +124,25 @@ module Shumway.Remoting.Player {
       this.output.writeInt(flash.display.StageAlign.toNumber(stage.align));
       this.output.writeInt(flash.display.StageScaleMode.toNumber(stage.scaleMode));
       this.output.writeInt(flash.display.StageDisplayState.toNumber(stage.displayState));
+      stage._isDirty = false;
+    }
 
-      var cursor = stage.sec.flash.ui.Mouse.axClass.cursor;
+    writeCurrentMouseTarget(stage: Stage, currentMouseTarget: flash.display.InteractiveObject) {
+      this.output.writeInt(MessageTag.UpdateCurrentMouseTarget);
+
+      var sec = stage.sec;
+      var Mouse = sec.flash.ui.Mouse.axClass;
+      var cursor = Mouse.cursor;
       if (currentMouseTarget) {
+        var SimpleButton = sec.flash.display.SimpleButton.axClass;
+        var Sprite = sec.flash.display.Sprite.axClass;
         this.output.writeInt(currentMouseTarget._id);
         if (cursor === MouseCursor.AUTO) {
           var node = currentMouseTarget;
           do {
-            if (stage.sec.flash.display.SimpleButton.axClass.axIsType(node) ||
-                (stage.sec.flash.display.Sprite.axClass.axIsType(node) &&
-                 (<flash.display.Sprite>node).buttonMode) &&
-                 (<any>currentMouseTarget).useHandCursor)
+            if (SimpleButton.axIsType(node) ||
+                (Sprite.axIsType(node) && (<flash.display.Sprite>node).buttonMode) &&
+                (<any>currentMouseTarget).useHandCursor)
             {
               cursor = MouseCursor.BUTTON;
               break;
@@ -146,34 +157,35 @@ module Shumway.Remoting.Player {
     }
 
     writeGraphics(graphics: Graphics) {
-      if (graphics._isDirty) {
-        writer && writer.writeLn("Sending Graphics: " + graphics._id);
-        var textures = graphics.getUsedTextures();
-        var numTextures = textures.length;
-        for (var i = 0; i < numTextures; i++) {
-          textures[i] && this.writeBitmapData(textures[i]);
-        }
-        this.output.writeInt(MessageTag.UpdateGraphics);
-        this.output.writeInt(graphics._id);
-        this.output.writeInt(-1);
-        this._writeRectangle(graphics._getContentBounds());
-        this._writeAsset(graphics.getGraphicsData().toPlainObject());
-        this.output.writeInt(numTextures);
-        for (var i = 0; i < numTextures; i++) {
-          this.output.writeInt(textures[i] ? textures[i]._id : -1);
-        }
-        graphics._isDirty = false;
+      if (!graphics._isDirty) {
+        return;
       }
+      var textures = graphics.getUsedTextures();
+      var numTextures = textures.length;
+      for (var i = 0; i < numTextures; i++) {
+        textures[i] && this.writeBitmapData(textures[i]);
+      }
+      this.output.writeInt(MessageTag.UpdateGraphics);
+      this.output.writeInt(graphics._id);
+      this.output.writeInt(-1);
+      this._writeRectangle(graphics._getContentBounds());
+      this._writeAsset(graphics.getGraphicsData().toPlainObject());
+      this.output.writeInt(numTextures);
+      for (var i = 0; i < numTextures; i++) {
+        this.output.writeInt(textures[i] ? textures[i]._id : -1);
+      }
+      graphics._isDirty = false;
     }
 
     writeNetStream(netStream: NetStream, bounds: Bounds) {
-      if (netStream._isDirty) {
-        writer && writer.writeLn("Sending NetStream: " + netStream._id);
-        this.output.writeInt(MessageTag.UpdateNetStream);
-        this.output.writeInt(netStream._id);
-        this._writeRectangle(bounds);
-        netStream._isDirty = false;
+      if (!netStream._isDirty) {
+        return;
       }
+      writer && writer.writeLn("Sending NetStream: " + netStream._id);
+      this.output.writeInt(MessageTag.UpdateNetStream);
+      this.output.writeInt(netStream._id);
+      this._writeRectangle(bounds);
+      netStream._isDirty = false;
     }
 
     writeDisplayObjectRoot(displayObject: DisplayObject) {
@@ -184,16 +196,17 @@ module Shumway.Remoting.Player {
     }
 
     writeBitmapData(bitmapData: BitmapData) {
-      if (bitmapData._isDirty) {
-        writer && writer.writeLn("Sending BitmapData: " + bitmapData._id);
-        this.output.writeInt(MessageTag.UpdateBitmapData);
-        this.output.writeInt(bitmapData._id);
-        this.output.writeInt(bitmapData._symbol ? bitmapData._symbol.id : -1);
-        this._writeRectangle(bitmapData._getContentBounds());
-        this.output.writeInt(bitmapData._type);
-        this._writeAsset(bitmapData.getDataBuffer().toPlainObject());
-        bitmapData._isDirty = false;
+      if (!bitmapData._isDirty) {
+        return;
       }
+      writer && writer.writeLn("Sending BitmapData: " + bitmapData._id);
+      this.output.writeInt(MessageTag.UpdateBitmapData);
+      this.output.writeInt(bitmapData._id);
+      this.output.writeInt(bitmapData._symbol ? bitmapData._symbol.id : -1);
+      this._writeRectangle(bitmapData._getContentBounds());
+      this.output.writeInt(bitmapData._type);
+      this._writeAsset(bitmapData.getDataBuffer().toPlainObject());
+      bitmapData._isDirty = false;
     }
 
     writeTextContent(textContent: Shumway.TextContent) {
