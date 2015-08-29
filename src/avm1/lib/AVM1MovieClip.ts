@@ -80,10 +80,7 @@ module Shumway.AVM1.Lib {
     }
 
     _lookupChildByName(name: string): AVM1Object {
-      release || assert(typeof name === 'string');
-      if (!this.context.isPropertyCaseSensitive) {
-        name = name.toLowerCase();
-      }
+      release || assert(alIsName(this.context, name));
       return this._childrenByName[name];
     }
 
@@ -711,10 +708,7 @@ module Shumway.AVM1.Lib {
     // Special and children names properties resolutions
 
     private _resolveLevelNProperty(name: string): AVM1MovieClip {
-      name = alToString(this.context, name);
-      if (!this.context.isPropertyCaseSensitive) {
-        name = name.toLowerCase();
-      }
+      release || assert(alIsName(this.context, name));
       if (name === '_level0') {
         return this.context.resolveLevel(0);
       } else if (name === '_root') {
@@ -742,12 +736,11 @@ module Shumway.AVM1.Lib {
       return this._cachedPropertyResult;
     }
 
-    public alGetOwnProperty(p): AVM1PropertyDescriptor {
-      var desc = super.alGetOwnProperty(p);
+    public alGetOwnProperty(name): AVM1PropertyDescriptor {
+      var desc = super.alGetOwnProperty(name);
       if (desc) {
         return desc;
       }
-      var name = alToString(this.context, p);
       if (name[0] === '_') {
         var level = this._resolveLevelNProperty(name);
         if (level) {
