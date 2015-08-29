@@ -1620,10 +1620,9 @@ module Shumway.AVM1 {
       if (isNullOrUndefined(methodName) || methodName === '') {
         if (obj instanceof AVM1SuperWrapper) {
           var superFrame = (<AVM1SuperWrapper>obj).callFrame;
-          superArg = avm1FindSuperPropertyOwner(ectx.context, superFrame,
-                                                ESCAPED_PROPERTY_PREFIX + '__constructor__');
+          superArg = avm1FindSuperPropertyOwner(ectx.context, superFrame, '__constructor__');
           if (superArg) {
-            fn = superArg.alGet(ESCAPED_PROPERTY_PREFIX + '__constructor__');
+            fn = superArg.alGet('__constructor__');
             target = superFrame.currentThis;
           }
         } else {

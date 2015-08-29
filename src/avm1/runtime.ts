@@ -157,17 +157,6 @@ module Shumway.AVM1 {
                                                                           v));
     }
 
-    _escapeProperty(p: any): string  {
-      return alToName(this.context, p);
-    }
-
-    _unescapeProperty(name: string): string {
-      if (name[0] === '_' && name[1] === '_' && name.indexOf(ESCAPED_PROPERTY_PREFIX) === 0) {
-        name = name.substring(ESCAPED_PROPERTY_PREFIX.length);
-      }
-      return name;
-    }
-
     _debugEscapeProperty(p: any): string {
       var context = this.context;
       var name = alToString(context, p);
@@ -185,7 +174,7 @@ module Shumway.AVM1 {
 
     public alSetOwnProperty(p, desc: AVM1PropertyDescriptor): void {
       release || Debug.assert(desc instanceof AVM1PropertyDescriptor);
-      var name = this._escapeProperty(p);
+      var name = alToName(this.context, p);
       this._ownProperties[name] = desc;
       if (!release) { // adding data property on the main object for convenience of debugging
         if ((desc.flags & AVM1PropertyFlags.DATA) &&
@@ -197,12 +186,12 @@ module Shumway.AVM1 {
     }
 
     public alHasOwnProperty(p): boolean  {
-      var name = this._escapeProperty(p);
+      var name = alToName(this.context, p);
       return !!this._ownProperties[name];
     }
 
     public alDeleteOwnProperty(p) {
-      var name = this._escapeProperty(p);
+      var name = alToName(this.context, p);
       delete this._ownProperties[name];
       if (!release) {
         delete this[this._debugEscapeProperty(p)];
@@ -211,10 +200,9 @@ module Shumway.AVM1 {
 
     public alGetOwnPropertiesKeys(): string[] {
       var keys: string[] = [];
-      for (var i in this._ownProperties) {
-        var desc = this._ownProperties[i];
+      for (var name in this._ownProperties) {
+        var desc = this._ownProperties[name];
         if (!(desc.flags & AVM1PropertyFlags.DONT_ENUM)) {
-          var name = this._unescapeProperty(i);
           keys.push(name);
         }
       }
@@ -596,9 +584,6 @@ module Shumway.AVM1 {
     if (!context.isPropertyCaseSensitive) {
       name = name.toLowerCase();
     }
-    if (name[0] === '_' && name[1] === '_' && name.indexOf(ESCAPED_PROPERTY_PREFIX) !== 0) {
-      name = ESCAPED_PROPERTY_PREFIX + name;
-    }
     if (typeof v === 'string') {
       nameCache[v] = name;
     }
@@ -608,7 +593,6 @@ module Shumway.AVM1 {
   export function alIsName(context: IAVM1Context, v): boolean {
     return typeof v === 'number' ||
            typeof v === 'string' &&
-           (v[0] !== '_' || v[1] !== '_' || v.indexOf(ESCAPED_PROPERTY_PREFIX) === 0) &&
            (context.isPropertyCaseSensitive || v === v.toLowerCase());
   }
 
