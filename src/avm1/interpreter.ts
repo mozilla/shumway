@@ -1424,7 +1424,9 @@ module Shumway.AVM1 {
       var resolved = avm1ResolveVariable(ectx, variableName,
         AVM1ResolveVariableFlags.READ | AVM1ResolveVariableFlags.GET_VALUE);
       if (isNullOrUndefined(resolved)) {
-        avm1Warn("AVM1 warning: cannot look up variable '" + variableName + "'");
+        if (avm1WarningsEnabled.value) {
+          avm1Warn("AVM1 warning: cannot look up variable '" + variableName + "'");
+        }
         return;
       }
       stack[sp] = resolved.value;
@@ -1436,7 +1438,9 @@ module Shumway.AVM1 {
       var variableName = '' + stack.pop();
       var resolved = avm1ResolveVariable(ectx, variableName, AVM1ResolveVariableFlags.WRITE);
       if (isNullOrUndefined(resolved)) {
-        avm1Warn("AVM1 warning: cannot look up variable '" + variableName + "'");
+        if (avm1WarningsEnabled.value) {
+          avm1Warn("AVM1 warning: cannot look up variable '" + variableName + "'");
+        }
         return;
       }
       resolved.scope.alPut(variableName, value);
