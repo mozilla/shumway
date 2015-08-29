@@ -899,7 +899,7 @@ module Shumway.AVM1 {
 
     function avm1IsTarget(target): boolean {
       // TODO refactor
-      return target instanceof AVM1Object && target.isAVM1Instance;
+      return target instanceof AVM1Object && Lib.hasAS3ObjectReference(target);
     }
 
     function avm1ResolveSimpleVariable(scopeList: AVM1ScopeListItem, variableName: string, flags: AVM1ResolveVariableFlags): IAVM1ResolvedVariableResult {
