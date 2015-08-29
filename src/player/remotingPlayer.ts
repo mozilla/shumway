@@ -461,8 +461,25 @@ module Shumway.Remoting.Player {
     }
 
     private _writeMatrix(matrix: flash.geom.Matrix) {
-      var output = this.output;
-      output.write6Floats(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+
+      if (matrix.b === 0 && matrix.c === 0) {
+        if (matrix.a === 1 && matrix.d === 1) {
+          this.output.writeInt(MatrixEncoding.TranslationOnly);
+          this.output.write2Floats(matrix.tx, matrix.ty);
+        } else {
+          if (matrix.a === matrix.d) {
+            this.output.writeInt(MatrixEncoding.UniformScaleAndTranslationOnly);
+            this.output.writeFloat(matrix.a);
+          } else {
+            this.output.writeInt(MatrixEncoding.ScaleAndTranslationOnly);
+            this.output.write2Floats(matrix.a, matrix.d);
+          }
+          this.output.write2Floats(matrix.tx, matrix.ty);
+        }
+      }  else {
+        this.output.writeInt(MatrixEncoding.All);
+        this.output.write6Floats(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+      }
     }
 
     private _writeRectangle(bounds: Bounds) {
@@ -566,15 +583,25 @@ module Shumway.Remoting.Player {
           output.writeFloat(aM);
         }
       } else {
-        output.writeInt(ColorTransformEncoding.All);
-        output.writeFloat(rM);
-        output.writeFloat(gM);
-        output.writeFloat(bM);
-        output.writeFloat(aM);
-        output.writeInt(rO);
-        output.writeInt(gO);
-        output.writeInt(bO);
-        output.writeInt(aO);
+        var zeroNonAlphaMultipliers = rM === 0 && gM === 0 && bM === 0;
+        if (zeroNonAlphaMultipliers) {
+          output.writeInt(ColorTransformEncoding.AlphaMultiplierWithOffsets);
+          output.writeFloat(aM);
+          output.writeInt(rO);
+          output.writeInt(gO);
+          output.writeInt(bO);
+          output.writeInt(aO);
+        } else {
+          output.writeInt(ColorTransformEncoding.All);
+          output.writeFloat(rM);
+          output.writeFloat(gM);
+          output.writeFloat(bM);
+          output.writeFloat(aM);
+          output.writeInt(rO);
+          output.writeInt(gO);
+          output.writeInt(bO);
+          output.writeInt(aO);
+        }
       }
     }
 
