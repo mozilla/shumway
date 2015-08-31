@@ -698,31 +698,32 @@ module Shumway.AVM1.Lib {
         var setterName = 'set' + memberName[0].toUpperCase() + memberName.slice(1, -1);
         var setter = obj[setterName];
         release || Debug.assert(getter || setter, 'define getter or setter')
-        wrap.alSetOwnProperty(memberName.slice(0, -1), {
-          flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.DONT_ENUM,
-          get: wrapFunction(getter),
-          set: wrapFunction(setter)
-        })
+        var desc = new AVM1PropertyDescriptor(AVM1PropertyFlags.ACCESSOR |
+                                              AVM1PropertyFlags.DONT_DELETE |
+                                              AVM1PropertyFlags.DONT_ENUM,
+                                              null, wrapFunction(getter), wrapFunction(setter));
+        wrap.alSetOwnProperty(memberName.slice(0, -1), desc);
         return;
       }
 
-      var desc = getMemberDescriptor(memberName);
-      if (!desc) {
+      var nativeDesc = getMemberDescriptor(memberName);
+      if (!nativeDesc) {
         return;
       }
-      if (desc.get || desc.set) {
+      if (nativeDesc.get || nativeDesc.set) {
         release || Debug.assert(false, 'Redefine ' + memberName + ' property getter/setter as functions');
         return;
       }
 
-      var value = desc.value;
+      var value = nativeDesc.value;
       if (typeof value === 'function') {
         value = wrapFunction(value);
       }
-      wrap.alSetOwnProperty(memberName, {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.DONT_ENUM,
-        value: value
-      })
+      var desc = new AVM1PropertyDescriptor(AVM1PropertyFlags.DATA |
+                                            AVM1PropertyFlags.DONT_DELETE |
+                                            AVM1PropertyFlags.DONT_ENUM,
+                                            value);
+      wrap.alSetOwnProperty(memberName, desc);
     });
   }
 

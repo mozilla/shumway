@@ -69,14 +69,16 @@ module Shumway.AVM1 {
   class GlobalPropertiesScope extends AVM1Object {
     constructor(context: AVM1Context, thisArg: AVM1Object) {
       super(context);
-      this.alSetOwnProperty('this', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.READ_ONLY,
-        value: thisArg
-      });
-      this.alSetOwnProperty('_global', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.READ_ONLY,
-        value: context.globals
-      })
+      this.alSetOwnProperty('this', new AVM1PropertyDescriptor(AVM1PropertyFlags.DATA |
+                                                               AVM1PropertyFlags.DONT_ENUM |
+                                                               AVM1PropertyFlags.DONT_DELETE |
+                                                               AVM1PropertyFlags.READ_ONLY,
+                                                               thisArg));
+      this.alSetOwnProperty('_global', new AVM1PropertyDescriptor(AVM1PropertyFlags.DATA |
+                                                                  AVM1PropertyFlags.DONT_ENUM |
+                                                                  AVM1PropertyFlags.DONT_DELETE |
+                                                                  AVM1PropertyFlags.READ_ONLY,
+                                                                  context.globals));
     }
   }
 
@@ -539,10 +541,9 @@ module Shumway.AVM1 {
       obj = cls.alConstruct(args).value;
     }
     if (obj instanceof AVM1Object) {
-      (<AVM1Object>obj).alSetOwnProperty('__constructor__', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-        value: cls
-      });
+      var desc = new AVM1PropertyDescriptor(AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
+                                            cls);
+      (<AVM1Object>obj).alSetOwnProperty('__constructor__', desc);
     }
     return obj;
   }
@@ -2086,10 +2087,9 @@ module Shumway.AVM1 {
       var prototype = constr.alGetPrototypeProperty();
       var prototypeSuper = constrSuper.alGetPrototypeProperty();
       prototype.alPrototype = prototypeSuper;
-      prototype.alSetOwnProperty('__constructor__', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-        value: constrSuper
-      });
+      var desc = new AVM1PropertyDescriptor(AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
+                                            constrSuper);
+      prototype.alSetOwnProperty('__constructor__', desc);
     }
     function avm1_0x2B_ActionCastOp(ectx: ExecutionContext) {
       var stack = ectx.stack;

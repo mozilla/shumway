@@ -52,12 +52,14 @@ module Shumway.AVM1 {
     userData: any;
   }
 
-  export interface AVM1PropertyDescriptor {
-    flags: AVM1PropertyFlags;
-    value?: any;
-    get?: IAVM1Callable;
-    set?: IAVM1Callable;
-    watcher?: IAVM1PropertyWatcher;
+  export class AVM1PropertyDescriptor {
+    constructor(public flags: AVM1PropertyFlags,
+                public value?: any,
+                public get?: IAVM1Callable,
+                public set?: IAVM1Callable,
+                public watcher?: IAVM1PropertyWatcher) {
+      // Empty block
+    }
   }
 
   var ESCAPED_PROPERTY_PREFIX = '__avm1';
@@ -106,11 +108,15 @@ module Shumway.AVM1 {
       // Using IAVM1Callable here to avoid circular calls between AVM1Object and
       // AVM1Function during constructions.
       // TODO do we need to support __proto__ for all SWF versions?
-      this.alSetOwnProperty('__proto__', {
-        flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.DONT_ENUM,
-        get: { alCall: function (thisArg: any, args?: any[]): any { return self.alPrototype; }},
-        set: { alCall: function (thisArg: any, args?: any[]): any { self.alPrototype = args[0]; }}
-      });
+      var getter = { alCall: function (thisArg: any, args?: any[]): any { return self.alPrototype; }};
+      var setter = { alCall: function (thisArg: any, args?: any[]): any { self.alPrototype = args[0]; }};
+      var desc = new AVM1PropertyDescriptor(AVM1PropertyFlags.ACCESSOR |
+                                            AVM1PropertyFlags.DONT_DELETE |
+                                            AVM1PropertyFlags.DONT_ENUM,
+                                            null,
+                                            getter,
+                                            setter);
+      this.alSetOwnProperty('__proto__', desc);
     }
 
     get alPrototype(): AVM1Object {
@@ -130,27 +136,25 @@ module Shumway.AVM1 {
       this._prototype = v;
     }
 
-    public alGetPrototypeProperty(): any {
+    public alGetPrototypeProperty(): AVM1Object {
       return this.alGet('prototype');
     }
 
     // TODO shall we add mode for readonly/native flags of the prototype property?
     public alSetOwnPrototypeProperty(v: any): void {
-      this.alSetOwnProperty('prototype', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-        value: v
-      });
+      this.alSetOwnProperty('prototype', new AVM1PropertyDescriptor(AVM1PropertyFlags.DATA |
+                                                                    AVM1PropertyFlags.DONT_ENUM,
+                                                                    v));
     }
 
-    public alGetConstructorProperty(): any {
+    public alGetConstructorProperty(): AVM1Object {
       return this.alGet('__constructor__');
     }
 
     public alSetOwnConstructorProperty(v: any): void {
-      this.alSetOwnProperty('__constructor__', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-        value: v
-      });
+      this.alSetOwnProperty('__constructor__', new AVM1PropertyDescriptor(AVM1PropertyFlags.DATA |
+                                                                          AVM1PropertyFlags.DONT_ENUM,
+                                                                          v));
     }
 
     _escapeProperty(p: any): string  {
@@ -188,6 +192,7 @@ module Shumway.AVM1 {
     }
 
     public alSetOwnProperty(p, desc: AVM1PropertyDescriptor): void {
+      release || Debug.assert(desc instanceof AVM1PropertyDescriptor);
       var name = this._escapeProperty(p);
       this._ownProperties[name] = desc;
       if (!release) { // adding data property on the main object for convenience of debugging
@@ -277,10 +282,9 @@ module Shumway.AVM1 {
           v = ownDesc.watcher.callback.alCall(this,
             [ownDesc.watcher.name, ownDesc.value, v, ownDesc.watcher.userData]);
         }
-        var newDesc: AVM1PropertyDescriptor = {
-          flags: ownDesc.flags,
-          value: v
-        };
+        // TODO: simplify to
+        //ownDesc.value = v;
+        var newDesc = new AVM1PropertyDescriptor(ownDesc.flags, v);
         this.alSetOwnProperty(p, newDesc);
         return;
       }
@@ -300,10 +304,7 @@ module Shumway.AVM1 {
           v = desc.watcher.callback.alCall(this,
             [desc.watcher.name, desc.value, v, desc.watcher.userData]);
         }
-        var newDesc: AVM1PropertyDescriptor = {
-          flags: desc ? desc.flags : AVM1PropertyFlags.DATA,
-          value: v
-        };
+        var newDesc = new AVM1PropertyDescriptor(desc ? desc.flags : AVM1PropertyFlags.DATA, v);
         this.alSetOwnProperty(p, newDesc);
       }
     }
@@ -478,9 +479,9 @@ module Shumway.AVM1 {
       super(context);
       var proto = new AVM1Object(context);
       proto.alPrototype = context.builtins.Object.alGetPrototypeProperty();
-      proto.alSetOwnProperty('constructor', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE
-      });
+      proto.alSetOwnProperty('constructor', new AVM1PropertyDescriptor(AVM1PropertyFlags.DATA |
+                                                                       AVM1PropertyFlags.DONT_ENUM |
+                                                                       AVM1PropertyFlags.DONT_DELETE));
       this.alSetOwnPrototypeProperty(proto);
     }
     public alConstruct(args?: any[]): AVM1Object  {
@@ -751,14 +752,7 @@ module Shumway.AVM1 {
         flags |= AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_DELETE |
                  AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.READ_ONLY;
       }
-      obj.alSetOwnProperty(name, getter || setter ? {
-        flags: flags,
-        get: getter,
-        set: setter
-      } : {
-        flags: flags,
-        value: value
-      })
+      obj.alSetOwnProperty(name, new AVM1PropertyDescriptor(flags, value, getter, setter));
     });
   }
 }

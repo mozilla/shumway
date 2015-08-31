@@ -89,10 +89,10 @@ module Shumway.AVM1.Lib {
     constructor(context: AVM1Context, as3XMLNode: flash.xml.XMLNode) {
       super(context);
       this._as3XMLNode = as3XMLNode;
-      this._cachedNodePropertyDescriptor = {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.READ_ONLY,
-        value: undefined
-      };
+      this._cachedNodePropertyDescriptor = new AVM1PropertyDescriptor(AVM1PropertyFlags.DATA |
+                                                                      AVM1PropertyFlags.DONT_DELETE |
+                                                                      AVM1PropertyFlags.READ_ONLY,
+                                                                      undefined);
       alDefineObjectProperties(this, {
         length: {
           get: this.getLength
@@ -127,10 +127,8 @@ module Shumway.AVM1.Lib {
       super(context);
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
       this._as3Attributes = as3Attributes;
-      this._cachedNodePropertyDescriptor = {
-        flags: AVM1PropertyFlags.DATA,
-        value: undefined
-      };
+      this._cachedNodePropertyDescriptor = new AVM1PropertyDescriptor(AVM1PropertyFlags.DATA,
+                                                                      undefined);
     }
 
     public alGetOwnProperty(p): AVM1PropertyDescriptor {
