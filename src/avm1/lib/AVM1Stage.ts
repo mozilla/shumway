@@ -17,6 +17,8 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
+  import flash = Shumway.AVMX.AS.flash;
+
   export class AVM1Stage extends AVM1Object {
     public static createAVM1Class(context: AVM1Context): AVM1Object {
       var wrapped = new AVM1Stage(context);
@@ -51,5 +53,23 @@ module Shumway.AVM1.Lib {
     public setShowMenu(value) { this._as3Stage.showDefaultContextMenu = value; }
 
     public getWidth() { return this._as3Stage.stageWidth; }
+
+    _getLevel(level: number): flash.display.DisplayObject  {
+      return this._as3Stage.getRoot(level);
+    }
+
+    _setLevel(level: number, root: flash.display.DisplayObject): void {
+      this._deleteLevel(level);
+      this._as3Stage.setRoot(root, level);
+    }
+
+    _deleteLevel(level: number): boolean {
+      var as3Root = this._as3Stage.getRoot(level);
+      if (!as3Root) {
+        return false;
+      }
+      this._as3Stage.removeChild(as3Root);
+      return true;
+    }
   }
 }

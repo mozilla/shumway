@@ -728,7 +728,7 @@ module Shumway.AVMX.AS.flash.display {
       this._content = root;
       if (this === loaderClass.getRootLoader()) {
         this.sec.flash.display.Loader.runtimeStartTime = Date.now();
-        this._stage.setRoot(root);
+        this._stage.setRoot(root, 0);
       } else {
         this.addTimelineObjectAtDepth(root, 0);
       }
@@ -739,18 +739,28 @@ module Shumway.AVMX.AS.flash.display {
     private _initAvm1(symbol: SpriteSymbol): void {
       var contentLoaderInfo: LoaderInfo = this._contentLoaderInfo;
       var context;
-      // Only the outermost AVM1 SWF gets an AVM1Context. SWFs loaded into it share that context.
+      var display = this.sec.flash.display;
+      var rootLoader = display.Loader.axClass.getRootLoader();
+      // Only the outermost AVM1 SWF gets an AVM1Context. SWFs loaded into levels 1 or above
+      // or inner movies share that context.
       if (this.loaderInfo && this.loaderInfo._avm1Context) {
+        // Inner movie loaded using loadMovie().
         context = contentLoaderInfo._avm1Context = this.loaderInfo._avm1Context;
+      } else if (!this.loaderInfo && rootLoader.contentLoaderInfo._avm1Context) {
+        // Top level movie loaded using loadMovieNum().
+        context = contentLoaderInfo._avm1Context = rootLoader.contentLoaderInfo._avm1Context;
       } else {
+        // Top level or movie loaded by AS3.
         context = Shumway.AVM1.AVM1Context.create(contentLoaderInfo);
         contentLoaderInfo._avm1Context = context;
-        var display = this.sec.flash.display;
         var as2LoadedFromAS3 = this.loaderInfo && !this.loaderInfo._avm1Context;
-        var rootLoader = display.Loader.axClass.getRootLoader();
         if (as2LoadedFromAS3 || this === rootLoader) {
           context.setStage(rootLoader._stage);
           display.MovieClip.axClass.frameNavigationModel = flash.display.FrameNavigationModel.SWF1;
+        }
+        if (!rootLoader.contentLoaderInfo._avm1Context) {
+          // Also storing AVM1 context in the outermost AVM1 SWF at level 0.
+          rootLoader.contentLoaderInfo._avm1Context = context;
         }
       }
       symbol.avm1Context = context;

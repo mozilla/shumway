@@ -207,17 +207,14 @@ module Shumway.AVM1 {
 
     public resolveLevel(level: number): AVM1MovieClip {
       release || Debug.assert(typeof level === 'number');
-      // TODO planning to load levels as children of the stage
-      var as3Stage = (<Lib.AVM1Stage>this.globals.Stage)._as3Stage;
-      // TODO currently there is only one (_level0)
-      var as3Loader = <flash.display.Loader>as3Stage._lookupChildByIndex(level,
-        flash.display.LookupChildOptions.INCLUDE_NON_INITIALIZED);
-      if (!as3Loader) {
+      var stage = <Lib.AVM1Stage>this.globals.Stage;
+      var as3Root = stage._getLevel(level);
+      if (!as3Root) {
         this.utils.warn('Unable to resolve level ' + level + ' root');
         return undefined;
       }
-      var as3Root = as3Loader._content; // FIXME content is undefined
-      return <AVM1MovieClip>Lib.getAVM1Object(as3Root, this);
+      var rootContent = Lib.getAVM1Object(as3Root._children[0], this);
+      return <AVM1MovieClip>rootContent;
     }
 
   }

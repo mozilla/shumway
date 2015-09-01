@@ -269,6 +269,9 @@ declare module Shumway.AVMX.AS.flash {
       showDefaultContextMenu: boolean;
       stageWidth: number;
       stageHeight: number;
+
+      getRoot(level: number): DisplayObject;
+      setRoot(root: DisplayObject, level: number): void;
     }
 
     class DisplaySymbol extends Timeline.Symbol {

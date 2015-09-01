@@ -117,8 +117,24 @@ module Shumway.AVMX.AS.flash.display {
      */
     private _invalidated: boolean;
 
-    setRoot(root: MovieClip) {
-      this.addTimelineObjectAtDepth(root, 0);
+    /**
+     * Sets a root object object at particular level. AS1/2 may have different
+     * amount of levels, AS3 has only one (level 0). Every level correspond
+     * objects depth in the children of the stage.
+     */
+    setRoot(root: DisplayObject, level: number) {
+      this.addTimelineObjectAtDepth(root, level);
+    }
+
+    /**
+     * Gets a root object at particular level. See also `setRoot` above.
+     */
+    getRoot(level: number): DisplayObject  {
+      if (level === 0 && this._children.length === 1) {
+        // Fast path for single level case.
+        return this._children[0];
+      }
+      return this.getTimelineObjectAtDepth(level);
     }
 
     get frameRate(): number {
