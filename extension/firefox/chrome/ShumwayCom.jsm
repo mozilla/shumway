@@ -597,9 +597,9 @@ ShumwayChromeActions.prototype = {
         return;
     }
     var isJavaScriptURL = scheme === "javascript";
-    if (!this.allowScriptAccess &&
-        isJavaScriptURL ||
-        (target === '_top' || target === '_parent')) {
+    var requireScriptAccess = isJavaScriptURL ||
+                              (target === '_top' || target === '_parent');
+    if (!this.allowScriptAccess && requireScriptAccess) {
       return;
     }
     // ...and only when user input is in-progress.

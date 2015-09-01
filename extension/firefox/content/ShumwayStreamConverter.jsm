@@ -62,32 +62,6 @@ function getDOMWindow(aChannel) {
   return win;
 }
 
-function isShumwayEnabledFor(startupInfo) {
-  // disabled for PrivateBrowsing windows
-  if (isContentWindowPrivate(startupInfo.window) &&
-      !getBoolPref('shumway.enableForPrivate', false)) {
-    return false;
-  }
-  // disabled if embed tag specifies shumwaymode (for testing purpose)
-  if (startupInfo.objectParams['shumwaymode'] === 'off') {
-    return false;
-  }
-
-  var url = startupInfo.url;
-  var baseUrl = startupInfo.baseUrl;
-
-  // blacklisting well known sites with issues
-  if (/\.ytimg\.com\//i.test(url) /* youtube movies */ ||
-    /\/vui.swf\b/i.test(url) /* vidyo manager */  ||
-    /soundcloud\.com\/player\/assets\/swf/i.test(url) /* soundcloud */ ||
-    /sndcdn\.com\/assets\/swf/.test(url) /* soundcloud */ ||
-    /vimeocdn\.com/.test(url) /* vimeo */) {
-    return false;
-  }
-
-  return true;
-}
-
 function activateShumwayScripts(window) {
   function initScripts() {
     window.wrappedJSObject.runViewer();
@@ -161,20 +135,17 @@ function activateShumwayScripts(window) {
   }
 }
 
-function fallbackToNativePlugin(window, userAction, activateCTP) {
-  var obj = window.frameElement;
-  var doc = obj.ownerDocument;
-  var e = doc.createEvent("CustomEvent");
-  e.initCustomEvent("MozPlayPlugin", true, true, activateCTP);
-  obj.dispatchEvent(e);
-
-  ShumwayTelemetry.onFallback(userAction);
+function ShumwayStreamConverter() {
 }
 
-function ShumwayStreamConverterBase() {
-}
+ShumwayStreamConverter.prototype = {
+  classID: Components.ID('{4c6030f7-e20a-264f-5b0e-ada3a9e97384}'),
+  classDescription: 'Shumway Content Converter Component',
+  contractID: '@mozilla.org/streamconv;1?from=application/x-shockwave-flash&to=*/*',
 
-ShumwayStreamConverterBase.prototype = {
+  classID2: Components.ID('{4c6030f8-e20a-264f-5b0e-ada3a9e97384}'),
+  contractID2: '@mozilla.org/streamconv;1?from=application/x-shockwave-flash&to=text/html',
+
   QueryInterface: XPCOMUtils.generateQI([
       Ci.nsISupports,
       Ci.nsIStreamConverter,
@@ -204,38 +175,6 @@ ShumwayStreamConverterBase.prototype = {
   getStartupInfo: function(window, url) {
     var initStartTime = Date.now();
     var element = window.frameElement;
-    var isOverlay = false;
-    if (element) {
-      // PlayPreview overlay "belongs" to the embed/object tag and consists of
-      // DIV and IFRAME. Starting from IFRAME and looking for first object tag.
-      var tagName = element.nodeName, containerElement;
-      while (tagName != 'EMBED' && tagName != 'OBJECT') {
-        // plugin overlay skipping until the target plugin is found
-        isOverlay = true;
-        containerElement = element;
-        element = element.parentNode;
-        if (!element) {
-          throw new Error('Plugin element is not found');
-        }
-        tagName = element.nodeName;
-      }
-
-      if (isOverlay) {
-        // HACK For Facebook, CSS embed tag rescaling -- iframe (our overlay)
-        // has no styling in document. Shall removed with jsplugins.
-        for (var child = window.frameElement; child !== element; child = child.parentNode) {
-          child.setAttribute('style', 'max-width: 100%; max-height: 100%');
-        }
-
-        // Checking if overlay is a proper PlayPreview overlay.
-        for (var i = 0; i < element.children.length; i++) {
-          if (element.children[i] === containerElement) {
-            throw new Error('Plugin element is invalid');
-          }
-        }
-      }
-    }
-
     if (element) {
       return getStartupInfo(element);
     }
@@ -346,11 +285,6 @@ ShumwayStreamConverterBase.prototype = {
           return;
         }
 
-        if (!isShumwayEnabledFor(startupInfo)) {
-          fallbackToNativePlugin(domWindow, false, true);
-          return;
-        }
-
         domWindow.shumwayStartupInfo = startupInfo;
 
         // TODO Report telemetry on amount of swfs on the page
@@ -397,14 +331,3 @@ function copyProperties(obj, template) {
     obj[prop] = template[prop];
   }
 }
-
-function ShumwayStreamConverter() {}
-ShumwayStreamConverter.prototype = new ShumwayStreamConverterBase();
-copyProperties(ShumwayStreamConverter.prototype, {
-  classID: Components.ID('{4c6030f7-e20a-264f-5b0e-ada3a9e97384}'),
-  classDescription: 'Shumway Content Converter Component',
-  contractID: '@mozilla.org/streamconv;1?from=application/x-shockwave-flash&to=*/*',
-
-  classID2: Components.ID('{4c6030f8-e20a-264f-5b0e-ada3a9e97384}'),
-  contractID2: '@mozilla.org/streamconv;1?from=application/x-shockwave-flash&to=text/html'
-});
