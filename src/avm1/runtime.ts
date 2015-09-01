@@ -53,6 +53,7 @@ module Shumway.AVM1 {
   }
 
   export class AVM1PropertyDescriptor {
+    public originalName: string;
     constructor(public flags: AVM1PropertyFlags,
                 public value?: any,
                 public get?: IAVM1Callable,
@@ -173,16 +174,24 @@ module Shumway.AVM1 {
     }
 
     public alSetOwnProperty(p, desc: AVM1PropertyDescriptor): void {
-      release || Debug.assert(desc instanceof AVM1PropertyDescriptor);
       var name = alToName(this.context, p);
-      this._ownProperties[name] = desc;
-      if (!release) { // adding data property on the main object for convenience of debugging
+      if (!desc.originalName && !this.context.isPropertyCaseSensitive) {
+        desc.originalName = p;
+      }
+      if (!release) {
+        Debug.assert(desc instanceof AVM1PropertyDescriptor);
+        // Ensure that a descriptor isn't used multiple times. If it were, we couldn't update
+        // values in-place.
+        Debug.assert(!desc['owningObject'] || desc['owningObject'] === this);
+        desc['owningObject'] = this;
+        // adding data property on the main object for convenience of debugging.
         if ((desc.flags & AVM1PropertyFlags.DATA) &&
             !(desc.flags & AVM1PropertyFlags.DONT_ENUM)) {
-          Object.defineProperty(this, this._debugEscapeProperty(p),
+          Object.defineProperty(this, this._debugEscapeProperty(name),
             {value: desc.value, enumerable: true, configurable: true});
         }
       }
+      this._ownProperties[name] = desc;
     }
 
     public alHasOwnProperty(p): boolean  {
@@ -200,10 +209,20 @@ module Shumway.AVM1 {
 
     public alGetOwnPropertiesKeys(): string[] {
       var keys: string[] = [];
-      for (var name in this._ownProperties) {
-        var desc = this._ownProperties[name];
-        if (!(desc.flags & AVM1PropertyFlags.DONT_ENUM)) {
-          keys.push(name);
+      if (!this.context.isPropertyCaseSensitive) {
+        for (var name in this._ownProperties) {
+          var desc = this._ownProperties[name];
+          release || Debug.assert("originalName" in desc);
+          if (!(desc.flags & AVM1PropertyFlags.DONT_ENUM)) {
+            keys.push(desc.originalName);
+          }
+        }
+      } else {
+        for (var name in this._ownProperties) {
+          var desc = this._ownProperties[name];
+          if (!(desc.flags & AVM1PropertyFlags.DONT_ENUM)) {
+            keys.push(name);
+          }
         }
       }
       return keys;
@@ -253,6 +272,9 @@ module Shumway.AVM1 {
     }
 
     public alPut(p, v) {
+      // Perform all lookups with the canonicalized name, but keep the original name around to
+      // pass it to `alSetOwnProperty`, which stores it on the descriptor.
+      var originalName = p;
       p = alToName(this.context, p);
       if (!this.alCanPut(p)) {
         return;
@@ -263,10 +285,12 @@ module Shumway.AVM1 {
           v = ownDesc.watcher.callback.alCall(this,
             [ownDesc.watcher.name, ownDesc.value, v, ownDesc.watcher.userData]);
         }
-        // TODO: simplify to
-        //ownDesc.value = v;
-        var newDesc = new AVM1PropertyDescriptor(ownDesc.flags, v);
-        this.alSetOwnProperty(p, newDesc);
+        // Real properties (i.e., not things like "_root" on MovieClips) can be updated in-place.
+        if (p in this._ownProperties) {
+          ownDesc.value = v;
+        } else {
+          this.alSetOwnProperty(originalName, new AVM1PropertyDescriptor(ownDesc.flags, v));
+        }
         return;
       }
       var desc = this.alGetProperty(p);
@@ -286,7 +310,7 @@ module Shumway.AVM1 {
             [desc.watcher.name, desc.value, v, desc.watcher.userData]);
         }
         var newDesc = new AVM1PropertyDescriptor(desc ? desc.flags : AVM1PropertyFlags.DATA, v);
-        this.alSetOwnProperty(p, newDesc);
+        this.alSetOwnProperty(originalName, newDesc);
       }
     }
 
@@ -374,14 +398,37 @@ module Shumway.AVM1 {
 
       // Merging two keys sets
       // TODO check if we shall worry about __proto__ usage here
-      var processed = Object.create(null);
-      for (var i = 0; i < ownKeys.length; i++) {
-        processed[ownKeys[i]] = true;
+      var context = this.context;
+      // If the context is case-insensitive, names only differing in their casing overwrite each
+      // other. Iterating over the keys returns the first original, case-preserved key that was
+      // ever used for the property, though.
+      if (!context.isPropertyCaseSensitive) {
+        var keyLists = [ownKeys, otherKeys];
+        var canonicalKeysMap = Object.create(null);
+        var keys = [];
+        for (var k = 0; k < keyLists.length; k++) {
+          var keyList = keyLists[k];
+          for (var i = keyList.length; i--;) {
+            var key = keyList[i];
+            var canonicalKey = alToName(context, key);
+            if (canonicalKeysMap[canonicalKey]) {
+              continue;
+            }
+            canonicalKeysMap[canonicalKey] = true;
+            keys.push(key);
+          }
+        }
+        return keys;
+      } else {
+        var processed = Object.create(null);
+        for (var i = 0; i < ownKeys.length; i++) {
+          processed[ownKeys[i]] = true;
+        }
+        for (var i = 0; i < otherKeys.length; i++) {
+          processed[otherKeys[i]] = true;
+        }
+        return Object.getOwnPropertyNames(processed);
       }
-      for (var i = 0; i < otherKeys.length; i++) {
-        processed[otherKeys[i]] = true;
-      }
-      return Object.getOwnPropertyNames(processed);
     }
   }
 

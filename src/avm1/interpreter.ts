@@ -422,7 +422,6 @@ module Shumway.AVM1 {
 
   function as2SetProperty(context: AVM1Context, obj: any, name: any, value: any): void {
     var avm1Obj: AVM1Object = alToObject(context, obj);
-    name = alToName(context, name);
     avm1Obj.alPut(name, value);
     as2SyncEvents(context, name);
   }
