@@ -951,6 +951,8 @@ module Shumway.AVM1 {
       // For now it is just very much magical -- designed to pass some of the swfdec tests
       // FIXME refactor
       release || Debug.assert(variableName);
+      // Canonicalizing the name here is ok even for paths: the only thing that (potentially)
+      // happens is that the name is converted to lower-case, which is always valid for paths.
       variableName = alToName(ectx.context, variableName);
       if (!avm1VariableNameHasPath(variableName)) {
         return avm1ResolveSimpleVariable(ectx.scopeList, variableName, flags);

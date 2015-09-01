@@ -63,7 +63,6 @@ module Shumway.AVM1 {
     }
   }
 
-  export var ESCAPED_PROPERTY_PREFIX = '__avm1';
   var DEBUG_PROPERTY_PREFIX = '$Bg';
 
   export interface IAVM1Builtins {
