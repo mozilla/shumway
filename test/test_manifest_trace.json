@@ -24,6 +24,8 @@
         "swfs/avm1/watch/watch.swf",
         "swfs/avm1/array/arraygeneric.swf",
         "swfs/avm1/propertycase/propertycase.swf",
+        "swfs/avm1/propertycase/propertycase-preserving-6.swf",
+        "swfs/avm1/propertycase/propertycase-preserving-7.swf",
         "swfs/avm1/scope/avm1-scope-1.swf",
         "swfs/avm1/loadevent/loadevent.swf",
         "swfs/avm1/nativeinheritance/avm1_inheritedproperties.swf",
