@@ -410,7 +410,7 @@ module Shumway.AVM1 {
 
   function as2HasProperty(context: AVM1Context, obj: any, name: any): boolean {
     var avm1Obj: AVM1Object = alToObject(context, obj);
-    name = alNormalizeName(context, name);
+    name = context.normalizeName(name);
     return avm1Obj.alHasProperty(name);
   }
 
@@ -427,7 +427,7 @@ module Shumway.AVM1 {
 
   function as2DeleteProperty(context: AVM1Context, obj: any, name: any): any {
     var avm1Obj: AVM1Object = alToObject(context, obj);
-    name = alNormalizeName(context, name);
+    name = context.normalizeName(name);
     var result = avm1Obj.alDeleteProperty(name);
     as2SyncEvents(context, name);
     return result;
@@ -955,7 +955,7 @@ module Shumway.AVM1 {
       // The original name is saved because the final property name needs to be extracted from
       // it for property name paths.
       var originalName = variableName;
-      variableName = alNormalizeName(ectx.context, variableName);
+      variableName = ectx.context.normalizeName(variableName);
       if (!avm1VariableNameHasPath(variableName)) {
         return avm1ResolveSimpleVariable(ectx.scopeList, variableName, flags);
       }
