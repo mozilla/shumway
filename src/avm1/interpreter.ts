@@ -953,6 +953,9 @@ module Shumway.AVM1 {
       release || Debug.assert(variableName);
       // Canonicalizing the name here is ok even for paths: the only thing that (potentially)
       // happens is that the name is converted to lower-case, which is always valid for paths.
+      // The original name is saved because the final property name needs to be extracted from
+      // it for property name paths.
+      var originalName = variableName;
       variableName = alNormalizeName(ectx.context, variableName);
       if (!avm1VariableNameHasPath(variableName)) {
         return avm1ResolveSimpleVariable(ectx.scopeList, variableName, flags);
@@ -1041,8 +1044,9 @@ module Shumway.AVM1 {
           }
         }
 
-        if (!valueFound) {
-          avm1Warn('Unable to resolve ' + propertyName + ' on ' + variableName.substring(q, i - 1) + ' (expr ' + variableName + ')');
+        if (!valueFound && !(flags & AVM1ResolveVariableFlags.WRITE)) {
+          avm1Warn('Unable to resolve ' + propertyName + ' on ' + variableName.substring(q, i - 1) +
+                   ' (expr ' + variableName + ')');
           return null;
         }
 
@@ -1059,7 +1063,7 @@ module Shumway.AVM1 {
 
       resolved = cachedResolvedVariableResult;
       resolved.scope = scope;
-      resolved.propertyName = propertyName;
+      resolved.propertyName = originalName.substring(q, i);
       resolved.value = (flags & AVM1ResolveVariableFlags.GET_VALUE) ? obj : undefined;
       return resolved;
     }
@@ -1438,14 +1442,15 @@ module Shumway.AVM1 {
       var value = stack.pop();
       var variableName = '' + stack.pop();
       var resolved = avm1ResolveVariable(ectx, variableName, AVM1ResolveVariableFlags.WRITE);
-      if (isNullOrUndefined(resolved)) {
+      if (!resolved) {
         if (avm1WarningsEnabled.value) {
           avm1Warn("AVM1 warning: cannot look up variable '" + variableName + "'");
         }
         return;
       }
-      resolved.scope.alPut(variableName, value);
-      as2SyncEvents(ectx.context, variableName);
+      release || assert(resolved.propertyName);
+      resolved.scope.alPut(resolved.propertyName, value);
+      as2SyncEvents(ectx.context, resolved.propertyName);
     }
     function avm1_0x9A_ActionGetURL2(ectx: ExecutionContext, args: any[]) {
       var stack = ectx.stack;
