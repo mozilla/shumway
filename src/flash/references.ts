@@ -321,28 +321,7 @@
 // ///<reference path='system/SystemUpdaterType.ts' />
 ///<reference path='system/TouchscreenType.ts' />
 
-///<reference path='text/AntiAliasType.ts' />
-// ///<reference path='text/CSMSettings.ts' />
-///<reference path='text/FontStyle.ts' />
-///<reference path='text/FontType.ts' />
-///<reference path='text/Font.ts' />
-///<reference path='text/GridFitType.ts' />
-///<reference path='text/StaticText.ts' />
-///<reference path='text/StyleSheet.ts' />
-// ///<reference path='text/TextColorType.ts' />
-///<reference path='text/TextDisplayMode.ts' />
-// ///<reference path='text/TextExtent.ts' />
-///<reference path='text/TextField.ts' />
-///<reference path='text/TextFieldAutoSize.ts' />
-///<reference path='text/TextFieldType.ts' />
-///<reference path='text/TextFormat.ts' />
-///<reference path='text/TextFormatAlign.ts' />
-///<reference path='text/TextFormatDisplay.ts' />
-///<reference path='text/TextInteractionMode.ts' />
-///<reference path='text/TextLineMetrics.ts' />
-// ///<reference path='text/TextRenderer.ts' />
-///<reference path='text/TextRun.ts' />
-///<reference path='text/TextSnapshot.ts' />
+///<reference path='text/text.ts' />
 
 // ///<reference path='text/engine/BreakOpportunity.ts' />
 // ///<reference path='text/engine/CFFHinting.ts' />
@@ -382,24 +361,7 @@
 
 ///<reference path='trace/Trace.ts' />
 
-///<reference path='ui/ContextMenu.ts' />
-///<reference path='ui/ContextMenuBuiltInItems.ts' />
-///<reference path='ui/ContextMenuClipboardItems.ts' />
-///<reference path='ui/ContextMenuItem.ts' />
-///<reference path='ui/GameInput.ts' />
-///<reference path='ui/GameInputControl.ts' />
-///<reference path='ui/GameInputControlType.ts' />
-///<reference path='ui/GameInputDevice.ts' />
-///<reference path='ui/GameInputFinger.ts' />
-///<reference path='ui/GameInputHand.ts' />
-// ///<reference path='ui/KeyLocation.ts' />
-///<reference path='ui/Keyboard.ts' />
-// ///<reference path='ui/KeyboardType.ts' />
-///<reference path='ui/Mouse.ts' />
-///<reference path='ui/MouseCursor.ts' />
-///<reference path='ui/MouseCursorData.ts' />
-///<reference path='ui/Multitouch.ts' />
-///<reference path='ui/MultitouchInputMode.ts' />
+///<reference path='ui/ui.ts' />
 
 ///<reference path='utils/Endian.ts' />
 ///<reference path='utils/IDataInput2.ts' />
