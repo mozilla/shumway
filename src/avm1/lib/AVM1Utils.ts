@@ -43,10 +43,6 @@ module Shumway.AVM1.Lib {
     public onUnbind(target: IAVM1SymbolBase): void {}
   }
 
-  function normalizeEventName(context: AVM1Context, eventName: string): string {
-    return context.isPropertyCaseSensitive ? eventName : eventName.toLowerCase();
-  }
-
   /**
    * Checks if an object contains a reference to a native AS3 object.
    * Returns false for MovieClip instances or instances of constructors with
@@ -177,7 +173,7 @@ module Shumway.AVM1.Lib {
       events.forEach(function (event: AVM1EventHandler) {
         // Normalization will always stay valid in a player instance, so we can safely modify
         // the event itself, here.
-        var propertyName = event.propertyName = normalizeEventName(context, event.propertyName);
+        var propertyName = event.propertyName = context.normalizeName(event.propertyName);
         eventsMap[propertyName] = event;
         context.registerEventPropertyObserver(propertyName, observer);
         observer._updateEvent(event);
@@ -219,7 +215,7 @@ module Shumway.AVM1.Lib {
     }
 
     private _addEventListener(event: AVM1EventHandler) {
-      var propertyName = normalizeEventName(this.context, event.propertyName);
+      var propertyName = this.context.normalizeName(event.propertyName);
       var listener: any = this._eventsListeners[propertyName];
       if (!listener) {
         listener = function avm1EventHandler() {
@@ -233,7 +229,7 @@ module Shumway.AVM1.Lib {
     }
 
     private _removeEventListener(event: AVM1EventHandler) {
-      var propertyName = normalizeEventName(this.context, event.propertyName);
+      var propertyName = this.context.normalizeName(event.propertyName);
       var listener: any = this._eventsListeners[propertyName];
       if (listener) {
         event.onUnbind(this);
@@ -243,7 +239,7 @@ module Shumway.AVM1.Lib {
     }
 
     public onEventPropertyModified(propertyName: string) {
-      var propertyName = normalizeEventName(this.context, propertyName);
+      var propertyName = this.context.normalizeName(propertyName);
       var event = this._eventsMap[propertyName];
       this._updateEvent(event);
     }
