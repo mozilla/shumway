@@ -1850,16 +1850,16 @@ module Shumway.AVMX.AS.flash.display {
      */
     _setStaticContentFromSymbol(symbol: Shumway.Timeline.DisplaySymbol) {
       release || assert(!symbol.dynamic);
-      if (this._canHaveGraphics()) {
-        release || assert(symbol instanceof flash.display.ShapeSymbol);
+      if (symbol instanceof flash.display.ShapeSymbol) {
+        release || assert(this._canHaveGraphics());
         var newGraphics = (<flash.display.ShapeSymbol>symbol).graphics;
         if (this._graphics === newGraphics) {
           return;
         }
         this._graphics = newGraphics;
         this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyGraphics);
-      } else if (this.sec.flash.text.StaticText.axIsType(this)) {
-        release || assert(symbol instanceof flash.text.TextSymbol);
+      } else if (symbol instanceof flash.text.TextSymbol) {
+        release || assert(this.sec.flash.text.StaticText.axIsType(this));
         var newTextContent = (<flash.text.TextSymbol>symbol).textContent;
         if ((<flash.text.StaticText>this)._textContent === newTextContent) {
           return;
