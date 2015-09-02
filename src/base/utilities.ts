@@ -1456,10 +1456,7 @@ module Shumway {
       return this._data[key];
     }
     set(key, value) {
-      if (key in this._data) {
-        this._data[key] = value;
-        return true;
-      }
+      release || Debug.assert(!(key in this._data)); // Cannot mutate cache entries.
       if (this._size >= this._maxSize) {
         return false;
       }
