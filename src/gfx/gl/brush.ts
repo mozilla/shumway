@@ -216,7 +216,7 @@ module Shumway.GFX.WebGL {
         gl.activeTexture(gl.TEXTURE0 + i);
         gl.bindTexture(gl.TEXTURE_2D, this._surfaces[i].texture);
       }
-      gl.uniform1iv(p.uniforms["uSampler[0]"].location, [0, 1, 2, 3, 4, 5, 6, 7]);
+      gl.uniform1iv(p.uniforms["uSampler[0]"].location, new Int32Array([0, 1, 2, 3, 4, 5, 6, 7]));
       // Bind vertex buffer.
       gl.bindBuffer(gl.ARRAY_BUFFER, g.buffer);
       var size = WebGLCombinedBrushVertex.attributeList.size;

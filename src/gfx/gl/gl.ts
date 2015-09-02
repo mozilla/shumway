@@ -112,19 +112,19 @@ module Shumway.GFX.WebGL {
 
       this._scratchCanvas = document.createElement("canvas");
       this._scratchCanvas.width = this._scratchCanvas.height = SCRATCH_CANVAS_SIZE;
-      this._scratchCanvasContext = this._scratchCanvas.getContext("2d", {
+      this._scratchCanvasContext = <any>this._scratchCanvas.getContext("2d", {
         willReadFrequently: true
       });
 
       this._dynamicScratchCanvas = document.createElement("canvas");
       this._dynamicScratchCanvas.width = this._dynamicScratchCanvas.height = 0;
-      this._dynamicScratchCanvasContext = this._dynamicScratchCanvas.getContext("2d", {
+      this._dynamicScratchCanvasContext = <any>this._dynamicScratchCanvas.getContext("2d", {
         willReadFrequently: true
       });
 
       this._uploadCanvas = document.createElement("canvas");
       this._uploadCanvas.width = this._uploadCanvas.height = 0;
-      this._uploadCanvasContext = this._uploadCanvas.getContext("2d", {
+      this._uploadCanvasContext = <any>this._uploadCanvas.getContext("2d", {
         willReadFrequently: true
       });
 
