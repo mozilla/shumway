@@ -714,7 +714,8 @@ module Shumway.AVMX.AS.flash.display {
       var loaderInfo = this._contentLoaderInfo;
       root._loaderInfo = loaderInfo;
       var rootTimeline = root;
-      if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
+      if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2 &&
+          !loaderInfo._avm1LevelHolder) {
         root = this._initAvm1Root(root);
       } else if (this === loaderClass.getRootLoader()) {
         var movieClipClass = this.sec.flash.display.MovieClip.axClass;
@@ -729,6 +730,8 @@ module Shumway.AVMX.AS.flash.display {
       if (this === loaderClass.getRootLoader()) {
         this.sec.flash.display.Loader.runtimeStartTime = Date.now();
         this._stage.setRoot(root);
+      } else if (loaderInfo._avm1LevelHolder) {
+        loaderInfo._avm1LevelHolder._setRoot(loaderInfo._avm1LevelNumber, root);
       } else {
         this.addTimelineObjectAtDepth(root, 0);
       }
@@ -738,6 +741,11 @@ module Shumway.AVMX.AS.flash.display {
 
     private _initAvm1(symbol: SpriteSymbol): void {
       var contentLoaderInfo: LoaderInfo = this._contentLoaderInfo;
+      if (contentLoaderInfo._avm1Context) {
+        // Loading as a level of the existing AVM1 SWF.
+        return;
+      }
+      // FIXME handle multiple AVM1Context (and store them at AVM1Movie level?)
       var context;
       // Only the outermost AVM1 SWF gets an AVM1Context. SWFs loaded into it share that context.
       if (this.loaderInfo && this.loaderInfo._avm1Context) {

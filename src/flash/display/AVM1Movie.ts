@@ -47,7 +47,14 @@ module Shumway.AVMX.AS.flash.display {
     constructor(content: MovieClip) {
       super();
       this._children = [];
-      this._children[0] = this._content = content;
+      this._children[0] = content;
+
+      // Setting up _level0 root.
+      this._levels = [];
+      this._levelToNumberMap = new WeakMap<DisplayObject, number>();
+      this._levels[0] = content;
+      this._levelToNumberMap.set(content, 0);
+
       // Pretend we're a DisplayObjectContainer and can have children. See comment at the top.
       content._setParent(<any>this, 0);
       this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyChildren);
@@ -56,7 +63,8 @@ module Shumway.AVMX.AS.flash.display {
       this._constructed = false;
     }
 
-    private _content: MovieClip;
+    private _levels: MovieClip[];
+    private _levelToNumberMap: WeakMap<MovieClip, number>;
     private _constructed: boolean;
 
     call(functionName: string): any {
@@ -68,7 +76,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     _addFrame(frame: Shumway.SWF.SWFFrame) {
-      this._content._addFrame(frame);
+      this._levels[0]._addFrame(frame);
     }
 
     _initFrame(advance: boolean): void {
@@ -81,12 +89,12 @@ module Shumway.AVMX.AS.flash.display {
         this._constructed = true;
         DisplayObjectContainer.prototype._constructChildren.call(this);
       }
-      this._content._constructFrame();
+      this._children.forEach(level => (<MovieClip>level)._constructFrame());
     }
 
     _enqueueFrameScripts() {
       this._removeFlags(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
-      this._content._enqueueFrameScripts();
+      this._children.forEach(level => (<MovieClip>level)._enqueueFrameScripts());
     }
 
     _propagateFlagsDown(flags: DisplayObjectFlags) {
@@ -94,7 +102,7 @@ module Shumway.AVMX.AS.flash.display {
         return;
       }
       this._setFlags(flags);
-      this._content._propagateFlagsDown(flags);
+      this._children.forEach(level => level._propagateFlagsDown(flags));
     }
 
     /**
@@ -104,7 +112,14 @@ module Shumway.AVMX.AS.flash.display {
     _containsPoint(globalX: number, globalY: number, localX: number, localY: number,
                    testingType: HitTestingType, objects: DisplayObject[]): HitTestingResult {
       if (testingType === HitTestingType.Mouse) {
-        return this._content._containsPoint(globalX, globalY, localX, localY, testingType, objects);
+        // Testing mouse at all levels.
+        for (var i = this._children.length - 1; i >= 0; i--) {
+          var result = this._children[i]._containsPoint(globalX, globalY, localX, localY, testingType, objects);
+          if (result !== HitTestingResult.None) {
+            return result;
+          }
+        }
+        return HitTestingResult.None;
       }
       if (testingType !== HitTestingType.HitTestBounds ||
           !this._getContentBounds().contains(localX, localY)) {
@@ -117,10 +132,53 @@ module Shumway.AVMX.AS.flash.display {
      * Override of DisplayObject#_getChildBounds that retrieves the AVM1 content's bounds.
      */
     _getChildBounds(bounds: Bounds, includeStrokes: boolean) {
-      var childBounds = this._content._getContentBounds(includeStrokes).clone();
+      var childBounds = this._levels[0]._getContentBounds(includeStrokes).clone();
       // Always apply the SimpleButton's matrix.
       this._getConcatenatedMatrix().transformBounds(childBounds);
       bounds.unionInPlace(childBounds);
+    }
+
+    _getLevelForRoot(root: DisplayObject): number {
+      var level = this._levelToNumberMap.get(<MovieClip>root);
+      return level === undefined ? -1 : level;
+    }
+
+    _getRoot(level: number): DisplayObject  {
+      return this._levels[level] || null;
+    }
+
+    _setRoot(level: number, root: DisplayObject): void {
+      release || Debug.assert(this.sec.flash.display.MovieClip.axClass.axIsType(root));
+      this._deleteRoot(level);
+      release || Debug.assert(!this._levels[level] || !this._levelToNumberMap.has(<MovieClip>root));
+      this._levels[level] = <MovieClip>root;
+      this._levelToNumberMap.set(<MovieClip>root, level);
+      // Finding place to insert in this._children
+      var i = 0;
+      while (i < this._children.length &&
+             (this._levelToNumberMap.get(<MovieClip>this._children[i]) < level)) {
+        i++;
+      }
+      this._children.splice(i, 0, root);
+      // Also pretending we are the parent of the root.
+      root._setParent(<any>this, level);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyChildren);
+    }
+
+    _deleteRoot(level: number): boolean {
+      release || Debug.assert(level !== 0, 'Deletion of _level0 is not supported yet');
+      var root = this._levels[level];
+      if (!root) {
+        return false;
+      }
+      delete this._levels[level];
+      this._levelToNumberMap.delete(root);
+      var i = this._children.indexOf(root);
+      release || Debug.assert(i > 0);
+      this._children.splice(i, 1);
+      root._setParent(null, -1);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyChildren);
+      return true;
     }
   }
 }

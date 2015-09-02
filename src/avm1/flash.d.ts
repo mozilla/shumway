@@ -212,6 +212,8 @@ declare module Shumway.AVMX.AS.flash {
     }
     class LoaderInfo extends events.EventDispatcher {
       _avm1Context: AVM1.AVM1Context;
+      _avm1LevelHolder: AVM1Movie;
+      _avm1LevelNumber: number;
       loader: Loader;
       swfVersion: number;
       bytesLoaded: number;
@@ -219,7 +221,12 @@ declare module Shumway.AVMX.AS.flash {
       url: string;
       getSymbolById(id: number): any;
     }
-    class AVM1Movie extends DisplayObject {}
+    class AVM1Movie extends DisplayObject {
+      _getLevelForRoot(root: DisplayObject): number;
+      _getRoot(level: number): DisplayObject;
+      _setRoot(level: number, root: DisplayObject): void;
+      _deleteRoot(level: number): void;
+    }
     class BitmapData extends ASObject {
       static axClass: typeof BitmapData;
 
