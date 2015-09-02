@@ -1638,7 +1638,16 @@ module Shumway.AVMX {
       this.executeScript(lastScript);
     }
 
-    public findClassInfo(name: string) {
+    public findClassInfo(name: string): ClassInfo {
+      // Look in parent domain first.
+      if (this.parent) {
+        var classInfo = this.parent.findClassInfo(name);
+        if (classInfo) {
+          return classInfo;
+        }
+      }
+
+      // Search through the loaded abcs.
       for (var i = 0; i < this._abcs.length; i++) {
         var abc = this._abcs[i];
         for (var j = 0; j < abc.instances.length; j++) {
@@ -1648,6 +1657,7 @@ module Shumway.AVMX {
           }
         }
       }
+
       return null;
     }
 
@@ -1732,6 +1742,21 @@ module Shumway.AVMX {
         }
       }
       return null;
+    }
+
+    trace(writer: IndentingWriter) {
+      for (var i = 0; i < this._abcs.length; i++) {
+        var abc = this._abcs[i];
+        writer.enter(i + " {");
+        var scripts = abc.scripts;
+        for (var j = 0; j < scripts.length; j++) {
+          var script = scripts[j];
+          var traits = script.traits;
+          traits.resolve();
+          traits.trace(writer);
+        }
+        writer.leave("}");
+      }
     }
   }
 }

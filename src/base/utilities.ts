@@ -2443,6 +2443,19 @@ module Shumway {
         }
       }
 
+      nextSetBit(from: number, to: number): number {
+        if (from === to) {
+          return -1;
+        }
+        var bits = this.bits;
+        for (var i = from; i < to; i++) {
+          var word = bits[i >> ADDRESS_BITS_PER_WORD];
+          if (((word & 1 << (i & BIT_INDEX_MASK))) !== 0) {
+            return i;
+          }
+        }
+      }
+
       clear(i) {
         var n = i >> ADDRESS_BITS_PER_WORD;
         var old = this.bits[n];

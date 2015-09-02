@@ -165,7 +165,7 @@ module Shumway.AVMX {
         argumentsArray.receiver = receiver;
         argumentsArray.methodInfo = methodInfo;
         locals.push(argumentsArray);
-        }
+      }
     }
 
     bc(): Bytecode {

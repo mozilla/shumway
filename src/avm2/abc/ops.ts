@@ -491,6 +491,10 @@ module Shumway.AVMX {
       return result;
     }
 
+    static s24(code: Uint8Array, i: number): number {
+      return ((code[i] | (code[i + 1] << 8) | (code[i + 2] << 16)) << 8) >> 8;
+    }
+
     static u32(code: Uint8Array, i: number): number {
       return Bytes.s32(code, i) >>> 0;
     }
@@ -529,7 +533,31 @@ module Shumway.AVMX {
     u32
   }
 
-  function lengthAt(code: Uint8Array, i: number): number {
+  /**
+   * Everything can trap for now, which is too conservative.
+   */
+  export function canTrap(opcode: Bytecode) {
+    return true;
+  }
+
+  export function isCall(opcode: Bytecode) {
+    switch (opcode) {
+      case Bytecode.CALL:
+      case Bytecode.CALLINTERFACE:
+      case Bytecode.CALLMETHOD:
+      case Bytecode.CALLPROPERTY:
+      case Bytecode.CALLPROPLEX:
+      case Bytecode.CALLPROPVOID:
+      case Bytecode.CALLSTATIC:
+      case Bytecode.CALLSUPER:
+      case Bytecode.CALLSUPERID:
+      case Bytecode.CALLSUPERVOID:
+        return true;
+    }
+    return false;
+  }
+
+  export function lengthAt(code: Uint8Array, i: number): number {
     var l = 1;
     var bytecode = code[i];
     if (bytecode === Bytecode.LOOKUPSWITCH) {

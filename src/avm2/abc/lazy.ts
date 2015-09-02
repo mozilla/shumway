@@ -936,11 +936,9 @@ module Shumway.AVMX {
 
     trace(writer: IndentingWriter) {
       writer.writeLn("Code: " + this.code.length);
-      var stream = new BytecodeStream(this.code);
-      while (stream.currentBytecode() !== Bytecode.END) {
-        writer.writeLn(stream.currentBCI + ": " + Bytecode[stream.currentBytecode()]);
-        stream.next();
-      }
+      var blockMap = new BlockMap(this);
+      blockMap.build();
+      blockMap.trace(writer, true);
     }
   }
 
