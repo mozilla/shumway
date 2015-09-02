@@ -69,14 +69,16 @@ module Shumway.AVM1 {
   class GlobalPropertiesScope extends AVM1Object {
     constructor(context: AVM1Context, thisArg: AVM1Object) {
       super(context);
-      this.alSetOwnProperty('this', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.READ_ONLY,
-        value: thisArg
-      });
-      this.alSetOwnProperty('_global', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.READ_ONLY,
-        value: context.globals
-      })
+      this.alSetOwnProperty('this', new AVM1PropertyDescriptor(AVM1PropertyFlags.DATA |
+                                                               AVM1PropertyFlags.DONT_ENUM |
+                                                               AVM1PropertyFlags.DONT_DELETE |
+                                                               AVM1PropertyFlags.READ_ONLY,
+                                                               thisArg));
+      this.alSetOwnProperty('_global', new AVM1PropertyDescriptor(AVM1PropertyFlags.DATA |
+                                                                  AVM1PropertyFlags.DONT_ENUM |
+                                                                  AVM1PropertyFlags.DONT_DELETE |
+                                                                  AVM1PropertyFlags.READ_ONLY,
+                                                                  context.globals));
     }
   }
 
@@ -408,11 +410,13 @@ module Shumway.AVM1 {
 
   function as2HasProperty(context: AVM1Context, obj: any, name: any): boolean {
     var avm1Obj: AVM1Object = alToObject(context, obj);
+    name = alNormalizeName(context, name);
     return avm1Obj.alHasProperty(name);
   }
 
   function as2GetProperty(context: AVM1Context, obj: any, name: any): any {
     var avm1Obj: AVM1Object = alToObject(context, obj);
+    name = alNormalizeName(context, name);
     return avm1Obj.alGet(name);
   }
 
@@ -424,6 +428,7 @@ module Shumway.AVM1 {
 
   function as2DeleteProperty(context: AVM1Context, obj: any, name: any): any {
     var avm1Obj: AVM1Object = alToObject(context, obj);
+    name = alNormalizeName(context, name);
     var result = avm1Obj.alDeleteProperty(name);
     as2SyncEvents(context, name);
     return result;
@@ -539,10 +544,9 @@ module Shumway.AVM1 {
       obj = cls.alConstruct(args).value;
     }
     if (obj instanceof AVM1Object) {
-      (<AVM1Object>obj).alSetOwnProperty('__constructor__', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-        value: cls
-      });
+      var desc = new AVM1PropertyDescriptor(AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
+                                            cls);
+      (<AVM1Object>obj).alSetOwnProperty('__constructor__', desc);
     }
     return obj;
   }
@@ -903,6 +907,7 @@ module Shumway.AVM1 {
     }
 
     function avm1ResolveSimpleVariable(scopeList: AVM1ScopeListItem, variableName: string, flags: AVM1ResolveVariableFlags): IAVM1ResolvedVariableResult {
+      release || Debug.assert(alIsName(scopeList.scope.context, variableName));
       var currentTarget;
       var resolved = cachedResolvedVariableResult;
       for (var p = scopeList; p; p = p.previousScopeItem) {
@@ -946,6 +951,12 @@ module Shumway.AVM1 {
       // For now it is just very much magical -- designed to pass some of the swfdec tests
       // FIXME refactor
       release || Debug.assert(variableName);
+      // Canonicalizing the name here is ok even for paths: the only thing that (potentially)
+      // happens is that the name is converted to lower-case, which is always valid for paths.
+      // The original name is saved because the final property name needs to be extracted from
+      // it for property name paths.
+      var originalName = variableName;
+      variableName = alNormalizeName(ectx.context, variableName);
       if (!avm1VariableNameHasPath(variableName)) {
         return avm1ResolveSimpleVariable(ectx.scopeList, variableName, flags);
       }
@@ -1033,8 +1044,9 @@ module Shumway.AVM1 {
           }
         }
 
-        if (!valueFound) {
-          avm1Warn('Unable to resolve ' + propertyName + ' on ' + variableName.substring(q, i - 1) + ' (expr ' + variableName + ')');
+        if (!valueFound && !(flags & AVM1ResolveVariableFlags.WRITE)) {
+          avm1Warn('Unable to resolve ' + propertyName + ' on ' + variableName.substring(q, i - 1) +
+                   ' (expr ' + variableName + ')');
           return null;
         }
 
@@ -1051,7 +1063,7 @@ module Shumway.AVM1 {
 
       resolved = cachedResolvedVariableResult;
       resolved.scope = scope;
-      resolved.propertyName = propertyName;
+      resolved.propertyName = originalName.substring(q, i);
       resolved.value = (flags & AVM1ResolveVariableFlags.GET_VALUE) ? obj : undefined;
       return resolved;
     }
@@ -1417,7 +1429,9 @@ module Shumway.AVM1 {
       var resolved = avm1ResolveVariable(ectx, variableName,
         AVM1ResolveVariableFlags.READ | AVM1ResolveVariableFlags.GET_VALUE);
       if (isNullOrUndefined(resolved)) {
-        avm1Warn("AVM1 warning: cannot look up variable '" + variableName + "'");
+        if (avm1WarningsEnabled.value) {
+          avm1Warn("AVM1 warning: cannot look up variable '" + variableName + "'");
+        }
         return;
       }
       stack[sp] = resolved.value;
@@ -1428,12 +1442,15 @@ module Shumway.AVM1 {
       var value = stack.pop();
       var variableName = '' + stack.pop();
       var resolved = avm1ResolveVariable(ectx, variableName, AVM1ResolveVariableFlags.WRITE);
-      if (isNullOrUndefined(resolved)) {
-        avm1Warn("AVM1 warning: cannot look up variable '" + variableName + "'");
+      if (!resolved) {
+        if (avm1WarningsEnabled.value) {
+          avm1Warn("AVM1 warning: cannot look up variable '" + variableName + "'");
+        }
         return;
       }
-      resolved.scope.alPut(variableName, value);
-      as2SyncEvents(ectx.context, variableName);
+      release || assert(resolved.propertyName);
+      resolved.scope.alPut(resolved.propertyName, value);
+      as2SyncEvents(ectx.context, resolved.propertyName);
     }
     function avm1_0x9A_ActionGetURL2(ectx: ExecutionContext, args: any[]) {
       var stack = ectx.stack;
@@ -2086,10 +2103,9 @@ module Shumway.AVM1 {
       var prototype = constr.alGetPrototypeProperty();
       var prototypeSuper = constrSuper.alGetPrototypeProperty();
       prototype.alPrototype = prototypeSuper;
-      prototype.alSetOwnProperty('__constructor__', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-        value: constrSuper
-      });
+      var desc = new AVM1PropertyDescriptor(AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
+                                            constrSuper);
+      prototype.alSetOwnProperty('__constructor__', desc);
     }
     function avm1_0x2B_ActionCastOp(ectx: ExecutionContext) {
       var stack = ectx.stack;

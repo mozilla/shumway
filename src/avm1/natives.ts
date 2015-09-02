@@ -89,11 +89,8 @@ module Shumway.AVM1.Natives {
       if (desc && !!(desc.flags & AVM1PropertyFlags.DONT_DELETE)) {
         return false; // protected property
       }
-      this.alSetOwnProperty(name, {
-        flags: AVM1PropertyFlags.ACCESSOR,
-        get: getter,
-        set: setter || undefined
-      });
+      this.alSetOwnProperty(name, new AVM1PropertyDescriptor(AVM1PropertyFlags.ACCESSOR, null,
+                                                             getter, setter || undefined));
       return true;
     }
 
@@ -603,10 +600,8 @@ module Shumway.AVM1.Natives {
 
   // Array natives
 
-  var cachedArrayPropertyDescriptor: AVM1PropertyDescriptor = {
-    flags: AVM1PropertyFlags.DATA,
-    value: undefined
-  };
+  var cachedArrayPropertyDescriptor = new AVM1PropertyDescriptor(AVM1PropertyFlags.DATA,
+                                                                 undefined);
 
   export class AVM1ArrayNative extends AVM1Object {
     public value: any[];

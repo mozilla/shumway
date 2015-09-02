@@ -35,10 +35,12 @@ module Shumway.AVM1.Lib {
       this.alPrototype = context.builtins.Object.alGetPrototypeProperty();
       var as3Capabilities = context.sec.flash.system.Capabilities.axClass;
       capabilitiesProperties.forEach((name) => {
-        this.alSetOwnProperty(name, {
-          flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.DONT_ENUM,
-          get: { alCall: function () { return as3Capabilities.axGetPublicProperty(name); }}
-        })
+        var getter = { alCall: function () { return as3Capabilities.axGetPublicProperty(name); }};
+        var desc = new AVM1PropertyDescriptor(AVM1PropertyFlags.ACCESSOR |
+                                              AVM1PropertyFlags.DONT_DELETE |
+                                              AVM1PropertyFlags.DONT_ENUM,
+                                              null, getter);
+        this.alSetOwnProperty(name, desc);
       }, this);
     }
   }
