@@ -410,13 +410,13 @@ module Shumway.AVM1 {
 
   function as2HasProperty(context: AVM1Context, obj: any, name: any): boolean {
     var avm1Obj: AVM1Object = alToObject(context, obj);
-    name = alToName(context, name);
+    name = alNormalizeName(context, name);
     return avm1Obj.alHasProperty(name);
   }
 
   function as2GetProperty(context: AVM1Context, obj: any, name: any): any {
     var avm1Obj: AVM1Object = alToObject(context, obj);
-    name = alToName(context, name);
+    name = alNormalizeName(context, name);
     return avm1Obj.alGet(name);
   }
 
@@ -428,7 +428,7 @@ module Shumway.AVM1 {
 
   function as2DeleteProperty(context: AVM1Context, obj: any, name: any): any {
     var avm1Obj: AVM1Object = alToObject(context, obj);
-    name = alToName(context, name);
+    name = alNormalizeName(context, name);
     var result = avm1Obj.alDeleteProperty(name);
     as2SyncEvents(context, name);
     return result;
@@ -953,7 +953,7 @@ module Shumway.AVM1 {
       release || Debug.assert(variableName);
       // Canonicalizing the name here is ok even for paths: the only thing that (potentially)
       // happens is that the name is converted to lower-case, which is always valid for paths.
-      variableName = alToName(ectx.context, variableName);
+      variableName = alNormalizeName(ectx.context, variableName);
       if (!avm1VariableNameHasPath(variableName)) {
         return avm1ResolveSimpleVariable(ectx.scopeList, variableName, flags);
       }

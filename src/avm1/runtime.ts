@@ -173,7 +173,7 @@ module Shumway.AVM1 {
     }
 
     public alSetOwnProperty(p, desc: AVM1PropertyDescriptor): void {
-      var name = alToName(this.context, p);
+      var name = alNormalizeName(this.context, p);
       if (!desc.originalName && !this.context.isPropertyCaseSensitive) {
         desc.originalName = p;
       }
@@ -194,12 +194,12 @@ module Shumway.AVM1 {
     }
 
     public alHasOwnProperty(p): boolean  {
-      var name = alToName(this.context, p);
+      var name = alNormalizeName(this.context, p);
       return !!this._ownProperties[name];
     }
 
     public alDeleteOwnProperty(p) {
-      var name = alToName(this.context, p);
+      var name = alNormalizeName(this.context, p);
       delete this._ownProperties[name];
       if (!release) {
         delete this[this._debugEscapeProperty(p)];
@@ -274,7 +274,7 @@ module Shumway.AVM1 {
       // Perform all lookups with the canonicalized name, but keep the original name around to
       // pass it to `alSetOwnProperty`, which stores it on the descriptor.
       var originalName = p;
-      p = alToName(this.context, p);
+      p = alNormalizeName(this.context, p);
       if (!this.alCanPut(p)) {
         return;
       }
@@ -356,24 +356,24 @@ module Shumway.AVM1 {
 
     public alDefaultValue(hint: AVM1DefaultValueHint = AVM1DefaultValueHint.NUMBER): any {
       if (hint === AVM1DefaultValueHint.STRING) {
-        var toString = this.alGet(alToName(this.context, 'toString'));
+        var toString = this.alGet(alNormalizeName(this.context, 'toString'));
         if (alIsFunction(toString)) {
           var str = toString.alCall(this);
           return str;
         }
-        var valueOf = this.alGet(alToName(this.context, 'valueOf'));
+        var valueOf = this.alGet(alNormalizeName(this.context, 'valueOf'));
         if (alIsFunction(valueOf)) {
           var val = valueOf.alCall(this);
           return val;
         }
       } else {
         release || Debug.assert(hint === AVM1DefaultValueHint.NUMBER);
-        var valueOf = this.alGet(alToName(this.context, 'valueOf'));
+        var valueOf = this.alGet(alNormalizeName(this.context, 'valueOf'));
         if (alIsFunction(valueOf)) {
           var val = valueOf.alCall(this);
           return val;
         }
-        var toString = this.alGet(alToName(this.context, 'toString'));
+        var toString = this.alGet(alNormalizeName(this.context, 'toString'));
         if (alIsFunction(toString)) {
           var str = toString.alCall(this);
           return str;
@@ -409,7 +409,7 @@ module Shumway.AVM1 {
           var keyList = keyLists[k];
           for (var i = keyList.length; i--;) {
             var key = keyList[i];
-            var canonicalKey = alToName(context, key);
+            var canonicalKey = alNormalizeName(context, key);
             if (canonicalKeysMap[canonicalKey]) {
               continue;
             }
@@ -621,7 +621,12 @@ module Shumway.AVM1 {
 
   var nameCache = Object.create(null);
 
-  export function alToName(context: IAVM1Context, v): string {
+  /**
+   * Normalize the name according to the current AVM1Context's settings.
+   *
+   * This means converting it to lower-case for SWF versions below 7, and doing nothing otherwise.
+   */
+  export function alNormalizeName(context: IAVM1Context, v): string {
     var name;
     if (typeof v === 'string' && (name = nameCache[v])) {
       return name;
