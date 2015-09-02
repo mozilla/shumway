@@ -1440,6 +1440,33 @@ module Shumway {
   }
 
   /**
+   * An extremely naive cache with a maximum size.
+   * TODO: LRU
+   */
+  export class Cache {
+    private _data;
+    private _size: number;
+    private _maxSize: number;
+    constructor(maxSize: number) {
+      this._data = Object.create(null);
+      this._size = 0;
+      this._maxSize = maxSize;
+    }
+    get(key) {
+      return this._data[key];
+    }
+    set(key, value) {
+      release || Debug.assert(!(key in this._data)); // Cannot mutate cache entries.
+      if (this._size >= this._maxSize) {
+        return false;
+      }
+      this._data[key] = value;
+      this._size ++;
+      return true;
+    }
+  }
+
+  /**
    * Marsaglia's algorithm, adapted from V8. Use this if you want a deterministic random number.
    */
   export class Random {
@@ -3243,15 +3270,35 @@ module Shumway {
       return argb << 8 | ((argb >> 24) & 0xff);
     }
 
-    export function rgbaToCSSStyle(color: number): string {
-      return Shumway.StringUtilities.concat9('rgba(', color >> 24 & 0xff, ',', color >> 16 & 0xff, ',', color >> 8 & 0xff, ',', (color & 0xff) / 0xff, ')');
+    /**
+     * Cache frequently used rgba -> css style conversions.
+     */
+    var rgbaToCSSStyleCache = new Cache(1024);
+
+    export function rgbaToCSSStyle(rgba: number): string {
+      var result = rgbaToCSSStyleCache.get(rgba);
+      if (typeof result === "string") {
+        return result;
+      }
+      result = Shumway.StringUtilities.concat9('rgba(', rgba >> 24 & 0xff, ',', rgba >> 16 & 0xff, ',', rgba >> 8 & 0xff, ',', (rgba & 0xff) / 0xff, ')');
+      rgbaToCSSStyleCache.set(rgba, result);
+      return result;
     }
 
+    /**
+     * Cache frequently used css -> rgba styles conversions.
+     */
+    var cssStyleToRGBACache = new Cache(1024);
+
     export function cssStyleToRGBA(style: string) {
+      var result = cssStyleToRGBACache.get(style);
+      if (typeof result === "number") {
+        return result;
+      }
+      result =  0xff0000ff; // Red
       if (style[0] === "#") {
         if (style.length === 7) {
-          var value = parseInt(style.substring(1), 16);
-          return (value << 8) | 0xff;
+          result = (parseInt(style.substring(1), 16) << 8) | 0xff;
         }
       } else if (style[0] === "r") {
         // We don't parse all types of rgba(....) color styles. We only handle the
@@ -3261,12 +3308,13 @@ module Shumway {
         var g = parseInt(values[1]);
         var b = parseInt(values[2]);
         var a = parseFloat(values[3]);
-        return (r & 0xff) << 24 |
-               (g & 0xff) << 16 |
-               (b & 0xff) << 8  |
-               ((a * 255) & 0xff);
+        result = (r & 0xff) << 24 |
+                 (g & 0xff) << 16 |
+                 (b & 0xff) << 8  |
+                 ((a * 255) & 0xff);
       }
-      return 0xff0000ff; // Red
+      cssStyleToRGBACache.set(style, result);
+      return result;
     }
 
     export function hexToRGB(color: string): number {
