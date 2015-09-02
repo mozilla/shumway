@@ -193,6 +193,10 @@ module Shumway.GFX {
         ShumwayCom.processFrame();
       }
     }
+    
+    processPreview() {
+      throw new Error('This method is abstract');
+    }
 
     onVideoPlaybackEvent(id: number, eventType: VideoPlaybackEvent, data: any) {
       throw new Error('This method is abstract');

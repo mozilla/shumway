@@ -74,6 +74,13 @@ function runViewer() {
         });
       }
     }
+    
+    var playPreviewDiv = document.getElementById('playPreview');
+    playPreviewDiv.addEventListener('click', function (e) {
+      playerWindow.postMessage({ type: 'play' }, '*');
+      hidePreviewDiv();
+      e.preventDefault();
+    });
 
     ShumwayCom.setupGfxComBridge(document.getElementById('gfxIframe'));
     gfxWindow.postMessage({
@@ -86,6 +93,17 @@ function runViewer() {
       }
     }, '*')
   });
+}
+
+var playPreviewDiv = document.getElementById('playPreview');
+function showPreviewDiv() {
+  playPreviewDiv.style.display = 'block';
+}
+function hidePreviewDiv() {
+  playPreviewDiv.style.opacity = '0';
+  setTimeout(function() {
+    playPreviewDiv.style.display = 'none';
+  }, 1000);
 }
 
 window.addEventListener("message", function handlerMessage(e) {
@@ -117,6 +135,9 @@ window.addEventListener("message", function handlerMessage(e) {
         break;
       case 'fallback':
         fallback();
+        break;
+      case 'preview':
+        showPreviewDiv();
         break;
       default:
         console.error('Unexpected message from gfx frame: ' + args.callback);
@@ -197,7 +218,7 @@ function parseSwf(url, baseUrl, movieParams, objectParams, settings,
         objectParams: objectParams,
         displayParameters: displayParameters,
         turboMode: playerSettings.turboMode,
-        env: playerSettings.env,
+        needsClickToPlay: playerSettings.playPreview,
         bgcolor: backgroundColor,
         url: url,
         baseUrl: baseUrl || url,

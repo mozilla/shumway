@@ -534,6 +534,7 @@ ShumwayChromeActions.prototype = {
       },
       playerSettings: {
         turboMode: getBoolPref('shumway.turboMode', false),
+        playPreview: getBoolPref('shumway.playPreview', false),
         hud: getBoolPref('shumway.hud', false),
         forceHidpi: getBoolPref('shumway.force_hidpi', false)
       }

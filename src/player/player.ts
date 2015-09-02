@@ -25,6 +25,7 @@ module Shumway.Player {
   import Event = flash.events.Event;
   import BitmapData = flash.display.BitmapData;
   import DisplayObject = flash.display.DisplayObject;
+  import DisplayObjectFlags = flash.display.DisplayObjectFlags;
   import DisplayObjectContainer = flash.display.DisplayObjectContainer;
   import EventDispatcher = flash.events.EventDispatcher;
   import MovieClip = flash.display.MovieClip;
@@ -87,6 +88,10 @@ module Shumway.Player {
     }
 
     frame(): void {
+      throw new Error('This method is abstract');
+    }
+    
+    preview(): void {
       throw new Error('This method is abstract');
     }
 
@@ -328,8 +333,10 @@ module Shumway.Player {
      * Loader URL, can be different from SWF URL.
      */
     private _loaderUrl: string = null;
+    
+    private _needsClickToPlay: boolean = false;
 
-    constructor(sec: ISecurityDomain, gfxService: IGFXService) {
+    constructor(sec: ISecurityDomain, gfxService: IGFXService, needsClickToPlay: boolean = false) {
       this.sec = sec;
       sec.player = this;
       // Freeze in debug builds.
@@ -339,6 +346,7 @@ module Shumway.Player {
       this._gfxService = gfxService;
       this._gfxServiceObserver = new GFXServiceObserver(this);
       this._gfxService.addObserver(this._gfxServiceObserver);
+      this._needsClickToPlay = needsClickToPlay;
     }
 
     /**
@@ -542,6 +550,8 @@ module Shumway.Player {
         // http://www.craftymind.com/2008/04/18/updated-elastic-racetrack-for-flash-9-and-avm2/
         self._frameTimeout = setTimeout(tick, self._getFrameInterval());
         self._eventLoopTick();
+        self._pumpUpdates();
+        self._gfxService.frame();
       }
       if (!isNaN(this.initStartTime)) {
         console.info('Time from init start to main event loop start: ' +
@@ -591,9 +601,46 @@ module Shumway.Player {
           self._gfxServiceObserver.displayParameters(self.displayParameters);
         }
 
-        self._enterEventLoop();
+        if (self._needsClickToPlay) {
+          self._providePreview();
+        } else {
+          self._enterEventLoop();
+        }
       }
       rootLoadingLoop();
+    }
+    
+    private _providePreview() {
+      var stopIfNoChange = false;
+      var i = this._stage.frameRate * 5;
+      var self = this;
+      function tick() {
+        if (i--) {
+          self._eventLoopTick();
+          if (!self._stage._hasFlags(DisplayObjectFlags.DirtyDescendents)) {
+            if (!stopIfNoChange) {
+              stopIfNoChange = true;
+              setTimeout(tick);
+              return;
+            }
+          } else {
+            setTimeout(tick);
+            return;
+          }
+        }
+        self._pumpUpdates();
+      }
+      tick();
+      self._pumpUpdates();
+      self._gfxService.preview();
+    }
+    
+    clickedToPlay() {
+      if (!this._needsClickToPlay) {
+        return;
+      }
+      this._needsClickToPlay = false;
+      this._enterEventLoop();
     }
 
     private _eventLoopTick(): void {
@@ -631,8 +678,6 @@ module Shumway.Player {
         this._tracePlayer();
       }
       this._stage.render();
-      this._pumpUpdates();
-      this._gfxService.frame();
     }
 
     private _tracePlayer(): void {

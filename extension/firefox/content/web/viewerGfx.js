@@ -41,6 +41,11 @@ var easelHost;
 function createEaselHost() {
   var peer = new Shumway.Remoting.ShumwayComTransportPeer();
   easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, peer);
+  easelHost.processPreview = function () {
+    window.parent.postMessage({
+      callback: 'preview'
+    }, '*');
+  };
   return easelHost;
 }
 

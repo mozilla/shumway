@@ -62,6 +62,12 @@ module Shumway.Player.Window {
         type: 'frame'
       });
     }
+    
+    preview() {
+      this._peer.postAsyncMessage({
+        type: 'preview'
+      });
+    }
 
     videoControl(id: number, eventType: VideoControlEvent, data: any): any {
       var message = {

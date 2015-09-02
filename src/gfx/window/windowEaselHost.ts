@@ -93,6 +93,8 @@ module Shumway.GFX.Window {
           }
         } else if (data.type === 'frame') {
           this.processFrame();
+        } else if (data.type === 'preview') {
+          this.processPreview();
         } else if (data.type === 'videoControl') {
           result = this.processVideoControl(data.id, data.eventType, data.data);
         } else if (data.type === 'registerFont') {

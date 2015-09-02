@@ -157,6 +157,10 @@ module Shumway.Shell {
     frame(): void {
       // console.log('Frame');
     }
+    
+    preview(): void {
+      // console.log('Preview');
+    }
 
     videoControl(id: number, eventType: Shumway.Remoting.VideoControlEvent, data: any): any {
       // console.log('videoControl');
