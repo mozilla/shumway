@@ -1440,6 +1440,36 @@ module Shumway {
   }
 
   /**
+   * An extremely naive cache with a maximum size.
+   * TODO: LRU
+   */
+  export class Cache {
+    private _data;
+    private _size: number;
+    private _maxSize: number;
+    constructor(maxSize: number) {
+      this._data = Object.create(null);
+      this._size = 0;
+      this._maxSize = maxSize;
+    }
+    get(key) {
+      return this._data[key];
+    }
+    set(key, value) {
+      if (key in this._data) {
+        this._data[key] = value;
+        return true;
+      }
+      if (this._size >= this._maxSize) {
+        return false;
+      }
+      this._data[key] = value;
+      this._size ++;
+      return true;
+    }
+  }
+
+  /**
    * Marsaglia's algorithm, adapted from V8. Use this if you want a deterministic random number.
    */
   export class Random {
@@ -3246,31 +3276,25 @@ module Shumway {
     /**
      * Cache frequently used rgba -> css style conversions.
      */
-    var rgbaToCSSStyleCache = Object.create(null);
-    var rgbaToCSSStyleCacheSize = 0;
-    var maxRGBAToCSSStyleCache = 1024;
+    var rgbaToCSSStyleCache = new Cache(1024);
 
     export function rgbaToCSSStyle(rgba: number): string {
-      var result = rgbaToCSSStyleCache[rgba];
+      var result = rgbaToCSSStyleCache.get(rgba);
       if (typeof result === "string") {
         return result;
       }
       result = Shumway.StringUtilities.concat9('rgba(', rgba >> 24 & 0xff, ',', rgba >> 16 & 0xff, ',', rgba >> 8 & 0xff, ',', (rgba & 0xff) / 0xff, ')');
-      if (rgbaToCSSStyleCacheSize < maxRGBAToCSSStyleCache) {
-        rgbaToCSSStyleCacheSize++;
-        return (rgbaToCSSStyleCache[rgba] = result);
-      }
+      rgbaToCSSStyleCache.set(rgba, result);
+      return result;
     }
 
     /**
      * Cache frequently used css -> rgba styles conversions.
      */
-    var cssStyleToRGBACache = Object.create(null);
-    var cssStyleToRGBACacheSize = 0;
-    var maxCSSStyleToRGBACacheSize = 1024;
+    var cssStyleToRGBACache = new Cache(1024);
 
     export function cssStyleToRGBA(style: string) {
-      var result = cssStyleToRGBACache[style];
+      var result = cssStyleToRGBACache.get(style);
       if (typeof result === "number") {
         return result;
       }
@@ -3292,10 +3316,7 @@ module Shumway {
                  (b & 0xff) << 8  |
                  ((a * 255) & 0xff);
       }
-      if (cssStyleToRGBACacheSize < maxCSSStyleToRGBACacheSize) {
-        cssStyleToRGBACacheSize++;
-        return (cssStyleToRGBACache[style] = result);
-      }
+      cssStyleToRGBACache.set(style, result);
       return result;
     }
 
