@@ -399,38 +399,42 @@ module Shumway.AVM1.Lib {
         target.indexOf('_level') === 0;
       var levelNumber: number;
       if (loadLevel) {
-        var levelStr: string = target.charAt(6);
+        var levelStr: string = target.substr(6);
         levelNumber = parseInt(levelStr, 10);
         loadLevel = levelNumber.toString() === levelStr;
       }
-      var loader: flash.display.Loader = new this.context.sec.flash.display.Loader();
       if (loadLevel) {
-        this._setLevel(levelNumber, loader);
-        var request: flash.net.URLRequest = new this.context.sec.flash.net.URLRequest(url);
-        if (method) {
-          request.method = method;
-        }
-        loader.load(request);
+        this.loadMovieNum(url, levelNumber, method);
       } else {
         var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
         nativeTarget.loadMovie(url, method);
       }
     }
 
-    _setLevel(level: number /*uint*/, loader: flash.display.Loader): any {
-      level = level >>> 0;
-      // TODO: re-enable support for loading AVM1 content into levels. See bug 1035166.
-      //AVM1Context.instance.stage._as2SetLevel(level, loader);
-    }
-
     public loadMovieNum(url, level, method) {
+      url = alCoerceString(this.context, url);
+      level = alToInteger(this.context, level);
+      method = alCoerceString(this.context, method);
+
       // some swfs are using loadMovieNum to call fscommmand
       if (url && url.toLowerCase().indexOf('fscommand:') === 0) {
         return this.fscommand(url.substring('fscommand:'.length));
       }
 
+      if (level === 0) {
+        release || Debug.notImplemented('loadMovieNum at _level0');
+        return;
+      }
+
+      var avm1MovieHolder = <flash.display.AVM1Movie>this.context.resolveRoot()._as3Object.parent;
+      release || Debug.assert(this.context.sec.flash.display.AVM1Movie.axClass.axIsType(avm1MovieHolder));
+
       var loader: flash.display.Loader = new this.context.sec.flash.display.Loader();
-      this._setLevel(level, loader);
+      var loaderInfo = loader.contentLoaderInfo;
+      loaderInfo._avm1Context = this.context;
+      loaderInfo._avm1LevelHolder = avm1MovieHolder;
+      loaderInfo._avm1LevelNumber = level;
+
       var request = new this.context.sec.flash.net.URLRequest(url);
       if (method) {
         request.method = method;
@@ -606,9 +610,15 @@ module Shumway.AVM1.Lib {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
       nativeTarget.unloadMovie();
     }
-    public unloadMovieNum(level) {
-      var nativeTarget = AVM1Utils.resolveLevel(this.context, level);
-      nativeTarget.unloadMovie();
+    public unloadMovieNum(level: number) {
+      level = alToInt32(this.context, level);
+      if (level === 0) {
+        release || Debug.notImplemented('unloadMovieNum at _level0');
+        return;
+      }
+
+      var avm1MovieHolder = this.context.resolveRoot()._as3Object.parent;
+      avm1MovieHolder._deleteRoot(level);
     }
   }
 }
