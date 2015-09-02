@@ -32,46 +32,6 @@ module Shumway.GFX {
   export var debugClipping = stageOptions.register(new Option("", "debugClipping", "boolean", false, "Disable clipping."));
   export var hud = stageOptions.register(new Option("", "hud", "boolean", false, "Enable HUD."));
 
-  var webGLOptions = stageOptions.register(new OptionSet("WebGL Options"));
-  export var perspectiveCamera = webGLOptions.register(new Option("", "pc", "boolean", false, "Use perspective camera."));
-  export var perspectiveCameraFOV = webGLOptions.register(new Option("", "pcFOV", "number", 60, "Perspective Camera FOV."));
-  export var perspectiveCameraDistance = webGLOptions.register(new Option("", "pcDistance", "number", 2, "Perspective Camera Distance."));
-  export var perspectiveCameraAngle = webGLOptions.register(new Option("", "pcAngle", "number", 0, "Perspective Camera Angle."));
-  export var perspectiveCameraAngleRotate = webGLOptions.register(new Option("", "pcRotate", "boolean", false, "Rotate Use perspective camera."));
-  export var perspectiveCameraSpacing = webGLOptions.register(new Option("", "pcSpacing", "number", 0.01, "Element Spacing."));
-  export var perspectiveCameraSpacingInflate = webGLOptions.register(new Option("", "pcInflate", "boolean", false, "Rotate Use perspective camera."));
-
-  export var drawTiles = webGLOptions.register(new Option("", "drawTiles", "boolean", false, "Draw WebGL Tiles"));
-
-  export var drawSurfaces = webGLOptions.register(new Option("", "drawSurfaces", "boolean", false, "Draw WebGL Surfaces."));
-  export var drawSurface = webGLOptions.register(new Option("", "drawSurface", "number", -1, "Draw WebGL Surface #"));
-  export var drawElements = webGLOptions.register(new Option("", "drawElements", "boolean", true, "Actually call gl.drawElements. This is useful to test if the GPU is the bottleneck."));
-  export var disableSurfaceUploads = webGLOptions.register(new Option("", "disableSurfaceUploads", "boolean", false, "Disable surface uploads."));
-
-  export var premultipliedAlpha = webGLOptions.register(new Option("", "premultipliedAlpha", "boolean", false, "Set the premultipliedAlpha flag on getContext()."));
-  export var unpackPremultiplyAlpha = webGLOptions.register(new Option("", "unpackPremultiplyAlpha", "boolean", true, "Use UNPACK_PREMULTIPLY_ALPHA_WEBGL in pixelStorei."));
-
-  var factorChoices = {
-    ZERO: 0,
-    ONE: 1,
-    SRC_COLOR: 768,
-    ONE_MINUS_SRC_COLOR: 769,
-    DST_COLOR: 774,
-    ONE_MINUS_DST_COLOR: 775,
-    SRC_ALPHA: 770,
-    ONE_MINUS_SRC_ALPHA: 771,
-    DST_ALPHA: 772,
-    ONE_MINUS_DST_ALPHA: 773,
-    SRC_ALPHA_SATURATE: 776,
-    CONSTANT_COLOR: 32769,
-    ONE_MINUS_CONSTANT_COLOR: 32770,
-    CONSTANT_ALPHA: 32771,
-    ONE_MINUS_CONSTANT_ALPHA: 32772
-  };
-
-  export var sourceBlendFactor = webGLOptions.register(new Option("", "sourceBlendFactor", "number", factorChoices.ONE, "", { choices: factorChoices }));
-  export var destinationBlendFactor = webGLOptions.register(new Option("", "destinationBlendFactor", "number", factorChoices.ONE_MINUS_SRC_ALPHA, "", { choices: factorChoices }));
-
   var canvas2DOptions = stageOptions.register(new OptionSet("Canvas2D Options"));
   export var clipDirtyRegions = canvas2DOptions.register(new Option("", "clipDirtyRegions", "boolean", false, "Clip dirty regions."));
   export var clipCanvas = canvas2DOptions.register(new Option("", "clipCanvas", "boolean", false, "Clip Regions."));

@@ -17,7 +17,6 @@
 module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
   import axCoerceString = Shumway.AVMX.axCoerceString;
-  import ArrayWriter = Shumway.ArrayUtilities.ArrayWriter;
   import Bounds = Shumway.Bounds;
 
   export class Rectangle extends ASObject implements flash.utils.IExternalizable {

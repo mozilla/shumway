@@ -40,8 +40,6 @@ var fastRun = queryVariables['fast'] === 'true';
 var easelHost;
 
 function startMovie(file) {
-  //Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
-
   var easelContainer = document.getElementById('easelContainer');
   var easel = new Shumway.GFX.Easel(easelContainer);
 
