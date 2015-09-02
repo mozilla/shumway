@@ -47,7 +47,7 @@ module Shumway.GFX {
       this._fullscreen = false;
       this._context = new Shumway.Remoting.GFX.GFXChannelDeserializerContext(this, this._group, transparent);
       this._addEventListeners();
-      Shumway.registerFallbackFont();
+      registerFallbackFont();
     }
 
     onSendUpdates(update: DataBuffer, asssets: Array<DataBuffer>) {
