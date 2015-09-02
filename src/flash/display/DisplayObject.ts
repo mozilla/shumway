@@ -1852,12 +1852,19 @@ module Shumway.AVMX.AS.flash.display {
       release || assert(!symbol.dynamic);
       if (this._canHaveGraphics()) {
         release || assert(symbol instanceof flash.display.ShapeSymbol);
-        this._graphics = (<flash.display.ShapeSymbol>symbol).graphics;
+        var newGraphics = (<flash.display.ShapeSymbol>symbol).graphics;
+        if (this._graphics === newGraphics) {
+          return;
+        }
+        this._graphics = newGraphics;
         this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyGraphics);
       } else if (this.sec.flash.text.StaticText.axIsType(this)) {
         release || assert(symbol instanceof flash.text.TextSymbol);
-        var textSymbol = <flash.text.TextSymbol>symbol;
-        (<flash.text.StaticText>this)._textContent = textSymbol.textContent;
+        var newTextContent = (<flash.text.TextSymbol>symbol).textContent;
+        if ((<flash.text.StaticText>this)._textContent === newTextContent) {
+          return;
+        }
+        (<flash.text.StaticText>this)._textContent = newTextContent;
         this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyTextContent);
       }
       this._symbol = symbol;
