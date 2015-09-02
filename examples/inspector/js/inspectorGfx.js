@@ -24,7 +24,6 @@ function createPlaybackEaselHost(file) {
 
 var easel;
 function createEasel() {
-  Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
   easel = new Easel(document.getElementById("easelContainer"));
   easel.startRendering();
   return easel;

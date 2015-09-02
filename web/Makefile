@@ -24,10 +24,6 @@ build: ensureoutputdir
 	# Copying compatibility utils
 	mkdir -p $(BUILD_DIR)/src
 	cp $(SHUMWAY_ROOT)/src/compatibility.js $(BUILD_DIR)/src/
-	# Copying WebGL shaders
-	mkdir -p $(BUILD_DIR)/src/gfx/gl/shaders
-	cp $(SHUMWAY_ROOT)/src/gfx/gl/shaders/combined.frag $(BUILD_DIR)/src/gfx/gl/shaders/
-	cp $(SHUMWAY_ROOT)/src/gfx/gl/shaders/combined.vert $(BUILD_DIR)/src/gfx/gl/shaders/
 	# Copying generated JavaScript file
 	mkdir $(BUILD_DIR)/build
 	cp -R $(SHUMWAY_ROOT)/build/ts $(BUILD_DIR)/build/

@@ -22,7 +22,6 @@ function createEasel(backgroundColor) {
   var Easel = Shumway.GFX.Easel;
   var Canvas2DRenderer = Shumway.GFX.Canvas2DRenderer;
 
-  Shumway.GFX.WebGL.SHADER_ROOT = SHUMWAY_ROOT + "gfx/gl/shaders/";
   easel = new Easel(document.getElementById("easelContainer"), false, backgroundColor);
   
   if (ShumwayCom.environment === 'test') {

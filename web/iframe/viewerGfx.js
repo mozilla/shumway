@@ -20,7 +20,6 @@ function createEasel() {
   var Easel = Shumway.GFX.Easel;
   var Canvas2DRenderer = Shumway.GFX.Canvas2DRenderer;
 
-  Shumway.GFX.WebGL.SHADER_ROOT = "../src/gfx/gl/shaders/";
   easel = new Easel(document.getElementById("easelContainer"));
   easel.startRendering();
   return easel;
