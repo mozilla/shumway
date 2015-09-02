@@ -790,21 +790,6 @@ module Shumway {
       });
     }
 
-    export function getOwnPropertyDescriptors(object: Object): MapObject<PropertyDescriptor> {
-      var o = ObjectUtilities.createMap<PropertyDescriptor>();
-      var properties = Object.getOwnPropertyNames(object);
-      for (var i = 0; i < properties.length; i++) {
-        o[properties[i]] = Object.getOwnPropertyDescriptor(object, properties[i]);
-      }
-      return o;
-    }
-
-    export function cloneObject(object: Object): Object {
-      var clone = Object.create(Object.getPrototypeOf(object));
-      copyOwnProperties(clone, object);
-      return clone;
-    }
-
     export function copyProperties(object: Object, template: Object) {
       for (var property in template) {
         object[property] = template[property];
@@ -852,43 +837,8 @@ module Shumway {
       }
     }
 
-    export function getLatestGetterOrSetterPropertyDescriptor(object, name) {
-      var descriptor: PropertyDescriptor = {};
-      while (object) {
-        var tmp = Object.getOwnPropertyDescriptor(object, name);
-        if (tmp) {
-          descriptor.get = descriptor.get || tmp.get;
-          descriptor.set = descriptor.set || tmp.set;
-        }
-        if (descriptor.get && descriptor.set) {
-          break;
-        }
-        object = Object.getPrototypeOf(object);
-      }
-      return descriptor;
-    }
-
-    export function defineNonEnumerableGetterOrSetter(obj, name, value, isGetter) {
-      var descriptor = ObjectUtilities.getLatestGetterOrSetterPropertyDescriptor(obj, name);
-      descriptor.configurable = true;
-      descriptor.enumerable = false;
-      if (isGetter) {
-        descriptor.get = value;
-      } else {
-        descriptor.set = value;
-      }
-      Object.defineProperty(obj, name, descriptor);
-    }
-
     export function defineNonEnumerableGetter(obj, name, getter) {
       Object.defineProperty(obj, name, { get: getter,
-        configurable: true,
-        enumerable: false
-      });
-    }
-
-    export function defineNonEnumerableSetter(obj, name, setter) {
-      Object.defineProperty(obj, name, { set: setter,
         configurable: true,
         enumerable: false
       });
@@ -901,39 +851,6 @@ module Shumway {
         enumerable: false
       });
     }
-
-    export function defineNonEnumerableForwardingProperty(obj, name: string, otherName: string) {
-      Object.defineProperty(obj, name, {
-        get: FunctionUtilities.makeForwardingGetter(otherName),
-        set: FunctionUtilities.makeForwardingSetter(otherName),
-        writable: true,
-        configurable: true,
-        enumerable: false
-      });
-    }
-
-    export function defineNewNonEnumerableProperty(obj, name: string, value) {
-      release || Debug.assert (!Object.prototype.hasOwnProperty.call(obj, name), "Property: " + name + " already exits.");
-      ObjectUtilities.defineNonEnumerableProperty(obj, name, value);
-    }
-
-    /**
-     * Takes an object and a list of property names and creates an alias in the public namespace
-     * for each.
-     */
-    export function createPublicAliases(obj: any, names: string[]) {
-      var prop = {
-        value: null,
-        writable: true,
-        configurable: true,
-        enumerable: false
-      };
-      for (var i = 0; i < names.length; i++) {
-        var name = names[i];
-        prop.value = obj[name];
-        Object.defineProperty(obj, '$Bg' + name, prop);
-      }
-    }
   }
 
   export module FunctionUtilities {
@@ -945,20 +862,6 @@ module Shumway {
     export function makeForwardingSetter(target: string): (any) => void {
       return <(any) => void> new Function("value", "this[\"" + target + "\"] = value;" +
                                                    "//# sourceURL=fwd-set-" + target + ".as");
-    }
-
-    /**
-     * Attaches a property to the bound function so we can detect when if it
-     * ever gets rebound.
-     */
-    export function bindSafely(method: Function, receiver: Object) {
-      release || Debug.assert (!method.boundTo);
-      release || Debug.assert (receiver);
-      function methodClosure() {
-        return method.apply(receiver, arguments);
-      }
-      (<any>methodClosure).boundTo = receiver;
-      return methodClosure;
     }
   }
 
