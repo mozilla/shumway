@@ -24,6 +24,8 @@ module Shumway.AVMX.AS.flash.text {
   import clamp = Shumway.NumberUtilities.clamp;
 
   import DisplayObjectFlags = flash.display.DisplayObjectFlags;
+  import DisplayObjectDirtyFlags = flash.display.DisplayObjectDirtyFlags;
+
   import TextTag = Shumway.SWF.Parser.TextTag;
   import TextFlags = Shumway.SWF.Parser.TextFlags;
   import TextRecord = Shumway.SWF.Parser.TextRecord;
@@ -172,7 +174,7 @@ module Shumway.AVMX.AS.flash.text {
 
     private _invalidateContent() {
       if (this._textContent.flags & Shumway.TextContentFlags.Dirty) {
-        this._setFlags(DisplayObjectFlags.DirtyTextContent);
+        this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyTextContent);
       }
     }
 
@@ -294,7 +296,7 @@ module Shumway.AVMX.AS.flash.text {
       }
       this._background = value;
       this._textContent.backgroundColor = value ? this._backgroundColor : 0;
-      this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyTextContent);
     }
 
     get backgroundColor(): number /*uint*/ {
@@ -309,7 +311,7 @@ module Shumway.AVMX.AS.flash.text {
       this._backgroundColor = value;
       if (this._background) {
         this._textContent.backgroundColor = value;
-        this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
+        this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyTextContent);
       }
     }
 
@@ -324,7 +326,7 @@ module Shumway.AVMX.AS.flash.text {
       }
       this._border = value;
       this._textContent.borderColor = value ? this._borderColor : 0;
-      this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyTextContent);
     }
 
     get borderColor(): number /*uint*/ {
@@ -339,7 +341,7 @@ module Shumway.AVMX.AS.flash.text {
       this._borderColor = value;
       if (this._border) {
         this._textContent.borderColor = value;
-        this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
+        this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyTextContent);
       }
     }
 
@@ -643,7 +645,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     private _ensureLineMetrics() {
-      if (!this._hasFlags(DisplayObjectFlags.DirtyTextContent)) {
+      if (!this._hasDirtyFlags(DisplayObjectDirtyFlags.DirtyTextContent)) {
         return;
       }
       var serializer = this.sec.player;

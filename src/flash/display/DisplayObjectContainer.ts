@@ -44,7 +44,7 @@ module Shumway.AVMX.AS.flash.display {
       if (!this._fieldsInitialized) {
         this._initializeFields();
       }
-      this._setDirtyFlags(DisplayObjectFlags.DirtyChildren);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyChildren);
     }
 
     protected _initializeFields() {
@@ -62,7 +62,7 @@ module Shumway.AVMX.AS.flash.display {
      * This object's children have changed.
      */
     private _invalidateChildren() {
-      this._setDirtyFlags(DisplayObjectFlags.DirtyChildren);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyChildren);
       this._invalidateFillAndLineBounds(true, true);
     }
 

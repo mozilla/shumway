@@ -114,7 +114,7 @@ module Shumway.AVMX.AS.flash.media {
       if (this._netStream) {
         netStream._videoReferrer = this;
       }
-      this._setDirtyFlags(flash.display.DisplayObjectFlags.DirtyNetStream);
+      this._setDirtyFlags(flash.display.DisplayObjectDirtyFlags.DirtyNetStream);
     }
 
     attachCamera(camera: flash.media.Camera): void {

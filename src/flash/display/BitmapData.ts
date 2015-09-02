@@ -143,7 +143,7 @@ module Shumway.AVMX.AS.flash.display {
       for (var i = 0; i < this._bitmapReferrers.length; i++) {
         var bitmap = this._bitmapReferrers[i];
         if (bitmap) {
-          bitmap._setDirtyFlags(DisplayObjectFlags.DirtyBitmapData);
+          bitmap._setDirtyFlags(DisplayObjectDirtyFlags.DirtyBitmapData);
         }
       }
     }
