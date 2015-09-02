@@ -104,7 +104,7 @@ module Shumway.AVMX.AS.flash.display {
         this._setFillAndLineBoundsFromWidthAndHeight(value.width * 20 | 0, value.height * 20 | 0);
       }
       this._invalidateParentFillAndLineBounds(true, true);
-      this._setDirtyFlags(DisplayObjectFlags.DirtyBitmapData);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyBitmapData);
     }
 
     _getContentBounds(includeStrokes: boolean = true): Bounds {

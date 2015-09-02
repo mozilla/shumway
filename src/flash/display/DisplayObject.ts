@@ -191,63 +191,70 @@ module Shumway.AVMX.AS.flash.display {
     HasPerspectiveProjection                  = 0x040000,
 
     /**
+     * Indicates whether this display object has dirty descendents. If this flag is set then the
+     * subtree need to be synchronized.
+     */
+    DirtyDescendents                          = 0x20000000,
+
+    /**
+     * Masks flags that need to be propagated up when this display object gets added to a parent.
+     */
+    Bubbling                                  = ContainsFrameScriptPendingChildren | ContainsMorph
+  }
+
+  export enum DisplayObjectDirtyFlags {
+    /**
      * Indicates whether this display object's matrix has changed since the last time it was
      * synchronized.
      */
-    DirtyMatrix                               = 0x100000,
+    DirtyMatrix                               = 0x001,
 
     /**
      * Indicates whether this display object's children list is dirty.
      */
-    DirtyChildren                             = 0x200000,
+    DirtyChildren                             = 0x002,
 
     /**
      * Indicates whether this display object's graphics has changed since the last time it was
      * synchronized.
      */
-    DirtyGraphics                             = 0x400000,
+    DirtyGraphics                             = 0x004,
 
     /**
      * Indicates whether this display object's text content has changed since the last time it was
      * synchronized.
      */
-    DirtyTextContent                          = 0x800000,
+    DirtyTextContent                          = 0x008,
 
     /**
      * Indicates whether this display object's bitmap data has changed since the last time it was
      * synchronized.
      */
-    DirtyBitmapData                           = 0x1000000,
+    DirtyBitmapData                           = 0x010,
 
     /**
      * Indicates whether this display object's bitmap data has changed since the last time it was
      * synchronized.
      */
-    DirtyNetStream                            = 0x2000000,
+    DirtyNetStream                            = 0x020,
 
     /**
      * Indicates whether this display object's color transform has changed since the last time it
      * was synchronized.
      */
-    DirtyColorTransform                       = 0x4000000,
+    DirtyColorTransform                       = 0x040,
 
     /**
      * Indicates whether this display object's mask has changed since the last time it was
      * synchronized.
      */
-    DirtyMask                                 = 0x8000000,
+    DirtyMask                                 = 0x080,
 
     /**
      * Indicates whether this display object's clip depth has changed since the last time it was
      * synchronized.
      */
-    DirtyClipDepth                            = 0x10000000,
-
-    /**
-     * Indicates whether this display object has dirty descendents. If this flag is set then the
-     * subtree need to be synchronized.
-     */
-    DirtyDescendents                          = 0x20000000,
+    DirtyClipDepth                            = 0x100,
 
     /**
      * Indicates whether this display object's other properties have changed. We need to split this
@@ -261,7 +268,7 @@ module Shumway.AVMX.AS.flash.display {
      * filters,
      * visible,
      */
-    DirtyMiscellaneousProperties              = 0x40000000,
+    DirtyMiscellaneousProperties              = 0x200,
 
     /**
      * All synchronizable properties are dirty.
@@ -269,14 +276,8 @@ module Shumway.AVMX.AS.flash.display {
     Dirty                                     = DirtyMatrix | DirtyChildren | DirtyGraphics |
                                                 DirtyTextContent | DirtyBitmapData | DirtyNetStream |
                                                 DirtyColorTransform | DirtyMask | DirtyClipDepth |
-                                                DirtyMiscellaneousProperties,
-
-    /**
-     * Masks flags that need to be propagated up when this display object gets added to a parent.
-     */
-    Bubbling                                  = ContainsFrameScriptPendingChildren | ContainsMorph
+                                                DirtyMiscellaneousProperties
   }
-
   /**
    * Controls how the visitor walks the display tree.
    */
@@ -522,19 +523,18 @@ module Shumway.AVMX.AS.flash.display {
     protected _initializeFields() {
       super._initializeFields(this);
       this._id = this.sec.flash.display.DisplayObject.axClass.getNextSyncID();
-      this._displayObjectFlags = DisplayObjectFlags.Visible |
-                                 DisplayObjectFlags.InvalidLineBounds |
-                                 DisplayObjectFlags.InvalidFillBounds |
-                                 DisplayObjectFlags.InvalidConcatenatedMatrix |
-                                 DisplayObjectFlags.InvalidInvertedConcatenatedMatrix |
-                                 DisplayObjectFlags.DirtyDescendents |
-                                 DisplayObjectFlags.DirtyGraphics |
-                                 DisplayObjectFlags.DirtyMatrix |
-                                 DisplayObjectFlags.DirtyColorTransform |
-                                 DisplayObjectFlags.DirtyMask |
-                                 DisplayObjectFlags.DirtyClipDepth |
-                                 DisplayObjectFlags.DirtyMiscellaneousProperties;
-
+      this._flags = DisplayObjectFlags.Visible |
+                    DisplayObjectFlags.InvalidLineBounds |
+                    DisplayObjectFlags.InvalidFillBounds |
+                    DisplayObjectFlags.InvalidConcatenatedMatrix |
+                    DisplayObjectFlags.InvalidInvertedConcatenatedMatrix |
+                    DisplayObjectFlags.DirtyDescendents;
+      this._dirtyFlags = DisplayObjectDirtyFlags.DirtyGraphics |
+                         DisplayObjectDirtyFlags.DirtyMatrix |
+                         DisplayObjectDirtyFlags.DirtyColorTransform |
+                         DisplayObjectDirtyFlags.DirtyMask |
+                         DisplayObjectDirtyFlags.DirtyClipDepth |
+                         DisplayObjectDirtyFlags.DirtyMiscellaneousProperties;
       this._root = null;
       this._stage = null;
       this._setInitialName();
@@ -614,7 +614,7 @@ module Shumway.AVMX.AS.flash.display {
           bubblingFlags |= DisplayObjectFlags.ContainsFrameScriptPendingChildren;
         }
         if (this._hasAnyFlags(DisplayObjectFlags.Bubbling)) {
-          bubblingFlags |= this._displayObjectFlags & DisplayObjectFlags.Bubbling;
+          bubblingFlags |= this._flags & DisplayObjectFlags.Bubbling;
         }
         if (bubblingFlags) {
           parent._propagateFlagsUp(bubblingFlags);
@@ -657,38 +657,50 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     _setFlags(flags: DisplayObjectFlags) {
-      this._displayObjectFlags |= flags;
+      this._flags |= flags;
     }
 
     /**
      * Use this to set dirty flags so that we can also propagate the dirty child bit.
      */
-    _setDirtyFlags(flags: DisplayObjectFlags) {
-      this._displayObjectFlags |= flags;
+    _setDirtyFlags(flags: DisplayObjectDirtyFlags) {
+      this._dirtyFlags |= flags;
       if (this._parent) {
         // Notify parent that it has a dirty descendent.
         this._parent._propagateFlagsUp(DisplayObjectFlags.DirtyDescendents);
       }
     }
 
+    _removeDirtyFlags(flags: DisplayObjectDirtyFlags) {
+      this._dirtyFlags &= ~flags;
+    }
+
+    _hasDirtyFlags(flags: DisplayObjectDirtyFlags): boolean {
+      return (this._dirtyFlags & flags) === flags;
+    }
+
+    _hasAnyDirtyFlags(flags: DisplayObjectDirtyFlags): boolean {
+      return !!(this._dirtyFlags & flags);
+    }
+
     _toggleFlags(flags: DisplayObjectFlags, on: boolean) {
       if (on) {
-        this._displayObjectFlags |= flags;
+        this._flags |= flags;
       } else {
-        this._displayObjectFlags &= ~flags;
+        this._flags &= ~flags;
       }
     }
 
     _removeFlags(flags: DisplayObjectFlags) {
-      this._displayObjectFlags &= ~flags;
+      this._flags &= ~flags;
     }
 
     _hasFlags(flags: DisplayObjectFlags): boolean {
-      return (this._displayObjectFlags & flags) === flags;
+      return (this._flags & flags) === flags;
     }
 
     _hasAnyFlags(flags: DisplayObjectFlags): boolean {
-      return !!(this._displayObjectFlags & flags);
+      return !!(this._flags & flags);
     }
 
     /**
@@ -717,7 +729,8 @@ module Shumway.AVMX.AS.flash.display {
     // AS -> JS Bindings
 
     _id: number;
-    private _displayObjectFlags: number;
+    private _flags: DisplayObjectFlags;
+    private _dirtyFlags: DisplayObjectDirtyFlags;
 
     _root: flash.display.DisplayObject;
     _stage: flash.display.Stage;
@@ -939,7 +952,7 @@ module Shumway.AVMX.AS.flash.display {
       this._rotation = DisplayObject._clampRotation(this._skewY * 180 / Math.PI);
       this._removeFlags(DisplayObjectFlags.InvalidMatrix);
       this._setFlags(DisplayObjectFlags.InvalidInvertedMatrix);
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMatrix);
       this._invalidatePosition();
     }
 
@@ -1001,7 +1014,7 @@ module Shumway.AVMX.AS.flash.display {
       this._colorTransform.copyFrom(colorTransform);
       this._colorTransform.convertToFixedPoint();
       this._propagateFlagsDown(DisplayObjectFlags.InvalidConcatenatedColorTransform);
-      this._setDirtyFlags(DisplayObjectFlags.DirtyColorTransform);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyColorTransform);
     }
 
     /**
@@ -1098,7 +1111,7 @@ module Shumway.AVMX.AS.flash.display {
      * TODO: check if we can usefully combine all upwards-propagated flags here.
      */
     private _invalidateMatrix() {
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMatrix);
       this._setFlags(DisplayObjectFlags.InvalidMatrix | DisplayObjectFlags.InvalidInvertedMatrix);
       this._invalidatePosition();
     }
@@ -1142,7 +1155,7 @@ module Shumway.AVMX.AS.flash.display {
         if (ratio !== this._ratio) {
           release || assert(ratio >= 0 && ratio <= 0xffff);
           this._ratio = ratio;
-          this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+          this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
         }
       }
 
@@ -1150,7 +1163,7 @@ module Shumway.AVMX.AS.flash.display {
         var clipDepth = placeObjectTag.clipDepth === undefined ? -1 : placeObjectTag.clipDepth;
         if (clipDepth !== this._clipDepth) {
           this._clipDepth = clipDepth;
-          this._setDirtyFlags(DisplayObjectFlags.DirtyClipDepth);
+          this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyClipDepth);
         }
       }
 
@@ -1192,10 +1205,10 @@ module Shumway.AVMX.AS.flash.display {
           filters.push(filter);
         }
         this._filters = filters;
-        this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+        this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
       } else if (reset) {
         this._filters = null;
-        this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+        this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
       }
 
       if (placeObjectTag.flags & PlaceObjectFlags.HasBlendMode || reset) {
@@ -1203,7 +1216,7 @@ module Shumway.AVMX.AS.flash.display {
                                                             1 : placeObjectTag.blendMode);
         if (blendMode !== this._blendMode) {
           this._blendMode = blendMode;
-          this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+          this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
         }
       }
 
@@ -1211,7 +1224,7 @@ module Shumway.AVMX.AS.flash.display {
         var cacheAsBitmap = placeObjectTag.bmpCache > 0;
         if (cacheAsBitmap !== this._hasFlags(DisplayObjectFlags.CacheAsBitmap)) {
           this._toggleFlags(DisplayObjectFlags.CacheAsBitmap, cacheAsBitmap);
-          this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+          this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
         }
       }
 
@@ -1219,7 +1232,7 @@ module Shumway.AVMX.AS.flash.display {
         var visible = placeObjectTag.visibility === undefined || placeObjectTag.visibility;
         if (visible !== this._hasFlags(DisplayObjectFlags.Visible)) {
           this._toggleFlags(DisplayObjectFlags.Visible, visible);
-          this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+          this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
         }
       }
     }
@@ -1259,7 +1272,7 @@ module Shumway.AVMX.AS.flash.display {
       this._matrix.tx = value;
       this._invertedMatrix.tx = -value;
       this._invalidatePosition();
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMatrix);
     }
 
     get y(): number {
@@ -1287,7 +1300,7 @@ module Shumway.AVMX.AS.flash.display {
       this._matrix.ty = value;
       this._invertedMatrix.ty = -value;
       this._invalidatePosition();
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMatrix);
     }
 
     /**
@@ -1492,7 +1505,7 @@ module Shumway.AVMX.AS.flash.display {
       if (value) {
         value._maskedObject = this;
       }
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMask);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMask);
     }
 
     get transform(): flash.geom.Transform {
@@ -1581,7 +1594,7 @@ module Shumway.AVMX.AS.flash.display {
       this._colorTransform.alphaMultiplier = value;
       this._colorTransform.convertToFixedPoint();
       this._propagateFlagsDown(DisplayObjectFlags.InvalidConcatenatedColorTransform);
-      this._setDirtyFlags(DisplayObjectFlags.DirtyColorTransform);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyColorTransform);
     }
 
     get blendMode(): string {
@@ -1598,7 +1611,7 @@ module Shumway.AVMX.AS.flash.display {
         this.sec.throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
       }
       this._blendMode = value;
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
     }
 
     get scale9Grid(): flash.geom.Rectangle {
@@ -1612,7 +1625,7 @@ module Shumway.AVMX.AS.flash.display {
     set scale9Grid(innerRectangle: flash.geom.Rectangle) {
       this._stopTimelineAnimation();
       this._scale9Grid = Bounds.FromRectangle(innerRectangle);
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
     }
 
     /**
@@ -1630,7 +1643,7 @@ module Shumway.AVMX.AS.flash.display {
         return;
       }
       this._toggleFlags(DisplayObjectFlags.CacheAsBitmap, !!value);
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
     }
 
     /**
@@ -1668,7 +1681,7 @@ module Shumway.AVMX.AS.flash.display {
         changed = true;
       }
       if (changed) {
-        this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+        this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
       }
     }
 
@@ -1685,7 +1698,7 @@ module Shumway.AVMX.AS.flash.display {
         return;
       }
       this._toggleFlags(DisplayObjectFlags.Visible, value);
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
     }
 
     get z(): number {
@@ -1826,7 +1839,7 @@ module Shumway.AVMX.AS.flash.display {
       this._graphics = new this.sec.flash.display.Graphics();
       this._graphics._setParent(this);
       this._invalidateFillAndLineBounds(true, true);
-      this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyGraphics);
       return this._graphics;
     }
 
@@ -1840,12 +1853,12 @@ module Shumway.AVMX.AS.flash.display {
       if (this._canHaveGraphics()) {
         release || assert(symbol instanceof flash.display.ShapeSymbol);
         this._graphics = (<flash.display.ShapeSymbol>symbol).graphics;
-        this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
+        this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyGraphics);
       } else if (this.sec.flash.text.StaticText.axIsType(this)) {
         release || assert(symbol instanceof flash.text.TextSymbol);
         var textSymbol = <flash.text.TextSymbol>symbol;
         (<flash.text.StaticText>this)._textContent = textSymbol.textContent;
-        this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
+        this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyTextContent);
       }
       this._symbol = symbol;
       this._setFillAndLineBoundsFromSymbol(symbol);
@@ -2078,7 +2091,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     public debugNameShort(): string {
-      return "[" + this._depth + "]: (" + this._referenceCount + ") {" + this._displayObjectFlags + "} " + this;
+      return "[" + this._depth + "]: (" + this._referenceCount + ") {" + this._flags + "} " + this;
     }
 
     public hashCode(): number {

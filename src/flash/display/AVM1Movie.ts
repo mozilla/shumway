@@ -50,7 +50,7 @@ module Shumway.AVMX.AS.flash.display {
       this._children[0] = this._content = content;
       // Pretend we're a DisplayObjectContainer and can have children. See comment at the top.
       content._setParent(<any>this, 0);
-      this._setDirtyFlags(DisplayObjectFlags.DirtyChildren);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyChildren);
       this._invalidateFillAndLineBounds(true, true);
       this.sec.flash.display.DisplayObject.axClass._advancableInstances.push(this);
       this._constructed = false;

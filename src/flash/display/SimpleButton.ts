@@ -282,7 +282,7 @@ module Shumway.AVMX.AS.flash.display {
       } else {
         this._children.length = 0;
       }
-      this._setDirtyFlags(DisplayObjectFlags.DirtyChildren);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyChildren);
       this._invalidateFillAndLineBounds(true, true);
     }
   }

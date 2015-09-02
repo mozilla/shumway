@@ -26,6 +26,7 @@ module Shumway.Remoting.Player {
   import BitmapData = flash.display.BitmapData;
   import DisplayObject = flash.display.DisplayObject;
   import DisplayObjectFlags = flash.display.DisplayObjectFlags;
+  import DisplayObjectDirtyFlags = flash.display.DisplayObjectDirtyFlags;
   import DisplayObjectContainer = flash.display.DisplayObjectContainer;
   import BlendMode = flash.display.BlendMode;
   import PixelSnapping = flash.display.PixelSnapping;
@@ -89,7 +90,7 @@ module Shumway.Remoting.Player {
       var self = this;
       var roots = this.roots;
       displayObject.visit(function (displayObject) {
-        if (displayObject._hasAnyFlags(DisplayObjectFlags.Dirty)) {
+        if (displayObject._hasAnyDirtyFlags(DisplayObjectDirtyFlags.Dirty)) {
           self.writeUpdateFrame(displayObject);
           // Collect more roots?
           if (roots && displayObject.mask) {
@@ -273,9 +274,9 @@ module Shumway.Remoting.Player {
       writer && writer.writeLn("Sending UpdateFrame: " + displayObject.debugName(true));
 
       var hasMask = false;
-      var hasMatrix = displayObject._hasFlags(DisplayObjectFlags.DirtyMatrix);
-      var hasColorTransform = displayObject._hasFlags(DisplayObjectFlags.DirtyColorTransform);
-      var hasMiscellaneousProperties = displayObject._hasFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+      var hasMatrix = displayObject._hasDirtyFlags(DisplayObjectDirtyFlags.DirtyMatrix);
+      var hasColorTransform = displayObject._hasDirtyFlags(DisplayObjectDirtyFlags.DirtyColorTransform);
+      var hasMiscellaneousProperties = displayObject._hasDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
 
       var video: Video = null;
       if (displayObject.sec.flash.media.Video.axClass.axIsType(displayObject)) {
@@ -285,14 +286,14 @@ module Shumway.Remoting.Player {
       // Check if any children need to be written. These are remoting children, not just display object children.
       var hasRemotableChildren = false;
       if (this.phase === RemotingPhase.References) {
-        hasRemotableChildren = displayObject._hasAnyFlags (
-          DisplayObjectFlags.DirtyChildren     |
-          DisplayObjectFlags.DirtyGraphics     |
-          DisplayObjectFlags.DirtyBitmapData   |
-          DisplayObjectFlags.DirtyNetStream    |
-          DisplayObjectFlags.DirtyTextContent
+        hasRemotableChildren = displayObject._hasAnyDirtyFlags (
+          DisplayObjectDirtyFlags.DirtyChildren     |
+          DisplayObjectDirtyFlags.DirtyGraphics     |
+          DisplayObjectDirtyFlags.DirtyBitmapData   |
+          DisplayObjectDirtyFlags.DirtyNetStream    |
+          DisplayObjectDirtyFlags.DirtyTextContent
         );
-        hasMask = displayObject._hasFlags(DisplayObjectFlags.DirtyMask);
+        hasMask = displayObject._hasDirtyFlags(DisplayObjectDirtyFlags.DirtyMask);
       }
       var bitmap: Bitmap = null;
       if (displayObject.sec.flash.display.Bitmap.axClass.axIsType(displayObject)) {
@@ -300,7 +301,7 @@ module Shumway.Remoting.Player {
       }
 
       // Checks if the computed clip value needs to be written.
-      var hasClip = displayObject._hasFlags(DisplayObjectFlags.DirtyClipDepth);
+      var hasClip = displayObject._hasDirtyFlags(DisplayObjectDirtyFlags.DirtyClipDepth);
 
       // Write Has Bits
       var hasBits = 0;
@@ -381,7 +382,7 @@ module Shumway.Remoting.Player {
               this.output.writeInt(children[i]._id);
               // Make sure children with a clip depth are getting visited.
               if (children[i]._clipDepth >= 0) {
-                children[i]._setFlags(DisplayObjectFlags.DirtyClipDepth);
+                children[i]._setDirtyFlags(DisplayObjectDirtyFlags.DirtyClipDepth);
               }
             }
           }
@@ -389,7 +390,7 @@ module Shumway.Remoting.Player {
         writer && writer.leave("}");
       }
       if (this.phase === RemotingPhase.References) {
-        displayObject._removeFlags(DisplayObjectFlags.Dirty);
+        displayObject._removeDirtyFlags(DisplayObjectDirtyFlags.Dirty);
       }
     }
 
