@@ -938,7 +938,7 @@ module Shumway.AVMX {
       writer.writeLn("Code: " + this.code.length);
       var stream = new BytecodeStream(this.code);
       while (stream.currentBytecode() !== Bytecode.END) {
-        writer.writeLn(stream.currentBCI + ": " + Bytecode[stream.currentBytecode()]);
+        writer.writeLn(stream.currentBCI + ": " + getBytecodeName(stream.currentBytecode()));
         stream.next();
       }
     }
