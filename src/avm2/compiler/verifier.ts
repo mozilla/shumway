@@ -30,6 +30,125 @@ module Shumway.AVM2.Verifier {
 
   import Scope = Shumway.AVM2.Runtime.Scope;
 
+  /**
+   * Insertion sort SortedList backed by a linked list.
+   */
+  class SortedListNode<T> {
+    value: T;
+    next: SortedListNode<T>;
+    constructor(value: T, next: SortedListNode<T>) {
+      this.value = value;
+      this.next = next;
+    }
+  }
+
+  export class SortedList<T>  {
+    public static RETURN = 1;
+    public static DELETE = 2;
+    private _compare: (l: T, r: T) => number;
+    private _head: SortedListNode<T>;
+    private _length: number;
+
+    constructor (compare: (l: T, r: T) => number) {
+      release || Debug.assert(compare);
+      this._compare = compare;
+      this._head = null;
+      this._length = 0;
+    }
+
+    public push(value: T) {
+      release || Debug.assert(value !== undefined);
+      this._length ++;
+      if (!this._head) {
+        this._head = new SortedListNode<T>(value, null);
+        return;
+      }
+
+      var curr = this._head;
+      var prev = null;
+      var node = new SortedListNode<T>(value, null);
+      var compare = this._compare;
+      while (curr) {
+        if (compare(curr.value, node.value) > 0) {
+          if (prev) {
+            node.next = curr;
+            prev.next = node;
+          } else {
+            node.next = this._head;
+            this._head = node;
+          }
+          return;
+        }
+        prev = curr;
+        curr = curr.next;
+      }
+      prev.next = node;
+    }
+
+    /**
+     * Visitors can return RETURN if they wish to stop the iteration or DELETE if they need to delete the current node.
+     * NOTE: DELETE most likley doesn't work if there are multiple active iterations going on.
+     */
+    public forEach(visitor: (value: T) => any) {
+      var curr = this._head;
+      var last = null;
+      while (curr) {
+        var result = visitor(curr.value);
+        if (result === SortedList.RETURN) {
+          return;
+        } else if (result === SortedList.DELETE) {
+          if (!last) {
+            curr = this._head = this._head.next;
+          } else {
+            curr = last.next = curr.next;
+          }
+        } else {
+          last = curr;
+          curr = curr.next;
+        }
+      }
+    }
+
+    public isEmpty(): boolean {
+      return !this._head;
+    }
+
+    public pop(): T {
+      if (!this._head) {
+        return undefined;
+      }
+      this._length --;
+      var ret = this._head;
+      this._head = this._head.next;
+      return ret.value;
+    }
+
+    public contains(value: T): boolean {
+      var curr = this._head;
+      while (curr) {
+        if (curr.value === value) {
+          return true;
+        }
+        curr = curr.next;
+      }
+      return false;
+    }
+
+    public toString(): string {
+      var str = "[";
+      var curr = this._head;
+      while (curr) {
+        str += curr.value.toString();
+        curr = curr.next;
+        if (curr) {
+          str += ",";
+        }
+      }
+      str += "]";
+      return str;
+    }
+  }
+  
   export class VerifierError {
     name: string;
     constructor(public message: string = "") {
