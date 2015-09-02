@@ -666,7 +666,7 @@ module Shumway.GFX.Canvas2D {
       var bounds = node.getBounds(true);
       var style = node.properties["style"];
       if (!style) {
-        style = node.properties["style"] = Color.randomColor(0.4).toCSSStyle();
+        style = node.properties["style"] = ColorStyle.randomStyle();
       }
 
       context.strokeStyle = style;

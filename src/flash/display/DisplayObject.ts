@@ -2161,5 +2161,9 @@ module Shumway.AVMX.AS.flash.display {
     set blendShader(value: any /* flash.display.Shader */) {
       somewhatImplemented("public DisplayObject::set blendShader");
     }
+
+    protected registerAsAdvancableInstance(value: IAdvancable) {
+      this.sec.flash.display.DisplayObject.axClass._advancableInstances.push(value);
+    }
   }
 }

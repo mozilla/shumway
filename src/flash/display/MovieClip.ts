@@ -238,8 +238,8 @@ module Shumway.AVMX.AS.flash.display {
 
     applySymbol() {
       super.applySymbol();
-      this.sec.flash.display.DisplayObject.axClass._advancableInstances.push(this);
       var symbol = this._symbol;
+      this.registerAsAdvancableInstance(this);
       this._totalFrames = symbol.numFrames;
       this._currentFrame = 1;
       if (!symbol.isRoot) {

@@ -220,9 +220,8 @@ module Shumway.AVMX.AS.flash.display {
 
     constructor () {
       super();
-
+      this.registerAsAdvancableInstance(this);
       var displayObjectClass = this.sec.flash.display.DisplayObject.axClass;
-      displayObjectClass._advancableInstances.push(this);
       this._content = null;
       if (this.axClass._rootLoader) {
         // Loader reserves the next instance ID to use for the loaded content.

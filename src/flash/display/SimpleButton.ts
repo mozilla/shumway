@@ -79,7 +79,7 @@ module Shumway.AVMX.AS.flash.display {
         this.applySymbol();
       }
       super();
-      this.sec.flash.display.DisplayObject.axClass._advancableInstances.push(this);
+      this.registerAsAdvancableInstance(this);
       if (!this._fieldsInitialized) {
         this._initializeFields();
       }
