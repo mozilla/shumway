@@ -797,7 +797,7 @@ module Shumway.AVM1.Lib {
         var eventMapping = ClipEventMappings[eventFlag];
         var eventName = eventMapping.name;
         if (!eventName) {
-          Debug.warning(AVM1ClipEvents[eventFlag] + ' ClipEvent not implemented');
+          Debug.warning("ClipEvent: " + eventFlag + ' not implemented');
           continue;
         }
 

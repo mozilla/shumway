@@ -189,7 +189,7 @@ module Shumway.GFX.WebGL {
     }
   }
 
-  export enum WebGLBlendFactor {
+  export const enum WebGLBlendFactor {
     ZERO                       = 0,
     ONE                        = 1,
     SRC_COLOR                  = 768,

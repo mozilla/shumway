@@ -188,7 +188,7 @@ module Shumway.AVMX.AS.flash.ui {
     }
   }
 
-  export enum MouseButtonFlags {
+  export const enum MouseButtonFlags {
     Left    = 0x01,
     Middle  = 0x02,
     Right   = 0x04

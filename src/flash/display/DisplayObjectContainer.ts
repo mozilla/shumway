@@ -27,7 +27,7 @@ module Shumway.AVMX.AS.flash.display {
   import events = flash.events;
   import VisitorFlags = flash.display.VisitorFlags;
 
-  export enum LookupChildOptions {
+  export const enum LookupChildOptions {
     DEFAULT = 0,
     IGNORE_CASE = 1,
     INCLUDE_NON_INITIALIZED = 2

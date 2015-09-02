@@ -52,7 +52,7 @@ module Shumway.GFX.WebGL {
     }
   }
 
-  export enum WebGLCombinedBrushKind {
+  export const enum WebGLCombinedBrushKind {
     FillColor,
     FillTexture,
     FillTextureWithColorMatrix

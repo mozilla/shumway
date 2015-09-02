@@ -44,7 +44,7 @@ module Shumway.GFX {
     HardLight  = 14
   }
 
-  export enum NodeFlags {
+  export const enum NodeFlags {
     None                              = 0x00000,
 
     Visible                           = 0x00001,
@@ -171,7 +171,7 @@ module Shumway.GFX {
   /**
    * Scene graph object hierarchy. This enum makes it possible to write fast type checks.
    */
-  export enum NodeType {
+  export const enum NodeType {
     Node                   = 0x0001,
       Shape                = 0x0003, // 0x0002 | Node,
       Group                = 0x0005, // 0x0004 | Node,
@@ -179,10 +179,18 @@ module Shumway.GFX {
       Renderable           = 0x0021  // 0x0020 | Node
   }
 
+  function getNodeTypeName(nodeType: NodeType) {
+    if (nodeType === NodeType.Node) return "Node";
+    else if (nodeType === NodeType.Shape) return "Shape";
+    else if (nodeType === NodeType.Group) return "Group";
+    else if (nodeType === NodeType.Stage) return "Stage";
+    else if (nodeType === NodeType.Renderable) return "Renderable";
+  }
+
   /**
    * Basic event types. Not much here.
    */
-  export enum NodeEventType {
+  export const enum NodeEventType {
     None                        = 0x0000,
     OnStageBoundsChanged        = 0x0001,
     RemovedFromStage            = 0x0002
@@ -751,7 +759,7 @@ module Shumway.GFX {
     }
 
     public toString(bounds: boolean = false): string {
-      var s = NodeType[this._type] + " " + this._id;
+      var s = getNodeTypeName(this._type) + " " + this._id;
       if (bounds) {
         s += " " + this._bounds.toString();
       }
@@ -1206,7 +1214,7 @@ module Shumway.GFX {
     clear: boolean = true;
   }
 
-  export enum Backend {
+  export const enum Backend {
     Canvas2D = 0,
     WebGL = 1, // Soon
     Both = 2,

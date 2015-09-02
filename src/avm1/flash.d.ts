@@ -282,7 +282,7 @@ declare module Shumway.AVMX.AS.flash {
       avm1Name: string;
     }
 
-    enum LookupChildOptions {
+    const enum LookupChildOptions {
       DEFAULT = 0,
       IGNORE_CASE = 1,
       INCLUDE_NON_INITIALIZED = 2

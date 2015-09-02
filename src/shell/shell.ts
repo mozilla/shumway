@@ -612,19 +612,6 @@ module Shumway.Shell {
     writer.outdent();
   }
 
-  function ignoreTag(code, symbolFilters) {
-    if (symbolFilters[0].length === 0) {
-      return false;
-    }
-    for (var i = 0; i < symbolFilters.length; i++) {
-      var filterCode = SwfTagCode[symbolFilters[i]];
-      if (filterCode !== undefined && filterCode === code) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   function extractABCsFromSWF(buffer: Uint8Array): Uint8Array [] {
     var abcData = [];
     try {

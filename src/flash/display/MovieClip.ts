@@ -31,7 +31,7 @@ module Shumway.AVMX.AS.flash.display {
   /**
    * Controls how to behave on inter-frame navigation.
    */
-  export enum FrameNavigationModel {
+  export const enum FrameNavigationModel {
     SWF1  =  1,
     SWF9  =  9,
     SWF10 = 10

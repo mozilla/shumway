@@ -21,7 +21,7 @@ module Shumway.SWF.Parser {
   import roundToMultipleOfFour = Shumway.IntegerUtilities.roundToMultipleOfFour;
   import Inflate = Shumway.ArrayUtilities.Inflate;
 
-  export enum BitmapFormat {
+  export const enum BitmapFormat {
     /**
      * 8-bit color mapped image.
      */

@@ -72,7 +72,7 @@ module Shumway.AVMX.AS.flash.display {
    *
    * These are used to mark properties as having been changed.
    */
-  export enum DisplayObjectFlags {
+  export const enum DisplayObjectFlags {
     None                                      = 0x0000,
 
     /**
@@ -202,7 +202,7 @@ module Shumway.AVMX.AS.flash.display {
     Bubbling                                  = ContainsFrameScriptPendingChildren | ContainsMorph
   }
 
-  export enum DisplayObjectDirtyFlags {
+  export const enum DisplayObjectDirtyFlags {
     /**
      * Indicates whether this display object's matrix has changed since the last time it was
      * synchronized.
@@ -281,7 +281,7 @@ module Shumway.AVMX.AS.flash.display {
   /**
    * Controls how the visitor walks the display tree.
    */
-  export enum VisitorFlags {
+  export const enum VisitorFlags {
     /**
      * None
      */
@@ -313,7 +313,7 @@ module Shumway.AVMX.AS.flash.display {
     Filter       = 0x10
   }
 
-  export enum HitTestingType {
+  export const enum HitTestingType {
     HitTestBounds,
     HitTestBoundsAndMask,
     HitTestShape,
@@ -322,7 +322,7 @@ module Shumway.AVMX.AS.flash.display {
     Drop
   }
 
-  export enum HitTestingResult {
+  export const enum HitTestingResult {
     None,
     Bounds,
     Shape
@@ -2082,7 +2082,7 @@ module Shumway.AVMX.AS.flash.display {
         var flagNames = [];
         for (var i = 0; i < 32; i++) {
           if (this._hasFlags(1 << i)) {
-            flagNames.push(DisplayObjectFlags[1 << i]);
+            flagNames.push(String([1 << i]));
           }
         }
         name += " " + flagNames.join("|");

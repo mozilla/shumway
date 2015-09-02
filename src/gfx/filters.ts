@@ -175,7 +175,7 @@ module Shumway.GFX {
     }
   }
 
-  export enum ColorMatrixType {
+  export const enum ColorMatrixType {
     Unknown            = 0x0000,
     Identity           = 0x0001
   }

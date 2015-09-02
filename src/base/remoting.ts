@@ -23,7 +23,7 @@ module Shumway.Remoting {
   /**
    * Remoting phases.
    */
-  export enum RemotingPhase {
+  export const enum RemotingPhase {
     /**
      * Objects are serialized. During this phase all reachable remotable objects (all objects
      * reachable from a root set) that are dirty are remoted. This includes all dirty object
@@ -38,7 +38,7 @@ module Shumway.Remoting {
     References
   }
 
-  export enum MessageBits {
+  export const enum MessageBits {
     HasMatrix                   = 0x0001,
     HasBounds                   = 0x0002,
     HasChildren                 = 0x0004,
@@ -49,7 +49,7 @@ module Shumway.Remoting {
     HasClip                     = 0x0080
   }
 
-  export enum IDMask {
+  export const enum IDMask {
     None                        = 0x00000000,
     Asset                       = 0x08000000
   }
@@ -57,7 +57,7 @@ module Shumway.Remoting {
   /**
    * Serialization Format. All commands start with a message tag.
    */
-  export enum MessageTag {
+  export const enum MessageTag {
     EOF                         = 0,
 
     /**
@@ -99,7 +99,7 @@ module Shumway.Remoting {
    * either identity or only modify the alpha multiplier, so we can encode these more
    * efficiently.
    */
-  export enum ColorTransformEncoding {
+  export const enum ColorTransformEncoding {
     /**
      * Identity, no need to serialize all the fields.
      */
@@ -124,7 +124,7 @@ module Shumway.Remoting {
   /**
    * Dictates how matrices are encoded.
    */
-  export enum MatrixEncoding {
+  export const enum MatrixEncoding {
     /**
      * Translation only.
      */
@@ -146,7 +146,7 @@ module Shumway.Remoting {
     All = 3
   }
 
-  export enum VideoPlaybackEvent {
+  export const enum VideoPlaybackEvent {
     Initialized = 0,
     Metadata = 1,
     PlayStart = 2,
@@ -161,7 +161,7 @@ module Shumway.Remoting {
     Error = 11,
   }
 
-  export enum VideoControlEvent {
+  export const enum VideoControlEvent {
     Init = 1,
     Pause = 2,
     Seek = 3,
@@ -173,14 +173,14 @@ module Shumway.Remoting {
     EnsurePlaying = 9,
   }
 
-  export enum StageScaleMode {
+  export const enum StageScaleMode {
     ShowAll = 0,
     ExactFit = 1,
     NoBorder = 2,
     NoScale = 4
   }
 
-  export enum StageAlignFlags {
+  export const enum StageAlignFlags {
     None     = 0,
     Top      = 1,
     Bottom   = 2,
@@ -209,13 +209,13 @@ module Shumway.Remoting {
     'keyup'
   ];
 
-  export enum KeyboardEventFlags {
+  export const enum KeyboardEventFlags {
     CtrlKey  = 0x0001,
     AltKey   = 0x0002,
     ShiftKey = 0x0004
   }
 
-  export enum FocusEventType {
+  export const enum FocusEventType {
     DocumentHidden,
     DocumentVisible,
     WindowBlur,

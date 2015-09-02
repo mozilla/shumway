@@ -183,7 +183,7 @@ module Shumway.AVMX {
     interpreterWriter = (flags & WriterFlags.Interpreter) ? writer : null;
   }
 
-  export enum ScriptInfoState {
+  export const enum ScriptInfoState {
     None = 0,
     Executing = 1,
     Executed = 2

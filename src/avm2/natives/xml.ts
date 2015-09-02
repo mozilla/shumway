@@ -448,7 +448,7 @@ module Shumway.AVMX.AS {
   var anyMultiname = new Multiname(null, 0, CONSTANT.QName, [], null);
   release || Object.seal(anyMultiname);
 
-  export enum XMLParserErrorCode {
+  export const enum XMLParserErrorCode {
     NoError = 0,
     EndOfDocument = -1,
     UnterminatedCdat = -2,
@@ -1364,7 +1364,7 @@ module Shumway.AVMX.AS {
 
   // Note: the order of the entries is relevant, because some checks are of
   // the form `type > ASXMLKind.Element`.
-  export enum ASXMLKind {
+  export const enum ASXMLKind {
     Unknown = 0,
     Element = 1,
     Attribute = 2,

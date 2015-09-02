@@ -8,8 +8,8 @@ function displayTests() {
   var Bounds = Shumway.Bounds;
   var Point = flash.geom.Point;
 
-  var VisitorFlags = Shumway.AVMX.AS.flash.display.VisitorFlags;
-  var DisplayObjectFlags = Shumway.AVMX.AS.flash.display.DisplayObjectFlags;
+  var VisitorFlagsContinue = 0; // Shumway.AVMX.AS.flash.display.VisitorFlags.Continue;
+  var DisplayObjectFlagsInvalidConcatenatedMatrix = 0x0020; // Shumway.AVMX.AS.flash.display.DisplayObjectFlags.InvalidConcatenatedMatrix;
 
   var DisplayObject = flash.display.DisplayObject;
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
@@ -82,7 +82,7 @@ function displayTests() {
       } else {
         leafs.push(o)
       }
-      return VisitorFlags.Continue;
+      return VisitorFlagsContinue;
     });
 
     r.x = 10;
@@ -94,10 +94,10 @@ function displayTests() {
     // Test concatenatedMatrix propagation.
     for (var i = 0; i < p.length; i++) {
       r[p[i]] += 0.1;
-      check(leafs[0]._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix),
+      check(leafs[0]._hasFlags(DisplayObjectFlagsInvalidConcatenatedMatrix),
         "Should invalidate concatenatedMatrix when setting: " + p[i]);
       leafs[0]._getConcatenatedMatrix();
-      check(!leafs[0]._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix),
+      check(!leafs[0]._hasFlags(DisplayObjectFlagsInvalidConcatenatedMatrix),
         "Should have cached concatenatedMatrix when setting: " + p[i]);
       eq(leafs[0]._getConcatenatedMatrix(), leafs[0]._getConcatenatedMatrix(),
          "Repeatedly getting internal matrix gives same object.")

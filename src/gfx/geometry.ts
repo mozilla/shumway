@@ -591,7 +591,7 @@ module Shumway.GFX.Geometry {
   /**
    * Used to write fast paths for common matrix types.
    */
-  export enum MatrixType {
+  export const enum MatrixType {
     Unknown           = 0x0000,
     Identity          = 0x0001,
     Translation       = 0x0002

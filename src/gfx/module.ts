@@ -28,7 +28,7 @@ module Shumway.GFX {
   import assert = Shumway.Debug.assert;
   import clamp = Shumway.NumberUtilities.clamp;
 
-  export enum TraceLevel {
+  export const enum TraceLevel {
     None,
     Brief,
     Verbose,

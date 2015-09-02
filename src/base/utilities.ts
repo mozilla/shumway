@@ -103,7 +103,7 @@ interface Map<K, V> {
   set(key: K, value: V): Map<K, V>;
   size: number;
 }
-s
+
 declare var Map: {
   new <K, V>(): Map<K, V>;
   prototype: Map<any, any>;
@@ -163,7 +163,7 @@ declare module Shumway {
 
 module Shumway {
 
-  export enum CharacterCodes {
+  export const enum CharacterCodes {
     _0 = 48,
     _1 = 49,
     _2 = 50,
@@ -1733,7 +1733,7 @@ module Shumway {
     }
   }
 
-  export enum Numbers {
+  export const enum Numbers {
     MaxU16 = 0xFFFF,
     MaxI16 = 0x7FFF,
     MinI16 = -0x8000
@@ -1965,7 +1965,7 @@ module Shumway {
     }
   }
 
-  export enum LogLevel {
+  export const enum LogLevel {
     Error = 0x1,
     Warn = 0x2,
     Debug = 0x4,
@@ -3579,7 +3579,7 @@ module Shumway {
   }
 
   export module Telemetry {
-    export enum Feature {
+    export const enum Feature {
       EXTERNAL_INTERFACE_FEATURE = 1,
       CLIPBOARD_FEATURE = 2,
       SHAREDOBJECT_FEATURE = 3,
@@ -3588,12 +3588,12 @@ module Shumway {
       NETCONNECTION_FEATURE = 6
     }
 
-    export enum ErrorTypes {
+    export const enum ErrorTypes {
       AVM1_ERROR = 1,
       AVM2_ERROR = 2
     }
 
-    export enum LoadResource {
+    export const enum LoadResource {
       LoadSource = 0,
       LoadWhitelistAllowed = 1,
       LoadWhitelistDenied = 2,
@@ -3639,7 +3639,7 @@ module Shumway {
     export var instance: IFileLoadingService;
   }
 
-  export enum SystemResourceId {
+  export const enum SystemResourceId {
     BuiltinAbc = 0,
     PlayerglobalAbcs = 1,
     PlayerglobalManifest = 2,
@@ -3721,14 +3721,14 @@ module Shumway {
     };
   }
 
-  export enum LocalConnectionConnectResult {
+  export const enum LocalConnectionConnectResult {
     InvalidCallback = -3,
     AlreadyTaken = -2,
     InvalidName = -1,
     Success = 0
   }
 
-  export enum LocalConnectionCloseResult {
+  export const enum LocalConnectionCloseResult {
     NotConnected = -1,
     Success = 0
   }
