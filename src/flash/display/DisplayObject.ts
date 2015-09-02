@@ -1206,7 +1206,7 @@ module Shumway.AVMX.AS.flash.display {
         }
         this._filters = filters;
         this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
-      } else if (reset) {
+      } else if (reset && this._filters) {
         this._filters = null;
         this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
       }
