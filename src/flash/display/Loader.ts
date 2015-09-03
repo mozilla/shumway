@@ -781,7 +781,8 @@ module Shumway.AVMX.AS.flash.display {
       var parameters = this._contentLoaderInfo._parameters;
       avm1MovieClip.setParameters(parameters);
 
-      var avm1Movie = new this.sec.flash.display.AVM1Movie(<MovieClip>root);
+      var avm1Movie = new this.sec.flash.display.AVM1Movie();
+      avm1Movie._setRoot(0, root);
       return avm1Movie;
     }
   }
