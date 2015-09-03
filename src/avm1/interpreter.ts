@@ -416,7 +416,6 @@ module Shumway.AVM1 {
 
   function as2GetProperty(context: AVM1Context, obj: any, name: any): any {
     var avm1Obj: AVM1Object = alToObject(context, obj);
-    name = alNormalizeName(context, name);
     return avm1Obj.alGet(name);
   }
 
