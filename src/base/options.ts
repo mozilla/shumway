@@ -146,7 +146,11 @@ module Shumway.Options {
             value = args.shift();
             release || assert(value !== "-" && value !== "--", "Argument " + argString + " must have a value.");
           } else {
-            value = true;
+            if (args.length && ["yes", "no", "true", "false", "t", "f"].indexOf(args[0]) >= 0) {
+              value = ["yes", "true", "t"].indexOf(args.shift()) >= 0;
+            } else {
+              value = true;
+            }
           }
         } else if (positionalArgumentList.length) {
           argument = positionalArgumentList.shift();
