@@ -147,21 +147,37 @@ function run() {
     return out;
   }
 
-  function timeExec(command, count) {
+  function getStats(values) {
     var s = 0;
+    for (var i = 0; i < values.length; i++) {
+      s += values[i];
+    }
+    var mean = s / values.length;
+    s = 0;
+    for (var i = 0; i < values.length; i++) {
+      var t = (values[i] - mean);
+      s += t * t;
+    }
+    var variance = s / values.length;
+    return {mean: mean, variance: variance};
+  }
+
+  function timeExec(command, count) {
+    var times = [];
     process.stdout.write("Running: " + command + ": ");
     for (var i = 0; i < count; i++) {
       var t = timeNow();
       var child = execSync(command);
-      s += timeNow() - t;
+      times.push(timeNow() - t);
       process.stdout.write(".")
     }
     process.stdout.write("\n");
-    return s / count;
+    return getStats(times);
   }
 
   function runBenchmark(command, iterations) {
-    return {value: timeExec(command, iterations), iterations: iterations, command: command};
+    var stats = timeExec(command, iterations);
+    return {mean: stats.mean, variance: stats.variance, iterations: iterations, command: command};
   }
 
   function runBenchmarks() {
@@ -184,7 +200,7 @@ function run() {
   }
 
   var rows = [
-    ["Metric", "Baseline", "New", "Difference", "%", "Command"]
+    ["Metric", "Baseline", "New", "Std", "Difference", "%", "Command"]
   ];
 
   console.info(prettyTable([
@@ -196,12 +212,19 @@ function run() {
   ], [LEFT, LEFT]));
 
   for (var k in result) {
-    var currentMean = result[k].value;
-    var baselineMean = baseline[k].value;
+    var currentMean = result[k].mean;
+    var baselineMean = baseline[k].mean;
     var percent = (100 * (currentMean - baselineMean) / baselineMean).toFixed(2) + "%";
-    rows.push([k, msFormatter(baselineMean), msFormatter(currentMean), msFormatter(currentMean - baselineMean), percent, result[k].command]);
+    var standardDeviation = Math.sqrt(result[k].variance);
+    rows.push([k,
+      msFormatter(baselineMean),
+      msFormatter(currentMean),
+      msFormatter(standardDeviation),
+      msFormatter(currentMean - baselineMean),
+      percent,
+      result[k].command]);
   }
 
   console.info("");
-  console.info(prettyTable(rows, [LEFT, LEFT, LEFT, LEFT, RIGHT, LEFT]));
+  console.info(prettyTable(rows, [LEFT, LEFT, LEFT, LEFT, LEFT, RIGHT, LEFT]));
 }
