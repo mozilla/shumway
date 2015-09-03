@@ -180,9 +180,10 @@ function run() {
     return {mean: stats.mean, variance: stats.variance, iterations: iterations, command: command};
   }
 
+  var iterations = 10;
+
   function runBenchmarks() {
     var result = {};
-    var iterations = 10;
     result["HelloWorld"] = runBenchmark("js build/ts/shell.js -r -x test/avm2/shumway/hello.abc", iterations);
     result["Many w/o Pump"] = runBenchmark("js build/ts/shell.js -x test/bench/many.swf -r -det -fc 30 -enablePump false", iterations);
     result["Many"] = runBenchmark("js build/ts/shell.js -x test/bench/many.swf -r -det -fc 30", iterations);
@@ -200,7 +201,7 @@ function run() {
   }
 
   var rows = [
-    ["Metric", "Baseline", "New", "Std", "Difference", "%", "Command"]
+    ["Metric", "Baseline", "New", "Dev", "Diff", "%", "Command"]
   ];
 
   console.info(prettyTable([
@@ -208,7 +209,8 @@ function run() {
     ["CPU Model", os.cpus()[0].model],
     ["CPU Speed", os.cpus()[0].speed],
     ["CPU Count", os.cpus().length],
-    ["Idle Time", (benchmarkIdlePercentage * 100).toFixed(2) + "%"]
+    ["Idle Time", (benchmarkIdlePercentage * 100).toFixed(2) + "%"],
+    ["Iterations", iterations]
   ], [LEFT, LEFT]));
 
   for (var k in result) {
