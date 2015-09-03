@@ -420,6 +420,16 @@ module.exports = function(grunt) {
     packageRefs(['player'], outputDir + 'shumway.player.js', license);
   });
 
+  grunt.registerTask('merge-modules', function () {
+    mergeModules("build/bundles/shumway.player.js");
+    mergeModules("build/bundles/shumway.gfx.js");
+  });
+
+  function mergeModules(path) {
+    var mergeModules = require('typescript-module-merger').mergeModulesInFile;
+    grunt.file.write(path, mergeModules(path, !!grunt.option('verbose')));
+  }
+
   function runClosure(jsFiles, output, warnings, done) {
     // This needs a special build of closure that has SHUMWAY_OPTIMIZATIONS.
     var closureCmd = 'java';
@@ -730,7 +740,8 @@ module.exports = function(grunt) {
     'parallel:natives',
     'exec:build_player_ts',
     'exec:build_shell_ts',
-    'bundles'
+    'bundles',
+    'merge-modules'
   ]);
   grunt.registerTask('shu', [
     'build',
