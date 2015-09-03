@@ -24,3 +24,4 @@ build/
 *.run
 test_swf_avm2.baseline
 test/arch/swfs
+baseline.json
