@@ -206,16 +206,22 @@ module Shumway.AVM1 {
       return state;
     }
 
+    public getAVM1LevelsHolder(target?): flash.display.AVM1Movie {
+      // From current target's root, getting the root holder (AVM1Movie)
+      // and resolving level from there.
+      // FIXME refactor to bring context into AVM1Movie and introduce one-to-one dependency between two.
+      var as3Root = target ? this.resolveTarget(target)._as3Object.root :
+                             this.resolveRoot()._as3Object;
+      release || Debug.assert(as3Root);
+      // AVM1Movie contains Sprite, and the latter contains root.
+      var avm1MovieHolder = <flash.display.AVM1Movie>as3Root.parent.parent;
+      release || Debug.assert(this.sec.flash.display.AVM1Movie.axClass.axIsType(avm1MovieHolder));
+      return avm1MovieHolder;
+    }
+
     public resolveLevel(level: number): AVM1MovieClip {
       release || Debug.assert(typeof level === 'number');
-      var root = this.resolveRoot();
-      release || Debug.assert(root);
-
-      // From current root, getting the root holder (AVM1Movie) and resolving
-      // level from there.
-      var avm1MovieHolder = <flash.display.AVM1Movie>root._as3Object.parent;
-      release || Debug.assert(this.sec.flash.display.AVM1Movie.axClass.axIsType(avm1MovieHolder));
-      var as3Root = avm1MovieHolder._getRoot(level);
+      var as3Root = this.getAVM1LevelsHolder(null)._getRoot(level);
       if (!as3Root) {
         this.utils.warn('Unable to resolve level ' + level + ' root');
         return undefined;

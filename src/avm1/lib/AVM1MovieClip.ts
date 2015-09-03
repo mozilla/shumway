@@ -96,12 +96,9 @@ module Shumway.AVM1.Lib {
 
     public get __targetPath() {
       var target = this.get_target();
-      // DisplayObject's depth at a root MovieClip correspond to loaded level.
       var as3Root = this._as3Object.root;
       release || Debug.assert(as3Root);
-      var as3AVM1Movie = <flash.display.AVM1Movie><any>as3Root.parent;
-      release || Debug.assert(this.context.sec.flash.display.AVM1Movie.axClass.axIsType(as3AVM1Movie));
-      var level = as3AVM1Movie._getLevelForRoot(as3Root);
+      var level = this.context.getAVM1LevelsHolder(this)._getLevelForRoot(as3Root);
       release || Debug.assert(level >= 0);
       var prefix = '_level' + level;
       return target != '/' ? prefix + target.replace(/\//g, '.') : prefix;

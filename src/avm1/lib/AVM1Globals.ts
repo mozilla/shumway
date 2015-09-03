@@ -426,13 +426,10 @@ module Shumway.AVM1.Lib {
         return;
       }
 
-      var avm1MovieHolder = <flash.display.AVM1Movie>this.context.resolveRoot()._as3Object.parent;
-      release || Debug.assert(this.context.sec.flash.display.AVM1Movie.axClass.axIsType(avm1MovieHolder));
-
       var loader: flash.display.Loader = new this.context.sec.flash.display.Loader();
       var loaderInfo = loader.contentLoaderInfo;
       loaderInfo._avm1Context = this.context;
-      loaderInfo._avm1LevelHolder = avm1MovieHolder;
+      loaderInfo._avm1LevelHolder = this.context.getAVM1LevelsHolder(null);
       loaderInfo._avm1LevelNumber = level;
 
       var request = new this.context.sec.flash.net.URLRequest(url);
@@ -617,7 +614,7 @@ module Shumway.AVM1.Lib {
         return;
       }
 
-      var avm1MovieHolder = this.context.resolveRoot()._as3Object.parent;
+      var avm1MovieHolder = this.context.getAVM1LevelsHolder(null);
       avm1MovieHolder._deleteRoot(level);
     }
   }

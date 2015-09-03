@@ -44,27 +44,20 @@ module Shumway.AVMX.AS.flash.display {
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
-    constructor(content: MovieClip) {
+    constructor() {
       super();
+      this._content = this.sec.flash.display.Sprite.axClass.axConstruct();
       this._children = [];
-      this._children[0] = content;
-
-      // Setting up _level0 root.
-      this._levels = [];
-      this._levelToNumberMap = new WeakMap<DisplayObject, number>();
-      this._levels[0] = content;
-      this._levelToNumberMap.set(content, 0);
-
+      this._children[0] = this._content;
       // Pretend we're a DisplayObjectContainer and can have children. See comment at the top.
-      content._setParent(<any>this, 0);
+      this._content._setParent(<any>this, 0);
       this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyChildren);
       this._invalidateFillAndLineBounds(true, true);
       this.sec.flash.display.DisplayObject.axClass._advancableInstances.push(this);
       this._constructed = false;
     }
 
-    private _levels: MovieClip[];
-    private _levelToNumberMap: WeakMap<MovieClip, number>;
+    private _content: Sprite;
     private _constructed: boolean;
 
     call(functionName: string): any {
@@ -76,7 +69,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     _addFrame(frame: Shumway.SWF.SWFFrame) {
-      this._levels[0]._addFrame(frame);
+      (<MovieClip>this._content._children[0])._addFrame(frame);
     }
 
     _initFrame(advance: boolean): void {
@@ -87,14 +80,13 @@ module Shumway.AVMX.AS.flash.display {
     _constructFrame(): void {
       if (!this._constructed) {
         this._constructed = true;
-        DisplayObjectContainer.prototype._constructChildren.call(this);
+        this._content._constructChildren();
       }
-      this._children.forEach(level => (<MovieClip>level)._constructFrame());
     }
 
     _enqueueFrameScripts() {
       this._removeFlags(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
-      this._children.forEach(level => (<MovieClip>level)._enqueueFrameScripts());
+      this._content._enqueueFrameScripts();
     }
 
     _propagateFlagsDown(flags: DisplayObjectFlags) {
@@ -102,7 +94,7 @@ module Shumway.AVMX.AS.flash.display {
         return;
       }
       this._setFlags(flags);
-      this._children.forEach(level => level._propagateFlagsDown(flags));
+      this._content._propagateFlagsDown(flags);
     }
 
     /**
@@ -112,14 +104,7 @@ module Shumway.AVMX.AS.flash.display {
     _containsPoint(globalX: number, globalY: number, localX: number, localY: number,
                    testingType: HitTestingType, objects: DisplayObject[]): HitTestingResult {
       if (testingType === HitTestingType.Mouse) {
-        // Testing mouse at all levels.
-        for (var i = this._children.length - 1; i >= 0; i--) {
-          var result = this._children[i]._containsPoint(globalX, globalY, localX, localY, testingType, objects);
-          if (result !== HitTestingResult.None) {
-            return result;
-          }
-        }
-        return HitTestingResult.None;
+        return this._content._containsPoint(globalX, globalY, localX, localY, testingType, objects);
       }
       if (testingType !== HitTestingType.HitTestBounds ||
           !this._getContentBounds().contains(localX, localY)) {
@@ -132,53 +117,41 @@ module Shumway.AVMX.AS.flash.display {
      * Override of DisplayObject#_getChildBounds that retrieves the AVM1 content's bounds.
      */
     _getChildBounds(bounds: Bounds, includeStrokes: boolean) {
-      var childBounds = this._levels[0]._getContentBounds(includeStrokes).clone();
+      var childBounds = this._content._getContentBounds(includeStrokes).clone();
       // Always apply the SimpleButton's matrix.
       this._getConcatenatedMatrix().transformBounds(childBounds);
       bounds.unionInPlace(childBounds);
     }
 
     _getLevelForRoot(root: DisplayObject): number {
-      var level = this._levelToNumberMap.get(<MovieClip>root);
-      return level === undefined ? -1 : level;
+      release || Debug.assert(root.parent === this._content);
+      return root._depth;
     }
 
     _getRoot(level: number): DisplayObject  {
-      return this._levels[level] || null;
+      if (level === 0 && this._content.numChildren === 1) {
+        var level0 = this._content._children[0];
+        if (level0._depth === level) {
+          return level0;
+        }
+      }
+      return this._content.getTimelineObjectAtDepth(level);
     }
 
     _setRoot(level: number, root: DisplayObject): void {
       release || Debug.assert(this.sec.flash.display.MovieClip.axClass.axIsType(root));
       this._deleteRoot(level);
-      release || Debug.assert(!this._levels[level] || !this._levelToNumberMap.has(<MovieClip>root));
-      this._levels[level] = <MovieClip>root;
-      this._levelToNumberMap.set(<MovieClip>root, level);
-      // Finding place to insert in this._children
-      var i = 0;
-      while (i < this._children.length &&
-             (this._levelToNumberMap.get(<MovieClip>this._children[i]) < level)) {
-        i++;
-      }
-      this._children.splice(i, 0, root);
-      // Also pretending we are the parent of the root.
-      root._setParent(<any>this, level);
-      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyChildren);
+      release || Debug.assert(!this._content.getTimelineObjectAtDepth(level));
+      this._content.addTimelineObjectAtDepth(root, level);
     }
 
-    _deleteRoot(level: number): boolean {
-      release || Debug.assert(level !== 0, 'Deletion of _level0 is not supported yet');
-      var root = this._levels[level];
-      if (!root) {
-        return false;
-      }
-      delete this._levels[level];
-      this._levelToNumberMap.delete(root);
-      var i = this._children.indexOf(root);
-      release || Debug.assert(i > 0);
-      this._children.splice(i, 1);
-      root._setParent(null, -1);
-      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyChildren);
-      return true;
-    }
+     _deleteRoot(level: number): boolean {
+       var root = this._content.getTimelineObjectAtDepth(level);
+       if (!root) {
+         return false;
+       }
+       this._content.removeChild(root);
+       return true;
+     }
   }
 }
