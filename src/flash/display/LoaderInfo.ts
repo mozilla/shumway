@@ -81,7 +81,7 @@ module Shumway.AVMX.AS.flash.display {
 
     static getLoaderInfoByDefinition(object: Object): flash.display.LoaderInfo {
       object = object;
-      notImplemented("public flash.display.LoaderInfo::static getLoaderInfoByDefinition"); return;
+      release || notImplemented("public flash.display.LoaderInfo::static getLoaderInfoByDefinition"); return;
     }
 
     _url: string;
@@ -134,7 +134,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     get isURLInaccessible(): boolean {
-      somewhatImplemented("public flash.display.LoaderInfo::get isURLInaccessible");
+      release || somewhatImplemented("public flash.display.LoaderInfo::get isURLInaccessible");
       return this._file ? false : true;
     }
 
@@ -147,7 +147,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     get applicationDomain(): flash.system.ApplicationDomain {
-      somewhatImplemented("public flash.display.LoaderInfo::get applicationDomain");
+      release || somewhatImplemented("public flash.display.LoaderInfo::get applicationDomain");
       return this._file ? this._applicationDomain : null;
     }
 
@@ -211,47 +211,47 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     get sharedEvents(): flash.events.EventDispatcher {
-      somewhatImplemented("public flash.display.LoaderInfo::get sharedEvents");
+      release || somewhatImplemented("public flash.display.LoaderInfo::get sharedEvents");
       if (!this._sharedEvents) {
         this._sharedEvents = new this.sec.flash.events.EventDispatcher();
       }
       return this._sharedEvents;
     }
     get parentSandboxBridge(): Object {
-      somewhatImplemented("public flash.display.LoaderInfo::get parentSandboxBridge");
+      release || somewhatImplemented("public flash.display.LoaderInfo::get parentSandboxBridge");
       return this._parentSandboxBridge;
     }
     set parentSandboxBridge(door: Object) {
-      somewhatImplemented("public flash.display.LoaderInfo::set parentSandboxBridge");
+      release || somewhatImplemented("public flash.display.LoaderInfo::set parentSandboxBridge");
       this._parentSandboxBridge = door;
     }
     get childSandboxBridge(): Object {
-      somewhatImplemented("public flash.display.LoaderInfo::get childSandboxBridge");
+      release || somewhatImplemented("public flash.display.LoaderInfo::get childSandboxBridge");
       return this._childSandboxBridge;
     }
     set childSandboxBridge(door: Object) {
-      somewhatImplemented("public flash.display.LoaderInfo::set childSandboxBridge");
+      release || somewhatImplemented("public flash.display.LoaderInfo::set childSandboxBridge");
       this._childSandboxBridge = door;
     }
     get sameDomain(): boolean {
       if (!this._file) {
         this.sec.throwError('Error', Errors.LoadingObjectNotInitializedError);
       }
-      somewhatImplemented("public flash.display.LoaderInfo::get sameDomain");
+      release || somewhatImplemented("public flash.display.LoaderInfo::get sameDomain");
       return true;
     }
     get childAllowsParent(): boolean {
       if (!this._file) {
         this.sec.throwError('Error', Errors.LoadingObjectNotInitializedError);
       }
-      somewhatImplemented("public flash.display.LoaderInfo::get childAllowsParent");
+      release || somewhatImplemented("public flash.display.LoaderInfo::get childAllowsParent");
       return true;
     }
     get parentAllowsChild(): boolean {
       if (!this._file) {
         this.sec.throwError('Error', Errors.LoadingObjectNotInitializedError);
       }
-      somewhatImplemented("public flash.display.LoaderInfo::get parentAllowsChild");
+      release || somewhatImplemented("public flash.display.LoaderInfo::get parentAllowsChild");
       return true;
     }
 
@@ -267,18 +267,18 @@ module Shumway.AVMX.AS.flash.display {
       if (!this._file) {
         return new this.sec.flash.utils.ByteArray();
       }
-      notImplemented("public flash.display.LoaderInfo::get bytes");
+      release || notImplemented("public flash.display.LoaderInfo::get bytes");
       return null;
     }
     get parameters(): Object {
-      somewhatImplemented("public flash.display.LoaderInfo::get parameters");
+      release || somewhatImplemented("public flash.display.LoaderInfo::get parameters");
       if (this._parameters) {
         return transformJSValueToAS(this.sec, this._parameters, false);
       }
       return {};
     }
     get uncaughtErrorEvents(): flash.events.UncaughtErrorEvents {
-      somewhatImplemented("public flash.display.LoaderInfo::_getUncaughtErrorEvents");
+      release || somewhatImplemented("public flash.display.LoaderInfo::_getUncaughtErrorEvents");
       if (!this._uncaughtErrorEvents) {
         this._uncaughtErrorEvents = new this.sec.flash.events.UncaughtErrorEvents();
       }

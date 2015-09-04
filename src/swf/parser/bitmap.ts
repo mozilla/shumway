@@ -17,6 +17,7 @@
 /// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
   import assert = Shumway.Debug.assert;
+  import notImplemented = Shumway.Debug.notImplemented;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
   import roundToMultipleOfFour = Shumway.IntegerUtilities.roundToMultipleOfFour;
   import Inflate = Shumway.ArrayUtilities.Inflate;
@@ -137,7 +138,7 @@ module Shumway.SWF.Parser {
   }
 
   function parse15BPP(tag: BitmapTag): Uint8Array {
-    Shumway.Debug.notImplemented("parse15BPP");
+    release || notImplemented("parse15BPP");
     /*
       case FORMAT_15BPP:
         var colorType = 0x02;

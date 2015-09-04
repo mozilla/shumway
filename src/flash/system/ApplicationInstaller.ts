@@ -33,21 +33,21 @@ module Shumway.AVMX.AS.flash.system {
 
     static stringsDigest(strings: ASXML): string {
       strings = strings;
-      notImplemented("public flash.system.ApplicationInstaller::static stringsDigest"); return;
+      release || notImplemented("public flash.system.ApplicationInstaller::static stringsDigest"); return;
     }
     static iconDigest(icon: flash.utils.ByteArray): string {
       icon = icon;
-      notImplemented("public flash.system.ApplicationInstaller::static iconDigest"); return;
+      release || notImplemented("public flash.system.ApplicationInstaller::static iconDigest"); return;
     }
     
     // _isInstalled: boolean;
     get isInstalled(): boolean {
-      notImplemented("public flash.system.ApplicationInstaller::get isInstalled"); return;
+      release || notImplemented("public flash.system.ApplicationInstaller::get isInstalled"); return;
       // return this._isInstalled;
     }
     install(shortcutsOnly: boolean = false): void {
       shortcutsOnly = !!shortcutsOnly;
-      notImplemented("public flash.system.ApplicationInstaller::install"); return;
+      release || notImplemented("public flash.system.ApplicationInstaller::install"); return;
     }
   }
 }

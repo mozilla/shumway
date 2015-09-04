@@ -88,7 +88,7 @@ module Shumway.AVMX.AS.flash.display {
      * The given |focusRect| can be one of: |true|, |false| or |null|.
      */
     set focusRect(focusRect: any) {
-      somewhatImplemented("public flash.display.InteractiveObject::set focusRect");
+      release || somewhatImplemented("public flash.display.InteractiveObject::set focusRect");
       this._focusRect = focusRect;
     }
 
@@ -113,7 +113,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     set accessibilityImplementation(value: flash.accessibility.AccessibilityImplementation) {
-      somewhatImplemented("public flash.display.InteractiveObject::set" +
+      release || somewhatImplemented("public flash.display.InteractiveObject::set" +
                          " accessibilityImplementation");
       this._accessibilityImplementation = value;
     }
@@ -123,7 +123,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     set softKeyboardInputAreaOfInterest(value: flash.geom.Rectangle) {
-      somewhatImplemented("public flash.display.InteractiveObject::set" +
+      release || somewhatImplemented("public flash.display.InteractiveObject::set" +
                           " softKeyboardInputAreaOfInterest");
        this._softKeyboardInputAreaOfInterest = value;
     }
@@ -134,7 +134,7 @@ module Shumway.AVMX.AS.flash.display {
 
     set needsSoftKeyboard(value: boolean) {
       value = !!value;
-      somewhatImplemented("public flash.display.InteractiveObject::set needsSoftKeyboard");
+      release || somewhatImplemented("public flash.display.InteractiveObject::set needsSoftKeyboard");
        this._needsSoftKeyboard = value;
     }
 
@@ -144,12 +144,12 @@ module Shumway.AVMX.AS.flash.display {
 
     set contextMenu(cm: flash.ui.ContextMenu) {
       cm = cm;
-      somewhatImplemented("public flash.display.InteractiveObject::set contextMenu");
+      release || somewhatImplemented("public flash.display.InteractiveObject::set contextMenu");
       this._contextMenu = cm;
     }
 
     requestSoftKeyboard(): boolean {
-      somewhatImplemented("public flash.display.InteractiveObject::requestSoftKeyboard");
+      release || somewhatImplemented("public flash.display.InteractiveObject::requestSoftKeyboard");
       return false;
     }
   }

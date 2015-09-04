@@ -39,19 +39,19 @@ module Shumway.AVMX.AS.flash.net {
     // AS -> JS Bindings
     // static _isSupported: boolean;
     get isSupported(): boolean {
-      notImplemented("public flash.net.SecureSocket::get isSupported"); return;
+      release || notImplemented("public flash.net.SecureSocket::get isSupported"); return;
       // return this._isSupported;
     }
     
     // _serverCertificateStatus: string;
     // _serverCertificate: flash.security.X509Certificate;
     get serverCertificate(): flash.security.X509Certificate {
-      notImplemented("public flash.net.SecureSocket::get serverCertificate"); return;
+      release || notImplemented("public flash.net.SecureSocket::get serverCertificate"); return;
       // return this._serverCertificate;
     }
     addBinaryChainBuildingCertificate(certificate: flash.utils.ByteArray, trusted: boolean): void {
       certificate = certificate; trusted = !!trusted;
-      notImplemented("public flash.net.SecureSocket::addBinaryChainBuildingCertificate"); return;
+      release || notImplemented("public flash.net.SecureSocket::addBinaryChainBuildingCertificate"); return;
     }
   }
 }

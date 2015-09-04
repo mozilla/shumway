@@ -265,7 +265,7 @@ module Shumway.AVMX.AS.flash.display {
 
     set colorCorrection(value: string) {
       //this._colorCorrection = axCoerceString(value);
-      notImplemented("public flash.display.Stage::set colorCorrection"); return;
+      release || notImplemented("public flash.display.Stage::set colorCorrection"); return;
     }
 
     get colorCorrectionSupport(): string {
@@ -316,7 +316,7 @@ module Shumway.AVMX.AS.flash.display {
 
     set fullScreenSourceRect(value: flash.geom.Rectangle) {
       //this._fullScreenSourceRect = value;
-      notImplemented("public flash.display.Stage::set fullScreenSourceRect"); return;
+      release || notImplemented("public flash.display.Stage::set fullScreenSourceRect"); return;
     }
 
     get mouseLock(): boolean {
@@ -324,16 +324,16 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     set mouseLock(value: boolean) {
-      somewhatImplemented("public flash.display.Stage::set mouseLock");
+      release || somewhatImplemented("public flash.display.Stage::set mouseLock");
       this._mouseLock = !!value;
     }
 
     get stageVideos(): any {
-      somewhatImplemented("public flash.display.Stage::get stageVideos");
+      release || somewhatImplemented("public flash.display.Stage::get stageVideos");
       return this._stageVideos;
     }
     get stage3Ds(): GenericVector {
-      somewhatImplemented("public flash.display.Stage::get stage3Ds");
+      release || somewhatImplemented("public flash.display.Stage::get stage3Ds");
        return this._stage3Ds;
     }
 
@@ -473,7 +473,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     isFocusInaccessible(): boolean {
-      notImplemented("public flash.display.Stage::isFocusInaccessible"); return;
+      release || notImplemented("public flash.display.Stage::isFocusInaccessible"); return;
     }
     requireOwnerPermissions(): void {
       // TODO: implement requireOwnerPermissions

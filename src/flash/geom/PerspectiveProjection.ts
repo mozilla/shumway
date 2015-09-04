@@ -53,14 +53,14 @@ module Shumway.AVMX.AS.flash.geom {
     _centerY: number;
 
     get fieldOfView(): number {
-      somewhatImplemented("public flash.geom.PerspectiveProjection::get fieldOfView");
+      release || somewhatImplemented("public flash.geom.PerspectiveProjection::get fieldOfView");
       return this._displayObject ?
              this._displayObject._perspectiveProjectionFOV :
              this._fieldOfView;
     }
     set fieldOfView(fieldOfViewAngleInDegrees: number) {
       fieldOfViewAngleInDegrees = +fieldOfViewAngleInDegrees;
-      somewhatImplemented("public flash.geom.PerspectiveProjection::set fieldOfView");
+      release || somewhatImplemented("public flash.geom.PerspectiveProjection::set fieldOfView");
       if (this._displayObject) {
         this._displayObject._perspectiveProjectionFOV = fieldOfViewAngleInDegrees;
       } else {
@@ -68,7 +68,7 @@ module Shumway.AVMX.AS.flash.geom {
       }
     }
     get projectionCenter(): flash.geom.Point {
-      somewhatImplemented("public flash.geom.PerspectiveProjection::get projectionCenter");
+      release || somewhatImplemented("public flash.geom.PerspectiveProjection::get projectionCenter");
       var centerX: number;
       var centerY: number;
       if (this._displayObject) {
@@ -81,7 +81,7 @@ module Shumway.AVMX.AS.flash.geom {
       return new this.sec.flash.geom.Point(centerX, centerY);
     }
     set projectionCenter(p: flash.geom.Point) {
-      somewhatImplemented("public flash.geom.PerspectiveProjection::set projectionCenter");
+      release || somewhatImplemented("public flash.geom.PerspectiveProjection::set projectionCenter");
       if (this._displayObject) {
         this._displayObject._perspectiveProjectionCenterX = +p.x;
         this._displayObject._perspectiveProjectionCenterY = +p.y;
@@ -91,7 +91,7 @@ module Shumway.AVMX.AS.flash.geom {
       }
     }
     get focalLength(): number {
-      somewhatImplemented("public flash.geom.PerspectiveProjection::get focalLength");
+      release || somewhatImplemented("public flash.geom.PerspectiveProjection::get focalLength");
       var fov: number;
       var centerX: number;
 
@@ -106,7 +106,7 @@ module Shumway.AVMX.AS.flash.geom {
     }
     set focalLength(value: number) {
       value = +value;
-      somewhatImplemented("public flash.geom.PerspectiveProjection::set focalLength");
+      release || somewhatImplemented("public flash.geom.PerspectiveProjection::set focalLength");
       var centerX = this._displayObject ?
                     this._displayObject._perspectiveProjectionCenterX :
                     this._centerX;
@@ -118,7 +118,7 @@ module Shumway.AVMX.AS.flash.geom {
       }
     }
     toMatrix3D(): flash.geom.Matrix3D {
-      somewhatImplemented("public flash.geom.PerspectiveProjection::toMatrix3D");
+      release || somewhatImplemented("public flash.geom.PerspectiveProjection::toMatrix3D");
       return new this.sec.flash.geom.Matrix3D();
     }
     

@@ -38,35 +38,35 @@ module Shumway.AVMX.AS.flash.globalization {
     
     // AS -> JS Bindings
     static getAvailableLocaleIDNames(): ASVector<any> {
-      notImplemented("public flash.globalization.StringTools::static getAvailableLocaleIDNames"); return;
+      release || notImplemented("public flash.globalization.StringTools::static getAvailableLocaleIDNames"); return;
     }
     
     // _lastOperationStatus: string;
     // _requestedLocaleIDName: string;
     // _actualLocaleIDName: string;
     get lastOperationStatus(): string {
-      notImplemented("public flash.globalization.StringTools::get lastOperationStatus"); return;
+      release || notImplemented("public flash.globalization.StringTools::get lastOperationStatus"); return;
       // return this._lastOperationStatus;
     }
     get requestedLocaleIDName(): string {
-      notImplemented("public flash.globalization.StringTools::get requestedLocaleIDName"); return;
+      release || notImplemented("public flash.globalization.StringTools::get requestedLocaleIDName"); return;
       // return this._requestedLocaleIDName;
     }
     get actualLocaleIDName(): string {
-      notImplemented("public flash.globalization.StringTools::get actualLocaleIDName"); return;
+      release || notImplemented("public flash.globalization.StringTools::get actualLocaleIDName"); return;
       // return this._actualLocaleIDName;
     }
     toLowerCase(s: string): string {
       s = axCoerceString(s);
-      notImplemented("public flash.globalization.StringTools::toLowerCase"); return;
+      release || notImplemented("public flash.globalization.StringTools::toLowerCase"); return;
     }
     toUpperCase(s: string): string {
       s = axCoerceString(s);
-      notImplemented("public flash.globalization.StringTools::toUpperCase"); return;
+      release || notImplemented("public flash.globalization.StringTools::toUpperCase"); return;
     }
     ctor(requestedLocaleIDName: string): void {
       requestedLocaleIDName = axCoerceString(requestedLocaleIDName);
-      notImplemented("public flash.globalization.StringTools::ctor"); return;
+      release || notImplemented("public flash.globalization.StringTools::ctor"); return;
     }
   }
 }

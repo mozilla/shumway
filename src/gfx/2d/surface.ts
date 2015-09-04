@@ -239,7 +239,7 @@ module Shumway.GFX.Canvas2D {
       case BlendMode.Alpha:      compositeOp = "destination-in";  break;
       case BlendMode.Erase:      compositeOp = "destination-out"; break;
       default:
-        Shumway.Debug.somewhatImplemented("Blend Mode: " + BlendMode[blendMode]);
+        release || Shumway.Debug.somewhatImplemented("Blend Mode: " + BlendMode[blendMode]);
     }
     return compositeOp;
   }

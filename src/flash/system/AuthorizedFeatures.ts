@@ -33,18 +33,18 @@ module Shumway.AVMX.AS.flash.system {
 
     createApplicationInstaller(strings: ASXML, icon: flash.utils.ByteArray): flash.system.ApplicationInstaller {
       strings = strings; icon = icon;
-      notImplemented("public flash.system.AuthorizedFeatures::createApplicationInstaller"); return;
+      release || notImplemented("public flash.system.AuthorizedFeatures::createApplicationInstaller"); return;
     }
     enableDiskCache(stream: flash.net.URLStream): boolean {
       stream = stream;
-      notImplemented("public flash.system.AuthorizedFeatures::enableDiskCache"); return;
+      release || notImplemented("public flash.system.AuthorizedFeatures::enableDiskCache"); return;
     }
     isFeatureEnabled(feature: string, data: string = null): boolean {
       feature = axCoerceString(feature); data = axCoerceString(data);
-      notImplemented("public flash.system.AuthorizedFeatures::isFeatureEnabled"); return;
+      release || notImplemented("public flash.system.AuthorizedFeatures::isFeatureEnabled"); return;
     }
     isNegativeToken(): boolean {
-      notImplemented("public flash.system.AuthorizedFeatures::isNegativeToken"); return;
+      release || notImplemented("public flash.system.AuthorizedFeatures::isNegativeToken"); return;
     }
   }
 }

@@ -2558,7 +2558,7 @@ module Shumway {
           target[i] = swap32(premultiplyARGB(uARGB));
         }
       } else {
-        Debug.somewhatImplemented("Image Format Conversion: " + ImageType[sourceFormat] + " -> " + ImageType[targetFormat]);
+        release || Debug.somewhatImplemented("Image Format Conversion: " + ImageType[sourceFormat] + " -> " + ImageType[targetFormat]);
         // Copy the buffer over for now, we should at least get some image output.
         for (var i = 0; i < length; i++) {
           target[i] = source[i];

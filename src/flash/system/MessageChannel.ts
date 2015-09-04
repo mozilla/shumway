@@ -39,23 +39,23 @@ module Shumway.AVMX.AS.flash.system {
     // _messageAvailable: boolean;
     // _state: string;
     get messageAvailable(): boolean {
-      notImplemented("public flash.system.MessageChannel::get messageAvailable"); return;
+      release || notImplemented("public flash.system.MessageChannel::get messageAvailable"); return;
       // return this._messageAvailable;
     }
     get state(): string {
-      notImplemented("public flash.system.MessageChannel::get state"); return;
+      release || notImplemented("public flash.system.MessageChannel::get state"); return;
       // return this._state;
     }
     send(arg: any, queueLimit: number /*int*/ = -1): void {
       queueLimit = queueLimit | 0;
-      notImplemented("public flash.system.MessageChannel::send"); return;
+      release || notImplemented("public flash.system.MessageChannel::send"); return;
     }
     receive(blockUntilReceived: boolean = false): any {
       blockUntilReceived = !!blockUntilReceived;
-      notImplemented("public flash.system.MessageChannel::receive"); return;
+      release || notImplemented("public flash.system.MessageChannel::receive"); return;
     }
     close(): void {
-      notImplemented("public flash.system.MessageChannel::close"); return;
+      release || notImplemented("public flash.system.MessageChannel::close"); return;
     }
   }
 }

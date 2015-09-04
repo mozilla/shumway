@@ -47,21 +47,21 @@ module Shumway.AVMX.AS.flash.text.engine {
     // _justificationStyle: string;
     // _composeTrailingIdeographicSpaces: boolean;
     get justificationStyle(): string {
-      notImplemented("public flash.text.engine.EastAsianJustifier::get justificationStyle"); return;
+      release || notImplemented("public flash.text.engine.EastAsianJustifier::get justificationStyle"); return;
       // return this._justificationStyle;
     }
     set justificationStyle(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.text.engine.EastAsianJustifier::set justificationStyle"); return;
+      release || notImplemented("public flash.text.engine.EastAsianJustifier::set justificationStyle"); return;
       // this._justificationStyle = value;
     }
     get composeTrailingIdeographicSpaces(): boolean {
-      notImplemented("public flash.text.engine.EastAsianJustifier::get composeTrailingIdeographicSpaces"); return;
+      release || notImplemented("public flash.text.engine.EastAsianJustifier::get composeTrailingIdeographicSpaces"); return;
       // return this._composeTrailingIdeographicSpaces;
     }
     set composeTrailingIdeographicSpaces(value: boolean) {
       value = !!value;
-      notImplemented("public flash.text.engine.EastAsianJustifier::set composeTrailingIdeographicSpaces"); return;
+      release || notImplemented("public flash.text.engine.EastAsianJustifier::set composeTrailingIdeographicSpaces"); return;
       // this._composeTrailingIdeographicSpaces = value;
     }
   }

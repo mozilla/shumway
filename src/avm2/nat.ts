@@ -2630,7 +2630,7 @@ module Shumway.AVMX.AS {
       }
       release || assert (trait.getName().namespace.type !== NamespaceType.Private, "Why are you linking against private members?");
       if (trait.isConst()) {
-        notImplemented("Don't link against const traits.");
+        release || release || notImplemented("Don't link against const traits.");
         return;
       }
       var name = trait.getName().name;

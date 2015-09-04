@@ -39,7 +39,7 @@ module Shumway.AVMX.AS.flash.net {
     
     writeDynamicProperty(name: string, value: any): void {
       name = axCoerceString(name);
-      notImplemented("packageInternal flash.net.DynamicPropertyOutput::writeDynamicProperty"); return;
+      release || notImplemented("packageInternal flash.net.DynamicPropertyOutput::writeDynamicProperty"); return;
     }
   }
 }

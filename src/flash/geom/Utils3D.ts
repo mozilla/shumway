@@ -35,15 +35,15 @@ module Shumway.AVMX.AS.flash.geom {
     // AS -> JS Bindings
     static projectVector(m: flash.geom.Matrix3D, v: flash.geom.Vector3D): flash.geom.Vector3D {
       m = m; v = v;
-      notImplemented("public flash.geom.Utils3D::static projectVector"); return;
+      release || notImplemented("public flash.geom.Utils3D::static projectVector"); return;
     }
     static projectVectors(m: flash.geom.Matrix3D, verts: Float64Vector, projectedVerts: Float64Vector, uvts: Float64Vector): void {
       m = m; verts = verts; projectedVerts = projectedVerts; uvts = uvts;
-      notImplemented("public flash.geom.Utils3D::static projectVectors"); return;
+      release || notImplemented("public flash.geom.Utils3D::static projectVectors"); return;
     }
     static pointTowards(percent: number, mat: flash.geom.Matrix3D, pos: flash.geom.Vector3D, at: flash.geom.Vector3D = null, up: flash.geom.Vector3D = null): flash.geom.Matrix3D {
       percent = +percent; mat = mat; pos = pos; at = at; up = up;
-      notImplemented("public flash.geom.Utils3D::static pointTowards"); return;
+      release || notImplemented("public flash.geom.Utils3D::static pointTowards"); return;
     }
     
   }

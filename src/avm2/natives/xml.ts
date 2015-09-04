@@ -2105,7 +2105,7 @@ module Shumway.AVMX.AS {
       if (!this || this.axClass !== this.sec.AXXML) {
         this.sec.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
-      notImplemented("public.XML::namespaceDeclarations"); return;
+      release || release || notImplemented("public.XML::namespaceDeclarations"); return;
     }
     nodeKind(): string {
       if (!this || this.axClass !== this.sec.AXXML) {
@@ -2199,7 +2199,7 @@ module Shumway.AVMX.AS {
 
     removeNamespace(ns: any): ASXML {
 
-      notImplemented("public.XML::removeNamespace"); return;
+      release || release || notImplemented("public.XML::removeNamespace"); return;
     }
     // 9.1.1.12 [[Replace]] (P, V)
     replace(p: any, v: any): ASXML {
@@ -2803,7 +2803,7 @@ module Shumway.AVMX.AS {
     }
 
     _delete(key, isMethod) {
-      notImplemented("XML.[[Delete]]");
+      release || release || notImplemented("XML.[[Delete]]");
     }
 
     deleteByIndex (p: number) {

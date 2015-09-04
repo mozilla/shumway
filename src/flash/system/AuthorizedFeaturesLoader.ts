@@ -33,14 +33,14 @@ module Shumway.AVMX.AS.flash.system {
 
     // _authorizedFeatures: flash.system.AuthorizedFeatures;
     get authorizedFeatures(): flash.system.AuthorizedFeatures {
-      notImplemented("public flash.system.AuthorizedFeaturesLoader::get authorizedFeatures"); return;
+      release || notImplemented("public flash.system.AuthorizedFeaturesLoader::get authorizedFeatures"); return;
       // return this._authorizedFeatures;
     }
     loadAuthorizedFeatures(): void {
-      notImplemented("public flash.system.AuthorizedFeaturesLoader::loadAuthorizedFeatures"); return;
+      release || notImplemented("public flash.system.AuthorizedFeaturesLoader::loadAuthorizedFeatures"); return;
     }
     makeGlobal(): void {
-      notImplemented("public flash.system.AuthorizedFeaturesLoader::makeGlobal"); return;
+      release || notImplemented("public flash.system.AuthorizedFeaturesLoader::makeGlobal"); return;
     }
   }
 }

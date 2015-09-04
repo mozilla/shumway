@@ -47,7 +47,7 @@ module Shumway.AVMX.AS.flash.system {
     }
 
     static get MIN_DOMAIN_MEMORY_LENGTH(): number /*uint*/ {
-      notImplemented("public flash.system.ApplicationDomain::get MIN_DOMAIN_MEMORY_LENGTH"); return;
+      release || notImplemented("public flash.system.ApplicationDomain::get MIN_DOMAIN_MEMORY_LENGTH"); return;
       // return this._MIN_DOMAIN_MEMORY_LENGTH;
     }
 
@@ -59,13 +59,13 @@ module Shumway.AVMX.AS.flash.system {
     }
 
     get domainMemory(): flash.utils.ByteArray {
-      notImplemented("public flash.system.ApplicationDomain::get domainMemory"); return;
+      release || notImplemented("public flash.system.ApplicationDomain::get domainMemory"); return;
       // return this._domainMemory;
     }
 
     set domainMemory(mem: flash.utils.ByteArray) {
       mem = mem;
-      notImplemented("public flash.system.ApplicationDomain::set domainMemory"); return;
+      release || notImplemented("public flash.system.ApplicationDomain::set domainMemory"); return;
       // this._domainMemory = mem;
     }
 
@@ -92,7 +92,7 @@ module Shumway.AVMX.AS.flash.system {
     }
 
     getQualifiedDefinitionNames(): GenericVector {
-      notImplemented("public flash.system.ApplicationDomain::getQualifiedDefinitionNames"); return;
+      release || notImplemented("public flash.system.ApplicationDomain::getQualifiedDefinitionNames"); return;
     }
   }
 }

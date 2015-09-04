@@ -27,7 +27,7 @@ module Shumway.AVMX.AS.flash.automation {
     // Instance AS -> JS Bindings
     generateActions(a: any []): void {
       a = a;
-      notImplemented("public flash.automation.ActionGenerator::generateActions"); return;
+      release || release || notImplemented("public flash.automation.ActionGenerator::generateActions"); return;
     }
   }
 }

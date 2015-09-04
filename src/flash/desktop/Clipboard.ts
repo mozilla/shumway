@@ -43,21 +43,21 @@ module Shumway.AVMX.AS.flash.desktop {
     // AS -> JS Bindings
     // static _generalClipboard: flash.desktop.Clipboard;
     get generalClipboard(): flash.desktop.Clipboard {
-      notImplemented("public flash.desktop.Clipboard::get generalClipboard"); return;
+      release || notImplemented("public flash.desktop.Clipboard::get generalClipboard"); return;
       // return this._generalClipboard;
     }
     
     // _formats: any [];
     get formats(): any [] {
-      notImplemented("public flash.desktop.Clipboard::get formats"); return;
+      release || notImplemented("public flash.desktop.Clipboard::get formats"); return;
       // return this._formats;
     }
     clear(): void {
-      notImplemented("public flash.desktop.Clipboard::clear"); return;
+      release || notImplemented("public flash.desktop.Clipboard::clear"); return;
     }
     clearData(format: string): void {
       format = axCoerceString(format);
-      notImplemented("public flash.desktop.Clipboard::clearData"); return;
+      release || notImplemented("public flash.desktop.Clipboard::clearData"); return;
     }
   }
 }

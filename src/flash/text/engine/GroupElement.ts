@@ -46,40 +46,40 @@ module Shumway.AVMX.AS.flash.text.engine {
     
     // _elementCount: number /*int*/;
     get elementCount(): number /*int*/ {
-      notImplemented("public flash.text.engine.GroupElement::get elementCount"); return;
+      release || notImplemented("public flash.text.engine.GroupElement::get elementCount"); return;
       // return this._elementCount;
     }
     getElementAt(index: number /*int*/): flash.text.engine.ContentElement {
       index = index | 0;
-      notImplemented("public flash.text.engine.GroupElement::getElementAt"); return;
+      release || notImplemented("public flash.text.engine.GroupElement::getElementAt"); return;
     }
     setElements(value: ASVector<any>): void {
       value = value;
-      notImplemented("public flash.text.engine.GroupElement::setElements"); return;
+      release || notImplemented("public flash.text.engine.GroupElement::setElements"); return;
     }
     groupElements(beginIndex: number /*int*/, endIndex: number /*int*/): flash.text.engine.GroupElement {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0;
-      notImplemented("public flash.text.engine.GroupElement::groupElements"); return;
+      release || notImplemented("public flash.text.engine.GroupElement::groupElements"); return;
     }
     ungroupElements(groupIndex: number /*int*/): void {
       groupIndex = groupIndex | 0;
-      notImplemented("public flash.text.engine.GroupElement::ungroupElements"); return;
+      release || notImplemented("public flash.text.engine.GroupElement::ungroupElements"); return;
     }
     mergeTextElements(beginIndex: number /*int*/, endIndex: number /*int*/): flash.text.engine.TextElement {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0;
-      notImplemented("public flash.text.engine.GroupElement::mergeTextElements"); return;
+      release || notImplemented("public flash.text.engine.GroupElement::mergeTextElements"); return;
     }
     splitTextElement(elementIndex: number /*int*/, splitIndex: number /*int*/): flash.text.engine.TextElement {
       elementIndex = elementIndex | 0; splitIndex = splitIndex | 0;
-      notImplemented("public flash.text.engine.GroupElement::splitTextElement"); return;
+      release || notImplemented("public flash.text.engine.GroupElement::splitTextElement"); return;
     }
     replaceElements(beginIndex: number /*int*/, endIndex: number /*int*/, newElements: ASVector<any>): ASVector<any> {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0; newElements = newElements;
-      notImplemented("public flash.text.engine.GroupElement::replaceElements"); return;
+      release || notImplemented("public flash.text.engine.GroupElement::replaceElements"); return;
     }
     getElementAtCharIndex(charIndex: number /*int*/): flash.text.engine.ContentElement {
       charIndex = charIndex | 0;
-      notImplemented("public flash.text.engine.GroupElement::getElementAtCharIndex"); return;
+      release || notImplemented("public flash.text.engine.GroupElement::getElementAtCharIndex"); return;
     }
   }
 }

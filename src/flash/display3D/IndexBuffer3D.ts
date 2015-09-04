@@ -39,14 +39,14 @@ module Shumway.AVMX.AS.flash.display3D {
     
     uploadFromVector(data: ASVector<any>, startOffset: number /*int*/, count: number /*int*/): void {
       data = data; startOffset = startOffset | 0; count = count | 0;
-      notImplemented("public flash.display3D.IndexBuffer3D::uploadFromVector"); return;
+      release || notImplemented("public flash.display3D.IndexBuffer3D::uploadFromVector"); return;
     }
     uploadFromByteArray(data: flash.utils.ByteArray, byteArrayOffset: number /*int*/, startOffset: number /*int*/, count: number /*int*/): void {
       data = data; byteArrayOffset = byteArrayOffset | 0; startOffset = startOffset | 0; count = count | 0;
-      notImplemented("public flash.display3D.IndexBuffer3D::uploadFromByteArray"); return;
+      release || notImplemented("public flash.display3D.IndexBuffer3D::uploadFromByteArray"); return;
     }
     dispose(): void {
-      notImplemented("public flash.display3D.IndexBuffer3D::dispose"); return;
+      release || notImplemented("public flash.display3D.IndexBuffer3D::dispose"); return;
     }
   }
 }

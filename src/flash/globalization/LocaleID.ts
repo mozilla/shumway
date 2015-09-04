@@ -40,40 +40,40 @@ module Shumway.AVMX.AS.flash.globalization {
     // AS -> JS Bindings
     static determinePreferredLocales(want: ASVector<any>, have: ASVector<any>, keyword: string = "userinterface"): ASVector<any> {
       want = want; have = have; keyword = axCoerceString(keyword);
-      notImplemented("public flash.globalization.LocaleID::static determinePreferredLocales"); return;
+      release || notImplemented("public flash.globalization.LocaleID::static determinePreferredLocales"); return;
     }
     
     // _name: string;
     // _lastOperationStatus: string;
     get name(): string {
-      notImplemented("public flash.globalization.LocaleID::get name"); return;
+      release || notImplemented("public flash.globalization.LocaleID::get name"); return;
       // return this._name;
     }
     get lastOperationStatus(): string {
-      notImplemented("public flash.globalization.LocaleID::get lastOperationStatus"); return;
+      release || notImplemented("public flash.globalization.LocaleID::get lastOperationStatus"); return;
       // return this._lastOperationStatus;
     }
     getLanguage(): string {
-      notImplemented("public flash.globalization.LocaleID::getLanguage"); return;
+      release || notImplemented("public flash.globalization.LocaleID::getLanguage"); return;
     }
     getRegion(): string {
-      notImplemented("public flash.globalization.LocaleID::getRegion"); return;
+      release || notImplemented("public flash.globalization.LocaleID::getRegion"); return;
     }
     getScript(): string {
-      notImplemented("public flash.globalization.LocaleID::getScript"); return;
+      release || notImplemented("public flash.globalization.LocaleID::getScript"); return;
     }
     getVariant(): string {
-      notImplemented("public flash.globalization.LocaleID::getVariant"); return;
+      release || notImplemented("public flash.globalization.LocaleID::getVariant"); return;
     }
     getKeysAndValues(): ASObject {
-      notImplemented("public flash.globalization.LocaleID::getKeysAndValues"); return;
+      release || notImplemented("public flash.globalization.LocaleID::getKeysAndValues"); return;
     }
     isRightToLeft(): boolean {
-      notImplemented("public flash.globalization.LocaleID::isRightToLeft"); return;
+      release || notImplemented("public flash.globalization.LocaleID::isRightToLeft"); return;
     }
     ctor(name: string): void {
       name = axCoerceString(name);
-      notImplemented("public flash.globalization.LocaleID::ctor"); return;
+      release || notImplemented("public flash.globalization.LocaleID::ctor"); return;
     }
   }
 }

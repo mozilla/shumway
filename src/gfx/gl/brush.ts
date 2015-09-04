@@ -142,7 +142,7 @@ module Shumway.GFX.WebGL {
         this._surfaces.push(src.surface);
         // if (this._surfaces.length > 8) {
         //   return false;
-        //   notImplemented("Cannot handle more than 8 texture samplers.");
+        //   release || notImplemented("Cannot handle more than 8 texture samplers.");
         // }
         sampler = this._surfaces.length - 1;
       }

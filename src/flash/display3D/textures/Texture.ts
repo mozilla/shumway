@@ -34,15 +34,15 @@ module Shumway.AVMX.AS.flash.display3D.textures {
 
     uploadFromBitmapData(source: flash.display.BitmapData, miplevel: number /*uint*/ = 0): void {
       source = source; miplevel = miplevel >>> 0;
-      notImplemented("public flash.display3D.textures.Texture::uploadFromBitmapData"); return;
+      release || notImplemented("public flash.display3D.textures.Texture::uploadFromBitmapData"); return;
     }
     uploadFromByteArray(data: flash.utils.ByteArray, byteArrayOffset: number /*uint*/, miplevel: number /*uint*/ = 0): void {
       data = data; byteArrayOffset = byteArrayOffset >>> 0; miplevel = miplevel >>> 0;
-      notImplemented("public flash.display3D.textures.Texture::uploadFromByteArray"); return;
+      release || notImplemented("public flash.display3D.textures.Texture::uploadFromByteArray"); return;
     }
     uploadCompressedTextureFromByteArray(data: flash.utils.ByteArray, byteArrayOffset: number /*uint*/, async: boolean = false): void {
       data = data; byteArrayOffset = byteArrayOffset >>> 0; async = !!async;
-      notImplemented("public flash.display3D.textures.Texture::uploadCompressedTextureFromByteArray"); return;
+      release || notImplemented("public flash.display3D.textures.Texture::uploadCompressedTextureFromByteArray"); return;
     }
   }
 }

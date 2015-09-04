@@ -319,7 +319,7 @@ module Shumway.Shell {
         }
       });
       verbose && writer.writeLn("Loading " + buffers.length + " ABCs");
-      Shumway.Debug.notImplemented("Compile");
+      release || Shumway.Debug.notImplemented("Compile");
       Shumway.AVM2.timelineBuffer.createSnapshot().trace(new IndentingWriter());
     }
 

@@ -56,11 +56,11 @@ module Shumway.AVMX.AS.flash.net {
     private static _defaultObjectEncoding: number /*uint*/ = 3 /* AMF3 */;
     static deleteAll(url: string): number /*int*/ {
       url = axCoerceString(url);
-      notImplemented("public flash.net.SharedObject::static deleteAll"); return;
+      release || notImplemented("public flash.net.SharedObject::static deleteAll"); return;
     }
     static getDiskUsage(url: string): number /*int*/ {
       url = axCoerceString(url);
-      notImplemented("public flash.net.SharedObject::static getDiskUsage"); return;
+      release || notImplemented("public flash.net.SharedObject::static getDiskUsage"); return;
     }
     static _create(path: string, data: any): SharedObject {
       var obj = new this.sec.flash.net.SharedObject();
@@ -86,7 +86,7 @@ module Shumway.AVMX.AS.flash.net {
     static getRemote(name: string, remotePath: string = null, persistence: any = false,
                      secure: boolean = false): flash.net.SharedObject {
       name = axCoerceString(name); remotePath = axCoerceString(remotePath); secure = !!secure;
-      notImplemented("public flash.net.SharedObject::static getRemote"); return;
+      release || notImplemented("public flash.net.SharedObject::static getRemote"); return;
     }
     static get defaultObjectEncoding(): number /*uint*/ {
       return this._defaultObjectEncoding;
@@ -120,12 +120,12 @@ module Shumway.AVMX.AS.flash.net {
     }
 
     get client(): ASObject {
-      notImplemented("public flash.net.SharedObject::get client"); return;
+      release || notImplemented("public flash.net.SharedObject::get client"); return;
       // return this._client;
     }
     set client(object: ASObject) {
       object = object;
-      notImplemented("public flash.net.SharedObject::set client"); return;
+      release || notImplemented("public flash.net.SharedObject::set client"); return;
       // this._client = object;
     }
     setDirty(propertyName: string): void {
@@ -134,37 +134,37 @@ module Shumway.AVMX.AS.flash.net {
     }
 
     connect(myConnection: NetConnection, params: string = null): void {
-      notImplemented("public flash.net.SharedObject::connect");
+      release || notImplemented("public flash.net.SharedObject::connect");
     }
 
     send(): void {
-      notImplemented("send");
+      release || notImplemented("send");
     }
 
     close(): void {
-      somewhatImplemented("public flash.net.SharedObject::close");
+      release || somewhatImplemented("public flash.net.SharedObject::close");
     }
 
     flush(minDiskSpace: number = 0): string {
-      somewhatImplemented("public flash.net.SharedObject::flush");
+      release || somewhatImplemented("public flash.net.SharedObject::flush");
       var value = JSON.stringify(transformASValueToJS(this.sec, this._data, true));
       getSharedObjectStorage().setItem(this._path, value);
       return 'flushed';
     }
 
     clear(): void {
-      somewhatImplemented("public flash.net.SharedObject::clear");
+      release || somewhatImplemented("public flash.net.SharedObject::clear");
       this._data = this.sec.createObject();
       getSharedObjectStorage().removeItem(this._path);
     }
 
     get size(): number {
-      somewhatImplemented("public flash.net.SharedObject::get size");
+      release || somewhatImplemented("public flash.net.SharedObject::get size");
       return JSON.stringify(this._data).length - 2;
     }
 
     set fps(updatesPerSecond: number) {
-      somewhatImplemented("fps");
+      release || somewhatImplemented("fps");
       this._fps = updatesPerSecond;
     }
 

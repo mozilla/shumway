@@ -64,7 +64,7 @@ module Shumway.AVMX.AS.flash.net {
       this._buffer.endian = type;
     }
     get diskCacheEnabled(): boolean {
-      notImplemented("public flash.net.URLStream::get diskCacheEnabled"); return;
+      release || notImplemented("public flash.net.URLStream::get diskCacheEnabled"); return;
       // return this._diskCacheEnabled;
     }
     get position(): number {
@@ -147,35 +147,35 @@ module Shumway.AVMX.AS.flash.net {
       this._buffer.readBytes(bytes, offset, length);
     }
     readBoolean(): boolean {
-      notImplemented("public flash.net.URLStream::readBoolean"); return;
+      release || notImplemented("public flash.net.URLStream::readBoolean"); return;
     }
     readByte(): number /*int*/ {
       return this._buffer.readByte();
     }
     readUnsignedByte(): number /*uint*/ {
-      notImplemented("public flash.net.URLStream::readUnsignedByte"); return;
+      release || notImplemented("public flash.net.URLStream::readUnsignedByte"); return;
     }
     readShort(): number /*int*/ {
-      notImplemented("public flash.net.URLStream::readShort"); return;
+      release || notImplemented("public flash.net.URLStream::readShort"); return;
     }
     readUnsignedShort(): number /*uint*/ {
       return this._buffer.readUnsignedShort();
     }
     readUnsignedInt(): number /*uint*/ {
-      notImplemented("public flash.net.URLStream::readUnsignedInt"); return;
+      release || notImplemented("public flash.net.URLStream::readUnsignedInt"); return;
     }
     readInt(): number /*int*/ {
-      notImplemented("public flash.net.URLStream::readInt"); return;
+      release || notImplemented("public flash.net.URLStream::readInt"); return;
     }
     readFloat(): number {
-      notImplemented("public flash.net.URLStream::readFloat"); return;
+      release || notImplemented("public flash.net.URLStream::readFloat"); return;
     }
     readDouble(): number {
-      notImplemented("public flash.net.URLStream::readDouble"); return;
+      release || notImplemented("public flash.net.URLStream::readDouble"); return;
     }
     readMultiByte(length: number /*uint*/, charSet: string): string {
       length = length >>> 0; charSet = axCoerceString(charSet);
-      notImplemented("public flash.net.URLStream::readMultiByte"); return;
+      release || notImplemented("public flash.net.URLStream::readMultiByte"); return;
     }
     readUTF(): string {
       return this._buffer.readUTF();
@@ -189,10 +189,10 @@ module Shumway.AVMX.AS.flash.net {
       }
     }
     readObject(): any {
-      notImplemented("public flash.net.URLStream::readObject"); return;
+      release || notImplemented("public flash.net.URLStream::readObject"); return;
     }
     stop(): void {
-      notImplemented("public flash.net.URLStream::stop"); return;
+      release || notImplemented("public flash.net.URLStream::stop"); return;
     }
   }
 }

@@ -71,7 +71,7 @@ module Shumway.AVMX.AS.flash.geom {
 
     get pixelBounds(): flash.geom.Rectangle {
       // Only somewhat implemented because this is largely untested.
-      somewhatImplemented("public flash.geom.Transform::get pixelBounds");
+      release || somewhatImplemented("public flash.geom.Transform::get pixelBounds");
       var stage = this._displayObject.stage;
       var targetCoordinateSpace = stage || this._displayObject;
       var rect = this._displayObject.getRect(targetCoordinateSpace);
@@ -84,7 +84,7 @@ module Shumway.AVMX.AS.flash.geom {
     }
 
     get matrix3D(): flash.geom.Matrix3D {
-      somewhatImplemented("public flash.geom.Transform::get matrix3D");
+      release || somewhatImplemented("public flash.geom.Transform::get matrix3D");
       // Note: matrix3D returns the original object, *not* a clone.
       return this._displayObject._matrix3D;
     }
@@ -94,7 +94,7 @@ module Shumway.AVMX.AS.flash.geom {
         this.sec.throwError('TypeError', Errors.CheckTypeFailedError, m, 'flash.geom.Matrix3D');
       }
 
-      somewhatImplemented("public flash.geom.Transform::set matrix3D");
+      release || somewhatImplemented("public flash.geom.Transform::set matrix3D");
       // Setting the displayObject on the matrix can throw an error, so do that first.
       m.setTargetDisplayObject(this._displayObject);
       // Note: matrix3D stores the original object, *not* a clone.
@@ -103,14 +103,14 @@ module Shumway.AVMX.AS.flash.geom {
 
     getRelativeMatrix3D(relativeTo: flash.display.DisplayObject): flash.geom.Matrix3D {
       checkNullParameter(relativeTo, "relativeTo", this.sec);
-      somewhatImplemented("public flash.geom.Transform::getRelativeMatrix3D");
+      release || somewhatImplemented("public flash.geom.Transform::getRelativeMatrix3D");
       var matrix3D = this._displayObject._matrix3D;
       // TODO: actually calculate the relative matrix.
       return matrix3D ? matrix3D.clone() : null;
     }
 
     get perspectiveProjection(): flash.geom.PerspectiveProjection {
-      somewhatImplemented("public flash.geom.Transform::get perspectiveProjection");
+      release || somewhatImplemented("public flash.geom.Transform::get perspectiveProjection");
       if (!this._displayObject._hasFlags(display.DisplayObjectFlags.HasPerspectiveProjection)) {
         return null;
       }
@@ -119,7 +119,7 @@ module Shumway.AVMX.AS.flash.geom {
     }
 
     set perspectiveProjection(projection: flash.geom.PerspectiveProjection) {
-      somewhatImplemented("public flash.geom.Transform::set perspectiveProjection");
+      release || somewhatImplemented("public flash.geom.Transform::set perspectiveProjection");
       if (!projection) {
         this._displayObject._removeFlags(display.DisplayObjectFlags.HasPerspectiveProjection);
         return;

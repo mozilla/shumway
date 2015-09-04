@@ -495,7 +495,7 @@ module Shumway.AVMX.AS.flash.display {
 
 //    beginShaderFill(shader: flash.display.Shader, matrix: flash.geom.Matrix = null): void {
 //      //shader = shader; matrix = matrix;
-//      notImplemented("public flash.display.Graphics::beginShaderFill"); return;
+//      release || notImplemented("public flash.display.Graphics::beginShaderFill"); return;
 //    }
 
     lineStyle(thickness: number, color: number /*uint*/ = 0, alpha: number = 1,
@@ -821,13 +821,13 @@ module Shumway.AVMX.AS.flash.display {
 
 //    lineShaderStyle(shader: flash.display.Shader, matrix: flash.geom.Matrix = null): void {
 //      //shader = shader; matrix = matrix;
-//      notImplemented("public flash.display.Graphics::lineShaderStyle"); return;
+//      release || notImplemented("public flash.display.Graphics::lineShaderStyle"); return;
 //    }
     drawPath(commands: GenericVector, data: GenericVector, winding: string = "evenOdd"): void {
       commands = commands;
       data = data;
       winding = axCoerceString(winding);
-      notImplemented("public flash.display.Graphics::drawPath");
+      release || notImplemented("public flash.display.Graphics::drawPath");
       return;
     }
 
@@ -837,13 +837,13 @@ module Shumway.AVMX.AS.flash.display {
       indices = indices;
       uvtData = uvtData;
       culling = axCoerceString(culling);
-      notImplemented("public flash.display.Graphics::drawTriangles");
+      release || notImplemented("public flash.display.Graphics::drawTriangles");
       return;
     }
 
     drawGraphicsData(graphicsData: GenericVector): void {
       graphicsData = graphicsData;
-      notImplemented("public flash.display.Graphics::drawGraphicsData");
+      release || notImplemented("public flash.display.Graphics::drawGraphicsData");
       return;
     }
 

@@ -40,43 +40,43 @@ module Shumway.AVMX.AS.flash.ui {
 
 
     get cut(): boolean {
-      somewhatImplemented("cut");
+      release || somewhatImplemented("cut");
       return this._cut;
     }
     set cut(val: boolean) {
-      somewhatImplemented("cut");
+      release || somewhatImplemented("cut");
       this._cut = !!val;
     }
     get copy(): boolean {
-      somewhatImplemented("copy");
+      release || somewhatImplemented("copy");
       return this._copy;
     }
     set copy(val: boolean) {
-      somewhatImplemented("copy");
+      release || somewhatImplemented("copy");
       this._copy = !!val;
     }
     get paste(): boolean {
-      somewhatImplemented("paste");
+      release || somewhatImplemented("paste");
       return this._paste;
     }
     set paste(val: boolean) {
-      somewhatImplemented("paste");
+      release || somewhatImplemented("paste");
       this._paste = !!val;
     }
     get clear(): boolean {
-      somewhatImplemented("clear");
+      release || somewhatImplemented("clear");
       return this._clear;
     }
     set clear(val: boolean) {
-      somewhatImplemented("clear");
+      release || somewhatImplemented("clear");
       this._clear = !!val;
     }
     get selectAll(): boolean {
-      somewhatImplemented("selectAll");
+      release || somewhatImplemented("selectAll");
       return this._selectAll;
     }
     set selectAll(val: boolean) {
-      somewhatImplemented("selectAll");
+      release || somewhatImplemented("selectAll");
       this._selectAll = !!val;
     }
     clone(): ContextMenuClipboardItems {

@@ -35,28 +35,28 @@ module Shumway.AVMX.AS.flash.profiler {
     // static _spanMarker: number;
     // static _connected: boolean;
     get spanMarker(): number {
-      notImplemented("public flash.profiler.Telemetry::get spanMarker"); return;
+      release || notImplemented("public flash.profiler.Telemetry::get spanMarker"); return;
       // return this._spanMarker;
     }
     get connected(): boolean {
-      notImplemented("public flash.profiler.Telemetry::get connected"); return;
+      release || notImplemented("public flash.profiler.Telemetry::get connected"); return;
       // return this._connected;
     }
     static sendMetric(metric: string, value: any): void {
       metric = axCoerceString(metric);
-      notImplemented("public flash.profiler.Telemetry::static sendMetric"); return;
+      release || notImplemented("public flash.profiler.Telemetry::static sendMetric"); return;
     }
     static sendSpanMetric(metric: string, startSpanMarker: number, value: any = null): void {
       metric = axCoerceString(metric); startSpanMarker = +startSpanMarker;
-      notImplemented("public flash.profiler.Telemetry::static sendSpanMetric"); return;
+      release || notImplemented("public flash.profiler.Telemetry::static sendSpanMetric"); return;
     }
     static registerCommandHandler(commandName: string, handler: ASFunction): boolean {
       commandName = axCoerceString(commandName); handler = handler;
-      notImplemented("public flash.profiler.Telemetry::static registerCommandHandler"); return;
+      release || notImplemented("public flash.profiler.Telemetry::static registerCommandHandler"); return;
     }
     static unregisterCommandHandler(commandName: string): boolean {
       commandName = axCoerceString(commandName);
-      notImplemented("public flash.profiler.Telemetry::static unregisterCommandHandler"); return;
+      release || notImplemented("public flash.profiler.Telemetry::static unregisterCommandHandler"); return;
     }
     
   }

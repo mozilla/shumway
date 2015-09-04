@@ -36,12 +36,12 @@ module Shumway.AVMX.AS.flash.display {
 
     _enabled: boolean;
     get enabled(): boolean {
-      somewhatImplemented("public flash.display.NativeMenuItem::get enabled");
+      release || somewhatImplemented("public flash.display.NativeMenuItem::get enabled");
       return this._enabled;
     }
     set enabled(isSeparator: boolean) {
       isSeparator = !!isSeparator;
-      somewhatImplemented("public flash.display.NativeMenuItem::set enabled");
+      release || somewhatImplemented("public flash.display.NativeMenuItem::set enabled");
       this._enabled = isSeparator;
     }
   }

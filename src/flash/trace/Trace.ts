@@ -45,18 +45,18 @@ module Shumway.AVMX.AS.flash.trace {
     // AS -> JS Bindings
     static setLevel(l: number /*int*/, target: number /*int*/ = 2): any {
       l = l | 0; target = target | 0;
-      notImplemented("public flash.trace.Trace::static setLevel"); return;
+      release || notImplemented("public flash.trace.Trace::static setLevel"); return;
     }
     static getLevel(target: number /*int*/ = 2): number /*int*/ {
       target = target | 0;
-      notImplemented("public flash.trace.Trace::static getLevel"); return;
+      release || notImplemented("public flash.trace.Trace::static getLevel"); return;
     }
     static setListener(f: ASFunction): any {
       f = f;
-      notImplemented("public flash.trace.Trace::static setListener"); return;
+      release || notImplemented("public flash.trace.Trace::static setListener"); return;
     }
     static getListener(): ASFunction {
-      notImplemented("public flash.trace.Trace::static getListener"); return;
+      release || notImplemented("public flash.trace.Trace::static getListener"); return;
     }
     
   }

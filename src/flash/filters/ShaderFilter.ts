@@ -49,12 +49,12 @@ module Shumway.AVMX.AS.flash.filters {
     // _rightExtension: number /*int*/;
     // _bottomExtension: number /*int*/;
     get shader(): flash.display.Shader {
-      notImplemented("public flash.filters.ShaderFilter::get shader"); return;
+      release || notImplemented("public flash.filters.ShaderFilter::get shader"); return;
       // return this._shader;
     }
     set shader(shader: flash.display.Shader) {
       shader = shader;
-      notImplemented("public flash.filters.ShaderFilter::set shader"); return;
+      release || notImplemented("public flash.filters.ShaderFilter::set shader"); return;
       // this._shader = shader;
     }
   }

@@ -243,18 +243,18 @@ module Shumway.AVMX.AS.flash.ui {
       return true;
     }
     static hide(): void {
-      somewhatImplemented("public flash.ui.Mouse::static hide"); return;
+      release || somewhatImplemented("public flash.ui.Mouse::static hide"); return;
     }
     static show(): void {
-      somewhatImplemented("public flash.ui.Mouse::static show"); return;
+      release || somewhatImplemented("public flash.ui.Mouse::static show"); return;
     }
     static registerCursor(name: string, cursor: flash.ui.MouseCursorData): void {
       name = axCoerceString(name); cursor = cursor;
-      notImplemented("public flash.ui.Mouse::static registerCursor"); return;
+      release || notImplemented("public flash.ui.Mouse::static registerCursor"); return;
     }
     static unregisterCursor(name: string): void {
       name = axCoerceString(name);
-      notImplemented("public flash.ui.Mouse::static unregisterCursor"); return;
+      release || notImplemented("public flash.ui.Mouse::static unregisterCursor"); return;
     }
 
     static _currentPosition: flash.geom.Point;

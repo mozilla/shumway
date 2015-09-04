@@ -36,11 +36,11 @@ module Shumway.AVMX.AS {
       public static DEFAULT = ObjectEncoding.AMF3;
 
       static get dynamicPropertyWriter(): any /* flash.net.IDynamicPropertyWriter */ {
-        notImplemented("public flash.net.ObjectEncoding::get dynamicPropertyWriter");
+        release || release || notImplemented("public flash.net.ObjectEncoding::get dynamicPropertyWriter");
         return null;
       }
       static set dynamicPropertyWriter(value: any /* flash.net.IDynamicPropertyWriter */) {
-        notImplemented("public flash.net.ObjectEncoding::set dynamicPropertyWriter");
+        release || release || notImplemented("public flash.net.ObjectEncoding::set dynamicPropertyWriter");
       }
     }
   }

@@ -39,7 +39,7 @@ module Shumway.AVMX.AS.flash.globalization {
     
     // AS -> JS Bindings
     static getAvailableLocaleIDNames(): ASVector<any> {
-      notImplemented("public flash.globalization.CurrencyFormatter::static getAvailableLocaleIDNames"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::static getAvailableLocaleIDNames"); return;
     }
     
     // _currencyISOCode: string;
@@ -59,143 +59,143 @@ module Shumway.AVMX.AS.flash.globalization {
     // _leadingZero: boolean;
     // _trailingZeros: boolean;
     get currencyISOCode(): string {
-      notImplemented("public flash.globalization.CurrencyFormatter::get currencyISOCode"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::get currencyISOCode"); return;
       // return this._currencyISOCode;
     }
     get currencySymbol(): string {
-      notImplemented("public flash.globalization.CurrencyFormatter::get currencySymbol"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::get currencySymbol"); return;
       // return this._currencySymbol;
     }
     get lastOperationStatus(): string {
-      notImplemented("public flash.globalization.CurrencyFormatter::get lastOperationStatus"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::get lastOperationStatus"); return;
       // return this._lastOperationStatus;
     }
     get requestedLocaleIDName(): string {
-      notImplemented("public flash.globalization.CurrencyFormatter::get requestedLocaleIDName"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::get requestedLocaleIDName"); return;
       // return this._requestedLocaleIDName;
     }
     get actualLocaleIDName(): string {
-      notImplemented("public flash.globalization.CurrencyFormatter::get actualLocaleIDName"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::get actualLocaleIDName"); return;
       // return this._actualLocaleIDName;
     }
     get fractionalDigits(): number /*int*/ {
-      notImplemented("public flash.globalization.CurrencyFormatter::get fractionalDigits"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::get fractionalDigits"); return;
       // return this._fractionalDigits;
     }
     set fractionalDigits(value: number /*int*/) {
       value = value | 0;
-      notImplemented("public flash.globalization.CurrencyFormatter::set fractionalDigits"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::set fractionalDigits"); return;
       // this._fractionalDigits = value;
     }
     get useGrouping(): boolean {
-      notImplemented("public flash.globalization.CurrencyFormatter::get useGrouping"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::get useGrouping"); return;
       // return this._useGrouping;
     }
     set useGrouping(value: boolean) {
       value = !!value;
-      notImplemented("public flash.globalization.CurrencyFormatter::set useGrouping"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::set useGrouping"); return;
       // this._useGrouping = value;
     }
     get groupingPattern(): string {
-      notImplemented("public flash.globalization.CurrencyFormatter::get groupingPattern"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::get groupingPattern"); return;
       // return this._groupingPattern;
     }
     set groupingPattern(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.globalization.CurrencyFormatter::set groupingPattern"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::set groupingPattern"); return;
       // this._groupingPattern = value;
     }
     get digitsType(): number /*uint*/ {
-      notImplemented("public flash.globalization.CurrencyFormatter::get digitsType"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::get digitsType"); return;
       // return this._digitsType;
     }
     set digitsType(value: number /*uint*/) {
       value = value >>> 0;
-      notImplemented("public flash.globalization.CurrencyFormatter::set digitsType"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::set digitsType"); return;
       // this._digitsType = value;
     }
     get decimalSeparator(): string {
-      notImplemented("public flash.globalization.CurrencyFormatter::get decimalSeparator"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::get decimalSeparator"); return;
       // return this._decimalSeparator;
     }
     set decimalSeparator(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.globalization.CurrencyFormatter::set decimalSeparator"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::set decimalSeparator"); return;
       // this._decimalSeparator = value;
     }
     get groupingSeparator(): string {
-      notImplemented("public flash.globalization.CurrencyFormatter::get groupingSeparator"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::get groupingSeparator"); return;
       // return this._groupingSeparator;
     }
     set groupingSeparator(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.globalization.CurrencyFormatter::set groupingSeparator"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::set groupingSeparator"); return;
       // this._groupingSeparator = value;
     }
     get negativeSymbol(): string {
-      notImplemented("public flash.globalization.CurrencyFormatter::get negativeSymbol"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::get negativeSymbol"); return;
       // return this._negativeSymbol;
     }
     set negativeSymbol(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.globalization.CurrencyFormatter::set negativeSymbol"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::set negativeSymbol"); return;
       // this._negativeSymbol = value;
     }
     get negativeCurrencyFormat(): number /*uint*/ {
-      notImplemented("public flash.globalization.CurrencyFormatter::get negativeCurrencyFormat"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::get negativeCurrencyFormat"); return;
       // return this._negativeCurrencyFormat;
     }
     set negativeCurrencyFormat(value: number /*uint*/) {
       value = value >>> 0;
-      notImplemented("public flash.globalization.CurrencyFormatter::set negativeCurrencyFormat"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::set negativeCurrencyFormat"); return;
       // this._negativeCurrencyFormat = value;
     }
     get positiveCurrencyFormat(): number /*uint*/ {
-      notImplemented("public flash.globalization.CurrencyFormatter::get positiveCurrencyFormat"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::get positiveCurrencyFormat"); return;
       // return this._positiveCurrencyFormat;
     }
     set positiveCurrencyFormat(value: number /*uint*/) {
       value = value >>> 0;
-      notImplemented("public flash.globalization.CurrencyFormatter::set positiveCurrencyFormat"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::set positiveCurrencyFormat"); return;
       // this._positiveCurrencyFormat = value;
     }
     get leadingZero(): boolean {
-      notImplemented("public flash.globalization.CurrencyFormatter::get leadingZero"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::get leadingZero"); return;
       // return this._leadingZero;
     }
     set leadingZero(value: boolean) {
       value = !!value;
-      notImplemented("public flash.globalization.CurrencyFormatter::set leadingZero"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::set leadingZero"); return;
       // this._leadingZero = value;
     }
     get trailingZeros(): boolean {
-      notImplemented("public flash.globalization.CurrencyFormatter::get trailingZeros"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::get trailingZeros"); return;
       // return this._trailingZeros;
     }
     set trailingZeros(value: boolean) {
       value = !!value;
-      notImplemented("public flash.globalization.CurrencyFormatter::set trailingZeros"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::set trailingZeros"); return;
       // this._trailingZeros = value;
     }
     setCurrency(currencyISOCode: string, currencySymbol: string): void {
       currencyISOCode = axCoerceString(currencyISOCode); currencySymbol = axCoerceString(currencySymbol);
-      notImplemented("public flash.globalization.CurrencyFormatter::setCurrency"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::setCurrency"); return;
     }
     formattingWithCurrencySymbolIsSafe(requestedISOCode: string): boolean {
       requestedISOCode = axCoerceString(requestedISOCode);
-      notImplemented("public flash.globalization.CurrencyFormatter::formattingWithCurrencySymbolIsSafe"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::formattingWithCurrencySymbolIsSafe"); return;
     }
     parse(inputString: string): flash.globalization.CurrencyParseResult {
       inputString = axCoerceString(inputString);
-      notImplemented("public flash.globalization.CurrencyFormatter::parse"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::parse"); return;
     }
     ctor(requestedLocaleIDName: string): void {
       requestedLocaleIDName = axCoerceString(requestedLocaleIDName);
-      notImplemented("public flash.globalization.CurrencyFormatter::ctor"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::ctor"); return;
     }
     formatImplementation(value: number, withCurrencySymbol: boolean): string {
       value = +value; withCurrencySymbol = !!withCurrencySymbol;
-      notImplemented("public flash.globalization.CurrencyFormatter::formatImplementation"); return;
+      release || notImplemented("public flash.globalization.CurrencyFormatter::formatImplementation"); return;
     }
   }
 }

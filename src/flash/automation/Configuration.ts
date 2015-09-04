@@ -23,14 +23,14 @@ module Shumway.AVMX.AS.flash.automation {
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings
     get testAutomationConfiguration(): string {
-      notImplemented("public flash.automation.Configuration::get testAutomationConfiguration"); return;
+      release || release || notImplemented("public flash.automation.Configuration::get testAutomationConfiguration"); return;
     }
     set deviceConfiguration(configData: string) {
       configData = axCoerceString(configData);
-      notImplemented("public flash.automation.Configuration::set deviceConfiguration"); return;
+      release || release || notImplemented("public flash.automation.Configuration::set deviceConfiguration"); return;
     }
     get deviceConfiguration(): string {
-      notImplemented("public flash.automation.Configuration::get deviceConfiguration"); return;
+      release || release || notImplemented("public flash.automation.Configuration::get deviceConfiguration"); return;
     }
     // Instance JS -> AS Bindings
     // Instance AS -> JS Bindings

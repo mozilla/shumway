@@ -63,169 +63,169 @@ module Shumway.AVMX.AS.flash.text.engine {
     // _typographicCase: string;
     // _locked: boolean;
     get alignmentBaseline(): string {
-      notImplemented("public flash.text.engine.ElementFormat::get alignmentBaseline"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::get alignmentBaseline"); return;
       // return this._alignmentBaseline;
     }
     set alignmentBaseline(alignmentBaseline: string) {
       alignmentBaseline = axCoerceString(alignmentBaseline);
-      notImplemented("public flash.text.engine.ElementFormat::set alignmentBaseline"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::set alignmentBaseline"); return;
       // this._alignmentBaseline = alignmentBaseline;
     }
     get alpha(): number {
-      notImplemented("public flash.text.engine.ElementFormat::get alpha"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::get alpha"); return;
       // return this._alpha;
     }
     set alpha(value: number) {
       value = +value;
-      notImplemented("public flash.text.engine.ElementFormat::set alpha"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::set alpha"); return;
       // this._alpha = value;
     }
     get baselineShift(): number {
-      notImplemented("public flash.text.engine.ElementFormat::get baselineShift"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::get baselineShift"); return;
       // return this._baselineShift;
     }
     set baselineShift(value: number) {
       value = +value;
-      notImplemented("public flash.text.engine.ElementFormat::set baselineShift"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::set baselineShift"); return;
       // this._baselineShift = value;
     }
     get breakOpportunity(): string {
-      notImplemented("public flash.text.engine.ElementFormat::get breakOpportunity"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::get breakOpportunity"); return;
       // return this._breakOpportunity;
     }
     set breakOpportunity(opportunityType: string) {
       opportunityType = axCoerceString(opportunityType);
-      notImplemented("public flash.text.engine.ElementFormat::set breakOpportunity"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::set breakOpportunity"); return;
       // this._breakOpportunity = opportunityType;
     }
     get color(): number /*uint*/ {
-      notImplemented("public flash.text.engine.ElementFormat::get color"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::get color"); return;
       // return this._color;
     }
     set color(value: number /*uint*/) {
       value = value >>> 0;
-      notImplemented("public flash.text.engine.ElementFormat::set color"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::set color"); return;
       // this._color = value;
     }
     get dominantBaseline(): string {
-      notImplemented("public flash.text.engine.ElementFormat::get dominantBaseline"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::get dominantBaseline"); return;
       // return this._dominantBaseline;
     }
     set dominantBaseline(dominantBaseline: string) {
       dominantBaseline = axCoerceString(dominantBaseline);
-      notImplemented("public flash.text.engine.ElementFormat::set dominantBaseline"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::set dominantBaseline"); return;
       // this._dominantBaseline = dominantBaseline;
     }
     get fontDescription(): flash.text.engine.FontDescription {
-      notImplemented("public flash.text.engine.ElementFormat::get fontDescription"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::get fontDescription"); return;
       // return this._fontDescription;
     }
     set fontDescription(value: flash.text.engine.FontDescription) {
       value = value;
-      notImplemented("public flash.text.engine.ElementFormat::set fontDescription"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::set fontDescription"); return;
       // this._fontDescription = value;
     }
     get digitCase(): string {
-      notImplemented("public flash.text.engine.ElementFormat::get digitCase"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::get digitCase"); return;
       // return this._digitCase;
     }
     set digitCase(digitCaseType: string) {
       digitCaseType = axCoerceString(digitCaseType);
-      notImplemented("public flash.text.engine.ElementFormat::set digitCase"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::set digitCase"); return;
       // this._digitCase = digitCaseType;
     }
     get digitWidth(): string {
-      notImplemented("public flash.text.engine.ElementFormat::get digitWidth"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::get digitWidth"); return;
       // return this._digitWidth;
     }
     set digitWidth(digitWidthType: string) {
       digitWidthType = axCoerceString(digitWidthType);
-      notImplemented("public flash.text.engine.ElementFormat::set digitWidth"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::set digitWidth"); return;
       // this._digitWidth = digitWidthType;
     }
     get ligatureLevel(): string {
-      notImplemented("public flash.text.engine.ElementFormat::get ligatureLevel"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::get ligatureLevel"); return;
       // return this._ligatureLevel;
     }
     set ligatureLevel(ligatureLevelType: string) {
       ligatureLevelType = axCoerceString(ligatureLevelType);
-      notImplemented("public flash.text.engine.ElementFormat::set ligatureLevel"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::set ligatureLevel"); return;
       // this._ligatureLevel = ligatureLevelType;
     }
     get fontSize(): number {
-      notImplemented("public flash.text.engine.ElementFormat::get fontSize"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::get fontSize"); return;
       // return this._fontSize;
     }
     set fontSize(value: number) {
       value = +value;
-      notImplemented("public flash.text.engine.ElementFormat::set fontSize"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::set fontSize"); return;
       // this._fontSize = value;
     }
     get kerning(): string {
-      notImplemented("public flash.text.engine.ElementFormat::get kerning"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::get kerning"); return;
       // return this._kerning;
     }
     set kerning(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.text.engine.ElementFormat::set kerning"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::set kerning"); return;
       // this._kerning = value;
     }
     get locale(): string {
-      notImplemented("public flash.text.engine.ElementFormat::get locale"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::get locale"); return;
       // return this._locale;
     }
     set locale(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.text.engine.ElementFormat::set locale"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::set locale"); return;
       // this._locale = value;
     }
     get textRotation(): string {
-      notImplemented("public flash.text.engine.ElementFormat::get textRotation"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::get textRotation"); return;
       // return this._textRotation;
     }
     set textRotation(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.text.engine.ElementFormat::set textRotation"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::set textRotation"); return;
       // this._textRotation = value;
     }
     get trackingRight(): number {
-      notImplemented("public flash.text.engine.ElementFormat::get trackingRight"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::get trackingRight"); return;
       // return this._trackingRight;
     }
     set trackingRight(value: number) {
       value = +value;
-      notImplemented("public flash.text.engine.ElementFormat::set trackingRight"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::set trackingRight"); return;
       // this._trackingRight = value;
     }
     get trackingLeft(): number {
-      notImplemented("public flash.text.engine.ElementFormat::get trackingLeft"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::get trackingLeft"); return;
       // return this._trackingLeft;
     }
     set trackingLeft(value: number) {
       value = +value;
-      notImplemented("public flash.text.engine.ElementFormat::set trackingLeft"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::set trackingLeft"); return;
       // this._trackingLeft = value;
     }
     get typographicCase(): string {
-      notImplemented("public flash.text.engine.ElementFormat::get typographicCase"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::get typographicCase"); return;
       // return this._typographicCase;
     }
     set typographicCase(typographicCaseType: string) {
       typographicCaseType = axCoerceString(typographicCaseType);
-      notImplemented("public flash.text.engine.ElementFormat::set typographicCase"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::set typographicCase"); return;
       // this._typographicCase = typographicCaseType;
     }
     get locked(): boolean {
-      notImplemented("public flash.text.engine.ElementFormat::get locked"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::get locked"); return;
       // return this._locked;
     }
     set locked(value: boolean) {
       value = !!value;
-      notImplemented("public flash.text.engine.ElementFormat::set locked"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::set locked"); return;
       // this._locked = value;
     }
     getFontMetrics(): flash.text.engine.FontMetrics {
-      notImplemented("public flash.text.engine.ElementFormat::getFontMetrics"); return;
+      release || notImplemented("public flash.text.engine.ElementFormat::getFontMetrics"); return;
     }
   }
 }

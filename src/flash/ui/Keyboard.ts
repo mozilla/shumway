@@ -379,23 +379,23 @@ module Shumway.AVMX.AS.flash.ui {
     // static _hasVirtualKeyboard: boolean;
     // static _physicalKeyboardType: string;
     static get capsLock(): boolean {
-      notImplemented("public flash.ui.Keyboard::get capsLock"); return;
+      release || notImplemented("public flash.ui.Keyboard::get capsLock"); return;
       // return this._capsLock;
     }
     static get numLock(): boolean {
-      notImplemented("public flash.ui.Keyboard::get numLock"); return;
+      release || notImplemented("public flash.ui.Keyboard::get numLock"); return;
       // return this._numLock;
     }
     static get hasVirtualKeyboard(): boolean {
-      notImplemented("public flash.ui.Keyboard::get hasVirtualKeyboard"); return;
+      release || notImplemented("public flash.ui.Keyboard::get hasVirtualKeyboard"); return;
       // return this._hasVirtualKeyboard;
     }
     static get physicalKeyboardType(): string {
-      notImplemented("public flash.ui.Keyboard::get physicalKeyboardType"); return;
+      release || notImplemented("public flash.ui.Keyboard::get physicalKeyboardType"); return;
       // return this._physicalKeyboardType;
     }
     static isAccessible(): boolean {
-      notImplemented("public flash.ui.Keyboard::static isAccessible"); return;
+      release || notImplemented("public flash.ui.Keyboard::static isAccessible"); return;
     }
     
   }

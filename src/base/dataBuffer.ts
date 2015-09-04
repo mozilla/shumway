@@ -719,12 +719,12 @@ module Shumway.ArrayUtilities {
 
     writeMultiByte(value: string, charSet: string): void {
       value = axCoerceString(value); charSet = axCoerceString(charSet);
-      notImplemented("packageInternal flash.utils.ObjectOutput::writeMultiByte"); return;
+      release || release || notImplemented("packageInternal flash.utils.ObjectOutput::writeMultiByte"); return;
     }
 
     readMultiByte(length: number /*uint*/, charSet: string): string {
       length = length >>> 0; charSet = axCoerceString(charSet);
-      notImplemented("packageInternal flash.utils.ObjectInput::readMultiByte"); return;
+      release || release || notImplemented("packageInternal flash.utils.ObjectInput::readMultiByte"); return;
     }
 
     getValue(name: number): any {

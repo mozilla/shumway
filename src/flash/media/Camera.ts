@@ -26,7 +26,7 @@ module Shumway.AVMX.AS.flash.media {
     }
 
     static get names(): ASArray {
-      somewhatImplemented("public flash.media.Camera::get names");
+      release || somewhatImplemented("public flash.media.Camera::get names");
       return this.sec.createArrayUnsafe([]);
     }
     static get isSupported(): boolean {
@@ -34,104 +34,104 @@ module Shumway.AVMX.AS.flash.media {
     }
     static getCamera(name: string = null): flash.media.Camera {
       name = axCoerceString(name);
-      somewhatImplemented("public flash.media.Camera::static getCamera");
+      release || somewhatImplemented("public flash.media.Camera::static getCamera");
       return null;
     }
     static _scanHardware(): void {
-      somewhatImplemented("public flash.media.Camera::static _scanHardware");
+      release || somewhatImplemented("public flash.media.Camera::static _scanHardware");
     }
 
     get activityLevel(): number {
-      somewhatImplemented("public flash.media.Camera::get activityLevel");
+      release || somewhatImplemented("public flash.media.Camera::get activityLevel");
       return 0;
     }
     get bandwidth(): number /*int*/ {
-      somewhatImplemented("public flash.media.Camera::get bandwidth");
+      release || somewhatImplemented("public flash.media.Camera::get bandwidth");
       return 0;
     }
     get currentFPS(): number {
-      somewhatImplemented("public flash.media.Camera::get currentFPS");
+      release || somewhatImplemented("public flash.media.Camera::get currentFPS");
       return 0;
     }
     get fps(): number {
-      somewhatImplemented("public flash.media.Camera::get fps");
+      release || somewhatImplemented("public flash.media.Camera::get fps");
       return 0;
     }
     get height(): number /*int*/ {
-      somewhatImplemented("public flash.media.Camera::get height");
+      release || somewhatImplemented("public flash.media.Camera::get height");
       return 0;
     }
     get index(): number /*int*/ {
-      somewhatImplemented("public flash.media.Camera::get index");
+      release || somewhatImplemented("public flash.media.Camera::get index");
       return 0;
     }
     get keyFrameInterval(): number /*int*/ {
-      somewhatImplemented("public flash.media.Camera::get keyFrameInterval");
+      release || somewhatImplemented("public flash.media.Camera::get keyFrameInterval");
       return 1;
     }
     get loopback(): boolean {
-      somewhatImplemented("public flash.media.Camera::get loopback");
+      release || somewhatImplemented("public flash.media.Camera::get loopback");
       return false;
     }
     get motionLevel(): number /*int*/ {
-      somewhatImplemented("public flash.media.Camera::get motionLevel");
+      release || somewhatImplemented("public flash.media.Camera::get motionLevel");
       return 0;
     }
     get motionTimeout(): number /*int*/ {
-      somewhatImplemented("public flash.media.Camera::get motionTimeout");
+      release || somewhatImplemented("public flash.media.Camera::get motionTimeout");
       return 0;
     }
     get muted(): boolean {
-      somewhatImplemented("public flash.media.Camera::get muted");
+      release || somewhatImplemented("public flash.media.Camera::get muted");
       return true;
     }
     get name(): string {
-      somewhatImplemented("public flash.media.Camera::get name");
+      release || somewhatImplemented("public flash.media.Camera::get name");
       return '';
     }
     get quality(): number /*int*/ {
-      somewhatImplemented("public flash.media.Camera::get quality");
+      release || somewhatImplemented("public flash.media.Camera::get quality");
       return 0;
     }
     get width(): number /*int*/ {
-      somewhatImplemented("public flash.media.Camera::get width");
+      release || somewhatImplemented("public flash.media.Camera::get width");
       return 0;
     }
     setCursor(value: boolean): void {
       value = !!value;
-      somewhatImplemented("public flash.media.Camera::setCursor");
+      release || somewhatImplemented("public flash.media.Camera::setCursor");
     }
     setKeyFrameInterval(keyFrameInterval: number /*int*/): void {
       keyFrameInterval = keyFrameInterval | 0;
-      somewhatImplemented("public flash.media.Camera::setKeyFrameInterval");
+      release || somewhatImplemented("public flash.media.Camera::setKeyFrameInterval");
     }
     setLoopback(compress: boolean = false): void {
       compress = !!compress;
-      somewhatImplemented("public flash.media.Camera::setLoopback");
+      release || somewhatImplemented("public flash.media.Camera::setLoopback");
     }
     setMode(width: number /*int*/, height: number /*int*/, fps: number, favorArea: boolean = true): void {
       width = width | 0; height = height | 0; fps = +fps; favorArea = !!favorArea;
-      somewhatImplemented("public flash.media.Camera::setMode");
+      release || somewhatImplemented("public flash.media.Camera::setMode");
     }
     setMotionLevel(motionLevel: number /*int*/, timeout: number /*int*/ = 2000): void {
       motionLevel = motionLevel | 0; timeout = timeout | 0;
-      somewhatImplemented("public flash.media.Camera::setMotionLevel");
+      release || somewhatImplemented("public flash.media.Camera::setMotionLevel");
     }
     setQuality(bandwidth: number /*int*/, quality: number /*int*/): void {
       bandwidth = bandwidth | 0; quality = quality | 0;
-      somewhatImplemented("public flash.media.Camera::setQuality");
+      release || somewhatImplemented("public flash.media.Camera::setQuality");
     }
     drawToBitmapData(destination: flash.display.BitmapData): void {
       destination = destination;
-      somewhatImplemented("public flash.media.Camera::drawToBitmapData");
+      release || somewhatImplemented("public flash.media.Camera::drawToBitmapData");
     }
     copyToByteArray(rect: flash.geom.Rectangle, destination: flash.utils.ByteArray): void {
       rect = rect; destination = destination;
-      somewhatImplemented("public flash.media.Camera::copyToByteArray");
+      release || somewhatImplemented("public flash.media.Camera::copyToByteArray");
     }
     copyToVector(rect: flash.geom.Rectangle, destination: Float64Vector): void {
       rect = rect; destination = destination;
-      somewhatImplemented("public flash.media.Camera::copyToVector");
+      release || somewhatImplemented("public flash.media.Camera::copyToVector");
     }
   }
 }

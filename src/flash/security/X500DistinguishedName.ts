@@ -38,31 +38,31 @@ module Shumway.AVMX.AS.flash.security {
     // _stateOrProvinceName: string;
     // _countryName: string;
     get commonName(): string {
-      notImplemented("public flash.security.X500DistinguishedName::get commonName"); return;
+      release || notImplemented("public flash.security.X500DistinguishedName::get commonName"); return;
       // return this._commonName;
     }
     get organizationName(): string {
-      notImplemented("public flash.security.X500DistinguishedName::get organizationName"); return;
+      release || notImplemented("public flash.security.X500DistinguishedName::get organizationName"); return;
       // return this._organizationName;
     }
     get organizationalUnitName(): string {
-      notImplemented("public flash.security.X500DistinguishedName::get organizationalUnitName"); return;
+      release || notImplemented("public flash.security.X500DistinguishedName::get organizationalUnitName"); return;
       // return this._organizationalUnitName;
     }
     get localityName(): string {
-      notImplemented("public flash.security.X500DistinguishedName::get localityName"); return;
+      release || notImplemented("public flash.security.X500DistinguishedName::get localityName"); return;
       // return this._localityName;
     }
     get stateOrProvinceName(): string {
-      notImplemented("public flash.security.X500DistinguishedName::get stateOrProvinceName"); return;
+      release || notImplemented("public flash.security.X500DistinguishedName::get stateOrProvinceName"); return;
       // return this._stateOrProvinceName;
     }
     get countryName(): string {
-      notImplemented("public flash.security.X500DistinguishedName::get countryName"); return;
+      release || notImplemented("public flash.security.X500DistinguishedName::get countryName"); return;
       // return this._countryName;
     }
     toString(): string {
-      notImplemented("public flash.security.X500DistinguishedName::toString"); return;
+      release || notImplemented("public flash.security.X500DistinguishedName::toString"); return;
     }
   }
 }

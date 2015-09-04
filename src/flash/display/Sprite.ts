@@ -281,12 +281,12 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     get soundTransform(): flash.media.SoundTransform {
-      notImplemented("public flash.display.Sprite::get soundTransform"); return;
+      release || notImplemented("public flash.display.Sprite::get soundTransform"); return;
       // return this._soundTransform;
     }
     set soundTransform(sndTransform: flash.media.SoundTransform) {
       sndTransform = sndTransform;
-      notImplemented("public flash.display.Sprite::set soundTransform"); return;
+      release || notImplemented("public flash.display.Sprite::set soundTransform"); return;
       // this._soundTransform = sndTransform;
     }
 
@@ -346,11 +346,11 @@ module Shumway.AVMX.AS.flash.display {
     }
     startTouchDrag(touchPointID: number /*int*/, lockCenter: boolean = false, bounds: flash.geom.Rectangle = null): void {
       touchPointID = touchPointID | 0; lockCenter = !!lockCenter; bounds = bounds;
-      notImplemented("public flash.display.Sprite::startTouchDrag"); return;
+      release || notImplemented("public flash.display.Sprite::startTouchDrag"); return;
     }
     stopTouchDrag(touchPointID: number /*int*/): void {
       touchPointID = touchPointID | 0;
-      notImplemented("public flash.display.Sprite::stopTouchDrag"); return;
+      release || notImplemented("public flash.display.Sprite::stopTouchDrag"); return;
     }
 
     _containsPoint(globalX: number, globalY: number, localX: number, localY: number,

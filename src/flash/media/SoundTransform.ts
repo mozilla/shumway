@@ -94,7 +94,7 @@ module Shumway.AVMX.AS.flash.media {
     }
 
     _updateTransform() {
-      somewhatImplemented("public flash.media.SoundTransform::_updateTransform");
+      release || somewhatImplemented("public flash.media.SoundTransform::_updateTransform");
       // TODO dispatch updates to the current audio destinations?
     }
   }
