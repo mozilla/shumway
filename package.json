@@ -28,12 +28,7 @@
     "url": "https://github.com/mozilla/shumway.git"
   },
   "author": "Mozilla Research",
-  "licenses": [
-    {
-      "type": "Apache",
-      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-    }
-  ],
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/mozilla/shumway/issues"
   },
