@@ -83,7 +83,6 @@ module Shumway.AVMX.AS {
   import Scope = Shumway.AVMX.Scope;
 
   import defineNonEnumerableGetter = Shumway.ObjectUtilities.defineNonEnumerableGetter;
-  import defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
   import copyOwnPropertyDescriptors = Shumway.ObjectUtilities.copyOwnPropertyDescriptors;
   import copyPropertiesByList = Shumway.ObjectUtilities.copyPropertiesByList;
 

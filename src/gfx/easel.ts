@@ -21,9 +21,6 @@ module Shumway.GFX {
   import Rectangle = Geometry.Rectangle;
 
   import Canvas2DRenderer = Shumway.GFX.Canvas2D.Canvas2DRenderer;
-  import WebGLRenderer = Shumway.GFX.WebGL.WebGLRenderer;
-  import WebGLRendererOptions = Shumway.GFX.WebGL.WebGLRendererOptions;
-  import WebGLContext = Shumway.GFX.WebGL.WebGLContext;
   import FPS = Shumway.Tools.Mini.FPS;
 
   import DisplayParameters = Shumway.Remoting.DisplayParameters;

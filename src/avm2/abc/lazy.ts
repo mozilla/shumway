@@ -1,6 +1,5 @@
 module Shumway.AVMX {
   import assert = Shumway.Debug.assert;
-  import hashBytesTo32BitsAdler = Shumway.HashUtilities.hashBytesTo32BitsAdler;
   import AbcStream = Shumway.AVM2.ABC.AbcStream;
 
   var writer = new IndentingWriter();
@@ -1393,7 +1392,6 @@ module Shumway.AVMX {
   Namespace.PUBLIC = internNamespace(NamespaceType.Public, "");
 
   export class ABCFile {
-    public hash: number;
     public ints: Int32Array;
     public uints: Uint32Array;
     public doubles: Float64Array;
@@ -1441,7 +1439,6 @@ module Shumway.AVMX {
     ) {
       this.env = env;
       this._stream = new AbcStream(_buffer);
-      this.hash = hashBytesTo32BitsAdler(_buffer, 0, _buffer.length);
       this._checkMagic();
 
       this._parseConstantPool();

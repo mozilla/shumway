@@ -52,15 +52,17 @@ module Shumway.AVM1 {
     userData: any;
   }
 
-  export interface AVM1PropertyDescriptor {
-    flags: AVM1PropertyFlags;
-    value?: any;
-    get?: IAVM1Callable;
-    set?: IAVM1Callable;
-    watcher?: IAVM1PropertyWatcher;
+  export class AVM1PropertyDescriptor {
+    public originalName: string;
+    constructor(public flags: AVM1PropertyFlags,
+                public value?: any,
+                public get?: IAVM1Callable,
+                public set?: IAVM1Callable,
+                public watcher?: IAVM1PropertyWatcher) {
+      // Empty block
+    }
   }
 
-  var ESCAPED_PROPERTY_PREFIX = '__avm1';
   var DEBUG_PROPERTY_PREFIX = '$Bg';
 
   export interface IAVM1Builtins {
@@ -106,11 +108,15 @@ module Shumway.AVM1 {
       // Using IAVM1Callable here to avoid circular calls between AVM1Object and
       // AVM1Function during constructions.
       // TODO do we need to support __proto__ for all SWF versions?
-      this.alSetOwnProperty('__proto__', {
-        flags: AVM1PropertyFlags.ACCESSOR | AVM1PropertyFlags.DONT_DELETE | AVM1PropertyFlags.DONT_ENUM,
-        get: { alCall: function (thisArg: any, args?: any[]): any { return self.alPrototype; }},
-        set: { alCall: function (thisArg: any, args?: any[]): any { self.alPrototype = args[0]; }}
-      });
+      var getter = { alCall: function (thisArg: any, args?: any[]): any { return self.alPrototype; }};
+      var setter = { alCall: function (thisArg: any, args?: any[]): any { self.alPrototype = args[0]; }};
+      var desc = new AVM1PropertyDescriptor(AVM1PropertyFlags.ACCESSOR |
+                                            AVM1PropertyFlags.DONT_DELETE |
+                                            AVM1PropertyFlags.DONT_ENUM,
+                                            null,
+                                            getter,
+                                            setter);
+      this.alSetOwnProperty('__proto__', desc);
     }
 
     get alPrototype(): AVM1Object {
@@ -130,46 +136,25 @@ module Shumway.AVM1 {
       this._prototype = v;
     }
 
-    public alGetPrototypeProperty(): any {
+    public alGetPrototypeProperty(): AVM1Object {
       return this.alGet('prototype');
     }
 
     // TODO shall we add mode for readonly/native flags of the prototype property?
     public alSetOwnPrototypeProperty(v: any): void {
-      this.alSetOwnProperty('prototype', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-        value: v
-      });
+      this.alSetOwnProperty('prototype', new AVM1PropertyDescriptor(AVM1PropertyFlags.DATA |
+                                                                    AVM1PropertyFlags.DONT_ENUM,
+                                                                    v));
     }
 
-    public alGetConstructorProperty(): any {
+    public alGetConstructorProperty(): AVM1Object {
       return this.alGet('__constructor__');
     }
 
     public alSetOwnConstructorProperty(v: any): void {
-      this.alSetOwnProperty('__constructor__', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
-        value: v
-      });
-    }
-
-    _escapeProperty(p: any): string  {
-      var context = this.context;
-      var name = alToString(context, p);
-      if (!context.isPropertyCaseSensitive) {
-        name = name.toLowerCase();
-      }
-      if (name[0] === '_') {
-        name = ESCAPED_PROPERTY_PREFIX + name
-      }
-      return name;
-    }
-
-    _unescapeProperty(name: string): string {
-      if (name[0] === '_' && name.indexOf(ESCAPED_PROPERTY_PREFIX) === 0) {
-        name = name.substring(ESCAPED_PROPERTY_PREFIX.length);
-      }
-      return name;
+      this.alSetOwnProperty('__constructor__', new AVM1PropertyDescriptor(AVM1PropertyFlags.DATA |
+                                                                          AVM1PropertyFlags.DONT_ENUM,
+                                                                          v));
     }
 
     _debugEscapeProperty(p: any): string {
@@ -181,31 +166,40 @@ module Shumway.AVM1 {
       return DEBUG_PROPERTY_PREFIX + name;
     }
 
-    public alGetOwnProperty(p): AVM1PropertyDescriptor {
-      var name = this._escapeProperty(p);
+    public alGetOwnProperty(name): AVM1PropertyDescriptor {
+      release || Debug.assert(alIsName(this.context, name));
       // TODO __resolve
       return this._ownProperties[name];
     }
 
     public alSetOwnProperty(p, desc: AVM1PropertyDescriptor): void {
-      var name = this._escapeProperty(p);
-      this._ownProperties[name] = desc;
-      if (!release) { // adding data property on the main object for convenience of debugging
+      var name = alNormalizeName(this.context, p);
+      if (!desc.originalName && !this.context.isPropertyCaseSensitive) {
+        desc.originalName = p;
+      }
+      if (!release) {
+        Debug.assert(desc instanceof AVM1PropertyDescriptor);
+        // Ensure that a descriptor isn't used multiple times. If it were, we couldn't update
+        // values in-place.
+        Debug.assert(!desc['owningObject'] || desc['owningObject'] === this);
+        desc['owningObject'] = this;
+        // adding data property on the main object for convenience of debugging.
         if ((desc.flags & AVM1PropertyFlags.DATA) &&
             !(desc.flags & AVM1PropertyFlags.DONT_ENUM)) {
-          Object.defineProperty(this, this._debugEscapeProperty(p),
+          Object.defineProperty(this, this._debugEscapeProperty(name),
             {value: desc.value, enumerable: true, configurable: true});
         }
       }
+      this._ownProperties[name] = desc;
     }
 
     public alHasOwnProperty(p): boolean  {
-      var name = this._escapeProperty(p);
+      var name = alNormalizeName(this.context, p);
       return !!this._ownProperties[name];
     }
 
     public alDeleteOwnProperty(p) {
-      var name = this._escapeProperty(p);
+      var name = alNormalizeName(this.context, p);
       delete this._ownProperties[name];
       if (!release) {
         delete this[this._debugEscapeProperty(p)];
@@ -214,11 +208,20 @@ module Shumway.AVM1 {
 
     public alGetOwnPropertiesKeys(): string[] {
       var keys: string[] = [];
-      for (var i in this._ownProperties) {
-        var desc = this._ownProperties[i];
-        if (!(desc.flags & AVM1PropertyFlags.DONT_ENUM)) {
-          var name = this._unescapeProperty(i);
-          keys.push(name);
+      if (!this.context.isPropertyCaseSensitive) {
+        for (var name in this._ownProperties) {
+          var desc = this._ownProperties[name];
+          release || Debug.assert("originalName" in desc);
+          if (!(desc.flags & AVM1PropertyFlags.DONT_ENUM)) {
+            keys.push(desc.originalName);
+          }
+        }
+      } else {
+        for (var name in this._ownProperties) {
+          var desc = this._ownProperties[name];
+          if (!(desc.flags & AVM1PropertyFlags.DONT_ENUM)) {
+            keys.push(name);
+          }
         }
       }
       return keys;
@@ -236,7 +239,8 @@ module Shumway.AVM1 {
     }
 
     public alGet(p): any {
-      var desc = this.alGetProperty(p);
+      name = alNormalizeName(this.context, p);
+      var desc = this.alGetProperty(name);
       if (!desc) {
         return undefined;
       }
@@ -268,6 +272,10 @@ module Shumway.AVM1 {
     }
 
     public alPut(p, v) {
+      // Perform all lookups with the canonicalized name, but keep the original name around to
+      // pass it to `alSetOwnProperty`, which stores it on the descriptor.
+      var originalName = p;
+      p = alNormalizeName(this.context, p);
       if (!this.alCanPut(p)) {
         return;
       }
@@ -277,11 +285,12 @@ module Shumway.AVM1 {
           v = ownDesc.watcher.callback.alCall(this,
             [ownDesc.watcher.name, ownDesc.value, v, ownDesc.watcher.userData]);
         }
-        var newDesc: AVM1PropertyDescriptor = {
-          flags: ownDesc.flags,
-          value: v
-        };
-        this.alSetOwnProperty(p, newDesc);
+        // Real properties (i.e., not things like "_root" on MovieClips) can be updated in-place.
+        if (p in this._ownProperties) {
+          ownDesc.value = v;
+        } else {
+          this.alSetOwnProperty(originalName, new AVM1PropertyDescriptor(ownDesc.flags, v));
+        }
         return;
       }
       var desc = this.alGetProperty(p);
@@ -300,11 +309,8 @@ module Shumway.AVM1 {
           v = desc.watcher.callback.alCall(this,
             [desc.watcher.name, desc.value, v, desc.watcher.userData]);
         }
-        var newDesc: AVM1PropertyDescriptor = {
-          flags: desc ? desc.flags : AVM1PropertyFlags.DATA,
-          value: v
-        };
-        this.alSetOwnProperty(p, newDesc);
+        var newDesc = new AVM1PropertyDescriptor(desc ? desc.flags : AVM1PropertyFlags.DATA, v);
+        this.alSetOwnProperty(originalName, newDesc);
       }
     }
 
@@ -351,24 +357,24 @@ module Shumway.AVM1 {
 
     public alDefaultValue(hint: AVM1DefaultValueHint = AVM1DefaultValueHint.NUMBER): any {
       if (hint === AVM1DefaultValueHint.STRING) {
-        var toString = this.alGet('toString');
+        var toString = this.alGet(alNormalizeName(this.context, 'toString'));
         if (alIsFunction(toString)) {
           var str = toString.alCall(this);
           return str;
         }
-        var valueOf = this.alGet('valueOf');
+        var valueOf = this.alGet(alNormalizeName(this.context, 'valueOf'));
         if (alIsFunction(valueOf)) {
           var val = valueOf.alCall(this);
           return val;
         }
       } else {
         release || Debug.assert(hint === AVM1DefaultValueHint.NUMBER);
-        var valueOf = this.alGet('valueOf');
+        var valueOf = this.alGet(alNormalizeName(this.context, 'valueOf'));
         if (alIsFunction(valueOf)) {
           var val = valueOf.alCall(this);
           return val;
         }
-        var toString = this.alGet('toString');
+        var toString = this.alGet(alNormalizeName(this.context, 'toString'));
         if (alIsFunction(toString)) {
           var str = toString.alCall(this);
           return str;
@@ -392,14 +398,37 @@ module Shumway.AVM1 {
 
       // Merging two keys sets
       // TODO check if we shall worry about __proto__ usage here
-      var processed = Object.create(null);
-      for (var i = 0; i < ownKeys.length; i++) {
-        processed[ownKeys[i]] = true;
+      var context = this.context;
+      // If the context is case-insensitive, names only differing in their casing overwrite each
+      // other. Iterating over the keys returns the first original, case-preserved key that was
+      // ever used for the property, though.
+      if (!context.isPropertyCaseSensitive) {
+        var keyLists = [ownKeys, otherKeys];
+        var canonicalKeysMap = Object.create(null);
+        var keys = [];
+        for (var k = 0; k < keyLists.length; k++) {
+          var keyList = keyLists[k];
+          for (var i = keyList.length; i--;) {
+            var key = keyList[i];
+            var canonicalKey = alNormalizeName(context, key);
+            if (canonicalKeysMap[canonicalKey]) {
+              continue;
+            }
+            canonicalKeysMap[canonicalKey] = true;
+            keys.push(key);
+          }
+        }
+        return keys;
+      } else {
+        var processed = Object.create(null);
+        for (var i = 0; i < ownKeys.length; i++) {
+          processed[ownKeys[i]] = true;
+        }
+        for (var i = 0; i < otherKeys.length; i++) {
+          processed[otherKeys[i]] = true;
+        }
+        return Object.getOwnPropertyNames(processed);
       }
-      for (var i = 0; i < otherKeys.length; i++) {
-        processed[otherKeys[i]] = true;
-      }
-      return Object.getOwnPropertyNames(processed);
     }
   }
 
@@ -478,9 +507,9 @@ module Shumway.AVM1 {
       super(context);
       var proto = new AVM1Object(context);
       proto.alPrototype = context.builtins.Object.alGetPrototypeProperty();
-      proto.alSetOwnProperty('constructor', {
-        flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.DONT_DELETE
-      });
+      proto.alSetOwnProperty('constructor', new AVM1PropertyDescriptor(AVM1PropertyFlags.DATA |
+                                                                       AVM1PropertyFlags.DONT_ENUM |
+                                                                       AVM1PropertyFlags.DONT_DELETE));
       this.alSetOwnPrototypeProperty(proto);
     }
     public alConstruct(args?: any[]): AVM1Object  {
@@ -589,6 +618,34 @@ module Shumway.AVM1 {
       default:
         release || Debug.assert(false);
     }
+  }
+
+  var nameCache = Object.create(null);
+
+  /**
+   * Normalize the name according to the current AVM1Context's settings.
+   *
+   * This means converting it to lower-case for SWF versions below 7, and doing nothing otherwise.
+   */
+  export function alNormalizeName(context: IAVM1Context, v): string {
+    var name;
+    if (typeof v === 'string' && (name = nameCache[v])) {
+      return name;
+    }
+    name = alToString(context, v);
+    if (!context.isPropertyCaseSensitive) {
+      name = name.toLowerCase();
+    }
+    if (typeof v === 'string') {
+      nameCache[v] = name;
+    }
+    return name;
+  }
+
+  export function alIsName(context: IAVM1Context, v): boolean {
+    return typeof v === 'number' ||
+           typeof v === 'string' &&
+           (context.isPropertyCaseSensitive || v === v.toLowerCase());
   }
 
   export function alToObject(context: IAVM1Context, v): AVM1Object {
@@ -751,14 +808,7 @@ module Shumway.AVM1 {
         flags |= AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_DELETE |
                  AVM1PropertyFlags.DONT_ENUM | AVM1PropertyFlags.READ_ONLY;
       }
-      obj.alSetOwnProperty(name, getter || setter ? {
-        flags: flags,
-        get: getter,
-        set: setter
-      } : {
-        flags: flags,
-        value: value
-      })
+      obj.alSetOwnProperty(name, new AVM1PropertyDescriptor(flags, value, getter, setter));
     });
   }
 }

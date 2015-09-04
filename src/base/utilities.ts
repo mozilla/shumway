@@ -49,22 +49,6 @@ if (!jsGlobal.performance.now) {
   };
 }
 
-function lazyInitializer(obj: any, propertyName: string, fn: ()=>any) {
-  Object.defineProperty(obj, propertyName, {
-    get: function () {
-      var value = fn();
-      Object.defineProperty(obj, propertyName, {
-        value: value,
-        configurable: true,
-        enumerable: true
-      });
-      return value;
-    },
-    configurable: true,
-    enumerable: true
-  });
-}
-
 var START_TIME = performance.now();
 
 interface String {
@@ -382,10 +366,6 @@ module Shumway {
       return list.reduce((result, entry) => (result += '\n' + entry.count + '\t' + entry.key), '');
     }
 
-    export function notUsed(message: string) {
-      release || Debug.assert(false, "Not Used " + message);
-    }
-
     export function notImplemented(message: string) {
       release || Debug.assert(false, "Not Implemented " + message);
     }
@@ -554,203 +534,11 @@ module Shumway {
       }
     }
 
-    export class ArrayWriter {
-      _u8: Uint8Array;
-      _u16: Uint16Array;
-      _i32: Int32Array;
-      _f32: Float32Array;
-      _u32: Uint32Array;
-      _offset: number;
-
-      constructor(initialCapacity: number = 16) {
-        this._u8 = null;
-        this._u16 = null;
-        this._i32 = null;
-        this._f32 = null;
-        this._offset = 0;
-        this.ensureCapacity(initialCapacity);
-      }
-
-      public reset() {
-        this._offset = 0;
-      }
-
-      public get offset (): number {
-        return this._offset;
-      }
-
-      getIndex(size: number) {
-        release || assert (size === 1 || size === 2 || size === 4 || size === 8 || size === 16);
-        var index = this._offset / size;
-        release || assert ((index | 0) === index);
-        return index;
-      }
-
-      ensureAdditionalCapacity(size) {
-        this.ensureCapacity(this._offset + size);
-      }
-
-      ensureCapacity(minCapacity: number) {
-        if (!this._u8) {
-          this._u8 = new Uint8Array(minCapacity);
-        } else if (this._u8.length > minCapacity) {
-          return;
-        }
-        var oldCapacity = this._u8.length;
-        // var newCapacity = (((oldCapacity * 3) >> 1) + 8) & ~0x7;
-        var newCapacity = oldCapacity * 2;
-        if (newCapacity < minCapacity) {
-          newCapacity = minCapacity;
-        }
-        var u8 = new Uint8Array(newCapacity);
-        u8.set(this._u8, 0);
-        this._u8 = u8;
-        this._u16 = new Uint16Array(u8.buffer);
-        this._i32 = new Int32Array(u8.buffer);
-        this._f32 = new Float32Array(u8.buffer);
-      }
-
-      writeInt(v: number) {
-        release || assert ((this._offset & 0x3) === 0);
-        this.ensureCapacity(this._offset + 4);
-        this.writeIntUnsafe(v);
-      }
-
-      writeIntAt(v: number, offset: number) {
-        release || assert (offset >= 0 && offset <= this._offset);
-        release || assert ((offset & 0x3) === 0);
-        this.ensureCapacity(offset + 4);
-        var index = offset >> 2;
-        this._i32[index] = v;
-      }
-
-      writeIntUnsafe(v: number) {
-        var index = this._offset >> 2;
-        this._i32[index] = v;
-        this._offset += 4;
-      }
-
-      writeFloat(v: number) {
-        release || assert ((this._offset & 0x3) === 0);
-        this.ensureCapacity(this._offset + 4);
-        this.writeFloatUnsafe(v);
-      }
-
-      writeFloatUnsafe(v: number) {
-        var index = this._offset >> 2;
-        this._f32[index] = v;
-        this._offset += 4;
-      }
-
-      write4Floats(a: number, b: number, c: number, d: number) {
-        release || assert ((this._offset & 0x3) === 0);
-        this.ensureCapacity(this._offset + 16);
-        this.write4FloatsUnsafe(a, b, c, d);
-      }
-
-      write4FloatsUnsafe(a: number, b: number, c: number, d: number) {
-        var index = this._offset >> 2;
-        this._f32[index + 0] = a;
-        this._f32[index + 1] = b;
-        this._f32[index + 2] = c;
-        this._f32[index + 3] = d;
-        this._offset += 16;
-      }
-
-      write6Floats(a: number, b: number, c: number, d: number, e: number, f: number) {
-        release || assert ((this._offset & 0x3) === 0);
-        this.ensureCapacity(this._offset + 24);
-        this.write6FloatsUnsafe(a, b, c, d, e, f);
-      }
-
-      write6FloatsUnsafe(a: number, b: number, c: number, d: number, e: number, f: number) {
-        var index = this._offset >> 2;
-        this._f32[index + 0] = a;
-        this._f32[index + 1] = b;
-        this._f32[index + 2] = c;
-        this._f32[index + 3] = d;
-        this._f32[index + 4] = e;
-        this._f32[index + 5] = f;
-        this._offset += 24;
-      }
-
-      subF32View(): Float32Array {
-        return this._f32.subarray(0, this._offset >> 2);
-      }
-
-      subI32View(): Int32Array {
-        return this._i32.subarray(0, this._offset >> 2);
-      }
-
-      subU16View(): Uint16Array {
-        return this._u16.subarray(0, this._offset >> 1);
-      }
-
-      subU8View(): Uint8Array {
-        return this._u8.subarray(0, this._offset);
-      }
-
-      hashWords(hash: number, offset: number, length: number) {
-        var i32 = this._i32;
-        for (var i = 0; i < length; i++) {
-          hash = (((31 * hash) | 0) + i32[i]) | 0;
-        }
-        return hash;
-      }
-
-      reserve(size: number) {
-        size = (size + 3) & ~0x3; // Round up to multiple of 4.
-        this.ensureCapacity(this._offset + size);
-        this._offset += size;
-      }
-    }
-
     export interface IDataDecoder {
       onData: (data: Uint8Array) => void;
       onError: (e) => void;
       push(data: Uint8Array);
       close();
-    }
-  }
-
-  export class ArrayReader {
-    _u8: Uint8Array;
-    _u16: Uint16Array;
-    _i32: Int32Array;
-    _f32: Float32Array;
-    _u32: Uint32Array;
-    _offset: number;
-
-    constructor(buffer: ArrayBuffer) {
-      this._u8 = new Uint8Array(buffer);
-      this._u16 = new Uint16Array(buffer);
-      this._i32 = new Int32Array(buffer);
-      this._f32 = new Float32Array(buffer);
-      this._offset = 0;
-    }
-
-    public get offset (): number {
-      return this._offset;
-    }
-
-    public isEmpty (): boolean {
-      return this._offset === this._u8.length;
-    }
-
-    readInt(): number {
-      release || Debug.assert ((this._offset & 0x3) === 0);
-      release || Debug.assert (this._offset <= this._u8.length - 4);
-      var v = this._i32[this._offset >> 2];
-      this._offset += 4;
-      return v;
-    }
-
-    readFloat(): number {
-      release || Debug.assert ((this._offset & 0x3) === 0);
-      release || Debug.assert (this._offset <= this._u8.length - 4);
-      var v = this._f32[this._offset >> 2];
-      this._offset += 4;
-      return v;
     }
   }
 
@@ -832,21 +620,6 @@ module Shumway {
       });
     }
 
-    export function getOwnPropertyDescriptors(object: Object): MapObject<PropertyDescriptor> {
-      var o = ObjectUtilities.createMap<PropertyDescriptor>();
-      var properties = Object.getOwnPropertyNames(object);
-      for (var i = 0; i < properties.length; i++) {
-        o[properties[i]] = Object.getOwnPropertyDescriptor(object, properties[i]);
-      }
-      return o;
-    }
-
-    export function cloneObject(object: Object): Object {
-      var clone = Object.create(Object.getPrototypeOf(object));
-      copyOwnProperties(clone, object);
-      return clone;
-    }
-
     export function copyProperties(object: Object, template: Object) {
       for (var property in template) {
         object[property] = template[property];
@@ -894,43 +667,8 @@ module Shumway {
       }
     }
 
-    export function getLatestGetterOrSetterPropertyDescriptor(object, name) {
-      var descriptor: PropertyDescriptor = {};
-      while (object) {
-        var tmp = Object.getOwnPropertyDescriptor(object, name);
-        if (tmp) {
-          descriptor.get = descriptor.get || tmp.get;
-          descriptor.set = descriptor.set || tmp.set;
-        }
-        if (descriptor.get && descriptor.set) {
-          break;
-        }
-        object = Object.getPrototypeOf(object);
-      }
-      return descriptor;
-    }
-
-    export function defineNonEnumerableGetterOrSetter(obj, name, value, isGetter) {
-      var descriptor = ObjectUtilities.getLatestGetterOrSetterPropertyDescriptor(obj, name);
-      descriptor.configurable = true;
-      descriptor.enumerable = false;
-      if (isGetter) {
-        descriptor.get = value;
-      } else {
-        descriptor.set = value;
-      }
-      Object.defineProperty(obj, name, descriptor);
-    }
-
     export function defineNonEnumerableGetter(obj, name, getter) {
       Object.defineProperty(obj, name, { get: getter,
-        configurable: true,
-        enumerable: false
-      });
-    }
-
-    export function defineNonEnumerableSetter(obj, name, setter) {
-      Object.defineProperty(obj, name, { set: setter,
         configurable: true,
         enumerable: false
       });
@@ -943,39 +681,6 @@ module Shumway {
         enumerable: false
       });
     }
-
-    export function defineNonEnumerableForwardingProperty(obj, name: string, otherName: string) {
-      Object.defineProperty(obj, name, {
-        get: FunctionUtilities.makeForwardingGetter(otherName),
-        set: FunctionUtilities.makeForwardingSetter(otherName),
-        writable: true,
-        configurable: true,
-        enumerable: false
-      });
-    }
-
-    export function defineNewNonEnumerableProperty(obj, name: string, value) {
-      release || Debug.assert (!Object.prototype.hasOwnProperty.call(obj, name), "Property: " + name + " already exits.");
-      ObjectUtilities.defineNonEnumerableProperty(obj, name, value);
-    }
-
-    /**
-     * Takes an object and a list of property names and creates an alias in the public namespace
-     * for each.
-     */
-    export function createPublicAliases(obj: any, names: string[]) {
-      var prop = {
-        value: null,
-        writable: true,
-        configurable: true,
-        enumerable: false
-      };
-      for (var i = 0; i < names.length; i++) {
-        var name = names[i];
-        prop.value = obj[name];
-        Object.defineProperty(obj, '$Bg' + name, prop);
-      }
-    }
   }
 
   export module FunctionUtilities {
@@ -987,20 +692,6 @@ module Shumway {
     export function makeForwardingSetter(target: string): (any) => void {
       return <(any) => void> new Function("value", "this[\"" + target + "\"] = value;" +
                                                    "//# sourceURL=fwd-set-" + target + ".as");
-    }
-
-    /**
-     * Attaches a property to the bound function so we can detect when if it
-     * ever gets rebound.
-     */
-    export function bindSafely(method: Function, receiver: Object) {
-      release || Debug.assert (!method.boundTo);
-      release || Debug.assert (receiver);
-      function methodClosure() {
-        return method.apply(receiver, arguments);
-      }
-      (<any>methodClosure).boundTo = receiver;
-      return methodClosure;
     }
   }
 
@@ -1294,10 +985,6 @@ module Shumway {
 
     var _concat3array = new Array(3);
     var _concat4array = new Array(4);
-    var _concat5array = new Array(5);
-    var _concat6array = new Array(6);
-    var _concat7array = new Array(7);
-    var _concat8array = new Array(8);
     var _concat9array = new Array(9);
 
     /**
@@ -1322,51 +1009,6 @@ module Shumway {
         _concat4array[2] = s2;
         _concat4array[3] = s3;
         return _concat4array.join('');
-    }
-
-    export function concat5(s0: any, s1: any, s2: any, s3: any, s4: any) {
-        _concat5array[0] = s0;
-        _concat5array[1] = s1;
-        _concat5array[2] = s2;
-        _concat5array[3] = s3;
-        _concat5array[4] = s4;
-        return _concat5array.join('');
-    }
-
-    export function concat6(s0: any, s1: any, s2: any, s3: any, s4: any,
-                            s5: any) {
-        _concat6array[0] = s0;
-        _concat6array[1] = s1;
-        _concat6array[2] = s2;
-        _concat6array[3] = s3;
-        _concat6array[4] = s4;
-        _concat6array[5] = s5;
-        return _concat6array.join('');
-    }
-
-    export function concat7(s0: any, s1: any, s2: any, s3: any, s4: any,
-                            s5: any, s6: any) {
-        _concat7array[0] = s0;
-        _concat7array[1] = s1;
-        _concat7array[2] = s2;
-        _concat7array[3] = s3;
-        _concat7array[4] = s4;
-        _concat7array[5] = s5;
-        _concat7array[6] = s6;
-        return _concat7array.join('');
-    }
-
-    export function concat8(s0: any, s1: any, s2: any, s3: any, s4: any,
-                            s5: any, s6: any, s7: any) {
-        _concat8array[0] = s0;
-        _concat8array[1] = s1;
-        _concat8array[2] = s2;
-        _concat8array[3] = s3;
-        _concat8array[4] = s4;
-        _concat8array[5] = s5;
-        _concat8array[6] = s6;
-        _concat8array[7] = s7;
-        return _concat8array.join('');
     }
 
     export function concat9(s0: any, s1: any, s2: any, s3: any, s4: any,
@@ -1465,19 +1107,35 @@ module Shumway {
       return h0;
     }
 
-    export function hashBytesTo32BitsAdler(data: Uint8Array, offset: number, length: number): number {
-      var a = 1;
-      var b = 0;
-      var end = offset + length;
-      for (var i = offset; i < end; ++i) {
-        a = (a + (data[i] & 0xff)) % 65521;
-        b = (b + a) % 65521;
-      }
-      return (b << 16) | a;
-    }
-
     export function mixHash(a: number, b: number) {
       return (((31 * a) | 0) + b) | 0;
+    }
+  }
+
+  /**
+   * An extremely naive cache with a maximum size.
+   * TODO: LRU
+   */
+  export class Cache {
+    private _data;
+    private _size: number;
+    private _maxSize: number;
+    constructor(maxSize: number) {
+      this._data = Object.create(null);
+      this._size = 0;
+      this._maxSize = maxSize;
+    }
+    get(key) {
+      return this._data[key];
+    }
+    set(key, value) {
+      release || Debug.assert(!(key in this._data)); // Cannot mutate cache entries.
+      if (this._size >= this._maxSize) {
+        return false;
+      }
+      this._data[key] = value;
+      this._size ++;
+      return true;
     }
   }
 
@@ -1892,79 +1550,6 @@ module Shumway {
     }
   }
 
-  export module GeometricUtilities {
-    /**
-     * Crossing numeber tests to check if a point is inside a polygon. The polygon is given as
-     * an array of n + 1 float pairs where the last is equal to the first.
-     *
-     * http://geomalgorithms.com/a03-_inclusion.html
-     */
-    export function pointInPolygon(x: number, y: number, polygon: Float32Array): boolean {
-      // release || assert (((polygon.length & 1) === 0) && polygon.length >= 8);
-      // release || assert (polygon[0] === polygon[polygon.length - 2] &&
-      //        polygon[1] === polygon[polygon.length - 1], "First and last points should be equal.");
-      var crosses = 0;
-      var n = polygon.length - 2;
-      var p = polygon;
-
-      for (var i = 0; i < n; i += 2) {
-        var x0 = p[i + 0];
-        var y0 = p[i + 1];
-        var x1 = p[i + 2];
-        var y1 = p[i + 3];
-        if (((y0 <= y) && (y1 > y)) || ((y0 > y) && (y1 <= y))) {
-          var t = (y  - y0) / (y1 - y0);
-          if (x < x0 + t * (x1 - x0)) {
-            crosses ++;
-          }
-        }
-      }
-      return (crosses & 1) === 1;
-    }
-
-    /**
-     * Signed area of a triangle. If zero then points are collinear, if < 0 then points
-     * are clockwise otherwise counter-clockwise.
-     */
-    export function signedArea(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number): number {
-      return (x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0);
-    }
-
-    export function counterClockwise(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number): boolean {
-      return signedArea(x0, y0, x1, y1, x2, y2) > 0;
-    }
-
-    export function clockwise(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number): boolean {
-      return signedArea(x0, y0, x1, y1, x2, y2) < 0;
-    }
-
-    export function pointInPolygonInt32(x: number, y: number, polygon: Int32Array): boolean {
-      // release || assert (((polygon.length & 1) === 0) && polygon.length >= 8);
-      // release || assert (polygon[0] === polygon[polygon.length - 2] &&
-      //        polygon[1] === polygon[polygon.length - 1], "First and last points should be equal.");
-      x = x | 0;
-      y = y | 0;
-      var crosses = 0;
-      var n = polygon.length - 2;
-      var p = polygon;
-
-      for (var i = 0; i < n; i += 2) {
-        var x0 = p[i + 0];
-        var y0 = p[i + 1];
-        var x1 = p[i + 2];
-        var y1 = p[i + 3];
-        if (((y0 <= y) && (y1 > y)) || ((y0 > y) && (y1 <= y))) {
-          var t = (y  - y0) / (y1 - y0);
-          if (x < x0 + t * (x1 - x0)) {
-            crosses ++;
-          }
-
-        }
-      }
-      return (crosses & 1) === 1;
-    }
-  }
-
   export const enum LogLevel {
     Error = 0x1,
     Warn = 0x2,
@@ -2173,125 +1758,6 @@ module Shumway {
     }
   }
 
-  /**
-   * Insertion sort SortedList backed by a linked list.
-   */
-  class SortedListNode<T> {
-    value: T;
-    next: SortedListNode<T>;
-    constructor(value: T, next: SortedListNode<T>) {
-      this.value = value;
-      this.next = next;
-    }
-  }
-
-  export class SortedList<T>  {
-    public static RETURN = 1;
-    public static DELETE = 2;
-    private _compare: (l: T, r: T) => number;
-    private _head: SortedListNode<T>;
-    private _length: number;
-
-    constructor (compare: (l: T, r: T) => number) {
-      release || Debug.assert(compare);
-      this._compare = compare;
-      this._head = null;
-      this._length = 0;
-    }
-
-    public push(value: T) {
-      release || Debug.assert(value !== undefined);
-      this._length ++;
-      if (!this._head) {
-        this._head = new SortedListNode<T>(value, null);
-        return;
-      }
-
-      var curr = this._head;
-      var prev = null;
-      var node = new SortedListNode<T>(value, null);
-      var compare = this._compare;
-      while (curr) {
-        if (compare(curr.value, node.value) > 0) {
-          if (prev) {
-            node.next = curr;
-            prev.next = node;
-          } else {
-            node.next = this._head;
-            this._head = node;
-          }
-          return;
-        }
-        prev = curr;
-        curr = curr.next;
-      }
-      prev.next = node;
-    }
-
-    /**
-     * Visitors can return RETURN if they wish to stop the iteration or DELETE if they need to delete the current node.
-     * NOTE: DELETE most likley doesn't work if there are multiple active iterations going on.
-     */
-    public forEach(visitor: (value: T) => any) {
-      var curr = this._head;
-      var last = null;
-      while (curr) {
-        var result = visitor(curr.value);
-        if (result === SortedList.RETURN) {
-          return;
-        } else if (result === SortedList.DELETE) {
-          if (!last) {
-            curr = this._head = this._head.next;
-          } else {
-            curr = last.next = curr.next;
-          }
-        } else {
-          last = curr;
-          curr = curr.next;
-        }
-      }
-    }
-
-    public isEmpty(): boolean {
-      return !this._head;
-    }
-
-    public pop(): T {
-      if (!this._head) {
-        return undefined;
-      }
-      this._length --;
-      var ret = this._head;
-      this._head = this._head.next;
-      return ret.value;
-    }
-
-    public contains(value: T): boolean {
-      var curr = this._head;
-      while (curr) {
-        if (curr.value === value) {
-          return true;
-        }
-        curr = curr.next;
-      }
-      return false;
-    }
-
-    public toString(): string {
-      var str = "[";
-      var curr = this._head;
-      while (curr) {
-        str += curr.value.toString();
-        curr = curr.next;
-        if (curr) {
-          str += ",";
-        }
-      }
-      str += "]";
-      return str;
-    }
-  }
-
   export class CircularBuffer {
     index: number;
     start: number;
@@ -2342,425 +1808,6 @@ module Shumway {
     public reset() {
       this.index = 0;
       this.start = 0;
-    }
-  }
-
-  export module BitSets {
-    import assert = Shumway.Debug.assert;
-
-    export var ADDRESS_BITS_PER_WORD = 5;
-    export var BITS_PER_WORD = 1 << ADDRESS_BITS_PER_WORD;
-    export var BIT_INDEX_MASK = BITS_PER_WORD - 1;
-
-    function getSize(length): number {
-      return ((length + (BITS_PER_WORD - 1)) >> ADDRESS_BITS_PER_WORD) << ADDRESS_BITS_PER_WORD;
-    }
-
-    export interface BitSet {
-      set: (i) => void;
-      setAll: () => void;
-      assign: (set: BitSet) => void;
-      clear: (i: number) => void;
-      get: (i: number) => boolean;
-      clearAll: () => void;
-      intersect: (other: BitSet) => void;
-      subtract: (other: BitSet) => void;
-      negate: () => void;
-      forEach: (fn) => void;
-      toArray: () => boolean [];
-      equals: (other: BitSet) => boolean;
-      contains: (other: BitSet) => boolean;
-      isEmpty: () => boolean;
-      clone: () => BitSet;
-      recount: () => void;
-      toString: (names: string []) => string;
-      toBitString: (on: string, off: string) => string;
-    }
-
-    function toBitString(on: string, off: string) {
-      var self: BitSet = this;
-      on = on || "1";
-      off = off || "0";
-      var str = "";
-      for (var i = 0; i < length; i++) {
-        str += self.get(i) ? on : off;
-      }
-      return str;
-    }
-
-    function toString(names: any[]) {
-      var self: BitSet = this;
-      var set = [];
-      for (var i = 0; i < length; i++) {
-        if (self.get(i)) {
-          set.push(names ? names[i] : i);
-        }
-      }
-      return set.join(", ");
-    }
-
-    export class Uint32ArrayBitSet implements BitSet {
-      size: number;
-      bits: Uint32Array;
-      count: number;
-      dirty: number;
-      length: number;
-
-      constructor(length: number) {
-        this.size = getSize(length);
-        this.count = 0;
-        this.dirty = 0;
-        this.length = length;
-        this.bits = new Uint32Array(this.size >> ADDRESS_BITS_PER_WORD);
-      }
-
-      recount() {
-        if (!this.dirty) {
-          return;
-        }
-
-        var bits = this.bits;
-        var c = 0;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          var v = bits[i];
-          v = v - ((v >> 1) & 0x55555555);
-          v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
-          c += ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
-        }
-
-        this.count = c;
-        this.dirty = 0;
-      }
-
-      set(i) {
-        var n = i >> ADDRESS_BITS_PER_WORD;
-        var old = this.bits[n];
-        var b = old | (1 << (i & BIT_INDEX_MASK));
-        this.bits[n] = b;
-        this.dirty |= old ^ b;
-      }
-
-      setAll() {
-        var bits = this.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          bits[i] = 0xFFFFFFFF;
-        }
-        this.count = this.size;
-        this.dirty = 0;
-      }
-
-      assign(set) {
-        this.count = set.count;
-        this.dirty = set.dirty;
-        this.size = set.size;
-        for (var i = 0, j = this.bits.length; i < j; i++) {
-          this.bits[i] = set.bits[i];
-        }
-      }
-
-      clear(i) {
-        var n = i >> ADDRESS_BITS_PER_WORD;
-        var old = this.bits[n];
-        var b = old & ~(1 << (i & BIT_INDEX_MASK));
-        this.bits[n] = b;
-        this.dirty |= old ^ b;
-      }
-
-      get(i): boolean {
-        var word = this.bits[i >> ADDRESS_BITS_PER_WORD];
-        return ((word & 1 << (i & BIT_INDEX_MASK))) !== 0;
-      }
-
-      clearAll() {
-        var bits = this.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          bits[i] = 0;
-        }
-        this.count = 0;
-        this.dirty = 0;
-      }
-
-      private _union(other: Uint32ArrayBitSet) {
-        var dirty = this.dirty;
-        var bits = this.bits;
-        var otherBits = other.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          var old = bits[i];
-          var b = old | otherBits[i];
-          bits[i] = b;
-          dirty |= old ^ b;
-        }
-        this.dirty = dirty;
-      }
-
-      intersect(other: Uint32ArrayBitSet) {
-        var dirty = this.dirty;
-        var bits = this.bits;
-        var otherBits = other.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          var old = bits[i];
-          var b = old & otherBits[i];
-          bits[i] = b;
-          dirty |= old ^ b;
-        }
-        this.dirty = dirty;
-      }
-
-      subtract(other: Uint32ArrayBitSet) {
-        var dirty = this.dirty;
-        var bits = this.bits;
-        var otherBits = other.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          var old = bits[i];
-          var b = old & ~otherBits[i];
-          bits[i] = b;
-          dirty |= old ^ b;
-        }
-        this.dirty = dirty;
-      }
-
-      negate() {
-        var dirty = this.dirty;
-        var bits = this.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          var old = bits[i];
-          var b = ~old;
-          bits[i] = b;
-          dirty |= old ^ b;
-        }
-        this.dirty = dirty;
-      }
-
-      forEach(fn) {
-        release || assert(fn);
-        var bits = this.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          var word = bits[i];
-          if (word) {
-            for (var k = 0; k < BITS_PER_WORD; k++) {
-              if (word & (1 << k)) {
-                fn(i * BITS_PER_WORD + k);
-              }
-            }
-          }
-        }
-      }
-
-      toArray(): boolean[] {
-        var set = [];
-        var bits = this.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          var word = bits[i];
-          if (word) {
-            for (var k = 0; k < BITS_PER_WORD; k++) {
-              if (word & (1 << k)) {
-                set.push(i * BITS_PER_WORD + k);
-              }
-            }
-          }
-        }
-        return set;
-      }
-
-      equals(other: Uint32ArrayBitSet) {
-        if (this.size !== other.size) {
-          return false;
-        }
-        var bits = this.bits;
-        var otherBits = other.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          if (bits[i] !== otherBits[i]) {
-            return false;
-          }
-        }
-        return true;
-      }
-
-      contains(other: Uint32ArrayBitSet) {
-        if (this.size !== other.size) {
-          return false;
-        }
-        var bits = this.bits;
-        var otherBits = other.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          if ((bits[i] | otherBits[i]) !== bits[i]) {
-            return false;
-          }
-        }
-        return true;
-      }
-
-      toBitString: (on: string, off: string) => string;
-      toString: (names: string []) => string;
-
-      isEmpty(): boolean {
-        this.recount();
-        return this.count === 0;
-      }
-
-      clone(): Uint32ArrayBitSet {
-        var set = new Uint32ArrayBitSet(this.length);
-        set._union(this);
-        return set;
-      }
-    }
-
-    export class Uint32BitSet implements BitSet {
-      size: number;
-      bits: number;
-      count: number;
-      dirty: number;
-      singleWord: boolean;
-      length: number;
-      constructor(length: number) {
-        this.count = 0;
-        this.dirty = 0;
-        this.size = getSize(length);
-        this.bits = 0;
-        this.singleWord = true;
-        this.length = length;
-      }
-
-      recount() {
-        if (!this.dirty) {
-          return;
-        }
-
-        var c = 0;
-        var v = this.bits;
-        v = v - ((v >> 1) & 0x55555555);
-        v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
-        c += ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
-
-        this.count = c;
-        this.dirty = 0;
-      }
-
-      set(i) {
-        var old = this.bits;
-        var b = old | (1 << (i & BIT_INDEX_MASK));
-        this.bits = b;
-        this.dirty |= old ^ b;
-      }
-
-      setAll() {
-        this.bits = 0xFFFFFFFF;
-        this.count = this.size;
-        this.dirty = 0;
-      }
-
-      assign(set: Uint32BitSet) {
-        this.count = set.count;
-        this.dirty = set.dirty;
-        this.size = set.size;
-        this.bits = set.bits;
-      }
-
-      clear(i: number) {
-        var old = this.bits;
-        var b = old & ~(1 << (i & BIT_INDEX_MASK));
-        this.bits = b;
-        this.dirty |= old ^ b;
-      }
-
-      get(i: number): boolean {
-        return ((this.bits & 1 << (i & BIT_INDEX_MASK))) !== 0;
-      }
-
-      clearAll() {
-        this.bits = 0;
-        this.count = 0;
-        this.dirty = 0;
-      }
-
-      private _union(other: Uint32BitSet) {
-        var old = this.bits;
-        var b = old | other.bits;
-        this.bits = b;
-        this.dirty = old ^ b;
-      }
-
-      intersect(other: Uint32BitSet) {
-        var old = this.bits;
-        var b = old & other.bits;
-        this.bits = b;
-        this.dirty = old ^ b;
-      }
-
-      subtract(other: Uint32BitSet) {
-        var old = this.bits;
-        var b = old & ~other.bits;
-        this.bits = b;
-        this.dirty = old ^ b;
-      }
-
-      negate() {
-        var old = this.bits;
-        var b = ~old;
-        this.bits = b;
-        this.dirty = old ^ b;
-      }
-
-      forEach(fn) {
-        release || assert(fn);
-        var word = this.bits;
-        if (word) {
-          for (var k = 0; k < BITS_PER_WORD; k++) {
-            if (word & (1 << k)) {
-              fn(k);
-            }
-          }
-        }
-      }
-
-      toArray(): boolean [] {
-        var set = [];
-        var word = this.bits;
-        if (word) {
-          for (var k = 0; k < BITS_PER_WORD; k++) {
-            if (word & (1 << k)) {
-              set.push(k);
-            }
-          }
-        }
-        return set;
-      }
-
-      equals(other: Uint32BitSet) {
-        return this.bits === other.bits;
-      }
-
-      contains(other: Uint32BitSet) {
-        var bits = this.bits;
-        return (bits | other.bits) === bits;
-      }
-
-      toBitString: (on: string, off: string) => string;
-      toString: (names: string []) => string;
-
-      isEmpty(): boolean {
-        this.recount();
-        return this.count === 0;
-      }
-
-      clone(): Uint32BitSet {
-        var set = new Uint32BitSet(this.length);
-        set._union(this);
-        return set;
-      }
-    }
-
-    Uint32BitSet.prototype.toString = toString;
-    Uint32BitSet.prototype.toBitString = toBitString;
-    Uint32ArrayBitSet.prototype.toString = toString;
-    Uint32ArrayBitSet.prototype.toBitString = toBitString;
-
-    export function BitSetFunctor(length: number) {
-      var shouldUseSingleWord = (getSize(length) >> ADDRESS_BITS_PER_WORD) === 1;
-      var type = (shouldUseSingleWord ? <any>Uint32BitSet : <any>Uint32ArrayBitSet);
-      return function () {
-        return new type(length);
-      };
     }
   }
 
@@ -3285,15 +2332,35 @@ module Shumway {
       return argb << 8 | ((argb >> 24) & 0xff);
     }
 
-    export function rgbaToCSSStyle(color: number): string {
-      return Shumway.StringUtilities.concat9('rgba(', color >> 24 & 0xff, ',', color >> 16 & 0xff, ',', color >> 8 & 0xff, ',', (color & 0xff) / 0xff, ')');
+    /**
+     * Cache frequently used rgba -> css style conversions.
+     */
+    var rgbaToCSSStyleCache = new Cache(1024);
+
+    export function rgbaToCSSStyle(rgba: number): string {
+      var result = rgbaToCSSStyleCache.get(rgba);
+      if (typeof result === "string") {
+        return result;
+      }
+      result = Shumway.StringUtilities.concat9('rgba(', rgba >> 24 & 0xff, ',', rgba >> 16 & 0xff, ',', rgba >> 8 & 0xff, ',', (rgba & 0xff) / 0xff, ')');
+      rgbaToCSSStyleCache.set(rgba, result);
+      return result;
     }
 
+    /**
+     * Cache frequently used css -> rgba styles conversions.
+     */
+    var cssStyleToRGBACache = new Cache(1024);
+
     export function cssStyleToRGBA(style: string) {
+      var result = cssStyleToRGBACache.get(style);
+      if (typeof result === "number") {
+        return result;
+      }
+      result =  0xff0000ff; // Red
       if (style[0] === "#") {
         if (style.length === 7) {
-          var value = parseInt(style.substring(1), 16);
-          return (value << 8) | 0xff;
+          result = (parseInt(style.substring(1), 16) << 8) | 0xff;
         }
       } else if (style[0] === "r") {
         // We don't parse all types of rgba(....) color styles. We only handle the
@@ -3303,12 +2370,13 @@ module Shumway {
         var g = parseInt(values[1]);
         var b = parseInt(values[2]);
         var a = parseFloat(values[3]);
-        return (r & 0xff) << 24 |
-               (g & 0xff) << 16 |
-               (b & 0xff) << 8  |
-               ((a * 255) & 0xff);
+        result = (r & 0xff) << 24 |
+                 (g & 0xff) << 16 |
+                 (b & 0xff) << 8  |
+                 ((a * 255) & 0xff);
       }
-      return 0xff0000ff; // Red
+      cssStyleToRGBACache.set(style, result);
+      return result;
     }
 
     export function hexToRGB(color: string): number {
@@ -3681,13 +2749,7 @@ module Shumway {
     }
   }
 
-  // Registers a default font to render non-spacing and non-marking glyphs for undefined characters in embedded fonts.
-  // Embeds the Adobe Blank web font (https://github.com/adobe-fonts/adobe-blank).
-  export function registerFallbackFont() {
-    var style = <CSSStyleSheet>document.styleSheets[0];
-    var rule = '@font-face{font-family:AdobeBlank;src:url("data:font/opentype;base64,T1RUTwAKAIAAAwAgQ0ZGIDTeCDQAACFkAAAZPERTSUcAAAABAABKqAAAAAhPUy8yAF+xmwAAARAAAABgY21hcCRDbtEAAAdcAAAZ6GhlYWQFl9tDAAAArAAAADZoaGVhB1oD7wAAAOQAAAAkaG10eAPoAHwAADqgAAAQBm1heHAIAVAAAAABCAAAAAZuYW1lIE0HkgAAAXAAAAXrcG9zdP+4ADIAACFEAAAAIAABAAAAAQuFfcPHtV8PPPUAAwPoAAAAANFMRfMAAAAA0UxF8wB8/4gDbANwAAAAAwACAAAAAAAAAAEAAANw/4gAAAPoAHwAfANsAAEAAAAAAAAAAAAAAAAAAAACAABQAAgBAAAAAwPoAZAABQAAAooCWAAAAEsCigJYAAABXgAyANwAAAAAAAAAAAAAAAD3/67/+9///w/gAD8AAAAAQURCTwBAAAD//wNw/4gAAANwAHhgLwH/AAAAAAAAAAAAAAAgAAAAAAARANIAAQAAAAAAAQALAAAAAQAAAAAAAgAHAAsAAQAAAAAAAwAbABIAAQAAAAAABAALAAAAAQAAAAAABQA6AC0AAQAAAAAABgAKAGcAAwABBAkAAACUAHEAAwABBAkAAQAWAQUAAwABBAkAAgAOARsAAwABBAkAAwA2ASkAAwABBAkABAAWAQUAAwABBAkABQB0AV8AAwABBAkABgAUAdMAAwABBAkACAA0AecAAwABBAkACwA0AhsAAwABBAkADQKWAk8AAwABBAkADgA0BOVBZG9iZSBCbGFua1JlZ3VsYXIxLjA0NTtBREJPO0Fkb2JlQmxhbms7QURPQkVWZXJzaW9uIDEuMDQ1O1BTIDEuMDQ1O2hvdGNvbnYgMS4wLjgyO21ha2VvdGYubGliMi41LjYzNDA2QWRvYmVCbGFuawBDAG8AcAB5AHIAaQBnAGgAdAAgAKkAIAAyADAAMQAzACwAIAAyADAAMQA1ACAAQQBkAG8AYgBlACAAUwB5AHMAdABlAG0AcwAgAEkAbgBjAG8AcgBwAG8AcgBhAHQAZQBkACAAKABoAHQAdABwADoALwAvAHcAdwB3AC4AYQBkAG8AYgBlAC4AYwBvAG0ALwApAC4AQQBkAG8AYgBlACAAQgBsAGEAbgBrAFIAZQBnAHUAbABhAHIAMQAuADAANAA1ADsAQQBEAEIATwA7AEEAZABvAGIAZQBCAGwAYQBuAGsAOwBBAEQATwBCAEUAVgBlAHIAcwBpAG8AbgAgADEALgAwADQANQA7AFAAUwAgADEALgAwADQANQA7AGgAbwB0AGMAbwBuAHYAIAAxAC4AMAAuADgAMgA7AG0AYQBrAGUAbwB0AGYALgBsAGkAYgAyAC4ANQAuADYAMwA0ADAANgBBAGQAbwBiAGUAQgBsAGEAbgBrAEEAZABvAGIAZQAgAFMAeQBzAHQAZQBtAHMAIABJAG4AYwBvAHIAcABvAHIAYQB0AGUAZABoAHQAdABwADoALwAvAHcAdwB3AC4AYQBkAG8AYgBlAC4AYwBvAG0ALwB0AHkAcABlAC8AVABoAGkAcwAgAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUAIABpAHMAIABsAGkAYwBlAG4AcwBlAGQAIAB1AG4AZABlAHIAIAB0AGgAZQAgAFMASQBMACAATwBwAGUAbgAgAEYAbwBuAHQAIABMAGkAYwBlAG4AcwBlACwAIABWAGUAcgBzAGkAbwBuACAAMQAuADEALgAgAFQAaABpAHMAIABGAG8AbgB0ACAAUwBvAGYAdAB3AGEAcgBlACAAaQBzACAAZABpAHMAdAByAGkAYgB1AHQAZQBkACAAbwBuACAAYQBuACAAIgBBAFMAIABJAFMAIgAgAEIAQQBTAEkAUwAsACAAVwBJAFQASABPAFUAVAAgAFcAQQBSAFIAQQBOAFQASQBFAFMAIABPAFIAIABDAE8ATgBEAEkAVABJAE8ATgBTACAATwBGACAAQQBOAFkAIABLAEkATgBEACwAIABlAGkAdABoAGUAcgAgAGUAeABwAHIAZQBzAHMAIABvAHIAIABpAG0AcABsAGkAZQBkAC4AIABTAGUAZQAgAHQAaABlACAAUwBJAEwAIABPAHAAZQBuACAARgBvAG4AdAAgAEwAaQBjAGUAbgBzAGUAIABmAG8AcgAgAHQAaABlACAAcwBwAGUAYwBpAGYAaQBjACAAbABhAG4AZwB1AGEAZwBlACwAIABwAGUAcgBtAGkAcwBzAGkAbwBuAHMAIABhAG4AZAAgAGwAaQBtAGkAdABhAHQAaQBvAG4AcwAgAGcAbwB2AGUAcgBuAGkAbgBnACAAeQBvAHUAcgAgAHUAcwBlACAAbwBmACAAdABoAGkA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wwDEAMUAxgDHAMgAyQDKAMsAzADNAM4AzwDQANEA0gDTANQA1QDWANcA2ADZANoA2wDcAN0A3gDfAOAA4QDiAOMA5ADlAOYA5wDoAOkA6gDrAOwA7QDuAO8A8ADxAPIA8wD0APUA9gD3APgA+QD6APsA/AD9AP4A/wEAAQEBAgEDAQQBBQEGAQcBCAEJAQoBCwEMAQ0BDgEPARABEQESARMBFAEVARYBFwEYARkBGgEbARwBHQEeAR8BIAEhASIBIwEkASUBJgEnASgBKQEqASsBLAEtAS4BLwEwATEBMgEzATQBNQE2ATcBOAE5AToBOwE8AT0BPgE/AUABQQFCAUMBRAFFAUYBRwFIAUkBSgFLAUwBTQFOAU8BUAFRAVIBUwFUAVUBVgFXAVgBWQFaAVsBXAFdAV4BXwFgAWEBYgFjAWQBZQFmAWcBaAFpAWoBawFsAW0BbgFvAXABcQFyAXMBdAF1AXYBdwF4AXkBegF7AXwBfQF+AX8BgAGBAYIBgwGEAYUBhgGHAYgBiQGKAYsBjAGNAY4BjwGQAZEBkgGTAZQBlQGWAZcBmAGZAZoBmwGcAZ0BngGfAaABoQGiAaMBpAGlAaYBpwGoAakBqgGrAawBrQGuAa8BsAGxAbIBswG0AbUBtgG3AbgBuQG6AbsBvAG9Ab4BvwHAAcEBwgHDAcQBxQHGAccByAHJAcoBywHMAc0BzgHPAdAB0QHSAdMB1AHVAdYB1wHYAdkB2gHbAdwB3QHeAd8B4AHhAeIB4wHkAeUB5gHnAegB6QHqAesB7AHtAe4B7wHwAfEB8gHzAfQB9QH2AfcB+AH5AfoB+wH8Af0B/gH/AgACAQICAgMCBAIFAgYCBwIIAgkCCgILAgwCDQIOAg8CEAIRAhICEwIUAhUCFgIXAhgCGQIaAhsCHAIdAh4CHwIgAiECIgIjAiQCJQImAicCKAIpAioCKwIsAi0CLgIvAjACMQIyAjMCNAI1AjYCNwI4AjkCOgI7AjwCPQI+Aj8CQAJBAkICQwJEAkUCRgJHAkgCSQJKAksCTAJNAk4CTwJQAlECUgJTAlQCVQJWAlcCWAJZAloCWwJcAl0CXgJfAmACYQJiAmMCZAJlAmYCZwJoAmkCagJrAmwCbQJuAm8CcAJxAnICcwJ0AnUCdgJ3AngCeQJ6AnsCfAJ9An4CfwKAAoECggKDAoQChQKGAocCiAKJAooCiwKMAo0CjgKPApACkQKSApMClAKVApYClwKYApkCmgKbApwCnQKeAp8CoAKhAqICowKkAqUCpgKnAqgCqQKqAqsCrAKtAq4CrwKwArECsgKzArQCtQK2ArcCuAK5AroCuwK8Ar0CvgK/AsACwQLCAsMCxALFAsYCxwLIAskCygLLAswCzQLOAs8C0ALRAtIC0wLUAtUC1gLXAtgC2QLaAtsC3ALdAt4C3wLgAuEC4gLjAuQC5QLmAucC6ALpAuoC6wLsAu0C7gLvAvAC8QLyAvMC9AL1AvYC9wL4AvkC+gL7AvwC/QL+Av8DAAMBAwIDAwMEAwUDBgMHAwgDCQMKAwsDDAMNAw4DDwMQAxEDEgMTAxQDFQMWAxcDGAMZAxoDGwMcAx0DHgMfAyADIQMiAyMDJAMlAyYDJwMoAykDKgMrAywDLQMuAy8DMAMxAzIDMwM0AzUDNgM3AzgDOQM6AzsDPAM9Az4DPwNAA0EDQgNDA0QDRQNGA0cDSANJA0oDSwNMA00DTgNPA1ADUQNSA1MDVANVA1YDVwNYA1kDWgNbA1wDXQNeA18DYANhA2IDYwNkA2UDZgNnA2gDaQNqA2sDbANtA24DbwNwA3EDcgNzA3QDdQN2A3cDeAN5A3oDewN8A30DfgN/A4ADgQOCA4MDhAOFA4YDhwOIA4kDigOLA4wDjQOOA48DkAORA5IDkwOUA5UDlgOXA5gDmQOaA5sDnAOdA54DnwOgA6EDogOjA6QDpQOmA6cDqAOpA6oDqwOsA60DrgOvA7ADsQOyA7MDtAO1A7YDtwO4A7kDugO7A7wDvQO+A78DwAPBA8IDwwPEA8UDxgPHA8gDyQPKA8sDzAPNA84DzwPQA9ED0gPTA9QD1QPWA9cD2APZA9oD2wPcA90D3gPfA+AD4QPiA+MD5APlA+YD5wPoA+kD6gPrA+wD7QPuA+8D8APxA/ID8wP0A/UD9gP3A/gD+QP6A/sD/AP9A/4D/wQABAEEAgQDBAQEBQQGBAcECAQJBAoECwQMBA0EDgQPBBAEEQQSBBMEFAQVBBYEFwQYBBkEGgQbBBwEHQQeBB8EIAQhBCIEIwQkBCUEJgQnBCgEKQQqBCsELAQtBC4ELwQwBDEEMgQzBDQENQQ2BDcEOAQ5BDoEOwQ8BD0EPgQ/BEAEQQRCBEMERARFBEYERwRIBEkESgRLBEwETQROBE8EUARRBFIEUwRUBFUEVgRXBFgEWQRaBFsEXARdBF4EXwRgBGEEYgRjBGQEZQRmBGcEaARpBGoEawRsBG0EbgRvBHAEcQRyBHMEdAR1BHYEdwR4BHkEegR7BHwEfQR+BH8EgASBBIIEgwSEBIUEhgSHBIgEiQSKBIsEjASNBI4EjwSQBJEEkgSTBJQElQSWBJcEmASZBJoEmwScBJ0EngSfBKAEoQSiBKMEpASlBKYEpwSoBKkEqgSrBKwErQSuBK8EsASxBLIEswS0BLUEtgS3BLgEuQS6BLsEvAS9BL4EvwTABMEEwgTDBMQExQTGBMcEyATJBMoEywTMBM0EzgTPBNAE0QTSBNME1ATVBNYE1wTYBNkE2gTbBNwE3QTeBN8E4AThBOIE4wTkBOUE5gTnBOgE6QTqBOsE7ATtBO4E7wTwBPEE8gTzBPQE9QT2BPcE+AT5BPoE+wT8BP0E/gT/BQAFAQUCBQMFBAUFBQYFBwUIBQkFCgULBQwFDQUOBQ8FEAURBRIFEwUUBRUFFgUXBRgFGQUaBRsFHAUdBR4FHwUgBSEFIgUjBSQFJQUmBScFKAUpBSoFKwUsBS0FLgUvBTAFMQUyBTMFNAU1BTYFNwU4BTkFOgU7BTwFPQU+BT8FQAVBBUIFQwVEBUUFRgVHBUgFSQVKBUsFTAVNBU4FTwVQBVEFUgVTBVQFVQVWBVcFWAVZBVoFWwVcBV0FXgVfBWAFYQViBWMFZAVlBWYFZwVoBWkFagVrBWwFbQVuBW8FcAVxBXIFcwV0BXUFdgV3BXgFeQV6BXsFfAV9BX4FfwWABYEFggWDBYQFhQWGBYcFiAWJBYoFiwWMBY0FjgWPBZAFkQWSBZMFlAWVBZYFlwWYBZkFmgWbBZwFnQWeBZ8FoAWhBaIFowWkBaUFpgWnBagFqQWqBasFrAWtBa4FrwWwBbEFsgWzBbQFtQW2BbcFuAW5BboFuwW8Bb0FvgW/BcAFwQXCBcMFxAXFBcYFxwXIBckFygXLBcwFzQXOBc8F0AXRBdIF0wXUBdUF1gXXBdgF2QXaBdsF3AXdBd4F3wXgBeEF4gXjBeQF5QXmBecF6AXpBeoF6wXsBe0F7gXvBfAF8QXyBfMF9AX1BfYF9wX4BfkF+gX7BfwF/QX+Bf8GAAYBBgIGAwYEBgUGBgYHBggGCQYKBgsGDAYNBg4GDwYQBhEGEgYTBhQGFQYWBhcGGAYZBhoGGwYcBh0GHgYfBiAGIQYiBiMGJAYlBiYGJwYoBikGKgYrBiwGLQYuBi8GMAYxBjIGMwY0BjUGNgY3BjgGOQY6BjsGPAY9Bj4GPwZABkEGQgZDBkQGRQZGBkcGSAZJBkoGSwZMBk0GTgZPBlAGUQZSBlMGVAZVBlYGVwZYBlkGWgZbBlwGXQZeBl8GYAZhBmIGYwZkBmUGZgZnBmgGaQZqBmsGbAZtBm4GbwZwBnEGcgZzBnQGdQZ2BncGeAZ5BnoGewZ8Bn0GfgZ/BoAGgQaCBoMGhAaFBoYGhwaIBokGigaLBowGjQaOBo8GkAaRBpIGkwaUBpUGlgaXBpgGmQaaBpsGnAadBp4GnwagBqEGogajBqQGpQamBqcGqAapBqoGqwasBq0GrgavBrAGsQayBrMGtAa1BrYGtwa4BrkGuga7BrwGvQa+Br8GwAbBBsIGwwbEBsUGxgbHBsgGyQbKBssGzAbNBs4GzwbQBtEG0gbTBtQG1QbWBtcG2AbZBtoG2wbcBt0G3gbfBuAG4QbiBuMG5AblBuYG5wboBukG6gbrBuwG7QbuBu8G8AbxBvIG8wb0BvUG9gb3BvgG+Qb6BvsG/Ab9Bv4G/wcABwEHAgcDBwQHBQcGBwcHCAcJBwoHCwcMBw0HDgcPBxAHEQcSBxMHFAcVBxYHFwcYBxkHGgcbBxwHHQceBx8HIAchByIHIwckByUHJgcnBygHKQcqBysHLActBy4HLwcwBzEHMgczBzQHNQc2BzcHOAc5BzoHOwc8Bz0HPgc/B0AHQQdCB0MHRAdFB0YHRwdIB0kHSgdLB0wHTQdOB08HUAdRB1IHUwdUB1UHVgdXB1gHWQdaB1sHXAddB14HXwdgB2EHYgdjB2QHZQdmB2cHaAdpB2oHawdsB20HbgdvB3AHcQdyB3MHdAd1B3YHdwd4B3kHegd7B3wHfQd+B38HgAeBB4IHgweEB4UHhgeHB4gHiQeKB4sHjAeNB44HjweQB5EHkgeTB5QHlQeWB5cHmAeZB5oHmwecB50HngefB6AHoQeiB6MHpAelB6YHpweoB6kHqgerB6wHrQeuB68HsAexB7IHswe0B7UHtge3B7gHuQe6B7sHvAe9B74HvwfAB8EHwgfDB8QHxQfGB8cHyAfJB8oHywfMB80HzgfPB9AH0QfSB9MH1AfVB9YH1wfYB9kH2gfbB9wH3QfeB98H4AfhB+IH4wfkB+UH5gfnB+gH6QfqB+sH7AftB+4H7wfwB/EH8gfzB/QH9Qf2B/cH+Af5B/oH+wf8B/0H/gf/CAAIAQgCCAMIBAgFCAYIBwgICAkICggLCAwIDQgOCA8IEAgRCBIIEwgUCBUIFggXCBgIGQgaCBsIHAgdCB4IHwggCCEIIggjCCQIJQgmCCcIKAgpCCoIKwgsCC0ILggvCDAIMQgyCDMINAg1CDYINwg4CDkIOgg7CDwIPQg+CD8IQAhBCEIIQwhECEUIRghHCEgISQhKCEsg+wy3+iS3AfcQt/kstwP3EPoEFf58+YT6fAf9WP4nFfnSB/fF/DMFprAV+8X4NwX49gamYhX90gf7xfgzBXBmFffF/DcF/PYGDg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4OAAEBAQr4HwwmmhwZLRL7joscBUaLBr0KvQv65xUD6AB8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAA==");}';
-    style.insertRule(rule, style.cssRules.length);
-  }
+
 
   export interface IExternalInterfaceService {
     enabled: boolean;

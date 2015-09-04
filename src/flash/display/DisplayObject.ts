@@ -1206,7 +1206,7 @@ module Shumway.AVMX.AS.flash.display {
         }
         this._filters = filters;
         this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
-      } else if (reset) {
+      } else if (reset && this._filters) {
         this._filters = null;
         this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
       }
@@ -1850,14 +1850,21 @@ module Shumway.AVMX.AS.flash.display {
      */
     _setStaticContentFromSymbol(symbol: Shumway.Timeline.DisplaySymbol) {
       release || assert(!symbol.dynamic);
-      if (this._canHaveGraphics()) {
-        release || assert(symbol instanceof flash.display.ShapeSymbol);
-        this._graphics = (<flash.display.ShapeSymbol>symbol).graphics;
+      if (symbol instanceof flash.display.ShapeSymbol) {
+        release || assert(this._canHaveGraphics());
+        var newGraphics = (<flash.display.ShapeSymbol>symbol).graphics;
+        if (this._graphics === newGraphics) {
+          return;
+        }
+        this._graphics = newGraphics;
         this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyGraphics);
-      } else if (this.sec.flash.text.StaticText.axIsType(this)) {
-        release || assert(symbol instanceof flash.text.TextSymbol);
-        var textSymbol = <flash.text.TextSymbol>symbol;
-        (<flash.text.StaticText>this)._textContent = textSymbol.textContent;
+      } else if (symbol instanceof flash.text.TextSymbol) {
+        release || assert(this.sec.flash.text.StaticText.axIsType(this));
+        var newTextContent = (<flash.text.TextSymbol>symbol).textContent;
+        if ((<flash.text.StaticText>this)._textContent === newTextContent) {
+          return;
+        }
+        (<flash.text.StaticText>this)._textContent = newTextContent;
         this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyTextContent);
       }
       this._symbol = symbol;

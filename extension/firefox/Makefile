@@ -30,10 +30,6 @@ build: ensureoutputdir
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ install.rdf > $(BUILD_DIR)/install.rdf
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ update.rdf > $(BUILD_DIR)/update.rdf
 	cp ../../examples/inspector/debug/pingpong.js $(BUILD_DIR)/chrome/
-	# Copying WebGL shaders
-	mkdir -p $(BUILD_DIR)/content/gfx/gl/shaders
-	cp ../../src/gfx/gl/shaders/combined.frag $(BUILD_DIR)/content/gfx/gl/shaders/
-	cp ../../src/gfx/gl/shaders/combined.vert $(BUILD_DIR)/content/gfx/gl/shaders/
 	# Copying JavaScript content files
 	mkdir -p $(BUILD_DIR)/content/playerglobal
 	cp ../../build/playerglobal/playerglobal.json $(BUILD_DIR)/content/playerglobal/

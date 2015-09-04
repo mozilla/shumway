@@ -24,7 +24,6 @@ function createPlaybackEaselHost(file) {
 
 var easel;
 function createEasel() {
-  Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
   easel = new Easel(document.getElementById("easelContainer"));
   easel.startRendering();
   return easel;
@@ -119,26 +118,9 @@ function syncGFXOptions() {
   var GFX = Shumway.GFX;
 
   var options = easel.options;
-  options.perspectiveCamera = GFX.perspectiveCamera.value;
-  options.perspectiveCameraFOV = GFX.perspectiveCameraFOV.value;
-  options.perspectiveCameraAngle = GFX.perspectiveCameraAngle.value;
-  options.perspectiveCameraDistance = GFX.perspectiveCameraDistance.value;
-
-  options.drawTiles = GFX.drawTiles.value;
-  options.drawSurfaces = GFX.drawSurfaces.value;
-  options.drawSurface = GFX.drawSurface.value;
-  options.drawElements = GFX.drawElements.value;
   options.clipDirtyRegions = GFX.clipDirtyRegions.value;
   options.clipCanvas = GFX.clipCanvas.value;
-
-  options.premultipliedAlpha = GFX.premultipliedAlpha.value;
-  options.unpackPremultiplyAlpha = GFX.unpackPremultiplyAlpha.value;
-
-  options.sourceBlendFactor = GFX.sourceBlendFactor.value;
-  options.destinationBlendFactor = GFX.destinationBlendFactor.value;
-
   options.masking = GFX.masking.value;
-  options.disableSurfaceUploads = GFX.disableSurfaceUploads.value;
 
   options.snapToDevicePixels = GFX.snapToDevicePixels.value;
   options.imageSmoothing = GFX.imageSmoothing.value;

@@ -18,11 +18,6 @@
 /// <reference path='../../build/ts/tools.d.ts' />
 /// <reference path='../../build/ts/gfx-base.d.ts' />
 
-/// <reference path='gl/glContext.ts'/>
-/// <reference path='gl/core.ts'/>
-/// <reference path='gl/surface.ts'/>
-/// <reference path='gl/gl.ts'/>
-/// <reference path='gl/brush.ts'/>
 /// <reference path='2d/debug.ts'/>
 /// <reference path='2d/surface.ts'/>
 /// <reference path='2d/2d.ts'/>
