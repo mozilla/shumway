@@ -529,21 +529,15 @@ module Shumway.AVM1.Lib {
     }
 
     public loadMovie(url: string, method: string) {
-      var loader: flash.display.Loader = new this.context.sec.flash.display.Loader();
-      var request: flash.net.URLRequest = new this.context.sec.flash.net.URLRequest(url);
-      if (method) {
-        request.method = method;
-      }
-      loader.load(request);
-      function completeHandler(event: flash.events.Event):void {
-        loader.removeEventListener(flash.events.Event.COMPLETE, completeHandler);
+      var loaderHelper = new AVM1LoaderHelper(this.context);
+      loaderHelper.load(url, method).then(function () {
+        var newChild = loaderHelper.content;
+        // TODO fix newChild name to match target_mc
         var parent: flash.display.MovieClip = this._as3Object.parent;
-        var depth = parent.getChildIndex(this._as3Object);
+        var depth = this._as3Object._depth;
         parent.removeChild(this._as3Object);
-        parent.addChildAt(loader.content, depth);
-      }
-
-      loader.addEventListener(flash.events.Event.COMPLETE, completeHandler);
+        parent.addTimelineObjectAtDepth(newChild, depth);
+      }.bind(this));
     }
 
     public loadVariables(url: string, method?: string) {
@@ -687,10 +681,7 @@ module Shumway.AVM1.Lib {
     public unloadMovie() {
       var nativeObject = this._as3Object;
       // TODO remove movie clip content
-      var loader = nativeObject.loaderInfo.loader;
-      if (loader.parent) {
-        loader.parent.removeChild(loader);
-      }
+      nativeObject.parent.removeChild(nativeObject);
       nativeObject.stop();
     }
 

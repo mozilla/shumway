@@ -426,17 +426,11 @@ module Shumway.AVM1.Lib {
         return;
       }
 
-      var loader: flash.display.Loader = new this.context.sec.flash.display.Loader();
-      var loaderInfo = loader.contentLoaderInfo;
-      loaderInfo._avm1Context = this.context;
-      loaderInfo._avm1LevelHolder = this.context.getAVM1LevelsHolder(null);
-      loaderInfo._avm1LevelNumber = level;
-
-      var request = new this.context.sec.flash.net.URLRequest(url);
-      if (method) {
-        request.method = method;
-      }
-      loader.load(request);
+      var avm1LevelHolder = this.context.getAVM1LevelsHolder(null);
+      var loaderHelper = new AVM1LoaderHelper(this.context);
+      loaderHelper.load(url, method).then(function () {
+        avm1LevelHolder._setRoot(level, loaderHelper.content);
+      });
     }
 
     public loadVariables(url: string, target: any, method: string = ''): void {

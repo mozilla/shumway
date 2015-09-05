@@ -62,6 +62,7 @@ interface ISecurityDomain {
     }
     system: {
       Capabilities: typeof flashPackage.system.Capabilities;
+      LoaderContext: typeof flashPackage.system.LoaderContext;
       Security: typeof flashPackage.system.Security;
       fscommand: typeof flashPackage.system.fscommand;
     }
@@ -207,13 +208,11 @@ declare module Shumway.AVMX.AS.flash {
       content: DisplayObject;
       _content: DisplayObject; // TODO remove
       contentLoaderInfo: LoaderInfo;
-      load(request: flash.net.URLRequest);
+      load(request: flash.net.URLRequest, context?: flash.system.LoaderContext): void;
       static runtimeStartTime: number;
     }
     class LoaderInfo extends events.EventDispatcher {
       _avm1Context: AVM1.AVM1Context;
-      _avm1LevelHolder: AVM1Movie;
-      _avm1LevelNumber: number;
       loader: Loader;
       swfVersion: number;
       bytesLoaded: number;
@@ -464,6 +463,9 @@ declare module Shumway.AVMX.AS.flash {
       static axClass: typeof Capabilities;
 
       static version: string;
+    }
+    class LoaderContext extends ASObject {
+      _avm1Context: Shumway.AVM1.AVM1Context;
     }
     class Security extends ASObject {
       static axClass: typeof Security;
