@@ -435,6 +435,7 @@ module Shumway.AVMX.AS.flash.display {
       this._contentLoaderInfo._parameters = parameters;
       this._contentLoaderInfo._allowCodeImport = context ? context.allowCodeImport : true;
       this._contentLoaderInfo._checkPolicyFile = context ? context.checkPolicyFile : false;
+      this._contentLoaderInfo._avm1Context = context ? context._avm1Context : null;
     }
 
     onLoadOpen(file: any) {
@@ -692,9 +693,15 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     private createContentRoot(symbol: SpriteSymbol, sceneData) {
-      if (symbol.isAVM1Object) {
-        this._initAvm1(symbol);
+      var isAS2LoadedFromAS3 = false;
+      if (symbol.isAVM1Object && !this._contentLoaderInfo._avm1Context) {
+        // For outermost AVM1 SWF we need to create AVM1Context.
+        isAS2LoadedFromAS3 = true;
+        this._createAVM1Context();
+        // Re-sync the AVM1Context for the symbol.
+        symbol.avm1Context = this._contentLoaderInfo._avm1Context;
       }
+
       var root = constructClassFromSymbol(symbol, symbol.symbolClass);
       // The initial SWF's root object gets a default of 'root1', which doesn't use up a
       // DisplayObject instance ID. For the others, we have reserved one in `_contentID`.
@@ -714,10 +721,10 @@ module Shumway.AVMX.AS.flash.display {
       var loaderInfo = this._contentLoaderInfo;
       root._loaderInfo = loaderInfo;
       var rootTimeline = root;
-      if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2 &&
-          !loaderInfo._avm1LevelHolder) {
-        root = this._initAvm1Root(root);
-      } else if (this === loaderClass.getRootLoader()) {
+      var isTopLevelMovie = this === loaderClass.getRootLoader();
+      if (isAS2LoadedFromAS3) {
+        root = this._createAVM1Movie(root);
+      } else if (isTopLevelMovie) {
         var movieClipClass = this.sec.flash.display.MovieClip.axClass;
         movieClipClass.frameNavigationModel = loaderInfo.swfVersion < 10 ?
                                               flash.display.FrameNavigationModel.SWF9 :
@@ -727,11 +734,9 @@ module Shumway.AVMX.AS.flash.display {
         root._setFlags(DisplayObjectFlags.HasPerspectiveProjection);
       }
       this._content = root;
-      if (this === loaderClass.getRootLoader()) {
+      if (isTopLevelMovie) {
         this.sec.flash.display.Loader.runtimeStartTime = Date.now();
         this._stage.setRoot(root);
-      } else if (loaderInfo._avm1LevelHolder) {
-        loaderInfo._avm1LevelHolder._setRoot(loaderInfo._avm1LevelNumber, root);
       } else {
         this.addTimelineObjectAtDepth(root, 0);
       }
@@ -739,46 +744,34 @@ module Shumway.AVMX.AS.flash.display {
       return rootTimeline;
     }
 
-    private _initAvm1(symbol: SpriteSymbol): void {
+    private _createAVM1Context(): void {
       var contentLoaderInfo: LoaderInfo = this._contentLoaderInfo;
-      if (contentLoaderInfo._avm1Context) {
-        // Loading as a level of the existing AVM1 SWF.
-        return;
+      var avm1Context = Shumway.AVM1.AVM1Context.create(contentLoaderInfo);
+      var display = this.sec.flash.display;
+      var rootLoader = display.Loader.axClass.getRootLoader();
+      avm1Context.setStage(rootLoader._stage);
+
+      // FIXME make frameNavigationModel non-global
+      if (this === rootLoader) {
+        display.MovieClip.axClass.frameNavigationModel = flash.display.FrameNavigationModel.SWF1;
       }
-      // FIXME handle multiple AVM1Context (and store them at AVM1Movie level?)
-      var context;
-      // Only the outermost AVM1 SWF gets an AVM1Context. SWFs loaded into it share that context.
-      if (this.loaderInfo && this.loaderInfo._avm1Context) {
-        context = contentLoaderInfo._avm1Context = this.loaderInfo._avm1Context;
-      } else {
-        context = Shumway.AVM1.AVM1Context.create(contentLoaderInfo);
-        contentLoaderInfo._avm1Context = context;
-        var display = this.sec.flash.display;
-        var as2LoadedFromAS3 = this.loaderInfo && !this.loaderInfo._avm1Context;
-        var rootLoader = display.Loader.axClass.getRootLoader();
-        if (as2LoadedFromAS3 || this === rootLoader) {
-          context.setStage(rootLoader._stage);
-          display.MovieClip.axClass.frameNavigationModel = flash.display.FrameNavigationModel.SWF1;
-        }
-      }
-      symbol.avm1Context = context;
+
+      contentLoaderInfo._avm1Context = avm1Context;
     }
 
     /**
-     * For AVM1 SWFs that aren't loaded into other AVM1 SWFs, create an AVM1Movie container
-     * and wrap the root timeline into it. This associates the AVM1Context with this AVM1
-     * MovieClip tree, including potential nested SWFs.
+     * Create an AVM1Movie container and wrap the root timeline into it.
+     * This associates the AVM1Context with this AVM1 MovieClip tree,
+     * including potential nested SWFs.
      */
-    private _initAvm1Root(root: flash.display.DisplayObject): flash.display.DisplayObject {
-      // Only create an AVM1Movie container for the outermost AVM1 SWF. Nested AVM1 SWFs just get
-      // their content added to the loading SWFs display list directly.
-      if (this.loaderInfo && this.loaderInfo._avm1Context) {
-        return root;
-      }
+    private _createAVM1Movie(root: flash.display.DisplayObject): flash.display.AVM1Movie {
+      var contentLoaderInfo = this._contentLoaderInfo;
+      release || Debug.assert(contentLoaderInfo);
 
       var avm1Context = this._contentLoaderInfo._avm1Context;
       var avm1MovieClip = <AVM1.Lib.AVM1MovieClip>AVM1.Lib.getAVM1Object(root, avm1Context);
-      var parameters = this._contentLoaderInfo._parameters;
+
+      var parameters = contentLoaderInfo._parameters;
       avm1MovieClip.setParameters(parameters);
 
       var avm1Movie = new this.sec.flash.display.AVM1Movie();

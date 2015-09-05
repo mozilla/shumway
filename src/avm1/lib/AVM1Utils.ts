@@ -98,6 +98,53 @@ module Shumway.AVM1.Lib {
     return <T>obj._as3ObjectTemplate;
   }
 
+  export class AVM1LoaderHelper {
+    private _loader: flash.display.Loader;
+    private _context: AVM1Context;
+
+    public get loader(): flash.display.Loader {
+      return this._loader;
+    }
+
+    public get loaderInfo(): flash.display.LoaderInfo {
+      return this._loader.contentLoaderInfo;
+    }
+
+    public get content(): flash.display.DisplayObject {
+      return this._loader._content;
+    }
+
+    public constructor(context: AVM1Context) {
+      this._context = context;
+      this._loader = new context.sec.flash.display.Loader();
+    }
+
+    public load(url: string, method: string): Promise<flash.display.DisplayObject> {
+      var context = this._context;
+      var loader = this._loader;
+      var loaderContext: flash.system.LoaderContext = new context.sec.flash.system.LoaderContext();
+      loaderContext._avm1Context = context;
+      var request = new context.sec.flash.net.URLRequest(url);
+      if (method) {
+        request.method = method;
+      }
+
+      var loaderInfo = loader.contentLoaderInfo;
+      var result = new PromiseWrapper<flash.display.DisplayObject>();
+      var progressEventHandler = function (e: flash.events.ProgressEvent): void {
+        if (!loader._content) {
+          return;
+        }
+        loaderInfo.removeEventListener(flash.events.ProgressEvent.PROGRESS, progressEventHandler);
+        result.resolve(loader._content);
+      };
+      loaderInfo.addEventListener(flash.events.ProgressEvent.PROGRESS, progressEventHandler);
+
+      loader.load(request, loaderContext);
+      return result.promise;
+    }
+  }
+
   export class AVM1SymbolBase<T extends flash.display.InteractiveObject> extends AVM1Object implements IAVM1SymbolBase, IAVM1EventPropertyObserver {
     _as3Object: T;
     _as3ObjectTemplate: any;

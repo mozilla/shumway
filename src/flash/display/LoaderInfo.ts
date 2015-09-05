@@ -113,8 +113,6 @@ module Shumway.AVMX.AS.flash.display {
 
     _dictionary: Shumway.Timeline.Symbol [];
     _avm1Context: Shumway.AVM1.AVM1Context;
-    _avm1LevelNumber: number;
-    _avm1LevelHolder: AVM1Movie;
 
     get loaderURL(): string {
       if (!this._loader) {
