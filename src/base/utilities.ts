@@ -866,7 +866,8 @@ module Shumway {
 
       var len = encoded.length;
       var padding = encoded.charAt(len - 2) === '=' ? 2 : encoded.charAt(len - 1) === '=' ? 1 : 0;
-      var decoded = new Uint8Array(encoded.length / 4 * 3 - padding);
+      release || assert(encoded.length % 4 === 0);
+      var decoded = new Uint8Array((encoded.length >> 2) * 3 - padding);
 
       for (var i = 0, j = 0; i < encoded.length;) {
         ch = encoded.charCodeAt(i++);
