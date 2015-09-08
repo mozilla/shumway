@@ -426,7 +426,7 @@ module Shumway.AVM1.Lib {
         return;
       }
 
-      var avm1LevelHolder = this.context.getAVM1LevelsHolder(null);
+      var avm1LevelHolder = this.context.levelsContainer;
       var loaderHelper = new AVM1LoaderHelper(this.context);
       loaderHelper.load(url, method).then(function () {
         avm1LevelHolder._setRoot(level, loaderHelper.content);
@@ -620,7 +620,7 @@ module Shumway.AVM1.Lib {
         return;
       }
 
-      var avm1MovieHolder = this.context.getAVM1LevelsHolder(null);
+      var avm1MovieHolder = this.context.levelsContainer;
       avm1MovieHolder._deleteRoot(level);
     }
   }
