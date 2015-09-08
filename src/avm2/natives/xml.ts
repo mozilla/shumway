@@ -67,7 +67,7 @@ module Shumway.AVMX.AS {
             val.axClass === sec.AXQName || val.axClass === sec.AXNamespace);
   }
 
-  export function isXMLCollection(val: any, sec: AXSecurityDomain): boolean {
+  export function isXMLCollection(sec: AXSecurityDomain, val: any): boolean {
     return typeof val === 'object' && val &&
            (val.axClass === sec.AXXML || val.axClass === sec.AXXMLList);
   }
@@ -75,7 +75,7 @@ module Shumway.AVMX.AS {
   // 10.1 ToString
   function toString(node, sec: AXSecurityDomain) {
     if (!node || node.axClass !== sec.AXXML) {
-      return String(node);
+      return axCoerceString(node);
     }
     switch (node._kind) {
       case ASXMLKind.Text:
@@ -100,8 +100,11 @@ module Shumway.AVMX.AS {
   }
 
   // 10.2.1.1 EscapeElementValue ( s )
-  export function escapeElementValue(s: string): string {
-    s = String(s);
+  export function escapeElementValue(sec: AXSecurityDomain, s: any): string {
+    if (isXMLCollection(sec, s)) {
+      return s.toXMLString();
+    }
+    s = axCoerceString(s);
     var i = 0, ch;
     while (i < s.length && (ch = s[i]) !== '&' && ch !== '<' && ch !== '>') {
       i++;
@@ -171,9 +174,20 @@ module Shumway.AVMX.AS {
     return buf;
   }
 
-  function isWhitespace(s: string, index: number) {
+  function isWhitespace(s: string, index: number): boolean {
     var ch = s[index];
     return ch === ' ' || ch === '\n' || ch === '\r' || ch === '\t';
+  }
+
+  function isWhitespaceString(s: string): boolean {
+    release || assert(typeof s === 'string');
+    for (var i = 0; i < s.length; i++) {
+      var ch = s[i];
+      if (!(ch === ' ' || ch === '\n' || ch === '\r' || ch === '\t')) {
+        return false;
+      }
+    }
+    return true;
   }
 
   function trimWhitespaces(s: string): string {
@@ -223,11 +237,7 @@ module Shumway.AVMX.AS {
     if (node === null || node === undefined) {
       throw new TypeError();
     }
-    if (!isXMLType(node, sec)) {
-      return escapeElementValue(String(node));
-    }
-
-    return node.toXMLString();
+    return escapeElementValue(sec, node);
   }
 
 
@@ -335,9 +345,9 @@ module Shumway.AVMX.AS {
       if (name === '*') {
         name = null;
       }
-      return new Multiname(null, 0, CONSTANT.QNameA, [], name);
+      return new Multiname(null, 0, CONSTANT.QNameA, [Namespace.PUBLIC], name);
     }
-    return new Multiname(null, 0, CONSTANT.QName, [], name);
+    return new Multiname(null, 0, CONSTANT.QName, [Namespace.PUBLIC], name);
   }
 
   function coerceE4XMultiname(mn: Multiname, sec: AXSecurityDomain) {
@@ -1365,7 +1375,6 @@ module Shumway.AVMX.AS {
   // Note: the order of the entries is relevant, because some checks are of
   // the form `type > ASXMLKind.Element`.
   export const enum ASXMLKind {
-    Unknown = 0,
     Element = 1,
     Attribute = 2,
     Text = 3,
@@ -1788,14 +1797,7 @@ module Shumway.AVMX.AS {
       if (!this || this.axClass !== this.sec.AXXML) {
         this.sec.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
-      // TODO review
-      if (child._parent) {
-        var index = child._parent._children.indexOf(child);
-        release || assert(index >= 0);
-        child._parent._children.splice(index, 1);
-      }
-      this._children.push(child);
-      child._parent = this;
+      this.insert(this._children.length, child);
       return this;
     }
     attribute(arg: any): ASXMLList {
@@ -1865,7 +1867,7 @@ module Shumway.AVMX.AS {
         this.sec.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       var xl = this.sec.AXXMLList.CreateList(this, this._name);
-      Array.prototype.push.apply(xl._children, this._children);
+      xl._children = this._children.concat();
       return xl;
     }
     comments() {
@@ -2128,16 +2130,18 @@ module Shumway.AVMX.AS {
         // Step 2.b.
         else if (child._kind === ASXMLKind.Text) {
           // Step 2.b.i.
-          for (i++; i < this._children.length;) {
-            var nextChild = this._children[i];
+          while (i + 1 < this._children.length) {
+            var nextChild = this._children[i + 1];
             if (nextChild._kind !== ASXMLKind.Text) {
               break;
             }
             child._value += nextChild._value;
-            this.removeByIndex(i);
+            this.removeByIndex(i + 1);
           }
           // Step 2.b.ii.
-          if (child._value.length === 0) {
+          // The spec says to only remove 0-length nodes, but Tamarin removes whitespace-only
+          // nodes, too.
+          if (child._value.length === 0 || isWhitespaceString(child._value)) {
             this.removeByIndex(i);
           }
           // Step 2.b.iii.
@@ -2201,66 +2205,130 @@ module Shumway.AVMX.AS {
 
       notImplemented("public.XML::removeNamespace"); return;
     }
+
+    // 13.4.4.32 XML.prototype.replace
+    replace(propertyName: any, value: any): ASXML {
+      // Step 1.
+      if (this._kind !== ASXMLKind.Element) {
+        return;
+      }
+      var c;
+      // Step 2.
+      if (!value || value.axClass !== this.axClass && value.axClass !== this.sec.AXXMLList) {
+        c = axCoerceString(value);
+      }
+      // Step 3.
+      else {
+        c = value._deepCopy();
+      }
+      // Step 4.
+      var mn = toXMLName(propertyName, this.sec);
+      if (isIndex(mn.name)) {
+        this._replaceByIndex(mn.name|0, c);
+        // Step 10.
+        return this;
+      }
+      var isAnyName = mn.isAnyName();
+      // Step 5 (Implicit).
+      // Step 6.
+      var i = -1;
+      // Step 7.
+      var children = this._children;
+      for (var k = children.length; k--;) {
+        // Step 7.a.
+        var child = children[k];
+        if (isAnyName || child._kind === ASXMLKind.Element && child._name.matches(mn)) {
+          // Step 7.a.i.
+          if (i !== -1) {
+            this.deleteByIndex(i);
+          }
+          // Step 7.a.i.
+          i = k;
+        }
+      }
+      // Step 8.
+      if (i === -1) {
+        // Step 10.
+        return this;
+      }
+      // Step 9.
+      this._replaceByIndex(i, c);
+      // Step 10.
+      return this;
+    }
+
     // 9.1.1.12 [[Replace]] (P, V)
-    replace(p: any, v: any): ASXML {
+    _replaceByIndex(p: number, v: any): ASXML {
+      // Step 1.
       if (this._kind > ASXMLKind.Element) {
         return this;
       }
-      if (v._kind === ASXMLKind.Element) {
-        var a = this;
-        while (a) {
-          if (a === v) {
-            throw "Error in XML.prototype.replace()";
-          }
-          a = a._parent;
-        }
-      }
-      var mn: Multiname;
-      if (p && p.axClass === this.sec.AXQName) {
-        mn = (<ASQName>p).name;
-      }
-      mn = toXMLName(p, this.sec);
-      var i = mn.name >>> 0;
+      // Steps 2-3. (Implicit, guaranteed by assert).
+      release || assert(typeof p === 'number' && p >>> 0 === p);
+      // Step 4.
       var children = this._children;
-      if (String(mn.name) === String(i)) {
-        if (i >= children.length) {
-          i = children.length;
-        }
-        if (children && children[i]) {
-          children[i]._parent = null;
-        }
-      } else {
-        var toRemove = this.getProperty(mn);
-        if (toRemove._children.length === 0) { // nothing to replace
-          return this;
-        }
-        toRemove._children.forEach(function (v, i) {
-          var index = children.indexOf(v);
-          v._parent = null;
-          if (i === 0) {
-            mn.name = String(index);
-            children.splice(index, 1, undefined);
-          } else {
-            children.splice(index, 1);
+      if (p > children.length) {
+        p = children.length;
+      }
+      // Step 5.
+      if (v && v.axClass === this.axClass && v._kind !== ASXMLKind.Attribute) {
+        // Step 5.a.
+        if (v._kind === ASXMLKind.Element) {
+          var a = this;
+          while (a) {
+            if (a === v) {
+              this.sec.throwError("Error", Errors.XMLIllegalCyclicalLoop);
+            }
+            a = a._parent;
           }
-        });
+        }
+        // Step 5.b.
+        v._parent = this;
+        // Step 5.c.
+        if (children[p]) {
+          children[p]._parent = null;
+        }
+        // Step 5.d.
+        children[p] = v;
       }
-
-      release || assert(isIndex(mn.name));
-
-      if (v._kind !== ASXMLKind.Element &&
-          v._kind !== ASXMLKind.Text &&
-          v._kind !== ASXMLKind.Comment &&
-          v._kind !== ASXMLKind.ProcessingInstruction)
-      {
-        var s = toString(v, this.sec);
-        v = createXML(this.sec);
-        v._value = s;
+      // Step 6.
+      else if (v && v.axClass === this.sec.AXXMLList) {
+        // Inlined steps.
+        if (v._children.length === 0) {
+          this.deleteByIndex(p);
+        } else {
+          var n = v._children.length;
+          if (p < children.length) {
+            children[p]._parent = null;
+            for (var i = children.length - 1; i > p; i--) {
+              children[i + n] = children[i];
+            }
+          }
+          for (var i = 0; i < n; i++) {
+            var child = v._children[i];
+            child._parent = this;
+            children[i + p] = child;
+          }
+        }
       }
-      v._parent = this;
-      children[mn.name] = v;
-      return this;
+      // Step 7.
+      else {
+        // Step 7.a.
+        var s = axCoerceString(v);
+        // Step 7.b.
+        var t = this.axClass.Create();
+        t._kind = ASXMLKind.Text;
+        t._value = s;
+        t._parent = this;
+        // Step 7.c.
+        if (children[p]) {
+          children[p]._parent = null;
+        }
+        // Step 7.d.
+        children[p] = t;
+      }
     }
+
     setChildren(value: any): ASXML {
       this.setProperty(anyMultiname, value);
       return this;
@@ -2360,8 +2428,8 @@ module Shumway.AVMX.AS {
         // 4. If x.[[Class]] == "text",
         case ASXMLKind.Text:
           return prettyPrinting ?
-                 s + escapeElementValue(trimWhitespaces(node._value)) :
-                 escapeElementValue(node._value);
+                 s + escapeElementValue(sec, trimWhitespaces(node._value)) :
+                 escapeElementValue(sec, node._value);
         // 5. If x.[[Class]] == "attribute", return the result of concatenating s and
         // EscapeAttributeValue(x.[[Value]])
         case ASXMLKind.Attribute:
@@ -2609,19 +2677,24 @@ module Shumway.AVMX.AS {
           }
           var y = createXML(sec, ASXMLKind.Element, uri, mn.name, prefix);
           y._parent = this;
-          this.replace(String(i), y);
+          this._replaceByIndex(i, y);
           var ns = y._name.namespace;
           y.addInScopeNamespace(ns);
         }
       }
       if (primitiveAssign) {
-        this._children[i]._children = [];   // blow away kids of x[i]
+        // Blow away kids of x[i].
+        var subChildren = this._children[i]._children;
+        for (var j = subChildren.length; j--;) {
+          subChildren[j]._parent = null;
+        }
+        subChildren.length = 0;
         var s = toString(c, sec);
         if (s !== "") {
-          this._children[i].replace("0", s);
+          this._children[i]._replaceByIndex(0, s);
         }
       } else {
-        this.replace(String(i), c);
+        this._replaceByIndex(i, c);
       }
     }
 
@@ -2819,19 +2892,15 @@ module Shumway.AVMX.AS {
     }
 
     // 9.1.1.11 [[Insert]] (P, V)
-    insert(p, v) {
+    insert(p: number, v: any): void {
       // Step 1.
       if (this._kind > ASXMLKind.Element) {
         return;
       }
 
-      // Step 2.
-      var i = p >>> 0;
-
-      // Step 3.
-      if (String(p) !== String(i)) {
-        throw "TypeError in XML.prototype.insert(): invalid property name " + p;
-      }
+      // Steps 2-3 (Guaranteed by assert).
+      release || assert(typeof p === 'number' && isIndex(p));
+      var i = p;
 
       // Step 4.
       if (v && v.axClass === this.axClass) {
@@ -2849,7 +2918,7 @@ module Shumway.AVMX.AS {
 
       // Step 6.
       if (v && v.axClass === this.sec.AXXMLList) {
-        n = this._children.length;
+        n = v._children.length;
         // Step 7.
         if (n === 0) {
           return;
@@ -2857,9 +2926,10 @@ module Shumway.AVMX.AS {
       }
 
       // Step 8.
-      for (var j = this._children.length - 1; j >= i; j--) {
-        this._children[j + n] = this._children[j];
-        assert(this._children[0]);
+      var ownChildren = this._children;
+      for (var j = ownChildren.length - 1; j >= i; j--) {
+        ownChildren[j + n] = ownChildren[j];
+        assert(ownChildren[0]);
       }
 
       // Step 9 (implicit).
@@ -2869,7 +2939,7 @@ module Shumway.AVMX.AS {
         n = v._children.length;
         for (var j = 0; j < n; j++) {
           v._children[j]._parent = this;
-          this[i + j] = v[j];
+          ownChildren[i + j] = v._children[j];
         }
         // Step 11.
       } else {
@@ -2878,11 +2948,11 @@ module Shumway.AVMX.AS {
           v = this.sec.AXXML.Create(v);
         }
         v._parent = this;
-        if (!this._children) {
-          this._children = [];
+        if (!ownChildren) {
+          this._children = ownChildren = [];
         }
-        this._children[i] = v;
-        assert(this._children[0]);
+        ownChildren[i] = v;
+        assert(ownChildren[0]);
       }
     }
 
@@ -3742,10 +3812,10 @@ module Shumway.AVMX.AS {
             // Step 2.f.iii.1.
             var q = parent._children.indexOf(currentChild);
             // Step 2.f.iii.2.
-            parent.replace(q, c);
+            parent._replaceByIndex(q, c);
             // Step 2.f.iii.3.
             for (var j = 0; j < cLength; j++) {
-              c.setProperty(c._children[j]._name, parent._children[q + j]);
+              c._children[j] = parent._children[q + j];
             }
           }
           // Step 2.f.iv.
@@ -3779,7 +3849,7 @@ module Shumway.AVMX.AS {
             // Step 2.g.ii.1.
             var q = parent._children.indexOf(currentChild);
             // Step 2.g.ii.2.
-            parent.replace(q, value);
+            parent._replaceByIndex(q, value);
             // Step 2.g.ii.3.
             value = parent._children[q];
           }

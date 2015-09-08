@@ -342,7 +342,7 @@ module Shumway.AVMX {
   }
 
   export function axCheckFilter(sec: AXSecurityDomain, value) {
-    if (!value || !AS.isXMLCollection(value, sec)) {
+    if (!value || !AS.isXMLCollection(sec, value)) {
       var className = value && value.axClass ? value.axClass.name.toFQNString(false) : '[unknown]';
       sec.throwError('TypeError', Errors.FilterError, className);
     }
@@ -439,7 +439,7 @@ module Shumway.AVMX {
     if (typeof l === "string" || typeof r === "string") {
       return String(l) + String(r);
     }
-    if (AS.isXMLCollection(l, sec) && AS.isXMLCollection(r, sec)) {
+    if (AS.isXMLCollection(sec, l) && AS.isXMLCollection(sec, r)) {
       return AS.ASXMLList.addXML(l, r);
     }
     return l + r;

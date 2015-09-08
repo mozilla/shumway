@@ -30,10 +30,15 @@ module Shumway.AVMX.AS {
   import assert = Shumway.Debug.assert;
 
   export module flash.net {
+    export enum AMFEncoding {
+      AMF0 = 0,
+      AMF3 = 3,
+      DEFAULT = 3
+    }
     export class ObjectEncoding extends ASObject {
-      public static AMF0 = 0;
-      public static AMF3 = 3;
-      public static DEFAULT = ObjectEncoding.AMF3;
+      public static AMF0 = AMFEncoding.AMF0;
+      public static AMF3 = AMFEncoding.AMF3;
+      public static DEFAULT = AMFEncoding.DEFAULT;
 
       static get dynamicPropertyWriter(): any /* flash.net.IDynamicPropertyWriter */ {
         notImplemented("public flash.net.ObjectEncoding::get dynamicPropertyWriter");
