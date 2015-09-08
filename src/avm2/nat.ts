@@ -1255,6 +1255,9 @@ module Shumway.AVMX.AS {
     }
 
     get length(): number {
+      if (this.value.methodInfo) {
+        return this.value.methodInfo.parameters.length;
+      }
       return this.value.length;
     }
 
