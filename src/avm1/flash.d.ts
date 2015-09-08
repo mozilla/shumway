@@ -169,7 +169,8 @@ declare module Shumway.AVMX.AS.flash {
       addChild(child: DisplayObject);
       removeChild(child: DisplayObject);
       addChildAt(child: DisplayObject, index: number);
-      addTimelineObjectAtDepth(child, depth: number);
+      addTimelineObjectAtDepth(child: DisplayObject, depth: number): void;
+      getTimelineObjectAtDepth(depth: number): DisplayObject;
       swapChildren: Function;
       _lookupChildByIndex(index: number, options: LookupChildOptions): DisplayObject;
       _lookupChildByName(name: string, options: LookupChildOptions): DisplayObject;

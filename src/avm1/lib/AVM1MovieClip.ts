@@ -595,10 +595,12 @@ module Shumway.AVM1.Lib {
     }
 
     public setMask(mc:Object) {
-      var nativeObject = this._as3Object;
-      var mask = AVM1Utils.resolveMovieClip(this.context, mc);
+      if (!mc) {
+        return; // mask is not specified
+      }
+      var mask = this.context.resolveTarget(mc);
       if (mask) {
-        nativeObject.mask = <flash.display.InteractiveObject>getAS3Object(mask);
+        this._as3Object.mask = <flash.display.InteractiveObject>getAS3Object(mask);
       }
     }
 
@@ -623,16 +625,26 @@ module Shumway.AVM1.Lib {
       return this._as3Object.stopDrag();
     }
 
-    public swapDepths(target:Object) {
-      var target_mc = AVM1Utils.resolveLevelOrTarget(this.context, target);
-      if (!target_mc) {
-        // Don't swap with non-existent target.
-        return;
-      }
+    public swapDepths(target: any): void {
       var child1 = this._as3Object;
-      var child2 = target_mc._as3Object;
-      if (child1.parent !== child2.parent) {
-        return; // must be the same parent
+      var child2, target_mc;
+      if (typeof target === 'number') {
+        child2 = child1.parent.getTimelineObjectAtDepth(<number>target);
+        if (child2) {
+          // Don't swap if child at depth does not exist.
+          return;
+        }
+        target_mc = getAVM1Object(child2, this.context);
+      } else {
+        var target_mc = this.context.resolveTarget(target);
+        if (!target_mc) {
+          // Don't swap with non-existent target.
+          return;
+        }
+        child2 = target_mc._as3Object;
+        if (child1.parent !== child2.parent) {
+          return; // must be the same parent
+        }
       }
       child1.parent.swapChildren(child1, child2);
       var lower;

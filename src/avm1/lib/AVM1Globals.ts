@@ -309,7 +309,7 @@ module Shumway.AVM1.Lib {
     }
 
     public call(frame) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
+      var nativeTarget = <AVM1MovieClip>this.context.resolveTarget(null);
       var as3Object = <flash.display.MovieClip>getAS3Object(nativeTarget);
       var frameNum = as3Object._getAbsFrameNumber(<any>frame, null);
       if (frameNum === undefined) {
@@ -328,7 +328,7 @@ module Shumway.AVM1.Lib {
 
     public duplicateMovieClip(target, newname, depth) {
       var normalizedDepth = alCoerceNumber(this.context, depth) - DEPTH_OFFSET;
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
+      var nativeTarget = <AVM1MovieClip>this.context.resolveTarget(target);
       nativeTarget.duplicateMovieClip(newname, normalizedDepth, null);
     }
 
@@ -354,8 +354,8 @@ module Shumway.AVM1.Lib {
     }
 
     public gotoAndPlay(scene, frame?) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
-      var as3Object = <flash.display.MovieClip>getAS3Object(nativeTarget);;
+      var nativeTarget = <AVM1MovieClip>this.context.resolveTarget(null);
+      var as3Object = <flash.display.MovieClip>getAS3Object(nativeTarget);
       if (arguments.length < 2) {
         as3Object.gotoAndPlay(arguments[0]);
       } else {
@@ -364,8 +364,8 @@ module Shumway.AVM1.Lib {
     }
 
     public gotoAndStop(scene, frame?) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
-      var as3Object = <flash.display.MovieClip>getAS3Object(nativeTarget);;
+      var nativeTarget = <AVM1MovieClip>this.context.resolveTarget(null);
+      var as3Object = <flash.display.MovieClip>getAS3Object(nativeTarget);
       if (arguments.length < 2) {
         as3Object.gotoAndStop(arguments[0]);
       } else {
@@ -375,7 +375,7 @@ module Shumway.AVM1.Lib {
 
     public ifFrameLoaded(scene, frame?) {
       // ignoring scene parameter ?
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
+      var nativeTarget = <AVM1MovieClip>this.context.resolveTarget(null);
       var frameNum = arguments.length < 2 ? arguments[0] : arguments[1];
       var framesLoaded = nativeTarget.alGet('_framesloaded');
       var totalFrames = nativeTarget.alGet('_totalframes');
@@ -406,7 +406,7 @@ module Shumway.AVM1.Lib {
       if (loadLevel) {
         this.loadMovieNum(url, levelNumber, method);
       } else {
-        var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
+        var nativeTarget = <AVM1MovieClip>this.context.resolveTarget(target);
         nativeTarget.loadMovie(url, method);
       }
     }
@@ -434,12 +434,25 @@ module Shumway.AVM1.Lib {
     }
 
     public loadVariables(url: string, target: any, method: string = ''): void {
-      var nativeTarget = AVM1Utils.resolveTarget(this.context, target);
+      url = alCoerceString(this.context, url);
+      method = alCoerceString(this.context, method);
+
+      var nativeTarget = this.context.resolveTarget(target);
+      if (!nativeTarget) {
+        return; // target was not found
+      }
       this._loadVariables(nativeTarget, url, method);
     }
 
     public loadVariablesNum(url: string, level: number, method: string = ''): void {
-      var nativeTarget = AVM1Utils.resolveLevel(this.context, level);
+      url = alCoerceString(this.context, url);
+      level = alToInteger(this.context, level);
+      method = alCoerceString(this.context, method);
+      
+      var nativeTarget = this.context.resolveLevel(level);
+      if (!nativeTarget) {
+        return; // target was not found
+      }
       this._loadVariables(nativeTarget, url, method);
     }
 
@@ -487,13 +500,13 @@ module Shumway.AVM1.Lib {
     }
 
     public nextFrame() {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
+      var nativeTarget = <AVM1MovieClip>this.context.resolveTarget(null);
       var as3Object = <flash.display.MovieClip>getAS3Object(nativeTarget);
       as3Object.nextFrame();
     }
 
     public nextScene() {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
+      var nativeTarget = <AVM1MovieClip>this.context.resolveTarget(null);
       var as3Object = <flash.display.MovieClip>getAS3Object(nativeTarget);
       as3Object.nextScene();
     }
@@ -503,18 +516,18 @@ module Shumway.AVM1.Lib {
     }
 
     public play() {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
+      var nativeTarget = <AVM1MovieClip>this.context.resolveTarget(null);
       nativeTarget.play();
     }
 
     public prevFrame() {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
+      var nativeTarget = <AVM1MovieClip>this.context.resolveTarget(null);
       var as3Object = <flash.display.MovieClip>getAS3Object(nativeTarget);
       as3Object.prevFrame();
     }
 
     public prevScene() {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
+      var nativeTarget = <AVM1MovieClip>this.context.resolveTarget(null);
       var as3Object = <flash.display.MovieClip>getAS3Object(nativeTarget);
       as3Object.prevScene();
     }
@@ -541,7 +554,7 @@ module Shumway.AVM1.Lib {
     }
 
     public removeMovieClip(target) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
+      var nativeTarget = <AVM1MovieClip>this.context.resolveTarget(target);
       if (!nativeTarget) {
         return;
       }
@@ -549,12 +562,12 @@ module Shumway.AVM1.Lib {
     }
 
     public startDrag(target?, ...args: any[]): void {
-      var mc = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
+      var mc = <AVM1MovieClip>this.context.resolveTarget(target);
       mc.startDrag.apply(mc, args);
     }
 
     public stop() {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context);
+      var nativeTarget = <AVM1MovieClip>this.context.resolveTarget(null);
       nativeTarget.stop();
     }
     public stopAllSounds() {
@@ -570,10 +583,6 @@ module Shumway.AVM1.Lib {
     }
     public substring(value, index, count) {
       return this.mbsubstring(value, index, count); // ASCII Only?
-    }
-    public targetPath(target) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
-      return nativeTarget._target;
     }
     public toggleHighQuality() {
       // flash.display.Stage.quality
@@ -598,7 +607,10 @@ module Shumway.AVM1.Lib {
     }
 
     public unloadMovie(target) {
-      var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>(this.context, target);
+      var nativeTarget = <AVM1MovieClip>this.context.resolveTarget(target);
+      if (!nativeTarget) {
+        return; // target was not found
+      }
       nativeTarget.unloadMovie();
     }
     public unloadMovieNum(level: number) {

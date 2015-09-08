@@ -36,7 +36,7 @@ module Shumway.AVM1.Lib {
     private _linkageID: string;
 
     public avm1Constructor(target_mc) {
-      this._target = AVM1Utils.resolveTarget(this.context, target_mc);
+      this._target = this.context.resolveTarget(target_mc);
       this._sound = null;
       this._channel = null;
       this._linkageID = null;
