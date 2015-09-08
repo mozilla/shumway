@@ -45,7 +45,7 @@ module Shumway.AVM1.Lib {
           return false;
         }
       } else {
-        target_mc = AVM1Utils.resolveTarget(this.context, target);
+        target_mc = this.context.resolveTarget(target);
         if (!target_mc) {
           return false; // target was not found -- doing nothing
         }
@@ -93,7 +93,7 @@ module Shumway.AVM1.Lib {
         var avm1LevelHolder = this.context.getAVM1LevelsHolder(null);
         avm1LevelHolder._deleteRoot(level);
       } else {
-        target_mc = target ? AVM1Utils.resolveTarget(this.context, target) : undefined;
+        target_mc = target ? this.context.resolveTarget(target) : undefined;
         if (!target_mc) {
           return false; // target was not found -- doing nothing
         }

@@ -633,28 +633,6 @@ module Shumway.AVM1.Lib {
     }
   }
 
-  export class AVM1Utils {
-    static resolveTarget<T extends IAVM1SymbolBase>(context: AVM1Context, target_mc: any = undefined): any {
-      return context.resolveTarget(target_mc);
-    }
-
-    // Temporary solution as suggested by Yury. Will be refactored soon.
-    static resolveMovieClip<T extends IAVM1SymbolBase>(context: AVM1Context, target: any = undefined): any {
-      return target ? context.resolveTarget(target) : undefined;
-    }
-
-    static resolveLevel(context: AVM1Context, level: number): AVM1MovieClip {
-      level = +level;
-      return context.resolveLevel(level);
-    }
-
-    static resolveLevelOrTarget(context: AVM1Context, target: any): AVM1MovieClip {
-      return typeof target === 'number' ?
-             <AVM1MovieClip>context.resolveLevel(target) :
-             context.resolveTarget(target);
-    }
-  }
-
   function createAVM1NativeObject(ctor, nativeObject: flash.display.DisplayObject, context: AVM1Context) {
     // We need to walk on __proto__ to find right ctor.prototype.
     var template;
