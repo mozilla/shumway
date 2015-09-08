@@ -776,6 +776,10 @@ module Shumway.AVMX.AS.flash.display {
 
       var avm1Movie = new this.sec.flash.display.AVM1Movie();
       avm1Movie._setRoot(0, root);
+
+      release || Debug.assert(!avm1Context.levelsContainer, "One levels container per context");
+      avm1Context.levelsContainer = avm1Movie;
+
       return avm1Movie;
     }
   }

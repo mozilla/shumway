@@ -67,7 +67,7 @@ module Shumway.AVM1.Lib {
         this._target = getAVM1Object(newChild, this.context);
 
         if (loadLevel) {
-          var avm1LevelHolder = this.context.getAVM1LevelsHolder(null);
+          var avm1LevelHolder = this.context.levelsContainer;
           avm1LevelHolder._setRoot(level, newChild);
         } else {
           // TODO fix newChild name to match target_mc
@@ -90,7 +90,7 @@ module Shumway.AVM1.Lib {
           release || Debug.notImplemented('MovieClipLoader.unloadClip at _level0');
           return false;
         }
-        var avm1LevelHolder = this.context.getAVM1LevelsHolder(null);
+        var avm1LevelHolder = this.context.levelsContainer;
         avm1LevelHolder._deleteRoot(level);
       } else {
         target_mc = target ? this.context.resolveTarget(target) : undefined;

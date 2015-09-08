@@ -26,6 +26,7 @@ declare module Shumway.AVM1 {
   }
   export class AVM1Context {
     actionsDataFactory: ActionsDataFactory;
+    levelsContainer: flash.display.AVM1Movie;
     static create(loaderInfo: flash.display.LoaderInfo): AVM1Context;
     addAsset(className: string, symbolId: number, symbolProps): void;
     executeActions(actionsData: AVM1ActionsData, scopeObj): void;
