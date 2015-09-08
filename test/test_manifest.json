@@ -497,5 +497,10 @@
       "frames": [1],
       "swf": "swfs/avm1/duplicateMovieClip/duplicateMovieClip.swf",
       "type": "eq"
+    },
+    {  "id": "gradient-transform",
+      "frames": [1],
+      "swf": "swfs/gradientTransform.swf",
+      "type": "eq"
     }
 ]
