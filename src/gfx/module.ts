@@ -515,15 +515,22 @@ module Shumway.GFX {
         var hasStyleTransformation = !!this.strokeStyle._transform;
         if (supportsStyle && hasStyleTransformation && path instanceof Path2D) {
           var m = this.strokeStyle._transform;
-          var i = m.inverse();
+          var i;
+          try {
+            i = m.inverse();
+          } catch (e) {
+            i = m = Geometry.Matrix.createIdentitySVGMatrix();
+          }
           // Transform the context by the style transform ...
           this.transform(m.a, m.b, m.c, m.d, m.e, m.f);
           // transform the path by the inverse of the style transform ...
           var transformedPath = new Path2D();
           transformedPath.addPath(path, i);
-          // draw the transformed path, which should render it in its original position but with a transformed style.
+          // Scale the lineWidth down since it will be scaled up by the current transform.
           var oldLineWidth = this.lineWidth;
-          this.lineWidth *= (i.a + i.d) / 2; // Scale the lineWidth down since it will be scaled up by the current transform.
+          this.lineWidth *= Math.sqrt((i.a + i.c) * (i.a + i.c) +
+                            (i.d + i.b) * (i.d + i.b)) * Math.SQRT1_2;
+          // draw the transformed path, which should render it in its original position but with a transformed style.
           originalStroke.call(this, transformedPath);
           this.transform(i.a, i.b, i.c, i.d, i.e, i.f);
           this.lineWidth = oldLineWidth;

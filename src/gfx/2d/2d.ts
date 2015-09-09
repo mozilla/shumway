@@ -620,7 +620,7 @@ module Shumway.GFX.Canvas2D {
             var transform = child.getTransform();
             var childState = state.transform(transform);
             childState.toggleFlags(RenderFlags.ImageSmoothing, child.hasFlags(NodeFlags.ImageSmoothing));
-            if (child.clip >= 0) {
+            if (child.clip > 0) {
               clips = clips || new Uint8Array(children.length); // MEMORY: Don't allocate here.
               clips[child.clip + i] ++;
               var clipState = childState.clone();

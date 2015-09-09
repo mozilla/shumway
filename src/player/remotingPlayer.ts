@@ -246,7 +246,7 @@ module Shumway.Remoting.Player {
      * Writes the number of display objects this display object clips.
      */
     writeClippedObjectsCount(displayObject: DisplayObject) {
-      if (displayObject._clipDepth >= 0 && displayObject._parent) {
+      if (displayObject._clipDepth > 0 && displayObject._parent) {
         // Clips in GFX land don't use absolute clip depth numbers. Instead we need to encode
         // the number of siblings you want to clip. If children are removed or added, GFX clip
         // values need to be recomputed.

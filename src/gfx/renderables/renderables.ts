@@ -644,7 +644,8 @@ module Shumway.GFX {
                 public strokeProperties: StrokeProperties)
     {
       this.path = new Path2D();
-      release || assert ((type === PathType.Stroke) === !!strokeProperties);
+      release || assert ((type === PathType.Stroke ||
+                          type === PathType.StrokeFill) === !!strokeProperties);
     }
   }
 
@@ -871,16 +872,19 @@ module Shumway.GFX {
             var jointsStyle: string = RenderableShape.LINE_JOINTS_STYLES[styles.readByte()];
             var strokeProperties = new StrokeProperties(coordinates[coordinatesIndex++]/20,
                                                         scaleMode, capsStyle, jointsStyle, styles.readByte());
-            strokePath = this._createPath(PathType.Stroke, color, false, strokeProperties, x, y);
-            break;
-          case PathCommand.LineStyleGradient:
-            strokePath = this._createPath(PathType.StrokeFill, this._readGradient(styles, context),
-                                          false, null, x, y);
-            break;
-          case PathCommand.LineStyleBitmap:
-            var bitmapStyle = this._readBitmap(styles, context);
-            strokePath = this._createPath(PathType.StrokeFill, bitmapStyle.style,
-                                          bitmapStyle.smoothImage, null, x, y);
+            // Look ahead at the following command to determine if this is a complex stroke style.
+            if (commands[commandIndex + 1] === PathCommand.LineStyleGradient) {
+              commandIndex++;
+              strokePath = this._createPath(PathType.StrokeFill, this._readGradient(styles, context),
+                                            false, strokeProperties, x, y);
+            } else if (commands[commandIndex + 1] === PathCommand.LineStyleGradient) {
+              commandIndex++;
+              var bitmapStyle = this._readBitmap(styles, context);
+              strokePath = this._createPath(PathType.StrokeFill, bitmapStyle.style,
+                                            bitmapStyle.smoothImage, strokeProperties, x, y);
+            } else {
+              strokePath = this._createPath(PathType.Stroke, color, false, strokeProperties, x, y);
+            }
             break;
           case PathCommand.LineEnd:
             strokePath = null;
@@ -1118,7 +1122,9 @@ module Shumway.GFX {
             var jointsStyle: string = RenderableShape.LINE_JOINTS_STYLES[styles.readByte()];
             var strokeProperties = new StrokeProperties(
               width, scaleMode, capsStyle, jointsStyle, styles.readByte());
-            strokePath = this._createMorphPath(PathType.Stroke, ratio, color, false, strokeProperties, x, y);
+            if (strokeProperties.thickness > 0) {
+              strokePath = this._createMorphPath(PathType.Stroke, ratio, color, false, strokeProperties, x, y); 
+            }
             break;
           case PathCommand.LineStyleGradient:
             var gradientStyle = this._readMorphGradient(styles, morphStyles, ratio, context);
