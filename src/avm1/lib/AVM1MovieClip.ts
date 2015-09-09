@@ -96,7 +96,11 @@ module Shumway.AVM1.Lib {
 
     public get __targetPath() {
       var target = this.get_target();
-      var prefix = '_level0'; // TODO use needed level number here
+      var as3Root = this._as3Object.root;
+      release || Debug.assert(as3Root);
+      var level = this.context.levelsContainer._getLevelForRoot(as3Root);
+      release || Debug.assert(level >= 0);
+      var prefix = '_level' + level;
       return target != '/' ? prefix + target.replace(/\//g, '.') : prefix;
     }
 
@@ -525,21 +529,15 @@ module Shumway.AVM1.Lib {
     }
 
     public loadMovie(url: string, method: string) {
-      var loader: flash.display.Loader = new this.context.sec.flash.display.Loader();
-      var request: flash.net.URLRequest = new this.context.sec.flash.net.URLRequest(url);
-      if (method) {
-        request.method = method;
-      }
-      loader.load(request);
-      function completeHandler(event: flash.events.Event):void {
-        loader.removeEventListener(flash.events.Event.COMPLETE, completeHandler);
+      var loaderHelper = new AVM1LoaderHelper(this.context);
+      loaderHelper.load(url, method).then(function () {
+        var newChild = loaderHelper.content;
+        // TODO fix newChild name to match target_mc
         var parent: flash.display.MovieClip = this._as3Object.parent;
-        var depth = parent.getChildIndex(this._as3Object);
+        var depth = this._as3Object._depth;
         parent.removeChild(this._as3Object);
-        parent.addChildAt(loader.content, depth);
-      }
-
-      loader.addEventListener(flash.events.Event.COMPLETE, completeHandler);
+        parent.addTimelineObjectAtDepth(newChild, depth);
+      }.bind(this));
     }
 
     public loadVariables(url: string, method?: string) {
@@ -597,10 +595,14 @@ module Shumway.AVM1.Lib {
     }
 
     public setMask(mc:Object) {
-      var nativeObject = this._as3Object;
-      var mask = AVM1Utils.resolveMovieClip(this.context, mc);
+      if (mc == null) {
+        // Cancel a mask.
+        this._as3Object.mask = null;
+        return;
+      }
+      var mask = this.context.resolveTarget(mc);
       if (mask) {
-        nativeObject.mask = <flash.display.InteractiveObject>getAS3Object(mask);
+        this._as3Object.mask = <flash.display.InteractiveObject>getAS3Object(mask);
       }
     }
 
@@ -625,16 +627,26 @@ module Shumway.AVM1.Lib {
       return this._as3Object.stopDrag();
     }
 
-    public swapDepths(target:Object) {
-      var target_mc = AVM1Utils.resolveLevelOrTarget(this.context, target);
-      if (!target_mc) {
-        // Don't swap with non-existent target.
-        return;
-      }
+    public swapDepths(target: any): void {
       var child1 = this._as3Object;
-      var child2 = target_mc._as3Object;
-      if (child1.parent !== child2.parent) {
-        return; // must be the same parent
+      var child2, target_mc;
+      if (typeof target === 'number') {
+        child2 = child1.parent.getTimelineObjectAtDepth(<number>target);
+        if (child2) {
+          // Don't swap if child at depth does not exist.
+          return;
+        }
+        target_mc = getAVM1Object(child2, this.context);
+      } else {
+        var target_mc = this.context.resolveTarget(target);
+        if (!target_mc) {
+          // Don't swap with non-existent target.
+          return;
+        }
+        child2 = target_mc._as3Object;
+        if (child1.parent !== child2.parent) {
+          return; // must be the same parent
+        }
       }
       child1.parent.swapChildren(child1, child2);
       var lower;
@@ -683,10 +695,7 @@ module Shumway.AVM1.Lib {
     public unloadMovie() {
       var nativeObject = this._as3Object;
       // TODO remove movie clip content
-      var loader = nativeObject.loaderInfo.loader;
-      if (loader.parent) {
-        loader.parent.removeChild(loader);
-      }
+      nativeObject.parent.removeChild(nativeObject);
       nativeObject.stop();
     }
 

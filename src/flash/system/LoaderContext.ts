@@ -32,6 +32,8 @@ module Shumway.AVMX.AS.flash.system {
     private $Bgparameters: ASObject;
     private $BgimageDecodingPolicy: string;
 
+    _avm1Context: AVM1.AVM1Context;
+
     constructor(checkPolicyFile: boolean = false,
                 applicationDomain: flash.system.ApplicationDomain = null,
                 securityDomain: flash.system.SecurityDomain = null)
@@ -41,6 +43,8 @@ module Shumway.AVMX.AS.flash.system {
       this.$BgapplicationDomain = applicationDomain;
       this.$BgsecurityDomain = securityDomain;
       this.$BgimageDecodingPolicy = flash.system.ImageDecodingPolicy.ON_DEMAND;
+
+      this._avm1Context = null;
     }
 
     public get imageDecodingPolicy(): string {

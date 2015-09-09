@@ -62,6 +62,7 @@ interface ISecurityDomain {
     }
     system: {
       Capabilities: typeof flashPackage.system.Capabilities;
+      LoaderContext: typeof flashPackage.system.LoaderContext;
       Security: typeof flashPackage.system.Security;
       fscommand: typeof flashPackage.system.fscommand;
     }
@@ -168,7 +169,8 @@ declare module Shumway.AVMX.AS.flash {
       addChild(child: DisplayObject);
       removeChild(child: DisplayObject);
       addChildAt(child: DisplayObject, index: number);
-      addTimelineObjectAtDepth(child, depth: number);
+      addTimelineObjectAtDepth(child: DisplayObject, depth: number): void;
+      getTimelineObjectAtDepth(depth: number): DisplayObject;
       swapChildren: Function;
       _lookupChildByIndex(index: number, options: LookupChildOptions): DisplayObject;
       _lookupChildByName(name: string, options: LookupChildOptions): DisplayObject;
@@ -207,7 +209,7 @@ declare module Shumway.AVMX.AS.flash {
       content: DisplayObject;
       _content: DisplayObject; // TODO remove
       contentLoaderInfo: LoaderInfo;
-      load(request: flash.net.URLRequest);
+      load(request: flash.net.URLRequest, context?: flash.system.LoaderContext): void;
       static runtimeStartTime: number;
     }
     class LoaderInfo extends events.EventDispatcher {
@@ -219,7 +221,12 @@ declare module Shumway.AVMX.AS.flash {
       url: string;
       getSymbolById(id: number): any;
     }
-    class AVM1Movie extends DisplayObject {}
+    class AVM1Movie extends DisplayObject {
+      _getLevelForRoot(root: DisplayObject): number;
+      _getRootForLevel(level: number): DisplayObject;
+      _addRoot(level: number, root: DisplayObject): void;
+      _removeRoot(level: number): void;
+    }
     class BitmapData extends ASObject {
       static axClass: typeof BitmapData;
 
@@ -457,6 +464,9 @@ declare module Shumway.AVMX.AS.flash {
       static axClass: typeof Capabilities;
 
       static version: string;
+    }
+    class LoaderContext extends ASObject {
+      _avm1Context: Shumway.AVM1.AVM1Context;
     }
     class Security extends ASObject {
       static axClass: typeof Security;

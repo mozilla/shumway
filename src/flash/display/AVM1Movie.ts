@@ -44,19 +44,23 @@ module Shumway.AVMX.AS.flash.display {
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
-    constructor(content: MovieClip) {
+    constructor(level0: DisplayObject) {
       super();
+      this._content = this.sec.flash.display.Sprite.axClass.axConstruct();
       this._children = [];
-      this._children[0] = this._content = content;
+      this._children[0] = this._content;
       // Pretend we're a DisplayObjectContainer and can have children. See comment at the top.
-      content._setParent(<any>this, 0);
+      this._content._setParent(<any>this, 0);
       this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyChildren);
       this._invalidateFillAndLineBounds(true, true);
       this.sec.flash.display.DisplayObject.axClass._advancableInstances.push(this);
       this._constructed = false;
+
+      // Setting _level0 root.
+      this._content.addTimelineObjectAtDepth(level0, 0);
     }
 
-    private _content: MovieClip;
+    private _content: Sprite;
     private _constructed: boolean;
 
     call(functionName: string): any {
@@ -68,7 +72,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     _addFrame(frame: Shumway.SWF.SWFFrame) {
-      this._content._addFrame(frame);
+      (<MovieClip>this._content._children[0])._addFrame(frame);
     }
 
     _initFrame(advance: boolean): void {
@@ -77,11 +81,13 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     _constructFrame(): void {
+      // On custructFrame we need to fully construct the roots container.
+      // Once constructed, its children (which are IAdvancable type) will be
+      // receiving their own _constructFrame events.
       if (!this._constructed) {
         this._constructed = true;
-        DisplayObjectContainer.prototype._constructChildren.call(this);
+        this._content._constructChildren();
       }
-      this._content._constructFrame();
     }
 
     _enqueueFrameScripts() {
@@ -121,6 +127,31 @@ module Shumway.AVMX.AS.flash.display {
       // Always apply the SimpleButton's matrix.
       this._getConcatenatedMatrix().transformBounds(childBounds);
       bounds.unionInPlace(childBounds);
+    }
+
+    _getLevelForRoot(root: DisplayObject): number {
+      release || Debug.assert(root.parent === this._content);
+      return root._depth;
+    }
+
+    _getRootForLevel(level: number): DisplayObject  {
+      return this._content.getTimelineObjectAtDepth(level);
+    }
+
+    _addRoot(level: number, root: DisplayObject): void {
+      release || Debug.assert(this.sec.flash.display.MovieClip.axClass.axIsType(root));
+      this._removeRoot(level);
+      release || Debug.assert(!this._content.getTimelineObjectAtDepth(level));
+      this._content.addTimelineObjectAtDepth(root, level);
+    }
+
+    _removeRoot(level: number): boolean {
+      var root = this._content.getTimelineObjectAtDepth(level);
+      if (!root) {
+        return false;
+      }
+      this._content.removeChild(root);
+      return true;
     }
   }
 }

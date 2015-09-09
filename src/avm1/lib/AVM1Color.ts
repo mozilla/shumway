@@ -31,7 +31,7 @@ module Shumway.AVM1.Lib {
     private _targetAS3Object: flash.display.InteractiveObject;
 
     public avm1Constructor(target_mc) {
-      this._target = AVM1Utils.resolveTarget(this.context, target_mc);
+      this._target = this.context.resolveTarget(target_mc);
       this._targetAS3Object = <flash.display.InteractiveObject>getAS3Object(this._target);
     }
 
