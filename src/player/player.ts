@@ -473,7 +473,7 @@ module Shumway.Player {
       serializer.writeEOF();
 
       enterTimeline("sendUpdates");
-      this._gfxService.update(serializer.output, serializer.outputAssets);
+      this._gfxService.updateAndGet(serializer.output, serializer.outputAssets);
       leaveTimeline("sendUpdates");
     }
 
