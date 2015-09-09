@@ -528,7 +528,8 @@ module Shumway.GFX {
           transformedPath.addPath(path, i);
           // Scale the lineWidth down since it will be scaled up by the current transform.
           var oldLineWidth = this.lineWidth;
-          this.lineWidth *= (i.a + i.d) / 2;
+          this.lineWidth *= Math.sqrt((i.a + i.c) * (i.a + i.c) +
+                            (i.d + i.b) * (i.d + i.b)) * Math.SQRT1_2;
           // draw the transformed path, which should render it in its original position but with a transformed style.
           originalStroke.call(this, transformedPath);
           this.transform(i.a, i.b, i.c, i.d, i.e, i.f);
