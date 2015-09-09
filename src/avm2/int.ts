@@ -145,6 +145,18 @@ module Shumway.AVMX {
         var rn = p.getType();
         if (rn && !rn.isAnyName()) {
           var type = parentScope.getScopeProperty(rn, true, false);
+          if (!type) {
+            // During class initialization the class' constructor isn't in scope and can't be
+            // resolved as a scope property: trying to do so yields `null`.
+            // However, using it as a constructor parameter type *does* work, and correctly
+            // applies coercion to the constructor. It's unclear why and how this works in
+            // Tamarin, but since it does work, we check for this scenario here and work around it.
+            if ('axClass' in receiver && (<any>receiver).axClass.name.matches(rn)) {
+              type = (<any>receiver).axClass;
+            } else {
+              continue;
+            }
+          }
           if (!release && interpreterWriter) {
             interpreterWriter.writeLn("Coercing argument to type " +
                                       (type.axClass ? type.axClass.name.toFQNString(false) : type));
