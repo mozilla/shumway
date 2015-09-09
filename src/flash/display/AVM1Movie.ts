@@ -44,7 +44,7 @@ module Shumway.AVMX.AS.flash.display {
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
-    constructor() {
+    constructor(level0: DisplayObject) {
       super();
       this._content = this.sec.flash.display.Sprite.axClass.axConstruct();
       this._children = [];
@@ -55,6 +55,9 @@ module Shumway.AVMX.AS.flash.display {
       this._invalidateFillAndLineBounds(true, true);
       this.sec.flash.display.DisplayObject.axClass._advancableInstances.push(this);
       this._constructed = false;
+
+      // Setting _level0 root.
+      this._content.addTimelineObjectAtDepth(level0, 0);
     }
 
     private _content: Sprite;
@@ -78,6 +81,9 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     _constructFrame(): void {
+      // On custructFrame we need to fully construct the roots container.
+      // Once constructed, its children (which are IAdvancable type) will be
+      // receiving their own _constructFrame events.
       if (!this._constructed) {
         this._constructed = true;
         this._content._constructChildren();
@@ -128,30 +134,24 @@ module Shumway.AVMX.AS.flash.display {
       return root._depth;
     }
 
-    _getRoot(level: number): DisplayObject  {
-      if (level === 0 && this._content.numChildren === 1) {
-        var level0 = this._content._children[0];
-        if (level0._depth === level) {
-          return level0;
-        }
-      }
+    _getRootForLevel(level: number): DisplayObject  {
       return this._content.getTimelineObjectAtDepth(level);
     }
 
-    _setRoot(level: number, root: DisplayObject): void {
+    _addRoot(level: number, root: DisplayObject): void {
       release || Debug.assert(this.sec.flash.display.MovieClip.axClass.axIsType(root));
-      this._deleteRoot(level);
+      this._removeRoot(level);
       release || Debug.assert(!this._content.getTimelineObjectAtDepth(level));
       this._content.addTimelineObjectAtDepth(root, level);
     }
 
-     _deleteRoot(level: number): boolean {
-       var root = this._content.getTimelineObjectAtDepth(level);
-       if (!root) {
-         return false;
-       }
-       this._content.removeChild(root);
-       return true;
-     }
+    _removeRoot(level: number): boolean {
+      var root = this._content.getTimelineObjectAtDepth(level);
+      if (!root) {
+        return false;
+      }
+      this._content.removeChild(root);
+      return true;
+    }
   }
 }

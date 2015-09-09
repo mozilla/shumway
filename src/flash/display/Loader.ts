@@ -774,9 +774,7 @@ module Shumway.AVMX.AS.flash.display {
       var parameters = contentLoaderInfo._parameters;
       avm1MovieClip.setParameters(parameters);
 
-      var avm1Movie = new this.sec.flash.display.AVM1Movie();
-      avm1Movie._setRoot(0, root);
-
+      var avm1Movie = new this.sec.flash.display.AVM1Movie(root);
       release || Debug.assert(!avm1Context.levelsContainer, "One levels container per context");
       avm1Context.levelsContainer = avm1Movie;
 

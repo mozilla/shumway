@@ -68,7 +68,7 @@ module Shumway.AVM1.Lib {
 
         if (loadLevel) {
           var avm1LevelHolder = this.context.levelsContainer;
-          avm1LevelHolder._setRoot(level, newChild);
+          avm1LevelHolder._addRoot(level, newChild);
         } else {
           // TODO fix newChild name to match target_mc
           var parent = target_mc._as3Object.parent;
@@ -81,9 +81,13 @@ module Shumway.AVM1.Lib {
     }
 
     public unloadClip(target):Boolean {
+      if (!this._loaderHelper) {
+        return false; // nothing was loaded by this loader
+      }
       var loadLevel: boolean = typeof target === 'number';
       var level: number;
       var target_mc: AVM1MovieClip;
+      var originalLoader = this._loaderHelper.loader;
       if (loadLevel) {
         level = <number>target;
         if (level === 0) {
@@ -91,13 +95,19 @@ module Shumway.AVM1.Lib {
           return false;
         }
         var avm1LevelHolder = this.context.levelsContainer;
-        avm1LevelHolder._deleteRoot(level);
+        if (avm1LevelHolder._getRootForLevel(level) !== originalLoader.content) {
+          return false; // did not load this root
+        }
+        avm1LevelHolder._removeRoot(level);
       } else {
         target_mc = target ? this.context.resolveTarget(target) : undefined;
         if (!target_mc) {
           return false; // target was not found -- doing nothing
         }
-       // target_mc.unloadMovie();
+        if (target_mc._as3Object !== originalLoader.content) {
+          return false; // did not load this movie clip
+        }
+        target_mc.unloadMovie();
       }
       this._target = null;
       this._loaderHelper = null;

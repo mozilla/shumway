@@ -209,7 +209,7 @@ module Shumway.AVM1 {
 
     public resolveLevel(level: number): AVM1MovieClip {
       release || Debug.assert(typeof level === 'number');
-      var as3Root = this.levelsContainer._getRoot(level);
+      var as3Root = this.levelsContainer._getRootForLevel(level);
       if (!as3Root) {
         this.utils.warn('Unable to resolve level ' + level + ' root');
         return undefined;

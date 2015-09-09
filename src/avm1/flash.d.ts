@@ -223,9 +223,9 @@ declare module Shumway.AVMX.AS.flash {
     }
     class AVM1Movie extends DisplayObject {
       _getLevelForRoot(root: DisplayObject): number;
-      _getRoot(level: number): DisplayObject;
-      _setRoot(level: number, root: DisplayObject): void;
-      _deleteRoot(level: number): void;
+      _getRootForLevel(level: number): DisplayObject;
+      _addRoot(level: number, root: DisplayObject): void;
+      _removeRoot(level: number): void;
     }
     class BitmapData extends ASObject {
       static axClass: typeof BitmapData;

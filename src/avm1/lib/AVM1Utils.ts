@@ -131,6 +131,8 @@ module Shumway.AVM1.Lib {
 
       var loaderInfo = loader.contentLoaderInfo;
       var result = new PromiseWrapper<flash.display.DisplayObject>();
+      // Waiting for content in the progress event -- the result promise will be resolved
+      // as soon as loader's content will be set to non-empty value.
       var progressEventHandler = function (e: flash.events.ProgressEvent): void {
         if (!loader._content) {
           return;
