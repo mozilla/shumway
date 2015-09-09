@@ -28,7 +28,7 @@ module Shumway.AVM1 {
 
   // ActionScript properties flags.
   // DONT_ENUM, DONT_DELETE, and READ_ONLY are mapped to the the ASSetPropFlags.
-  export enum AVM1PropertyFlags {
+  export const enum AVM1PropertyFlags {
     DONT_ENUM = 1,
     DONT_DELETE = 2,
     READ_ONLY = 4,
@@ -37,7 +37,7 @@ module Shumway.AVM1 {
     ASSETPROP_MASK = DONT_DELETE | DONT_ENUM | READ_ONLY
   }
 
-  export enum AVM1DefaultValueHint {
+  export const enum AVM1DefaultValueHint {
     NUMBER,
     STRING
   }

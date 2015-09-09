@@ -19,7 +19,7 @@ module Shumway.AVMX.AS {
   import notImplemented = Shumway.Debug.notImplemented;
   import axCoerceString = Shumway.AVMX.axCoerceString;
 
-  enum DescribeTypeFlags {
+  const enum DescribeTypeFlags {
     HIDE_NSURI_METHODS  = 0x0001,
     INCLUDE_BASES       = 0x0002,
     INCLUDE_INTERFACES  = 0x0004,

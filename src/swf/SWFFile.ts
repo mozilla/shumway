@@ -30,8 +30,9 @@ module Shumway.SWF {
   import FontDefinitionTags = Parser.FontDefinitionTags;
   import ImageDefinition = Parser.ImageDefinition;
   import ControlTags = Parser.ControlTags;
+  import getSwfTagCodeName = Parser.getSwfTagCodeName;
 
-  export enum CompressionMethod {
+  export const enum CompressionMethod {
     None,
     Deflate,
     LZMA
@@ -181,7 +182,7 @@ module Shumway.SWF {
     }
 
     getParsedTag(unparsed: UnparsedTag): any {
-      SWF.enterTimeline('Parse tag ' + SwfTagCode[unparsed.tagCode]);
+      SWF.enterTimeline('Parse tag ' + getSwfTagCodeName(unparsed.tagCode));
       this._dataStream.align();
       this._dataStream.pos = unparsed.byteOffset;
       var handler = Parser.LowLevel.tagHandlers[unparsed.tagCode];
@@ -339,7 +340,7 @@ module Shumway.SWF {
       var tagCode = tag.tagCode;
       var tagLength = tag.byteLength;
       if (!release && traceLevel.value > 1) {
-        console.info("Scanning tag " + SwfTagCode[tagCode] + " (start: " + byteOffset +
+        console.info("Scanning tag " + getSwfTagCodeName(tagCode) + " (start: " + byteOffset +
                      ", end: " + (byteOffset + tagLength) + ")");
       }
 
@@ -504,7 +505,7 @@ module Shumway.SWF {
         case SwfTagCode.CODE_DEFINE_SCALING_GRID:
         case SwfTagCode.CODE_IMPORT_ASSETS:
         case SwfTagCode.CODE_IMPORT_ASSETS2:
-          Debug.warning('Unsupported tag encountered ' + tagCode + ': ' + SwfTagCode[tagCode]);
+          Debug.warning('Unsupported tag encountered ' + tagCode + ': ' + getSwfTagCodeName(tagCode));
           this.jumpToNextTag(tagLength);
           break;
         // These tags should be supported at some point, but for now, we ignore them.
@@ -541,7 +542,7 @@ module Shumway.SWF {
         case SwfTagCode.CODE_GENERATE_FRAME:
         case SwfTagCode.CODE_STOP_SOUND:
         case SwfTagCode.CODE_SYNC_FRAME:
-          console.info("Ignored tag (these shouldn't occur) " + tagCode + ': ' + SwfTagCode[tagCode]);
+          console.info("Ignored tag (these shouldn't occur) " + tagCode + ': ' + getSwfTagCodeName(tagCode));
           this.jumpToNextTag(tagLength);
           break;
         default:
@@ -549,7 +550,7 @@ module Shumway.SWF {
             Debug.warning("Encountered undefined tag " + tagCode + ", probably used for AVM1 " +
                           "obfuscation. See http://ijs.mtasa.com/files/swfdecrypt.cpp.");
           } else {
-            Debug.warning('Tag not handled by the parser: ' + tagCode + ': ' + SwfTagCode[tagCode]);
+            Debug.warning('Tag not handled by the parser: ' + tagCode + ': ' + getSwfTagCodeName(tagCode));
           }
           this.jumpToNextTag(tagLength);
       }
@@ -652,7 +653,7 @@ module Shumway.SWF {
 
     private emitTagSlopWarning(tag: UnparsedTag, tagEnd: number) {
       var consumedBytes = this._dataStream.pos - tag.byteOffset;
-      Debug.warning('Scanning ' + SwfTagCode[tag.tagCode] + ' at offset ' + tag.byteOffset +
+      Debug.warning('Scanning ' + getSwfTagCodeName(tag.tagCode) + ' at offset ' + tag.byteOffset +
                     ' consumed ' + consumedBytes + ' of ' + tag.byteLength + ' bytes. (' +
                     (tag.byteLength - consumedBytes) + ' left)');
       this._dataStream.pos = tagEnd;
@@ -717,7 +718,7 @@ module Shumway.SWF {
       var symbol = new DictionaryEntry(id, tagCode, byteOffset, tagLength);
       this.dictionary[id] = symbol;
       if (!release && traceLevel.value > 0) {
-        console.info("Registering symbol " + id + " of type " + SwfTagCode[tagCode]);
+        console.info("Registering symbol " + id + " of type " + getSwfTagCodeName(tagCode));
       }
       return symbol;
     }
@@ -774,7 +775,7 @@ module Shumway.SWF {
                                                     this.env);
       if (!release && traceLevel.value > 0) {
         console.info("Decoding embedded image " + definition.id + " of type " +
-                     SwfTagCode[unparsed.tagCode] + " (start: " + unparsed.byteOffset +
+                     getSwfTagCodeName(unparsed.tagCode) + " (start: " + unparsed.byteOffset +
                      ", end: " + (unparsed.byteOffset + unparsed.byteLength) + ")");
       }
       this.eagerlyParsedSymbolsMap[symbol.id] = symbol;

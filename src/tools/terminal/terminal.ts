@@ -89,7 +89,7 @@ module Shumway.Tools.Terminal {
     constructor(canvas: HTMLCanvasElement) {
       this.canvas = canvas;
       this.canvas.focus();
-      this.context = canvas.getContext('2d', { original: true });
+      this.context = <any>canvas.getContext('2d', { original: true });
       this.context.fillStyle = "#FFFFFF";
       this.fontSize = 10;
       this.lineIndex = 0;

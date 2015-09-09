@@ -58,10 +58,10 @@ module Shumway.Tools.Profiler.TraceLogger {
       var buffer = this._buffer;
       do {
         var index = id * Thread.ITEM_SIZE;
-        var start = data.getUint32(index + Offsets.START_HI) * 4294967295 + data.getUint32(index + Offsets.START_LO);
-        var stop = data.getUint32(index + Offsets.STOP_HI) * 4294967295 + data.getUint32(index + Offsets.STOP_LO);
-        var textId = data.getUint32(index + Offsets.TEXTID);
-        var nextId = data.getUint32(index + Offsets.NEXTID);
+        var start = data.getUint32(index + Offsets.START_HI, false) * 4294967295 + data.getUint32(index + Offsets.START_LO, false);
+        var stop = data.getUint32(index + Offsets.STOP_HI, false) * 4294967295 + data.getUint32(index + Offsets.STOP_LO, false);
+        var textId = data.getUint32(index + Offsets.TEXTID, false);
+        var nextId = data.getUint32(index + Offsets.NEXTID, false);
         var hasChildren = ((textId & 1) === 1);
         textId >>>= 1;
         var text = this._text[textId];

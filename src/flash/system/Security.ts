@@ -108,7 +108,7 @@ module Shumway.AVMX.AS.flash.system {
     
   }
 
-  export enum CrossDomainSWFLoadingWhitelistResult {
+  export const enum CrossDomainSWFLoadingWhitelistResult {
     /**
      * The requested domain belongs to the same domain as SWF's.
      */

@@ -15,7 +15,7 @@
  */
 
 module Shumway.SWF.Parser {
-  export enum SwfTagCode {
+  export const enum SwfTagCode {
     CODE_END                               = 0,
     CODE_SHOW_FRAME                        = 1,
     CODE_DEFINE_SHAPE                      = 2,
@@ -109,6 +109,12 @@ module Shumway.SWF.Parser {
     CODE_DEFINE_BITS_JPEG4                 = 90,
     CODE_DEFINE_FONT4                      = 91,
     CODE_TELEMETRY                         = 93
+  }
+
+  var SwfTagCodeNames = ["CODE_END","CODE_SHOW_FRAME","CODE_DEFINE_SHAPE","CODE_FREE_CHARACTER","CODE_PLACE_OBJECT","CODE_REMOVE_OBJECT","CODE_DEFINE_BITS","CODE_DEFINE_BUTTON","CODE_JPEG_TABLES","CODE_SET_BACKGROUND_COLOR","CODE_DEFINE_FONT","CODE_DEFINE_TEXT","CODE_DO_ACTION","CODE_DEFINE_FONT_INFO","CODE_DEFINE_SOUND","CODE_START_SOUND","CODE_STOP_SOUND","CODE_DEFINE_BUTTON_SOUND","CODE_SOUND_STREAM_HEAD","CODE_SOUND_STREAM_BLOCK","CODE_DEFINE_BITS_LOSSLESS","CODE_DEFINE_BITS_JPEG2","CODE_DEFINE_SHAPE2","CODE_DEFINE_BUTTON_CXFORM","CODE_PROTECT","CODE_PATHS_ARE_POSTSCRIPT","CODE_PLACE_OBJECT2","INVALID","CODE_REMOVE_OBJECT2","CODE_SYNC_FRAME","INVALID","CODE_FREE_ALL","CODE_DEFINE_SHAPE3","CODE_DEFINE_TEXT2","CODE_DEFINE_BUTTON2","CODE_DEFINE_BITS_JPEG3","CODE_DEFINE_BITS_LOSSLESS2","CODE_DEFINE_EDIT_TEXT","CODE_DEFINE_VIDEO","CODE_DEFINE_SPRITE","CODE_NAME_CHARACTER","CODE_PRODUCT_INFO","CODE_DEFINE_TEXT_FORMAT","CODE_FRAME_LABEL","CODE_DEFINE_BEHAVIOUR","CODE_SOUND_STREAM_HEAD2","CODE_DEFINE_MORPH_SHAPE","CODE_GENERATE_FRAME","CODE_DEFINE_FONT2","CODE_GEN_COMMAND","CODE_DEFINE_COMMAND_OBJECT","CODE_CHARACTER_SET","CODE_EXTERNAL_FONT","CODE_DEFINE_FUNCTION","CODE_PLACE_FUNCTION","CODE_GEN_TAG_OBJECTS","CODE_EXPORT_ASSETS","CODE_IMPORT_ASSETS","CODE_ENABLE_DEBUGGER","CODE_DO_INIT_ACTION","CODE_DEFINE_VIDEO_STREAM","CODE_VIDEO_FRAME","CODE_DEFINE_FONT_INFO2","CODE_DEBUG_ID","CODE_ENABLE_DEBUGGER2","CODE_SCRIPT_LIMITS","CODE_SET_TAB_INDEX","CODE_DEFINE_SHAPE4","INVALID","CODE_FILE_ATTRIBUTES","CODE_PLACE_OBJECT3","CODE_IMPORT_ASSETS2","CODE_DO_ABC_DEFINE","CODE_DEFINE_FONT_ALIGN_ZONES","CODE_CSM_TEXT_SETTINGS","CODE_DEFINE_FONT3","CODE_SYMBOL_CLASS","CODE_METADATA","CODE_DEFINE_SCALING_GRID","INVALID","INVALID","INVALID","CODE_DO_ABC","CODE_DEFINE_SHAPE4","CODE_DEFINE_MORPH_SHAPE2","INVALID","CODE_DEFINE_SCENE_AND_FRAME_LABEL_DATA","CODE_DEFINE_BINARY_DATA","CODE_DEFINE_FONT_NAME","CODE_START_SOUND2","CODE_DEFINE_BITS_JPEG4","CODE_DEFINE_FONT4","CODE_TELEMETRY"];
+
+  export function getSwfTagCodeName(tagCode: SwfTagCode) {
+    return release ? "SwfTagCode: " + tagCode : SwfTagCodeNames[tagCode];
   }
 
   export enum DefinitionTags {
@@ -221,7 +227,7 @@ module Shumway.SWF.Parser {
     events?: ClipEvents[];
   }
   
-  export enum PlaceObjectFlags {
+  export const enum PlaceObjectFlags {
     Move              = 0x0001,
     HasCharacter      = 0x0002,
     HasMatrix         = 0x0004,
@@ -240,7 +246,7 @@ module Shumway.SWF.Parser {
     Reserved          = 0x8000
   }
   
-  export enum AVM1ClipEvents {
+  export const enum AVM1ClipEvents {
     Load =            0x00001,
     EnterFrame =      0x00002,
     Unload =          0x00004,
@@ -339,7 +345,7 @@ module Shumway.SWF.Parser {
     buttonActions?: ButtonCondAction[];
   }
   
-  export enum ButtonCharacterFlags {
+  export const enum ButtonCharacterFlags {
     StateUp       = 0x01,
     StateOver     = 0x02,
     StateDown     = 0x04,
@@ -377,7 +383,7 @@ module Shumway.SWF.Parser {
     data?: Uint8Array;
   }
   
-  export enum FontFlags {
+  export const enum FontFlags {
     Bold              = 0x01,
     Italic            = 0x02,
     WideOrHasFontData = 0x04,
@@ -407,7 +413,7 @@ module Shumway.SWF.Parser {
     entries?: TextEntry[];
   }
   
-  export enum TextRecordFlags {
+  export const enum TextRecordFlags {
     HasMoveX = 0x01,
     HasMoveY = 0x02,
     HasColor = 0x04,
@@ -442,7 +448,7 @@ module Shumway.SWF.Parser {
     envelopes?: SoundEnvelope[];
   }
   
-  export enum SoundInfoFlags {
+  export const enum SoundInfoFlags {
     HasInPoint  = 0x01,
     HasOutPoint = 0x02,
     HasLoops    = 0x04,
@@ -496,7 +502,7 @@ module Shumway.SWF.Parser {
     initialText?: string;
   }
   
-  export enum TextFlags {
+  export const enum TextFlags {
     HasFont      = 0x0001,
     HasMaxLength = 0x0002,
     HasColor     = 0x0004,
@@ -553,7 +559,7 @@ module Shumway.SWF.Parser {
     recordsMorph?: ShapeRecord[];
   }
   
-  export enum ShapeFlags {
+  export const enum ShapeFlags {
     UsesScalingStrokes    = 0x01,
     UsesNonScalingStrokes = 0x02,
     UsesFillWindingRule   = 0x04,
@@ -630,7 +636,7 @@ module Shumway.SWF.Parser {
     fillBits?: number;
   }
   
-  export enum ShapeRecordFlags {
+  export const enum ShapeRecordFlags {
     Move = 0x01,
     HasFillStyle0 = 0x02,
     HasFillStyle1 = 0x04,

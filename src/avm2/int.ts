@@ -239,7 +239,7 @@ module Shumway.AVMX {
     interpretLabel:
     while (true) {
       if (!release && interpreterWriter) {
-        interpreterWriter.greenLn("" + frame.pc + ": " + Bytecode[frame.code[frame.pc]] + " [" +
+        interpreterWriter.greenLn("" + frame.pc + ": " + getBytecodeName(frame.code[frame.pc]) + " [" +
                                   frame.stack.map(x => stringifyStackEntry(x)).join(", ") + "]");
       }
       try {
@@ -864,7 +864,7 @@ module Shumway.AVMX {
           case Bytecode.BKPT:
             break;
           default:
-            Debug.notImplemented(Bytecode[bc]);
+            Debug.notImplemented(getBytecodeName(bc));
         }
       } catch (e) {
         // TODO: e = translateError(e);
@@ -1081,7 +1081,7 @@ module Shumway.AVMX {
     }
     // To be sure we don't let VM exceptions flow into the player, box them manually here,
     // even in release builds.
-    message = 'Uncaught VM-internal exception during op ' + Bytecode[bc] + ': ';
+    message = 'Uncaught VM-internal exception during op ' + getBytecodeName(bc) + ': ';
     var stack;
     try {
       message += internalError.toString();

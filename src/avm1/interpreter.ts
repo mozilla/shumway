@@ -879,7 +879,7 @@ module Shumway.AVM1 {
       return variableName && (variableName.indexOf('.') >= 0 || variableName.indexOf(':') >= 0 || variableName.indexOf('/') >= 0 );
     }
 
-    enum AVM1ResolveVariableFlags {
+    const enum AVM1ResolveVariableFlags {
       READ = 1,
       WRITE = 2,
       DELETE = READ,

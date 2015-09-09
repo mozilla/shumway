@@ -24,7 +24,7 @@ module Shumway {
   import flash = Shumway.AVMX.AS.flash;
   import altTieBreakRound = Shumway.NumberUtilities.altTieBreakRound;
 
-  export enum TextContentFlags {
+  export const enum TextContentFlags {
     None            = 0x0000,
     DirtyBounds     = 0x0001,
     DirtyContent    = 0x0002,

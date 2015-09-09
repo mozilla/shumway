@@ -16,7 +16,7 @@ module Shumway.AVMX {
    * it is needed for multiname parsing.
    */
 
-  export enum CONSTANT {
+  export const enum CONSTANT {
     Undefined          = 0x00,
     Utf8               = 0x01,
     Float              = 0x02,
@@ -54,7 +54,13 @@ module Shumway.AVMX {
     ClassProtectedNs   = 0x08
   }
 
-  export enum METHOD {
+  var CONSTANTNames = ["Undefined","Utf8|ClassSealed","Float|ClassFinal","Int","UInt|ClassInterface","PrivateNs","Double","QName","Namespace|ClassProtectedNs","Multiname","False","True","Null","QNameA","MultinameA","RTQName","RTQNameA","RTQNameL","RTQNameLA","NameL","NameLA","NamespaceSet","PackageNamespace","PackageInternalNs","ProtectedNamespace","ExplicitNamespace","StaticProtectedNs","MultinameL","MultinameLA","TypeName"];
+
+  export function getCONSTANTName(constant: CONSTANT): string {
+    return release ? String(constant) : CONSTANTNames[constant];
+  }
+
+  export const enum METHOD {
     NeedArguments       = 0x1,
     Activation          = 0x2,
     NeedRest            = 0x4,
@@ -70,7 +76,7 @@ module Shumway.AVMX {
     ScriptInitializer   = 0x800
   }
 
-  export enum TRAIT {
+  export const enum TRAIT {
     Slot               = 0,
     Method             = 1,
     Getter             = 2,
@@ -81,13 +87,19 @@ module Shumway.AVMX {
     GetterSetter       = 7 // This is a runtime addition, not a valid ABC Trait type.
   }
 
-  export enum ATTR {
+  var TRAITNames = ["Slot", "Method", "Getter", "Setter", "Class", "Function", "Const", "GetterSetter"];
+
+  export function getTRAITName(trait: TRAIT): string {
+    return release ? String(trait) : TRAITNames[trait];
+  }
+
+  export const enum ATTR {
     Final              = 0x01,
     Override           = 0x02,
     Metadata           = 0x04
   }
 
-  export enum NamespaceType {
+  export const enum NamespaceType {
     Public          = 0,
     Protected       = 1,
     PackageInternal = 2,
@@ -96,7 +108,13 @@ module Shumway.AVMX {
     StaticProtected = 5
   }
 
-  export enum SORT {
+  var namespaceTypeNames = ["Public", "Protected", "PackageInternal", "Private", "Explicit", "StaticProtected"];
+
+  export function getNamespaceTypeName(namespaceType: NamespaceType): string {
+    return release ? String(namespaceType) : namespaceTypeNames[namespaceType];
+  }
+
+  export const enum SORT {
     CASEINSENSITIVE = 1,
     DESCENDING = 2,
     UNIQUESORT = 4,
@@ -404,7 +422,7 @@ module Shumway.AVMX {
     }
 
     toString() {
-      return TRAIT[this.kind] + " " + this.name;
+      return getTRAITName(this.kind) + " " + this.name;
     }
 
     toFlashlogString(): string {
@@ -937,7 +955,7 @@ module Shumway.AVMX {
       writer.writeLn("Code: " + this.code.length);
       var stream = new BytecodeStream(this.code);
       while (stream.currentBytecode() !== Bytecode.END) {
-        writer.writeLn(stream.currentBCI + ": " + Bytecode[stream.currentBytecode()]);
+        writer.writeLn(stream.currentBCI + ": " + getBytecodeName(stream.currentBytecode()));
         stream.next();
       }
     }
@@ -1240,7 +1258,7 @@ module Shumway.AVMX {
     }
 
     public toString() {
-      var str = CONSTANT[this.kind] + " ";
+      var str = getCONSTANTName(this.kind) + " ";
       str += this.isAttribute() ? "@" : "";
       if (this.isRuntimeNamespace()) {
         var namespaces = this.namespaces ? this.namespaces.map(x => String(x)).join(", ") : null;
@@ -1306,7 +1324,7 @@ module Shumway.AVMX {
     }
 
     toString() {
-      return NamespaceType[this.type] + (this.uri !== "" ? ":" + this.uri : "");
+      return getNamespaceTypeName(this.type) + (this.uri !== "" ? ":" + this.uri : "");
     }
 
     private static _knownNames = [

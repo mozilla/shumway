@@ -17,6 +17,7 @@
 module Shumway.AVM1 {
   import assert = Shumway.Debug.assert;
   import flash = Shumway.AVMX.AS.flash;
+  import LookupChildOptions = Shumway.AVMX.AS.flash.display.LookupChildOptions;
 
   import AVM1MovieClip = Lib.AVM1MovieClip;
   import AVM1Globals = Lib.AVM1Globals;
@@ -211,7 +212,7 @@ module Shumway.AVM1 {
       var as3Stage = (<Lib.AVM1Stage>this.globals.Stage)._as3Stage;
       // TODO currently there is only one (_level0)
       var as3Loader = <flash.display.Loader>as3Stage._lookupChildByIndex(level,
-        flash.display.LookupChildOptions.INCLUDE_NON_INITIALIZED);
+        LookupChildOptions.INCLUDE_NON_INITIALIZED);
       if (!as3Loader) {
         this.utils.warn('Unable to resolve level ' + level + ' root');
         return undefined;

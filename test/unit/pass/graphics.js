@@ -22,7 +22,22 @@
   var SpreadMethod = flash.display.SpreadMethod;
   var InterpolationMethod = flash.display.InterpolationMethod;
   var BitmapData = flash.display.BitmapData;
-  var PathCommand = Shumway.PathCommand;
+  // We don't import Shumway.PathCommand because we don't want the TSC compiler
+  // to preserve enum names. So we'll have to keep this in sync.
+  var PathCommand = {
+      BeginSolidFill: 1,
+      BeginGradientFill: 2,
+      BeginBitmapFill: 3,
+      EndFill: 4,
+      LineStyleSolid: 5,
+      LineStyleGradient: 6,
+      LineStyleBitmap: 7,
+      LineEnd: 8,
+      MoveTo: 9,
+      LineTo: 10,
+      CurveTo: 11,
+      CubicCurveTo: 12
+  };
   var assertUnreachable = Shumway.Debug.assertUnreachable;
 
   var LineScaleMode = flash.display.LineScaleMode;

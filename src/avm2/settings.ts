@@ -23,7 +23,7 @@ module Shumway.AVM2 {
     //export var compilerEnableExceptions = options.register(new Option("cex", "exceptions", "boolean", false, "Compile functions with catch blocks."));
     //export var compilerMaximumMethodSize = options.register(new Option("cmms", "maximumMethodSize", "number", 4 * 1024, "Compiler maximum method size."));
 
-    export enum ExecutionMode {
+    export const enum ExecutionMode {
       INTERPRET   = 0x1,
       COMPILE     = 0x2
     }

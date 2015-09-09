@@ -183,7 +183,7 @@ module Shumway.GFX {
     sendVideoPlaybackEvent(assetId: number, eventType: VideoPlaybackEvent, data: any): void;
   }
 
-  export enum RenderableVideoState {
+  export const enum RenderableVideoState {
     Idle = 1,
     Playing,
     Paused,
@@ -632,7 +632,7 @@ module Shumway.GFX {
     }
   }
 
-  export enum PathType {
+  export const enum PathType {
     Fill,
     Stroke,
     StrokeFill /* Doesn't define thickness, caps and joints. */

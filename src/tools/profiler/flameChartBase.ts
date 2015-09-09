@@ -15,7 +15,7 @@
  */
 module Shumway.Tools.Profiler {
 
-  export enum FlameChartDragTarget {
+  export const enum FlameChartDragTarget {
     NONE,
     WINDOW,
     HANDLE_LEFT,

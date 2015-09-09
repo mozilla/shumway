@@ -117,7 +117,7 @@ module Shumway.GFX.Test {
     return buffer.getBytes();
   }
 
-  export enum MovieRecordType {
+  export const enum MovieRecordType {
     None = 0,
     PlayerCommand = 1,
     PlayerCommandAsync = 2,

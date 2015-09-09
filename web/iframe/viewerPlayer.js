@@ -81,12 +81,7 @@ function runSwfPlayer(flashParams, settings, gfxWindow) {
   if (settings) {
     Shumway.Settings.setSettings(settings);
   }
-
-  var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
-
   var compilerSettings = flashParams.compilerSettings;
-  var sysMode = compilerSettings.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-  var appMode = compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
   var asyncLoading = true;
   var baseUrl = flashParams.baseUrl;
   var movieUrl = flashParams.url;

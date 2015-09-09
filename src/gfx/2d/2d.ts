@@ -94,7 +94,7 @@ module Shumway.GFX.Canvas2D {
     }
   }
 
-  export enum FillRule {
+  export const enum FillRule {
     NonZero,
     EvenOdd
   }
@@ -151,7 +151,7 @@ module Shumway.GFX.Canvas2D {
     alpha: boolean = false;
   }
 
-  export enum RenderFlags {
+  export const enum RenderFlags {
     None                        = 0x0000,
     IgnoreNextLayer             = 0x0001,
     RenderMask                  = 0x0002,

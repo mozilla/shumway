@@ -48,7 +48,7 @@ module Shumway.AVMX {
     }
   }
 
-  export enum AMF0Marker {
+  export const enum AMF0Marker {
     NUMBER = 0x00,
     BOOLEAN = 0x01,
     STRING = 0x02,
@@ -220,7 +220,7 @@ module Shumway.AVMX {
     }
   }
 
-  export enum AMF3Marker {
+  export const enum AMF3Marker {
     UNDEFINED = 0x00,
     NULL = 0x01,
     FALSE = 0x02,

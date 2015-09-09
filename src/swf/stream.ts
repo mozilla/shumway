@@ -129,7 +129,7 @@ module Shumway.SWF {
     }
 
     readFloat16(): number {
-      var ui16 = this.view.getUint16(this.pos);
+      var ui16 = this.view.getUint16(this.pos, false);
       this.pos += 2;
       var sign = ui16 >> 15 ? -1 : 1;
       var exponent = (ui16 & 0x7c00) >> 10;

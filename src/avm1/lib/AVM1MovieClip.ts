@@ -19,6 +19,7 @@
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
   import assert = Shumway.Debug.assert;
+  import LookupChildOptions = Shumway.AVMX.AS.flash.display.LookupChildOptions;
 
   class AVM1MovieClipButtonModeEvent extends AVM1EventHandler {
     constructor(public propertyName: string,
@@ -85,9 +86,9 @@ module Shumway.AVM1.Lib {
     }
 
     private _lookupChildInAS3Object(name: string): AVM1Object {
-      var lookupOptions = flash.display.LookupChildOptions.INCLUDE_NON_INITIALIZED;
+      var lookupOptions = LookupChildOptions.INCLUDE_NON_INITIALIZED;
       if (!this.context.isPropertyCaseSensitive) {
-        lookupOptions |= flash.display.LookupChildOptions.IGNORE_CASE;
+        lookupOptions |= LookupChildOptions.IGNORE_CASE;
       }
       var as3Child = this._as3Object._lookupChildByName(name, lookupOptions);
       return getAVM1Object(as3Child, this.context);
@@ -383,7 +384,7 @@ module Shumway.AVM1.Lib {
     public getInstanceAtDepth(depth: number): AVM1MovieClip {
       var symbolDepth = alCoerceNumber(this.context, depth) + DEPTH_OFFSET;
       var nativeObject = this._as3Object;
-      var lookupChildOptions = flash.display.LookupChildOptions.INCLUDE_NON_INITIALIZED;
+      var lookupChildOptions = LookupChildOptions.INCLUDE_NON_INITIALIZED;
       for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
         var child = nativeObject._lookupChildByIndex(i, lookupChildOptions);
         // child is null if it hasn't been constructed yet. This can happen in InitActionBlocks.
@@ -401,7 +402,7 @@ module Shumway.AVM1.Lib {
     public getNextHighestDepth(): number {
       var nativeObject = this._as3Object;
       var maxDepth = DEPTH_OFFSET;
-      var lookupChildOptions = flash.display.LookupChildOptions.INCLUDE_NON_INITIALIZED;
+      var lookupChildOptions = LookupChildOptions.INCLUDE_NON_INITIALIZED;
       for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
         var child = nativeObject._lookupChildByIndex(i, lookupChildOptions);
         if (child._depth >= maxDepth) {

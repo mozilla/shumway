@@ -17,7 +17,7 @@ module Shumway.Tools.Profiler {
 
   import clamp = NumberUtilities.clamp;
 
-  export enum FlameChartOverviewMode {
+  export const enum FlameChartOverviewMode {
     OVERLAY,
     STACK,
     UNION
