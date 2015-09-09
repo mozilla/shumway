@@ -467,10 +467,13 @@ module Shumway.AVM1.Lib {
       loader.dataFormat = 'variables'; // flash.net.URLLoaderDataFormat.VARIABLES;
       var completeHandler = context.sec.boxFunction(function (event: flash.events.Event): void {
         loader.removeEventListener(flash.events.Event.COMPLETE, completeHandler);
-        release || Debug.assert(typeof loader.data === 'object');
-        Shumway.AVMX.forEachPublicProperty(loader.data, function (key, value) {
-          context.utils.setProperty(nativeTarget, key, value);
-        });
+        // If the response data is empty, URLLoader#data contains an empty string.
+        if (loader.data !== '') {
+          release || Debug.assert(typeof loader.data === 'object');
+          Shumway.AVMX.forEachPublicProperty(loader.data, function (key, value) {
+            context.utils.setProperty(nativeTarget, key, value);
+          });
+        }
         if (nativeTarget instanceof AVM1MovieClip) {
           avm1BroadcastEvent(context, nativeTarget, 'onData');
         }
