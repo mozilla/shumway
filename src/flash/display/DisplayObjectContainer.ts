@@ -92,7 +92,11 @@ module Shumway.AVMX.AS.flash.display {
         if (child._hasFlags(DisplayObjectFlags.Constructed)) {
           continue;
         }
-        (<any>child).axInitializer();
+        try {
+          (<any>child).axInitializer();
+        } catch (e) {
+          Debug.warning('caught error executing child constructor in constructChildren: ', e);
+        }
         //child.class.instanceConstructorNoInitialize.call(child);
         child._removeReference();
         if (child._name) {

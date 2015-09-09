@@ -655,7 +655,7 @@ module Shumway.AVMX {
             stack[stack.length - 1] = AS.escapeAttributeValue(stack[stack.length - 1]);
             break;
           case Bytecode.ESC_XELEM:
-            stack[stack.length - 1] = AS.escapeElementValue(stack[stack.length - 1]);
+            stack[stack.length - 1] = AS.escapeElementValue(sec, stack[stack.length - 1]);
             break;
           case Bytecode.COERCE_I:
           case Bytecode.CONVERT_I:

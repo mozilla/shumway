@@ -37,14 +37,10 @@ function runSwfPlayer(flashParams, settings, gfxWindow) {
     Shumway.Settings.setSettings(settings);
   }
 
-  var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
-
   Shumway.dontSkipFramesOption.value = true;
   Shumway.frameRateOption.value = 60; // turbo mode
 
   var compilerSettings = flashParams.compilerSettings;
-  var sysMode = compilerSettings.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-  var appMode = compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
   var asyncLoading = true;
   var baseUrl = flashParams.baseUrl;
   var movieParams = flashParams.movieParams;
