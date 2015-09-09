@@ -360,6 +360,11 @@
       "filenames": ["swfs/bitmapdata/getpixel-from-embedded.swf"],
       "type": "stas"
     },
+    {  "id": "bitmapdata-draw-and-read",
+      "stas": "swfs/trace.stas",
+      "filenames": ["swfs/bitmapdata/draw-and-read.swf"],
+      "type": "stas"
+    },
     {  "id": "pac-ref",
        "frames": [1, 5, 10],
        "swf": "/examples/pac/pac.swf",
