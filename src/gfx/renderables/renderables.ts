@@ -872,6 +872,7 @@ module Shumway.GFX {
             var jointsStyle: string = RenderableShape.LINE_JOINTS_STYLES[styles.readByte()];
             var strokeProperties = new StrokeProperties(coordinates[coordinatesIndex++]/20,
                                                         scaleMode, capsStyle, jointsStyle, styles.readByte());
+            // Look ahead at the following command to determine if this is a complex stroke style.
             if (commands[commandIndex + 1] === PathCommand.LineStyleGradient) {
               commandIndex++;
               strokePath = this._createPath(PathType.StrokeFill, this._readGradient(styles, context),
