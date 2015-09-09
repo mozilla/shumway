@@ -514,7 +514,7 @@ module Shumway.GFX {
         var supportsStyle = this.strokeStyle instanceof CanvasPattern || this.strokeStyle instanceof CanvasGradient;
         var hasStyleTransformation = !!this.strokeStyle._transform;
         if (supportsStyle && hasStyleTransformation && path instanceof Path2D) {
-          var m = this.fillStyle._transform;
+          var m = this.strokeStyle._transform;
           var i;
           try {
             i = m.inverse();
