@@ -35,30 +35,30 @@ module Shumway.AVMX.AS.flash.ui {
     // _hotSpot: flash.geom.Point;
     // _frameRate: number;
     get data(): GenericVector {
-      notImplemented("public flash.ui.MouseCursorData::get data"); return;
+      release || notImplemented("public flash.ui.MouseCursorData::get data"); return;
       // return this._data;
     }
     set data(data: GenericVector) {
       data = data;
-      notImplemented("public flash.ui.MouseCursorData::set data"); return;
+      release || notImplemented("public flash.ui.MouseCursorData::set data"); return;
       // this._data = data;
     }
     get hotSpot(): flash.geom.Point {
-      notImplemented("public flash.ui.MouseCursorData::get hotSpot"); return;
+      release || notImplemented("public flash.ui.MouseCursorData::get hotSpot"); return;
       // return this._hotSpot;
     }
     set hotSpot(data: flash.geom.Point) {
       data = data;
-      notImplemented("public flash.ui.MouseCursorData::set hotSpot"); return;
+      release || notImplemented("public flash.ui.MouseCursorData::set hotSpot"); return;
       // this._hotSpot = data;
     }
     get frameRate(): number {
-      notImplemented("public flash.ui.MouseCursorData::get frameRate"); return;
+      release || notImplemented("public flash.ui.MouseCursorData::get frameRate"); return;
       // return this._frameRate;
     }
     set frameRate(data: number) {
       data = +data;
-      notImplemented("public flash.ui.MouseCursorData::set frameRate"); return;
+      release || notImplemented("public flash.ui.MouseCursorData::set frameRate"); return;
       // this._frameRate = data;
     }
   }

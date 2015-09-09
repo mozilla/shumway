@@ -87,7 +87,7 @@ module Shumway.AVMX.AS.flash.net {
     connect(command: string): void {
       command = axCoerceString(command);
 
-      somewhatImplemented("public flash.net.NetConnection::connect");
+      release || somewhatImplemented("public flash.net.NetConnection::connect");
       this._uri = command;
       var netStatusEventCtor = this.sec.flash.events.NetStatusEvent;
       if (!command) {
@@ -166,7 +166,7 @@ module Shumway.AVMX.AS.flash.net {
     }
     set objectEncoding(version: number /*uint*/) {
       version = version >>> 0;
-      somewhatImplemented("public flash.net.NetConnection::set objectEncoding");
+      release || somewhatImplemented("public flash.net.NetConnection::set objectEncoding");
       this._objectEncoding = version;
     }
     get proxyType(): string {
@@ -174,11 +174,11 @@ module Shumway.AVMX.AS.flash.net {
     }
     set proxyType(ptype: string) {
       ptype = axCoerceString(ptype);
-      somewhatImplemented("public flash.net.NetConnection::set proxyType");
+      release || somewhatImplemented("public flash.net.NetConnection::set proxyType");
       this._proxyType = ptype;
     }
     get connectedProxyType(): string {
-      notImplemented("public flash.net.NetConnection::get connectedProxyType"); return;
+      release || notImplemented("public flash.net.NetConnection::get connectedProxyType"); return;
       // return this._connectedProxyType;
     }
     get usingTLS(): boolean {
@@ -188,32 +188,32 @@ module Shumway.AVMX.AS.flash.net {
       return this._protocol;
     }
     get maxPeerConnections(): number /*uint*/ {
-      notImplemented("public flash.net.NetConnection::get maxPeerConnections"); return;
+      release || notImplemented("public flash.net.NetConnection::get maxPeerConnections"); return;
       // return this._maxPeerConnections;
     }
     set maxPeerConnections(maxPeers: number /*uint*/) {
       maxPeers = maxPeers >>> 0;
-      notImplemented("public flash.net.NetConnection::set maxPeerConnections"); return;
+      release || notImplemented("public flash.net.NetConnection::set maxPeerConnections"); return;
       // this._maxPeerConnections = maxPeers;
     }
     get nearID(): string {
-      notImplemented("public flash.net.NetConnection::get nearID"); return;
+      release || notImplemented("public flash.net.NetConnection::get nearID"); return;
       // return this._nearID;
     }
     get farID(): string {
-      notImplemented("public flash.net.NetConnection::get farID"); return;
+      release || notImplemented("public flash.net.NetConnection::get farID"); return;
       // return this._farID;
     }
     get nearNonce(): string {
-      notImplemented("public flash.net.NetConnection::get nearNonce"); return;
+      release || notImplemented("public flash.net.NetConnection::get nearNonce"); return;
       // return this._nearNonce;
     }
     get farNonce(): string {
-      notImplemented("public flash.net.NetConnection::get farNonce"); return;
+      release || notImplemented("public flash.net.NetConnection::get farNonce"); return;
       // return this._farNonce;
     }
     get unconnectedPeerStreams(): ASArray {
-      notImplemented("public flash.net.NetConnection::get unconnectedPeerStreams"); return;
+      release || notImplemented("public flash.net.NetConnection::get unconnectedPeerStreams"); return;
       // return this._unconnectedPeerStreams;
     }
     invoke(index: number /*uint*/): any {

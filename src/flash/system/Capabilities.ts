@@ -63,7 +63,7 @@ module Shumway.AVMX.AS.flash.system {
       return false;
     }
     static get hasEmbeddedVideo(): boolean {
-      notImplemented("public flash.system.Capabilities::get hasEmbeddedVideo"); return;
+      release || notImplemented("public flash.system.Capabilities::get hasEmbeddedVideo"); return;
       // return Capabilities._hasEmbeddedVideo;
     }
     static get hasAudio(): boolean {
@@ -71,58 +71,58 @@ module Shumway.AVMX.AS.flash.system {
       return true;
     }
     static get avHardwareDisable(): boolean {
-      somewhatImplemented("public flash.system.Capabilities::get avHardwareDisable");
+      release || somewhatImplemented("public flash.system.Capabilities::get avHardwareDisable");
       return true;
     }
     static get hasAccessibility(): boolean {
-      somewhatImplemented("public flash.system.Capabilities::get hasAccessibility");
+      release || somewhatImplemented("public flash.system.Capabilities::get hasAccessibility");
       return Capabilities._hasAccessibility;
     }
     static get hasAudioEncoder(): boolean {
-      somewhatImplemented("public flash.system.Capabilities::get hasAudioEncoder");
+      release || somewhatImplemented("public flash.system.Capabilities::get hasAudioEncoder");
       return false;
     }
     static get hasMP3(): boolean {
-      notImplemented("public flash.system.Capabilities::get hasMP3"); return;
+      release || notImplemented("public flash.system.Capabilities::get hasMP3"); return;
       // return Capabilities._hasMP3;
     }
     static get hasPrinting(): boolean {
-      somewhatImplemented("public flash.system.Capabilities::get hasPrinting");
+      release || somewhatImplemented("public flash.system.Capabilities::get hasPrinting");
       return false;
     }
     static get hasScreenBroadcast(): boolean {
-      somewhatImplemented("public flash.system.Capabilities::get hasScreenBroadcast");
+      release || somewhatImplemented("public flash.system.Capabilities::get hasScreenBroadcast");
       return false;
     }
     static get hasScreenPlayback(): boolean {
-      somewhatImplemented("public flash.system.Capabilities::get hasScreenPlayback");
+      release || somewhatImplemented("public flash.system.Capabilities::get hasScreenPlayback");
       return false;
     }
     static get hasStreamingAudio(): boolean {
-      notImplemented("public flash.system.Capabilities::get hasStreamingAudio"); return;
+      release || notImplemented("public flash.system.Capabilities::get hasStreamingAudio"); return;
       // return Capabilities._hasStreamingAudio;
     }
     static get hasStreamingVideo(): boolean {
-      notImplemented("public flash.system.Capabilities::get hasStreamingVideo"); return;
+      release || notImplemented("public flash.system.Capabilities::get hasStreamingVideo"); return;
       // return Capabilities._hasStreamingVideo;
     }
     static get hasVideoEncoder(): boolean {
-      somewhatImplemented("public flash.system.Capabilities::get hasVideoEncoder");
+      release || somewhatImplemented("public flash.system.Capabilities::get hasVideoEncoder");
       return false;
     }
     static get isDebugger(): boolean {
       return false;
     }
     static get localFileReadDisable(): boolean {
-      notImplemented("public flash.system.Capabilities::get localFileReadDisable"); return;
+      release || notImplemented("public flash.system.Capabilities::get localFileReadDisable"); return;
       // return Capabilities._localFileReadDisable;
     }
     static get language(): string {
-      somewhatImplemented("public flash.system.Capabilities::get language");
+      release || somewhatImplemented("public flash.system.Capabilities::get language");
       return Capabilities._language;
     }
     static get manufacturer(): string {
-      somewhatImplemented("public flash.system.Capabilities::get manufacturer");
+      release || somewhatImplemented("public flash.system.Capabilities::get manufacturer");
       return Capabilities._manufacturer;
     }
     static get os(): string {
@@ -143,7 +143,7 @@ module Shumway.AVMX.AS.flash.system {
         } else if (/(iPad|iPhone|iPod|Android)/.test(userAgent)) {
           os = "iPhone3,1";
         } else {
-          somewhatImplemented("public flash.system.Capabilities::get os");
+          release || somewhatImplemented("public flash.system.Capabilities::get os");
           os = "Generic OS";
         }
         Capabilities._os = os;
@@ -151,7 +151,7 @@ module Shumway.AVMX.AS.flash.system {
       return Capabilities._os;
     }
     static get cpuArchitecture(): string {
-      somewhatImplemented("public flash.system.Capabilities::get cpuArchitecture");
+      release || somewhatImplemented("public flash.system.Capabilities::get cpuArchitecture");
       return 'x86';
     }
     static get playerType(): string {
@@ -161,11 +161,11 @@ module Shumway.AVMX.AS.flash.system {
       var str = toKeyValueArray({OS: Capabilities.os}).map(function (pair) {
         return pair[0] + "=" + encodeURIComponent(pair[1]);
       }).join("&");
-      somewhatImplemented("Capabilities.serverString: " + str);
+      release || somewhatImplemented("Capabilities.serverString: " + str);
       return str;
     }
     static get version(): string {
-      somewhatImplemented("public flash.system.Capabilities::get version");
+      release || somewhatImplemented("public flash.system.Capabilities::get version");
       return Capabilities._version;
     }
 
@@ -177,19 +177,19 @@ module Shumway.AVMX.AS.flash.system {
       return "color";
     }
     static get pixelAspectRatio(): number {
-      somewhatImplemented("public flash.system.Capabilities::get pixelAspectRatio");
+      release || somewhatImplemented("public flash.system.Capabilities::get pixelAspectRatio");
       return 1;
     }
     static get screenDPI(): number {
-      somewhatImplemented("public flash.system.Capabilities::get screenDPI");
+      release || somewhatImplemented("public flash.system.Capabilities::get screenDPI");
       return Capabilities._screenDPI;
     }
     static get screenResolutionX(): number {
-      somewhatImplemented("public flash.system.Capabilities::get screenResolutionX");
+      release || somewhatImplemented("public flash.system.Capabilities::get screenResolutionX");
       return window.screen.width; // TODO check
     }
     static get screenResolutionY(): number {
-      somewhatImplemented("public flash.system.Capabilities::get screenResolutionY");
+      release || somewhatImplemented("public flash.system.Capabilities::get screenResolutionY");
       return window.screen.height; // TODO check
     }
     static get touchscreenType(): string {
@@ -199,27 +199,27 @@ module Shumway.AVMX.AS.flash.system {
       return false;
     }
     static get hasTLS(): boolean {
-      notImplemented("public flash.system.Capabilities::get hasTLS"); return;
+      release || notImplemented("public flash.system.Capabilities::get hasTLS"); return;
       // return Capabilities._hasTLS;
     }
     static get maxLevelIDC(): string {
-      notImplemented("public flash.system.Capabilities::get maxLevelIDC"); return;
+      release || notImplemented("public flash.system.Capabilities::get maxLevelIDC"); return;
       // return Capabilities._maxLevelIDC;
     }
     static get supports32BitProcesses(): boolean {
-      notImplemented("public flash.system.Capabilities::get supports32BitProcesses"); return;
+      release || notImplemented("public flash.system.Capabilities::get supports32BitProcesses"); return;
       // return Capabilities._supports32BitProcesses;
     }
     static get supports64BitProcesses(): boolean {
-      notImplemented("public flash.system.Capabilities::get supports64BitProcesses"); return;
+      release || notImplemented("public flash.system.Capabilities::get supports64BitProcesses"); return;
       // return Capabilities._supports64BitProcesses;
     }
     static get _internal(): number /*uint*/ {
-      notImplemented("public flash.system.Capabilities::get _internal"); return;
+      release || notImplemented("public flash.system.Capabilities::get _internal"); return;
       // return Capabilities.__internal;
     }
     static hasMultiChannelAudio(type: string): boolean {
-      somewhatImplemented("public flash.system.Capabilities::static hasMultiChannelAudio");
+      release || somewhatImplemented("public flash.system.Capabilities::static hasMultiChannelAudio");
       return false;
     }
     

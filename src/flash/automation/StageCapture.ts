@@ -27,34 +27,34 @@ module Shumway.AVMX.AS.flash.automation {
     // Instance AS -> JS Bindings
     capture(type: string): void {
       type = axCoerceString(type);
-      notImplemented("public flash.automation.StageCapture::capture"); return;
+      release || notImplemented("public flash.automation.StageCapture::capture"); return;
     }
     cancel(): void {
-      notImplemented("public flash.automation.StageCapture::cancel"); return;
+      release || notImplemented("public flash.automation.StageCapture::cancel"); return;
     }
     set fileNameBase(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.automation.StageCapture::set fileNameBase"); return;
+      release || notImplemented("public flash.automation.StageCapture::set fileNameBase"); return;
     }
     get fileNameBase(): string {
-      notImplemented("public flash.automation.StageCapture::get fileNameBase"); return;
+      release || notImplemented("public flash.automation.StageCapture::get fileNameBase"); return;
     }
     set clipRect(value: flash.geom.Rectangle) {
       value = value;
-      notImplemented("public flash.automation.StageCapture::set clipRect"); return;
+      release || notImplemented("public flash.automation.StageCapture::set clipRect"); return;
     }
     get clipRect(): flash.geom.Rectangle {
-      notImplemented("public flash.automation.StageCapture::get clipRect"); return;
+      release || notImplemented("public flash.automation.StageCapture::get clipRect"); return;
     }
     captureBitmapData(): flash.display.BitmapData {
-      notImplemented("public flash.automation.StageCapture::captureBitmapData"); return;
+      release || notImplemented("public flash.automation.StageCapture::captureBitmapData"); return;
     }
     set captureSource(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.automation.StageCapture::set captureSource"); return;
+      release || notImplemented("public flash.automation.StageCapture::set captureSource"); return;
     }
     get captureSource(): string {
-      notImplemented("public flash.automation.StageCapture::get captureSource"); return;
+      release || notImplemented("public flash.automation.StageCapture::get captureSource"); return;
     }
   }
 }

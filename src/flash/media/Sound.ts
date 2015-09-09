@@ -143,14 +143,14 @@ module Shumway.AVMX.AS.flash.media {
       return this._url;
     }
     get isURLInaccessible(): boolean {
-      somewhatImplemented("public flash.media.Sound::get isURLInaccessible");
+      release || somewhatImplemented("public flash.media.Sound::get isURLInaccessible");
       return this._isURLInaccessible;
     }
     get length(): number {
       return this._length;
     }
     get isBuffering(): boolean {
-      somewhatImplemented("public flash.media.Sound::get isBuffering");
+      release || somewhatImplemented("public flash.media.Sound::get isBuffering");
       return this._isBuffering;
     }
     get bytesLoaded(): number /*uint*/ {
@@ -164,11 +164,11 @@ module Shumway.AVMX.AS.flash.media {
     }
     loadCompressedDataFromByteArray(bytes: flash.utils.ByteArray, bytesLength: number /*uint*/): void {
       bytes = bytes; bytesLength = bytesLength >>> 0;
-      notImplemented("public flash.media.Sound::loadCompressedDataFromByteArray"); return;
+      release || notImplemented("public flash.media.Sound::loadCompressedDataFromByteArray"); return;
     }
     loadPCMFromByteArray(bytes: flash.utils.ByteArray, samples: number /*uint*/, format: string = "float", stereo: boolean = true, sampleRate: number = 44100): void {
       bytes = bytes; samples = samples >>> 0; format = axCoerceString(format); stereo = !!stereo; sampleRate = +sampleRate;
-      notImplemented("public flash.media.Sound::loadPCMFromByteArray"); return;
+      release || notImplemented("public flash.media.Sound::loadPCMFromByteArray"); return;
     }
     play(startTime: number = 0, loops: number /*int*/ = 0, sndTransform: flash.media.SoundTransform = null): flash.media.SoundChannel {
       startTime = +startTime; loops = loops | 0;
@@ -206,11 +206,11 @@ module Shumway.AVMX.AS.flash.media {
       return channel;
     }
     close(): void {
-      somewhatImplemented("public flash.media.Sound::close");
+      release || somewhatImplemented("public flash.media.Sound::close");
     }
     extract(target: flash.utils.ByteArray, length: number, startPosition: number = -1): number {
       target = target; length = +length; startPosition = +startPosition;
-      notImplemented("public flash.media.Sound::extract"); return;
+      release || notImplemented("public flash.media.Sound::extract"); return;
     }
     load(request: flash.net.URLRequest, context?: SoundLoaderContext): void {
       if (!request) {

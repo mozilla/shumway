@@ -41,36 +41,36 @@ module Shumway.AVMX.AS.flash.system {
     // static _conversionMode: string;
     // static _isSupported: boolean;
     get enabled(): boolean {
-      notImplemented("public flash.system.IME::get enabled"); return;
+      release || notImplemented("public flash.system.IME::get enabled"); return;
       // return this._enabled;
     }
     set enabled(enabled: boolean) {
       enabled = !!enabled;
-      notImplemented("public flash.system.IME::set enabled"); return;
+      release || notImplemented("public flash.system.IME::set enabled"); return;
       // this._enabled = enabled;
     }
     get conversionMode(): string {
-      notImplemented("public flash.system.IME::get conversionMode"); return;
+      release || notImplemented("public flash.system.IME::get conversionMode"); return;
       // return this._conversionMode;
     }
     set conversionMode(mode: string) {
       mode = axCoerceString(mode);
-      notImplemented("public flash.system.IME::set conversionMode"); return;
+      release || notImplemented("public flash.system.IME::set conversionMode"); return;
       // this._conversionMode = mode;
     }
     static setCompositionString(composition: string): void {
       composition = axCoerceString(composition);
-      notImplemented("public flash.system.IME::static setCompositionString"); return;
+      release || notImplemented("public flash.system.IME::static setCompositionString"); return;
     }
     static doConversion(): void {
-      notImplemented("public flash.system.IME::static doConversion"); return;
+      release || notImplemented("public flash.system.IME::static doConversion"); return;
     }
     static compositionSelectionChanged(start: number /*int*/, end: number /*int*/): void {
       start = start | 0; end = end | 0;
-      notImplemented("public flash.system.IME::static compositionSelectionChanged"); return;
+      release || notImplemented("public flash.system.IME::static compositionSelectionChanged"); return;
     }
     static compositionAbandoned(): void {
-      notImplemented("public flash.system.IME::static compositionAbandoned"); return;
+      release || notImplemented("public flash.system.IME::static compositionAbandoned"); return;
     }
     
   }

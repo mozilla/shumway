@@ -159,7 +159,7 @@ module Shumway.AVMX.AS.flash.net {
     // _videoStreamSettings: flash.media.VideoStreamSettings;
 
     dispose(): void {
-      notImplemented("public flash.net.NetStream::dispose"); return;
+      release || notImplemented("public flash.net.NetStream::dispose"); return;
     }
 
     _getVideoStreamURL(): string {
@@ -189,10 +189,10 @@ module Shumway.AVMX.AS.flash.net {
     }
     play2(param: flash.net.NetStreamPlayOptions): void {
       param = param;
-      notImplemented("public flash.net.NetStream::play2"); return;
+      release || notImplemented("public flash.net.NetStream::play2"); return;
     }
     get info(): flash.net.NetStreamInfo {
-      somewhatImplemented("public flash.net.NetStream::get info");
+      release || somewhatImplemented("public flash.net.NetStream::get info");
       var bufferSeconds = 1;
       var playedSeconds = Math.ceil(this._invoke(304, null));
       var audioBytesPerSecond = 32;
@@ -227,7 +227,7 @@ module Shumway.AVMX.AS.flash.net {
       );
     }
     get multicastInfo(): flash.net.NetStreamMulticastInfo {
-      notImplemented("public flash.net.NetStream::get multicastInfo"); return;
+      release || notImplemented("public flash.net.NetStream::get multicastInfo"); return;
       // return this._multicastInfo;
     }
     get soundTransform(): flash.media.SoundTransform {
@@ -248,126 +248,126 @@ module Shumway.AVMX.AS.flash.net {
       return this._client;
     }
     set client(object: ASObject) {
-      somewhatImplemented("public flash.net.NetStream::set client");
+      release || somewhatImplemented("public flash.net.NetStream::set client");
       this._client = object;
     }
     get objectEncoding(): number /*uint*/ {
-      notImplemented("public flash.net.NetStream::get objectEncoding"); return;
+      release || notImplemented("public flash.net.NetStream::get objectEncoding"); return;
       // return this._objectEncoding;
     }
     get multicastPushNeighborLimit(): number {
-      notImplemented("public flash.net.NetStream::get multicastPushNeighborLimit"); return;
+      release || notImplemented("public flash.net.NetStream::get multicastPushNeighborLimit"); return;
       // return this._multicastPushNeighborLimit;
     }
     set multicastPushNeighborLimit(neighbors: number) {
       neighbors = +neighbors;
-      notImplemented("public flash.net.NetStream::set multicastPushNeighborLimit"); return;
+      release || notImplemented("public flash.net.NetStream::set multicastPushNeighborLimit"); return;
       // this._multicastPushNeighborLimit = neighbors;
     }
     get multicastWindowDuration(): number {
-      notImplemented("public flash.net.NetStream::get multicastWindowDuration"); return;
+      release || notImplemented("public flash.net.NetStream::get multicastWindowDuration"); return;
       // return this._multicastWindowDuration;
     }
     set multicastWindowDuration(seconds: number) {
       seconds = +seconds;
-      notImplemented("public flash.net.NetStream::set multicastWindowDuration"); return;
+      release || notImplemented("public flash.net.NetStream::set multicastWindowDuration"); return;
       // this._multicastWindowDuration = seconds;
     }
     get multicastRelayMarginDuration(): number {
-      notImplemented("public flash.net.NetStream::get multicastRelayMarginDuration"); return;
+      release || notImplemented("public flash.net.NetStream::get multicastRelayMarginDuration"); return;
       // return this._multicastRelayMarginDuration;
     }
     set multicastRelayMarginDuration(seconds: number) {
       seconds = +seconds;
-      notImplemented("public flash.net.NetStream::set multicastRelayMarginDuration"); return;
+      release || notImplemented("public flash.net.NetStream::set multicastRelayMarginDuration"); return;
       // this._multicastRelayMarginDuration = seconds;
     }
     get multicastAvailabilityUpdatePeriod(): number {
-      notImplemented("public flash.net.NetStream::get multicastAvailabilityUpdatePeriod"); return;
+      release || notImplemented("public flash.net.NetStream::get multicastAvailabilityUpdatePeriod"); return;
       // return this._multicastAvailabilityUpdatePeriod;
     }
     set multicastAvailabilityUpdatePeriod(seconds: number) {
       seconds = +seconds;
-      notImplemented("public flash.net.NetStream::set multicastAvailabilityUpdatePeriod"); return;
+      release || notImplemented("public flash.net.NetStream::set multicastAvailabilityUpdatePeriod"); return;
       // this._multicastAvailabilityUpdatePeriod = seconds;
     }
     get multicastFetchPeriod(): number {
-      notImplemented("public flash.net.NetStream::get multicastFetchPeriod"); return;
+      release || notImplemented("public flash.net.NetStream::get multicastFetchPeriod"); return;
       // return this._multicastFetchPeriod;
     }
     set multicastFetchPeriod(seconds: number) {
       seconds = +seconds;
-      notImplemented("public flash.net.NetStream::set multicastFetchPeriod"); return;
+      release || notImplemented("public flash.net.NetStream::set multicastFetchPeriod"); return;
       // this._multicastFetchPeriod = seconds;
     }
     get multicastAvailabilitySendToAll(): boolean {
-      notImplemented("public flash.net.NetStream::get multicastAvailabilitySendToAll"); return;
+      release || notImplemented("public flash.net.NetStream::get multicastAvailabilitySendToAll"); return;
       // return this._multicastAvailabilitySendToAll;
     }
     set multicastAvailabilitySendToAll(value: boolean) {
       value = !!value;
-      notImplemented("public flash.net.NetStream::set multicastAvailabilitySendToAll"); return;
+      release || notImplemented("public flash.net.NetStream::set multicastAvailabilitySendToAll"); return;
       // this._multicastAvailabilitySendToAll = value;
     }
     get farID(): string {
-      notImplemented("public flash.net.NetStream::get farID"); return;
+      release || notImplemented("public flash.net.NetStream::get farID"); return;
       // return this._farID;
     }
     get nearNonce(): string {
-      notImplemented("public flash.net.NetStream::get nearNonce"); return;
+      release || notImplemented("public flash.net.NetStream::get nearNonce"); return;
       // return this._nearNonce;
     }
     get farNonce(): string {
-      notImplemented("public flash.net.NetStream::get farNonce"); return;
+      release || notImplemented("public flash.net.NetStream::get farNonce"); return;
       // return this._farNonce;
     }
     get peerStreams(): ASArray {
-      notImplemented("public flash.net.NetStream::get peerStreams"); return;
+      release || notImplemented("public flash.net.NetStream::get peerStreams"); return;
       // return this._peerStreams;
     }
     get audioReliable(): boolean {
-      notImplemented("public flash.net.NetStream::get audioReliable"); return;
+      release || notImplemented("public flash.net.NetStream::get audioReliable"); return;
       // return this._audioReliable;
     }
     set audioReliable(reliable: boolean) {
       reliable = !!reliable;
-      notImplemented("public flash.net.NetStream::set audioReliable"); return;
+      release || notImplemented("public flash.net.NetStream::set audioReliable"); return;
       // this._audioReliable = reliable;
     }
     get videoReliable(): boolean {
-      notImplemented("public flash.net.NetStream::get videoReliable"); return;
+      release || notImplemented("public flash.net.NetStream::get videoReliable"); return;
       // return this._videoReliable;
     }
     set videoReliable(reliable: boolean) {
       reliable = !!reliable;
-      notImplemented("public flash.net.NetStream::set videoReliable"); return;
+      release || notImplemented("public flash.net.NetStream::set videoReliable"); return;
       // this._videoReliable = reliable;
     }
     get dataReliable(): boolean {
-      notImplemented("public flash.net.NetStream::get dataReliable"); return;
+      release || notImplemented("public flash.net.NetStream::get dataReliable"); return;
       // return this._dataReliable;
     }
     set dataReliable(reliable: boolean) {
       reliable = !!reliable;
-      notImplemented("public flash.net.NetStream::set dataReliable"); return;
+      release || notImplemented("public flash.net.NetStream::set dataReliable"); return;
       // this._dataReliable = reliable;
     }
     get audioSampleAccess(): boolean {
-      notImplemented("public flash.net.NetStream::get audioSampleAccess"); return;
+      release || notImplemented("public flash.net.NetStream::get audioSampleAccess"); return;
       // return this._audioSampleAccess;
     }
     set audioSampleAccess(reliable: boolean) {
       reliable = !!reliable;
-      notImplemented("public flash.net.NetStream::set audioSampleAccess"); return;
+      release || notImplemented("public flash.net.NetStream::set audioSampleAccess"); return;
       // this._audioSampleAccess = reliable;
     }
     get videoSampleAccess(): boolean {
-      notImplemented("public flash.net.NetStream::get videoSampleAccess"); return;
+      release || notImplemented("public flash.net.NetStream::get videoSampleAccess"); return;
       // return this._videoSampleAccess;
     }
     set videoSampleAccess(reliable: boolean) {
       reliable = !!reliable;
-      notImplemented("public flash.net.NetStream::set videoSampleAccess"); return;
+      release || notImplemented("public flash.net.NetStream::set videoSampleAccess"); return;
       // this._videoSampleAccess = reliable;
     }
     appendBytes(bytes: flash.utils.ByteArray): void {
@@ -380,30 +380,30 @@ module Shumway.AVMX.AS.flash.net {
       this._videoStream.appendBytesAction(netStreamAppendBytesAction);
     }
     get useHardwareDecoder(): boolean {
-      notImplemented("public flash.net.NetStream::get useHardwareDecoder"); return;
+      release || notImplemented("public flash.net.NetStream::get useHardwareDecoder"); return;
       // return this._useHardwareDecoder;
     }
     set useHardwareDecoder(v: boolean) {
       v = !!v;
-      notImplemented("public flash.net.NetStream::set useHardwareDecoder"); return;
+      release || notImplemented("public flash.net.NetStream::set useHardwareDecoder"); return;
       // this._useHardwareDecoder = v;
     }
     get useJitterBuffer(): boolean {
-      notImplemented("public flash.net.NetStream::get useJitterBuffer"); return;
+      release || notImplemented("public flash.net.NetStream::get useJitterBuffer"); return;
       // return this._useJitterBuffer;
     }
     set useJitterBuffer(value: boolean) {
       value = !!value;
-      notImplemented("public flash.net.NetStream::set useJitterBuffer"); return;
+      release || notImplemented("public flash.net.NetStream::set useJitterBuffer"); return;
       // this._useJitterBuffer = value;
     }
     get videoStreamSettings(): flash.media.VideoStreamSettings {
-      notImplemented("public flash.net.NetStream::get videoStreamSettings"); return;
+      release || notImplemented("public flash.net.NetStream::get videoStreamSettings"); return;
       // return this._videoStreamSettings;
     }
     set videoStreamSettings(settings: flash.media.VideoStreamSettings) {
       settings = settings;
-      notImplemented("public flash.net.NetStream::set videoStreamSettings"); return;
+      release || notImplemented("public flash.net.NetStream::set videoStreamSettings"); return;
       // this._videoStreamSettings = settings;
     }
     invoke(index: number /*uint*/): any {
@@ -654,7 +654,7 @@ module Shumway.AVMX.AS.flash.net {
         }
       }
       if (!forceMediaSource && !isMediaSourceEnabled) {
-        somewhatImplemented("public flash.net.NetStream::play");
+        release || somewhatImplemented("public flash.net.NetStream::play");
         this._state = VideoStreamState.OPENED;
         this._url = FileLoadingService.instance.resolveUrl(url);
         return;
@@ -849,7 +849,7 @@ module Shumway.AVMX.AS.flash.net {
           this.close();
         }.bind(this));
       }
-      somewhatImplemented("public flash.net.NetStream::appendBytesAction");
+      release || somewhatImplemented("public flash.net.NetStream::appendBytesAction");
     }
 
     close() {

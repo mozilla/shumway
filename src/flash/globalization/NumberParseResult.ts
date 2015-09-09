@@ -42,20 +42,20 @@ module Shumway.AVMX.AS.flash.globalization {
     // _startIndex: number /*int*/;
     // _endIndex: number /*int*/;
     get value(): number {
-      notImplemented("public flash.globalization.NumberParseResult::get value"); return;
+      release || notImplemented("public flash.globalization.NumberParseResult::get value"); return;
       // return this._value;
     }
     get startIndex(): number /*int*/ {
-      notImplemented("public flash.globalization.NumberParseResult::get startIndex"); return;
+      release || notImplemented("public flash.globalization.NumberParseResult::get startIndex"); return;
       // return this._startIndex;
     }
     get endIndex(): number /*int*/ {
-      notImplemented("public flash.globalization.NumberParseResult::get endIndex"); return;
+      release || notImplemented("public flash.globalization.NumberParseResult::get endIndex"); return;
       // return this._endIndex;
     }
     ctor(value: number, startIndex: number /*int*/, endIndex: number /*int*/): void {
       value = +value; startIndex = startIndex | 0; endIndex = endIndex | 0;
-      notImplemented("public flash.globalization.NumberParseResult::ctor"); return;
+      release || notImplemented("public flash.globalization.NumberParseResult::ctor"); return;
     }
   }
 }

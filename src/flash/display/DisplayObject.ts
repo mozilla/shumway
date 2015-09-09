@@ -1341,7 +1341,7 @@ module Shumway.AVMX.AS.flash.display {
 
     set scaleZ(value: number) {
       value = +value;
-      somewhatImplemented("public DisplayObject::set scaleZ");
+      release || somewhatImplemented("public DisplayObject::set scaleZ");
       this._scaleZ = value;
     }
 
@@ -1370,7 +1370,7 @@ module Shumway.AVMX.AS.flash.display {
 
     set rotationX(value: number) {
       value = +value;
-      somewhatImplemented("public DisplayObject::set rotationX");
+      release || somewhatImplemented("public DisplayObject::set rotationX");
       this._rotationZ = value;
     }
 
@@ -1380,7 +1380,7 @@ module Shumway.AVMX.AS.flash.display {
 
     set rotationY(value: number) {
       value = +value;
-      somewhatImplemented("public DisplayObject::set rotationY");
+      release || somewhatImplemented("public DisplayObject::set rotationY");
       this._rotationY = value;
     }
 
@@ -1390,7 +1390,7 @@ module Shumway.AVMX.AS.flash.display {
 
     set rotationZ(value: number) {
       value = +value;
-      somewhatImplemented("public DisplayObject::set rotationZ");
+      release || somewhatImplemented("public DisplayObject::set rotationZ");
       this._rotationZ = value;
     }
 
@@ -1708,7 +1708,7 @@ module Shumway.AVMX.AS.flash.display {
     set z(value: number) {
       value = +value;
       this._z = value;
-      somewhatImplemented("public DisplayObject::set z");
+      release || somewhatImplemented("public DisplayObject::set z");
     }
 
     getBounds(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
@@ -1742,17 +1742,17 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     globalToLocal3D(point: flash.geom.Point): flash.geom.Vector3D {
-      notImplemented("public DisplayObject::globalToLocal3D");
+      release || notImplemented("public DisplayObject::globalToLocal3D");
       return null;
     }
 
     localToGlobal3D(point: flash.geom.Point): flash.geom.Vector3D {
-      notImplemented("public DisplayObject::localToGlobal3D");
+      release || notImplemented("public DisplayObject::localToGlobal3D");
       return null;
     }
 
     local3DToGlobal(point3d: flash.geom.Vector3D): flash.geom.Point {
-      notImplemented("public DisplayObject::local3DToGlobal");
+      release || notImplemented("public DisplayObject::local3DToGlobal");
       return null;
     }
 
@@ -2012,7 +2012,7 @@ module Shumway.AVMX.AS.flash.display {
       this._scrollRect = value ? value.clone() : null;
       /* TODO: Figure out how to deal with the bounds and hit testing when scroll rects are applied.
        * The Flash implementation appears to be broken. */
-      somewhatImplemented("public DisplayObject::set scrollRect");
+      release || somewhatImplemented("public DisplayObject::set scrollRect");
       return;
     }
 
@@ -2166,7 +2166,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     set blendShader(value: any /* flash.display.Shader */) {
-      somewhatImplemented("public DisplayObject::set blendShader");
+      release || somewhatImplemented("public DisplayObject::set blendShader");
     }
   }
 }

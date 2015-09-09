@@ -33,18 +33,18 @@ module Shumway.AVMX.AS.flash.sensors {
 
     // static _isSupported: boolean;
     get isSupported(): boolean {
-      notImplemented("public flash.sensors.Geolocation::get isSupported"); return;
+      release || notImplemented("public flash.sensors.Geolocation::get isSupported"); return;
       // return this._isSupported;
     }
     
     // _muted: boolean;
     get muted(): boolean {
-      notImplemented("public flash.sensors.Geolocation::get muted"); return;
+      release || notImplemented("public flash.sensors.Geolocation::get muted"); return;
       // return this._muted;
     }
     setRequestedUpdateInterval(interval: number): void {
       interval = +interval;
-      notImplemented("public flash.sensors.Geolocation::setRequestedUpdateInterval"); return;
+      release || notImplemented("public flash.sensors.Geolocation::setRequestedUpdateInterval"); return;
     }
   }
 }

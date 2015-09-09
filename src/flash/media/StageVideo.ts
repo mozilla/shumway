@@ -45,60 +45,60 @@ module Shumway.AVMX.AS.flash.media {
     // _videoHeight: number /*int*/;
     // _colorSpaces: ASVector<any>;
     get viewPort(): flash.geom.Rectangle {
-      notImplemented("public flash.media.StageVideo::get viewPort"); return;
+      release || notImplemented("public flash.media.StageVideo::get viewPort"); return;
       // return this._viewPort;
     }
     set viewPort(rect: flash.geom.Rectangle) {
       rect = rect;
-      notImplemented("public flash.media.StageVideo::set viewPort"); return;
+      release || notImplemented("public flash.media.StageVideo::set viewPort"); return;
       // this._viewPort = rect;
     }
     get pan(): flash.geom.Point {
-      notImplemented("public flash.media.StageVideo::get pan"); return;
+      release || notImplemented("public flash.media.StageVideo::get pan"); return;
       // return this._pan;
     }
     set pan(point: flash.geom.Point) {
       point = point;
-      notImplemented("public flash.media.StageVideo::set pan"); return;
+      release || notImplemented("public flash.media.StageVideo::set pan"); return;
       // this._pan = point;
     }
     get zoom(): flash.geom.Point {
-      notImplemented("public flash.media.StageVideo::get zoom"); return;
+      release || notImplemented("public flash.media.StageVideo::get zoom"); return;
       // return this._zoom;
     }
     set zoom(point: flash.geom.Point) {
       point = point;
-      notImplemented("public flash.media.StageVideo::set zoom"); return;
+      release || notImplemented("public flash.media.StageVideo::set zoom"); return;
       // this._zoom = point;
     }
     get depth(): number /*int*/ {
-      notImplemented("public flash.media.StageVideo::get depth"); return;
+      release || notImplemented("public flash.media.StageVideo::get depth"); return;
       // return this._depth;
     }
     set depth(depth: number /*int*/) {
       depth = depth | 0;
-      notImplemented("public flash.media.StageVideo::set depth"); return;
+      release || notImplemented("public flash.media.StageVideo::set depth"); return;
       // this._depth = depth;
     }
     get videoWidth(): number /*int*/ {
-      notImplemented("public flash.media.StageVideo::get videoWidth"); return;
+      release || notImplemented("public flash.media.StageVideo::get videoWidth"); return;
       // return this._videoWidth;
     }
     get videoHeight(): number /*int*/ {
-      notImplemented("public flash.media.StageVideo::get videoHeight"); return;
+      release || notImplemented("public flash.media.StageVideo::get videoHeight"); return;
       // return this._videoHeight;
     }
     get colorSpaces(): Float64Vector {
-      notImplemented("public flash.media.StageVideo::get colorSpaces"); return;
+      release || notImplemented("public flash.media.StageVideo::get colorSpaces"); return;
       // return this._colorSpaces;
     }
     attachNetStream(netStream: flash.net.NetStream): void {
       netStream = netStream;
-      notImplemented("public flash.media.StageVideo::attachNetStream"); return;
+      release || notImplemented("public flash.media.StageVideo::attachNetStream"); return;
     }
     attachCamera(theCamera: flash.media.Camera): void {
       theCamera = theCamera;
-      notImplemented("public flash.media.StageVideo::attachCamera"); return;
+      release || notImplemented("public flash.media.StageVideo::attachCamera"); return;
     }
   }
 }

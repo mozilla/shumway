@@ -351,7 +351,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     get caretIndex(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get caretIndex"); return;
+      release || notImplemented("public flash.text.TextField::get caretIndex"); return;
       // return this._caretIndex;
     }
 
@@ -427,7 +427,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     get textInteractionMode(): string {
-      notImplemented("public flash.text.TextField::get textInteractionMode"); return;
+      release || notImplemented("public flash.text.TextField::get textInteractionMode"); return;
       // return this._textInteractionMode;
     }
 
@@ -454,7 +454,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set mouseWheelEnabled(value: boolean) {
-      somewhatImplemented("public flash.text.TextField::set mouseWheelEnabled");
+      release || somewhatImplemented("public flash.text.TextField::set mouseWheelEnabled");
       this._mouseWheelEnabled = !!value;
     }
 
@@ -475,7 +475,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set displayAsPassword(value: boolean) {
-      somewhatImplemented("public flash.text.TextField::set displayAsPassword");
+      release || somewhatImplemented("public flash.text.TextField::set displayAsPassword");
       this._displayAsPassword = !!value;
     }
 
@@ -484,7 +484,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set restrict(value: string) {
-      somewhatImplemented("public flash.text.TextField::set restrict");
+      release || somewhatImplemented("public flash.text.TextField::set restrict");
       this._restrict = axCoerceString(value);
     }
 
@@ -613,27 +613,27 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     get useRichTextClipboard(): boolean {
-      notImplemented("public flash.text.TextField::get useRichTextClipboard"); return;
+      release || notImplemented("public flash.text.TextField::get useRichTextClipboard"); return;
       // return this._useRichTextClipboard;
     }
     set useRichTextClipboard(value: boolean) {
       value = !!value;
-      notImplemented("public flash.text.TextField::set useRichTextClipboard"); return;
+      release || notImplemented("public flash.text.TextField::set useRichTextClipboard"); return;
       // this._useRichTextClipboard = value;
     }
 
     copyRichText() {
-      notImplemented("public flash.text.TextField::copyRichText");
+      release || notImplemented("public flash.text.TextField::copyRichText");
     }
     pasteRichText(richText: string) {
       richText = axCoerceString(richText);
-      notImplemented("public flash.text.TextField::pasteRichText");
+      release || notImplemented("public flash.text.TextField::pasteRichText");
     }
 
     getXMLText(beginIndex: number, endIndex: number = 2147483647): string {
       beginIndex = +beginIndex;
       endIndex = +endIndex;
-      notImplemented("public flash.text.TextField::getXMLText");
+      release || notImplemented("public flash.text.TextField::getXMLText");
       return "";
     }
     insertXMLText(beginIndex: number, endIndex: number, richText: String, pasting: Boolean): void {
@@ -641,7 +641,7 @@ module Shumway.AVMX.AS.flash.text {
       endIndex = +endIndex;
       richText = axCoerceString(richText);
       pasting = !!pasting;
-      notImplemented("public flash.text.TextField::insertXMLText");
+      release || notImplemented("public flash.text.TextField::insertXMLText");
     }
 
     private _ensureLineMetrics() {
@@ -697,30 +697,30 @@ module Shumway.AVMX.AS.flash.text {
 
     getCharBoundaries(charIndex: number /*int*/): flash.geom.Rectangle {
       charIndex = charIndex | 0;
-      somewhatImplemented("public flash.text.TextField::getCharBoundaries");
+      release || somewhatImplemented("public flash.text.TextField::getCharBoundaries");
       var fakeCharHeight = this.textHeight, fakeCharWidth = fakeCharHeight * 0.75;
       return new this.sec.flash.geom.Rectangle(charIndex * fakeCharWidth, 0,
                                                           fakeCharWidth, fakeCharHeight);
     }
     getCharIndexAtPoint(x: number, y: number): number /*int*/ {
       x = +x; y = +y;
-      notImplemented("public flash.text.TextField::getCharIndexAtPoint"); return;
+      release || notImplemented("public flash.text.TextField::getCharIndexAtPoint"); return;
     }
     getFirstCharInParagraph(charIndex: number /*int*/): number /*int*/ {
       charIndex = charIndex | 0;
-      notImplemented("public flash.text.TextField::getFirstCharInParagraph"); return;
+      release || notImplemented("public flash.text.TextField::getFirstCharInParagraph"); return;
     }
     getLineIndexAtPoint(x: number, y: number): number /*int*/ {
       x = +x; y = +y;
-      notImplemented("public flash.text.TextField::getLineIndexAtPoint"); return;
+      release || notImplemented("public flash.text.TextField::getLineIndexAtPoint"); return;
     }
     getLineIndexOfChar(charIndex: number /*int*/): number /*int*/ {
       charIndex = charIndex | 0;
-      notImplemented("public flash.text.TextField::getLineIndexOfChar"); return;
+      release || notImplemented("public flash.text.TextField::getLineIndexOfChar"); return;
     }
     getLineLength(lineIndex: number /*int*/): number /*int*/ {
       lineIndex = lineIndex | 0;
-      notImplemented("public flash.text.TextField::getLineLength"); return;
+      release || notImplemented("public flash.text.TextField::getLineLength"); return;
     }
 
     getLineMetrics(lineIndex: number /*int*/): flash.text.TextLineMetrics {
@@ -756,7 +756,7 @@ module Shumway.AVMX.AS.flash.text {
       // TODO:  I've tried modifying the width of the text field so that lines wrap, but this doesn't seem
       // to have any effect on how line offsets are computed. I'm leaving in the |somewhatImplemented| call
       // since this is not fully tested.
-      release || somewhatImplemented("public flash.text.TextField::getLineOffset");
+      release || release || somewhatImplemented("public flash.text.TextField::getLineOffset");
       return offset;
     }
     getLineText(lineIndex: number /*int*/): string {
@@ -769,7 +769,7 @@ module Shumway.AVMX.AS.flash.text {
     }
     getParagraphLength(charIndex: number /*int*/): number /*int*/ {
       charIndex = charIndex | 0;
-      notImplemented("public flash.text.TextField::getParagraphLength"); return;
+      release || notImplemented("public flash.text.TextField::getParagraphLength"); return;
     }
 
     /**
@@ -821,7 +821,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     getRawText(): string {
-      notImplemented("public flash.text.TextField::getRawText"); return;
+      release || notImplemented("public flash.text.TextField::getRawText"); return;
     }
 
     replaceSelectedText(value: string): void {
@@ -872,7 +872,7 @@ module Shumway.AVMX.AS.flash.text {
 
     getImageReference(id: string): flash.display.DisplayObject {
       //id = "" + id;
-      notImplemented("public flash.text.TextField::getImageReference"); return;
+      release || notImplemented("public flash.text.TextField::getImageReference"); return;
     }
   }
 

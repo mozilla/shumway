@@ -44,21 +44,21 @@ module Shumway.AVMX.AS.flash.display {
     // _data: flash.display.ShaderData;
     // _precisionHint: string;
     get data(): flash.display.ShaderData {
-      notImplemented("public flash.display.Shader::get data"); return;
+      release || notImplemented("public flash.display.Shader::get data"); return;
       // return this._data;
     }
     set data(p: flash.display.ShaderData) {
       p = p;
-      notImplemented("public flash.display.Shader::set data"); return;
+      release || notImplemented("public flash.display.Shader::set data"); return;
       // this._data = p;
     }
     get precisionHint(): string {
-      notImplemented("public flash.display.Shader::get precisionHint"); return;
+      release || notImplemented("public flash.display.Shader::get precisionHint"); return;
       // return this._precisionHint;
     }
     set precisionHint(p: string) {
       p = axCoerceString(p);
-      notImplemented("public flash.display.Shader::set precisionHint"); return;
+      release || notImplemented("public flash.display.Shader::set precisionHint"); return;
       // this._precisionHint = p;
     }
   }

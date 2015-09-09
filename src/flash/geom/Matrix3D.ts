@@ -87,7 +87,7 @@ module Shumway.AVMX.AS.flash.geom {
     
     static interpolate(thisMat: flash.geom.Matrix3D, toMat: flash.geom.Matrix3D, percent: number): flash.geom.Matrix3D {
       thisMat = thisMat; toMat = toMat; percent = +percent;
-      notImplemented("public flash.geom.Matrix3D::static interpolate"); return;
+      release || notImplemented("public flash.geom.Matrix3D::static interpolate"); return;
     }
 
     setTargetDisplayObject(object: flash.display.DisplayObject): void {
@@ -246,11 +246,11 @@ module Shumway.AVMX.AS.flash.geom {
     }
     decompose(orientationStyle: string = "eulerAngles"): Float64Vector {
       orientationStyle = axCoerceString(orientationStyle);
-      notImplemented("public flash.geom.Matrix3D::decompose"); return;
+      release || notImplemented("public flash.geom.Matrix3D::decompose"); return;
     }
     recompose(components: Float64Vector, orientationStyle: string = "eulerAngles"): boolean {
       orientationStyle = axCoerceString(orientationStyle);
-      notImplemented("public flash.geom.Matrix3D::recompose"); return;
+      release || notImplemented("public flash.geom.Matrix3D::recompose"); return;
     }
     appendTranslation(x: number, y: number, z: number): void {
       x = +x; y = +y; z = +z;
@@ -381,11 +381,11 @@ module Shumway.AVMX.AS.flash.geom {
     }
     pointAt(pos: flash.geom.Vector3D, at: flash.geom.Vector3D = null, up: flash.geom.Vector3D = null): void {
       pos = pos; at = at; up = up;
-      notImplemented("public flash.geom.Matrix3D::pointAt"); return;
+      release || notImplemented("public flash.geom.Matrix3D::pointAt"); return;
     }
     interpolateTo(toMat: flash.geom.Matrix3D, percent: number): void {
       toMat = toMat; percent = +percent;
-      notImplemented("public flash.geom.Matrix3D::interpolateTo"); return;
+      release || notImplemented("public flash.geom.Matrix3D::interpolateTo"); return;
     }
     copyFrom(sourceMatrix3D: flash.geom.Matrix3D): void {
       sourceMatrix3D = sourceMatrix3D;

@@ -56,11 +56,11 @@ module Shumway.AVMX.AS.flash.net {
     private static _defaultObjectEncoding = flash.net.ObjectEncoding.DEFAULT;
     static deleteAll(url: string): number /*int*/ {
       url = axCoerceString(url);
-      notImplemented("public flash.net.SharedObject::static deleteAll"); return;
+      release || notImplemented("public flash.net.SharedObject::static deleteAll"); return;
     }
     static getDiskUsage(url: string): number /*int*/ {
       url = axCoerceString(url);
-      somewhatImplemented("public flash.net.SharedObject::static getDiskUsage");
+      release || somewhatImplemented("public flash.net.SharedObject::static getDiskUsage");
       return 0;
     }
 
@@ -108,7 +108,7 @@ module Shumway.AVMX.AS.flash.net {
     static getRemote(name: string, remotePath: string = null, persistence: any = false,
                      secure: boolean = false): flash.net.SharedObject {
       name = axCoerceString(name); remotePath = axCoerceString(remotePath); secure = !!secure;
-      notImplemented("public flash.net.SharedObject::static getRemote"); return;
+      release || notImplemented("public flash.net.SharedObject::static getRemote"); return;
     }
 
     static get defaultObjectEncoding(): number /*uint*/ {
@@ -143,12 +143,12 @@ module Shumway.AVMX.AS.flash.net {
     }
 
     get client(): ASObject {
-      notImplemented("public flash.net.SharedObject::get client"); return;
+      release || notImplemented("public flash.net.SharedObject::get client"); return;
       // return this._client;
     }
     set client(object: ASObject) {
       object = object;
-      notImplemented("public flash.net.SharedObject::set client"); return;
+      release || notImplemented("public flash.net.SharedObject::set client"); return;
       // this._client = object;
     }
     setDirty(propertyName: string): void {
@@ -157,20 +157,20 @@ module Shumway.AVMX.AS.flash.net {
     }
 
     connect(myConnection: NetConnection, params: string = null): void {
-      notImplemented("public flash.net.SharedObject::connect");
+      release || notImplemented("public flash.net.SharedObject::connect");
     }
 
     send(): void {
-      notImplemented("public flash.net.SharedObject::send");
+      release || notImplemented("public flash.net.SharedObject::send");
     }
 
     close(): void {
-      somewhatImplemented("public flash.net.SharedObject::close");
+      release || somewhatImplemented("public flash.net.SharedObject::close");
     }
 
     flush(minDiskSpace?: number): string {
       minDiskSpace = minDiskSpace | 0;
-      somewhatImplemented("public flash.net.SharedObject::flush");
+      release || somewhatImplemented("public flash.net.SharedObject::flush");
       if (!this._pendingFlushId) {
         return 'flushed';
       }
@@ -204,20 +204,20 @@ module Shumway.AVMX.AS.flash.net {
     }
 
     clear(): void {
-      somewhatImplemented("public flash.net.SharedObject::clear");
+      release || somewhatImplemented("public flash.net.SharedObject::clear");
       this._data = this.sec.createObject();
       getSharedObjectStorage().removeItem(this._path);
     }
 
     get size(): number {
-      somewhatImplemented("public flash.net.SharedObject::get size");
+      release || somewhatImplemented("public flash.net.SharedObject::get size");
       this.flush(0);
       var storedData = getSharedObjectStorage().getItem(this._path);
       return storedData ? storedData.length : 0;
     }
 
     set fps(updatesPerSecond: number) {
-      somewhatImplemented("fps");
+      release || somewhatImplemented("fps");
       this._fps = updatesPerSecond;
     }
 

@@ -39,10 +39,10 @@ module Shumway.AVMX.AS.flash.display3D {
     
     upload(vertexProgram: flash.utils.ByteArray, fragmentProgram: flash.utils.ByteArray): void {
       vertexProgram = vertexProgram; fragmentProgram = fragmentProgram;
-      notImplemented("public flash.display3D.Program3D::upload"); return;
+      release || notImplemented("public flash.display3D.Program3D::upload"); return;
     }
     dispose(): void {
-      notImplemented("public flash.display3D.Program3D::dispose"); return;
+      release || notImplemented("public flash.display3D.Program3D::dispose"); return;
     }
   }
 }

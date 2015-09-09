@@ -37,18 +37,18 @@ module Shumway.AVMX.AS.flash.sensors {
     // AS -> JS Bindings
     // static _isSupported: boolean;
     get isSupported(): boolean {
-      notImplemented("public flash.sensors.Accelerometer::get isSupported"); return;
+      release || notImplemented("public flash.sensors.Accelerometer::get isSupported"); return;
       // return this._isSupported;
     }
     
     // _muted: boolean;
     get muted(): boolean {
-      notImplemented("public flash.sensors.Accelerometer::get muted"); return;
+      release || notImplemented("public flash.sensors.Accelerometer::get muted"); return;
       // return this._muted;
     }
     setRequestedUpdateInterval(interval: number): void {
       interval = +interval;
-      notImplemented("public flash.sensors.Accelerometer::setRequestedUpdateInterval"); return;
+      release || notImplemented("public flash.sensors.Accelerometer::setRequestedUpdateInterval"); return;
     }
   }
 }

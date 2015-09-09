@@ -45,11 +45,11 @@ module Shumway.AVMX.AS.flash.text.engine {
     // AS -> JS Bindings
     static isFontCompatible(fontName: string, fontWeight: string, fontPosture: string): boolean {
       fontName = axCoerceString(fontName); fontWeight = axCoerceString(fontWeight); fontPosture = axCoerceString(fontPosture);
-      notImplemented("public flash.text.engine.FontDescription::static isFontCompatible"); return;
+      release || notImplemented("public flash.text.engine.FontDescription::static isFontCompatible"); return;
     }
     static isDeviceFontCompatible(fontName: string, fontWeight: string, fontPosture: string): boolean {
       fontName = axCoerceString(fontName); fontWeight = axCoerceString(fontWeight); fontPosture = axCoerceString(fontPosture);
-      notImplemented("public flash.text.engine.FontDescription::static isDeviceFontCompatible"); return;
+      release || notImplemented("public flash.text.engine.FontDescription::static isDeviceFontCompatible"); return;
     }
     
     // _renderingMode: string;
@@ -60,66 +60,66 @@ module Shumway.AVMX.AS.flash.text.engine {
     // _cffHinting: string;
     // _locked: boolean;
     get renderingMode(): string {
-      notImplemented("public flash.text.engine.FontDescription::get renderingMode"); return;
+      release || notImplemented("public flash.text.engine.FontDescription::get renderingMode"); return;
       // return this._renderingMode;
     }
     set renderingMode(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.text.engine.FontDescription::set renderingMode"); return;
+      release || notImplemented("public flash.text.engine.FontDescription::set renderingMode"); return;
       // this._renderingMode = value;
     }
     get fontLookup(): string {
-      notImplemented("public flash.text.engine.FontDescription::get fontLookup"); return;
+      release || notImplemented("public flash.text.engine.FontDescription::get fontLookup"); return;
       // return this._fontLookup;
     }
     set fontLookup(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.text.engine.FontDescription::set fontLookup"); return;
+      release || notImplemented("public flash.text.engine.FontDescription::set fontLookup"); return;
       // this._fontLookup = value;
     }
     get fontName(): string {
-      notImplemented("public flash.text.engine.FontDescription::get fontName"); return;
+      release || notImplemented("public flash.text.engine.FontDescription::get fontName"); return;
       // return this._fontName;
     }
     set fontName(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.text.engine.FontDescription::set fontName"); return;
+      release || notImplemented("public flash.text.engine.FontDescription::set fontName"); return;
       // this._fontName = value;
     }
     get fontPosture(): string {
-      notImplemented("public flash.text.engine.FontDescription::get fontPosture"); return;
+      release || notImplemented("public flash.text.engine.FontDescription::get fontPosture"); return;
       // return this._fontPosture;
     }
     set fontPosture(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.text.engine.FontDescription::set fontPosture"); return;
+      release || notImplemented("public flash.text.engine.FontDescription::set fontPosture"); return;
       // this._fontPosture = value;
     }
     get fontWeight(): string {
-      notImplemented("public flash.text.engine.FontDescription::get fontWeight"); return;
+      release || notImplemented("public flash.text.engine.FontDescription::get fontWeight"); return;
       // return this._fontWeight;
     }
     set fontWeight(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.text.engine.FontDescription::set fontWeight"); return;
+      release || notImplemented("public flash.text.engine.FontDescription::set fontWeight"); return;
       // this._fontWeight = value;
     }
     get cffHinting(): string {
-      notImplemented("public flash.text.engine.FontDescription::get cffHinting"); return;
+      release || notImplemented("public flash.text.engine.FontDescription::get cffHinting"); return;
       // return this._cffHinting;
     }
     set cffHinting(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.text.engine.FontDescription::set cffHinting"); return;
+      release || notImplemented("public flash.text.engine.FontDescription::set cffHinting"); return;
       // this._cffHinting = value;
     }
     get locked(): boolean {
-      notImplemented("public flash.text.engine.FontDescription::get locked"); return;
+      release || notImplemented("public flash.text.engine.FontDescription::get locked"); return;
       // return this._locked;
     }
     set locked(value: boolean) {
       value = !!value;
-      notImplemented("public flash.text.engine.FontDescription::set locked"); return;
+      release || notImplemented("public flash.text.engine.FontDescription::set locked"); return;
       // this._locked = value;
     }
   }

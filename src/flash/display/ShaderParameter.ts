@@ -41,20 +41,20 @@ module Shumway.AVMX.AS.flash.display {
     // _type: string;
     // _index: number /*int*/;
     get value(): ASArray {
-      notImplemented("public flash.display.ShaderParameter::get value"); return;
+      release || notImplemented("public flash.display.ShaderParameter::get value"); return;
       // return this._value;
     }
     set value(v: ASArray) {
       v = v;
-      notImplemented("public flash.display.ShaderParameter::set value"); return;
+      release || notImplemented("public flash.display.ShaderParameter::set value"); return;
       // this._value = v;
     }
     get type(): string {
-      notImplemented("public flash.display.ShaderParameter::get type"); return;
+      release || notImplemented("public flash.display.ShaderParameter::get type"); return;
       // return this._type;
     }
     get index(): number /*int*/ {
-      notImplemented("public flash.display.ShaderParameter::get index"); return;
+      release || notImplemented("public flash.display.ShaderParameter::get index"); return;
       // return this._index;
     }
   }

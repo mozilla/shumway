@@ -46,12 +46,12 @@ module Shumway.AVMX.AS.flash.text.engine {
     // _text: string;
     set text(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.text.engine.TextElement::set text"); return;
+      release || notImplemented("public flash.text.engine.TextElement::set text"); return;
       // this._text = value;
     }
     replaceText(beginIndex: number /*int*/, endIndex: number /*int*/, newText: string): void {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0; newText = axCoerceString(newText);
-      notImplemented("public flash.text.engine.TextElement::replaceText"); return;
+      release || notImplemented("public flash.text.engine.TextElement::replaceText"); return;
     }
   }
 }

@@ -41,16 +41,16 @@ module Shumway.AVMX.AS.flash.globalization {
     // _value: number;
     // _currencyString: string;
     get value(): number {
-      notImplemented("public flash.globalization.CurrencyParseResult::get value"); return;
+      release || notImplemented("public flash.globalization.CurrencyParseResult::get value"); return;
       // return this._value;
     }
     get currencyString(): string {
-      notImplemented("public flash.globalization.CurrencyParseResult::get currencyString"); return;
+      release || notImplemented("public flash.globalization.CurrencyParseResult::get currencyString"); return;
       // return this._currencyString;
     }
     ctor(value: number, symbol: string): void {
       value = +value; symbol = axCoerceString(symbol);
-      notImplemented("public flash.globalization.CurrencyParseResult::ctor"); return;
+      release || notImplemented("public flash.globalization.CurrencyParseResult::ctor"); return;
     }
   }
 }

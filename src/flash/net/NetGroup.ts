@@ -63,19 +63,19 @@ module Shumway.AVMX.AS.flash.net {
     // _localCoverageFrom: string;
     // _localCoverageTo: string;
     get info(): flash.net.NetGroupInfo {
-      notImplemented("public flash.net.NetGroup::get info"); return;
+      release || notImplemented("public flash.net.NetGroup::get info"); return;
       // return this._info;
     }
     convertPeerIDToGroupAddress(peerID: string): string {
       peerID = axCoerceString(peerID);
-      notImplemented("public flash.net.NetGroup::convertPeerIDToGroupAddress"); return;
+      release || notImplemented("public flash.net.NetGroup::convertPeerIDToGroupAddress"); return;
     }
     get localCoverageFrom(): string {
-      notImplemented("public flash.net.NetGroup::get localCoverageFrom"); return;
+      release || notImplemented("public flash.net.NetGroup::get localCoverageFrom"); return;
       // return this._localCoverageFrom;
     }
     get localCoverageTo(): string {
-      notImplemented("public flash.net.NetGroup::get localCoverageTo"); return;
+      release || notImplemented("public flash.net.NetGroup::get localCoverageTo"); return;
       // return this._localCoverageTo;
     }
   }

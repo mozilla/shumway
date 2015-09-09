@@ -27,22 +27,22 @@ module Shumway.AVMX.AS.flash.media {
     }
     
     static get names(): ASArray {
-      somewhatImplemented("public flash.media.Microphone::get names");
+      release || somewhatImplemented("public flash.media.Microphone::get names");
       return this.sec.createArrayUnsafe([]);
       // return this._names;
     }
     static get isSupported(): boolean {
-      somewhatImplemented("public flash.media.Microphone::get isSupported");
+      release || somewhatImplemented("public flash.media.Microphone::get isSupported");
       return false;
       // return this._isSupported;
     }
     static getMicrophone(index: number /*int*/ = -1): flash.media.Microphone {
       index = index | 0;
-      notImplemented("public flash.media.Microphone::static getMicrophone"); return;
+      release || notImplemented("public flash.media.Microphone::static getMicrophone"); return;
     }
     static getEnhancedMicrophone(index: number /*int*/ = -1): flash.media.Microphone {
       index = index | 0;
-      notImplemented("public flash.media.Microphone::static getEnhancedMicrophone"); return;
+      release || notImplemented("public flash.media.Microphone::static getEnhancedMicrophone"); return;
     }
     
     // _rate: number /*int*/;
@@ -62,125 +62,125 @@ module Shumway.AVMX.AS.flash.media {
     // _soundTransform: flash.media.SoundTransform;
     // _enhancedOptions: flash.media.MicrophoneEnhancedOptions;
     get rate(): number /*int*/ {
-      notImplemented("public flash.media.Microphone::get rate"); return;
+      release || notImplemented("public flash.media.Microphone::get rate"); return;
       // return this._rate;
     }
     set rate(rate: number /*int*/) {
       rate = rate | 0;
-      notImplemented("public flash.media.Microphone::set rate"); return;
+      release || notImplemented("public flash.media.Microphone::set rate"); return;
       // this._rate = rate;
     }
     get codec(): string {
-      notImplemented("public flash.media.Microphone::get codec"); return;
+      release || notImplemented("public flash.media.Microphone::get codec"); return;
       // return this._codec;
     }
     set codec(codec: string) {
       codec = axCoerceString(codec);
-      notImplemented("public flash.media.Microphone::set codec"); return;
+      release || notImplemented("public flash.media.Microphone::set codec"); return;
       // this._codec = codec;
     }
     get framesPerPacket(): number /*int*/ {
-      notImplemented("public flash.media.Microphone::get framesPerPacket"); return;
+      release || notImplemented("public flash.media.Microphone::get framesPerPacket"); return;
       // return this._framesPerPacket;
     }
     set framesPerPacket(frames: number /*int*/) {
       frames = frames | 0;
-      notImplemented("public flash.media.Microphone::set framesPerPacket"); return;
+      release || notImplemented("public flash.media.Microphone::set framesPerPacket"); return;
       // this._framesPerPacket = frames;
     }
     get encodeQuality(): number /*int*/ {
-      notImplemented("public flash.media.Microphone::get encodeQuality"); return;
+      release || notImplemented("public flash.media.Microphone::get encodeQuality"); return;
       // return this._encodeQuality;
     }
     set encodeQuality(quality: number /*int*/) {
       quality = quality | 0;
-      notImplemented("public flash.media.Microphone::set encodeQuality"); return;
+      release || notImplemented("public flash.media.Microphone::set encodeQuality"); return;
       // this._encodeQuality = quality;
     }
     get noiseSuppressionLevel(): number /*int*/ {
-      notImplemented("public flash.media.Microphone::get noiseSuppressionLevel"); return;
+      release || notImplemented("public flash.media.Microphone::get noiseSuppressionLevel"); return;
       // return this._noiseSuppressionLevel;
     }
     set noiseSuppressionLevel(level: number /*int*/) {
       level = level | 0;
-      notImplemented("public flash.media.Microphone::set noiseSuppressionLevel"); return;
+      release || notImplemented("public flash.media.Microphone::set noiseSuppressionLevel"); return;
       // this._noiseSuppressionLevel = level;
     }
     get enableVAD(): boolean {
-      notImplemented("public flash.media.Microphone::get enableVAD"); return;
+      release || notImplemented("public flash.media.Microphone::get enableVAD"); return;
       // return this._enableVAD;
     }
     set enableVAD(enable: boolean) {
       enable = !!enable;
-      notImplemented("public flash.media.Microphone::set enableVAD"); return;
+      release || notImplemented("public flash.media.Microphone::set enableVAD"); return;
       // this._enableVAD = enable;
     }
     get activityLevel(): number {
-      notImplemented("public flash.media.Microphone::get activityLevel"); return;
+      release || notImplemented("public flash.media.Microphone::get activityLevel"); return;
       // return this._activityLevel;
     }
     get gain(): number {
-      notImplemented("public flash.media.Microphone::get gain"); return;
+      release || notImplemented("public flash.media.Microphone::get gain"); return;
       // return this._gain;
     }
     set gain(gain: number) {
       gain = +gain;
-      notImplemented("public flash.media.Microphone::set gain"); return;
+      release || notImplemented("public flash.media.Microphone::set gain"); return;
       // this._gain = gain;
     }
     get index(): number /*int*/ {
-      notImplemented("public flash.media.Microphone::get index"); return;
+      release || notImplemented("public flash.media.Microphone::get index"); return;
       // return this._index;
     }
     get muted(): boolean {
-      notImplemented("public flash.media.Microphone::get muted"); return;
+      release || notImplemented("public flash.media.Microphone::get muted"); return;
       // return this._muted;
     }
     get name(): string {
-      notImplemented("public flash.media.Microphone::get name"); return;
+      release || notImplemented("public flash.media.Microphone::get name"); return;
       // return this._name;
     }
     get silenceLevel(): number {
-      notImplemented("public flash.media.Microphone::get silenceLevel"); return;
+      release || notImplemented("public flash.media.Microphone::get silenceLevel"); return;
       // return this._silenceLevel;
     }
     get silenceTimeout(): number /*int*/ {
-      notImplemented("public flash.media.Microphone::get silenceTimeout"); return;
+      release || notImplemented("public flash.media.Microphone::get silenceTimeout"); return;
       // return this._silenceTimeout;
     }
     get useEchoSuppression(): boolean {
-      notImplemented("public flash.media.Microphone::get useEchoSuppression"); return;
+      release || notImplemented("public flash.media.Microphone::get useEchoSuppression"); return;
       // return this._useEchoSuppression;
     }
     get soundTransform(): flash.media.SoundTransform {
-      notImplemented("public flash.media.Microphone::get soundTransform"); return;
+      release || notImplemented("public flash.media.Microphone::get soundTransform"); return;
       // return this._soundTransform;
     }
     set soundTransform(sndTransform: flash.media.SoundTransform) {
       sndTransform = sndTransform;
-      notImplemented("public flash.media.Microphone::set soundTransform"); return;
+      release || notImplemented("public flash.media.Microphone::set soundTransform"); return;
       // this._soundTransform = sndTransform;
     }
     get enhancedOptions(): any /* flash.media.MicrophoneEnhancedOptions */ {
-      notImplemented("public flash.media.Microphone::get enhancedOptions"); return;
+      release || notImplemented("public flash.media.Microphone::get enhancedOptions"); return;
       // return this._enhancedOptions;
     }
     set enhancedOptions(options: any /* flash.media.MicrophoneEnhancedOptions */) {
       options = options;
-      notImplemented("public flash.media.Microphone::set enhancedOptions"); return;
+      release || notImplemented("public flash.media.Microphone::set enhancedOptions"); return;
       // this._enhancedOptions = options;
     }
     setSilenceLevel(silenceLevel: number, timeout: number /*int*/ = -1): void {
       silenceLevel = +silenceLevel; timeout = timeout | 0;
-      notImplemented("public flash.media.Microphone::setSilenceLevel"); return;
+      release || notImplemented("public flash.media.Microphone::setSilenceLevel"); return;
     }
     setUseEchoSuppression(useEchoSuppression: boolean): void {
       useEchoSuppression = !!useEchoSuppression;
-      notImplemented("public flash.media.Microphone::setUseEchoSuppression"); return;
+      release || notImplemented("public flash.media.Microphone::setUseEchoSuppression"); return;
     }
     setLoopBack(state: boolean = true): void {
       state = !!state;
-      notImplemented("public flash.media.Microphone::setLoopBack"); return;
+      release || notImplemented("public flash.media.Microphone::setLoopBack"); return;
     }
   }
 }

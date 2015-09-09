@@ -47,30 +47,30 @@ module Shumway.AVMX.AS.flash.text.engine {
     // _elementHeight: number;
     // _elementWidth: number;
     get graphic(): flash.display.DisplayObject {
-      notImplemented("public flash.text.engine.GraphicElement::get graphic"); return;
+      release || notImplemented("public flash.text.engine.GraphicElement::get graphic"); return;
       // return this._graphic;
     }
     set graphic(value: flash.display.DisplayObject) {
       value = value;
-      notImplemented("public flash.text.engine.GraphicElement::set graphic"); return;
+      release || notImplemented("public flash.text.engine.GraphicElement::set graphic"); return;
       // this._graphic = value;
     }
     get elementHeight(): number {
-      notImplemented("public flash.text.engine.GraphicElement::get elementHeight"); return;
+      release || notImplemented("public flash.text.engine.GraphicElement::get elementHeight"); return;
       // return this._elementHeight;
     }
     set elementHeight(value: number) {
       value = +value;
-      notImplemented("public flash.text.engine.GraphicElement::set elementHeight"); return;
+      release || notImplemented("public flash.text.engine.GraphicElement::set elementHeight"); return;
       // this._elementHeight = value;
     }
     get elementWidth(): number {
-      notImplemented("public flash.text.engine.GraphicElement::get elementWidth"); return;
+      release || notImplemented("public flash.text.engine.GraphicElement::get elementWidth"); return;
       // return this._elementWidth;
     }
     set elementWidth(value: number) {
       value = +value;
-      notImplemented("public flash.text.engine.GraphicElement::set elementWidth"); return;
+      release || notImplemented("public flash.text.engine.GraphicElement::set elementWidth"); return;
       // this._elementWidth = value;
     }
   }

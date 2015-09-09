@@ -31,7 +31,7 @@ module Shumway.AVMX.AS.flash.net {
     }
 
     listStreams(): ASVector<any> {
-      notImplemented("public flash.net.NetMonitor::listStreams"); return;
+      release || notImplemented("public flash.net.NetMonitor::listStreams"); return;
     }
   }
 }

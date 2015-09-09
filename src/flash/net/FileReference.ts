@@ -36,47 +36,47 @@ module Shumway.AVMX.AS.flash.net {
     // _type: string;
     // _data: flash.utils.ByteArray;
     get creationDate(): ASDate {
-      notImplemented("public flash.net.FileReference::get creationDate"); return;
+      release || notImplemented("public flash.net.FileReference::get creationDate"); return;
       // return this._creationDate;
     }
     get creator(): string {
-      notImplemented("public flash.net.FileReference::get creator"); return;
+      release || notImplemented("public flash.net.FileReference::get creator"); return;
       // return this._creator;
     }
     get modificationDate(): ASDate {
-      notImplemented("public flash.net.FileReference::get modificationDate"); return;
+      release || notImplemented("public flash.net.FileReference::get modificationDate"); return;
       // return this._modificationDate;
     }
     get name(): string {
-      notImplemented("public flash.net.FileReference::get name"); return;
+      release || notImplemented("public flash.net.FileReference::get name"); return;
       // return this._name;
     }
     get size(): number {
-      notImplemented("public flash.net.FileReference::get size"); return;
+      release || notImplemented("public flash.net.FileReference::get size"); return;
       // return this._size;
     }
     get type(): string {
-      notImplemented("public flash.net.FileReference::get type"); return;
+      release || notImplemented("public flash.net.FileReference::get type"); return;
       // return this._type;
     }
     cancel(): void {
-      notImplemented("public flash.net.FileReference::cancel"); return;
+      release || notImplemented("public flash.net.FileReference::cancel"); return;
     }
     download(request: flash.net.URLRequest, defaultFileName: string = null): void {
       request = request; defaultFileName = axCoerceString(defaultFileName);
-      notImplemented("public flash.net.FileReference::download"); return;
+      release || notImplemented("public flash.net.FileReference::download"); return;
     }
     upload(request: flash.net.URLRequest, uploadDataFieldName: string = "Filedata", testUpload: boolean = false): void {
       request = request; uploadDataFieldName = axCoerceString(uploadDataFieldName); testUpload = !!testUpload;
-      notImplemented("public flash.net.FileReference::upload"); return;
+      release || notImplemented("public flash.net.FileReference::upload"); return;
     }
     get data(): flash.utils.ByteArray {
-      notImplemented("public flash.net.FileReference::get data"); return;
+      release || notImplemented("public flash.net.FileReference::get data"); return;
       // return this._data;
     }
     browse(typeFilter: ASArray = null): boolean {
       typeFilter = typeFilter;
-      notImplemented("public flash.net.FileReference::browse"); return;
+      release || notImplemented("public flash.net.FileReference::browse"); return;
     }
   }
 }

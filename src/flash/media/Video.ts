@@ -100,7 +100,7 @@ module Shumway.AVMX.AS.flash.media {
     }
 
     clear(): void {
-      somewhatImplemented("public flash.media.Video::clear"); return;
+      release || somewhatImplemented("public flash.media.Video::clear"); return;
     }
 
     attachNetStream(netStream: flash.net.NetStream): void {
@@ -118,7 +118,7 @@ module Shumway.AVMX.AS.flash.media {
     }
 
     attachCamera(camera: flash.media.Camera): void {
-      notImplemented("public flash.media.Video::attachCamera"); return;
+      release || notImplemented("public flash.media.Video::attachCamera"); return;
     }
   }
   

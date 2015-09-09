@@ -49,39 +49,39 @@ module Shumway.AVMX.AS.flash.text.engine {
     // _optimumSpacing: number;
     // _maximumSpacing: number;
     get letterSpacing(): boolean {
-      notImplemented("public flash.text.engine.SpaceJustifier::get letterSpacing"); return;
+      release || notImplemented("public flash.text.engine.SpaceJustifier::get letterSpacing"); return;
       // return this._letterSpacing;
     }
     set letterSpacing(value: boolean) {
       value = !!value;
-      notImplemented("public flash.text.engine.SpaceJustifier::set letterSpacing"); return;
+      release || notImplemented("public flash.text.engine.SpaceJustifier::set letterSpacing"); return;
       // this._letterSpacing = value;
     }
     get minimumSpacing(): number {
-      notImplemented("public flash.text.engine.SpaceJustifier::get minimumSpacing"); return;
+      release || notImplemented("public flash.text.engine.SpaceJustifier::get minimumSpacing"); return;
       // return this._minimumSpacing;
     }
     set minimumSpacing(value: number) {
       value = +value;
-      notImplemented("public flash.text.engine.SpaceJustifier::set minimumSpacing"); return;
+      release || notImplemented("public flash.text.engine.SpaceJustifier::set minimumSpacing"); return;
       // this._minimumSpacing = value;
     }
     get optimumSpacing(): number {
-      notImplemented("public flash.text.engine.SpaceJustifier::get optimumSpacing"); return;
+      release || notImplemented("public flash.text.engine.SpaceJustifier::get optimumSpacing"); return;
       // return this._optimumSpacing;
     }
     set optimumSpacing(value: number) {
       value = +value;
-      notImplemented("public flash.text.engine.SpaceJustifier::set optimumSpacing"); return;
+      release || notImplemented("public flash.text.engine.SpaceJustifier::set optimumSpacing"); return;
       // this._optimumSpacing = value;
     }
     get maximumSpacing(): number {
-      notImplemented("public flash.text.engine.SpaceJustifier::get maximumSpacing"); return;
+      release || notImplemented("public flash.text.engine.SpaceJustifier::get maximumSpacing"); return;
       // return this._maximumSpacing;
     }
     set maximumSpacing(value: number) {
       value = +value;
-      notImplemented("public flash.text.engine.SpaceJustifier::set maximumSpacing"); return;
+      release || notImplemented("public flash.text.engine.SpaceJustifier::set maximumSpacing"); return;
       // this._maximumSpacing = value;
     }
   }

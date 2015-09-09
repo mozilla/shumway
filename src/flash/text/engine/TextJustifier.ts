@@ -48,21 +48,21 @@ module Shumway.AVMX.AS.flash.text.engine {
     // _locale: string;
     // _lineJustification: string;
     get locale(): string {
-      notImplemented("public flash.text.engine.TextJustifier::get locale"); return;
+      release || notImplemented("public flash.text.engine.TextJustifier::get locale"); return;
       // return this._locale;
     }
     get lineJustification(): string {
-      notImplemented("public flash.text.engine.TextJustifier::get lineJustification"); return;
+      release || notImplemented("public flash.text.engine.TextJustifier::get lineJustification"); return;
       // return this._lineJustification;
     }
     set lineJustification(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.text.engine.TextJustifier::set lineJustification"); return;
+      release || notImplemented("public flash.text.engine.TextJustifier::set lineJustification"); return;
       // this._lineJustification = value;
     }
     setLocale(value: string): void {
       value = axCoerceString(value);
-      notImplemented("public flash.text.engine.TextJustifier::setLocale"); return;
+      release || notImplemented("public flash.text.engine.TextJustifier::setLocale"); return;
     }
   }
 }

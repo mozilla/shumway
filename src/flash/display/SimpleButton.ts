@@ -147,7 +147,7 @@ module Shumway.AVMX.AS.flash.display {
 
     set trackAsMenu(value: boolean) {
       value = !!value;
-      notImplemented("public flash.display.SimpleButton::set trackAsMenu"); return;
+      release || notImplemented("public flash.display.SimpleButton::set trackAsMenu"); return;
       // this._trackAsMenu = value;
     }
 
@@ -205,12 +205,12 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     get soundTransform(): flash.media.SoundTransform {
-      notImplemented("public flash.display.SimpleButton::get soundTransform"); return;
+      release || notImplemented("public flash.display.SimpleButton::get soundTransform"); return;
       // return this._soundTransform;
     }
     set soundTransform(sndTransform: flash.media.SoundTransform) {
       sndTransform = sndTransform;
-      notImplemented("public flash.display.SimpleButton::set soundTransform"); return;
+      release || notImplemented("public flash.display.SimpleButton::set soundTransform"); return;
       // this._soundTransform = sndTransform;
     }
 

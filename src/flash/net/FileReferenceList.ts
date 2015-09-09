@@ -27,12 +27,12 @@ module Shumway.AVMX.AS.flash.net {
 
     // _fileList: any [];
     get fileList(): ASArray {
-      notImplemented("public flash.net.FileReferenceList::get fileList"); return;
+      release || notImplemented("public flash.net.FileReferenceList::get fileList"); return;
       // return this._fileList;
     }
     browse(typeFilter: ASArray = null): boolean {
       typeFilter = typeFilter;
-      notImplemented("public flash.net.FileReferenceList::browse"); return;
+      release || notImplemented("public flash.net.FileReferenceList::browse"); return;
     }
   }
 }

@@ -40,15 +40,15 @@ module Shumway.AVMX.AS.flash.accessibility {
     // AS -> JS Bindings
     private static _active: boolean = false;
     static get active(): boolean {
-      somewhatImplemented("public flash.accessibility.Accessibility::get active");
+      release || somewhatImplemented("public flash.accessibility.Accessibility::get active");
       return Accessibility._active;
     }
     static sendEvent(source: flash.display.DisplayObject, childID: number /*uint*/, eventType: number /*uint*/, nonHTML: boolean = false): void {
       source = source; childID = childID >>> 0; eventType = eventType >>> 0; nonHTML = !!nonHTML;
-      notImplemented("public flash.accessibility.Accessibility::static sendEvent"); return;
+      release || release || notImplemented("public flash.accessibility.Accessibility::static sendEvent"); return;
     }
     static updateProperties(): void {
-      notImplemented("public flash.accessibility.Accessibility::static updateProperties"); return;
+      release || release || notImplemented("public flash.accessibility.Accessibility::static updateProperties"); return;
     }
     
   }

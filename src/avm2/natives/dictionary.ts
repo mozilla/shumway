@@ -86,7 +86,7 @@ module Shumway.AVMX.AS {
 
       // TODO: Not implemented yet.
       // public axCallProperty(mn: Multiname, args: any []) {
-      //   notImplemented("axCallProperty");
+      //   release || release || notImplemented("axCallProperty");
       // }
 
       public axHasPropertyInternal(mn: Multiname) {

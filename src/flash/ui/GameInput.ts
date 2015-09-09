@@ -38,18 +38,18 @@ module Shumway.AVMX.AS.flash.ui {
     // static _numDevices: number /*int*/;
     // static _isSupported: boolean;
     get numDevices(): number /*int*/ {
-      somewhatImplemented("public flash.ui.GameInput::get numDevices");
+      release || somewhatImplemented("public flash.ui.GameInput::get numDevices");
       return 0;
       // return this._numDevices;
     }
     get isSupported(): boolean {
-      somewhatImplemented("public flash.ui.GameInput::get isSupported");
+      release || somewhatImplemented("public flash.ui.GameInput::get isSupported");
       return false;
     }
     static getDeviceAt(index: number /*int*/): flash.ui.GameInputDevice {
       index = index | 0;
 
-      somewhatImplemented("public flash.ui.GameInput::static getDeviceAt");
+      release || somewhatImplemented("public flash.ui.GameInput::static getDeviceAt");
       this.sec.throwError("RangeError", Errors.ParamRangeError, "index");
       return null;
     }

@@ -54,50 +54,50 @@ module Shumway.AVMX.AS.flash.text.engine {
     // _text: string;
     // _textRotation: string;
     get textBlock(): flash.text.engine.TextBlock {
-      notImplemented("public flash.text.engine.ContentElement::get textBlock"); return;
+      release || notImplemented("public flash.text.engine.ContentElement::get textBlock"); return;
       // return this._textBlock;
     }
     get textBlockBeginIndex(): number /*int*/ {
-      notImplemented("public flash.text.engine.ContentElement::get textBlockBeginIndex"); return;
+      release || notImplemented("public flash.text.engine.ContentElement::get textBlockBeginIndex"); return;
       // return this._textBlockBeginIndex;
     }
     get elementFormat(): flash.text.engine.ElementFormat {
-      notImplemented("public flash.text.engine.ContentElement::get elementFormat"); return;
+      release || notImplemented("public flash.text.engine.ContentElement::get elementFormat"); return;
       // return this._elementFormat;
     }
     set elementFormat(value: flash.text.engine.ElementFormat) {
       value = value;
-      notImplemented("public flash.text.engine.ContentElement::set elementFormat"); return;
+      release || notImplemented("public flash.text.engine.ContentElement::set elementFormat"); return;
       // this._elementFormat = value;
     }
     get eventMirror(): flash.events.EventDispatcher {
-      notImplemented("public flash.text.engine.ContentElement::get eventMirror"); return;
+      release || notImplemented("public flash.text.engine.ContentElement::get eventMirror"); return;
       // return this._eventMirror;
     }
     set eventMirror(value: flash.events.EventDispatcher) {
       value = value;
-      notImplemented("public flash.text.engine.ContentElement::set eventMirror"); return;
+      release || notImplemented("public flash.text.engine.ContentElement::set eventMirror"); return;
       // this._eventMirror = value;
     }
     get groupElement(): flash.text.engine.GroupElement {
-      notImplemented("public flash.text.engine.ContentElement::get groupElement"); return;
+      release || notImplemented("public flash.text.engine.ContentElement::get groupElement"); return;
       // return this._groupElement;
     }
     get rawText(): string {
-      notImplemented("public flash.text.engine.ContentElement::get rawText"); return;
+      release || notImplemented("public flash.text.engine.ContentElement::get rawText"); return;
       // return this._rawText;
     }
     get text(): string {
-      notImplemented("public flash.text.engine.ContentElement::get text"); return;
+      release || notImplemented("public flash.text.engine.ContentElement::get text"); return;
       // return this._text;
     }
     get textRotation(): string {
-      notImplemented("public flash.text.engine.ContentElement::get textRotation"); return;
+      release || notImplemented("public flash.text.engine.ContentElement::get textRotation"); return;
       // return this._textRotation;
     }
     set textRotation(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.text.engine.ContentElement::set textRotation"); return;
+      release || notImplemented("public flash.text.engine.ContentElement::set textRotation"); return;
       // this._textRotation = value;
     }
   }

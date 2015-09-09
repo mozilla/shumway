@@ -33,7 +33,7 @@ module Shumway.AVMX.AS.flash.display3D.textures {
     }
 
     dispose(): void {
-      notImplemented("public flash.display3D.textures.TextureBase::dispose"); return;
+      release || notImplemented("public flash.display3D.textures.TextureBase::dispose"); return;
     }
   }
 }

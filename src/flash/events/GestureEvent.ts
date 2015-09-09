@@ -62,12 +62,12 @@ module Shumway.AVMX.AS.flash.events {
     }
 
     get stageX(): number {
-      somewhatImplemented("public flash.events.GestureEvent::stageX");
+      release || somewhatImplemented("public flash.events.GestureEvent::stageX");
       return 0;
     }
 
     get stageY(): number {
-      somewhatImplemented("public flash.events.GestureEvent::stageY");
+      release || somewhatImplemented("public flash.events.GestureEvent::stageY");
       return 0;
     }
 
@@ -100,7 +100,7 @@ module Shumway.AVMX.AS.flash.events {
     }
 
     updateAfterEvent(): void {
-      somewhatImplemented("public flash.events.GestureEvent::updateAfterEvent");
+      release || somewhatImplemented("public flash.events.GestureEvent::updateAfterEvent");
     }
 
     NativeCtor(phase: string, localX: number, localY: number,

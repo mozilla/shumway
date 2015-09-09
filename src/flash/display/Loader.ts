@@ -334,7 +334,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     get uncaughtErrorEvents(): events.UncaughtErrorEvents {
-      somewhatImplemented("public flash.display.Loader::uncaughtErrorEvents");
+      release || somewhatImplemented("public flash.display.Loader::uncaughtErrorEvents");
       if (!this._uncaughtErrorEvents) {
         this._uncaughtErrorEvents = new events.UncaughtErrorEvents();
       }

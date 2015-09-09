@@ -52,7 +52,7 @@ module Shumway.AVMX.AS.flash.events {
     }
 
     copyNativeData(event: flash.events.TextEvent): void {
-      notImplemented("public flash.events.TextEvent::copyNativeData");
+      release || notImplemented("public flash.events.TextEvent::copyNativeData");
     }
   }
 }

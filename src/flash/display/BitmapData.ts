@@ -380,20 +380,20 @@ module Shumway.AVMX.AS.flash.display {
       sourceRect = sourceRect;
       destPoint = destPoint;
       filter = filter;
-      somewhatImplemented("public flash.display.BitmapData::applyFilter " + filter);
+      release || somewhatImplemented("public flash.display.BitmapData::applyFilter " + filter);
       return;
     }
 
     colorTransform(rect: flash.geom.Rectangle, colorTransform: flash.geom.ColorTransform): void {
       rect = rect;
       colorTransform = colorTransform;
-      somewhatImplemented("public flash.display.BitmapData::colorTransform");
+      release || somewhatImplemented("public flash.display.BitmapData::colorTransform");
       return;
     }
 
     compare(otherBitmapData: flash.display.BitmapData): ASObject {
       otherBitmapData = otherBitmapData;
-      notImplemented("public flash.display.BitmapData::compare");
+      release || notImplemented("public flash.display.BitmapData::compare");
       return;
     }
 
@@ -405,7 +405,7 @@ module Shumway.AVMX.AS.flash.display {
       destPoint = destPoint;
       sourceChannel = sourceChannel >>> 0;
       destChannel = destChannel >>> 0;
-      somewhatImplemented("public flash.display.BitmapData::copyChannel");
+      release || somewhatImplemented("public flash.display.BitmapData::copyChannel");
       return;
     }
 
@@ -422,7 +422,7 @@ module Shumway.AVMX.AS.flash.display {
       mergeAlpha = !!mergeAlpha;
 
       if (alphaBitmapData || alphaPoint) {
-        somewhatImplemented("public flash.display.BitmapData::copyPixels - Alpha");
+        release || somewhatImplemented("public flash.display.BitmapData::copyPixels - Alpha");
         return;
       }
 
@@ -485,11 +485,11 @@ module Shumway.AVMX.AS.flash.display {
       var t = this._view;
 
       if (sourceBitmapData._type !== this._type) {
-        somewhatImplemented("public flash.display.BitmapData::copyPixels - Color Format Conversion");
+        release || somewhatImplemented("public flash.display.BitmapData::copyPixels - Color Format Conversion");
       }
 
       if (mergeAlpha && this._type !== ImageType.PremultipliedAlphaARGB) {
-        somewhatImplemented("public flash.display.BitmapData::copyPixels - Merge Alpha");
+        release || somewhatImplemented("public flash.display.BitmapData::copyPixels - Merge Alpha");
         return;
       }
 
@@ -587,7 +587,7 @@ module Shumway.AVMX.AS.flash.display {
          clipRect: flash.geom.Rectangle = null, smoothing: boolean = false): void {
       blendMode = axCoerceString(blendMode);
       smoothing = !!smoothing;
-      somewhatImplemented("public flash.display.BitmapData::draw");
+      release || somewhatImplemented("public flash.display.BitmapData::draw");
       var serializer: IBitmapDataSerializer = this.sec.player;
       if (matrix) {
         matrix = matrix.clone().toTwipsInPlace();
@@ -601,7 +601,7 @@ module Shumway.AVMX.AS.flash.display {
                     clipRect: flash.geom.Rectangle = null, smoothing: boolean = false,
                     quality: string = null): void {
       quality = axCoerceString(quality);
-      somewhatImplemented("public flash.display.BitmapData::drawWithQuality");
+      release || somewhatImplemented("public flash.display.BitmapData::drawWithQuality");
       this.draw(source, matrix, colorTransform, blendMode, clipRect, smoothing);
     }
 
@@ -662,7 +662,7 @@ module Shumway.AVMX.AS.flash.display {
       x = x | 0;
       y = y | 0;
       color = color >>> 0;
-      somewhatImplemented("public flash.display.BitmapData::floodFill");
+      release || somewhatImplemented("public flash.display.BitmapData::floodFill");
       return;
     }
 
@@ -670,7 +670,7 @@ module Shumway.AVMX.AS.flash.display {
                        filter: flash.filters.BitmapFilter): flash.geom.Rectangle {
       sourceRect = sourceRect;
       filter = filter;
-      somewhatImplemented("public flash.display.BitmapData::generateFilterRect");
+      release || somewhatImplemented("public flash.display.BitmapData::generateFilterRect");
       return;
     }
 
@@ -679,7 +679,7 @@ module Shumway.AVMX.AS.flash.display {
       mask = mask >>> 0;
       color = color >>> 0;
       findColor = !!findColor;
-      somewhatImplemented("public flash.display.BitmapData::getColorBoundsRect");
+      release || somewhatImplemented("public flash.display.BitmapData::getColorBoundsRect");
       return new this.sec.flash.geom.Rectangle();
     }
 
@@ -717,7 +717,7 @@ module Shumway.AVMX.AS.flash.display {
       secondObject = secondObject;
       secondBitmapDataPoint = secondBitmapDataPoint;
       secondAlphaThreshold = secondAlphaThreshold >>> 0;
-      somewhatImplemented("public flash.display.BitmapData::hitTest");
+      release || somewhatImplemented("public flash.display.BitmapData::hitTest");
       return true;
     }
 
@@ -731,7 +731,7 @@ module Shumway.AVMX.AS.flash.display {
       greenMultiplier = greenMultiplier >>> 0;
       blueMultiplier = blueMultiplier >>> 0;
       alphaMultiplier = alphaMultiplier >>> 0;
-      somewhatImplemented("public flash.display.BitmapData::merge");
+      release || somewhatImplemented("public flash.display.BitmapData::merge");
     }
 
     noise(randomSeed: number /*int*/, low: number /*uint*/ = 0, high: number /*uint*/ = 255,
@@ -741,7 +741,7 @@ module Shumway.AVMX.AS.flash.display {
       high = high >>> 0;
       channelOptions = channelOptions >>> 0;
       grayScale = !!grayScale;
-      somewhatImplemented("public flash.display.BitmapData::noise");
+      release || somewhatImplemented("public flash.display.BitmapData::noise");
     }
 
     paletteMap(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle,
@@ -754,7 +754,7 @@ module Shumway.AVMX.AS.flash.display {
       greenArray = greenArray;
       blueArray = blueArray;
       alphaArray = alphaArray;
-      somewhatImplemented("public flash.display.BitmapData::paletteMap");
+      release || somewhatImplemented("public flash.display.BitmapData::paletteMap");
     }
 
     perlinNoise(baseX: number, baseY: number, numOctaves: number /*uint*/, randomSeed: number
@@ -770,7 +770,7 @@ module Shumway.AVMX.AS.flash.display {
       channelOptions = channelOptions >>> 0;
       grayScale = !!grayScale;
       offsets = offsets;
-      somewhatImplemented("public flash.display.BitmapData::perlinNoise");
+      release || somewhatImplemented("public flash.display.BitmapData::perlinNoise");
     }
 
     pixelDissolve(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle,
@@ -782,14 +782,14 @@ module Shumway.AVMX.AS.flash.display {
       randomSeed = randomSeed | 0;
       numPixels = numPixels | 0;
       fillColor = fillColor >>> 0;
-      somewhatImplemented("public flash.display.BitmapData::pixelDissolve");
+      release || somewhatImplemented("public flash.display.BitmapData::pixelDissolve");
       return;
     }
 
     scroll(x: number /*int*/, y: number /*int*/): void {
       x = x | 0;
       y = y | 0;
-      somewhatImplemented("public flash.display.BitmapData::scroll");
+      release || somewhatImplemented("public flash.display.BitmapData::scroll");
       return;
     }
 
@@ -813,7 +813,7 @@ module Shumway.AVMX.AS.flash.display {
       color = color >>> 0;
       mask = mask >>> 0;
       copySource = !!copySource;
-      somewhatImplemented("public flash.display.BitmapData::threshold");
+      release || somewhatImplemented("public flash.display.BitmapData::threshold");
       return;
     }
 
@@ -828,7 +828,7 @@ module Shumway.AVMX.AS.flash.display {
 
     histogram(hRect: flash.geom.Rectangle = null): GenericVector {
       hRect = hRect;
-      notImplemented("public flash.display.BitmapData::histogram");
+      release || notImplemented("public flash.display.BitmapData::histogram");
       return;
     }
 
@@ -837,7 +837,7 @@ module Shumway.AVMX.AS.flash.display {
       rect = rect;
       compressor = compressor;
       byteArray = byteArray;
-      notImplemented("public flash.display.BitmapData::encode");
+      release || notImplemented("public flash.display.BitmapData::encode");
       return;
     }
 

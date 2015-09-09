@@ -36,35 +36,35 @@ module Shumway.AVMX.AS.flash.text {
     // static _maxLevel: number /*int*/;
     // static _displayMode: string;
     get antiAliasType(): string {
-      notImplemented("public flash.text.TextRenderer::get antiAliasType"); return;
+      release || notImplemented("public flash.text.TextRenderer::get antiAliasType"); return;
       // return this._antiAliasType;
     }
     set antiAliasType(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.text.TextRenderer::set antiAliasType"); return;
+      release || notImplemented("public flash.text.TextRenderer::set antiAliasType"); return;
       // this._antiAliasType = value;
     }
     get maxLevel(): number /*int*/ {
-      notImplemented("public flash.text.TextRenderer::get maxLevel"); return;
+      release || notImplemented("public flash.text.TextRenderer::get maxLevel"); return;
       // return this._maxLevel;
     }
     set maxLevel(value: number /*int*/) {
       value = value | 0;
-      notImplemented("public flash.text.TextRenderer::set maxLevel"); return;
+      release || notImplemented("public flash.text.TextRenderer::set maxLevel"); return;
       // this._maxLevel = value;
     }
     get displayMode(): string {
-      notImplemented("public flash.text.TextRenderer::get displayMode"); return;
+      release || notImplemented("public flash.text.TextRenderer::get displayMode"); return;
       // return this._displayMode;
     }
     set displayMode(value: string) {
       value = axCoerceString(value);
-      notImplemented("public flash.text.TextRenderer::set displayMode"); return;
+      release || notImplemented("public flash.text.TextRenderer::set displayMode"); return;
       // this._displayMode = value;
     }
     static setAdvancedAntiAliasingTable(fontName: string, fontStyle: string, colorType: string, advancedAntiAliasingTable: ASArray): void {
       fontName = axCoerceString(fontName); fontStyle = axCoerceString(fontStyle); colorType = axCoerceString(colorType); advancedAntiAliasingTable = advancedAntiAliasingTable;
-      notImplemented("public flash.text.TextRenderer::static setAdvancedAntiAliasingTable"); return;
+      release || notImplemented("public flash.text.TextRenderer::static setAdvancedAntiAliasingTable"); return;
     }
     
   }

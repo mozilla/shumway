@@ -39,36 +39,36 @@ module Shumway.AVMX.AS.flash.ui {
     // _finger: string;
     // _device: flash.ui.GameInputDevice;
     get numValues(): number /*int*/ {
-      notImplemented("public flash.ui.GameInputControl::get numValues"); return;
+      release || notImplemented("public flash.ui.GameInputControl::get numValues"); return;
       // return this._numValues;
     }
     get index(): number /*int*/ {
-      notImplemented("public flash.ui.GameInputControl::get index"); return;
+      release || notImplemented("public flash.ui.GameInputControl::get index"); return;
       // return this._index;
     }
     get relative(): boolean {
-      notImplemented("public flash.ui.GameInputControl::get relative"); return;
+      release || notImplemented("public flash.ui.GameInputControl::get relative"); return;
       // return this._relative;
     }
     get type(): string {
-      notImplemented("public flash.ui.GameInputControl::get type"); return;
+      release || notImplemented("public flash.ui.GameInputControl::get type"); return;
       // return this._type;
     }
     get hand(): string {
-      notImplemented("public flash.ui.GameInputControl::get hand"); return;
+      release || notImplemented("public flash.ui.GameInputControl::get hand"); return;
       // return this._hand;
     }
     get finger(): string {
-      notImplemented("public flash.ui.GameInputControl::get finger"); return;
+      release || notImplemented("public flash.ui.GameInputControl::get finger"); return;
       // return this._finger;
     }
     get device(): flash.ui.GameInputDevice {
-      notImplemented("public flash.ui.GameInputControl::get device"); return;
+      release || notImplemented("public flash.ui.GameInputControl::get device"); return;
       // return this._device;
     }
     getValueAt(index: number /*int*/ = 0): number {
       index = index | 0;
-      notImplemented("public flash.ui.GameInputControl::getValueAt"); return;
+      release || notImplemented("public flash.ui.GameInputControl::getValueAt"); return;
     }
   }
 }

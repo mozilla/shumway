@@ -43,39 +43,39 @@ module Shumway.AVMX.AS.flash.display {
     // _y: number;
     // _visible: boolean;
     get context3D(): flash.display3D.Context3D {
-      notImplemented("public flash.display.Stage3D::get context3D"); return;
+      release || notImplemented("public flash.display.Stage3D::get context3D"); return;
       // return this._context3D;
     }
     get x(): number {
-      notImplemented("public flash.display.Stage3D::get x"); return;
+      release || notImplemented("public flash.display.Stage3D::get x"); return;
       // return this._x;
     }
     set x(value: number) {
       value = +value;
-      notImplemented("public flash.display.Stage3D::set x"); return;
+      release || notImplemented("public flash.display.Stage3D::set x"); return;
       // this._x = value;
     }
     get y(): number {
-      notImplemented("public flash.display.Stage3D::get y"); return;
+      release || notImplemented("public flash.display.Stage3D::get y"); return;
       // return this._y;
     }
     set y(value: number) {
       value = +value;
-      notImplemented("public flash.display.Stage3D::set y"); return;
+      release || notImplemented("public flash.display.Stage3D::set y"); return;
       // this._y = value;
     }
     get visible(): boolean {
-      notImplemented("public flash.display.Stage3D::get visible"); return;
+      release || notImplemented("public flash.display.Stage3D::get visible"); return;
       // return this._visible;
     }
     set visible(value: boolean) {
       value = !!value;
-      notImplemented("public flash.display.Stage3D::set visible"); return;
+      release || notImplemented("public flash.display.Stage3D::set visible"); return;
       // this._visible = value;
     }
     requestContext3D(context3DRenderMode: string = "auto", profile: string = "baseline"): void {
       context3DRenderMode = axCoerceString(context3DRenderMode); profile = axCoerceString(profile);
-      notImplemented("public flash.display.Stage3D::requestContext3D"); return;
+      release || notImplemented("public flash.display.Stage3D::requestContext3D"); return;
     }
   }
 }
