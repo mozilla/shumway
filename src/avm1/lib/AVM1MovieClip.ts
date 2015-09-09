@@ -595,8 +595,10 @@ module Shumway.AVM1.Lib {
     }
 
     public setMask(mc:Object) {
-      if (!mc) {
-        return; // mask is not specified
+      if (mc == null) {
+        // Cancel a mask.
+        this._as3Object.mask = null;
+        return;
       }
       var mask = this.context.resolveTarget(mc);
       if (mask) {
