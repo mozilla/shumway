@@ -82,7 +82,14 @@ module Shumway.AVM1 {
       this.swfVersion = swfVersion;
       this.globals = null;
       this.actionsDataFactory = new ActionsDataFactory();
-      this.isPropertyCaseSensitive = swfVersion > 6;
+      if (swfVersion > 6) {
+        this.isPropertyCaseSensitive = true;
+        this.normalizeName = this.normalizeNameCaseSensitive;
+      } else {
+        this.isPropertyCaseSensitive = false;
+        this._nameCache = Object.create(null);
+        this.normalizeName = this.normalizeNameCaseInsensitive;
+      }
 
       this.builtins = <any>{};
       Shumway.AVM1.Natives.installBuiltins(this);
@@ -104,6 +111,45 @@ module Shumway.AVM1 {
 
     public executeActions(actionsData: AVM1ActionsData, scopeObj): void {}
     public executeFunction(fn: AVM1Function, thisArg, args: any): any {}
+
+    /**
+     * Normalize the name according to the current AVM1Context's settings.
+     *
+     * This entails coercing it to number or string. For SWF versions < 7, it also means converting
+     * it to lower-case.
+     * To avoid runtime checks, the implementation is set during context initialization based on
+     * the SWF version.
+     */
+    public normalizeName: (name) => string;
+
+    private normalizeNameCaseSensitive(name): string {
+      switch (typeof name) {
+        case 'number':
+        case 'string':
+          return name;
+        default:
+          return alToString(this, name);
+      }
+    }
+
+    private _nameCache: Map<string, string>;
+    private normalizeNameCaseInsensitive(name): string {
+      switch (typeof name) {
+        case 'number':
+          return name;
+        case 'string':
+          break;
+        default:
+          name = alToString(this, name);
+      }
+      var normalizedName = this._nameCache[name];
+      if (normalizedName) {
+        return normalizedName;
+      }
+      normalizedName = name.toLowerCase();
+      this._nameCache[name] = normalizedName;
+      return normalizedName;
+    }
 
     private _getEventPropertyObservers(propertyName: string, create: boolean): IAVM1EventPropertyObserver[] {
       if (!this.isPropertyCaseSensitive) {
