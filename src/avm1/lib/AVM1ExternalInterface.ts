@@ -53,10 +53,14 @@ module Shumway.AVM1.Lib {
         // TODO convert AVM1 objects to AVM2
         args.push(parameters[i]);
       }
-      var result = context.sec.flash.external.ExternalInterface.axClass.call.apply(
-        context.sec.flash.external.ExternalInterface.axClass, args);
-      // TODO convert AVM2 result to AVM1
-      return result;
+      try {
+        var result = context.sec.flash.external.ExternalInterface.axClass.call.apply(
+          context.sec.flash.external.ExternalInterface.axClass, args);
+        // TODO convert AVM2 result to AVM1
+        return result;
+      } catch (e) {
+        return undefined;
+      }
     }
   }
 }
