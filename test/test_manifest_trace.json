@@ -247,6 +247,13 @@
       ],
       "type": "stas"
     },
+    {  "id": "avm1-externalinterface",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/externalinterface/catch-call-errors.swf"
+      ],
+      "type": "stas"
+    },
     {  "id": "avm1-textfield",
       "stas": "swfs/trace.stas",
       "filenames": [
