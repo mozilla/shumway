@@ -142,8 +142,8 @@ module Shumway.AVM1 {
         default:
           name = alToString(this, name);
       }
-      var normalizedName;
-      if (normalizedName = this._nameCache[name]) {
+      var normalizedName = this._nameCache[name];
+      if (normalizedName) {
         return normalizedName;
       }
       normalizedName = name.toLowerCase();
