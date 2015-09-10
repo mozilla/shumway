@@ -1,3 +1,5 @@
+::: test/avm2/shumway/coerce-to-own-in-cinit.abc :::
+TypeError: Error #1034: Type Coercion failed: cannot convert
 ::: test/avm2/shumway/xml-9.abc :::
 default prettyPrinting true
 prettyPrinting=false
