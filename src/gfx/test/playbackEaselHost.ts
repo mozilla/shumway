@@ -19,7 +19,6 @@ module Shumway.GFX.Test {
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
   import CircularBuffer = Shumway.CircularBuffer;
-  import TimelineBuffer = Shumway.Tools.Profiler.TimelineBuffer;
 
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
   import DisplayParameters = Shumway.Remoting.DisplayParameters;

@@ -14,25 +14,9 @@
  * limitations under the License.
  */
 "use strict";
-module Shumway.AVM2 {
-  export var timelineBuffer = new Shumway.Tools.Profiler.TimelineBuffer("AVM2");
-  export var counter = new Shumway.Metrics.Counter(!release);
-
-  export function countTimeline(name: string, value: number = 1) {
-    timelineBuffer && timelineBuffer.count(name, value);
-  }
-
-  export function enterTimeline(name: string, data?: any) {
-    profile && timelineBuffer && timelineBuffer.enter(name, data);
-  }
-
-  export function leaveTimeline(data?: any) {
-    profile && timelineBuffer && timelineBuffer.leave(null, data);
-  }
-}
 
 module Shumway.AVMX {
-  export var timelineBuffer = new Shumway.Tools.Profiler.TimelineBuffer("AVX");
+  export var timelineBuffer = Shumway.Tools ? new Shumway.Tools.Profiler.TimelineBuffer("AVX") : null;
   export var counter = new Shumway.Metrics.Counter(!release);
 
   export function countTimeline(name: string, value: number = 1) {

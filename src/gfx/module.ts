@@ -45,7 +45,7 @@ module Shumway.GFX {
     frameCounter.count(name);
   }
 
-  export var timelineBuffer = new Shumway.Tools.Profiler.TimelineBuffer("GFX");
+  export var timelineBuffer = Shumway.Tools ? new Shumway.Tools.Profiler.TimelineBuffer("GFX") : null;
 
   export function enterTimeline(name: string, data?: any) {
     profile && timelineBuffer && timelineBuffer.enter(name, data);

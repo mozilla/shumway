@@ -116,7 +116,7 @@ function resetTimelineBuffers() {
     gfxWindow.Shumway.GFX.timelineBuffer.reset();
   }
   if (typeof playerWindow !== 'undefined') {
-    playerWindow.Shumway.AVM2.timelineBuffer.reset();
+    playerWindow.Shumway.AVMX.timelineBuffer.reset();
     playerWindow.Shumway.Player.timelineBuffer.reset();
     playerWindow.Shumway.SWF.timelineBuffer.reset();
   }
@@ -129,7 +129,7 @@ function getTimelineBuffers() {
     buffers.push(gfxWindow.Shumway.GFX.timelineBuffer);
   }
   if (typeof playerWindow !== 'undefined') {
-    buffers.push(playerWindow.Shumway.AVM2.timelineBuffer);
+    buffers.push(playerWindow.Shumway.AVMX.timelineBuffer);
     buffers.push(playerWindow.Shumway.Player.timelineBuffer);
     buffers.push(playerWindow.Shumway.SWF.timelineBuffer);
   }
