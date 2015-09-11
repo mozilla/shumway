@@ -26,8 +26,12 @@ function createEasel() {
 }
 
 var easelHost;
-function createEaselHost(playerWindow) {
+function createEaselHost(playerWindow, recordingLimit) {
   var peer = new Shumway.Remoting.WindowTransportPeer(window, playerWindow);
-  easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, peer);
+  if (recordingLimit) {
+    easelHost = new Shumway.GFX.Test.RecordingEaselHost(easel, peer, recordingLimit);
+  } else {
+    easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, peer);
+  }
   return easelHost;
 }

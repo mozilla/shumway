@@ -52,20 +52,20 @@ function getPluginParams() {
 
 var gfxWindow, playerWindow;
 
-function runViewer(flashParams) {
+function runViewer(params) {
   var easel = gfxWindow.createEasel();
-  var easelHost = gfxWindow.createEaselHost(playerWindow);
+  var easelHost = gfxWindow.createEaselHost(playerWindow, params.recordingLimit);
   var flashParams = {
-    url: flashParams.url,
-    baseUrl: flashParams.baseUrl || flashParams.url,
-    movieParams: flashParams.movieParams || {},
-    objectParams: flashParams.objectParams || {},
-    compilerSettings: flashParams.compilerSettings || {
+    url: params.url,
+    baseUrl: params.baseUrl || params.url,
+    movieParams: params.movieParams || {},
+    objectParams: params.objectParams || {},
+    compilerSettings: params.compilerSettings || {
       sysCompiler: true,
       appCompiler: true,
       verifier: true
     },
-    isRemote: flashParams.isRemote,
+    isRemote: params.isRemote,
     bgcolor: undefined,
     displayParameters: easel.getDisplayParameters()
   };
