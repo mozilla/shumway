@@ -338,7 +338,8 @@ module Shumway.GFX.Test {
       var symbolId = this.currentData.readInt();
       var imageType = this.currentData.readInt();
       var data = deserializeObj(this.currentData);
-      return {syncId: syncId, symbolId: symbolId, imageType: imageType, data: data};
+      var alphaData = deserializeObj(this.currentData);
+      return {syncId: syncId, symbolId: symbolId, imageType: imageType, data: data, alphaData: alphaData};
     }
 
     public dump() {
