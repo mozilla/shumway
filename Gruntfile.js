@@ -434,7 +434,6 @@ module.exports = function(grunt) {
     // This needs a special build of closure that has SHUMWAY_OPTIMIZATIONS.
     var closureCmd = 'java';
     var closureArgs = ['-jar', 'utils/closure.jar',
-      '--formatting', 'PRETTY_PRINT',
       '--define', 'release=true',
       '--compilation_level', 'SHUMWAY_OPTIMIZATIONS',
       '--language_in', 'ECMASCRIPT5'];
