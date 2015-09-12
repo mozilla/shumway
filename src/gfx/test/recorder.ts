@@ -136,7 +136,7 @@ module Shumway.GFX.Test {
     public constructor(maxRecordingSize: number) {
       this._maxRecordingSize = maxRecordingSize;
       this._recording = new DataBuffer();
-      this._recordingStarted = Date.now();
+      this._recordingStarted = 0;
       this._recording.writeRawBytes(new Uint8Array([0x4D, 0x53, 0x57, 0x46]));
       this._stopped = false;
     }
@@ -165,7 +165,13 @@ module Shumway.GFX.Test {
         return
       }
 
-      this._recording.writeInt(Date.now() - this._recordingStarted);
+      if (this._recordingStarted === 0) {
+        this._recordingStarted = Date.now();
+        this._recording.writeInt(0);
+      } else {
+        this._recording.writeInt(Date.now() - this._recordingStarted);
+      }
+
       this._recording.writeInt(type);
       if (buffer !== null) {
         this._recording.writeInt(buffer.length);
