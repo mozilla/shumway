@@ -37,10 +37,6 @@ module Shumway.AVMX.AS.flash.display {
   import geom = flash.geom;
   import utils = flash.utils;
 
-  // TODO duplicate refactor to remove duplication code from GFX geometry.ts
-  //import quadraticBezierExtreme = Shumway.GFX.Geometry.quadraticBezierExtreme;
-  //import cubicBezierExtremes = Shumway.GFX.Geometry.cubicBezierExtremes;
-
   function distanceSq(x1, y1, x2, y2) {
     var dX = x2 - x1;
     var dY = y2 - y1;
