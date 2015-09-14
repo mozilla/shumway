@@ -118,6 +118,7 @@ module Shumway.GFX.Test {
   }
 
   export const enum MovieRecordType {
+    Incomplete = -1,
     None = 0,
     PlayerCommand = 1,
     PlayerCommandAsync = 2,
@@ -150,7 +151,8 @@ module Shumway.GFX.Test {
     }
 
     public dump() {
-      var parser = new MovieRecordParser(this._recording.getBytes());
+      var parser = new MovieRecordParser();
+      parser.push(this._recording.getBytes());
       parser.dump();
     }
 
@@ -277,26 +279,77 @@ module Shumway.GFX.Test {
     }
   }
 
+  const enum MovieCompressionType {
+    None,
+    ZLib,
+    Lzma
+  }
+
+  const enum MovieRecordParserState {
+    Initial,
+    Parsing,
+    Ended
+  }
+
+  var MovieHeaderSize = 4;
+  var MovieRecordHeaderSize = 12;
+
   export class MovieRecordParser {
     private _buffer: DataBuffer;
+    private _state: MovieRecordParserState;
+    private _comressionType: MovieCompressionType;
+    private _closed: boolean;
 
     public currentTimestamp: number;
     public currentType: MovieRecordType;
     public currentData: DataBuffer;
 
-    constructor(data: Uint8Array) {
+    constructor () {
+      this._state = MovieRecordParserState.Initial;
       this._buffer = new DataBuffer();
+      this._closed = false;
+    }
+
+    public push(data: Uint8Array){
+      this._buffer.compact();
+
+      var savedPosition = this._buffer.position;
+      this._buffer.position = this._buffer.length;
       this._buffer.writeRawBytes(data);
-      this._buffer.position = 4;
+      this._buffer.position = savedPosition;
+    }
+
+    public close() {
+      this._closed = true;
     }
 
     public readNextRecord(): MovieRecordType  {
-      if (this._buffer.position >= this._buffer.length) {
-        return MovieRecordType.None;
+      if (this._state === MovieRecordParserState.Initial) {
+        if (this._buffer.position + MovieHeaderSize > this._buffer.length) {
+          return MovieRecordType.Incomplete;
+        }
+        this._buffer.position += MovieHeaderSize;
+        this._comressionType = MovieCompressionType.None;
+        this._state = MovieRecordParserState.Parsing;
       }
+
+      if (this._buffer.position >= this._buffer.length) {
+        return this._closed ? MovieRecordType.None : MovieRecordType.Incomplete;
+      }
+
+      if (this._buffer.position + MovieRecordHeaderSize > this._buffer.length) {
+        return MovieRecordType.Incomplete;
+      }
+
       var timestamp: number = this._buffer.readInt();
       var type: MovieRecordType = this._buffer.readInt();
-      var length: number = this._buffer.readInt();
+      var length: number = this._buffer.readInt() >>> 0;
+
+      if (this._buffer.position + MovieRecordHeaderSize + length > this._buffer.length) {
+        this._buffer.position -= MovieRecordHeaderSize;
+        return MovieRecordType.Incomplete;
+      }
+
       var data: DataBuffer = null;
 
       if (length > 0) {
@@ -344,7 +397,7 @@ module Shumway.GFX.Test {
 
     public dump() {
       var type: MovieRecordType;
-      while ((type = this.readNextRecord())) {
+      while ((type = this.readNextRecord()) !== MovieRecordType.None) {
         console.log('record ' + type + ' @' + this.currentTimestamp);
         switch (type) {
           case MovieRecordType.PlayerCommand:
@@ -360,6 +413,8 @@ module Shumway.GFX.Test {
           case MovieRecordType.Image:
             console.log(this.parseImage());
             break;
+          case MovieRecordType.Incomplete:
+            return;
         }
       }
     }
