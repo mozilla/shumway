@@ -166,8 +166,12 @@ module Shumway.ArrayUtilities {
      * will be set to 0.
      */
     compact(): void {
-      this._u8.set(this._u8.subarray(this._position, this._length), 0);
-      this._length -= this._position;
+      var position = this._position;
+      if (position === 0) {
+        return; // nothing to compact
+      }
+      this._u8.set(this._u8.subarray(position, this._length), 0);
+      this._length -= position;
       this._position = 0;
     }
 
