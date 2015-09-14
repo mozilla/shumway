@@ -387,7 +387,7 @@ module Shumway.GFX {
     }
 
     private _listenForContainerSizeChanges() {
-      var pollInterval = 10;
+      var pollInterval = 1000;
       var w = this._containerWidth;
       var h = this._containerHeight;
       this._onContainerSizeChanged();
