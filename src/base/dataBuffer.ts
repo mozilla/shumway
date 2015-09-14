@@ -626,8 +626,19 @@ module Shumway.ArrayUtilities {
       }
     }
 
-    readRawBytes(): Int8Array {
-      return new Int8Array(this._buffer, 0, this._length);
+    readRawBytes(length: number): Uint8Array {
+      if (length < 0) {
+        release || assert((<any>this).sec);
+        (<any>this).sec.throwError('RangeError', Errors.ParamRangeError);
+      }
+      var position = this._position;
+      if (position + length > this._length) {
+        release || assert((<any>this).sec);
+        (<any>this).sec.throwError('flash.errors.EOFError', Errors.EOFError);
+      }
+      var result = new Uint8Array(this._u8.subarray(position, position + length));
+      this._position = position + 4;
+      return result;
     }
 
     writeUTF(value: string): void {
