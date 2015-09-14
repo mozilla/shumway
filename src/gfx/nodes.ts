@@ -520,15 +520,13 @@ module Shumway.GFX {
     }
 
     _markCurrentBoundsAsDirtyRegion() {
-      return;
-      /*
+      // return;
       var stage = this.getStage();
       if (!stage) {
         return;
       }
       var bounds = this.getTransformedBounds(stage);
       stage.dirtyRegion.addDirtyRectangle(bounds);
-      */
     }
 
     public getStage(withDirtyRegion: boolean = true): Stage {
@@ -993,6 +991,7 @@ module Shumway.GFX {
       this._colorMatrix.set(value);
       this._node._propagateFlagsUp(NodeFlags.UpOnColorMatrixChanged);
       this._node._propagateFlagsDown(NodeFlags.DownOnColorMatrixChanged);
+      this._node._markCurrentBoundsAsDirtyRegion();
     }
 
     public getMatrix(clone: boolean = false): Matrix {

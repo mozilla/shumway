@@ -606,6 +606,7 @@ module Shumway.GFX.Canvas2D {
           (node.getLayer().filters && this._options.filters))) {
         state = state.clone();
         state.flags |= RenderFlags.IgnoreNextLayer;
+        state.clipList = [];
         this._renderLayer(node, state);
         state.free();
       } else {
@@ -708,7 +709,7 @@ module Shumway.GFX.Canvas2D {
       state.target.reset();
 
       state = state.clone();
-      if (false && node.dirtyRegion) {
+      if (node.dirtyRegion) {
         state.clipList.length = 0;
         node.dirtyRegion.gatherOptimizedRegions(state.clipList);
         context.save();
@@ -742,7 +743,7 @@ module Shumway.GFX.Canvas2D {
       if (node.dirtyRegion) {
         context.restore();
         state.target.reset();
-        context.globalAlpha = 0.4;
+        context.globalAlpha = 0.8;
         if (state.hasFlags(RenderFlags.PaintDirtyRegion)) {
           node.dirtyRegion.render(state.target.context);
         }
