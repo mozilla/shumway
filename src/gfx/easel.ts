@@ -21,7 +21,6 @@ module Shumway.GFX {
   import Rectangle = Geometry.Rectangle;
 
   import Canvas2DRenderer = Shumway.GFX.Canvas2D.Canvas2DRenderer;
-  import FPS = Shumway.Tools.Mini.FPS;
 
   import DisplayParameters = Shumway.Remoting.DisplayParameters;
 
@@ -281,7 +280,7 @@ module Shumway.GFX {
     private _rAF: number = undefined;
 
     private _eventListeners: Shumway.MapObject<any []> = Object.create(null);
-    private _fps: FPS;
+    private _fps: Shumway.Tools.Mini.FPS;
     private _fullScreen: boolean = false;
 
     constructor(
@@ -307,7 +306,7 @@ module Shumway.GFX {
       container.appendChild(stageContainer);
 
       // Create hud container, that lives on top of the stage.
-      if (hud.value) {
+      if (hud.value && Shumway.Tools) {
         var hudContainer = document.createElement("div");
         hudContainer.style.position = "absolute";
         hudContainer.style.width = "100%";
@@ -320,7 +319,7 @@ module Shumway.GFX {
         fpsContainer.style.pointerEvents = "none";
         hudContainer.appendChild(fpsContainer);
         container.appendChild(hudContainer);
-        this._fps = new FPS(fpsContainer);
+        this._fps = new Shumway.Tools.Mini.FPS(fpsContainer);
       } else {
         this._fps = null;
       }

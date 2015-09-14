@@ -320,7 +320,9 @@ module Shumway.Shell {
       });
       verbose && writer.writeLn("Loading " + buffers.length + " ABCs");
       release || Shumway.Debug.notImplemented("Compile");
-      Shumway.AVM2.timelineBuffer.createSnapshot().trace(new IndentingWriter());
+      if (Shumway.AVMX.timelineBuffer) {
+        Shumway.AVMX.timelineBuffer.createSnapshot().trace(new IndentingWriter());
+      }
     }
 
     if (parseOption.value) {

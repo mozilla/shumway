@@ -30,8 +30,8 @@ module Shumway.AVMX.AS.flash.display {
   import ILoadListener = Shumway.ILoadListener;
   import SWFFile = Shumway.SWF.SWFFile;
 
-  import enterTimeline = Shumway.AVM2.enterTimeline;
-  import leaveTimeline = Shumway.AVM2.leaveTimeline;
+  import enterTimeline = Shumway.AVMX.enterTimeline;
+  import leaveTimeline = Shumway.AVMX.leaveTimeline;
 
   enum LoadStatus {
     Unloaded    = 0,

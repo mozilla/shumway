@@ -16,9 +16,6 @@
 // Class: Timer
 module Shumway.AVMX.AS.flash.utils {
 
-  import enterTimeline = Shumway.AVM2.enterTimeline;
-  import leaveTimeline = Shumway.AVM2.leaveTimeline;
-
   export class Timer extends flash.events.EventDispatcher {
     static classInitializer: any = null;
     static classSymbols: string [] = null; // [];
