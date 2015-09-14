@@ -100,12 +100,13 @@ module Shumway.Remoting.Player {
         }
         // TODO: Checking if we need to write assets this way is kinda expensive, do better here.
         self.writeDirtyAssets(displayObject);
-        if (displayObject._hasFlags(DisplayObjectFlags.DirtyDescendents)) {
+        var hasDirtyDescendents = displayObject._hasFlags(DisplayObjectFlags.DirtyDescendents);
+        if (hasDirtyDescendents) {
+          if (clearDirtyDescendentsFlag) {
+            // We need this flag to make sure we don't clear the flag in the first remoting pass.
+            displayObject._removeFlags(DisplayObjectFlags.DirtyDescendents);
+          }
           return VisitorFlags.Continue;
-        }
-        if (clearDirtyDescendentsFlag) {
-          // We need this flag to make sure we don't clear the flag in the first remoting pass.
-          displayObject._removeFlags(DisplayObjectFlags.DirtyDescendents);
         }
         // We can skip visiting descendents since they are not dirty.
         return VisitorFlags.Skip;
