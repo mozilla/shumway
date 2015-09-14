@@ -238,47 +238,9 @@ module Shumway.GFX {
   }
 
   export class PreRenderState extends State {
-    private static _dirtyStack: PreRenderState [] = [];
-    private static _doNotCallCtorDirectly = Object.create(null);
-
-    matrix: Matrix = Matrix.createIdentity();
     depth: number = 0;
-
-    constructor(unlock: any) {
+    constructor() {
       super();
-      release || assert(unlock === PreRenderState._doNotCallCtorDirectly);
-    }
-
-    transform(transform: Transform): PreRenderState {
-      var state = this.clone();
-      state.matrix.preMultiply(transform.getMatrix());
-      return state;
-    }
-
-    static allocate(): PreRenderState {
-      var dirtyStack = PreRenderState._dirtyStack;
-      var state = null;
-      if (dirtyStack.length) {
-        state = dirtyStack.pop();
-      } else {
-        state = new PreRenderState(this._doNotCallCtorDirectly);
-      }
-      return state;
-    }
-
-    public clone(): PreRenderState {
-      var state = PreRenderState.allocate();
-      release || assert(state);
-      state.set(this);
-      return state;
-    }
-
-    set (state: PreRenderState) {
-      this.matrix.set(state.matrix);
-    }
-
-    free() {
-      PreRenderState._dirtyStack.push(this);
     }
   }
 
@@ -288,33 +250,29 @@ module Shumway.GFX {
    */
   export class PreRenderVisitor extends NodeVisitor {
     public isDirty = true;
-    private _dirtyRegion: DirtyRegion;
+    private _dirtyRegion: DirtyRegion = null;
+    private _depth = 0;
 
     start(node: Group, dirtyRegion: DirtyRegion) {
       this._dirtyRegion = dirtyRegion;
-      var state = PreRenderState.allocate();
-      state.matrix.setIdentity();
-      node.visit(this, state);
-      state.free();
+      this._depth = 0;
+      node.visit(this, null);
     }
 
-    visitGroup(node: Group, state: PreRenderState) {
+    visitGroup(node: Group, state: State) {
       var children = node.getChildren();
       this.visitNode(node, state);
       for (var i = 0; i < children.length; i++) {
-        var child = children[i];
-        var childState = state.transform(child.getTransform());
-        child.visit(this, childState);
-        childState.free();
+        children[i].visit(this, state);
       }
     }
 
-    visitNode(node: Node, state: PreRenderState) {
+    visitNode(node: Node, state: State) {
       if (node.hasFlags(NodeFlags.Dirty)) {
         this.isDirty = true;
       }
       node.toggleFlags(NodeFlags.Dirty, false);
-      node.depth = state.depth++;
+      node.depth = this._depth++;
     }
   }
 
