@@ -199,7 +199,7 @@ module Shumway.AVMX.AS.flash.display {
     /**
      * Masks flags that need to be propagated up when this display object gets added to a parent.
      */
-    Bubbling                                  = ContainsFrameScriptPendingChildren | ContainsMorph
+    Bubbling                                  = ContainsFrameScriptPendingChildren | ContainsMorph | DirtyDescendents
   }
 
   export const enum DisplayObjectDirtyFlags {
@@ -612,6 +612,9 @@ module Shumway.AVMX.AS.flash.display {
         var bubblingFlags = DisplayObjectFlags.None;
         if (this._hasFlags(DisplayObjectFlags.HasFrameScriptPending)) {
           bubblingFlags |= DisplayObjectFlags.ContainsFrameScriptPendingChildren;
+        }
+        if (this._hasAnyDirtyFlags(DisplayObjectDirtyFlags.Dirty)) {
+          bubblingFlags |= DisplayObjectFlags.DirtyDescendents;
         }
         if (this._hasAnyFlags(DisplayObjectFlags.Bubbling)) {
           bubblingFlags |= this._flags & DisplayObjectFlags.Bubbling;
@@ -2098,7 +2101,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     public debugNameShort(): string {
-      return "[" + this._depth + "]: (" + this._referenceCount + ") {" + this._flags + "} " + this;
+      return "[" + this._depth + ":" + this._id + "]: (" + this._referenceCount + ") {" + this._flags + "} " + this;
     }
 
     public hashCode(): number {
