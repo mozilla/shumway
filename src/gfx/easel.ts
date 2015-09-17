@@ -291,7 +291,7 @@ module Shumway.GFX {
       release || assert(container && container.children.length === 0,
                         "Easel container must be empty.");
       this._container = container;
-      this._stage = new Stage(512, 512, true);
+      this._stage = new Stage(512, 512, false);
       this._worldView = this._stage.content;
       this._world = new Group();
       this._worldView.addChild(this._world);
