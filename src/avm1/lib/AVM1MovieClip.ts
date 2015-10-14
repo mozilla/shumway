@@ -752,12 +752,15 @@ module Shumway.AVM1.Lib {
         return desc;
       }
       if (name[0] === '_') {
-        var level = this._resolveLevelNProperty(name);
-        if (level) {
-          return this._getCachedPropertyResult(level);
-        }
-        // For MovieClip's properties that start from '_' case does not matter.
-        if (PropertiesIndexMap.indexOf(name.toLowerCase()) >= 0) {
+        if ((name[1] === 'l' && name.indexOf('_level') === 0 ||
+             name[1] === 'r' && name.indexOf('_root') === 0))
+        {
+          var level = this._resolveLevelNProperty(name);
+          if (level) {
+            return this._getCachedPropertyResult(level);
+          }
+        } else if (name.toLowerCase() in MovieClipProperties) {
+          // For MovieClip's properties that start from '_' case does not matter.
           return super.alGetOwnProperty(name.toLowerCase());
         }
       }
