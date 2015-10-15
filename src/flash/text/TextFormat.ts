@@ -217,6 +217,10 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     set tabStops(value: ASArray) {
+      if (value == null) {
+        this._tabStops = null;
+        return;
+      }
       if (!this.sec.AXArray.axIsType(value)) {
         this.sec.throwError("ArgumentError", Errors.CheckTypeFailedError, value, 'Array');
       }
