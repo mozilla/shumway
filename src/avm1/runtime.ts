@@ -167,6 +167,9 @@ module Shumway.AVM1 {
     }
 
     public alGetOwnProperty(name): AVM1PropertyDescriptor {
+      if (typeof name === 'string' && !this.context.isPropertyCaseSensitive) {
+        name = name.toLowerCase();
+      }
       release || Debug.assert(alIsName(this.context, name));
       // TODO __resolve
       return this._ownProperties[name];
