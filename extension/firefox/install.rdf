@@ -4,7 +4,7 @@
      xmlns:em="http://www.mozilla.org/2004/em-rdf#">
 
   <Description about="urn:mozilla:install-manifest">
-    <em:id>shumway@research.mozilla.org</em:id>
+    <em:id>shumway-dev@research.mozilla.org</em:id>
     <em:name>Shumway</em:name>
     <em:version>(SHUMWAY_VERSION)</em:version>
 

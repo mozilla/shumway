@@ -68,7 +68,7 @@ restartless:
 	ln -s ../../../build/bundles/shumway.gfx.js $(RESTARTLESS_DIR)/content/shumway.gfx.js
 	ln -s ../../../build/bundles/shumway.player.js $(RESTARTLESS_DIR)/content/shumway.player.js
 	ln -s ../../../build/version/version.txt $(RESTARTLESS_DIR)/content/version.txt
-	cd $(RESTARTLESS_DIR); pwd > "$(PROFILE)/extensions/shumway@research.mozilla.org"
+	cd $(RESTARTLESS_DIR); pwd > "$(PROFILE)/extensions/shumway-dev@research.mozilla.org"
 	grep "nglayout.debug.disable_xul_cache\", true" "$(PROFILE)/prefs.js" 1>/dev/null || echo "Set create 'nglayout.debug.disable_xul_cache' boolean preference to 'true'."
 
 PHONY: build clean ensureoutputdir restartless
