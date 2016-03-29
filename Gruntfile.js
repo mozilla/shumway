@@ -16,17 +16,19 @@
 
 module.exports = function(grunt) {
 
-  var VERSION_BASELINE = '8c92f57b7811f5ce54';
-  var VERSION_BASE = '0.10.';
+  var VERSION_BASELINE = '2bbdb5ce0db7796b';
+  var VERSION_BASE = '0.11.';
+
+  // require it at the top and pass in the grunt instance
+  require('time-grunt')(grunt);
 
   // work around a grunt bug where color output is written to non-tty output
   if (!process.stdout.isTTY) {
       grunt.option("color", false);
   }
 
-  // Don't use `--removeComments` here beause it strips out closure annotations that are
-  // needed by the build system.
-  var commonArguments = 'node utils/typescript/tsc --target ES5 --removeComments --sourcemap -d --out build/ts/';
+  var tscCommand = 'node ./node_modules/typescript/bin/tsc.js';
+  var commonArguments = tscCommand + ' --target ES5 --sourcemap -d --out build/ts/';
 
   var defaultBrowserManifestFile = './resources/browser_manifests/browser_manifest.json';
   var defaultTestsManifestFile = 'test_manifest.json';
@@ -44,17 +46,11 @@ module.exports = function(grunt) {
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
-    jshint: {
-      options: {
-        jshintrc: 'test/jshint_config.json'
-      },
-      all: ['src/flash/**/*.js', 'src/swf/*.js']
-    },
     tslint: {
       options: {
         configuration: grunt.file.readJSON("tslint.json")
       },
-      all: ['src/flash/**/*.ts'] // TODO: Add more directories.
+      all: ['src/base/**/*.ts', 'src/flash/**/*.ts', 'src/avm2/**/*.ts'] // TODO: Add more directories.
     },
     exec: {
       build_web: {
@@ -97,7 +93,7 @@ module.exports = function(grunt) {
         cmd: commonArguments + 'player.js src/player/references.ts'
       },
       build_shell_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --out build/ts/shell.js src/shell/references.ts'
+        cmd: tscCommand + ' --target ES5 --sourcemap --out build/ts/shell.js src/shell/references.ts'
       },
       build_playerglobal: {
         cmd: 'node build.js -t ' + (+grunt.option('threads') || 9) +
@@ -112,11 +108,6 @@ module.exports = function(grunt) {
       debug_server: {
         cmd: 'node examples/inspector/debug/server.js'
       },
-      gate: {
-        cmd: '"utils/jsshell/js" build/ts/shell.js -x -g ' +
-                (grunt.option('verbose') ? '-v ' : '') +
-                (grunt.option('tests') || expandFilePattern('test/unit/pass/*.js'))
-      },
       perf: {
         cmd: '"utils/jsshell/js" build/ts/shell.js -x -g ' +
                (grunt.option('verbose') ? '-v ' : '') +
@@ -127,51 +118,118 @@ module.exports = function(grunt) {
                (grunt.option('verbose') ? '-v ' : '') +
           (grunt.option('tests') || expandFilePattern('test/gfx/pass/*.js'))
       },
-      smoke_parse_database: {
+      // Greps for errors.
+      warn: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -p -r -po {} >> data.json.txt'
+        cmd: 'find -L build/test -name "*.run" | xargs cat | grep "Not Implemented\\|Uncaught VM-internal\\|FAILED\\|EXCEPTED";'
       },
-      smoke_play: {
-        maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -x -md 1000 -v -tp 60 -v {}'
-      },
-      smoke_parse: {
-        maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -p -r ' +
-             (grunt.option('verbose') ? '-v ' : '') + ' {}'
-      },
-      smoke_parse_images: {
-        maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -p -r -f "CODE_DEFINE_BITS,CODE_DEFINE_BITS_JPEG2,CODE_DEFINE_BITS_JPEG3,CODE_DEFINE_BITS_JPEG4,CODE_JPEG_TABLES,CODE_DEFINE_BITS_LOSSLESS,CODE_DEFINE_BITS_LOSSLESS2" {}'
-      },
-      smoke_compile_baseline: {
-        maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N50 utils/jsshell/js build/ts/shell.js -c src/avm2/generated/playerGlobal/playerGlobal.min.abc {}'
-      },
-      spell: {
+      warn_spell: {
         // TODO: Add more files.
-        cmd: 'node utils/spell/spell.js build/ts/player.js'
+        cmd: 'node utils/spell/spell.js build/ts/flash.js build/ts/avm2.js'
       },
       lint_success: {
         cmd: 'echo "SUCCESS: no lint errors"'
       },
-      test_avm2_quick: {
-        cmd: 'node src/shell/numbers.js -i test/avm2/pass/ -c i -j ' + (+grunt.option('threads') || 9)
+      // Run all tests from shumway.txt in one instance of Shumway and save the output in |test/avm2/shumway.run|.
+      test_avm2_shumway: {
+        maxBuffer: Infinity,
+        cmd: 'mkdir -p build/test/avm2; ' +
+             'cat test/avm2/shumway.txt | xargs utils/jsshell/js build/ts/shell.js -x -det --printABCFileName > build/test/test_avm2_shumway.run; ' +
+             // Run all tests from shumway.txt each in many instances of Tamarin and save the output in |test/avm2/shumway.baseline|.
+             // Between each run, emit the test name as "::: test :::" so it's easy to identify where things go wrong.
+             'rm test/test_avm2_shumway.baseline; cat test/avm2/shumway.txt | grep -v @ | xargs -L 1 -I \'{}\' sh -c \'echo "::: {} :::" >> test/test_avm2_shumway.baseline; utils/tamarin-redux/bin/shell/avmshell {} >> test/test_avm2_shumway.baseline;\'; ' +
+             // Diff results.
+             'diff test/test_avm2_shumway.baseline build/test/test_avm2_shumway.run'
       },
-      test_avm2: {
-        cmd: 'node src/shell/numbers.js -c icb -i ' + (grunt.option('include') || 'test/avm2/pass/') +
-                                      ' -j ' + (+grunt.option('threads') || 9)
+      // Runs tamarin acceptance tests and tests against the current baseline. If you get more tests to pass, update the baseline.
+      test_avm2_acceptance: {
+        maxBuffer: Infinity,
+        cmd: 'mkdir -p build/test; ' +
+             'utils/jsshell/js build/ts/shell.js -x -det -v test/avm2/acceptance.json | tee build/test/test_avm2_acceptance_stdout.run | node test/avm2/count_totals.js | tee build/test/test_avm2_acceptance.run && ' +
+             'diff test/test_avm2_acceptance.baseline build/test/test_avm2_acceptance.run'
       },
-      test_avm2_baseline: {
-        cmd: 'node src/shell/numbers.js -c b -i ' + (grunt.option('include') || 'test/avm2/pass/') +
-                                      ' -j ' + (+grunt.option('threads') || 9)
+      // Runs the pypy tests and tests against the current baseline. If you get more tests to pass, update the baseline.
+      test_avm2_pypy: {
+        maxBuffer: Infinity,
+        cmd: 'mkdir -p build/test; ' +
+             'find -L test/avm2/pypy -name "*.abc" | xargs -I {} utils/jsshell/js build/ts/shell.js -x -det -v {} | tee build/test/test_avm2_pypy.run &&' +
+             'diff test/test_avm2_pypy.baseline build/test/test_avm2_pypy.run'
       },
-      tracetest: {
+      // Runs archive SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
+      // TODO: We need to pass the -k flag to parallel to keep the output in the right order, do what once we're ready
+      // to make this part of grunt gate.
+      test_arch: {
+        maxBuffer: Infinity,
+        cmd: 'mkdir -p build/test/; ' +
+             'find -L test/arch/swfs -name "*.swf" | parallel --gnu -X -N1 utils/jsshell/js build/ts/shell.js -x -det -fc 10 {} | tee build/test_arch.run;' +
+             'echo "Output saved to build/test_arch.run, at some point create a baseline and stick to it."'
+          // 'diff test/arch/arch.baseline build/test/arch/arch.run'
+      },
+      // Runs SWFs and tests against the current baseline. If you get more tests to pass, update the baseline.
+      test_swf: {
+        maxBuffer: Infinity,
+        cmd: 'find -L test/swf -name "*.swf" | parallel -k --gnu -X -N1 utils/jsshell/js build/ts/shell.js -x -det -fc 10 {} | LC_ALL=C sort > build/test/test_swf.run && ' +
+             'diff test/test_swf.baseline build/test/test_swf.run'
+      },
+      // Runs SWF trace tests.
+      test_trace: {
+        maxBuffer: Infinity,
         cmd: 'node test/trace_test_run.js -j ' + (+grunt.option('threads') || 6)
       },
-      tracetest_swfdec: {
+      // Runs SWF (AVM1) swfdec trace tests.
+      test_trace_swfdec: {
+        maxBuffer: Infinity,
         cmd: 'node test/trace_test_run.js -j ' + (+grunt.option('threads') || 6) +
-                                        ' -m test/swfdec_test_manifest.json'
+             ' -m test/swfdec_test_manifest.json'
+      },
+      test_avm2_ats: {
+        maxBuffer: Infinity,
+        cmd: 'mkdir -p build/test; ' +
+             'cat test/ats/test_swf_avm2.txt | parallel -k --gnu -X -N50 utils/jsshell/js build/ts/shell.js -x -det -fc 10 {} > build/test/test_avm2_ats.run; ' +
+             'if [ ! -f "test/test_avm2_ats.baseline" ]; then echo "Creating Baseline"; cp build/test/test_avm2_ats.run test/test_avm2_ats.baseline; fi;' +
+             'diff test/test_avm2_ats.baseline build/test/test_avm2_ats.run;'
+      },
+      // Run this to make sure the SWF parser still works.
+      test_avm2_ats_parse: {
+        maxBuffer: Infinity,
+        cmd: 'cat test/ats/test_swf_avm2.txt | parallel --gnu -X -N50 utils/jsshell/js build/ts/shell.js -p -v' +
+             (grunt.option('verbose') ? '-v ' : '') + ' {}'
+      },
+      test_unit: {
+        cmd: '"utils/jsshell/js" build/ts/shell.js -x -g ' +
+             (grunt.option('verbose') ? '-v ' : '') +
+             (grunt.option('tests') || expandFilePattern('test/unit/pass/*.js'))
+      },
+      test_swf_avm2_all: {
+        maxBuffer: Infinity,
+        cmd: 'mongo ats --eval \'db.swfs.find({"parse_result.uses_avm1": false}).forEach(function (x) { print("test/ats/swfs/" + x.file); })\' | parallel --gnu -k -X -N10 --timeout 200% utils/jsshell/js build/ts/shell.js -x -det -fc 10 {} | tee test/ats/test_swf_avm2_all.run;'
+      },
+      test_swf_all: {
+        maxBuffer: Infinity,
+        cmd: 'mongo ats --eval \'db.swfs.find({}).forEach(function (x) { print("test/ats/swfs/" + x.file); })\' | parallel --gnu -k -X -N10 --timeout 200% utils/jsshell/js build/ts/shell.js -x -det -fc 10 {} | tee test/ats/test_swf_all.run;'
+      },
+      test_swf_ads: {
+        maxBuffer: Infinity,
+        cmd: 'mongo ats --eval \'db.swfs.find({"parse_result.file_size":{$lt:204800},ad_result:{$ne:null}}).forEach(function (x) { print("test/ats/swfs/" + x.file); })\' | parallel --gnu -k -X -N10 --timeout 200% utils/jsshell/js build/ts/shell.js -x -det -fc 10 {} | tee test/ats/test_swf_ads.run;'
+      },
+      test_mock: {
+        maxBuffer: Infinity,
+        cmd: 'mkdir -p build/test;' +
+             'utils/jsshell/js build/ts/shell.js -x -det test/mock/jwplayer.js examples/jwplayer/jwplayer.flash.swf -fc 10 > build/test/test_mock.run;' +
+             'diff test/test_mock.baseline build/test/test_mock.run;'
+      },
+      bench_avm2: {
+        maxBuffer: Infinity,
+        cmd: 'find -L test/avm2/jsbench -name "*.abc" | xargs utils/jsshell/js build/ts/shell.js -x --printABCFileName'
+      },
+      perf_avm2_acceptance: {
+        maxBuffer: Infinity,
+        cmd: 'utils/jsshell/js build/ts/shell.js -x -det -r --porcelain test/avm2/acceptance.json > /dev/null 2>&1'
+      },
+      // Parses all ABCs in the acceptance suite. This is useful to run if you've made changes to the parser.
+      trace_avm2_acceptance_parse: {
+        maxBuffer: Infinity,
+        cmd: 'find -L test/avm2/acceptance -name "*.abc" | parallel -k --gnu -X -N50 utils/jsshell/js build/ts/shell.js -d -v {}'
       },
       tracetest_fuzz: {
         cmd: 'node test/trace_test_run.js -j ' + (+grunt.option('threads') || 6) +
@@ -184,21 +242,51 @@ module.exports = function(grunt) {
           return 'swfmill swf2xml ' + path + ' | xsltproc utils/instrument-swf.xslt - | swfmill xml2swf stdin ' + targetPath;
         }
       },
+      install_js_travis: {
+        cmd: "make -C utils/ install-js"
+      },
+      install_avmshell_travis: {
+        cmd: "make -C utils/ install-avmshell"
+      },
+      install_swfdec_travis: {
+        cmd: "make -C utils/ install-swfdec || echo 'Ignoring the error'"
+      },
+      versions_travis: {
+        cmd: "parallel --gnu --version; utils/jsshell/js --version; utils/tamarin-redux/bin/shell/avmshell -Dversion;"
+      },
+      install_mongo: {
+        cmd: "npm install mongojs@0.18.1"
+      },
       start_ats_db: {
         cmd: "test -e /tmp/ats.pid || mongod --dbpath test/ats/db --fork --logpath test/ats/db/log --pidfilepath /tmp/ats.pid || rm /tmp/ats.pid"
       },
       stop_ats_db: {
         cmd: "test -e /tmp/ats.pid && kill $(cat /tmp/ats.pid); rm /tmp/ats.pid"
       },
-      setup_ats: {
-        cmd: "mongo ats --eval 'db.copyDatabase(\"ats\",\"ats\",\"areweflashyet.com\",\"grunt\",\"grunt\")'"
-      },
       ats_parsetest: {
-        cmd: "parallel --will-cite node run.js parse ^{} ::: 0 1 2 3 4 5 6 7 8 9 a b c d e f",
+        cmd: "parallel --will-cite node run.js --task parse ::: 0 1 2 3 4 5 6 7 8 9 a b c d e f",
         cwd: "test/ats"
+      },
+      restartless: {
+        cmd: 'make restartless PROFILE="' + (grunt.option('profile') || '') + '"',
+        cwd: "extension/firefox"
       }
     },
     parallel: {
+      test: {
+        options: {
+          grunt: true
+        },
+        tasks: [
+          'exec:test_avm2_shumway',
+          'exec:test_avm2_acceptance',
+          'exec:test_swf',
+          'exec:test_avm2_ats',
+          'exec:test_unit',
+          'exec:test_trace',
+          'exec:test_mock'
+        ]
+      },
       base: {
         tasks: [
           { args: ['generate-version'], grunt: true },
@@ -222,12 +310,10 @@ module.exports = function(grunt) {
         ]
       },
       natives: {
-        options: {
-          grunt: true
-        },
         tasks: [
-          'exec:build_avm1_ts',
-          'exec:build_flash_ts'
+          { args: ['exec:build_playerglobal'].concat(parallelArgs), grunt: true },
+          { args: ['exec:build_flash_ts'].concat(parallelArgs), grunt: true },
+          { args: ['exec:build_avm1_ts'].concat(parallelArgs), grunt: true }
         ]
       },
       avm1: {
@@ -298,7 +384,6 @@ module.exports = function(grunt) {
   });
 
   grunt.loadNpmTasks('grunt-tslint');
-  grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-exec');
   grunt.loadNpmTasks('grunt-parallel');
@@ -307,8 +392,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('update-refs', function  () {
     var updateRefs = require('./utils/update-flash-refs.js').updateRefs;
-    updateRefs('examples/inspector/inspector.html', {gfx: true, player: true});
-    updateRefs('test/harness/slave.html', {gfx: true, player: true});
+    updateRefs('examples/inspector/inspector.gfx.html', {gfx: true});
     updateRefs('examples/xlsimport/index.html', {gfx: true, player: true});
     updateRefs('examples/inspector/inspector.player.html', {player: true});
     updateRefs('src/shell/shell.ts', {player: true, onlyIncludes: true});
@@ -336,11 +420,21 @@ module.exports = function(grunt) {
     packageRefs(['player'], outputDir + 'shumway.player.js', license);
   });
 
+  grunt.registerTask('merge-modules', function () {
+    mergeModules("build/bundles/shumway.player.js");
+    mergeModules("build/bundles/shumway.gfx.js");
+  });
+
+  function mergeModules(path) {
+    var mergeModules = require('typescript-module-merger').mergeModulesInFile;
+    grunt.file.write(path, mergeModules(path, !!grunt.option('verbose')));
+  }
+
   function runClosure(jsFiles, output, warnings, done) {
     // This needs a special build of closure that has SHUMWAY_OPTIMIZATIONS.
     var closureCmd = 'java';
     var closureArgs = ['-jar', 'utils/closure.jar',
-      '--formatting', 'PRETTY_PRINT',
+      '--define', 'release=true',
       '--compilation_level', 'SHUMWAY_OPTIMIZATIONS',
       '--language_in', 'ECMASCRIPT5'];
     if (!warnings) {
@@ -379,6 +473,14 @@ module.exports = function(grunt) {
       }
     })();
   }
+
+  grunt.registerTask('ensure-build-folder', function() {
+    grunt.file.mkdir('build');
+  });
+
+  grunt.registerTask('ensure-test-folder', function() {
+    grunt.file.mkdir('build/test');
+  });
 
   grunt.registerTask('closure-bundles', function () {
     var inputDir = 'build/bundles/';
@@ -420,9 +522,58 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('server', function () {
+    function isLogFileRequest(path) {
+      if (path.indexOf('/logs/') !== 0) {
+        return false;
+      }
+      return /^\/logs\/\w+\.(txt|log)$/i.test(path);
+    }
+    grunt.file.mkdir('build/logs/');
     var WebServer = require('./test/webserver.js').WebServer;
     var done = this.async();
     var server = new WebServer();
+    if (grunt.option('host')) {
+      server.host = grunt.option('host');
+    }
+    if (grunt.option('port')) {
+      server.port = +grunt.option('port');
+    }
+    if (grunt.option('port_ssl')) {
+      server.port_ssl = +grunt.option('port_ssl');
+    }
+    var url = require('url'), fs = require('fs');
+    server.hooks['POST'].push(function (req, res) {
+      var parsedUrl = url.parse(req.url, true);
+      var pathname = parsedUrl.pathname;
+      if (!isLogFileRequest(pathname)) {
+        return false;
+      }
+      var filename = 'build' + pathname;
+      var body = '';
+      req.on('data', function (data) {
+        body += data;
+      });
+      req.on('end', function () {
+        fs.appendFile(filename, body, function () {
+          res.writeHead(204, {'Content-Type': 'text/plain'});
+          res.end();
+        });
+      });
+      return true;
+    });
+    server.hooks['DELETE'].push(function (req, res) {
+      var parsedUrl = url.parse(req.url, true);
+      var pathname = parsedUrl.pathname;
+      if (!isLogFileRequest(pathname)) {
+        return false;
+      }
+      var filename = 'build' + pathname;
+      fs.unlink(filename, function () {
+        res.writeHead(204, {'Content-Type': 'text/plain'});
+        res.end();
+      });
+      return true;
+    });
     server.start();
   });
 
@@ -438,8 +589,8 @@ module.exports = function(grunt) {
     var testManifestFile = grunt.option('manifestFile') || defaultTestsManifestFile;
     var done = this.async();
     var params = [];
-    if (grunt.option('bundle')) {
-      params.push('--bundle');
+    if (grunt.option('extension')) {
+      params.push('--extension');
     }
     if (grunt.option('noPrompts')) {
       params.push('--noPrompts');
@@ -452,6 +603,11 @@ module.exports = function(grunt) {
     }, function () {
       done();
     });
+  });
+  
+  grunt.registerTask('reftest-extension', function () {
+    grunt.option('extension', true);
+    grunt.task.run('firefox', 'reftest');
   });
 
   grunt.registerTask('reftest-swfdec', function () {
@@ -466,8 +622,8 @@ module.exports = function(grunt) {
     var testManifestFile = 'swfdec_reftest_manifest.json';
     var done = this.async();
     var params = [];
-    if (grunt.option('bundle')) {
-      params.push('--bundle');
+    if (grunt.option('extension')) {
+      params.push('--extension');
     }
     if (grunt.option('noPrompts')) {
       params.push('--noPrompts');
@@ -489,8 +645,8 @@ module.exports = function(grunt) {
     var browserManifestFile = grunt.option('browserManifestFile') || defaultBrowserManifestFile;
     var done = this.async();
     var params = [];
-    if (grunt.option('bundle')) {
-      params.push('--bundle');
+    if (grunt.option('extension')) {
+      params.push('--extension');
     }
     if (grunt.option('noPrompts')) {
       params.push('--noPrompts');
@@ -543,8 +699,8 @@ module.exports = function(grunt) {
     }
   });
 
-  grunt.registerTask('tracetest', ['exec:tracetest']);
-  grunt.registerTask('tracetest-swfdec', ['exec:tracetest_swfdec']);
+  grunt.registerTask('tracetest', ['exec:test_trace']);
+  grunt.registerTask('tracetest-swfdec', ['exec:test_trace_swfdec']);
 
   grunt.registerTask('watch-playerglobal', ['exec:build_playerglobal', 'watch:playerglobal']);
   grunt.registerTask('watch-base', ['exec:build_base_ts', 'watch:base']);
@@ -560,20 +716,20 @@ module.exports = function(grunt) {
   grunt.registerTask('playerglobal', ['exec:build_playerglobal']);
   grunt.registerTask('playerglobal-single', ['exec:build_playerglobal_single']);
 
-  grunt.registerTask('base', ['exec:build_base_ts', 'exec:gate']);
-  grunt.registerTask('swf', ['exec:build_swf_ts', 'exec:gate']);
-  grunt.registerTask('flash', ['parallel:flash', 'exec:gate']);
-  grunt.registerTask('avm1', ['parallel:avm1', 'exec:gate']);
-  grunt.registerTask('player', ['exec:build_player_ts', 'exec:gate']);
-  grunt.registerTask('shell', ['exec:build_shell_ts', 'exec:gate']);
-  grunt.registerTask('tools', ['exec:build_tools_ts', 'exec:gate']);
-  grunt.registerTask('avm2', ['exec:build_avm2_ts', 'copy_relooper', 'exec:gate']);
-  grunt.registerTask('gfx', ['exec:build_gfx_base_ts', 'exec:build_gfx_ts']);
-  grunt.registerTask('gfx-base', ['exec:build_gfx_base_ts', 'exec:gate']);
-  grunt.registerTask('gate', ['exec:gate']);
+  grunt.registerTask('base', ['exec:build_base_ts', 'test-quick']);
+  grunt.registerTask('swf', ['exec:build_swf_ts', 'test-quick']);
+  grunt.registerTask('flash', ['parallel:flash', 'test-quick']);
+  grunt.registerTask('avm1', ['parallel:avm1', 'test-quick']);
+  grunt.registerTask('player', ['exec:build_player_ts', 'test-quick']);
+  grunt.registerTask('shell', ['exec:build_shell_ts', 'test-quick']);
+  grunt.registerTask('tools', ['exec:build_tools_ts', 'test-quick']);
+  grunt.registerTask('avm2', ['exec:build_avm2_ts', 'copy_relooper', 'test-quick']);
+  grunt.registerTask('gfx', ['exec:build_gfx_base_ts', 'exec:build_gfx_ts', 'test-quick']);
+  grunt.registerTask('gfx-base', ['exec:build_gfx_base_ts']);
   grunt.registerTask('perf', ['exec:perf']);
   grunt.registerTask('gfx-test', ['exec:gfx-test']);
-  grunt.registerTask('build', [
+  grunt.registerTask('build', "Builds all modules.", [
+    'ensure-build-folder',
     'parallel:base',
     'parallel:playerglobal',
     'exec:build_tools_ts',
@@ -583,34 +739,65 @@ module.exports = function(grunt) {
     'parallel:natives',
     'exec:build_player_ts',
     'exec:build_shell_ts',
-    'bundles'
+    'bundles',
+    'merge-modules'
   ]);
   grunt.registerTask('shu', [
     'build',
-    'exec:gate'
+    'gate'
   ]);
-  grunt.registerTask('travis', [
-    // Duplicates almost all of "build" because we don't want to do the costly "playerglobal" task.
-    'parallel:base',
-    'exec:build_tools_ts',
-    'exec:build_gfx_base_ts',
-    'parallel:tier2',
-    'copy_relooper',
-    'parallel:natives',
-    'exec:build_player_ts',
-    'exec:build_shell_ts',
-    'tslint:all',
-    'exec:spell',
-    'closure'
+  grunt.registerTask('travis', "Makes sure your local build will succeed on travis.", [
+    'exec:install_js_travis',
+    'exec:install_avmshell_travis',
+    // 'exec:versions_travis', AVMShell exits with 1 for some reason.
+    'build',
+
+    //'gate'
+    'exec:test_avm2_shumway',
+    'exec:test_avm2_acceptance',
+    // 'exec:test_avm2_pypy',
+    // 'exec:test_arch',
+    'exec:test_swf',
+    'exec:test_trace',
+    'exec:install_swfdec_travis',
+    'exec:test_trace_swfdec',
+    //'exec:test_avm2_ats',
+    //'exec:test_avm2_ats_parse',
+    'exec:test_unit',
+    'exec:test_mock'
   ]);
-  grunt.registerTask('smoke', [
-    'exec:smoke_parse'
+  grunt.registerTask('gate', "Run this before checking in any code.", [
+    'ensure-test-folder',
+    // 'tslint:all', // Annoyingly slow, and not very useful most of the time.
+    // 'closure', REDUX: Temporarily commented out.
+    'parallel:test',
+    'warn'
   ]);
+
+  grunt.registerTask('warn', "Run this before checking in any code to report warnings.", [
+    'exec:warn_spell',
+    'exec:warn'
+  ]);
+
+  grunt.registerTask('perf-gate', "Run this before checking in any code to make sure you don't regress performance.", [
+    'exec:perf_avm2_acceptance'
+  ]);
+  // Quick sanity test that runs after a module is compiled.
+  grunt.registerTask('test-quick', [
+    'exec:test_unit'
+  ]);
+  // Runs all tests.
   grunt.registerTask('test', [
-    'exec:gate',
-    'exec:test_avm2_quick',
-    'exec:tracetest',
-    // 'exec:tracetest_swfdec'
+    'exec:test_avm2_shumway',
+    'exec:test_avm2_acceptance',
+    // 'exec:test_avm2_pypy',
+    // 'exec:test_arch',
+    'exec:test_swf',
+    'exec:test_trace',
+    // 'exec:test_trace_swfdec', // Takes too long.
+    'exec:test_avm2_ats',
+    'exec:test_avm2_ats_parse',
+    'exec:test_unit'
   ]);
   grunt.registerTask('mozcentralshu', [
     'mozcentralbaseline',
@@ -869,6 +1056,8 @@ module.exports = function(grunt) {
 
     grunt.file.copy('build/version/version.txt', outputDir + '/version.txt');
     grunt.file.copy('LICENSE', outputDir + '/LICENSE');
+    grunt.file.copy('LICENSE-OFL.txt', outputDir + '/LICENSE-OFL.txt');
+    grunt.file.copy('README-LICENSE.txt', outputDir + '/README-LICENSE.txt');
   });
 
   function copyFilesUsingPattern(src, dest, callback) {
@@ -901,6 +1090,7 @@ module.exports = function(grunt) {
       // shuobject packaging
       copyFilesUsingPattern('web/iframe/*', outputDir + '/iframe');
       grunt.file.copy('extension/shuobject/shuobject.js', outputDir + '/shuobject.js');
+      grunt.file.copy('src/compatibility.js', outputDir + '/src/compatibility.js');
 
       // shell packaging
       grunt.file.copy('build/ts/shell.js', outputDir + '/build/ts/shell.js');
@@ -988,9 +1178,22 @@ module.exports = function(grunt) {
     });
   });
 
+  grunt.registerTask('clean', function () {
+    var filesToRemove = [
+      'build', // Deletes entire 'build' folder!
+      'test/tmp/',
+      'test/*.log',
+      'test/avm2/*.tmp'
+    ];
+    filesToRemove.forEach(function (files) {
+      grunt.file.expand(files).forEach(function (file) {
+        grunt.file.delete(file);
+      });
+    });
+  });
+
   grunt.registerTask('firefox', ['build', 'closure-bundles', 'exec:build_extension']);
   grunt.registerTask('mozcentral', ['build', 'closure-bundles', 'exec:build_mozcentral']);
   grunt.registerTask('web', ['build', 'closure-bundles', 'exec:build_extension', 'shell-package', 'shuobject-package', 'exec:build_web']);
   grunt.registerTask('dist', ['build', 'closure-bundles', 'dist-package']);
-  grunt.registerTask('setup-ats', ['exec:start_ats_db', 'exec:setup_ats']);
 };

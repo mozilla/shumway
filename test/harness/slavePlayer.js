@@ -15,7 +15,6 @@
  */
 
 var release = true;
-var SHUMWAY_ROOT = "../../src/";
 
 var viewerPlayerglobalInfo = {
   abcs: "../../build/playerglobal/playerglobal.abcs",
@@ -24,70 +23,43 @@ var viewerPlayerglobalInfo = {
 
 var builtinPath = "../../build/libs/builtin.abc";
 
-window.print = function (msg) {
-  window.parent.postMessage({type: 'console-log', msg: msg}, '*');
-};
+window.print = function () {};
 
 Shumway.Telemetry.instance = {
   reportTelemetry: function (data) { }
 };
 
 Shumway.FileLoadingService.instance = new Shumway.Player.BrowserFileLoadingService();
+Shumway.LocalConnectionService.instance = new Shumway.Player.PlayerInternalLocalConnectionService();
 
-// Combines two URLs. The baseUrl shall be absolute URL. If the url is an
-// absolute URL, it will be returned as is.
-function combineUrl(baseUrl, url) {
-  if (!url) {
-    return baseUrl;
+function runSwfPlayer(flashParams, settings, gfxWindow) {
+  if (settings) {
+    Shumway.Settings.setSettings(settings);
   }
-  if (/^[a-z][a-z0-9+\-.]*:/i.test(url)) {
-    return url;
-  }
-  var i;
-  if (url.charAt(0) == '/') {
-    // absolute path
-    i = baseUrl.indexOf('://');
-    if (url.charAt(1) === '/') {
-      ++i;
-    } else {
-      i = baseUrl.indexOf('/', i + 3);
-    }
-    return baseUrl.substring(0, i) + url;
-  } else {
-    // relative path
-    var pathLength = baseUrl.length;
-    i = baseUrl.lastIndexOf('#');
-    pathLength = i >= 0 ? i : pathLength;
-    i = baseUrl.lastIndexOf('?', pathLength);
-    pathLength = i >= 0 ? i : pathLength;
-    var prefixLength = baseUrl.lastIndexOf('/', pathLength);
-    return baseUrl.substring(0, prefixLength + 1) + url;
-  }
-}
-
-function runSwfPlayer(flashParams) {
-  var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
 
   Shumway.dontSkipFramesOption.value = true;
   Shumway.frameRateOption.value = 60; // turbo mode
 
   var compilerSettings = flashParams.compilerSettings;
-  var sysMode = compilerSettings.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-  var appMode = compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
   var asyncLoading = true;
   var baseUrl = flashParams.baseUrl;
   var movieParams = flashParams.movieParams;
   var objectParams = flashParams.objectParams;
+  var displayParameters = flashParams.displayParameters;
   var movieUrl = flashParams.url;
   Shumway.SystemResourcesLoadingService.instance =
     new Shumway.Player.BrowserSystemResourcesLoadingService(builtinPath, viewerPlayerglobalInfo);
-  Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal, sysMode, appMode).then(function (avm2) {
+  Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal).then(function (securityDomain) {
     function runSWF(file) {
-      var gfxService = new Shumway.Player.Window.WindowGFXService(window, window.parent);
-      var player = new Shumway.Player.Player(gfxService);
+      var peer = new Shumway.Remoting.WindowTransportPeer(window, gfxWindow);
+      var gfxService = new Shumway.Player.Window.WindowGFXService(securityDomain, peer);
+      var player = new Shumway.Player.Player(securityDomain, gfxService);
       player.stageAlign = 'tl';
       player.stageScale = 'noscale';
+      player.displayParameters = displayParameters;
       player.load(file);
+
+      document.body.style.backgroundColor = 'green';
     }
 
     Shumway.FileLoadingService.instance.init(baseUrl);
@@ -104,18 +76,3 @@ function runSwfPlayer(flashParams) {
     }
   });
 }
-
-window.addEventListener('message', function onWindowMessage(e) {
-  var data = e.data;
-  if (typeof data !== 'object' || data === null || data.type !== 'runSwf') {
-    return;
-  }
-  window.removeEventListener('message', onWindowMessage);
-
-  if (data.settings) {
-    Shumway.Settings.setSettings(data.settings);
-  }
-
-  runSwfPlayer(data.flashParams);
-  document.body.style.backgroundColor = 'green';
-});

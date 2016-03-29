@@ -14,28 +14,26 @@
  * limitations under the License.
  */
 // Class: Event
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
   import assert = Shumway.Debug.assert;
   import unexpected = Shumway.Debug.unexpected;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Event extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class Event extends ASObject {
 
-    static _instances: Shumway.Map<Event>;
+    static axClass: typeof Event;
+
+    static _instances: Shumway.MapObject<Event>;
 
     static classInitializer: any = function () {
-      Event._instances = Shumway.ObjectUtilities.createMap<Event>();
+      var self: typeof Event = this;
+      self._instances = Shumway.ObjectUtilities.createMap<Event>();
     };
 
-    static initializer: any = null;
-
-    static classSymbols: string [] = null;
-    static instanceSymbols: string [] = null;
-
     static getInstance(type: string, bubbles: boolean = false, cancelable: boolean = false): Event {
-      var instance = Event._instances[type];
+      var instance = this._instances[type];
       if (!instance) {
-        instance = new Event(type, bubbles, cancelable);
-        Event._instances[type] = instance;
+        instance = new this.sec.flash.events.Event(type, bubbles, cancelable);
+        this._instances[type] = instance;
       }
       instance._bubbles = bubbles;
       instance._cancelable = cancelable;
@@ -43,13 +41,13 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     static getBroadcastInstance(type: string, bubbles: boolean = false, cancelable: boolean = false): Event {
-      var instance = Event._instances[type];
+      var instance = this._instances[type];
       if (!instance) {
-        instance = new Event(type, bubbles, cancelable);
-        Event._instances[type] = instance;
+        instance = new this.sec.flash.events.Event(type, bubbles, cancelable);
+        this._instances[type] = instance;
         // Some events are documented as broadcast event in the AS3 docs. We can't set |_isBroadcastEvent| flag in the
         // constructor because if you create custom events with these types they do capture and bubble.
-        release || assert (Event.isBroadcastEventType(type));
+        release || assert(Event.isBroadcastEventType(type));
       }
       instance._isBroadcastEvent = true;
       instance._bubbles = bubbles;
@@ -75,8 +73,8 @@ module Shumway.AVM2.AS.flash.events {
 
 
     constructor(type: string, bubbles: boolean, cancelable: boolean) {
-      false && super();
-      this._type = asCoerceString(type);
+      super();
+      this._type = axCoerceString(type);
       this._bubbles = !!bubbles;
       this._cancelable = !!cancelable;
 
@@ -204,7 +202,8 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     clone(): Event {
-      return new Event(this._type, this._bubbles, this._cancelable);
+      return new this.sec.flash.events.Event(this._type, this._bubbles,
+                                                        this._cancelable);
     }
 
     toString(): string {
@@ -215,7 +214,7 @@ module Shumway.AVM2.AS.flash.events {
       var str = '[' + className;
       for (var i: number = 0; i < args.length; i++) {
         var field = args[i];
-        var value: Object = this.asGetPublicProperty(field);
+        var value: Object = this.axGetPublicProperty(field);
         if (typeof value === 'string') {
           value = '"' + value + '"';
         }

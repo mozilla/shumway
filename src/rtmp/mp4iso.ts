@@ -251,7 +251,7 @@ module RtmpJs.MP4.Iso {
     }
   }
 
-  export enum TrackHeaderFlags {
+  export const enum TrackHeaderFlags {
     TRACK_ENABLED = 0x000001,
     TRACK_IN_MOVIE = 0x000002,
     TRACK_IN_PREVIEW = 0x000004,
@@ -589,7 +589,7 @@ module RtmpJs.MP4.Iso {
     }
   }
 
-  export enum TrackFragmentFlags {
+  export const enum TrackFragmentFlags {
     BASE_DATA_OFFSET_PRESENT = 0x000001,
     SAMPLE_DESCRIPTION_INDEX_PRESENT = 0x000002,
     DEFAULT_SAMPLE_DURATION_PRESENT = 0x000008,
@@ -684,7 +684,7 @@ module RtmpJs.MP4.Iso {
     }
   }
 
-  export enum SampleFlags {
+  export const enum SampleFlags {
     IS_LEADING_MASK = 0x0C000000,
     SAMPLE_DEPENDS_ON_MASK = 0x03000000,
     SAMPLE_DEPENDS_ON_OTHER = 0x01000000,
@@ -696,7 +696,7 @@ module RtmpJs.MP4.Iso {
     SAMPLE_DEGRADATION_PRIORITY_MASK = 0x0000FFFF,
   }
 
-  export enum TrackRunFlags {
+  export const enum TrackRunFlags {
     DATA_OFFSET_PRESENT = 0x000001,
     FIRST_SAMPLE_FLAGS_PRESENT = 0x000004,
     SAMPLE_DURATION_PRESENT = 0x000100,

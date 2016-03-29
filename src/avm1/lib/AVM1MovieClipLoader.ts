@@ -17,57 +17,110 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
 
-  export class AVM1MovieClipLoader {
-    static createAVM1Class():typeof AVM1MovieClipLoader {
-      return wrapAVM1Class(AVM1MovieClipLoader,
+  export class AVM1MovieClipLoader extends AVM1Object {
+    static createAVM1Class(context: AVM1Context): AVM1Object {
+      return wrapAVM1NativeClass(context, true, AVM1MovieClipLoader,
         [],
-        ['loadClip', 'unloadClip', 'getProgress']);
+        ['loadClip', 'unloadClip', 'getProgress'],
+        null, AVM1MovieClipLoader.prototype.avm1Constructor);
     }
 
-    public initAVM1ObjectInstance(context: AVM1Context) {
-    }
+    private _loaderHelper: AVM1LoaderHelper;
+    private _target: AVM1MovieClip;
 
-    private _loader: flash.display.Loader;
-    private _target: IAVM1SymbolBase;
-
-    constructor() {
-      this._loader = new flash.display.Loader();
+    public avm1Constructor() {
+      AVM1Broadcaster.initialize(this.context, this);
     }
 
     public loadClip(url: string, target):Boolean {
-      this._target = typeof target === 'number' ?
-        AVM1Utils.resolveLevel(target) : AVM1Utils.resolveTarget(target);
+      var loadLevel: boolean = typeof target === 'number';
+      var level: number;
+      var target_mc: AVM1MovieClip;
+      if (loadLevel) {
+        level = <number>target;
+        if (level === 0) {
+          release || Debug.notImplemented('MovieClipLoader.loadClip at _level0');
+          return false;
+        }
+      } else {
+        target_mc = this.context.resolveTarget(target);
+        if (!target_mc) {
+          return false; // target was not found -- doing nothing
+        }
+      }
 
-      (<flash.display.DisplayObjectContainer>this._target.as3Object).addChild(this._loader);
+      var loaderHelper = new AVM1LoaderHelper(this.context);
+      this._loaderHelper = loaderHelper;
+      this._target = null;
 
-      this._loader.contentLoaderInfo.addEventListener(flash.events.Event.OPEN, this.openHandler.bind(this));
-      this._loader.contentLoaderInfo.addEventListener(flash.events.ProgressEvent.PROGRESS, this.progressHandler.bind(this));
-      this._loader.contentLoaderInfo.addEventListener(flash.events.IOErrorEvent.IO_ERROR, this.ioErrorHandler.bind(this));
-      this._loader.contentLoaderInfo.addEventListener(flash.events.Event.COMPLETE, this.completeHandler.bind(this));
-      this._loader.contentLoaderInfo.addEventListener(flash.events.Event.INIT, this.initHandler.bind(this));
+      var loaderInfo = loaderHelper.loaderInfo;
+      loaderInfo.addEventListener(flash.events.Event.OPEN, this.openHandler.bind(this));
+      loaderInfo.addEventListener(flash.events.ProgressEvent.PROGRESS, this.progressHandler.bind(this));
+      loaderInfo.addEventListener(flash.events.IOErrorEvent.IO_ERROR, this.ioErrorHandler.bind(this));
+      loaderInfo.addEventListener(flash.events.Event.COMPLETE, this.completeHandler.bind(this));
+      loaderInfo.addEventListener(flash.events.Event.INIT, this.initHandler.bind(this));
 
-      this._loader.load(new flash.net.URLRequest(url));
-      // TODO: find out under which conditions we should return false here
+      loaderHelper.load(url, null).then(function () {
+        var newChild = loaderHelper.content;
+        this._target = getAVM1Object(newChild, this.context);
+
+        if (loadLevel) {
+          var avm1LevelHolder = this.context.levelsContainer;
+          avm1LevelHolder._addRoot(level, newChild);
+        } else {
+          // TODO fix newChild name to match target_mc
+          var parent = target_mc._as3Object.parent;
+          var depth = target_mc._as3Object._depth;
+          parent.removeChild(target_mc._as3Object);
+          parent.addTimelineObjectAtDepth(newChild, depth);
+        }
+      }.bind(this));
       return true;
     }
 
     public unloadClip(target):Boolean {
-      var nativeTarget: IAVM1SymbolBase = typeof target === 'number' ?
-        AVM1Utils.resolveLevel(target) : AVM1Utils.resolveTarget(target);
-
-      (<flash.display.DisplayObjectContainer>nativeTarget.as3Object).removeChild(this._loader);
+      if (!this._loaderHelper) {
+        return false; // nothing was loaded by this loader
+      }
+      var loadLevel: boolean = typeof target === 'number';
+      var level: number;
+      var target_mc: AVM1MovieClip;
+      var originalLoader = this._loaderHelper.loader;
+      if (loadLevel) {
+        level = <number>target;
+        if (level === 0) {
+          release || Debug.notImplemented('MovieClipLoader.unloadClip at _level0');
+          return false;
+        }
+        var avm1LevelHolder = this.context.levelsContainer;
+        if (avm1LevelHolder._getRootForLevel(level) !== originalLoader.content) {
+          return false; // did not load this root
+        }
+        avm1LevelHolder._removeRoot(level);
+      } else {
+        target_mc = target ? this.context.resolveTarget(target) : undefined;
+        if (!target_mc) {
+          return false; // target was not found -- doing nothing
+        }
+        if (target_mc._as3Object !== originalLoader.content) {
+          return false; // did not load this movie clip
+        }
+        target_mc.unloadMovie();
+      }
+      this._target = null;
+      this._loaderHelper = null;
       // TODO: find out under which conditions unloading a clip can fail
       return true;
     }
 
     public getProgress(target): number {
-      return this._loader.contentLoaderInfo.bytesLoaded;
+      return this._loaderHelper.loaderInfo.bytesLoaded;
     }
 
     private _broadcastMessage(message: string, args: any[] = null) {
-      avm1BroadcastEvent(this._target.context, this, message, args);
+      avm1BroadcastEvent(this.context, this, message, args);
     }
 
     private openHandler(event: flash.events.Event): void {
@@ -88,12 +141,13 @@ module Shumway.AVM1.Lib {
 
     private initHandler(event: flash.events.Event):void {
       var exitFrameCallback = function () {
-        this._target.as3Object.removeEventListener(flash.events.Event.EXIT_FRAME, exitFrameCallback);
+        targetAS3Object.removeEventListener(flash.events.Event.EXIT_FRAME, exitFrameCallback);
         this._broadcastMessage('onLoadInit', [this._target]);
       }.bind(this);
       // MovieClipLoader's init event is dispatched after all frame scripts of the AVM1 instance
       // have run for one additional iteration.
-      this._target.as3Object.addEventListener(flash.events.Event.EXIT_FRAME, exitFrameCallback)
+      var targetAS3Object = this._loaderHelper.content;
+      targetAS3Object.addEventListener(flash.events.Event.EXIT_FRAME, exitFrameCallback)
     }
   }
 }

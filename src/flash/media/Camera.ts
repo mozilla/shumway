@@ -14,161 +14,124 @@
  * limitations under the License.
  */
 // Class: Camera
-module Shumway.AVM2.AS.flash.media {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+module Shumway.AVMX.AS.flash.media {
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class Camera extends flash.events.EventDispatcher {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
+
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.media.Camera");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    // static _names: any [];
-    // static _isSupported: boolean;
-    get names(): any [] {
-      notImplemented("public flash.media.Camera::get names"); return;
-      // return this._names;
+
+    static get names(): ASArray {
+      release || somewhatImplemented("public flash.media.Camera::get names");
+      return this.sec.createArrayUnsafe([]);
     }
-    get isSupported(): boolean {
-      notImplemented("public flash.media.Camera::get isSupported"); return;
-      // return this._isSupported;
+    static get isSupported(): boolean {
+      return false;
     }
     static getCamera(name: string = null): flash.media.Camera {
-      name = asCoerceString(name);
-      notImplemented("public flash.media.Camera::static getCamera"); return;
+      name = axCoerceString(name);
+      release || somewhatImplemented("public flash.media.Camera::static getCamera");
+      return null;
     }
     static _scanHardware(): void {
-      notImplemented("public flash.media.Camera::static _scanHardware"); return;
+      release || somewhatImplemented("public flash.media.Camera::static _scanHardware");
     }
-    
-    // _activityLevel: number;
-    // _bandwidth: number /*int*/;
-    // _currentFPS: number;
-    // _fps: number;
-    // _height: number /*int*/;
-    // _index: number /*int*/;
-    // _keyFrameInterval: number /*int*/;
-    // _loopback: boolean;
-    // _motionLevel: number /*int*/;
-    // _motionTimeout: number /*int*/;
-    // _muted: boolean;
-    // _name: string;
-    // _position: string;
-    // _quality: number /*int*/;
-    // _width: number /*int*/;
+
     get activityLevel(): number {
-      notImplemented("public flash.media.Camera::get activityLevel"); return;
-      // return this._activityLevel;
+      release || somewhatImplemented("public flash.media.Camera::get activityLevel");
+      return 0;
     }
     get bandwidth(): number /*int*/ {
-      notImplemented("public flash.media.Camera::get bandwidth"); return;
-      // return this._bandwidth;
+      release || somewhatImplemented("public flash.media.Camera::get bandwidth");
+      return 0;
     }
     get currentFPS(): number {
-      notImplemented("public flash.media.Camera::get currentFPS"); return;
-      // return this._currentFPS;
+      release || somewhatImplemented("public flash.media.Camera::get currentFPS");
+      return 0;
     }
     get fps(): number {
-      notImplemented("public flash.media.Camera::get fps"); return;
-      // return this._fps;
+      release || somewhatImplemented("public flash.media.Camera::get fps");
+      return 0;
     }
     get height(): number /*int*/ {
-      notImplemented("public flash.media.Camera::get height"); return;
-      // return this._height;
+      release || somewhatImplemented("public flash.media.Camera::get height");
+      return 0;
     }
     get index(): number /*int*/ {
-      notImplemented("public flash.media.Camera::get index"); return;
-      // return this._index;
+      release || somewhatImplemented("public flash.media.Camera::get index");
+      return 0;
     }
     get keyFrameInterval(): number /*int*/ {
-      notImplemented("public flash.media.Camera::get keyFrameInterval"); return;
-      // return this._keyFrameInterval;
+      release || somewhatImplemented("public flash.media.Camera::get keyFrameInterval");
+      return 1;
     }
     get loopback(): boolean {
-      notImplemented("public flash.media.Camera::get loopback"); return;
-      // return this._loopback;
+      release || somewhatImplemented("public flash.media.Camera::get loopback");
+      return false;
     }
     get motionLevel(): number /*int*/ {
-      notImplemented("public flash.media.Camera::get motionLevel"); return;
-      // return this._motionLevel;
+      release || somewhatImplemented("public flash.media.Camera::get motionLevel");
+      return 0;
     }
     get motionTimeout(): number /*int*/ {
-      notImplemented("public flash.media.Camera::get motionTimeout"); return;
-      // return this._motionTimeout;
+      release || somewhatImplemented("public flash.media.Camera::get motionTimeout");
+      return 0;
     }
     get muted(): boolean {
-      notImplemented("public flash.media.Camera::get muted"); return;
-      // return this._muted;
+      release || somewhatImplemented("public flash.media.Camera::get muted");
+      return true;
     }
     get name(): string {
-      notImplemented("public flash.media.Camera::get name"); return;
-      // return this._name;
-    }
-    get position(): string {
-      notImplemented("public flash.media.Camera::get position"); return;
-      // return this._position;
+      release || somewhatImplemented("public flash.media.Camera::get name");
+      return '';
     }
     get quality(): number /*int*/ {
-      notImplemented("public flash.media.Camera::get quality"); return;
-      // return this._quality;
+      release || somewhatImplemented("public flash.media.Camera::get quality");
+      return 0;
     }
     get width(): number /*int*/ {
-      notImplemented("public flash.media.Camera::get width"); return;
-      // return this._width;
+      release || somewhatImplemented("public flash.media.Camera::get width");
+      return 0;
     }
     setCursor(value: boolean): void {
       value = !!value;
-      notImplemented("public flash.media.Camera::setCursor"); return;
+      release || somewhatImplemented("public flash.media.Camera::setCursor");
     }
     setKeyFrameInterval(keyFrameInterval: number /*int*/): void {
       keyFrameInterval = keyFrameInterval | 0;
-      notImplemented("public flash.media.Camera::setKeyFrameInterval"); return;
+      release || somewhatImplemented("public flash.media.Camera::setKeyFrameInterval");
     }
     setLoopback(compress: boolean = false): void {
       compress = !!compress;
-      notImplemented("public flash.media.Camera::setLoopback"); return;
+      release || somewhatImplemented("public flash.media.Camera::setLoopback");
     }
     setMode(width: number /*int*/, height: number /*int*/, fps: number, favorArea: boolean = true): void {
       width = width | 0; height = height | 0; fps = +fps; favorArea = !!favorArea;
-      notImplemented("public flash.media.Camera::setMode"); return;
+      release || somewhatImplemented("public flash.media.Camera::setMode");
     }
     setMotionLevel(motionLevel: number /*int*/, timeout: number /*int*/ = 2000): void {
       motionLevel = motionLevel | 0; timeout = timeout | 0;
-      notImplemented("public flash.media.Camera::setMotionLevel"); return;
+      release || somewhatImplemented("public flash.media.Camera::setMotionLevel");
     }
     setQuality(bandwidth: number /*int*/, quality: number /*int*/): void {
       bandwidth = bandwidth | 0; quality = quality | 0;
-      notImplemented("public flash.media.Camera::setQuality"); return;
+      release || somewhatImplemented("public flash.media.Camera::setQuality");
     }
     drawToBitmapData(destination: flash.display.BitmapData): void {
       destination = destination;
-      notImplemented("public flash.media.Camera::drawToBitmapData"); return;
+      release || somewhatImplemented("public flash.media.Camera::drawToBitmapData");
     }
     copyToByteArray(rect: flash.geom.Rectangle, destination: flash.utils.ByteArray): void {
       rect = rect; destination = destination;
-      notImplemented("public flash.media.Camera::copyToByteArray"); return;
+      release || somewhatImplemented("public flash.media.Camera::copyToByteArray");
     }
-    copyToVector(rect: flash.geom.Rectangle, destination: ASVector<any>): void {
+    copyToVector(rect: flash.geom.Rectangle, destination: Float64Vector): void {
       rect = rect; destination = destination;
-      notImplemented("public flash.media.Camera::copyToVector"); return;
+      release || somewhatImplemented("public flash.media.Camera::copyToVector");
     }
   }
 }

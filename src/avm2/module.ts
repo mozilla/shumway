@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+"use strict";
 
-module Shumway.AVM2 {
-  export var timelineBuffer = new Shumway.Tools.Profiler.TimelineBuffer("AVM2");
+module Shumway.AVMX {
+  export var timelineBuffer = Shumway.Tools ? new Shumway.Tools.Profiler.TimelineBuffer("AVX") : null;
   export var counter = new Shumway.Metrics.Counter(!release);
 
   export function countTimeline(name: string, value: number = 1) {

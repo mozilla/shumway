@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: VertexBuffer3D
-module Shumway.AVM2.AS.flash.display3D {
+module Shumway.AVMX.AS.flash.display3D {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class VertexBuffer3D extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class VertexBuffer3D extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +29,7 @@ module Shumway.AVM2.AS.flash.display3D {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.display3D.VertexBuffer3D");
+      super();
     }
     
     // JS -> AS Bindings
@@ -44,14 +39,14 @@ module Shumway.AVM2.AS.flash.display3D {
     
     uploadFromVector(data: ASVector<any>, startVertex: number /*int*/, numVertices: number /*int*/): void {
       data = data; startVertex = startVertex | 0; numVertices = numVertices | 0;
-      notImplemented("public flash.display3D.VertexBuffer3D::uploadFromVector"); return;
+      release || notImplemented("public flash.display3D.VertexBuffer3D::uploadFromVector"); return;
     }
     uploadFromByteArray(data: flash.utils.ByteArray, byteArrayOffset: number /*int*/, startVertex: number /*int*/, numVertices: number /*int*/): void {
       data = data; byteArrayOffset = byteArrayOffset | 0; startVertex = startVertex | 0; numVertices = numVertices | 0;
-      notImplemented("public flash.display3D.VertexBuffer3D::uploadFromByteArray"); return;
+      release || notImplemented("public flash.display3D.VertexBuffer3D::uploadFromByteArray"); return;
     }
     dispose(): void {
-      notImplemented("public flash.display3D.VertexBuffer3D::dispose"); return;
+      release || notImplemented("public flash.display3D.VertexBuffer3D::dispose"); return;
     }
   }
 }

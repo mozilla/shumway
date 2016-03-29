@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-module Shumway.Shell
-{
+module Shumway.Shell {
   class ShellBinaryFileReader {
     public url:string;
     public method:string;
@@ -31,11 +30,12 @@ module Shumway.Shell
 
     readAll(progress, complete) {
       setTimeout(function () {
-        console.log('Reading: ' + this.url);
         try {
-          complete(read(this.url, 'binary'));
+          var url = this.url + '';
+          var strippedUrl = url.indexOf('file://') === 0 ? url.substr(7) : url;
+          complete(read(strippedUrl, 'binary'));
         } catch (e) {
-          complete(null, e.message);
+          complete(null, 'Can\'t read ' + this.url);
         }
       }.bind(this));
     }
@@ -45,10 +45,10 @@ module Shumway.Shell
       this.readAll(null, function (data, err) {
         if (data) {
           ondata(data, { loaded: data.byteLength, total: data.byteLength});
+          oncomplete();
         } else {
           onerror(err);
         }
-        oncomplete();
       });
     }
   }
@@ -75,6 +75,9 @@ module Shumway.Shell
             self.onopen,
             self.onclose,
             self.onhttpstatus);
+        },
+        close: function () {
+          // doing nothing in the shell
         }
       };
     },
@@ -97,5 +100,6 @@ module Shumway.Shell
     Shumway.BinaryFileReader = <typeof BinaryFileReader><any>ShellBinaryFileReader;
     Shumway.Telemetry.instance = shellTelemetry;
     Shumway.FileLoadingService.instance = shellFileLoadingService;
+    Shumway.LocalConnectionService.instance = new Player.PlayerInternalLocalConnectionService();
   }
 }

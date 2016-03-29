@@ -17,10 +17,9 @@
 module Shumway.Player {
   import assert = Shumway.Debug.assert;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import flash = Shumway.AVM2.AS.flash;
-  import Point = Shumway.AVM2.AS.flash.geom.Point;
+  import flash = Shumway.AVMX.AS.flash;
+  import Point = Shumway.AVMX.AS.flash.geom.Point;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
-  import AVM2 = Shumway.AVM2.Runtime.AVM2;
   import IExternalInterfaceService = Shumway.IExternalInterfaceService;
 
   import Event = flash.events.Event;
@@ -32,9 +31,9 @@ module Shumway.Player {
   import Loader = flash.display.Loader;
   import VisitorFlags = flash.display.VisitorFlags;
 
-  import MouseEventAndPointData = Shumway.AVM2.AS.flash.ui.MouseEventAndPointData;
+  import MouseEventAndPointData = Shumway.AVMX.AS.flash.ui.MouseEventAndPointData;
   import MouseEventDispatcher = flash.ui.MouseEventDispatcher;
-  import KeyboardEventData = Shumway.AVM2.AS.flash.ui.KeyboardEventData;
+  import KeyboardEventData = Shumway.AVMX.AS.flash.ui.KeyboardEventData;
   import KeyboardEventDispatcher = flash.ui.KeyboardEventDispatcher;
   import FocusEventData = Shumway.Remoting.Player.FocusEventData;
 
@@ -44,6 +43,7 @@ module Shumway.Player {
   import IVideoElementService = flash.net.IVideoElementService;
   import IRootElementService = flash.display.IRootElementService;
   import ICrossDomainSWFLoadingWhitelist = flash.system.ICrossDomainSWFLoadingWhitelist;
+  import CrossDomainSWFLoadingWhitelistResult = flash.system.CrossDomainSWFLoadingWhitelistResult;
   import MessageTag = Shumway.Remoting.MessageTag;
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
@@ -60,6 +60,12 @@ module Shumway.Player {
    */
   export class GFXServiceBase implements IGFXService {
     _observers: IGFXServiceObserver[] = [];
+
+    public sec: ISecurityDomain;
+
+    constructor(sec: ISecurityDomain) {
+      this.sec = sec;
+    }
 
     addObserver(observer: IGFXServiceObserver) {
       this._observers.push(observer);
@@ -88,11 +94,12 @@ module Shumway.Player {
       throw new Error('This method is abstract');
     }
 
-    registerFont(syncId: number, data: any): Promise<any> {
+    registerFont(syncId: number, data: Uint8Array): Promise<any> {
       throw new Error('This method is abstract');
     }
 
-    registerImage(syncId: number, symbolId: number, data: any): Promise<any> {
+    registerImage(syncId: number, symbolId: number, imageType: ImageType,
+                  data: Uint8Array, alphaData: Uint8Array): Promise<any> {
       throw new Error('This method is abstract');
     }
 
@@ -101,10 +108,8 @@ module Shumway.Player {
     }
 
     public processUpdates(updates: DataBuffer, assets: any []) {
-      var deserializer = new Remoting.Player.PlayerChannelDeserializer();
-
-      deserializer.input = updates;
-      deserializer.inputAssets = assets;
+      var deserializer = new Remoting.Player.PlayerChannelDeserializer(
+        this.sec, updates, assets);
 
       var message = deserializer.read();
       switch (message.tag) {
@@ -184,7 +189,9 @@ module Shumway.Player {
           this._player._hasFocus = false;
           break;
         case FocusEventType.WindowFocus:
-          EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.ACTIVATE));
+          var eventDispatcherClass = this._player.sec.flash.events.EventDispatcher.axClass;
+          var eventClass = this._player.sec.flash.events.Event.axClass;
+          eventDispatcherClass.broadcastEventDispatchQueue.dispatchEvent(eventClass.getBroadcastInstance(Event.ACTIVATE));
           this._player._hasFocus = true;
           break;
       }
@@ -210,7 +217,7 @@ module Shumway.Player {
           target.debugTrace();
         }
       }
-      this._player._currentMouseTarget = this._mouseEventDispatcher.currentTarget;
+      this._player.currentMouseTarget = this._mouseEventDispatcher.currentTarget;
     }
 
     registerEventListener(id: number, listener: (eventType: VideoPlaybackEvent, data: any)=>void) {
@@ -226,19 +233,24 @@ module Shumway.Player {
    */
   export class Player implements IBitmapDataSerializer, IFSCommandListener, IVideoElementService,
                                  IAssetResolver, IRootElementService, ICrossDomainSWFLoadingWhitelist {
+    public sec: ISecurityDomain;
+
     _stage: flash.display.Stage;
+
     private _loader: flash.display.Loader;
     private _loaderInfo: flash.display.LoaderInfo;
     private _frameTimeout: number;
     private _eventLoopIsRunning: boolean;
     private _framesPlayed: number = 0;
 
+    get framesPlayed() {
+      return this._framesPlayed;
+    }
+
     private _writer: IndentingWriter;
 
     private _gfxService: IGFXService;
     private _gfxServiceObserver: GFXServiceObserver;
-
-    private _env: string;
 
     /**
      * If set, overrides SWF file background color.
@@ -248,7 +260,7 @@ module Shumway.Player {
     /**
      * Movie parameters, such as flashvars.
      */
-    public movieParams: Map<string>;
+    public movieParams: MapObject<string>;
 
     /**
      * Initial stage alignment: l|r|t|tr|tl.
@@ -264,6 +276,11 @@ module Shumway.Player {
      * Initial display parameters.
      */
     public displayParameters: DisplayParameters;
+
+    /**
+     * Timestamp of initialization start of the player itself, including iframe creation.
+     */
+    public initStartTime: number;
 
     /**
      * Time since the last time we've synchronized the display list.
@@ -283,7 +300,19 @@ module Shumway.Player {
     /**
      * Stage current mouse target.
      */
-    _currentMouseTarget: flash.display.InteractiveObject = null;
+    private _currentMouseTarget: flash.display.InteractiveObject = null;
+
+    /**
+     * Indicates whether the |currentMouseTarget| has changed since the last time it was synchronized.
+     */
+    private _currentMouseTargetIsDirty = true;
+
+    set currentMouseTarget(value: flash.display.InteractiveObject) {
+      if (this._currentMouseTarget !== value) {
+        this._currentMouseTargetIsDirty = true;
+      }
+      this._currentMouseTarget = value;
+    }
 
     /**
      * Page URL that hosts SWF.
@@ -300,15 +329,16 @@ module Shumway.Player {
      */
     private _loaderUrl: string = null;
 
-    constructor(gfxService: IGFXService, env: string = 'dev') {
+    constructor(sec: ISecurityDomain, gfxService: IGFXService) {
+      this.sec = sec;
+      sec.player = this;
+      // Freeze in debug builds.
+      release || Object.defineProperty(this, 'sec', {value: sec});
       release || Debug.assert(gfxService);
       this._writer = new IndentingWriter();
       this._gfxService = gfxService;
       this._gfxServiceObserver = new GFXServiceObserver(this);
       this._gfxService.addObserver(this._gfxServiceObserver);
-      this._env = env;
-
-      AVM2.instance.globals['Shumway.Player.Utils'] = this;
     }
 
     /**
@@ -354,9 +384,9 @@ module Shumway.Player {
 
     public load(url: string, buffer?: ArrayBuffer) {
       release || assert (!this._loader, "Can't load twice.");
-      this._swfUrl = this._loaderUrl = url;
-      this._stage = new flash.display.Stage();
-      var loader = this._loader = flash.display.Loader.getRootLoader();
+      this._swfUrl = url;
+      this._stage = new this.sec.flash.display.Stage();
+      var loader = this._loader = this.sec.flash.display.Loader.axClass.getRootLoader();
       var loaderInfo = this._loaderInfo = loader.contentLoaderInfo;
       if (playAllSymbolsOption.value) {
         this._playAllSymbols();
@@ -364,26 +394,26 @@ module Shumway.Player {
       } else {
         this._enterRootLoadingLoop();
       }
-      this.addToSWFLoadingWhitelist(FileLoadingService.instance.resolveUrl(url), false);
+      var resolvedURL = FileLoadingService.instance.resolveUrl(url);
+      this.addToSWFLoadingWhitelist(resolvedURL, false, true);
       var context = this.createLoaderContext();
       if (buffer) {
-        var symbol = Shumway.Timeline.BinarySymbol.FromData({id: -1, data: buffer});
-        var byteArray = symbol.symbolClass.initializeFrom(symbol);
-        symbol.symbolClass.instanceConstructorNoInitialize.call(byteArray);
+        var byteArray = new this.sec.flash.utils.ByteArray(buffer);
         this._loader.loadBytes(byteArray, context);
+        this._loader.contentLoaderInfo._url = resolvedURL;
       } else {
-        this._loader.load(new flash.net.URLRequest(url), context);
+        this._loader.load(new this.sec.flash.net.URLRequest(url), context);
       }
     }
 
     private createLoaderContext() : flash.system.LoaderContext {
-      var loaderContext = new flash.system.LoaderContext();
+      var loaderContext = new this.sec.flash.system.LoaderContext();
       if (this.movieParams) {
-        var parameters: any = {};
+        var parameters: any = this.sec.createObject();
         for (var i in this.movieParams) {
-          parameters.asSetPublicProperty(i, this.movieParams[i]);
+          parameters.axSetPublicProperty(i, this.movieParams[i]);
         }
-        loaderContext.parameters = <Shumway.AVM2.AS.ASObject>parameters;
+        loaderContext.parameters = <Shumway.AVMX.AS.ASObject>parameters;
       }
       return loaderContext;
     }
@@ -392,28 +422,26 @@ module Shumway.Player {
       this.syncDisplayObject(this._stage, true);
     }
 
-    public syncDisplayObject(displayObject: flash.display.DisplayObject, async: boolean = true): DataBuffer {
-      var updates = new DataBuffer();
-      var assets = [];
+    public syncDisplayObject(displayObject: flash.display.DisplayObject,
+                             async: boolean): DataBuffer {
       var serializer = new Remoting.Player.PlayerChannelSerializer();
-      serializer.output = updates;
-      serializer.outputAssets = assets;
-
-      if (flash.display.Stage.isType(displayObject)) {
-        serializer.writeStage(<flash.display.Stage>displayObject, this._currentMouseTarget);
+      if (this.sec.flash.display.Stage.axClass.axIsType(displayObject)) {
+        var stage = <flash.display.Stage>displayObject;
+        serializer.writeStage(stage);
+        if (this._currentMouseTargetIsDirty) {
+          serializer.writeCurrentMouseTarget(stage, this._currentMouseTarget);
+          this._currentMouseTargetIsDirty = false;
+        }
       }
-
-      serializer.begin(displayObject);
-      serializer.remoteObjects();
-      serializer.remoteReferences();
-      updates.writeInt(Remoting.MessageTag.EOF);
+      serializer.writeDisplayObjectRoot(displayObject);
+      serializer.writeEOF();
 
       enterTimeline("remoting assets");
       var output;
       if (async) {
-        this._gfxService.update(updates, assets);
+        this._gfxService.update(serializer.output, serializer.outputAssets);
       } else {
-        output = this._gfxService.updateAndGet(updates, assets);
+        output = this._gfxService.updateAndGet(serializer.output, serializer.outputAssets).clone();
       }
       leaveTimeline("remoting assets");
 
@@ -421,41 +449,31 @@ module Shumway.Player {
     }
 
     public requestBitmapData(bitmapData: BitmapData): DataBuffer {
-      var output = new DataBuffer();
-      var assets = [];
       var serializer = new Remoting.Player.PlayerChannelSerializer();
-      serializer.output = output;
-      serializer.outputAssets = assets;
       serializer.writeRequestBitmapData(bitmapData);
-      output.writeInt(Remoting.MessageTag.EOF);
-      return this._gfxService.updateAndGet(output, assets);
+      serializer.writeEOF();
+      return this._gfxService.updateAndGet(serializer.output, serializer.outputAssets).clone();
     }
 
-    public drawToBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
-      var updates = new DataBuffer();
-      var assets = [];
+    public drawToBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable,
+                        matrix: flash.geom.Matrix = null,
+                        colorTransform: flash.geom.ColorTransform = null, blendMode: string = null,
+                        clipRect: flash.geom.Rectangle = null, smoothing: boolean = false)
+    {
       var serializer = new Shumway.Remoting.Player.PlayerChannelSerializer();
-      serializer.output = updates;
-      serializer.outputAssets = assets;
-
       serializer.writeBitmapData(bitmapData);
 
-      if (flash.display.BitmapData.isType(source)) {
+      if (this.sec.flash.display.BitmapData.axClass.axIsType(source)) {
         serializer.writeBitmapData(<flash.display.BitmapData>source);
       } else {
-        var displayObject = <flash.display.DisplayObject>source;
-
-        serializer.begin(displayObject);
-        serializer.remoteObjects();
-        serializer.remoteReferences();
+        serializer.writeDisplayObjectRoot(<flash.display.DisplayObject>source);
       }
 
       serializer.writeDrawToBitmap(bitmapData, source, matrix, colorTransform, blendMode, clipRect, smoothing);
-
-      updates.writeInt(Shumway.Remoting.MessageTag.EOF);
+      serializer.writeEOF();
 
       enterTimeline("sendUpdates");
-      this._gfxService.updateAndGet(updates, assets); // TODO replace to update() ?
+      this._gfxService.updateAndGet(serializer.output, serializer.outputAssets);
       leaveTimeline("sendUpdates");
     }
 
@@ -518,30 +536,17 @@ module Shumway.Player {
 
     private _enterEventLoop(): void {
       this._eventLoopIsRunning = true;
-      // this._eventLoopTick = this._eventLoopTick.bind(this);
-
       var self = this;
-
-      if (this._env === 'test') {
-        flash.external.ExternalInterface._initJS();
-        flash.external.ExternalInterface._addCallback('__tick__', function (request: string, args: any []) {
-          console.log('tick');
-          self._eventLoopTick();
-        }, false);
-        flash.external.ExternalInterface._addCallback('__takeScreenshot__', function (request: string, args: any []) {
-
-        }, false);
-        this._eventLoopTick();
-        return;
-      }
-
       function tick() {
         // TODO: change this to the mode described in
         // http://www.craftymind.com/2008/04/18/updated-elastic-racetrack-for-flash-9-and-avm2/
         self._frameTimeout = setTimeout(tick, self._getFrameInterval());
         self._eventLoopTick();
       }
-
+      if (!isNaN(this.initStartTime)) {
+        console.info('Time from init start to main event loop start: ' +
+                     (Date.now() - this.initStartTime));
+      }
       tick();
     }
 
@@ -553,16 +558,11 @@ module Shumway.Player {
 
     private _enterRootLoadingLoop(): void {
       var self = this;
-      var rootLoader = Loader.getRootLoader();
+      var rootLoader = this.sec.flash.display.Loader.axClass.getRootLoader();
       rootLoader._setStage(this._stage);
       function rootLoadingLoop() {
         var loaderInfo = rootLoader.contentLoaderInfo;
         if (!loaderInfo._file) {
-          setTimeout(rootLoadingLoop, self._getFrameInterval());
-          return;
-        }
-        if (self._env === 'test' && !Loader.getRootLoader().content) {
-          Loader.processEvents();
           setTimeout(rootLoadingLoop, self._getFrameInterval());
           return;
         }
@@ -606,22 +606,24 @@ module Shumway.Player {
         return;
       }
       // The stage is required for frame event cycle processing.
-      DisplayObject._stage = this._stage;
+      var displayObjectClass = this.sec.flash.display.DisplayObject.axClass;
+      displayObjectClass._stage = this._stage;
       // Until the root SWF is initialized, only process Loader events.
       // Once the root loader's content is created, directly process all events again to avoid
       // further delay in initialization.
-      if (!Loader.getRootLoader().content) {
-        Loader.processEvents();
-        if (!Loader.getRootLoader().content) {
+      var loaderClass = this.sec.flash.display.Loader.axClass;
+      if (!loaderClass.getRootLoader().content) {
+        loaderClass.processEvents();
+        if (!loaderClass.getRootLoader().content) {
           return;
         }
       }
       for (var i = 0; i < frameRateMultiplierOption.value; i++) {
         enterTimeline("eventLoop");
         var start = performance.now();
-        DisplayObject.performFrameNavigation(true, runFrameScripts);
+        displayObjectClass.performFrameNavigation(true, runFrameScripts);
         counter.count("performFrameNavigation", 1, performance.now() - start);
-        Loader.processEvents();
+        loaderClass.processEvents();
         leaveTimeline("eventLoop");
       }
       this._framesPlayed++;
@@ -634,17 +636,9 @@ module Shumway.Player {
     }
 
     private _tracePlayer(): void {
-      var writer = this._writer;
-      writer.enter("Frame: " + this._framesPlayed);
-
-      Shumway.AVM2.counter.traceSorted(writer, true);
-      Shumway.AVM2.counter.clear();
-
-      Shumway.Player.counter.traceSorted(writer, true);
-      Shumway.Player.counter.clear();
-
-      writer.writeLn("advancableInstances: " + flash.display.DisplayObject._advancableInstances.length);
-      writer.outdent();
+      this._writer.writeLn("Frame: " +
+                           String(this._framesPlayed).padLeft(' ', 4) + ": " + IntegerUtilities.toHEX(this._stage.hashCode()) + " " +
+                           String(this._stage.getAncestorCount()).padLeft(' ', 4));
     }
 
     private _playAllSymbols() {
@@ -679,7 +673,7 @@ module Shumway.Player {
           var symbolInstance = symbol.symbolClass.initializeFrom(symbol);
           symbol.symbolClass.instanceConstructorNoInitialize.call(symbolInstance);
           if (symbol instanceof flash.display.BitmapSymbol) {
-            symbolInstance = new flash.display.Bitmap(symbolInstance);
+            symbolInstance = new this.sec.flash.display.Bitmap(symbolInstance);
           }
           while (stage.numChildren > 0) {
             stage.removeChildAt(0);
@@ -723,7 +717,7 @@ module Shumway.Player {
       });
     }
 
-    registerFont(symbol: Timeline.EagerlyResolvedSymbol, data: any): void {
+    registerFont(symbol: Timeline.EagerlyResolvedSymbol, data: Uint8Array): void {
       release || assert(symbol.syncId);
       symbol.resolveAssetPromise = new PromiseWrapper(); // TODO no need for wrapper here, change to Promise
       this._gfxService.registerFont(symbol.syncId, data).then(function (result) {
@@ -737,44 +731,56 @@ module Shumway.Player {
       }
     }
 
-    registerImage(symbol: Timeline.EagerlyResolvedSymbol, data: any): void {
+    registerImage(symbol: Timeline.EagerlyResolvedSymbol, imageType: ImageType,
+                  data: Uint8Array, alphaData: Uint8Array): void {
       release || assert(symbol.syncId);
       symbol.resolveAssetPromise = new PromiseWrapper(); // TODO no need for wrapper here, change to Promise
-      this._gfxService.registerImage(symbol.syncId, symbol.id, data).then(function (result) {
+      this._gfxService.registerImage(symbol.syncId, symbol.id, imageType, data, alphaData).then(function (result) {
         symbol.resolveAssetPromise.resolve(result);
       });
       symbol.resolveAssetPromise.then(symbol.resolveAssetCallback, null);
     }
 
-    private _crossDomainSWFLoadingWhitelist: {protocol: string; hostname: string; insecure: boolean}[] = [];
+    private _crossDomainSWFLoadingWhitelist: {protocol: string; hostname: string; insecure: boolean; ownDomain: boolean}[] = [];
 
-    addToSWFLoadingWhitelist(domain: string, insecure: boolean) {
+    addToSWFLoadingWhitelist(domain: string, insecure: boolean, ownDomain: boolean) {
       if (domain.indexOf('/') < 0) { // anything without path, this includes '*'
-        this._crossDomainSWFLoadingWhitelist.push({protocol: 'http:', hostname: domain, insecure: insecure});
+        this._crossDomainSWFLoadingWhitelist.push({protocol: 'http:', hostname: domain, insecure: insecure, ownDomain: ownDomain});
         return;
       }
       try {
         var url = new (<any>window).URL(domain);
-        this._crossDomainSWFLoadingWhitelist.push({protocol: url.protocol, hostname: url.hostname, insecure: insecure});
+        this._crossDomainSWFLoadingWhitelist.push({protocol: url.protocol, hostname: url.hostname, insecure: insecure, ownDomain: ownDomain});
       } catch (e) { }
     }
 
-    checkDomainForSWFLoading(domain: string): boolean {
+    checkDomainForSWFLoading(domain: string): CrossDomainSWFLoadingWhitelistResult {
       try {
         var url = new (<any>window).URL(domain);
       } catch (e) {
-        return false;
+        return CrossDomainSWFLoadingWhitelistResult.Failed;
       }
-      return this._crossDomainSWFLoadingWhitelist.some(function (entry) {
+      var result: CrossDomainSWFLoadingWhitelistResult =
+        CrossDomainSWFLoadingWhitelistResult.Failed;
+      this._crossDomainSWFLoadingWhitelist.some(function (entry) {
+        var success;
         if (url.hostname !== entry.hostname && entry.hostname !== '*') {
-          return false;
+          success = false;
+        } else if (entry.insecure) {
+          success = true;
+        } else {
+          // The HTTPS SWF has to be more protected than it's whitelisted HTTP equivalent.
+          success = url.protocol === 'https:' || entry.protocol !== 'https:';
         }
-        if (entry.insecure) {
+        if (success) {
+          result = entry.ownDomain ?
+            CrossDomainSWFLoadingWhitelistResult.OwnDomain :
+            CrossDomainSWFLoadingWhitelistResult.Remote;
           return true;
         }
-        // The HTTPS SWF has to be more protected than it's whitelisted HTTP equivalent.
-        return url.protocol === 'https:' || entry.protocol !== 'https:';
+        return false;
       }, this);
+      return result;
     }
   }
 }

@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 // Class: GameInput
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import throwError = Shumway.AVM2.Runtime.throwError;
   export class GameInput extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -34,8 +28,7 @@ module Shumway.AVM2.AS.flash.ui {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.ui.GameInput");
+      super(undefined);
     }
     
     // JS -> AS Bindings
@@ -45,19 +38,19 @@ module Shumway.AVM2.AS.flash.ui {
     // static _numDevices: number /*int*/;
     // static _isSupported: boolean;
     get numDevices(): number /*int*/ {
-      somewhatImplemented("public flash.ui.GameInput::get numDevices");
+      release || somewhatImplemented("public flash.ui.GameInput::get numDevices");
       return 0;
       // return this._numDevices;
     }
     get isSupported(): boolean {
-      somewhatImplemented("public flash.ui.GameInput::get isSupported");
+      release || somewhatImplemented("public flash.ui.GameInput::get isSupported");
       return false;
     }
     static getDeviceAt(index: number /*int*/): flash.ui.GameInputDevice {
       index = index | 0;
 
-      somewhatImplemented("public flash.ui.GameInput::static getDeviceAt");
-      throwError("RangeError", Errors.ParamRangeError, "index");
+      release || somewhatImplemented("public flash.ui.GameInput::static getDeviceAt");
+      this.sec.throwError("RangeError", Errors.ParamRangeError, "index");
       return null;
     }
     

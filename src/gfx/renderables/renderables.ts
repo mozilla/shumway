@@ -83,8 +83,7 @@ module Shumway.GFX {
 
     public addRenderableParent(renderable: Renderable) {
       release || assert(renderable);
-      var index = indexOf(this._renderableParents, renderable);
-      release || assert(index < 0);
+      release || assert(this._renderableParents.indexOf(renderable) === -1);
       this._renderableParents.push(renderable);
     }
 
@@ -184,7 +183,7 @@ module Shumway.GFX {
     sendVideoPlaybackEvent(assetId: number, eventType: VideoPlaybackEvent, data: any): void;
   }
 
-  export enum RenderableVideoState {
+  export const enum RenderableVideoState {
     Idle = 1,
     Playing,
     Paused,
@@ -506,7 +505,7 @@ module Shumway.GFX {
         if (imageConvertOption.value) {
           enterTimeline("ColorUtilities.convertImage");
           var pixels = new Int32Array(buffer);
-          var out = new Int32Array(imageData.data.buffer);
+          var out = new Int32Array((<any>imageData.data).buffer);
           ColorUtilities.convertImage (type, ImageType.StraightAlphaRGBA, pixels, out);
           leaveTimeline("ColorUtilities.convertImage");
         }
@@ -523,7 +522,7 @@ module Shumway.GFX {
      * Writes the image data into the given |output| data buffer.
      */
     public readImageData(output: DataBuffer) {
-      output.writeRawBytes(this.imageData.data);
+      output.writeRawBytes((<any>this.imageData).data);
     }
 
     constructor(source: any /* HTMLImageElement | HTMLCanvasElement */, bounds: Rectangle) {
@@ -557,6 +556,32 @@ module Shumway.GFX {
       var renderer = new Canvas2D.Canvas2DRenderer(this._canvas, null);
       renderer.renderNode(source, clip || bounds, matrix);
       leaveTimeline("RenderableBitmap.drawFrame");
+    }
+    
+    mask(alphaValues: Uint8Array) {
+      var imageData = this.imageData;
+      var pixels = new Int32Array((<any>imageData.data).buffer);
+      var T = Shumway.ColorUtilities.getUnpremultiplyTable();
+      for (var i = 0; i < alphaValues.length; i++) {
+        var a = alphaValues[i];
+        if (a === 0) {
+          pixels[i] = 0;
+          continue;
+        }
+        if (a === 0xff) {
+          continue;
+        }
+        var pixel = pixels[i];
+        var r = (pixel >>  0) & 0xff;
+        var g = (pixel >>  8) & 0xff;
+        var b = (pixel >> 16) & 0xff;
+        var o = a << 8;
+        r = T[o + Math.min(r, a)];
+        g = T[o + Math.min(g, a)];
+        b = T[o + Math.min(b, a)];
+        pixels[i] = a << 24 | b << 16 | g << 8 | r;
+      }
+      this._context.putImageData(imageData, 0, 0);
     }
 
     private _initializeSourceCanvas(source: HTMLCanvasElement) {
@@ -607,7 +632,7 @@ module Shumway.GFX {
     }
   }
 
-  export enum PathType {
+  export const enum PathType {
     Fill,
     Stroke,
     StrokeFill /* Doesn't define thickness, caps and joints. */
@@ -619,7 +644,8 @@ module Shumway.GFX {
                 public strokeProperties: StrokeProperties)
     {
       this.path = new Path2D();
-      release || assert ((type === PathType.Stroke) === !!strokeProperties);
+      release || assert ((type === PathType.Stroke ||
+                          type === PathType.StrokeFill) === !!strokeProperties);
     }
   }
 
@@ -846,16 +872,19 @@ module Shumway.GFX {
             var jointsStyle: string = RenderableShape.LINE_JOINTS_STYLES[styles.readByte()];
             var strokeProperties = new StrokeProperties(coordinates[coordinatesIndex++]/20,
                                                         scaleMode, capsStyle, jointsStyle, styles.readByte());
-            strokePath = this._createPath(PathType.Stroke, color, false, strokeProperties, x, y);
-            break;
-          case PathCommand.LineStyleGradient:
-            strokePath = this._createPath(PathType.StrokeFill, this._readGradient(styles, context),
-                                          false, null, x, y);
-            break;
-          case PathCommand.LineStyleBitmap:
-            var bitmapStyle = this._readBitmap(styles, context);
-            strokePath = this._createPath(PathType.StrokeFill, bitmapStyle.style,
-                                          bitmapStyle.smoothImage, null, x, y);
+            // Look ahead at the following command to determine if this is a complex stroke style.
+            if (commands[commandIndex + 1] === PathCommand.LineStyleGradient) {
+              commandIndex++;
+              strokePath = this._createPath(PathType.StrokeFill, this._readGradient(styles, context),
+                                            false, strokeProperties, x, y);
+            } else if (commands[commandIndex + 1] === PathCommand.LineStyleGradient) {
+              commandIndex++;
+              var bitmapStyle = this._readBitmap(styles, context);
+              strokePath = this._createPath(PathType.StrokeFill, bitmapStyle.style,
+                                            bitmapStyle.smoothImage, strokeProperties, x, y);
+            } else {
+              strokePath = this._createPath(PathType.Stroke, color, false, strokeProperties, x, y);
+            }
             break;
           case PathCommand.LineEnd:
             strokePath = null;
@@ -1093,7 +1122,9 @@ module Shumway.GFX {
             var jointsStyle: string = RenderableShape.LINE_JOINTS_STYLES[styles.readByte()];
             var strokeProperties = new StrokeProperties(
               width, scaleMode, capsStyle, jointsStyle, styles.readByte());
-            strokePath = this._createMorphPath(PathType.Stroke, ratio, color, false, strokeProperties, x, y);
+            if (strokeProperties.thickness > 0) {
+              strokePath = this._createMorphPath(PathType.Stroke, ratio, color, false, strokeProperties, x, y); 
+            }
             break;
           case PathCommand.LineStyleGradient:
             var gradientStyle = this._readMorphGradient(styles, morphStyles, ratio, context);
@@ -1213,12 +1244,13 @@ module Shumway.GFX {
       return TextLine._measureContext;
     }
 
-    addRun(font: string, fillStyle: string, text: string, underline: boolean) {
+    addRun(font: string, fillStyle: string, text: string,
+           letterSpacing: number, underline: boolean) {
       if (text) {
         var measureContext = TextLine._getMeasureContext();
         measureContext.font = font;
-        var width = measureContext.measureText(text).width | 0;
-        this.runs.push(new TextRun(font, fillStyle, text, width, underline));
+        var width = measureText(measureContext, text, letterSpacing);
+        this.runs.push(new TextRun(font, fillStyle, text, width, letterSpacing, underline));
         this.width += width;
       }
     }
@@ -1245,13 +1277,14 @@ module Shumway.GFX {
         for (var j = 0; j < words.length; j++) {
           var word = words[j];
           var chunk = text.substr(offset, word.length + 1);
-          var wordWidth = measureContext.measureText(chunk).width | 0;
+          var letterSpacing = run.letterSpacing;
+          var wordWidth = measureText(measureContext, chunk, letterSpacing);
           if (wordWidth > spaceLeft) {
             do {
               if (run.text) {
                 currentLine.runs.push(run);
                 currentLine.width += run.width;
-                run = new TextRun(run.font, run.fillStyle, '', 0, run.underline);
+                run = new TextRun(run.font, run.fillStyle, '', 0, run.letterSpacing, run.underline);
                 var newLine = new TextLine();
                 newLine.y = (currentLine.y + currentLine.descent + currentLine.leading + currentLine.ascent) | 0;
                 newLine.ascent = currentLine.ascent;
@@ -1269,7 +1302,7 @@ module Shumway.GFX {
                 while (k > 1) {
                   k--;
                   t = chunk.substr(0, k);
-                  w = measureContext.measureText(t).width | 0;
+                  w = measureText(measureContext, t, letterSpacing);
                   if (w <= maxWidth) {
                     break;
                   }
@@ -1277,7 +1310,7 @@ module Shumway.GFX {
                 run.text = t;
                 run.width = w;
                 chunk = chunk.substr(k);
-                wordWidth = measureContext.measureText(chunk).width | 0;
+                wordWidth = measureText(measureContext, chunk, letterSpacing);
               }
             } while (chunk && spaceLeft < 0);
           } else {
@@ -1293,6 +1326,11 @@ module Shumway.GFX {
 
       return lines;
     }
+
+    toString() {
+      return 'TextLine {x: ' + this.x + ', y: ' + this.y + ', width: ' + this.width +
+             ', height: ' + (this.ascent + this.descent + this.leading) + '}';
+    }
   }
 
   export class TextRun {
@@ -1300,10 +1338,20 @@ module Shumway.GFX {
                 public fillStyle: string = '',
                 public text: string = '',
                 public width: number = 0,
+                public letterSpacing: number = 0,
                 public underline: boolean = false)
     {
 
     }
+  }
+  
+  function measureText(context: CanvasRenderingContext2D, text: string,
+                       letterSpacing: number): number {
+    var width = context.measureText(text).width | 0;
+    if (letterSpacing > 0) {
+      width += text.length * letterSpacing;
+    }
+    return width;
   }
 
   export class RenderableText extends Renderable {
@@ -1378,7 +1426,7 @@ module Shumway.GFX {
       var maxWidth = 0;
       var maxAscent = 0;
       var maxDescent = 0;
-      var maxLeading = 0;
+      var maxLeading = -0xffffffff;
       var firstAlign = -1;
 
       var finishLine = function () {
@@ -1450,7 +1498,7 @@ module Shumway.GFX {
         if (bold) {
           boldItalic += 'bold ';
         }
-        var font = boldItalic + size + 'px ' + fontName;
+        var font = boldItalic + size + 'px ' + fontName + ', AdobeBlank';
 
         var color = textRunData.readInt();
         var fillStyle = ColorUtilities.rgbToHex(color);
@@ -1483,14 +1531,14 @@ module Shumway.GFX {
               continue;
             }
           }
-          currentLine.addRun(font, fillStyle, text, underline);
+          currentLine.addRun(font, fillStyle, text, letterSpacing, underline);
           finishLine();
           text = '';
 
           if (eof) {
             maxAscent = 0;
             maxDescent = 0;
-            maxLeading = 0;
+            maxLeading = -0xffffffff;
             firstAlign = -1;
             break;
           }
@@ -1499,7 +1547,7 @@ module Shumway.GFX {
             i++;
           }
         }
-        currentLine.addRun(font, fillStyle, text, underline);
+        currentLine.addRun(font, fillStyle, text, letterSpacing, underline);
       }
 
       // Append an additional empty line if we find a line break character at the end of the text.
@@ -1631,13 +1679,19 @@ module Shumway.GFX {
       var lines = this.lines;
       var coords = this._coords;
       coords.position = 0;
+      var font = '';
+      var fillStyle = '';
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
         var runs = line.runs;
         for (var j = 0; j < runs.length; j++) {
           var run = runs[j];
-          context.font = run.font;
-          context.fillStyle = run.fillStyle;
+          if (run.font !== font) {
+            context.font = font = run.font;
+          }
+          if (run.fillStyle !== fillStyle) {
+            context.fillStyle = fillStyle = run.fillStyle;
+          }
           var text = run.text;
           for (var k = 0; k < text.length; k++) {
             var x = coords.readInt() / 20;
@@ -1658,6 +1712,10 @@ module Shumway.GFX {
       var lines = this.lines;
       var scrollV = this._scrollV;
       var scrollY = 0;
+      var font = '';
+      var fillStyle = '';
+      context.textAlign = "left";
+      context.textBaseline = "alphabetic";
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
         var x = line.x;
@@ -1676,15 +1734,27 @@ module Shumway.GFX {
         var runs = line.runs;
         for (var j = 0; j < runs.length; j++) {
           var run = runs[j];
-          context.font = run.font;
-          context.fillStyle = run.fillStyle;
+          if (run.font !== font) {
+            context.font = font = run.font;
+          }
+          if (run.fillStyle !== fillStyle) {
+            context.fillStyle = fillStyle = run.fillStyle;
+          }
           if (run.underline) {
             context.fillRect(x, (y + (line.descent / 2)) | 0, run.width, 1);
           }
           context.textAlign = "left";
           context.textBaseline = "alphabetic";
-          context.fillText(run.text, x, y);
-          x += run.width;
+          if (run.letterSpacing > 0) {
+            var text = run.text;
+            for (var k = 0; k < text.length; k++) {
+              context.fillText(text[k], x, y);
+              x += measureText(context, text[k], run.letterSpacing);
+            }
+          } else {
+            context.fillText(run.text, x, y);
+            x += run.width;
+          }
         }
       }
     }

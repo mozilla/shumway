@@ -15,7 +15,7 @@
  */
 
 module Shumway.SWF.Parser {
-  export enum SwfTag {
+  export const enum SwfTagCode {
     CODE_END                               = 0,
     CODE_SHOW_FRAME                        = 1,
     CODE_DEFINE_SHAPE                      = 2,
@@ -107,7 +107,14 @@ module Shumway.SWF.Parser {
     CODE_DEFINE_FONT_NAME                  = 88,
     CODE_START_SOUND2                      = 89,
     CODE_DEFINE_BITS_JPEG4                 = 90,
-    CODE_DEFINE_FONT4                      = 91
+    CODE_DEFINE_FONT4                      = 91,
+    CODE_TELEMETRY                         = 93
+  }
+
+  var SwfTagCodeNames = ["CODE_END","CODE_SHOW_FRAME","CODE_DEFINE_SHAPE","CODE_FREE_CHARACTER","CODE_PLACE_OBJECT","CODE_REMOVE_OBJECT","CODE_DEFINE_BITS","CODE_DEFINE_BUTTON","CODE_JPEG_TABLES","CODE_SET_BACKGROUND_COLOR","CODE_DEFINE_FONT","CODE_DEFINE_TEXT","CODE_DO_ACTION","CODE_DEFINE_FONT_INFO","CODE_DEFINE_SOUND","CODE_START_SOUND","CODE_STOP_SOUND","CODE_DEFINE_BUTTON_SOUND","CODE_SOUND_STREAM_HEAD","CODE_SOUND_STREAM_BLOCK","CODE_DEFINE_BITS_LOSSLESS","CODE_DEFINE_BITS_JPEG2","CODE_DEFINE_SHAPE2","CODE_DEFINE_BUTTON_CXFORM","CODE_PROTECT","CODE_PATHS_ARE_POSTSCRIPT","CODE_PLACE_OBJECT2","INVALID","CODE_REMOVE_OBJECT2","CODE_SYNC_FRAME","INVALID","CODE_FREE_ALL","CODE_DEFINE_SHAPE3","CODE_DEFINE_TEXT2","CODE_DEFINE_BUTTON2","CODE_DEFINE_BITS_JPEG3","CODE_DEFINE_BITS_LOSSLESS2","CODE_DEFINE_EDIT_TEXT","CODE_DEFINE_VIDEO","CODE_DEFINE_SPRITE","CODE_NAME_CHARACTER","CODE_PRODUCT_INFO","CODE_DEFINE_TEXT_FORMAT","CODE_FRAME_LABEL","CODE_DEFINE_BEHAVIOUR","CODE_SOUND_STREAM_HEAD2","CODE_DEFINE_MORPH_SHAPE","CODE_GENERATE_FRAME","CODE_DEFINE_FONT2","CODE_GEN_COMMAND","CODE_DEFINE_COMMAND_OBJECT","CODE_CHARACTER_SET","CODE_EXTERNAL_FONT","CODE_DEFINE_FUNCTION","CODE_PLACE_FUNCTION","CODE_GEN_TAG_OBJECTS","CODE_EXPORT_ASSETS","CODE_IMPORT_ASSETS","CODE_ENABLE_DEBUGGER","CODE_DO_INIT_ACTION","CODE_DEFINE_VIDEO_STREAM","CODE_VIDEO_FRAME","CODE_DEFINE_FONT_INFO2","CODE_DEBUG_ID","CODE_ENABLE_DEBUGGER2","CODE_SCRIPT_LIMITS","CODE_SET_TAB_INDEX","CODE_DEFINE_SHAPE4","INVALID","CODE_FILE_ATTRIBUTES","CODE_PLACE_OBJECT3","CODE_IMPORT_ASSETS2","CODE_DO_ABC_DEFINE","CODE_DEFINE_FONT_ALIGN_ZONES","CODE_CSM_TEXT_SETTINGS","CODE_DEFINE_FONT3","CODE_SYMBOL_CLASS","CODE_METADATA","CODE_DEFINE_SCALING_GRID","INVALID","INVALID","INVALID","CODE_DO_ABC","CODE_DEFINE_SHAPE4","CODE_DEFINE_MORPH_SHAPE2","INVALID","CODE_DEFINE_SCENE_AND_FRAME_LABEL_DATA","CODE_DEFINE_BINARY_DATA","CODE_DEFINE_FONT_NAME","CODE_START_SOUND2","CODE_DEFINE_BITS_JPEG4","CODE_DEFINE_FONT4","CODE_TELEMETRY"];
+
+  export function getSwfTagCodeName(tagCode: SwfTagCode) {
+    return release ? "SwfTagCode: " + tagCode : SwfTagCodeNames[tagCode];
   }
 
   export enum DefinitionTags {
@@ -129,9 +136,7 @@ module Shumway.SWF.Parser {
     CODE_DEFINE_SPRITE                     = 39,
     CODE_DEFINE_MORPH_SHAPE                = 46,
     CODE_DEFINE_FONT2                      = 48,
-    // We don't support DefineVideoStream tags for now so leave the next line commented to make the
-    // parser log a message if such a tag is encountered.
-    // CODE_DEFINE_VIDEO_STREAM            = 60,
+    CODE_DEFINE_VIDEO_STREAM               = 60,
     CODE_DEFINE_FONT3                      = 75,
     CODE_DEFINE_SHAPE4                     = 83,
     CODE_DEFINE_MORPH_SHAPE2               = 84,
@@ -162,12 +167,67 @@ module Shumway.SWF.Parser {
     CODE_REMOVE_OBJECT2                    = 28,
     CODE_START_SOUND                       = 15,
     CODE_START_SOUND2                      = 89,
-    // We don't support VideoFrame tags for now so leave the next line commented to make the
-    // parser log a message if such a tag is encountered.
-    // CODE_VIDEO_FRAME                       = 61,
+    CODE_VIDEO_FRAME                       = 61
+  }
+  
+  export interface Bbox {
+    xMin: number;
+    xMax: number;
+    yMin: number;
+    yMax: number;
+  }
+  
+  export interface Matrix {
+    a: number;
+    b: number;
+    c: number;
+    d: number;
+    tx: number;
+    ty: number;
+  }
+  
+  export interface ColorTransform {
+    redMultiplier: number;
+    greenMultiplier: number;
+    blueMultiplier: number;
+    alphaMultiplier: number;
+    redOffset: number;
+    greenOffset: number;
+    blueOffset: number;
+    alphaOffset: number;
+  }
+  
+  export interface SwfTag {
+    code: number;
   }
 
-  export enum PlaceObjectFlags {
+  export interface DefinitionTag extends SwfTag {
+    id: number;
+  }
+
+  export interface DisplayListTag extends SwfTag {
+    depth: number;
+  }
+
+  export interface PlaceObjectTag extends DisplayListTag {
+    actionBlocksPrecedence?: number;
+    symbolId?: number;
+    flags: number;
+    matrix?: Matrix;
+    cxform?: ColorTransform;
+    className?: string;
+    ratio?: number;
+    name?: string;
+    clipDepth?: number;
+    filters?: any[];
+    blendMode?: number;
+    bmpCache?: number;
+    visibility?: boolean;
+    backgroundColor?: number;
+    events?: ClipEvents[];
+  }
+  
+  export const enum PlaceObjectFlags {
     Move              = 0x0001,
     HasCharacter      = 0x0002,
     HasMatrix         = 0x0004,
@@ -186,7 +246,7 @@ module Shumway.SWF.Parser {
     Reserved          = 0x8000
   }
   
-  export enum AVM1ClipEvents {
+  export const enum AVM1ClipEvents {
     Load =            0x00001,
     EnterFrame =      0x00002,
     Unload =          0x00004,
@@ -206,5 +266,399 @@ module Shumway.SWF.Parser {
     DragOut =         0x10000,
     KeyPress =        0x20000,
     Construct =       0x40000
+  }
+  
+  export interface ClipEvents {
+    flags: number;
+    keyCode?: number;
+    actionsBlock: Uint8Array;
+  }
+  
+  export interface Filter {
+    type: number;
+  }
+  
+  export interface GlowFilter extends Filter {
+    colors: number[];
+    ratios?: number[];
+    blurX: number;
+    blurY: number;
+    angle?: number;
+    distance?: number;
+    strength: number;
+    inner: boolean;
+    knockout: boolean;
+    compositeSource: boolean;
+    onTop?: boolean;
+    quality: number;
+  }
+  
+  export interface BlurFilter extends Filter {
+    blurX: number;
+    blurY: number;
+    quality: number;
+  }
+  
+  export interface ConvolutionFilter extends Filter {
+    matrixX: number;
+    matrixY: number;
+    divisor: number;
+    bias: number;
+    matrix: number[];
+    color: number;
+    clamp: boolean;
+    preserveAlpha: boolean;
+  }
+  
+  export interface ColorMatrixFilter extends Filter {
+     matrix: number[];
+  }
+  
+  export interface RemoveObjectTag extends DisplayListTag {
+    depth: number;
+    symbolId?: number;
+  }
+
+  export interface ImageTag extends DefinitionTag {
+    deblock?: number;
+    imgData: Uint8Array;
+    alphaData?: Uint8Array;
+    mimeType: string;
+    jpegTables?: { data: Uint8Array };
+  }
+  
+  export interface ButtonTag extends DefinitionTag {
+    characters?: ButtonCharacter[];
+    actionsData?: Uint8Array;
+    trackAsMenu?: boolean;
+    buttonActions?: ButtonCondAction[];
+  }
+ 
+  export interface ButtonCharacter {
+    flags: number;
+    symbolId?: number;
+    depth?: number;
+    matrix?: Matrix;
+    cxform?: ColorTransform;
+    filters?: Filter[];
+    blendMode?: number;
+    buttonActions?: ButtonCondAction[];
+  }
+  
+  export const enum ButtonCharacterFlags {
+    StateUp       = 0x01,
+    StateOver     = 0x02,
+    StateDown     = 0x04,
+    StateHitTest  = 0x08,
+    HasFilterList = 0x10,
+    HasBlendMode  = 0x20
+  }
+  
+  export interface ButtonCondAction {
+    keyCode: number;
+    stateTransitionFlags: number;
+    actionsData: Uint8Array;
+  }
+  
+  export interface BinaryDataTag extends DefinitionTag {
+    data: Uint8Array;
+  }
+
+  export interface FontTag extends DefinitionTag {
+    flags: number;
+    language?: number;
+    name?: string;
+    copyright?: string;
+    resolution?: number;
+    offsets?: number[];
+    mapOffset?: number;
+    glyphs?: Glyph[];
+    codes?: number[];
+    ascent?: number;
+    descent?: number;
+    leading?: number;
+    advance?: number[];
+    bbox?: Bbox[];
+    kerning?: Kerning[];
+    data?: Uint8Array;
+  }
+  
+  export const enum FontFlags {
+    Bold              = 0x01,
+    Italic            = 0x02,
+    WideOrHasFontData = 0x04,
+    WideOffset        = 0x08,
+    Ansi              = 0x10,
+    SmallText         = 0x20,
+    ShiftJis          = 0x40,
+    HasLayout         = 0x80
+  }
+  
+  export type Glyph = ShapeRecord[];
+  
+  export interface StaticTextTag extends DefinitionTag {
+    bbox: Bbox;
+    matrix: Matrix;
+    records: TextRecord[];
+  }
+  
+  export interface TextRecord {
+    flags: number;
+    fontId?: number;
+    color?: number;
+    moveX?: number;
+    moveY?: number;
+    fontHeight?: number;
+    glyphCount?: number;
+    entries?: TextEntry[];
+  }
+  
+  export const enum TextRecordFlags {
+    HasMoveX = 0x01,
+    HasMoveY = 0x02,
+    HasColor = 0x04,
+    HasFont =  0x08
+  }
+  
+  export interface TextEntry {
+    glyphIndex: number;
+    advance: number;
+  }
+  
+  export interface SoundTag extends DefinitionTag {
+    soundFormat: number;
+    soundRate: number;
+    soundSize: number;
+    soundType: number;
+    samplesCount: number;
+    soundData: Uint8Array;
+  }
+  
+  export interface StartSoundTag extends SwfTag {
+    soundId?: number;
+    soundClassName?: string;
+    soundInfo: SoundInfo;
+  }
+  
+  export interface SoundInfo {
+    flags: number;
+    inPoint?: number;
+    outPoint?: number;
+    loopCount?: number;
+    envelopes?: SoundEnvelope[];
+  }
+  
+  export const enum SoundInfoFlags {
+    HasInPoint  = 0x01,
+    HasOutPoint = 0x02,
+    HasLoops    = 0x04,
+    HasEnvelope = 0x08,
+    NoMultiple  = 0x10,
+    Stop        = 0x20
+  }
+  
+  export interface SoundEnvelope {
+    pos44: number;
+    volumeLeft: number;
+    volumeRight: number;
+  }
+  
+  export interface SoundStreamHeadTag {
+    playbackRate: number;
+    playbackSize: number;
+    playbackType: number;
+    streamCompression: number;
+    streamRate: number;
+    streamSize: number;
+    streamType: number;
+    samplesCount: number;
+    latencySeek?: number;
+  }
+
+  export interface BitmapTag extends DefinitionTag {
+    format: number;
+    width: number;
+    height: number;
+    hasAlpha: boolean;
+    // Number of color table entries - 1, not size in bytes.
+    colorTableSize?: number;
+    bmpData: Uint8Array;
+  }
+  
+  export interface TextTag extends DefinitionTag {
+    bbox: Bbox;
+    flags: number;
+    fontId?: number;
+    fontClass?: string;
+    fontHeight?: number;
+    color?: number;
+    maxLength?: number;
+    align?: number;
+    leftMargin?: number;
+    rightMargin?: number;
+    indent?: number;
+    leading?: number;
+    variableName: string;
+    initialText?: string;
+  }
+  
+  export const enum TextFlags {
+    HasFont      = 0x0001,
+    HasMaxLength = 0x0002,
+    HasColor     = 0x0004,
+    ReadOnly     = 0x0008,
+    Password     = 0x0010,
+    Multiline    = 0x0020,
+    WordWrap     = 0x0040,
+    HasText      = 0x0080,
+    UseOutlines  = 0x0100,
+    Html         = 0x0200,
+    WasStatic    = 0x0400,
+    Border       = 0x0800,
+    NoSelect     = 0x1000,
+    HasLayout    = 0x2000,
+    AutoSize     = 0x4000,
+    HasFontClass = 0x8000
+  }
+  
+  export interface Kerning {
+    code1: number;
+    code2: number;
+    adjustment: number;
+  }
+  
+  export interface ScalingGridTag extends SwfTag {
+    symbolId: number;
+    splitter: Bbox;
+  }
+  
+  export interface SceneTag extends SwfTag {
+    scenes: Scene[];
+    labels: Label[];
+  }
+  
+  export interface Scene {
+    offset: number;
+    name: string;
+  }
+  
+  export interface Label {
+    frame: number;
+    name: string;
+  }
+  
+  export interface ShapeTag extends DefinitionTag {
+    lineBounds: Bbox;
+    lineBoundsMorph?: Bbox;
+    fillBounds?: Bbox;
+    fillBoundsMorph?: Bbox;
+    flags: number;
+    fillStyles: FillStyle[];
+    lineStyles: LineStyle[];
+    records: ShapeRecord[];
+    recordsMorph?: ShapeRecord[];
+  }
+  
+  export const enum ShapeFlags {
+    UsesScalingStrokes    = 0x01,
+    UsesNonScalingStrokes = 0x02,
+    UsesFillWindingRule   = 0x04,
+    IsMorph               = 0x08
+  }
+  
+  export interface FillStyle {
+    type: number;
+  }
+  
+  export interface SolidFill extends FillStyle {
+    color: number;
+    colorMorph?: number;
+  }
+  
+  export interface GradientFill extends FillStyle {
+    matrix: Matrix;
+    matrixMorph?: Matrix;
+    spreadMode?: number;
+    interpolationMode?: number;
+    records: GradientRecord[];
+    focalPoint?: number;
+    focalPointMorph?: number;
+  }
+  
+  export interface GradientRecord {
+    ratio: number;
+    color: number;
+    ratioMorph?: number;
+    colorMorph?: number;
+  }
+
+  export interface BitmapFill extends FillStyle {
+    bitmapId: number;
+    condition: boolean;
+    matrix: Matrix;
+    matrixMorph?: Matrix;
+  }
+  
+  export interface LineStyle {
+    width: number;
+    widthMorph?: number;
+    startCapsStyle?: number;
+    jointStyle?: number;
+    hasFill?: number;
+    noHscale?: boolean;
+    noVscale?: boolean;
+    pixelHinting?: boolean;
+    noClose?: boolean;
+    endCapsStyle?: number;
+    miterLimitFactor?: number;
+    fillStyle?: FillStyle;
+    color?: number;
+    colorMorph?: number;
+  }
+  
+  export interface ShapeRecord {
+    type: number;
+    flags: number;
+    deltaX?: number;
+    deltaY?: number;
+    controlDeltaX?: number;
+    controlDeltaY?: number;
+    anchorDeltaX?: number;
+    anchorDeltaY?: number;
+    moveX?: number;
+    moveY?: number;
+    fillStyle0?: number;
+    fillStyle1?: number;
+    lineStyle?: number;
+    fillStyles?: FillStyle[];
+    lineStyles?: LineStyle[];
+    lineBits?: number;
+    fillBits?: number;
+  }
+  
+  export const enum ShapeRecordFlags {
+    Move = 0x01,
+    HasFillStyle0 = 0x02,
+    HasFillStyle1 = 0x04,
+    HasLineStyle = 0x08,
+    HasNewStyles = 0x10,
+    IsStraight = 0x20,
+    IsGeneral = 0x40,
+    IsVertical = 0x80
+  }
+  
+  export interface VideoStreamTag extends DefinitionTag {
+    numFrames: number;
+    width: number;
+    height: number;
+    deblocking: number;
+    smoothing: boolean;
+    codecId: number;
+  }
+  
+  export interface VideoFrameTag extends SwfTag {
+    streamId: number;
+    frameNum: number;
+    videoData: Uint8Array;
   }
 }

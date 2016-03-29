@@ -1,6 +1,6 @@
 (function displayTests() {
   var Event = flash.events.Event;
-  var EventPhase = flash.events.EventPhase;
+  var EventPhase = Shumway.AVMX.AS.flash.events.EventPhase;
   var EventDispatcher = flash.events.EventDispatcher;
   var ProgressEvent = flash.events.ProgressEvent;
 
@@ -16,7 +16,7 @@
       traceOutput.push(message);
     }
 
-    EventDispatcher.broadcastEventDispatchQueue.reset();
+    EventDispatcher.axClass.broadcastEventDispatchQueue.reset();
     var stage = new Stage();
     var a = new DisplayObjectContainer();
     stage.addChild(a);

@@ -18,7 +18,7 @@ module Shumway.GFX.Canvas2D {
 
   declare var registerScratchCanvas;
 
-  var writer = new IndentingWriter(false, dumpLine);
+  var writer = null; // new IndentingWriter(false, dumpLine);
 
   var MIN_CACHE_LEVELS = 5;
   var MAX_CACHE_LEVELS = 3;
@@ -94,7 +94,7 @@ module Shumway.GFX.Canvas2D {
     }
   }
 
-  export enum FillRule {
+  export const enum FillRule {
     NonZero,
     EvenOdd
   }
@@ -151,7 +151,7 @@ module Shumway.GFX.Canvas2D {
     alpha: boolean = false;
   }
 
-  export enum RenderFlags {
+  export const enum RenderFlags {
     None                        = 0x0000,
     IgnoreNextLayer             = 0x0001,
     RenderMask                  = 0x0002,
@@ -599,14 +599,20 @@ module Shumway.GFX.Canvas2D {
         return;
       }
 
-      if (!(state.flags & RenderFlags.IgnoreNextLayer) &&
-          (node.getLayer().blendMode !== BlendMode.Normal || node.getLayer().mask) &&
-          this._options.blending) {
+      var ignoreNextLayer = state.flags & RenderFlags.IgnoreNextLayer;
+      if (!ignoreNextLayer && (
+          ((node.getLayer().blendMode !== BlendMode.Normal || node.getLayer().mask) &&
+          this._options.blending) ||
+          (node.getLayer().filters && this._options.filters))) {
         state = state.clone();
         state.flags |= RenderFlags.IgnoreNextLayer;
+        state.clipList = [];
         this._renderLayer(node, state);
         state.free();
       } else {
+        if (ignoreNextLayer) {
+          state.removeFlags(RenderFlags.IgnoreNextLayer);
+        }
         if (this._intersectsClipList(node, state)) {
           var clips = null;
           var children = node.getChildren();
@@ -615,7 +621,7 @@ module Shumway.GFX.Canvas2D {
             var transform = child.getTransform();
             var childState = state.transform(transform);
             childState.toggleFlags(RenderFlags.ImageSmoothing, child.hasFlags(NodeFlags.ImageSmoothing));
-            if (child.clip >= 0) {
+            if (child.clip > 0) {
               clips = clips || new Uint8Array(children.length); // MEMORY: Don't allocate here.
               clips[child.clip + i] ++;
               var clipState = childState.clone();
@@ -661,7 +667,7 @@ module Shumway.GFX.Canvas2D {
       var bounds = node.getBounds(true);
       var style = node.properties["style"];
       if (!style) {
-        style = node.properties["style"] = Color.randomColor(0.4).toCSSStyle();
+        style = node.properties["style"] = ColorStyle.randomStyle();
       }
 
       context.strokeStyle = style;
@@ -703,7 +709,7 @@ module Shumway.GFX.Canvas2D {
       state.target.reset();
 
       state = state.clone();
-      if (false && node.dirtyRegion) {
+      if (node.dirtyRegion) {
         state.clipList.length = 0;
         node.dirtyRegion.gatherOptimizedRegions(state.clipList);
         context.save();
@@ -737,7 +743,7 @@ module Shumway.GFX.Canvas2D {
       if (node.dirtyRegion) {
         context.restore();
         state.target.reset();
-        context.globalAlpha = 0.4;
+        context.globalAlpha = 0.8;
         if (state.hasFlags(RenderFlags.PaintDirtyRegion)) {
           node.dirtyRegion.render(state.target.context);
         }
@@ -767,6 +773,7 @@ module Shumway.GFX.Canvas2D {
       if (state.flags & RenderFlags.PixelSnapping) {
         matrix.free();
       }
+      Filters._removeFilter(context);
     }
 
     /**
@@ -857,10 +864,12 @@ module Shumway.GFX.Canvas2D {
       var mask = layer.mask;
       if (!mask) {
         var clip = Rectangle.allocate();
-        var target = this._renderToTemporarySurface(node, state, clip, null);
+        var target = this._renderToTemporarySurface(node, node.getLayerBounds(!!this._options.filters),
+                                                    state, clip, state.target.surface);
         if (target) {
-          var matrix = state.matrix;
-          state.target.draw(target, clip.x, clip.y, clip.w, clip.h, layer.blendMode);
+          state.target.draw(target, clip.x, clip.y, clip.w, clip.h, state.colorMatrix,
+                            this._options.blending ? layer.blendMode : BlendMode.Normal,
+                            this._options.filters ? layer.filters : null, this._devicePixelRatio);
           target.free();
         }
         clip.free();
@@ -904,7 +913,7 @@ module Shumway.GFX.Canvas2D {
 
       var aState = state.clone();
       aState.clip.set(clip);
-      var a = this._renderToTemporarySurface(node, aState, Rectangle.createEmpty(), null);
+      var a = this._renderToTemporarySurface(node, node.getBounds(), aState, Rectangle.createEmpty(), null);
       aState.free();
 
       var bState = state.clone();
@@ -914,13 +923,15 @@ module Shumway.GFX.Canvas2D {
       if (stencil) {
         bState.flags |= RenderFlags.PaintStencil;
       }
-      var b = this._renderToTemporarySurface(mask, bState, Rectangle.createEmpty(), a.surface);
+      var b = this._renderToTemporarySurface(mask, mask.getBounds(), bState, Rectangle.createEmpty(), a.surface);
       bState.free();
 
-      a.draw(b, 0, 0, clip.w, clip.h, BlendMode.Alpha);
+      a.draw(b, 0, 0, clip.w, clip.h, bState.colorMatrix, BlendMode.Alpha, null,
+             this._devicePixelRatio);
 
       var matrix = state.matrix;
-      state.target.draw(a, clip.x, clip.y, clip.w, clip.h, blendMode);
+      state.target.draw(a, clip.x, clip.y, clip.w, clip.h, aState.colorMatrix, blendMode, null,
+                        this._devicePixelRatio);
 
       b.free();
       a.free();
@@ -966,10 +977,9 @@ module Shumway.GFX.Canvas2D {
       this._frameInfo.leave();
     }
 
-    private _renderToTemporarySurface(node: Node, state: RenderState, clip: Rectangle,
+    private _renderToTemporarySurface(node: Node, bounds: Rectangle, state: RenderState, clip: Rectangle,
                                       excludeSurface: ISurface): Canvas2DSurfaceRegion {
       var matrix = state.matrix;
-      var bounds = node.getBounds();
       var boundsAABB = bounds.clone();
       matrix.transformRectangleAABB(boundsAABB);
       boundsAABB.snap();
@@ -990,6 +1000,7 @@ module Shumway.GFX.Canvas2D {
 
       target.context.setTransform(1, 0, 0, 1, 0, 0);
       target.clear();
+
       matrix = matrix.clone();
 
       matrix.translate (
@@ -1031,7 +1042,7 @@ module Shumway.GFX.Canvas2D {
       return surface;
     }
 
-    public screenShot(bounds: Rectangle, stageContent: boolean): ScreenShot {
+    public screenShot(bounds: Rectangle, stageContent: boolean, disableHidpi: boolean): ScreenShot {
       if (stageContent) {
         // HACK: Weird way to get to the real content, but oh well...
         var contentStage = <Stage>this._stage.content.groupChild.child;
@@ -1045,14 +1056,22 @@ module Shumway.GFX.Canvas2D {
       if (!bounds) {
         bounds = new Rectangle(0, 0, this._target.w, this._target.h);
       }
+      var outputWidth = bounds.w;
+      var outputHeight = bounds.h;
+      var pixelRatio = this._devicePixelRatio;
+      if (disableHidpi) {
+        outputWidth /= pixelRatio;
+        outputHeight /= pixelRatio;
+        pixelRatio = 1;
+      }
       var canvas = document.createElement("canvas");
-      canvas.width = bounds.w;
-      canvas.height = bounds.h;
+      canvas.width = outputWidth;
+      canvas.height = outputHeight;
       var context = canvas.getContext("2d");
       context.fillStyle = this._container.style.backgroundColor;
-      context.fillRect(0, 0, bounds.w, bounds.h);
-      context.drawImage(this._target.context.canvas, bounds.x, bounds.y, bounds.w, bounds.h, 0, 0, bounds.w, bounds.h);
-      return new ScreenShot(canvas.toDataURL('image/png'), bounds.w, bounds.h);
+      context.fillRect(0, 0, outputWidth, outputHeight);
+      context.drawImage(this._target.context.canvas, bounds.x, bounds.y, bounds.w, bounds.h, 0, 0, outputWidth, outputHeight);
+      return new ScreenShot(canvas.toDataURL('image/png'), outputWidth, outputHeight, pixelRatio);
     }
   }
 }

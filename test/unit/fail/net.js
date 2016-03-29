@@ -39,8 +39,8 @@
     request.method = "POST";
     check(request.url === 'http://example.com/');
     check(request.requestHeaders && request.requestHeaders.length === 1);
-    check(request.requestHeaders[0].asGetPublicProperty('name') === 'header');
-    check(request.requestHeaders[0].asGetPublicProperty('value') === 'value');
+    check(request.requestHeaders[0].axGetPublicProperty('name') === 'header');
+    check(request.requestHeaders[0].axGetPublicProperty('value') === 'value');
     check(request.method = "POST");
   });
 
@@ -98,8 +98,8 @@
         var result = new ByteArray();
         stream.readBytes(result, 0, 9);
         check(result.length === 9);
-        check(result.asGetPublicProperty(0) === 0x50);
-        check(result.asGetPublicProperty(1) === 0x4E);
+        check(result.axGetPublicProperty(0) === 0x50);
+        check(result.axGetPublicProperty(1) === 0x4E);
         var short = stream.readUnsignedShort();
         check(short === 0x000D);
         var str = stream.readUTFBytes(4);
@@ -128,7 +128,7 @@
           var data = loader.data;
           check(ByteArray.isInstanceOf(data));
           check(data.length > 20);
-          check(data.asGetPublicProperty(1) === 0x50);
+          check(data.axGetPublicProperty(1) === 0x50);
           resolve();
         } catch (e) {
           reject(e);

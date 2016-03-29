@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: GroupSpecifier
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class GroupSpecifier extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class GroupSpecifier extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // ["encodePostingAuthorization", "encodePublishAuthorization", "encodeIPMulticastAddressSpec", "encodeBootstrapPeerIDSpec"];
     
@@ -33,9 +29,8 @@ module Shumway.AVM2.AS.flash.net {
     static instanceSymbols: string [] = null; // ["makeUnique", "routingEnabled", "routingEnabled", "multicastEnabled", "multicastEnabled", "objectReplicationEnabled", "objectReplicationEnabled", "postingEnabled", "postingEnabled", "peerToPeerDisabled", "peerToPeerDisabled", "ipMulticastMemberUpdatesEnabled", "ipMulticastMemberUpdatesEnabled", "setPublishPassword", "setPostingPassword", "serverChannelEnabled", "serverChannelEnabled", "addBootstrapPeer", "addIPMulticastAddress", "toString", "groupspecWithoutAuthorizations", "groupspecWithAuthorizations", "authorizations"];
     
     constructor (name: string) {
-      name = asCoerceString(name);
-      false && super();
-      dummyConstructor("public flash.net.GroupSpecifier");
+      super();
+      name = axCoerceString(name);
     }
     
     // JS -> AS Bindings

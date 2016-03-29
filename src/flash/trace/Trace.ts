@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: Trace
-module Shumway.AVM2.AS.flash.trace {
+module Shumway.AVMX.AS.flash.trace {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Trace extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class Trace extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +29,7 @@ module Shumway.AVM2.AS.flash.trace {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.trace.Trace");
+      super();
     }
     
     // JS -> AS Bindings
@@ -50,18 +45,18 @@ module Shumway.AVM2.AS.flash.trace {
     // AS -> JS Bindings
     static setLevel(l: number /*int*/, target: number /*int*/ = 2): any {
       l = l | 0; target = target | 0;
-      notImplemented("public flash.trace.Trace::static setLevel"); return;
+      release || notImplemented("public flash.trace.Trace::static setLevel"); return;
     }
     static getLevel(target: number /*int*/ = 2): number /*int*/ {
       target = target | 0;
-      notImplemented("public flash.trace.Trace::static getLevel"); return;
+      release || notImplemented("public flash.trace.Trace::static getLevel"); return;
     }
     static setListener(f: ASFunction): any {
       f = f;
-      notImplemented("public flash.trace.Trace::static setListener"); return;
+      release || notImplemented("public flash.trace.Trace::static setListener"); return;
     }
     static getListener(): ASFunction {
-      notImplemented("public flash.trace.Trace::static getListener"); return;
+      release || notImplemented("public flash.trace.Trace::static getListener"); return;
     }
     
   }

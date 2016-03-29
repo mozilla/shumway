@@ -23,7 +23,7 @@ module Shumway.Remoting {
   /**
    * Remoting phases.
    */
-  export enum RemotingPhase {
+  export const enum RemotingPhase {
     /**
      * Objects are serialized. During this phase all reachable remotable objects (all objects
      * reachable from a root set) that are dirty are remoted. This includes all dirty object
@@ -38,7 +38,7 @@ module Shumway.Remoting {
     References
   }
 
-  export enum MessageBits {
+  export const enum MessageBits {
     HasMatrix                   = 0x0001,
     HasBounds                   = 0x0002,
     HasChildren                 = 0x0004,
@@ -49,7 +49,7 @@ module Shumway.Remoting {
     HasClip                     = 0x0080
   }
 
-  export enum IDMask {
+  export const enum IDMask {
     None                        = 0x00000000,
     Asset                       = 0x08000000
   }
@@ -57,7 +57,7 @@ module Shumway.Remoting {
   /**
    * Serialization Format. All commands start with a message tag.
    */
-  export enum MessageTag {
+  export const enum MessageTag {
     EOF                         = 0,
 
     /**
@@ -79,6 +79,7 @@ module Shumway.Remoting {
     UpdateStage                 = 104,
     UpdateNetStream             = 105,
     RequestBitmapData           = 106,
+    UpdateCurrentMouseTarget    = 107,
 
     DrawToBitmap                = 200,
 
@@ -89,7 +90,8 @@ module Shumway.Remoting {
 
   export enum FilterType {
     Blur,
-    DropShadow
+    DropShadow,
+    ColorMatrix
   }
 
   /**
@@ -97,24 +99,54 @@ module Shumway.Remoting {
    * either identity or only modify the alpha multiplier, so we can encode these more
    * efficiently.
    */
-  export enum ColorTransformEncoding {
+  export const enum ColorTransformEncoding {
     /**
      * Identity, no need to serialize all the fields.
      */
-    Identity               = 0,
+    Identity = 0,
 
     /**
      * Identity w/ AlphaMultiplier, only the alpha multiplier is serialized.
      */
-    AlphaMultiplierOnly    = 1,
+    AlphaMultiplierOnly = 1,
+
+    /**
+     * Offsets w/ AlphaMultiplier.
+     */
+    AlphaMultiplierWithOffsets = 2,
 
     /**
      * All fields are serialized.
      */
-    All                    = 2
+    All = 3
   }
 
-  export enum VideoPlaybackEvent {
+  /**
+   * Dictates how matrices are encoded.
+   */
+  export const enum MatrixEncoding {
+    /**
+     * Translation only.
+     */
+    TranslationOnly = 0,
+
+    /**
+     * Scale and translation only.
+     */
+    ScaleAndTranslationOnly = 1,
+
+    /**
+     * Uniform scale in the x and y direction and translation only.
+     */
+    UniformScaleAndTranslationOnly = 2,
+
+    /**
+     * All fields are serialized.
+     */
+    All = 3
+  }
+
+  export const enum VideoPlaybackEvent {
     Initialized = 0,
     Metadata = 1,
     PlayStart = 2,
@@ -129,7 +161,7 @@ module Shumway.Remoting {
     Error = 11,
   }
 
-  export enum VideoControlEvent {
+  export const enum VideoControlEvent {
     Init = 1,
     Pause = 2,
     Seek = 3,
@@ -141,14 +173,14 @@ module Shumway.Remoting {
     EnsurePlaying = 9,
   }
 
-  export enum StageScaleMode {
+  export const enum StageScaleMode {
     ShowAll = 0,
     ExactFit = 1,
     NoBorder = 2,
     NoScale = 4
   }
 
-  export enum StageAlignFlags {
+  export const enum StageAlignFlags {
     None     = 0,
     Top      = 1,
     Bottom   = 2,
@@ -177,13 +209,13 @@ module Shumway.Remoting {
     'keyup'
   ];
 
-  export enum KeyboardEventFlags {
+  export const enum KeyboardEventFlags {
     CtrlKey  = 0x0001,
     AltKey   = 0x0002,
     ShiftKey = 0x0004
   }
 
-  export enum FocusEventType {
+  export const enum FocusEventType {
     DocumentHidden,
     DocumentVisible,
     WindowBlur,
@@ -214,8 +246,83 @@ module Shumway.Remoting {
     updateAndGet(updates: DataBuffer, assets: Array<DataBuffer>): any;
     frame(): void;
     videoControl(id: number, eventType: VideoControlEvent, data: any): any;
-    registerFont(syncId: number, data: any): Promise<any>;
-    registerImage(syncId: number, symbolId: number, data: any): Promise<any>;
+    registerFont(syncId: number, data: Uint8Array): Promise<any>;
+    registerImage(syncId: number, symbolId: number, imageType: ImageType,
+                  data: Uint8Array, alphaData: Uint8Array): Promise<any>;
     fscommand(command: string, args: string): void;
+  }
+
+  /**
+   * Messaging peer for sending data synchronously and asynchronously. Currently
+   * used by GFX and Player iframes.
+   */
+  export interface ITransportPeer {
+    onAsyncMessage: (msg: any) => void;
+    onSyncMessage: (msg: any) => any;
+
+    postAsyncMessage(msg: any, transfers?: any[]): void;
+    sendSyncMessage(msg: any, transfers?: any[]): any;
+  }
+
+  /**
+   * Implementation of ITransportPeer that uses standard DOM postMessage and
+   * events to exchange data between messaging peers.
+   */
+  export class WindowTransportPeer implements ITransportPeer  {
+    set onAsyncMessage(callback: (msg: any) => void) {
+      this.window.addEventListener('message', function (e) {
+        Promise.resolve(e.data).then(function (msg) { // delay
+          callback(msg);
+        });
+      });
+    }
+
+    set onSyncMessage(callback: (msg: any) => any) {
+      this.window.addEventListener('syncmessage', function (e) {
+        var wrappedMessage = (<any>e).detail;
+        wrappedMessage.result = callback(wrappedMessage.msg);
+      });
+    }
+
+    constructor(public window: Window, public target: Window) {
+      //
+    }
+
+    postAsyncMessage(msg: any, transfers?: any[]): void {
+      this.target.postMessage(msg, '*', transfers);
+    }
+
+    sendSyncMessage(msg: any, transfers?: any[]): any {
+      var event = this.target.document.createEvent('CustomEvent');
+      var wrappedMessage = {
+        msg: msg,
+        result: undefined
+      };
+      event.initCustomEvent('syncmessage', false, false, wrappedMessage);
+      this.target.dispatchEvent(event);
+      return wrappedMessage.result;
+    }
+  }
+
+  /**
+   * Implementation of ITransportPeer that uses ShumwayCom API to exchange data
+   * between messaging peers.
+   */
+  export class ShumwayComTransportPeer implements ITransportPeer  {
+    set onAsyncMessage(callback: (msg: any) => void) {
+      ShumwayCom.setAsyncMessageCallback(callback);
+    }
+
+    set onSyncMessage(callback: (msg: any) => any) {
+      ShumwayCom.setSyncMessageCallback(callback);
+    }
+
+    postAsyncMessage(msg: any, transfers?: any[]): void {
+      ShumwayCom.postAsyncMessage(msg);
+    }
+
+    sendSyncMessage(msg: any, transfers?: any[]): any {
+      return ShumwayCom.sendSyncMessage(msg);
+    }
   }
 }

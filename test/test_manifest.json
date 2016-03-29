@@ -1,4 +1,9 @@
 [
+    {  "id": "bitmapdata-clone",
+       "frames": [1],
+       "swf": "swfs/avm2/flash/display/bitmapdata/bitmapdata-clone.swf",
+       "type": "eq"
+    },
     {  "id": "acid-bitmapData-copyPixels",
        "frames": [1],
        "swf": "swfs/acid/acid-bitmapData-copyPixels.swf",
@@ -12,6 +17,11 @@
     { "id": "acid-filter",
       "frames": [1],
       "swf": "swfs/acid/acid-filter.swf",
+      "type": "eq"
+    },
+    { "id": "acid-filter-2",
+      "frames": [1],
+      "swf": "swfs/acid/acid-filter-2.swf",
       "type": "eq"
     },
     {  "id": "acid",
@@ -149,6 +159,11 @@
       "swf": "swfs/acid/acid-text-3.swf",
       "type": "eq"
     },
+    {  "id": "acid-text-4",
+      "frames": [1],
+      "swf": "swfs/acid/acid-text-4.swf",
+      "type": "eq"
+    },
     {  "id": "acid-text-6",
       "frames": [1, 20],
       "swf": "swfs/acid/acid-text-6.swf",
@@ -197,13 +212,6 @@
       "frames": [1, 15, 30],
       "swf": "swfs/acid/acid-morph.swf",
       "type": "eq"
-    },
-    {  "id": "acid-morph-stas",
-      "stas": "swfs/trace.stas",
-      "filenames": [
-        "swfs/acid/acid-morph.swf"
-      ],
-      "type": "stas"
     },
     {  "id": "getObjectsUnderPoint",
       "stas": "swfs/trace.stas",
@@ -267,13 +275,6 @@
       ],
       "type": "stas"
     },
-    {  "id": "avm1 loadVariables trace",
-      "stas": "swfs/trace.stas",
-      "filenames": [
-        "swfs/avm1/loadvariables/loadvariables.swf"
-      ],
-      "type": "stas"
-    },
     {  "id": "button",
        "stas": "swfs/button.stas",
        "filenames": [
@@ -300,6 +301,13 @@
       "stas": "swfs/avm1/rollover/avm1-rollover.stas",
       "filenames": [
         "swfs/avm1/rollover/avm1-rollover.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "avm1-hitarea",
+      "stas": "swfs/avm1/hitarea/hitarea.stas",
+      "filenames": [
+        "swfs/avm1/hitarea/hitarea.swf"
       ],
       "type": "stas"
     },
@@ -352,10 +360,24 @@
       "filenames": ["swfs/bitmapdata/getpixel-from-embedded.swf"],
       "type": "stas"
     },
+    {  "id": "bitmapdata-draw-and-read",
+      "stas": "swfs/trace.stas",
+      "filenames": ["swfs/bitmapdata/draw-and-read.swf"],
+      "type": "stas"
+    },
     {  "id": "pac-ref",
        "frames": [1, 5, 10],
        "swf": "/examples/pac/pac.swf",
        "type": "eq"
+    },
+    {  "id": "mouse trace",
+      "stas": "swfs/mouse/drag.stas",
+      "filenames": [
+        "swfs/mouse/StartDragTest.swf",
+        "swfs/mouse/StartDragLockTest.swf",
+        "swfs/mouse/MouseCoordsTest.swf"
+      ],
+      "type": "stas"
     },
     {  "id": "3_joystick",
        "stas": "swfs/3_joystick.stas",
@@ -394,6 +416,11 @@
        "swf": "swfs/MaskTest-2.swf",
        "type": "eq"
     },
+    {  "id": "MaskTest-3",
+      "frames": [4],
+      "swf": "swfs/MaskTest-3.swf",
+      "type": "eq"
+    },
     {  "id": "graphics-fills-ref",
       "frames": [1],
       "swf": "/examples/graphics/various-shapes.swf",
@@ -429,6 +456,14 @@
       ],
       "type": "stas"
     },
+    {  "id": "Bug 1157243 - Correctly handle unknown file types in Loader",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/as3-loader/bug1157243/load-empty-file.swf",
+         "swfs/as3-loader/bug1157243/load-invalid-file.swf"
+       ],
+       "type": "stas"
+    },
     {  "id": "defineFont2-test",
        "frames": [60],
        "swf": "swfs/food.swf",
@@ -461,6 +496,21 @@
     {  "id": "clipping",
       "frames": [1],
       "swf": "swfs/clipping.swf",
+      "type": "eq"
+    },
+    {  "id": "avm1-duplicate-movieclip",
+      "frames": [1],
+      "swf": "swfs/avm1/duplicateMovieClip/duplicateMovieClip.swf",
+      "type": "eq"
+    },
+    {  "id": "gradient-transform",
+      "frames": [1],
+      "swf": "swfs/gradientTransform.swf",
+      "type": "eq"
+    },
+    {  "id": "invalid-clip-depth",
+      "frames": [1],
+      "swf": "swfs/invalidClipDepth.swf",
       "type": "eq"
     }
 ]

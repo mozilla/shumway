@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: GraphicElement
-module Shumway.AVM2.AS.flash.text.engine {
+module Shumway.AVMX.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class GraphicElement extends flash.text.engine.ContentElement {
     
     // Called whenever the class is initialized.
@@ -33,8 +33,8 @@ module Shumway.AVM2.AS.flash.text.engine {
     static instanceSymbols: string [] = null; // [];
     
     constructor (graphic: flash.display.DisplayObject = null, elementWidth: number = 15, elementHeight: number = 15, elementFormat: flash.text.engine.ElementFormat = null, eventMirror: flash.events.EventDispatcher = null, textRotation: string = "rotate0") {
-      graphic = graphic; elementWidth = +elementWidth; elementHeight = +elementHeight; elementFormat = elementFormat; eventMirror = eventMirror; textRotation = asCoerceString(textRotation);
-      false && super(undefined, undefined, undefined);
+      graphic = graphic; elementWidth = +elementWidth; elementHeight = +elementHeight; elementFormat = elementFormat; eventMirror = eventMirror; textRotation = axCoerceString(textRotation);
+      super(undefined, undefined, undefined);
       dummyConstructor("public flash.text.engine.GraphicElement");
     }
     
@@ -47,30 +47,30 @@ module Shumway.AVM2.AS.flash.text.engine {
     // _elementHeight: number;
     // _elementWidth: number;
     get graphic(): flash.display.DisplayObject {
-      notImplemented("public flash.text.engine.GraphicElement::get graphic"); return;
+      release || notImplemented("public flash.text.engine.GraphicElement::get graphic"); return;
       // return this._graphic;
     }
     set graphic(value: flash.display.DisplayObject) {
       value = value;
-      notImplemented("public flash.text.engine.GraphicElement::set graphic"); return;
+      release || notImplemented("public flash.text.engine.GraphicElement::set graphic"); return;
       // this._graphic = value;
     }
     get elementHeight(): number {
-      notImplemented("public flash.text.engine.GraphicElement::get elementHeight"); return;
+      release || notImplemented("public flash.text.engine.GraphicElement::get elementHeight"); return;
       // return this._elementHeight;
     }
     set elementHeight(value: number) {
       value = +value;
-      notImplemented("public flash.text.engine.GraphicElement::set elementHeight"); return;
+      release || notImplemented("public flash.text.engine.GraphicElement::set elementHeight"); return;
       // this._elementHeight = value;
     }
     get elementWidth(): number {
-      notImplemented("public flash.text.engine.GraphicElement::get elementWidth"); return;
+      release || notImplemented("public flash.text.engine.GraphicElement::get elementWidth"); return;
       // return this._elementWidth;
     }
     set elementWidth(value: number) {
       value = +value;
-      notImplemented("public flash.text.engine.GraphicElement::set elementWidth"); return;
+      release || notImplemented("public flash.text.engine.GraphicElement::set elementWidth"); return;
       // this._elementWidth = value;
     }
   }

@@ -11,14 +11,17 @@
       var shumwayObj = shuobject.getShumwayObject(e.ref);
 
       var stage = shumwayObj.stage;
-      stage.addEventListener('added', function rootAdded(e) {
+      var securityDomain = shumwayObj.sec;
+      var rootAdded = securityDomain.boxFunction(function (e) {
         stage.removeEventListener('added', rootAdded, true);
         initializeMovie(shumwayObj);
-      }, true);
+      });
+      stage.addEventListener('added', rootAdded , true);
     });
 
     function initializeMovie(shumwayObj) {
       var stage = shumwayObj.stage;
+      var securityDomain = shumwayObj.sec;
       var root = stage.getChildAt(0);
       var flash = shumwayObj.flash;
       var MovieClip = flash.display.MovieClip;
@@ -33,9 +36,10 @@
       root.addChild(movieClip);
 
       // Using events
-      root.addEventListener('enterFrame', function () {
+      var enterFrame = securityDomain.boxFunction(function () {
         movieClip.rotation = (movieClip.rotation + 1) % 360;
       });
+      root.addEventListener('enterFrame', enterFrame);
     }
   </script>
 </head>

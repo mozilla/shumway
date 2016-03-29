@@ -18,7 +18,7 @@ package flash.geom {
 
 [native(cls='PerspectiveProjectionClass')]
 public class PerspectiveProjection {
-  public function PerspectiveProjection() {}
+  public native function PerspectiveProjection();
   public native function get fieldOfView(): Number;
   public native function set fieldOfView(fieldOfViewAngleInDegrees: Number): void;
   public native function get projectionCenter(): Point;

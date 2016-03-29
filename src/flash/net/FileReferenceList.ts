@@ -14,42 +14,25 @@
  * limitations under the License.
  */
 // Class: FileReferenceList
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class FileReferenceList extends flash.events.EventDispatcher {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
+
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.net.FileReferenceList");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
+
     // _fileList: any [];
-    get fileList(): any [] {
-      notImplemented("public flash.net.FileReferenceList::get fileList"); return;
+    get fileList(): ASArray {
+      release || notImplemented("public flash.net.FileReferenceList::get fileList"); return;
       // return this._fileList;
     }
-    browse(typeFilter: any [] = null): boolean {
+    browse(typeFilter: ASArray = null): boolean {
       typeFilter = typeFilter;
-      notImplemented("public flash.net.FileReferenceList::browse"); return;
+      release || notImplemented("public flash.net.FileReferenceList::browse"); return;
     }
   }
 }

@@ -15,24 +15,23 @@
  */
 
 module Shumway.GFX.Test {
-  export class RecordingEaselHost extends TestEaselHost {
+  import WindowEaselHost = Shumway.GFX.Window.WindowEaselHost;
+
+  export class RecordingEaselHost extends WindowEaselHost {
     private _recorder: MovieRecorder = null;
 
     public get recorder(): MovieRecorder  {
       return this._recorder;
     }
 
-    constructor(easel: Easel, recordingLimit: number = 0) {
-      super(easel);
+    constructor(easel: Easel, peer: Shumway.Remoting.ITransportPeer, recordingLimit: number = 0) {
+      super(easel, peer);
 
       this._recorder = new MovieRecorder(recordingLimit);
     }
 
-    _onWorkerMessage(e, async: boolean = true): any {
-      var data = e.data;
-      if (typeof data !== 'object' || data === null) {
-        return;
-      }
+    _onWindowMessage(data: any, async: boolean): any {
+      release || Debug.assert(typeof data === 'object' && data !== null);
       var type = data.type;
       switch (type) {
         case 'player':
@@ -41,15 +40,19 @@ module Shumway.GFX.Test {
         case 'frame':
           this._recorder.recordFrame();
           break;
-        case 'registerFontOrImage':
-          this._recorder.recordFontOrImage(data.syncId, data.symbolId, data.assetType, data.data);
+        case 'registerFont':
+          this._recorder.recordFont(data.syncId, data.data);
+          break;
+        case 'registerImage':
+          this._recorder.recordImage(data.syncId, data.symbolId, data.imageType,
+                                     data.data, data.alphaData);
           break;
         case 'fscommand':
           this._recorder.recordFSCommand(data.command, data.args);
           break;
       }
 
-      super._onWorkerMessage(e, async);
+      return super._onWindowMessage(data, async);
     }
   }
 }

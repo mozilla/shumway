@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 // Class: StageVideoAvailabilityEvent
-module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
+module Shumway.AVMX.AS.flash.events {
   export class StageVideoAvailabilityEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
+    availability: string;
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 availability: string = null) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.StageVideoAvailabilityEvent");
+      super(type, bubbles, cancelable);
+      this.availability = axCoerceString(availability);
     }
 
     // JS -> AS Bindings

@@ -27,7 +27,7 @@ module Shumway.Metrics {
     private _last: number;
     private _total: number;
     private _count: number;
-    private _timers: Map<Timer>;
+    private _timers: MapObject<Timer>;
     constructor(parent: Timer, name: string) {
       this._parent = parent;
       this._timers = ObjectUtilities.createMap<Timer>();
@@ -93,9 +93,9 @@ module Shumway.Metrics {
     public static instance: Counter = new Counter(true);
 
     private _enabled: boolean;
-    private _counts: Map<number>;
-    private _times: Map<number>;
-    get counts(): Map<number> {
+    private _counts: MapObject<number>;
+    private _times: MapObject<number>;
+    get counts(): MapObject<number> {
       return this._counts;
     }
     constructor(enabled: boolean) {

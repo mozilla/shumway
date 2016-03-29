@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: StringTools
-module Shumway.AVM2.AS.flash.globalization {
+module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class StringTools extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class StringTools extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,8 @@ module Shumway.AVM2.AS.flash.globalization {
     static instanceSymbols: string [] = null; // [];
     
     constructor (requestedLocaleIDName: string) {
-      requestedLocaleIDName = asCoerceString(requestedLocaleIDName);
-      false && super();
-      dummyConstructor("public flash.globalization.StringTools");
+      super();
+      requestedLocaleIDName = axCoerceString(requestedLocaleIDName);
     }
     
     // JS -> AS Bindings
@@ -43,35 +38,35 @@ module Shumway.AVM2.AS.flash.globalization {
     
     // AS -> JS Bindings
     static getAvailableLocaleIDNames(): ASVector<any> {
-      notImplemented("public flash.globalization.StringTools::static getAvailableLocaleIDNames"); return;
+      release || notImplemented("public flash.globalization.StringTools::static getAvailableLocaleIDNames"); return;
     }
     
     // _lastOperationStatus: string;
     // _requestedLocaleIDName: string;
     // _actualLocaleIDName: string;
     get lastOperationStatus(): string {
-      notImplemented("public flash.globalization.StringTools::get lastOperationStatus"); return;
+      release || notImplemented("public flash.globalization.StringTools::get lastOperationStatus"); return;
       // return this._lastOperationStatus;
     }
     get requestedLocaleIDName(): string {
-      notImplemented("public flash.globalization.StringTools::get requestedLocaleIDName"); return;
+      release || notImplemented("public flash.globalization.StringTools::get requestedLocaleIDName"); return;
       // return this._requestedLocaleIDName;
     }
     get actualLocaleIDName(): string {
-      notImplemented("public flash.globalization.StringTools::get actualLocaleIDName"); return;
+      release || notImplemented("public flash.globalization.StringTools::get actualLocaleIDName"); return;
       // return this._actualLocaleIDName;
     }
     toLowerCase(s: string): string {
-      s = asCoerceString(s);
-      notImplemented("public flash.globalization.StringTools::toLowerCase"); return;
+      s = axCoerceString(s);
+      release || notImplemented("public flash.globalization.StringTools::toLowerCase"); return;
     }
     toUpperCase(s: string): string {
-      s = asCoerceString(s);
-      notImplemented("public flash.globalization.StringTools::toUpperCase"); return;
+      s = axCoerceString(s);
+      release || notImplemented("public flash.globalization.StringTools::toUpperCase"); return;
     }
     ctor(requestedLocaleIDName: string): void {
-      requestedLocaleIDName = asCoerceString(requestedLocaleIDName);
-      notImplemented("public flash.globalization.StringTools::ctor"); return;
+      requestedLocaleIDName = axCoerceString(requestedLocaleIDName);
+      release || notImplemented("public flash.globalization.StringTools::ctor"); return;
     }
   }
 }

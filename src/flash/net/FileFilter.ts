@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 // Class: FileFilter
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
-  export class FileFilter extends ASNative {
+  export class FileFilter extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -34,8 +30,7 @@ module Shumway.AVM2.AS.flash.net {
     static instanceSymbols: string [] = null; // [];
     
     constructor (description: string, extension: string, macType: string = null) {
-      false && super();
-      dummyConstructor("public flash.net.FileFilter");
+      super();
     }
     
     // JS -> AS Bindings
@@ -50,19 +45,19 @@ module Shumway.AVM2.AS.flash.net {
       return this._description;
     }
     set description(value: string) {
-      this._description = asCoerceString(value);
+      this._description = axCoerceString(value);
     }
     get extension(): string {
       return this._extension;
     }
     set extension(value: string) {
-      this._extension = asCoerceString(value);
+      this._extension = axCoerceString(value);
     }
     get macType(): string {
       return this._macType;
     }
     set macType(value: string) {
-      this._macType = asCoerceString(value);
+      this._macType = axCoerceString(value);
     }
   }
 }

@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 // Class: TransformGestureEvent
-module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
+module Shumway.AVMX.AS.flash.events {
   export class TransformGestureEvent extends flash.events.GestureEvent {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
@@ -29,9 +26,7 @@ module Shumway.AVM2.AS.flash.events {
                 phase: string = null, localX: number = 0, localY: number = 0, scaleX: number = 1,
                 scaleY: number = 1, rotation: number = 0, offsetX: number = 0, offsetY: number = 0,
                 ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false) {
-      super(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
-            undefined);
-      dummyConstructor("public flash.events.TransformGestureEvent");
+      super(type, bubbles, cancelable, phase, localX, localY, ctrlKey, altKey, shiftKey);
     }
 
     // JS -> AS Bindings

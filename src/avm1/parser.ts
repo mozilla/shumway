@@ -17,7 +17,7 @@
 module Shumway.AVM1 {
   import ActionsDataStream = Shumway.AVM1.ActionsDataStream;
 
-  export enum ActionCode {
+  export const enum ActionCode {
     None = 0x00,
     ActionGotoFrame = 0x81,
     ActionGetURL = 0x83,
@@ -142,7 +142,7 @@ module Shumway.AVM1 {
     name?: string;
     index?: number;
   }
-  export enum ArgumentAssignmentType {
+  export const enum ArgumentAssignmentType {
     None = 0,
     Argument = 1,
     This = 2,

@@ -17,347 +17,326 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
   import notImplemented = Shumway.Debug.notImplemented;
 
   export class AVM1TextField extends AVM1SymbolBase<flash.text.TextField> {
-    static createAVM1Class(): typeof AVM1TextField  {
-      return wrapAVM1Class(AVM1TextField,
+    static createAVM1Class(context: AVM1Context): AVM1Object  {
+      return wrapAVM1NativeClass(context, true, AVM1TextField,
         [],
-        [ '_alpha', 'antiAliasType', 'autoSize', 'background', 'backgroundColor',
-          'border', 'borderColor', 'bottomScroll', 'condenseWhite', 'embedFonts',
-          'getNewTextFormat', 'getTextFormat',
-          '_height', '_highquality', 'hscroll', 'html', 'htmlText', 'length',
-          'maxChars', 'maxhscroll', 'maxscroll', 'multiline',
-          '_name', '_parent', 'password', '_quality', '_rotation',
-          'scroll', 'selectable', 'setNewTextFormat', 'setTextFormat',
-          '_soundbuftime', 'tabEnabled', 'tabIndex', '_target',
-          'text', 'textColor', 'textHeight', 'textWidth', 'type',
-          '_url', '_visible', '_width', 'wordWrap',
-          '_x', '_xmouse', '_xscale', '_y', '_ymouse', '_yscale']);
+        [ '_alpha#', 'antiAliasType#', 'autoSize#', 'background#', 'backgroundColor#',
+          'border#', 'borderColor#', 'bottomScroll#', 'condenseWhite#', 'embedFonts#',
+          'filters#', 'getNewTextFormat', 'getTextFormat', 'gridFitType#', 'getDepth',
+          '_height#', '_highquality#', 'hscroll#', 'html#', 'htmlText#', 'length#',
+          'maxChars#', 'maxhscroll#', 'maxscroll#', 'multiline#',
+          '_name#', '_parent#', 'password#', '_quality#', '_rotation#',
+          'scroll#', 'selectable#', 'setNewTextFormat', 'setTextFormat',
+          '_soundbuftime#', 'tabEnabled#', 'tabIndex#', '_target#',
+          'text#', 'textColor#', 'textHeight#', 'textWidth#', 'type#',
+          '_url#', 'variable#', '_visible#', '_width#', 'wordWrap#',
+          '_x#', '_xmouse#', '_xscale#', '_y#', '_ymouse#', '_yscale#']);
     }
 
     private _variable: string;
+    private _html: boolean;
     private _exitFrameHandler: (event: flash.events.Event) => void;
-
 
     public initAVM1SymbolInstance(context: AVM1Context, as3Object: flash.text.TextField) {
       super.initAVM1SymbolInstance(context, as3Object);
 
       this._variable = '';
+      this._html = false;
       this._exitFrameHandler = null;
 
       if (as3Object._symbol) {
-        this.variable = as3Object._symbol.variableName || '';
+        this.setVariable(as3Object._symbol.variableName || '');
+        this._html = as3Object._symbol.html;
       }
 
       this._initEventsHandlers();
     }
 
-    public get _alpha() {
-      return this._as3Object.alpha;
-    }
-
-    public set _alpha(value) {
-      this._as3Object.alpha = value;
-    }
-
-    public get antiAliasType() {
+    public getAntiAliasType(): string {
       return this._as3Object.antiAliasType;
     }
 
-    public set antiAliasType(value) {
+    public setAntiAliasType(value: string) {
+      value = alCoerceString(this.context, value);
       this._as3Object.antiAliasType = value;
     }
 
-    public get autoSize() {
+    public getAutoSize() {
       return this._as3Object.autoSize;
     }
 
-    public set autoSize(value: any) {
+    public setAutoSize(value: any) {
       // AVM1 treats |true| as "LEFT" and |false| as "NONE".
       if (value === true) {
         value = "left";
       } else if (value === false) {
         value = "none";
       }
+      value = alCoerceString(this.context, value);
       this._as3Object.autoSize = value;
     }
 
-    public get background() {
+    public getBackground(): boolean {
       return this._as3Object.background;
     }
 
-    public set background(value) {
+    public setBackground(value: boolean) {
+      value = alToBoolean(this.context, value);
       this._as3Object.background = value;
     }
 
-    public get backgroundColor() {
+    public getBackgroundColor(): number {
       return this._as3Object.backgroundColor;
     }
 
-    public set backgroundColor(value) {
+    public setBackgroundColor(value) {
+      value = alToInt32(this.context, value);
       this._as3Object.backgroundColor = value;
     }
 
-    public get border() {
+    public getBorder(): boolean {
       return this._as3Object.border;
     }
 
-    public set border(value) {
+    public setBorder(value: boolean) {
+      value = alToBoolean(this.context, value);
       this._as3Object.border = value;
     }
 
-    public get borderColor() {
+    public getBorderColor(): number {
       return this._as3Object.borderColor;
     }
 
-    public set borderColor(value) {
+    public setBorderColor(value: number) {
+      value = alToInt32(this.context, value);
       this._as3Object.borderColor = value;
     }
 
-    public get bottomScroll() {
+    public getBottomScroll(): number {
       return this._as3Object.bottomScrollV;
     }
 
-    public get condenseWhite() {
+    public getCondenseWhite(): boolean {
       return this._as3Object.condenseWhite;
     }
 
-    public set condenseWhite(value) {
+    public setCondenseWhite(value: boolean) {
+      value = alToBoolean(this.context, value);
       this._as3Object.condenseWhite = value;
     }
 
-    public get embedFonts() {
+    public getEmbedFonts(): boolean {
       return this._as3Object.embedFonts;
     }
 
-    public set embedFonts(value) {
+    public setEmbedFonts(value) {
+      value = alToBoolean(this.context, value);
       this._as3Object.embedFonts = value;
     }
 
     public getNewTextFormat() {
-      return this._as3Object.defaultTextFormat;
+      return AVM1TextFormat.createFromNative(this.context, this._as3Object.defaultTextFormat);
     }
 
-    public getTextFormat() {
-      return this._as3Object.getTextFormat;
+    public getTextFormat(beginIndex: number = -1, endIndex: number = -1) {
+      beginIndex = alToInteger(this.context, beginIndex);
+      endIndex = alToInteger(this.context, endIndex);
+      var as3TextFormat = this._as3Object.getTextFormat(beginIndex, endIndex);
+      return AVM1TextFormat.createFromNative(this.context, as3TextFormat);
     }
 
-    public get _height() {
-      return this._as3Object.height;
+    public getGridFitType(): string {
+      return this._as3Object.gridFitType;
     }
 
-    public set _height(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this._as3Object.height = value;
+    public setGridFitType(value: string) {
+      value = alCoerceString(this.context, value);
+      this._as3Object.gridFitType = value;
     }
 
-    public get _highquality() {
-      return 1;
-    }
-
-    public set _highquality(value) {
-    }
-
-    public get hscroll() {
+    public getHscroll(): number {
       return this._as3Object.scrollH;
     }
 
-    public set hscroll(value) {
+    public setHscroll(value: number) {
+      value = alCoerceNumber(this.context, value);
       this._as3Object.scrollH = value;
     }
 
-    public get html() {
-      throw 'Not implemented: get$_html';
+    public getHtml() {
+      return this._html;
     }
 
-    public set html(value) {
-      throw 'Not implemented: set$_html';
+    public setHtml(value) {
+      this._html = !!value;
+      // Flash doesn't update the displayed text at this point, but the return
+      // value of `TextField#htmlText` is as though `TextField#htmlText = TextField#text` had
+      // also been called. For now, we ignore that.
     }
 
-    public get htmlText() {
-      return this._as3Object.htmlText;
+    public getHtmlText(): string {
+      return this._html ? this._as3Object.htmlText : this._as3Object.text;
     }
 
-    public set htmlText(value) {
-      this._as3Object.htmlText = value;
+    public setHtmlText(value: string) {
+      // alToString turns `undefined` into an empty string, but we really do want "undefined" here.
+      value = value === undefined ? 'undefined' : alToString(this.context, value);
+      if (this._html) {
+        this._as3Object.htmlText = value;
+      } else {
+        this._as3Object.text = value;
+      }
     }
 
-    public get length() {
+    public getLength(): number {
       return this._as3Object.length;
     }
 
-    public get maxChars() {
+    public getMaxChars(): number  {
       return this._as3Object.maxChars;
     }
 
-    public set maxChars(value) {
+    public setMaxChars(value) {
+      value = alCoerceNumber(this.context, value);
       this._as3Object.maxChars = value;
     }
 
-    public get maxhscroll() {
+    public getMaxhscroll(): number {
       return this._as3Object.maxScrollH;
     }
 
-    public get maxscroll() {
+    public getMaxscroll(): number {
       return this._as3Object.maxScrollV;
     }
 
-    public get multiline() {
+    public getMultiline(): boolean {
       return this._as3Object.multiline;
     }
 
-    public set multiline(value) {
+    public setMultiline(value: boolean) {
+      value = alToBoolean(this.context, value);
       this._as3Object.multiline = value;
     }
 
-    public get _name() {
-      return this.as3Object._name;
-    }
-
-    public set _name(value) {
-      this.as3Object._name = value;
-    }
-
-    public get _parent() {
-      return this._as3Object.parent;
-    }
-
-    public set _parent(value) {
-      throw 'Not implemented: set$_parent';
-    }
-
-    public get password() {
+    public getPassword(): boolean {
       return this._as3Object.displayAsPassword;
     }
 
-    public set password(value) {
+    public setPassword(value: boolean) {
+      value = alToBoolean(this.context, value);
       this._as3Object.displayAsPassword = value;
     }
 
-    public get _quality() {
-      return 'HIGH';
-    }
-
-    public set _quality(value) {
-    }
-
-    public get _rotation() {
-      return this._as3Object.rotation;
-    }
-
-    public set _rotation(value) {
-      this._as3Object.rotation = value;
-    }
-
-    public get scroll() {
+    public getScroll(): number {
       return this._as3Object.scrollV;
     }
 
-    public set scroll(value) {
+    public setScroll(value: number) {
+      value = alCoerceNumber(this.context, value);
       this._as3Object.scrollV = value;
     }
 
-    public get selectable() {
+    public getSelectable(): boolean {
       return this._as3Object.selectable;
     }
 
-    public set selectable(value) {
+    public setSelectable(value: boolean) {
+      value = alToBoolean(this.context, value);
       this._as3Object.selectable = value;
     }
 
     public setNewTextFormat(value) {
-      this._as3Object.defaultTextFormat = value;
+      var as3TextFormat;
+      if (value instanceof AVM1TextFormat) {
+        as3TextFormat = (<AVM1TextFormat>value)._as3Object;
+      }
+      this._as3Object.defaultTextFormat = as3TextFormat;
     }
 
     public setTextFormat() {
-      this._as3Object.setTextFormat.apply(this._as3Object, arguments);
+      var beginIndex: number = -1, endIndex: number = -1, tf;
+      switch (arguments.length) {
+        case 0:
+          return; // invalid amount of arguments
+        case 1:
+          tf = arguments[0];
+          break;
+        case 2:
+          beginIndex = alToNumber(this.context, arguments[0]);
+          tf = arguments[1];
+          break;
+        default:
+          beginIndex = alToNumber(this.context, arguments[0]);
+          endIndex = alToNumber(this.context, arguments[1]);
+          tf = arguments[2];
+          break;
+      }
+      var as3TextFormat;
+      if (tf instanceof AVM1TextFormat) {
+        as3TextFormat = (<AVM1TextFormat>tf)._as3Object;
+      }
+      this._as3Object.setTextFormat(as3TextFormat, beginIndex, endIndex);
     }
 
-    public get _soundbuftime() {
-      throw 'Not implemented: get$_soundbuftime';
-    }
-
-    public set _soundbuftime(value) {
-      throw 'Not implemented: set$_soundbuftime';
-    }
-
-    public get tabEnabled() {
-      return this._as3Object.tabEnabled;
-    }
-
-    public set tabEnabled(value) {
-      this._as3Object.tabEnabled = value;
-    }
-
-    public get tabIndex() {
-      return this._as3Object.tabIndex;
-    }
-
-    public set tabIndex(value) {
-      this._as3Object.tabIndex = value;
-    }
-
-    public get _target() {
-      return AVM1Utils.getTarget(this);
-    }
-
-    public get text() {
+    public getText(): string {
       return this._as3Object.text;
     }
 
-    public set text(value) {
+    public setText(value: string) {
+      // alToString turns `undefined` into an empty string, but we really do want "undefined" here.
+      value = value === undefined ? 'undefined' : alToString(this.context, value);
       this._as3Object.text = value;
     }
 
-    public get textColor() {
+    public getTextColor(): number {
       return this._as3Object.textColor;
     }
 
-    public set textColor(value) {
+    public setTextColor(value: number) {
+      value = alToInt32(this.context, value);
       this._as3Object.textColor = value;
     }
 
-    public get textHeight() {
+    public getTextHeight(): number {
       return this._as3Object.textHeight;
     }
 
-    public set textHeight(value) {
-      throw 'Not supported: set$textHeight';
+    public setTextHeight(value: number) {
+      Debug.notImplemented('AVM1TextField.setTextHeight');
     }
 
-    public get textWidth() {
+    public getTextWidth(): number {
       return this._as3Object.textWidth;
     }
 
-    public set textWidth(value) {
-      throw 'Not supported: set$textWidth';
+    public setTextWidth(value) {
+      Debug.notImplemented('AVM1TextField.setTextWidth');
     }
 
-    public get type() {
+    public getType(): string {
       return this._as3Object.type;
     }
 
-    public set type(value) {
+    public setType(value: string) {
+      value = alCoerceString(this.context, value);
       this._as3Object.type = value;
     }
 
-    public get _url() {
-      return this._as3Object.loaderInfo.url;
-    }
-
-    get variable():any {
+    public getVariable(): string {
       return this._variable;
     }
 
-    set variable(name:any) {
+    public setVariable(name: string) {
+      name = alCoerceString(this.context, name);
       if (name === this._variable) {
         return;
       }
-      var instance = this.as3Object;
+
+      var instance = this._as3Object;
       if (this._exitFrameHandler && !name) {
         instance.removeEventListener('exitFrame', this._exitFrameHandler);
         this._exitFrameHandler = null;
@@ -370,7 +349,7 @@ module Shumway.AVM1.Lib {
     }
 
     private _onAS3ObjectExitFrame() {
-      this._syncTextFieldValue(this.as3Object, this._variable);
+      this._syncTextFieldValue(this._as3Object, this._variable);
     }
 
     private _syncTextFieldValue(instance, name) {
@@ -402,6 +381,10 @@ module Shumway.AVM1.Lib {
       } else {
         clip = getAVM1Object(instance._parent, this.context);
       }
+      if (!clip) { // REDUX
+        avm1ContextUtils.warn('Clip ' + name + ' was not found');
+        return;
+      }
       // Sets default values as defined in SWF if this property was not found.
       if (!avm1ContextUtils.hasProperty(clip, name)) {
         avm1ContextUtils.setProperty(clip, name, instance.text);
@@ -410,83 +393,13 @@ module Shumway.AVM1.Lib {
       instance.text = '' + avm1ContextUtils.getProperty(clip, name);
     }
 
-    public get _visible() {
-      return this._as3Object.visible;
-    }
-
-    public set _visible(value) {
-      this._as3Object.visible = +value !== 0;
-    }
-
-    public get _width() {
-      return this._as3Object.width;
-    }
-
-    public set _width(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this._as3Object.width = value;
-    }
-
-    public get wordWrap() {
+    public getWordWrap(): boolean {
       return this._as3Object.wordWrap;
     }
 
-    public set wordWrap(value) {
+    public setWordWrap(value: boolean) {
+      value = alToBoolean(this.context, value);
       this._as3Object.wordWrap = value;
-    }
-
-    public get _x() {
-      return this._as3Object.x;
-    }
-
-    public set _x(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this._as3Object.x = value;
-    }
-
-    public get _xmouse() {
-      return this._as3Object.mouseX;
-    }
-
-    public get _xscale() {
-      return this._as3Object.scaleX;
-    }
-
-    public set _xscale(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this._as3Object.scaleX = value;
-    }
-
-    public get _y() {
-      return this._as3Object.y;
-    }
-
-    public set _y(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this._as3Object.y = value;
-    }
-
-    public get _ymouse() {
-      return this._as3Object.mouseY;
-    }
-
-    public get _yscale() {
-      return this._as3Object.scaleY;
-    }
-
-    public set _yscale(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this._as3Object.scaleY = value;
     }
 
 

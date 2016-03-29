@@ -19,8 +19,7 @@
 
 ///<reference path='parser/references.ts' />
 ///<reference path='module.ts'/>
-///<reference path='options.ts'/>
-///<reference path='jpeg.ts' />
+///<reference path='settings.ts'/>
 ///<reference path='stream.ts' />
 ///<reference path='mp3decodersession.ts' />
 ///<reference path='SWFFile.ts' />

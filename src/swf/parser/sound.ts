@@ -67,7 +67,7 @@ module Shumway.SWF.Parser {
     };
   }
 
-  export function defineSound(tag) {
+  export function defineSound(tag: SoundTag) {
     var channels = tag.soundType == SOUND_TYPE_STEREO ? 2 : 1;
     var samplesCount = tag.samplesCount;
     var sampleRate = SOUND_RATES[tag.soundRate];
@@ -252,7 +252,7 @@ module Shumway.SWF.Parser {
           stream.decode = SwfSoundStream_decode_MP3;
           break;
         default:
-          Debug.warning('Unsupported audio format: ' + tag.soundFormat);
+          Debug.warning('Unsupported audio stream format: ' + tag.streamCompression);
           return null;
       }
 

@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 // Class: Texture
-module Shumway.AVM2.AS.flash.display3D.textures {
+module Shumway.AVMX.AS.flash.display3D.textures {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class Texture extends flash.display3D.textures.TextureBase {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -33,26 +29,20 @@ module Shumway.AVM2.AS.flash.display3D.textures {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.display3D.textures.Texture");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
+
     uploadFromBitmapData(source: flash.display.BitmapData, miplevel: number /*uint*/ = 0): void {
       source = source; miplevel = miplevel >>> 0;
-      notImplemented("public flash.display3D.textures.Texture::uploadFromBitmapData"); return;
+      release || notImplemented("public flash.display3D.textures.Texture::uploadFromBitmapData"); return;
     }
     uploadFromByteArray(data: flash.utils.ByteArray, byteArrayOffset: number /*uint*/, miplevel: number /*uint*/ = 0): void {
       data = data; byteArrayOffset = byteArrayOffset >>> 0; miplevel = miplevel >>> 0;
-      notImplemented("public flash.display3D.textures.Texture::uploadFromByteArray"); return;
+      release || notImplemented("public flash.display3D.textures.Texture::uploadFromByteArray"); return;
     }
     uploadCompressedTextureFromByteArray(data: flash.utils.ByteArray, byteArrayOffset: number /*uint*/, async: boolean = false): void {
       data = data; byteArrayOffset = byteArrayOffset >>> 0; async = !!async;
-      notImplemented("public flash.display3D.textures.Texture::uploadCompressedTextureFromByteArray"); return;
+      release || notImplemented("public flash.display3D.textures.Texture::uploadCompressedTextureFromByteArray"); return;
     }
   }
 }

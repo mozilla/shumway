@@ -17,20 +17,9 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
   import assert = Shumway.Debug.assert;
-
-  import Multiname = Shumway.AVM2.ABC.Multiname;
-  import resolveMultinameProperty = Shumway.AVM2.Runtime.resolveMultinameProperty;
-
-  var _asGetProperty = Object.prototype.asGetProperty;
-  var _asSetProperty = Object.prototype.asSetProperty;
-  var _asCallProperty = Object.prototype.asCallProperty;
-  var _asHasProperty = Object.prototype.asHasProperty;
-  var _asHasOwnProperty = Object.prototype.asHasOwnProperty;
-  var _asHasTraitProperty = Object.prototype.asHasTraitProperty;
-  var _asDeleteProperty = Object.prototype.asDeleteProperty;
-  var _asGetEnumerableKeys = Object.prototype.asGetEnumerableKeys;
+  import LookupChildOptions = Shumway.AVMX.AS.flash.display.LookupChildOptions;
 
   class AVM1MovieClipButtonModeEvent extends AVM1EventHandler {
     constructor(public propertyName: string,
@@ -41,107 +30,119 @@ module Shumway.AVM1.Lib {
 
     public onBind(target: IAVM1SymbolBase): void {
       var mc: AVM1MovieClip = <any>target;
-      mc.as3Object.buttonMode = true;
+      mc._as3Object.buttonMode = true;
     }
   }
 
+  function convertAS3RectangeToBounds(as3Rectange: flash.geom.Rectangle): AVM1Object {
+    var result = alNewObject(this.context);
+    result.alPut('xMin', as3Rectange.axGetPublicProperty('left'));
+    result.alPut('yMin', as3Rectange.axGetPublicProperty('top'));
+    result.alPut('xMax', as3Rectange.axGetPublicProperty('right'));
+    result.alPut('yMax', as3Rectange.axGetPublicProperty('bottom'));
+    return result;
+  }
+
   export class AVM1MovieClip extends AVM1SymbolBase<flash.display.MovieClip> {
-    public static createAVM1Class(): typeof AVM1MovieClip {
-      return wrapAVM1Class(AVM1MovieClip,
+    public static createAVM1Class(context: AVM1Context): AVM1Object {
+      return wrapAVM1NativeClass(context, true, AVM1MovieClip,
         [],
-        ['_alpha', 'attachAudio', 'attachBitmap', 'attachMovie',
-          'beginFill', 'beginBitmapFill', 'beginGradientFill', 'blendMode',
-          'cacheAsBitmap', '_callFrame', 'clear', 'createEmptyMovieClip',
-          'createTextField', '_currentframe', 'curveTo', '_droptarget',
-          'duplicateMovieClip', 'enabled', 'endFill', 'filters', '_framesloaded',
-          'focusEnabled', '_focusrect', 'forceSmothing', 'getBounds',
+        ['$version#', '_alpha#', 'attachAudio', 'attachBitmap', 'attachMovie',
+          'beginFill', 'beginBitmapFill', 'beginGradientFill', 'blendMode#',
+          'cacheAsBitmap#', '_callFrame', 'clear', 'createEmptyMovieClip',
+          'createTextField', '_currentframe#', 'curveTo', '_droptarget#',
+          'duplicateMovieClip', 'enabled#', 'endFill', 'filters#', '_framesloaded#',
+          '_focusrect#', 'forceSmoothing#', 'getBounds',
           'getBytesLoaded', 'getBytesTotal', 'getDepth', 'getInstanceAtDepth',
           'getNextHighestDepth', 'getRect', 'getSWFVersion', 'getTextSnapshot',
-          'getURL', 'globalToLocal', 'gotoAndPlay', 'gotoAndStop', '_height',
-          '_highquality', 'hitArea', 'hitTest', 'lineGradientStyle', 'listStyle',
-          'lineTo', 'loadMovie', 'loadVariables', 'localToGlobal', '_lockroot',
-          'menu', 'moveTo', '_name', 'nextFrame', 'opaqueBackground', '_parent',
-          'play', 'prevFrame', '_quality', 'removeMovieClip', '_rotation',
-          'scale9Grid', 'scrollRect', 'setMask', '_soundbuftime', 'startDrag',
-          'stop', 'stopDrag', 'swapDepths', 'tabChildren', 'tabEnabled', 'tabIndex',
-          '_target', '_totalframes', 'trackAsMenu', 'transform', 'toString',
-          'unloadMovie', '_url', 'useHandCursor', '_visible', '_width',
-          '_x', '_xmouse', '_xscale', '_y', '_ymouse', '_yscale']);
+          'getURL', 'globalToLocal', 'gotoAndPlay', 'gotoAndStop', '_height#',
+          '_highquality#', 'hitArea#', 'hitTest', 'lineGradientStyle', 'lineStyle',
+          'lineTo', 'loadMovie', 'loadVariables', 'localToGlobal', '_lockroot#',
+          'menu#', 'moveTo', '_name#', 'nextFrame', 'opaqueBackground#', '_parent#',
+          'play', 'prevFrame', '_quality#', 'removeMovieClip', '_rotation#',
+          'scale9Grid#', 'scrollRect#', 'setMask', '_soundbuftime#', 'startDrag',
+          'stop', 'stopDrag', 'swapDepths', 'tabChildren#', 'tabEnabled#', 'tabIndex#',
+          '_target#', '_totalframes#', 'trackAsMenu#', 'transform#', 'toString',
+          'unloadMovie', '_url#', 'useHandCursor#', '_visible#', '_width#',
+          '_x#', '_xmouse#', '_xscale#', '_y#', '_ymouse#', '_yscale#']);
     }
 
-    private _boundExecuteFrameScripts: () => void;
-    private _frameScripts: AVM1.AVM1ActionsData[][];
-
-    constructor() {
-      super();
-      // TODO fail or do nothing?
-    }
+    private _hitArea: any;
+    private _lockroot: boolean;
 
     private get graphics() : flash.display.Graphics {
-      return this.as3Object.graphics;
+      return this._as3Object.graphics;
     }
 
     public initAVM1SymbolInstance(context: AVM1Context, as3Object: flash.display.MovieClip) {
+      this._childrenByName = Object.create(null);
       super.initAVM1SymbolInstance(context, as3Object);
-
-      this._frameScripts = null;
-      this._boundExecuteFrameScripts = null;
-
       this._initEventsHandlers();
     }
 
-    public __lookupChild(id: string) {
-      if (id == '.') {
-        return this;
-      } else if (id == '..') {
-        return getAVM1Object(this.as3Object.parent, this.context);
-      } else {
-        return getAVM1Object(this._lookupChildByName(id), this.context);
-      }
+    _lookupChildByName(name: string): AVM1Object {
+      release || assert(alIsName(this.context, name));
+      return this._childrenByName[name];
     }
 
-    private _lookupChildByName(name: string): flash.display.DisplayObject {
-      name = asCoerceString(name);
-      return this.as3Object._lookupChildByName(name);
+    private _lookupChildInAS3Object(name: string): AVM1Object {
+      var lookupOptions = LookupChildOptions.INCLUDE_NON_INITIALIZED;
+      if (!this.context.isPropertyCaseSensitive) {
+        lookupOptions |= LookupChildOptions.IGNORE_CASE;
+      }
+      var as3Child = this._as3Object._lookupChildByName(name, lookupOptions);
+      return getAVM1Object(as3Child, this.context);
     }
 
     public get __targetPath() {
-      var target = this._target;
-      var prefix = '_level0'; // TODO use needed level number here
+      var target = this.get_target();
+      var as3Root = this._as3Object.root;
+      release || Debug.assert(as3Root);
+      var level = this.context.levelsContainer._getLevelForRoot(as3Root);
+      release || Debug.assert(level >= 0);
+      var prefix = '_level' + level;
       return target != '/' ? prefix + target.replace(/\//g, '.') : prefix;
     }
 
-    public get _alpha() {
-      return this.as3Object.alpha;
+    public attachAudio(id: any): void {
+      if (Shumway.isNullOrUndefined(id)) {
+        return; // ignoring all undefined objects, probably nothing to attach
+      }
+      if (id === false) {
+        return; // TODO stop playing all attached audio source (when implemented).
+      }
+      // TODO implement NetStream and Microphone objects to make this work.
+      Debug.notImplemented('AVM1MovieClip.attachAudio');
     }
 
-    public set _alpha(value) {
-      this.as3Object.alpha = value;
+    public attachBitmap(bmp:AVM1BitmapData, depth:number, pixelSnapping:String = 'auto', smoothing:Boolean = false): void {
+      pixelSnapping = alCoerceString(this.context, pixelSnapping);
+      smoothing = alToBoolean(this.context, smoothing);
+      var as3BitmapData = bmp.as3BitmapData;
+      var bitmap: flash.display.Bitmap = this.context.sec.flash.display.Bitmap.axClass.axConstruct([as3BitmapData, pixelSnapping, smoothing]);
+      this._insertChildAtDepth(bitmap, depth);
     }
 
-    public attachAudio(id) {
-      throw 'Not implemented: attachAudio';
-    }
+    public _constructMovieClipSymbol(symbolId:string, name:string): flash.display.MovieClip {
+      symbolId = alToString(this.context, symbolId);
+      name = alToString(this.context, name);
 
-//    public attachBitmap(bmp:AVM1BitmapData, depth:number, pixelSnapping:String = 'auto', smoothing:Boolean = false):void {
-//      var bitmap:flash.display.Bitmap = construct(flash.display.Bitmap, [bmp, pixelSnapping, smoothing]);
-//      this._insertChildAtDepth(bitmap, depth);
-//    }
-
-    public _constructMovieClipSymbol(symbolId:string, name:string):flash.display.MovieClip {
-      var symbol = AVM1Context.instance.getAsset(symbolId);
+      var symbol = this.context.getAsset(symbolId);
       if (!symbol) {
         return undefined;
       }
 
       var props: flash.display.SpriteSymbol = Object.create(symbol.symbolProps);
       props.avm1Name = name;
-      props.avm1SymbolClass = symbol.theClass;
 
-      var mc:flash.display.MovieClip = flash.display.MovieClip.initializeFrom(props);
-      flash.display.MovieClip.instanceConstructorNoInitialize.call(mc);
+      var mc:flash.display.MovieClip;
+      mc = Shumway.AVMX.AS.constructClassFromSymbol(props, this.context.sec.flash.display.MovieClip.axClass);
 
       return mc;
+    }
+
+    public get$version(): string {
+      return this.context.sec.flash.system.Capabilities.version;
     }
 
     public attachMovie(symbolId, name, depth, initObject) {
@@ -150,76 +151,134 @@ module Shumway.AVM1.Lib {
         return undefined;
       }
 
-      var as2mc = this._insertChildAtDepth(mc, depth);
-
-      for (var i in initObject) {
-        as2mc[i] = initObject[i];
+      var as2mc = <AVM1MovieClip>this._insertChildAtDepth(mc, depth);
+      if (initObject) {
+        as2mc._init(initObject);
       }
 
       return as2mc;
     }
 
-    public beginFill(color, alpha) {
-      this.graphics.beginFill(color, alpha);
+    public beginFill(color: number, alpha: number = 100): void {
+      color = alToInt32(this.context, color);
+      alpha = alToNumber(this.context, alpha);
+      this.graphics.beginFill(color, alpha / 100.0);
     }
 
-    public beginBitmapFill(bmp, matrix, repeat, smoothing) {
-      if (!(bmp instanceof flash.display.BitmapData))
-      {
-        return;
+    public beginBitmapFill(bmp: AVM1BitmapData, matrix: AVM1Object = null,
+                           repeat: boolean = false, smoothing: boolean = false): void {
+      if (!alInstanceOf(this.context, bmp, this.context.globals.BitmapData)) {
+        return; // skipping operation if first parameter is not a BitmapData.
       }
+      var bmpNative = toAS3BitmapData(bmp);
+      var matrixNative = Shumway.isNullOrUndefined(matrix) ? null : toAS3Matrix(matrix);
+      repeat = alToBoolean(this.context, repeat);
+      smoothing = alToBoolean(this.context, smoothing);
 
-      this.graphics.beginBitmapFill(bmp, matrix, repeat, smoothing);
+      this.graphics.beginBitmapFill(bmpNative, matrixNative, repeat, smoothing);
     }
 
-    public beginGradientFill(fillType, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPointRatio) {
-      this.graphics.beginGradientFill(fillType, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPointRatio);
-    }
-
-    public get blendMode() {
-      return this.as3Object.blendMode;
-    }
-
-    public set blendMode(value) {
-      this.as3Object.blendMode = value;
-    }
-
-    public get cacheAsBitmap() {
-      return this.as3Object.cacheAsBitmap;
-    }
-
-    public set cacheAsBitmap(value) {
-      this.as3Object.cacheAsBitmap = value;
+    public beginGradientFill(fillType: string, colors: AVM1Object, alphas: AVM1Object,
+                             ratios: AVM1Object, matrix: AVM1Object,
+                             spreadMethod: string = 'pad', interpolationMethod: string = 'rgb',
+                             focalPointRatio: number = 0.0): void {
+      var context = this.context, sec = context.sec;
+      fillType = alToString(this.context, fillType);
+      var colorsNative = sec.createArray(
+        Natives.AVM1ArrayNative.mapToJSArray(colors, (item) => alToInt32(this.context, item)));
+      var alphasNative = sec.createArray(
+        Natives.AVM1ArrayNative.mapToJSArray(alphas, (item) => alToNumber(this.context, item) / 100.0));
+      var ratiosNative = sec.createArray(
+        Natives.AVM1ArrayNative.mapToJSArray(ratios, (item) => alToNumber(this.context, item)));
+      var matrixNative = null;
+      if (Shumway.isNullOrUndefined(matrix)) {
+        Debug.somewhatImplemented('AVM1MovieClip.beginGradientFill');
+      }
+      spreadMethod = alToString(this.context, spreadMethod);
+      interpolationMethod = alToString(this.context, interpolationMethod);
+      focalPointRatio = alToNumber(this.context, focalPointRatio);
+      this.graphics.beginGradientFill(fillType, colorsNative, alphasNative, ratiosNative, matrixNative,
+                                      spreadMethod, interpolationMethod, focalPointRatio);
     }
 
     public _callFrame(frame:any):any {
-      var nativeAS3Object = <any> this.as3Object;
+      var nativeAS3Object = this._as3Object;
       nativeAS3Object._callFrame(frame);
     }
 
-    public clear() {
+    public clear(): void {
       this.graphics.clear();
     }
 
-    private _insertChildAtDepth<T extends flash.display.DisplayObject>(mc: T, depth:number): AVM1SymbolBase<T> {
-      var nativeAS3Object = this.as3Object;
-      nativeAS3Object.addTimelineObjectAtDepth(mc, Math.min(nativeAS3Object.numChildren, depth));
+    /**
+     * This map stores the AVM1MovieClip's children keyed by their names. It's updated by all
+     * operations that can cause different results for name-based lookups. these are
+     * addition/removal of children and swapDepths.
+     *
+     * Using this map instead of always relaying lookups to the AVM2 MovieClip substantially
+     * reduces the time spent in looking up children. In some cases by two orders of magnitude.
+     */
+    private _childrenByName: Map<string, AVM1MovieClip>;
+
+    private _insertChildAtDepth<T extends flash.display.DisplayObject>(mc: T, depth:number): AVM1Object {
+      var oldChild = this.getInstanceAtDepth(depth);
+      if (oldChild) {
+        var oldAS3Object = oldChild._as3Object;
+        oldAS3Object.parent.removeChild(oldAS3Object);
+      }
+      var symbolDepth = alCoerceNumber(this.context, depth) + DEPTH_OFFSET;
+      var nativeAS3Object = this._as3Object;
+      nativeAS3Object.addTimelineObjectAtDepth(mc, symbolDepth);
       // Bitmaps aren't reflected in AVM1, so the rest here doesn't apply.
-      if (flash.display.Bitmap.isType(mc)) {
+      if (this.context.sec.flash.display.Bitmap.axIsType(mc)) {
         return null;
       }
-      var as2mc = getAVM1Object(mc, this.context);
-      return as2mc;
+      return getAVM1Object(mc, this.context);
+    }
+
+    public _updateChildName(child: AVM1MovieClip, oldName: string, newName: string) {
+      oldName && this._removeChildName(child, oldName);
+      newName && this._addChildName(child, newName);
+    }
+    _removeChildName(child: IAVM1SymbolBase, name: string) {
+      release || assert(name);
+      if (!this.context.isPropertyCaseSensitive) {
+        name = name.toLowerCase();
+      }
+      release || assert(this._childrenByName[name]);
+      if (this._childrenByName[name] !== child) {
+        return;
+      }
+      var newChildForName = this._lookupChildInAS3Object(name);
+      if (newChildForName) {
+        this._childrenByName[name] = newChildForName;
+      } else {
+        delete this._childrenByName[name];
+      }
+    }
+
+    _addChildName(child: IAVM1SymbolBase, name: string) {
+      release || assert(name);
+      if (!this.context.isPropertyCaseSensitive) {
+        name = name.toLowerCase();
+      }
+      release || assert(this._childrenByName[name] !== child);
+      var currentChild = this._childrenByName[name];
+      if (!currentChild || currentChild.getDepth() > child.getDepth()) {
+        this._childrenByName[name] = child;
+      }
     }
 
     public createEmptyMovieClip(name, depth): AVM1MovieClip {
-      var mc: flash.display.MovieClip = new flash.display.MovieClip();
+      name = alToString(this.context, name);
+      var mc: flash.display.MovieClip = new this.context.sec.flash.display.MovieClip();
       mc.name = name;
       return <AVM1MovieClip>this._insertChildAtDepth(mc, depth);
     }
 
     public createTextField(name, depth, x, y, width, height): AVM1TextField {
-      var text: flash.text.TextField = new flash.text.TextField();
+      name = alToString(this.context, name);
+      var text: flash.text.TextField = new this.context.sec.flash.text.TextField();
       text.name = name;
       text.x = x;
       text.y = y;
@@ -228,666 +287,522 @@ module Shumway.AVM1.Lib {
       return <AVM1TextField>this._insertChildAtDepth(text, depth);
     }
 
-    public get _currentframe() {
-      return this.as3Object.currentFrame;
+    public get_currentframe() {
+      return this._as3Object.currentFrame;
     }
 
-    public curveTo(controlX, controlY, anchorX, anchorY) {
+    public curveTo(controlX: number, controlY: number, anchorX: number, anchorY: number): void {
+      controlX = alToNumber(this.context, controlX);
+      controlY = alToNumber(this.context, controlY);
+      anchorX = alToNumber(this.context, anchorX);
+      anchorY = alToNumber(this.context, anchorY);
       this.graphics.curveTo(controlX, controlY, anchorX, anchorY);
     }
 
-    public get _droptarget() {
-      return this.as3Object.dropTarget;
-    }
-
-    private  _duplicate(name:any, depth:any, initObject:any):any {
-      var nativeAS3Object = <any> this.as3Object;
-      nativeAS3Object._duplicate(name, depth, initObject);
+    public get_droptarget() {
+      return this._as3Object.dropTarget;
     }
 
     public duplicateMovieClip(name, depth, initObject): AVM1MovieClip {
-      var mc = this._duplicate(name, +depth, initObject);
-      return getAVM1Object(mc, this.context);
+      name = alToString(this.context, name);
+      var parent = this.context.resolveTarget(null);
+      var nativeAS3Object = this._as3Object;
+      var mc: flash.display.MovieClip;
+      if (nativeAS3Object._symbol) {
+        mc = Shumway.AVMX.AS.constructClassFromSymbol(nativeAS3Object._symbol, nativeAS3Object.axClass);
+      } else {
+        mc = new this.context.sec.flash.display.MovieClip();
+      }
+      mc.name = name;
+
+      // These are all properties that get copied over when duplicating a movie clip.
+      // Examined by testing.
+      mc.x = nativeAS3Object.x;
+      mc.scaleX = nativeAS3Object.scaleX;
+      mc.y = nativeAS3Object.y;
+      mc.scaleY = nativeAS3Object.scaleY;
+      mc.rotation = nativeAS3Object.rotation;
+      mc.alpha = nativeAS3Object.alpha;
+      mc.blendMode = nativeAS3Object.blendMode;
+      mc.cacheAsBitmap = nativeAS3Object.cacheAsBitmap;
+      mc.opaqueBackground = nativeAS3Object.opaqueBackground;
+      mc.tabChildren = nativeAS3Object.tabChildren;
+      // Not supported yet: _quality, _highquality, _soundbuftime.
+
+      mc.graphics.copyFrom(nativeAS3Object.graphics);
+
+      // TODO: Do event listeners get copied?
+
+      var as2mc = <AVM1MovieClip>parent._insertChildAtDepth(mc, depth);
+      if (initObject) {
+        as2mc._init(initObject);
+      }
+
+      return as2mc;
     }
 
-    public get enabled() {
-      return this.as3Object.enabled;
+    public getEnabled() {
+      return getAS3ObjectOrTemplate(this).enabled;
     }
 
-    public set enabled(value) {
-      this.as3Object.enabled = value;
+    public setEnabled(value) {
+      getAS3ObjectOrTemplate(this).enabled = value;
     }
 
-    public endFill() {
+    public endFill(): void {
       this.graphics.endFill();
     }
 
-    public get filters() {
-      throw 'Not implemented: get$filters';
+    public getForceSmoothing(): boolean {
+      Debug.somewhatImplemented('AVM1MovieClip.getForceSmoothing');
+      return false;
     }
 
-    public set filters(value) {
-      throw 'Not implemented: set$filters';
+    public setForceSmoothing(value: boolean) {
+      value = alToBoolean(this.context, value);
+      Debug.somewhatImplemented('AVM1MovieClip.setForceSmoothing');
     }
 
-    public get focusEnabled() {
-      throw 'Not implemented: get$focusEnabled';
+    public get_framesloaded() {
+      return this._as3Object.framesLoaded;
     }
 
-    public set focusEnabled(value) {
-      throw 'Not implemented: set$focusEnabled';
-    }
-
-    public get _focusrect() {
-      throw 'Not implemented: get$_focusrect';
-    }
-
-    public set _focusrect(value) {
-      throw 'Not implemented: set$_focusrect';
-    }
-
-    public get forceSmoothing() {
-      throw 'Not implemented: get$forceSmoothing';
-    }
-
-    public set forceSmoothing(value) {
-      throw 'Not implemented: set$forceSmoothing';
-    }
-
-    public get _framesloaded() {
-      return this.as3Object.framesLoaded;
-    }
-
-    public getBounds(bounds) {
-      var obj = bounds.as3Object;
+    public getBounds(bounds): AVM1Object {
+      var obj = <flash.display.InteractiveObject>getAS3Object(bounds);
       if (!obj) {
-        throw 'Unsupported bounds type';
+        return undefined;
       }
-      return this.as3Object.getBounds(obj);
+      return convertAS3RectangeToBounds(this._as3Object.getBounds(obj));
     }
 
     public getBytesLoaded(): number {
-      var loaderInfo = this.as3Object.loaderInfo;
+      var loaderInfo = this._as3Object.loaderInfo;
       return loaderInfo.bytesLoaded;
     }
 
     public getBytesTotal() {
-      var loaderInfo = this.as3Object.loaderInfo;
+      var loaderInfo = this._as3Object.loaderInfo;
       return loaderInfo.bytesTotal;
     }
 
-    public getDepth() {
-      return this.as3Object._depth;
-    }
-
     public getInstanceAtDepth(depth: number): AVM1MovieClip {
-      var nativeObject = this.as3Object;
+      var symbolDepth = alCoerceNumber(this.context, depth) + DEPTH_OFFSET;
+      var nativeObject = this._as3Object;
+      var lookupChildOptions = LookupChildOptions.INCLUDE_NON_INITIALIZED;
       for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
-        var child = nativeObject._lookupChildByIndex(i);
+        var child = nativeObject._lookupChildByIndex(i, lookupChildOptions);
         // child is null if it hasn't been constructed yet. This can happen in InitActionBlocks.
-        if (child && child._depth === depth) {
+        if (child && child._depth === symbolDepth) {
           // Somewhat absurdly, this method returns the mc if a bitmap is at the given depth.
-          if (flash.display.Bitmap.isType(child)) {
+          if (this.context.sec.flash.display.Bitmap.axIsType(child)) {
             return this;
           }
-          return getAVM1Object(child, this.context);
+          return <AVM1MovieClip>getAVM1Object(child, this.context);
         }
-      }
-      return null;
-    }
-
-    public getNextHighestDepth(): number {
-      var nativeObject = this.as3Object;
-      var maxDepth = 0;
-      for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
-        var child = nativeObject._lookupChildByIndex(i);
-        if (child._depth > maxDepth) {
-          maxDepth = child._depth;
-        }
-      }
-      return maxDepth + 1;
-    }
-
-    public getRect(bounds) {
-      throw 'Not implemented: getRect';
-    }
-
-    public getSWFVersion() {
-      var loaderInfo = this.as3Object.loaderInfo;
-      return loaderInfo.swfVersion;
-    }
-
-    public getTextSnapshot() {
-      throw 'Not implemented: getTextSnapshot';
-    }
-
-    public getURL(url, window, method) {
-      var request = new flash.net.URLRequest(url);
-      if (method) {
-        request.method = method;
-      }
-      Shumway.AVM2.AS.FlashNetScript_navigateToURL(request, window);
-    }
-
-    public globalToLocal(pt) {
-      var tmp: flash.geom.Point = this.as3Object.globalToLocal(
-        new flash.geom.Point(pt.asGetPublicProperty('x'), pt.asGetPublicProperty('y')));
-      pt.asSetPublicProperty('x', tmp.x);
-      pt.asSetPublicProperty('y', tmp.y);
-    }
-
-    public gotoAndPlay(frame) {
-      return this.as3Object.gotoAndPlay(frame);
-    }
-
-    public gotoAndStop(frame) {
-      return this.as3Object.gotoAndStop(frame);
-    }
-
-    public get _height() {
-      return this.as3Object.height;
-    }
-
-    public set _height(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this.as3Object.height = value;
-    }
-
-    public get _highquality() {
-      return 1;
-    }
-
-    public set _highquality(value) {
-    }
-
-    public get hitArea() {
-      throw 'Not implemented: get$hitArea';
-    }
-
-    public set hitArea(value) {
-      throw 'Not implemented: set$hitArea';
-    }
-
-    public hitTest(x, y, shapeFlag) {
-      if (x instanceof AVM1MovieClip) {
-        return this.as3Object.hitTestObject((<AVM1MovieClip>x).as3Object);
-      } else {
-        return this.as3Object.hitTestPoint(x, y, shapeFlag);
-      }
-    }
-
-    public lineGradientStyle(fillType, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPointRatio) {
-      this.graphics.lineGradientStyle(fillType, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPointRatio);
-    }
-
-    public lineStyle(thickness, rgb, alpha, pixelHinting, noScale, capsStyle, jointStyle, miterLimit) {
-      this.graphics.lineStyle(thickness, rgb, alpha, pixelHinting, noScale, capsStyle, jointStyle, miterLimit);
-    }
-
-    public lineTo(x, y) {
-      this.graphics.lineTo(x, y);
-    }
-
-    public loadMovie(url: string, method: string) {
-      var loader: flash.display.Loader = new flash.display.Loader();
-      var request: flash.net.URLRequest = new flash.net.URLRequest(url);
-      if (method) {
-        request.method = method;
-      }
-      loader.load(request);
-      function completeHandler(event: flash.events.Event):void {
-        loader.removeEventListener(flash.events.Event.COMPLETE, completeHandler);
-        var parent: flash.display.MovieClip = this.as3Object.parent;
-        var depth = parent.getChildIndex(this.as3Object);
-        parent.removeChild(this.as3Object);
-        parent.addChildAt(loader.content, depth);
-      }
-
-      loader.addEventListener(flash.events.Event.COMPLETE, completeHandler);
-    }
-
-    public loadVariables(url: string, method?: string) {
-      this.context.globals._loadVariables(this, url, method);
-    }
-
-    public localToGlobal(pt) {
-      var tmp: flash.geom.Point = this.as3Object.localToGlobal(
-        new flash.geom.Point(pt.asGetPublicProperty('x'), pt.asGetPublicProperty('y')));
-      pt.asSetPublicProperty('x', tmp.x);
-      pt.asSetPublicProperty('y', tmp.y);
-    }
-
-    public get _lockroot() {
-      throw 'Not implemented: get$_lockroot';
-    }
-
-    public set _lockroot(value) {
-      throw 'Not implemented: set$_lockroot';
-    }
-
-    public get menu() {
-      return this.as3Object.contextMenu;
-    }
-
-    public set menu(value) {
-      this.as3Object.contextMenu = value;
-    }
-
-    public moveTo(x, y) {
-      this.graphics.moveTo(x, y);
-    }
-
-    public get _name() {
-      return this.as3Object.name;
-    }
-
-    public set _name(value) {
-      this.as3Object.name = value;
-    }
-
-    public nextFrame() {
-      this.as3Object.nextFrame();
-    }
-
-    public nextScene() {
-      this.as3Object.nextScene();
-    }
-
-    public get opaqueBackground() {
-      return this.as3Object.opaqueBackground;
-    }
-
-    public set opaqueBackground(value) {
-      this.as3Object.opaqueBackground = value;
-    }
-
-    public get _parent(): AVM1MovieClip {
-      var parent = getAVM1Object(this.as3Object.parent, this.context);
-      // In AVM1, the _parent property is `undefined`, not `null` if the element has no parent.
-      return parent || undefined;
-    }
-
-    public set _parent(value) {
-      throw 'Not implemented: set$_parent';
-    }
-
-    public play() {
-      this.as3Object.play();
-    }
-
-    public prevFrame() {
-      this.as3Object.prevFrame();
-    }
-
-    public prevScene() {
-      this.as3Object.prevScene();
-    }
-
-    public get _quality() {
-      return 'HIGH';
-    }
-
-    public set _quality(value) {
-    }
-
-    public removeMovieClip() {
-      var parent = this._parent.as3Object;
-      parent.removeChild(this.as3Object);
-    }
-
-    public get _rotation() {
-      return this.as3Object.rotation;
-    }
-
-    public set _rotation(value) {
-      this.as3Object.rotation = value;
-    }
-
-    public get scale9Grid() {
-      throw 'Not implemented: get$scale9Grid';
-    }
-
-    public set scale9Grid(value) {
-      throw 'Not implemented: set$scale9Grid';
-    }
-
-    public get scrollRect() {
-      throw 'Not implemented: get$scrollRect';
-    }
-
-    public set scrollRect(value) {
-      throw 'Not implemented: set$scrollRect';
-    }
-
-    public setMask(mc:Object) {
-      var nativeObject = this.as3Object;
-      var mask = AVM1Utils.resolveMovieClip(mc);
-      if (mask) {
-        nativeObject.mask = mask.as3Object;
-      }
-    }
-
-    public get _soundbuftime() {
-      throw 'Not implemented: get$_soundbuftime';
-    }
-
-    public set _soundbuftime(value) {
-      throw 'Not implemented: set$_soundbuftime';
-    }
-
-    public startDrag(lock, left, top?, right?, bottom?) {
-      this.as3Object.startDrag(lock, arguments.length < 3 ? null :
-        new flash.geom.Rectangle(left, top, right - left, bottom - top));
-    }
-
-    public stop() {
-      return this.as3Object.stop();
-    }
-
-    public stopDrag() {
-      return this.as3Object.stopDrag();
-    }
-
-    public swapDepths(target:Object) {
-      var child1 = this.as3Object;
-      var child2 = typeof target === 'number' ?
-        AVM1Utils.resolveLevel(Number(target)).as3Object :
-        AVM1Utils.resolveTarget(target).as3Object;
-      if (child1.parent !== child2.parent) {
-        return; // must be the same parent
-      }
-      child1.parent.swapChildren(child1, child2);
-    }
-
-    public get tabChildren() {
-      return this.as3Object.tabChildren;
-    }
-
-    public set tabChildren(value) {
-      this.as3Object.tabChildren = value;
-    }
-
-    public get tabEnabled() {
-      return this.as3Object.tabEnabled;
-    }
-
-    public set tabEnabled(value) {
-      this.as3Object.tabEnabled = value;
-    }
-
-    public get tabIndex() {
-      return this.as3Object.tabIndex;
-    }
-
-    public set tabIndex(value) {
-      this.as3Object.tabIndex = value;
-    }
-
-    public get _target() {
-      var nativeObject: flash.display.DisplayObject = this.as3Object;
-      if (nativeObject === nativeObject.root) {
-        return '/';
-      }
-      var path = '';
-      do {
-        path = '/' + nativeObject.name + path;
-        nativeObject = nativeObject.parent;
-      } while (nativeObject !== nativeObject.root);
-      return path;
-    }
-
-    public get _totalframes() {
-      return this.as3Object.totalFrames;
-    }
-
-    public get trackAsMenu() {
-      throw 'Not implemented: get$trackAsMenu';
-    }
-
-    public set trackAsMenu(value) {
-      throw 'Not implemented: set$trackAsMenu';
-    }
-
-    public get transform() {
-      throw 'Not implemented: get$transform';
-    }
-
-    public set transform(value) {
-      throw 'Not implemented: set$transform';
-    }
-
-    public toString() {
-      return this.as3Object.toString();
-    }
-
-    public unloadMovie() {
-      var nativeObject = this.as3Object;
-      // TODO remove movie clip content
-      var loader = nativeObject.loaderInfo.loader;
-      if (loader.parent) {
-        loader.parent.removeChild(loader);
-      }
-      nativeObject.stop();
-    }
-
-    public get _url() {
-      return this.as3Object.loaderInfo.url;
-    }
-
-    public get useHandCursor() {
-      return this.as3Object.useHandCursor;
-    }
-
-    public set useHandCursor(value) {
-      this.as3Object.useHandCursor = value;
-    }
-
-    public get _visible() {
-      return this.as3Object.visible;
-    }
-
-    public set _visible(value) {
-      this.as3Object.visible = +value !== 0;
-    }
-
-    public get _width() {
-      return this.as3Object.width;
-    }
-
-    public set _width(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this.as3Object.width = value;
-    }
-
-    public get _x() {
-      return this.as3Object.x;
-    }
-
-    public set _x(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this.as3Object.x = value;
-    }
-
-    public get _xmouse() {
-      return this.as3Object.mouseX;
-    }
-
-    public get _xscale() {
-      return this.as3Object.scaleX * 100;
-    }
-
-    public set _xscale(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this.as3Object.scaleX = value / 100;
-    }
-
-    public get _y() {
-      return this.as3Object.y;
-    }
-
-    public set _y(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this.as3Object.y = value;
-    }
-
-    public get _ymouse() {
-      return this.as3Object.mouseY;
-    }
-
-    public get _yscale() {
-      return this.as3Object.scaleY * 100;
-    }
-
-    public set _yscale(value) {
-      if (isNaN(value)) {
-        return;
-      }
-      this.as3Object.scaleY = value / 100;
-    }
-
-    // Special and children names properties resolutions
-
-    private _resolveLevelNProperty(name): AVM1MovieClip {
-      if (name === '_root' || name === '_level0') {
-        return AVM1Context.instance.resolveLevel(0);
-      } else if (name.indexOf('_level') === 0) {
-        var level = name.substring(6), levelNum = level | 0;
-        if (levelNum > 0 && level == levelNum) {
-          return AVM1Context.instance.resolveLevel(levelNum)
-        }
-      }
-      return null;
-    }
-
-    public asGetProperty(namespaces: Namespace [], name: any, flags: number) {
-      if (_asHasProperty.call(this, namespaces, name, flags)) {
-        return _asGetProperty.call(this, namespaces, name, flags);
-      }
-      if (typeof name === 'string' && name[0] === '_') {
-        var level = this._resolveLevelNProperty(name);
-        if (level) {
-          return level;
-        }
-      }
-      var resolved = resolveMultinameProperty(namespaces, name, flags);
-      if (Multiname.isPublicQualifiedName(resolved) && this.isAVM1Instance) {
-        return this.__lookupChild(Multiname.getNameFromPublicQualifiedName(resolved));
       }
       return undefined;
     }
 
-    public asHasProperty(namespaces: Namespace [], name: any, flags: number) {
-      if (_asHasProperty.call(this, namespaces, name, flags)) {
-        return true;
-      }
-      if (typeof name === 'string' && name[0] === '_') {
-        var level = this._resolveLevelNProperty(name);
-        if (level) {
-          return true;
+    public getNextHighestDepth(): number {
+      var nativeObject = this._as3Object;
+      var maxDepth = DEPTH_OFFSET;
+      var lookupChildOptions = LookupChildOptions.INCLUDE_NON_INITIALIZED;
+      for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
+        var child = nativeObject._lookupChildByIndex(i, lookupChildOptions);
+        if (child._depth >= maxDepth) {
+          maxDepth = child._depth + 1;
         }
       }
-      var resolved = resolveMultinameProperty(namespaces, name, flags);
-      if (Multiname.isPublicQualifiedName(resolved) && this.isAVM1Instance) {
-        return !!this.__lookupChild(Multiname.getNameFromPublicQualifiedName(resolved));
-      }
-      return false;
+      return maxDepth - DEPTH_OFFSET;
     }
 
-    public asGetEnumerableKeys() {
-      var keys = _asGetEnumerableKeys.call(this);
+    public getRect(bounds): AVM1Object {
+      var obj = <flash.display.InteractiveObject>getAS3Object(bounds);
+      if (!obj) {
+        return undefined;
+      }
+      return convertAS3RectangeToBounds(this._as3Object.getRect(obj));
+    }
+
+    public getSWFVersion(): number {
+      var loaderInfo = this._as3Object.loaderInfo;
+      return loaderInfo.swfVersion;
+    }
+
+    public getTextSnapshot() {
+      Debug.notImplemented('AVM1MovieClip.getTextSnapshot');
+    }
+
+    public getURL(url, window, method) {
+      var request = new this.context.sec.flash.net.URLRequest(url);
+      if (method) {
+        request.method = method;
+      }
+      Shumway.AVMX.AS.FlashNetScript_navigateToURL(request, window);
+    }
+
+    public globalToLocal(pt) {
+      var tmp = this._as3Object.globalToLocal(toAS3Point(pt));
+      copyAS3PointTo(tmp, pt);
+    }
+
+    public gotoAndPlay(frame) {
+      this._as3Object.gotoAndPlay(frame);
+    }
+
+    public gotoAndStop(frame) {
+      this._as3Object.gotoAndStop(frame);
+    }
+
+    public getHitArea() {
+      return this._hitArea;
+    }
+
+    public setHitArea(value) {
+      // The hitArea getter always returns exactly the value set here, so we have to store that.
+      this._hitArea = value;
+      var obj = value ? <flash.display.InteractiveObject>getAS3Object(value) : null;
+      // If the passed-in value isn't a MovieClip, reset the hitArea.
+      if (!this.context.sec.flash.display.MovieClip.axIsType(obj)) {
+        obj = null;
+      }
+      this._as3Object.hitArea = obj;
+    }
+
+    public hitTest(x: number, y: number, shapeFlag: boolean): boolean {
+      if (arguments.length <= 1) {
+        // Alternative method signature: hitTest(target: AVM1Object): boolean
+        var target = arguments[0];
+        if (Shumway.isNullOrUndefined(target) || !hasAS3ObjectReference(target)) {
+          return false; // target is undefined or not a AVM1 display object, returning false.
+        }
+        return this._as3Object.hitTestObject(<flash.display.InteractiveObject>getAS3Object(target));
+      }
+      x = alToNumber(this.context, x);
+      y = alToNumber(this.context, y);
+      shapeFlag = alToBoolean(this.context, shapeFlag);
+      return this._as3Object.hitTestPoint(x, y, shapeFlag);
+    }
+
+    public lineGradientStyle(fillType: string, colors: AVM1Object, alphas: AVM1Object,
+                             ratios: AVM1Object, matrix: AVM1Object,
+                             spreadMethod: string = 'pad', interpolationMethod: string = 'rgb',
+                             focalPointRatio: number = 0.0): void {
+      var context = this.context, sec = context.sec;
+      fillType = alToString(this.context, fillType);
+      var colorsNative = sec.createArray(
+        Natives.AVM1ArrayNative.mapToJSArray(colors, (item) => alToInt32(this.context, item)));
+      var alphasNative = sec.createArray(
+        Natives.AVM1ArrayNative.mapToJSArray(alphas, (item) => alToNumber(this.context, item) / 100.0));
+      var ratiosNative = sec.createArray(
+        Natives.AVM1ArrayNative.mapToJSArray(ratios, (item) => alToNumber(this.context, item)));
+      var matrixNative = null;
+      if (Shumway.isNullOrUndefined(matrix)) {
+        Debug.somewhatImplemented('AVM1MovieClip.lineGradientStyle');
+      }
+      spreadMethod = alToString(this.context, spreadMethod);
+      interpolationMethod = alToString(this.context, interpolationMethod);
+      focalPointRatio = alToNumber(this.context, focalPointRatio);
+      this.graphics.lineGradientStyle(fillType, colorsNative, alphasNative, ratiosNative, matrixNative,
+                                      spreadMethod, interpolationMethod, focalPointRatio);
+    }
+
+    public lineStyle(thickness: number = NaN, rgb: number = 0x000000,
+                     alpha: number = 100, pixelHinting: boolean = false,
+                     noScale: string = 'normal', capsStyle: string = 'round',
+                     jointStyle: string = 'round', miterLimit: number = 3): void {
+      thickness = alToNumber(this.context, thickness);
+      rgb = alToInt32(this.context, rgb);
+      pixelHinting = alToBoolean(this.context, pixelHinting);
+      noScale = alToString(this.context, noScale);
+      capsStyle = alToString(this.context, capsStyle);
+      jointStyle = alToString(this.context, jointStyle);
+      miterLimit = alToNumber(this.context, miterLimit);
+      this.graphics.lineStyle(thickness, rgb, alpha / 100.0, pixelHinting,
+                              noScale, capsStyle, jointStyle, miterLimit);
+    }
+
+    public lineTo(x: number, y: number): void {
+      x = alToNumber(this.context, x);
+      y = alToNumber(this.context, y);
+      this.graphics.lineTo(x, y);
+    }
+
+    public loadMovie(url: string, method: string) {
+      var loaderHelper = new AVM1LoaderHelper(this.context);
+      loaderHelper.load(url, method).then(function () {
+        var newChild = loaderHelper.content;
+        // TODO fix newChild name to match target_mc
+        var parent: flash.display.MovieClip = this._as3Object.parent;
+        var depth = this._as3Object._depth;
+        parent.removeChild(this._as3Object);
+        parent.addTimelineObjectAtDepth(newChild, depth);
+      }.bind(this));
+    }
+
+    public loadVariables(url: string, method?: string) {
+      // REDUX move _loadVariables here?
+      (<any>this.context).actions._loadVariables(this, url, method);
+    }
+
+    public localToGlobal(pt) {
+      var tmp = this._as3Object.localToGlobal(toAS3Point(pt));
+      copyAS3PointTo(tmp, pt);
+    }
+
+    public get_lockroot(): boolean {
+      return this._lockroot;
+    }
+
+    public set_lockroot(value: boolean) {
+      Debug.somewhatImplemented('AVM1MovieClip._lockroot');
+      this._lockroot = alToBoolean(this.context, value);
+    }
+
+    public moveTo(x: number, y: number): void {
+      x = alToNumber(this.context, x);
+      y = alToNumber(this.context, y);
+      this.graphics.moveTo(x, y);
+    }
+
+    public nextFrame() {
+      this._as3Object.nextFrame();
+    }
+
+    public nextScene() {
+      this._as3Object.nextScene();
+    }
+
+    public play() {
+      this._as3Object.play();
+    }
+
+    public prevFrame() {
+      this._as3Object.prevFrame();
+    }
+
+    public prevScene() {
+      this._as3Object.prevScene();
+    }
+
+    public removeMovieClip() {
+      var as2Parent = this.get_parent();
+      if (!as2Parent) {
+        return; // let's not remove root symbol
+      }
+      as2Parent._removeChildName(this, this._as3Object.name);
+      as2Parent._as3Object.removeChild(this._as3Object);
+    }
+
+    public setMask(mc:Object) {
+      if (mc == null) {
+        // Cancel a mask.
+        this._as3Object.mask = null;
+        return;
+      }
+      var mask = this.context.resolveTarget(mc);
+      if (mask) {
+        this._as3Object.mask = <flash.display.InteractiveObject>getAS3Object(mask);
+      }
+    }
+
+    public startDrag(lock?: boolean, left?: number, top?: number, right?: number, bottom?: number): void {
+      lock = alToBoolean(this.context, lock);
+      var bounds = null;
+      if (arguments.length > 1) {
+        left = alToNumber(this.context, left);
+        top = alToNumber(this.context, top);
+        right = alToNumber(this.context, right);
+        bottom = alToNumber(this.context, bottom);
+        bounds = new this.context.sec.flash.geom.Rectangle(left, top, right - left, bottom - top);
+      }
+      this._as3Object.startDrag(lock, bounds);
+    }
+
+    public stop() {
+      return this._as3Object.stop();
+    }
+
+    public stopDrag() {
+      return this._as3Object.stopDrag();
+    }
+
+    public swapDepths(target: any): void {
+      var child1 = this._as3Object;
+      var child2, target_mc;
+      if (typeof target === 'number') {
+        child2 = child1.parent.getTimelineObjectAtDepth(<number>target);
+        if (child2) {
+          // Don't swap if child at depth does not exist.
+          return;
+        }
+        target_mc = getAVM1Object(child2, this.context);
+      } else {
+        var target_mc = this.context.resolveTarget(target);
+        if (!target_mc) {
+          // Don't swap with non-existent target.
+          return;
+        }
+        child2 = target_mc._as3Object;
+        if (child1.parent !== child2.parent) {
+          return; // must be the same parent
+        }
+      }
+      child1.parent.swapChildren(child1, child2);
+      var lower;
+      var higher;
+      if (this.getDepth() < target_mc.getDepth()) {
+        lower = this;
+        higher = target_mc;
+      } else {
+        lower = target_mc;
+        higher = this;
+      }
+      var lowerName = (<flash.display.InteractiveObject>getAS3Object(lower)).name;
+      var higherName = (<flash.display.InteractiveObject>getAS3Object(higher)).name;
+      if (this._lookupChildInAS3Object(lowerName) !== lower) {
+        this._removeChildName(lower, lowerName);
+      }
+      if (this._lookupChildInAS3Object(higherName) !== higher) {
+        this._addChildName(higher, higherName);
+      }
+    }
+
+    public getTabChildren(): boolean {
+      return getAS3ObjectOrTemplate(this).tabChildren;
+    }
+
+    public setTabChildren(value: boolean) {
+      getAS3ObjectOrTemplate(this).tabChildren = alToBoolean(this.context, value);
+    }
+
+    public get_totalframes(): number {
+      return this._as3Object.totalFrames;
+    }
+
+    public getTrackAsMenu(): boolean {
+      return getAS3ObjectOrTemplate(this).trackAsMenu;
+    }
+
+    public setTrackAsMenu(value: boolean) {
+      getAS3ObjectOrTemplate(this).trackAsMenu = alToBoolean(this.context, value);
+    }
+
+    public toString() {
+      return this.__targetPath;
+    }
+
+    public unloadMovie() {
+      var nativeObject = this._as3Object;
+      // TODO remove movie clip content
+      nativeObject.parent.removeChild(nativeObject);
+      nativeObject.stop();
+    }
+
+    public getUseHandCursor() {
+      getAS3ObjectOrTemplate(this).useHandCursor;
+    }
+
+    public setUseHandCursor(value) {
+      getAS3ObjectOrTemplate(this).useHandCursor = value;
+    }
+
+    public setParameters(parameters: any): any {
+      for (var paramName in parameters) {
+        if (!this.alHasProperty(paramName)) {
+          this.alPut(paramName, parameters[paramName]);
+        }
+      }
+    }
+
+    // Special and children names properties resolutions
+
+    private _resolveLevelNProperty(name: string): AVM1MovieClip {
+      release || assert(alIsName(this.context, name));
+      if (name === '_level0') {
+        return this.context.resolveLevel(0);
+      } else if (name === '_root') {
+        return this.context.resolveRoot();
+      } else if (name.indexOf('_level') === 0) {
+        var level = name.substring(6);
+        var levelNum = <any>level | 0;
+        if (levelNum > 0 && <any>level == levelNum) {
+          return this.context.resolveLevel(levelNum)
+        }
+      }
+      return null;
+    }
+
+    private _cachedPropertyResult;
+    private _getCachedPropertyResult(value) {
+      if (!this._cachedPropertyResult) {
+        this._cachedPropertyResult = {
+          flags: AVM1PropertyFlags.DATA | AVM1PropertyFlags.DONT_ENUM,
+          value: value
+        };
+      } else {
+        this._cachedPropertyResult.value = value;
+      }
+      return this._cachedPropertyResult;
+    }
+
+    public alGetOwnProperty(name): AVM1PropertyDescriptor {
+      var desc = super.alGetOwnProperty(name);
+      if (desc) {
+        return desc;
+      }
+      if (name[0] === '_') {
+        if ((name[1] === 'l' && name.indexOf('_level') === 0 ||
+             name[1] === 'r' && name.indexOf('_root') === 0))
+        {
+          var level = this._resolveLevelNProperty(name);
+          if (level) {
+            return this._getCachedPropertyResult(level);
+          }
+        } else if (name.toLowerCase() in MovieClipProperties) {
+          // For MovieClip's properties that start from '_' case does not matter.
+          return super.alGetOwnProperty(name.toLowerCase());
+        }
+      }
+      if (hasAS3ObjectReference(this)) {
+        var child = this._lookupChildByName(name);
+        if (child) {
+          return this._getCachedPropertyResult(child);
+        }
+      }
+      return undefined;
+    }
+
+    public alGetOwnPropertiesKeys(): any [] {
+      var keys = super.alGetOwnPropertiesKeys();
       // if it's a movie listing the children as well
-      if (!this.isAVM1Instance) {
+      if (!hasAS3ObjectReference(this)) {
         return keys; // not initialized yet
       }
 
-      var as3MovieClip = this.as3Object;
+      var as3MovieClip = this._as3Object;
+      if (as3MovieClip._children.length === 0) {
+        return keys; // no children
+      }
+
+      var processed = Object.create(null);
+      for (var i = 0; i < keys.length; i++) {
+        processed[keys[i]] = true;
+      }
       for (var i = 0, length = as3MovieClip._children.length; i < length; i++) {
         var child = as3MovieClip._children[i];
         var name = child.name;
-        if (!_asHasProperty.call(this, undefined, name, 0)) {
-          keys.push(Multiname.getPublicQualifiedName(name));
-        }
+        var normalizedName = name; // TODO something like this._unescapeProperty(this._escapeProperty(name));
+        processed[normalizedName] = true;
       }
-      return keys;
+      return Object.getOwnPropertyNames(processed);
     }
 
-    addFrameActionBlocks(frameIndex: number, frameData: any) {
-      var initActionBlocks: any[] = frameData.initActionBlocks;
-      var actionBlocks: any[] = frameData.actionBlocks;
-
-      if (initActionBlocks) {
-        this._addInitActionBlocks(frameIndex, initActionBlocks);
-      }
-
-      if (actionBlocks) {
-        for (var i = 0; i < actionBlocks.length; i++) {
-          this.addFrameScript(frameIndex, actionBlocks[i]);
-        }
-      }
-    }
-
-    addFrameScript(frameIndex: number, actionsBlock: Uint8Array): void {
-      var frameScripts = this._frameScripts;
-      if (!frameScripts) {
-        release || assert(!this._boundExecuteFrameScripts);
-        this._boundExecuteFrameScripts = this._executeFrameScripts.bind(this);
-        frameScripts = this._frameScripts = [];
-      }
-      var scripts: AVM1.AVM1ActionsData[] = frameScripts[frameIndex + 1];
-      if (!scripts) {
-        scripts = frameScripts[frameIndex + 1] = [];
-        this.as3Object.addFrameScript(frameIndex, this._boundExecuteFrameScripts);
-      }
-      var actionsData = this.context.actionsDataFactory.createActionsData(
-        actionsBlock, 'f' + frameIndex + 'i' + scripts.length);
-      scripts.push(actionsData);
-    }
-
-    /**
-     * AVM1 InitActionBlocks are executed once, before the children are initialized for a frame.
-     * That matches AS3's enterFrame event, so we can add an event listener that just bails
-     * as long as the target frame isn't reached, and executes the InitActionBlock once it is.
-     *
-     * After that, the listener removes itself.
-     */
-    private _addInitActionBlocks(frameIndex: number,
-                                 actionsBlocks: {actionsData: Uint8Array} []): void
-    {
-      var avm2MovieClip = this.as3Object;
-      var self = this;
-      function listener (e) {
-        if (avm2MovieClip.currentFrame !== frameIndex + 1) {
-          return;
-        }
-        avm2MovieClip.removeEventListener('enterFrame', listener);
-
-        var avm1Context = self.context;
-        for (var i = 0; i < actionsBlocks.length; i++) {
-          var actionsData = avm1Context.actionsDataFactory.createActionsData(
-            actionsBlocks[i].actionsData, 'f' + frameIndex + 'i' + i);
-          avm1Context.executeActions(actionsData, self);
-        }
-      }
-      avm2MovieClip.addEventListener('enterFrame', listener);
-    }
-
-    private _executeFrameScripts() {
-      var context = this.context;
-      var scripts: AVM1.AVM1ActionsData[] = this._frameScripts[this.as3Object.currentFrame];
-      release || assert(scripts && scripts.length);
-      for (var i = 0; i < scripts.length; i++) {
-        var actionsData = scripts[i];
-        context.executeActions(actionsData, this);
+    private _init(initObject) {
+      if (initObject instanceof AVM1Object) {
+        alForEachProperty(initObject, (name: string) => {
+          this.alPut(name, initObject.alGet(name));
+        }, null);
       }
     }
 
@@ -905,6 +820,7 @@ module Shumway.AVM1.Lib {
         new AVM1EventHandler('onLoad', 'load'),
         new AVM1EventHandler('onMouseDown', 'mouseDown'),
         new AVM1EventHandler('onMouseUp', 'mouseUp'),
+        new AVM1EventHandler('onMouseMove', 'mouseMove'),
         new AVM1MovieClipButtonModeEvent('onPress', 'mouseDown'),
         new AVM1MovieClipButtonModeEvent('onRelease', 'mouseUp'),
         new AVM1MovieClipButtonModeEvent('onReleaseOutside', 'releaseOutside'),

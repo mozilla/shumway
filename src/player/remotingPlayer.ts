@@ -17,7 +17,7 @@ module Shumway.Remoting.Player {
   import MessageTag = Shumway.Remoting.MessageTag;
   import MessageBits = Shumway.Remoting.MessageBits;
 
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
   import Stage = flash.display.Stage;
   import Graphics = flash.display.Graphics;
   import NetStream = flash.net.NetStream;
@@ -26,6 +26,7 @@ module Shumway.Remoting.Player {
   import BitmapData = flash.display.BitmapData;
   import DisplayObject = flash.display.DisplayObject;
   import DisplayObjectFlags = flash.display.DisplayObjectFlags;
+  import DisplayObjectDirtyFlags = flash.display.DisplayObjectDirtyFlags;
   import DisplayObjectContainer = flash.display.DisplayObjectContainer;
   import BlendMode = flash.display.BlendMode;
   import PixelSnapping = flash.display.PixelSnapping;
@@ -53,8 +54,9 @@ module Shumway.Remoting.Player {
     public phase: RemotingPhase = RemotingPhase.Objects;
     public roots: DisplayObject [] = null;
 
-    begin(displayObject: DisplayObject) {
-      this.roots = [displayObject];
+    constructor() {
+      this.output = new DataBuffer();
+      this.outputAssets = [];
     }
 
     remoteObjects() {
@@ -62,7 +64,7 @@ module Shumway.Remoting.Player {
       var roots = this.roots;
       for (var i = 0; i < roots.length; i++) {
         Shumway.Player.enterTimeline("remoting objects");
-        this.writeDirtyDisplayObjects(roots[i]);
+        this.writeDirtyDisplayObjects(roots[i], false);
         Shumway.Player.leaveTimeline("remoting objects");
       }
     }
@@ -77,14 +79,18 @@ module Shumway.Remoting.Player {
       }
     }
 
+    writeEOF() {
+      this.output.writeInt(Remoting.MessageTag.EOF);
+    }
+
     /**
      * Serializes dirty display objects starting at the specified root |displayObject| node.
      */
-    writeDirtyDisplayObjects(displayObject: DisplayObject, clearDirtyDescendentsFlag: boolean = false) {
+    writeDirtyDisplayObjects(displayObject: DisplayObject, clearDirtyDescendentsFlag: boolean) {
       var self = this;
       var roots = this.roots;
       displayObject.visit(function (displayObject) {
-        if (displayObject._hasAnyFlags(DisplayObjectFlags.Dirty)) {
+        if (displayObject._hasAnyDirtyFlags(DisplayObjectDirtyFlags.Dirty)) {
           self.writeUpdateFrame(displayObject);
           // Collect more roots?
           if (roots && displayObject.mask) {
@@ -94,19 +100,23 @@ module Shumway.Remoting.Player {
         }
         // TODO: Checking if we need to write assets this way is kinda expensive, do better here.
         self.writeDirtyAssets(displayObject);
-        if (displayObject._hasFlags(DisplayObjectFlags.DirtyDescendents)) {
+        var hasDirtyDescendents = displayObject._hasFlags(DisplayObjectFlags.DirtyDescendents);
+        if (hasDirtyDescendents) {
+          if (clearDirtyDescendentsFlag) {
+            // We need this flag to make sure we don't clear the flag in the first remoting pass.
+            displayObject._removeFlags(DisplayObjectFlags.DirtyDescendents);
+          }
           return VisitorFlags.Continue;
-        }
-        if (clearDirtyDescendentsFlag) {
-          // We need this flag to make sure we don't clear the flag in the first remoting pass.
-          displayObject._removeFlags(DisplayObjectFlags.DirtyDescendents);
         }
         // We can skip visiting descendents since they are not dirty.
         return VisitorFlags.Skip;
       }, VisitorFlags.None);
     }
 
-    writeStage(stage: Stage, currentMouseTarget: flash.display.InteractiveObject) {
+    writeStage(stage: Stage) {
+      if (!stage._isDirty) {
+        return;
+      }
       writer && writer.writeLn("Sending Stage");
       var serializer = this;
       this.output.writeInt(MessageTag.UpdateStage);
@@ -116,17 +126,25 @@ module Shumway.Remoting.Player {
       this.output.writeInt(flash.display.StageAlign.toNumber(stage.align));
       this.output.writeInt(flash.display.StageScaleMode.toNumber(stage.scaleMode));
       this.output.writeInt(flash.display.StageDisplayState.toNumber(stage.displayState));
+      stage._isDirty = false;
+    }
 
-      var cursor = flash.ui.Mouse.cursor;
+    writeCurrentMouseTarget(stage: Stage, currentMouseTarget: flash.display.InteractiveObject) {
+      this.output.writeInt(MessageTag.UpdateCurrentMouseTarget);
+
+      var sec = stage.sec;
+      var Mouse = sec.flash.ui.Mouse.axClass;
+      var cursor = Mouse.cursor;
       if (currentMouseTarget) {
+        var SimpleButton = sec.flash.display.SimpleButton.axClass;
+        var Sprite = sec.flash.display.Sprite.axClass;
         this.output.writeInt(currentMouseTarget._id);
         if (cursor === MouseCursor.AUTO) {
           var node = currentMouseTarget;
           do {
-            if (flash.display.SimpleButton.isType(node) ||
-                (flash.display.Sprite.isType(node) &&
-                 (<flash.display.Sprite>node).buttonMode) &&
-                 (<any>currentMouseTarget).useHandCursor)
+            if (SimpleButton.axIsType(node) ||
+                (Sprite.axIsType(node) && (<flash.display.Sprite>node).buttonMode) &&
+                (<any>currentMouseTarget).useHandCursor)
             {
               cursor = MouseCursor.BUTTON;
               break;
@@ -141,84 +159,95 @@ module Shumway.Remoting.Player {
     }
 
     writeGraphics(graphics: Graphics) {
-      if (graphics._isDirty) {
-        writer && writer.writeLn("Sending Graphics: " + graphics._id);
-        var textures = graphics.getUsedTextures();
-        var numTextures = textures.length;
-        for (var i = 0; i < numTextures; i++) {
-          textures[i] && this.writeBitmapData(textures[i]);
-        }
-        this.output.writeInt(MessageTag.UpdateGraphics);
-        this.output.writeInt(graphics._id);
-        this.output.writeInt(-1);
-        this._writeRectangle(graphics._getContentBounds());
-        this._writeAsset(graphics.getGraphicsData().toPlainObject());
-        this.output.writeInt(numTextures);
-        for (var i = 0; i < numTextures; i++) {
-          this.output.writeInt(textures[i] ? textures[i]._id : -1);
-        }
-        graphics._isDirty = false;
+      if (!graphics._isDirty) {
+        return;
       }
+      var textures = graphics.getUsedTextures();
+      var numTextures = textures.length;
+      for (var i = 0; i < numTextures; i++) {
+        textures[i] && this.writeBitmapData(textures[i]);
+      }
+      this.output.writeInt(MessageTag.UpdateGraphics);
+      this.output.writeInt(graphics._id);
+      this.output.writeInt(-1);
+      this._writeRectangle(graphics._getContentBounds());
+      this._writeAsset(graphics.getGraphicsData().toPlainObject());
+      this.output.writeInt(numTextures);
+      for (var i = 0; i < numTextures; i++) {
+        this.output.writeInt(textures[i] ? textures[i]._id : -1);
+      }
+      graphics._isDirty = false;
     }
 
     writeNetStream(netStream: NetStream, bounds: Bounds) {
-      if (netStream._isDirty) {
-        writer && writer.writeLn("Sending NetStream: " + netStream._id);
-        this.output.writeInt(MessageTag.UpdateNetStream);
-        this.output.writeInt(netStream._id);
-        this._writeRectangle(bounds);
-        netStream._isDirty = false;
+      if (!netStream._isDirty) {
+        return;
       }
+      writer && writer.writeLn("Sending NetStream: " + netStream._id);
+      this.output.writeInt(MessageTag.UpdateNetStream);
+      this.output.writeInt(netStream._id);
+      this._writeRectangle(bounds);
+      netStream._isDirty = false;
+    }
+
+    writeDisplayObjectRoot(displayObject: DisplayObject) {
+      release || assert(!this.roots);
+      this.roots = [displayObject];
+      this.remoteObjects();
+      this.remoteReferences();
     }
 
     writeBitmapData(bitmapData: BitmapData) {
-      if (bitmapData._isDirty) {
-        writer && writer.writeLn("Sending BitmapData: " + bitmapData._id);
-        this.output.writeInt(MessageTag.UpdateBitmapData);
-        this.output.writeInt(bitmapData._id);
-        this.output.writeInt(bitmapData._symbol ? bitmapData._symbol.id : -1);
-        this._writeRectangle(bitmapData._getContentBounds());
-        this.output.writeInt(bitmapData._type);
-        this._writeAsset(bitmapData.getDataBuffer().toPlainObject());
-        bitmapData._isDirty = false;
+      if (!bitmapData._isDirty) {
+        return;
       }
+      writer && writer.writeLn("Sending BitmapData: " + bitmapData._id);
+      this.output.writeInt(MessageTag.UpdateBitmapData);
+      this.output.writeInt(bitmapData._id);
+      this.output.writeInt(bitmapData._symbol ? bitmapData._symbol.id : -1);
+      this._writeRectangle(bitmapData._getContentBounds());
+      this.output.writeInt(bitmapData._type);
+      this._writeAsset(bitmapData.getDataBuffer().toPlainObject());
+      bitmapData._isDirty = false;
     }
 
     writeTextContent(textContent: Shumway.TextContent) {
-      if (textContent.flags & Shumway.TextContentFlags.Dirty) {
-        writer && writer.writeLn("Sending TextContent: " + textContent._id);
-        this.output.writeInt(MessageTag.UpdateTextContent);
-        this.output.writeInt(textContent._id);
-        this.output.writeInt(-1);
-        this._writeRectangle(textContent.bounds);
-        this._writeMatrix(textContent.matrix || flash.geom.Matrix.FROZEN_IDENTITY_MATRIX);
-        this.output.writeInt(textContent.backgroundColor);
-        this.output.writeInt(textContent.borderColor);
-        this.output.writeInt(textContent.autoSize);
-        this.output.writeBoolean(textContent.wordWrap);
-        this.output.writeInt(textContent.scrollV);
-        this.output.writeInt(textContent.scrollH);
-        this._writeAsset(textContent.plainText);
-        this._writeAsset(textContent.textRunData.toPlainObject());
-        var coords = textContent.coords;
-        if (coords) {
-          var numCoords = coords.length;
-          this.output.writeInt(numCoords);
-          for (var i = 0; i < numCoords; i++) {
-            this.output.writeInt(coords[i]);
-          }
-        } else {
-          this.output.writeInt(0);
-        }
-        textContent.flags &= ~Shumway.TextContentFlags.Dirty
+      if (!(textContent.flags & Shumway.TextContentFlags.Dirty)) {
+        return;
       }
+      writer && writer.writeLn("Sending TextContent: " + textContent._id);
+      this.output.writeInt(MessageTag.UpdateTextContent);
+      this.output.writeInt(textContent._id);
+      this.output.writeInt(-1);
+      this._writeRectangle(textContent.bounds);
+      var identity = textContent.sec.flash.geom.Matrix.axClass.FROZEN_IDENTITY_MATRIX;
+      this._writeMatrix(textContent.matrix || identity);
+      this.output.writeInt(textContent.backgroundColor);
+      this.output.writeInt(textContent.borderColor);
+      this.output.writeInt(textContent.autoSize);
+      this.output.writeBoolean(textContent.wordWrap);
+      this.output.writeInt(textContent.scrollV);
+      this.output.writeInt(textContent.scrollH);
+      this._writeAsset(textContent.plainText);
+      this._writeAsset(textContent.textRunData.toPlainObject());
+      var coords = textContent.coords;
+      if (coords) {
+        var numCoords = coords.length;
+        this.output.writeInt(numCoords);
+        for (var i = 0; i < numCoords; i++) {
+          this.output.writeInt(coords[i]);
+        }
+      } else {
+        this.output.writeInt(0);
+      }
+      textContent.flags &= ~Shumway.TextContentFlags.Dirty
     }
 
     /**
      * Writes the number of display objects this display object clips.
      */
     writeClippedObjectsCount(displayObject: DisplayObject) {
-      if (displayObject._clipDepth >= 0 && displayObject._parent) {
+      if (displayObject._clipDepth > 0 && displayObject._parent) {
         // Clips in GFX land don't use absolute clip depth numbers. Instead we need to encode
         // the number of siblings you want to clip. If children are removed or added, GFX clip
         // values need to be recomputed.
@@ -246,34 +275,34 @@ module Shumway.Remoting.Player {
       writer && writer.writeLn("Sending UpdateFrame: " + displayObject.debugName(true));
 
       var hasMask = false;
-      var hasMatrix = displayObject._hasFlags(DisplayObjectFlags.DirtyMatrix);
-      var hasColorTransform = displayObject._hasFlags(DisplayObjectFlags.DirtyColorTransform);
-      var hasMiscellaneousProperties = displayObject._hasFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+      var hasMatrix = displayObject._hasDirtyFlags(DisplayObjectDirtyFlags.DirtyMatrix);
+      var hasColorTransform = displayObject._hasDirtyFlags(DisplayObjectDirtyFlags.DirtyColorTransform);
+      var hasMiscellaneousProperties = displayObject._hasDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
 
       var video: Video = null;
-      if (flash.media.Video.isType(displayObject)) {
+      if (displayObject.sec.flash.media.Video.axClass.axIsType(displayObject)) {
         video = <Video>displayObject;
       }
 
       // Check if any children need to be written. These are remoting children, not just display object children.
       var hasRemotableChildren = false;
       if (this.phase === RemotingPhase.References) {
-        hasRemotableChildren = displayObject._hasAnyFlags (
-          DisplayObjectFlags.DirtyChildren     |
-          DisplayObjectFlags.DirtyGraphics     |
-          DisplayObjectFlags.DirtyBitmapData   |
-          DisplayObjectFlags.DirtyNetStream    |
-          DisplayObjectFlags.DirtyTextContent
+        hasRemotableChildren = displayObject._hasAnyDirtyFlags (
+          DisplayObjectDirtyFlags.DirtyChildren     |
+          DisplayObjectDirtyFlags.DirtyGraphics     |
+          DisplayObjectDirtyFlags.DirtyBitmapData   |
+          DisplayObjectDirtyFlags.DirtyNetStream    |
+          DisplayObjectDirtyFlags.DirtyTextContent
         );
-        hasMask = displayObject._hasFlags(DisplayObjectFlags.DirtyMask);
+        hasMask = displayObject._hasDirtyFlags(DisplayObjectDirtyFlags.DirtyMask);
       }
       var bitmap: Bitmap = null;
-      if (display.Bitmap.isType(displayObject)) {
+      if (displayObject.sec.flash.display.Bitmap.axClass.axIsType(displayObject)) {
         bitmap = <Bitmap>displayObject;
       }
 
       // Checks if the computed clip value needs to be written.
-      var hasClip = displayObject._hasFlags(DisplayObjectFlags.DirtyClipDepth);
+      var hasClip = displayObject._hasDirtyFlags(DisplayObjectDirtyFlags.DirtyClipDepth);
 
       // Write Has Bits
       var hasBits = 0;
@@ -301,15 +330,16 @@ module Shumway.Remoting.Player {
       if (hasMiscellaneousProperties) {
         this.output.writeInt(displayObject._ratio);
         this.output.writeInt(BlendMode.toNumber(displayObject._blendMode));
-        this._writeFilters(displayObject.filters);
+        this._writeFilters(displayObject._filters);
         this.output.writeBoolean(displayObject._hasFlags(DisplayObjectFlags.Visible));
         this.output.writeBoolean(displayObject.cacheAsBitmap);
         if (bitmap) {
           this.output.writeInt(PixelSnapping.toNumber(bitmap.pixelSnapping));
           this.output.writeInt(bitmap.smoothing ? 1 : 0);
         } else {
-          this.output.writeInt(PixelSnapping.toNumber(PixelSnapping.AUTO));
-          this.output.writeInt(1);
+          // For non-bitmaps, write null-defaults that cause flags not to be set in the GFX backend.
+          this.output.writeInt(PixelSnapping.toNumber(PixelSnapping.NEVER));
+          this.output.writeInt(0);
         }
       }
 
@@ -332,7 +362,7 @@ module Shumway.Remoting.Player {
             this.output.writeInt(0);
           }
         } else {
-          // Check if we have a graphics object and write that as a child first.
+          // Check if we have a graphics or text object and write that as a child first.
           var count = (graphics || textContent) ? 1 : 0;
           var children = displayObject._children;
           if (children) {
@@ -353,7 +383,7 @@ module Shumway.Remoting.Player {
               this.output.writeInt(children[i]._id);
               // Make sure children with a clip depth are getting visited.
               if (children[i]._clipDepth >= 0) {
-                children[i]._setFlags(DisplayObjectFlags.DirtyClipDepth);
+                children[i]._setDirtyFlags(DisplayObjectDirtyFlags.DirtyClipDepth);
               }
             }
           }
@@ -361,7 +391,7 @@ module Shumway.Remoting.Player {
         writer && writer.leave("}");
       }
       if (this.phase === RemotingPhase.References) {
-        displayObject._removeFlags(DisplayObjectFlags.Dirty);
+        displayObject._removeDirtyFlags(DisplayObjectDirtyFlags.Dirty);
       }
     }
 
@@ -382,7 +412,7 @@ module Shumway.Remoting.Player {
       }
 
       var bitmap: Bitmap = null;
-      if (display.Bitmap.isType(displayObject)) {
+      if (displayObject.sec.flash.display.Bitmap.axClass.axIsType(displayObject)) {
         bitmap = <Bitmap>displayObject;
         if (bitmap.bitmapData) {
           this.writeBitmapData(bitmap.bitmapData);
@@ -391,7 +421,7 @@ module Shumway.Remoting.Player {
       }
 
       var video: Video = null;
-      if (flash.media.Video.isType(displayObject)) {
+      if (displayObject.sec.flash.media.Video.axClass.axIsType(displayObject)) {
         video = <Video>displayObject;
         if (video._netStream) {
           this.writeNetStream(video._netStream, video._getContentBounds());
@@ -407,7 +437,7 @@ module Shumway.Remoting.Player {
     {
       this.output.writeInt(MessageTag.DrawToBitmap);
       this.output.writeInt(bitmapData._id);
-      if (BitmapData.isType(source)) {
+      if (bitmapData.sec.flash.display.BitmapData.axClass.axIsType(source)) {
         this.output.writeInt(IDMask.Asset | source._id);
       } else {
         this.output.writeInt(source._id);
@@ -433,8 +463,25 @@ module Shumway.Remoting.Player {
     }
 
     private _writeMatrix(matrix: flash.geom.Matrix) {
-      var output = this.output;
-      output.write6Floats(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+
+      if (matrix.b === 0 && matrix.c === 0) {
+        if (matrix.a === 1 && matrix.d === 1) {
+          this.output.writeInt(MatrixEncoding.TranslationOnly);
+          this.output.write2Floats(matrix.tx, matrix.ty);
+        } else {
+          if (matrix.a === matrix.d) {
+            this.output.writeInt(MatrixEncoding.UniformScaleAndTranslationOnly);
+            this.output.writeFloat(matrix.a);
+          } else {
+            this.output.writeInt(MatrixEncoding.ScaleAndTranslationOnly);
+            this.output.write2Floats(matrix.a, matrix.d);
+          }
+          this.output.write2Floats(matrix.tx, matrix.ty);
+        }
+      }  else {
+        this.output.writeInt(MatrixEncoding.All);
+        this.output.write6Floats(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+      }
     }
 
     private _writeRectangle(bounds: Bounds) {
@@ -449,11 +496,21 @@ module Shumway.Remoting.Player {
     }
 
     private _writeFilters(filters: flash.filters.BitmapFilter []) {
+      if (!filters || filters.length === 0) {
+        this.output.writeInt(0);
+        return;
+      }
+      var sec = filters[0].sec;
       var count = 0;
+      var blurFilterClass = sec.flash.filters.BlurFilter.axClass;
+      var dropShadowFilterClass = sec.flash.filters.DropShadowFilter.axClass;
+      var glowFilterClass = sec.flash.filters.GlowFilter.axClass;
+      var colorMatrixFilterClass = sec.flash.filters.ColorMatrixFilter.axClass;
       for (var i = 0; i < filters.length; i++) {
-        if (flash.filters.BlurFilter.isType(filters[i]) ||
-            flash.filters.DropShadowFilter.isType(filters[i]) ||
-            flash.filters.GlowFilter.isType(filters[i])) {
+        if (blurFilterClass.axIsType(filters[i]) ||
+            dropShadowFilterClass.axIsType(filters[i]) ||
+            glowFilterClass.axIsType(filters[i]) ||
+            colorMatrixFilterClass.axIsType(filters[i])) {
           count ++;
         } else {
           Shumway.Debug.somewhatImplemented(filters[i].toString());
@@ -462,13 +519,13 @@ module Shumway.Remoting.Player {
       this.output.writeInt(count);
       for (var i = 0; i < filters.length; i++) {
         var filter = filters[i];
-        if (flash.filters.BlurFilter.isType(filter)) {
+        if (blurFilterClass.axIsType(filter)) {
           var blurFilter = <flash.filters.BlurFilter>filter;
           this.output.writeInt(FilterType.Blur);
           this.output.writeFloat(blurFilter.blurX);
           this.output.writeFloat(blurFilter.blurY);
           this.output.writeInt(blurFilter.quality);
-        } else if (flash.filters.DropShadowFilter.isType(filter)) {
+        } else if (dropShadowFilterClass.axIsType(filter)) {
           var dropShadowFilter = <flash.filters.DropShadowFilter>filter;
           this.output.writeInt(FilterType.DropShadow);
           this.output.writeFloat(dropShadowFilter.alpha);
@@ -482,7 +539,7 @@ module Shumway.Remoting.Player {
           this.output.writeBoolean(dropShadowFilter.knockout);
           this.output.writeInt(dropShadowFilter.quality);
           this.output.writeFloat(dropShadowFilter.strength);
-        } else if (flash.filters.GlowFilter.isType(filter)) {
+        } else if (glowFilterClass.axIsType(filter)) {
           var glowFilter = <flash.filters.GlowFilter>filter;
           this.output.writeInt(FilterType.DropShadow);
           this.output.writeFloat(glowFilter.alpha);
@@ -496,6 +553,12 @@ module Shumway.Remoting.Player {
           this.output.writeBoolean(glowFilter.knockout);
           this.output.writeInt(glowFilter.quality);
           this.output.writeFloat(glowFilter.strength);
+        } else if (colorMatrixFilterClass.axIsType(filter)) {
+          var matrix = (<flash.filters.ColorMatrixFilter>filter).matrix.value;
+          this.output.writeInt(FilterType.ColorMatrix);
+          for (var j = 0; j < 20; j++) {
+            this.output.writeFloat(matrix[j]);
+          }
         }
       }
     }
@@ -522,15 +585,25 @@ module Shumway.Remoting.Player {
           output.writeFloat(aM);
         }
       } else {
-        output.writeInt(ColorTransformEncoding.All);
-        output.writeFloat(rM);
-        output.writeFloat(gM);
-        output.writeFloat(bM);
-        output.writeFloat(aM);
-        output.writeInt(rO);
-        output.writeInt(gO);
-        output.writeInt(bO);
-        output.writeInt(aO);
+        var zeroNonAlphaMultipliers = rM === 0 && gM === 0 && bM === 0;
+        if (zeroNonAlphaMultipliers) {
+          output.writeInt(ColorTransformEncoding.AlphaMultiplierWithOffsets);
+          output.writeFloat(aM);
+          output.writeInt(rO);
+          output.writeInt(gO);
+          output.writeInt(bO);
+          output.writeInt(aO);
+        } else {
+          output.writeInt(ColorTransformEncoding.All);
+          output.writeFloat(rM);
+          output.writeFloat(gM);
+          output.writeFloat(bM);
+          output.writeFloat(aM);
+          output.writeInt(rO);
+          output.writeInt(gO);
+          output.writeInt(bO);
+          output.writeInt(aO);
+        }
       }
     }
 
@@ -546,8 +619,11 @@ module Shumway.Remoting.Player {
   }
 
   export class PlayerChannelDeserializer {
-    input: IDataInput;
-    inputAssets: any[];
+
+    constructor(private sec: ISecurityDomain, private input: IDataInput,
+                private inputAssets: any[]) {
+      // ..
+    }
 
     public read(): any {
       var input = this.input;
@@ -583,7 +659,7 @@ module Shumway.Remoting.Player {
       return {
         tag: MessageTag.MouseEvent,
         type: type,
-        point: new Point(pX, pY),
+        point: new this.sec.flash.geom.Point(pX, pY),
         ctrlKey: !!(flags & KeyboardEventFlags.CtrlKey),
         altKey: !!(flags & KeyboardEventFlags.AltKey),
         shiftKey: !!(flags & KeyboardEventFlags.ShiftKey),

@@ -14,27 +14,38 @@
  * limitations under the License.
  */
 // Class: Shape
-module Shumway.AVM2.AS.flash.display {
-  import warning = Shumway.Debug.warning;
+module Shumway.AVMX.AS.flash.display {
+  import assert = Debug.assert;
+  import warning = Debug.warning;
 
   export class Shape extends flash.display.DisplayObject {
-    static classSymbols: string [] = null; // [];
-    static instanceSymbols: string [] = null; // [];
 
-    static classInitializer: any = null;
-    static initializer: any = function (symbol: ShapeSymbol) {
-      var self: Shape = this;
-      self._graphics = null;
-      if (symbol) {
-        this._setStaticContentFromSymbol(symbol);
-        // TODO: Check what do do if the computed bounds of the graphics object don't
-        // match those given by the symbol.
-      }
-    };
+    static axClass: typeof Shape;
 
+
+    static classInitializer = null;
+
+    _symbol: ShapeSymbol;
+    applySymbol() {
+      this._initializeFields();
+      release || assert(this._symbol);
+      // TODO: Check what do do if the computed bounds of the graphics object don't
+      // match those given by the symbol.
+      this._setStaticContentFromSymbol(this._symbol);
+    }
     constructor () {
-      false && super();
-      DisplayObject.instanceConstructorNoInitialize.call(this);
+      if (this._symbol && !this._fieldsInitialized) {
+        this.applySymbol();
+      }
+      super();
+      if (!this._fieldsInitialized) {
+        this._initializeFields();
+      }
+    }
+
+    protected _initializeFields() {
+      super._initializeFields();
+      this._graphics = null;
     }
 
     _canHaveGraphics(): boolean {
@@ -59,14 +70,14 @@ module Shumway.AVM2.AS.flash.display {
   export class ShapeSymbol extends Timeline.DisplaySymbol {
     graphics: flash.display.Graphics = null;
 
-    constructor(data: Timeline.SymbolData, symbolClass: Shumway.AVM2.AS.ASClass) {
+    constructor(data: Timeline.SymbolData, symbolClass: ASClass) {
       super(data, symbolClass, false);
     }
 
     static FromData(data: Timeline.SymbolData, loaderInfo: flash.display.LoaderInfo): ShapeSymbol {
-      var symbol = new ShapeSymbol(data, flash.display.Shape);
+      var symbol = new ShapeSymbol(data, loaderInfo.sec.flash.display.Shape.axClass);
       symbol._setBoundsFromData(data);
-      symbol.graphics = flash.display.Graphics.FromData(data);
+      symbol.graphics = flash.display.Graphics.FromData(data, loaderInfo);
       symbol.processRequires((<any>data).require, loaderInfo);
       return symbol;
     }

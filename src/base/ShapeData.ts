@@ -145,7 +145,7 @@ module Shumway {
    * Used for (de-)serializing Graphics path data in defineShape, flash.display.Graphics
    * and the renderer.
    */
-  export enum PathCommand {
+  export const enum PathCommand {
     BeginSolidFill = 1,
     BeginGradientFill = 2,
     BeginBitmapFill = 3,
@@ -160,23 +160,23 @@ module Shumway {
     CubicCurveTo = 12,
   }
 
-  export enum GradientType {
+  export const enum GradientType {
     Linear = 0x10,
     Radial = 0x12
   }
 
-  export enum GradientSpreadMethod {
+  export const enum GradientSpreadMethod {
     Pad = 0,
     Reflect = 1,
     Repeat = 2
   }
 
-  export enum GradientInterpolationMethod {
+  export const enum GradientInterpolationMethod {
     RGB = 0,
     LinearRGB = 1
   }
 
-  export enum LineScaleMode {
+  export const enum LineScaleMode {
     None = 0,
     Normal = 1,
     Vertical = 2,
@@ -432,10 +432,11 @@ module Shumway {
       copy.coordinates = new Int32Array(this.coordinates);
       copy.coordinatesPosition = this.coordinatesPosition;
       copy.styles = new DataBuffer(this.styles.length);
-      copy.styles.writeRawBytes(this.styles.bytes);
+      copy.styles.writeRawBytes(this.styles.bytes.subarray(0, this.styles.length));
       if (this.morphStyles) {
         copy.morphStyles = new DataBuffer(this.morphStyles.length);
-        copy.morphStyles.writeRawBytes(this.morphStyles.bytes);
+        copy.morphStyles.writeRawBytes(
+          this.morphStyles.bytes.subarray(0, this.morphStyles.length));
       }
       copy.hasFills = this.hasFills;
       copy.hasLines = this.hasLines;

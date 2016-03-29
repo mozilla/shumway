@@ -101,7 +101,7 @@ function buildLibs(outputDir, rebuild, configs, callback) {
   }
 
   compileAbc(outputDir, "builtin",
-    ["builtin.as", "Vector.as", "DescribeType.as", "JSON.as", "Math.as", "Error.as", "Date.as", "RegExp.as", "IDataInput.as", "IDataOutput.as", "ByteArray.as", "Proxy.as", "XML.as", "Dictionary.as"],
+    ["builtin.as", "Vector.as", "DescribeType.as", "JSON.as", "Math.as", "Error.as", "Date.as", "RegExp.as", "IDataInput.as", "IDataOutput.as", "ByteArray.as", "Proxy.as", "XML.as", "Dictionary.as", "xml-document.as"],
     true, configs, rebuild, function (builtinWasBuilt) {
 
     var left = 2;
@@ -111,7 +111,7 @@ function buildLibs(outputDir, rebuild, configs, callback) {
       }
     }
 
-    compileAbc(outputDir, "shell", ["Capabilities.as", "Domain.as", "System.as"], false, configs, rebuild || builtinWasBuilt, done);
+    compileAbc(outputDir, "shell", ["Capabilities.as", "Domain.as"], false, configs, rebuild || builtinWasBuilt, done);
     compileAbc(outputDir, "avmplus", ["avmplus.as"], false, configs, rebuild || builtinWasBuilt, done);
   });
 }

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: TextJustifier
-module Shumway.AVM2.AS.flash.text.engine {
+module Shumway.AVMX.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class TextJustifier extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class TextJustifier extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -33,8 +33,8 @@ module Shumway.AVM2.AS.flash.text.engine {
     static instanceSymbols: string [] = null; // ["clone"];
     
     constructor (locale: string, lineJustification: string) {
-      locale = asCoerceString(locale); lineJustification = asCoerceString(lineJustification);
-      false && super();
+      locale = axCoerceString(locale); lineJustification = axCoerceString(lineJustification);
+      super();
       dummyConstructor("public flash.text.engine.TextJustifier");
     }
     
@@ -48,21 +48,21 @@ module Shumway.AVM2.AS.flash.text.engine {
     // _locale: string;
     // _lineJustification: string;
     get locale(): string {
-      notImplemented("public flash.text.engine.TextJustifier::get locale"); return;
+      release || notImplemented("public flash.text.engine.TextJustifier::get locale"); return;
       // return this._locale;
     }
     get lineJustification(): string {
-      notImplemented("public flash.text.engine.TextJustifier::get lineJustification"); return;
+      release || notImplemented("public flash.text.engine.TextJustifier::get lineJustification"); return;
       // return this._lineJustification;
     }
     set lineJustification(value: string) {
-      value = asCoerceString(value);
-      notImplemented("public flash.text.engine.TextJustifier::set lineJustification"); return;
+      value = axCoerceString(value);
+      release || notImplemented("public flash.text.engine.TextJustifier::set lineJustification"); return;
       // this._lineJustification = value;
     }
     setLocale(value: string): void {
-      value = asCoerceString(value);
-      notImplemented("public flash.text.engine.TextJustifier::setLocale"); return;
+      value = axCoerceString(value);
+      release || notImplemented("public flash.text.engine.TextJustifier::setLocale"); return;
     }
   }
 }

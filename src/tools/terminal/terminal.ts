@@ -89,7 +89,7 @@ module Shumway.Tools.Terminal {
     constructor(canvas: HTMLCanvasElement) {
       this.canvas = canvas;
       this.canvas.focus();
-      this.context = canvas.getContext('2d', { original: true });
+      this.context = <any>canvas.getContext('2d', { original: true });
       this.context.fillStyle = "#FFFFFF";
       this.fontSize = 10;
       this.lineIndex = 0;
@@ -126,6 +126,8 @@ module Shumway.Tools.Terminal {
       var ESCAPE = 27;
       var KEY_N = 78;
       var KEY_T = 84;
+      var KEY_H = 72;
+      var KEY_S = 83;
 
       function onFocusIn(event) {
         this.hasFocus = true;
@@ -137,7 +139,9 @@ module Shumway.Tools.Terminal {
       function onKeyDown(event) {
         var delta = 0;
         switch (event.keyCode) {
-
+          case KEY_H:
+            this.printHelp();
+            break;
           case KEY_N:
             this.showLineNumbers = !this.showLineNumbers;
             break;
@@ -174,13 +178,14 @@ module Shumway.Tools.Terminal {
             event.preventDefault();
             break;
           case KEY_A:
-            if (event.metaKey) {
-              this.selection = {start: 0, end: this.buffer.length};
+            if (event.metaKey || event.ctrlKey) {
+              this.selection = {start: 0, end: this.buffer.length - 1};
               event.preventDefault();
             }
             break;
           case KEY_C:
-            if (event.metaKey) {
+          case KEY_S:
+            if (event.metaKey || event.ctrlKey) {
               var str = "";
               if (this.selection) {
                 for (var i = this.selection.start; i <= this.selection.end; i++) {
@@ -189,7 +194,12 @@ module Shumway.Tools.Terminal {
               } else {
                 str = this.buffer.get(this.lineIndex);
               }
-              alert(str);
+              if (event.keyCode === KEY_C) {
+                alert(str);
+              } else {
+                window.open(URL.createObjectURL(
+                  new Blob([str], {type: 'text/plain'})), '_blank');
+              }
             }
             break;
           default:
@@ -223,6 +233,20 @@ module Shumway.Tools.Terminal {
       }
     }
 
+    public printHelp(): void {
+      var lines = [
+        'h - help',
+        'n - turn on/off line numbers',
+        't - turn on/off line time',
+        'arrow_keys - navigation',
+        'cmd/ctrl+a - select all',
+        'cmd/ctrl+c - copy/alert selection',
+        'cmd/ctrl+s - open selection in new tab',
+        'shift+arrow_keys - selection'
+      ];
+      lines.forEach((l) => this.buffer.append(l, '#002000'));
+    }
+
     public resize() {
       this._resizeHandler();
     }
@@ -230,7 +254,7 @@ module Shumway.Tools.Terminal {
     private _resizeHandler() {
       var parent = this.canvas.parentElement;
       var cw = parent.clientWidth;
-      var ch = parent.clientHeight - 1;
+      var ch = parent.clientHeight && (parent.clientHeight - 1);
 
       var devicePixelRatio = window.devicePixelRatio || 1;
       var backingStoreRatio = 1;

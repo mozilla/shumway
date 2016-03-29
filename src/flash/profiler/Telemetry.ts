@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: Telemetry
-module Shumway.AVM2.AS.flash.profiler {
+module Shumway.AVMX.AS.flash.profiler {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Telemetry extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class Telemetry extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,39 +29,34 @@ module Shumway.AVM2.AS.flash.profiler {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.profiler.Telemetry");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
+
     // static _spanMarker: number;
     // static _connected: boolean;
     get spanMarker(): number {
-      notImplemented("public flash.profiler.Telemetry::get spanMarker"); return;
+      release || notImplemented("public flash.profiler.Telemetry::get spanMarker"); return;
       // return this._spanMarker;
     }
     get connected(): boolean {
-      notImplemented("public flash.profiler.Telemetry::get connected"); return;
+      release || notImplemented("public flash.profiler.Telemetry::get connected"); return;
       // return this._connected;
     }
     static sendMetric(metric: string, value: any): void {
-      metric = asCoerceString(metric);
-      notImplemented("public flash.profiler.Telemetry::static sendMetric"); return;
+      metric = axCoerceString(metric);
+      release || notImplemented("public flash.profiler.Telemetry::static sendMetric"); return;
     }
     static sendSpanMetric(metric: string, startSpanMarker: number, value: any = null): void {
-      metric = asCoerceString(metric); startSpanMarker = +startSpanMarker;
-      notImplemented("public flash.profiler.Telemetry::static sendSpanMetric"); return;
+      metric = axCoerceString(metric); startSpanMarker = +startSpanMarker;
+      release || notImplemented("public flash.profiler.Telemetry::static sendSpanMetric"); return;
     }
     static registerCommandHandler(commandName: string, handler: ASFunction): boolean {
-      commandName = asCoerceString(commandName); handler = handler;
-      notImplemented("public flash.profiler.Telemetry::static registerCommandHandler"); return;
+      commandName = axCoerceString(commandName); handler = handler;
+      release || notImplemented("public flash.profiler.Telemetry::static registerCommandHandler"); return;
     }
     static unregisterCommandHandler(commandName: string): boolean {
-      commandName = asCoerceString(commandName);
-      notImplemented("public flash.profiler.Telemetry::static unregisterCommandHandler"); return;
+      commandName = axCoerceString(commandName);
+      release || notImplemented("public flash.profiler.Telemetry::static unregisterCommandHandler"); return;
     }
     
   }

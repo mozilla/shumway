@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 // Class: URLLoader
-module Shumway.AVM2.AS.flash.net {
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+module Shumway.AVMX.AS.flash.net {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   import Event = flash.events.Event;
   import IOErrorEvent = flash.events.IOErrorEvent;
@@ -26,14 +26,12 @@ module Shumway.AVM2.AS.flash.net {
   export class URLLoader extends flash.events.EventDispatcher {
     
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null;
     
     constructor (request?: flash.net.URLRequest) {
-      false && super(undefined);
-      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
-      var stream = this._stream = new URLStream();
+      super();
+      var stream = this._stream = new this.sec.flash.net.URLStream();
 
       stream.addEventListener(Event.OPEN, this.onStreamOpen.bind(this));
       stream.addEventListener(Event.COMPLETE, this.onStreamComplete.bind(this));
@@ -87,7 +85,7 @@ module Shumway.AVM2.AS.flash.net {
     }
 
     complete() {
-      var response = new utils.ByteArray();
+      var response = new this.sec.flash.utils.ByteArray();
       this._stream.readBytes(response);
 
       if (this.$BgdataFormat === 'binary') {
@@ -97,7 +95,7 @@ module Shumway.AVM2.AS.flash.net {
 
       var data = response.toString();
       if (response.length > 0 && this.$BgdataFormat === 'variables') {
-        var variable: URLVariables = new URLVariables();
+        var variable: URLVariables = new this.sec.flash.net.URLVariables();
         if (this._ignoreDecodeErrors) {
           variable._ignoreDecodingErrors = true;
         }

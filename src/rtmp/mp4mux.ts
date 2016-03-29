@@ -576,10 +576,10 @@ module RtmpJs.MP4 {
     var audioTrackId = -1;
     var videoTrackId = -1;
 
-    var duration = +metadata.asGetPublicProperty('duration');
+    var duration = +metadata.axGetPublicProperty('duration');
 
     var audioCodec, audioCodecId;
-    var audioCodecCode = metadata.asGetPublicProperty('audiocodecid');
+    var audioCodecCode = metadata.axGetPublicProperty('audiocodecid');
     switch (audioCodecCode) {
       case MP3_SOUND_CODEC_ID:
       case 'mp3':
@@ -601,7 +601,7 @@ module RtmpJs.MP4 {
     }
 
     var videoCodec, videoCodecId;
-    var videoCodecCode = metadata.asGetPublicProperty('videocodecid');
+    var videoCodecCode = metadata.axGetPublicProperty('videocodecid');
     switch (videoCodecCode) {
       case VP6_VIDEO_CODEC_ID:
       case 'vp6f':
@@ -626,9 +626,9 @@ module RtmpJs.MP4 {
       codecDescription: audioCodec,
       codecId: audioCodecId,
       language: 'und',
-      timescale: +metadata.asGetPublicProperty('audiosamplerate') || 44100,
-      samplerate: +metadata.asGetPublicProperty('audiosamplerate') || 44100,
-      channels: +metadata.asGetPublicProperty('audiochannels') || 2,
+      timescale: +metadata.axGetPublicProperty('audiosamplerate') || 44100,
+      samplerate: +metadata.axGetPublicProperty('audiosamplerate') || 44100,
+      channels: +metadata.axGetPublicProperty('audiochannels') || 2,
       samplesize: 16
     };
     var videoTrack: MP4Track = (videoCodec === null) ? null : {
@@ -636,24 +636,24 @@ module RtmpJs.MP4 {
       codecId: videoCodecId,
       language: 'und',
       timescale: 60000,
-      framerate: +metadata.asGetPublicProperty('videoframerate') ||
-                 +metadata.asGetPublicProperty('framerate'),
-      width: +metadata.asGetPublicProperty('width'),
-      height: +metadata.asGetPublicProperty('height')
+      framerate: +metadata.axGetPublicProperty('videoframerate') ||
+                 +metadata.axGetPublicProperty('framerate'),
+      width: +metadata.axGetPublicProperty('width'),
+      height: +metadata.axGetPublicProperty('height')
     };
 
-    var trackInfos = metadata.asGetPublicProperty('trackinfo');
+    var trackInfos = metadata.axGetPublicProperty('trackinfo');
     if (trackInfos) {
       // Not in the Adobe's references, red5 specific?
       for (var i = 0; i < trackInfos.length; i++) {
         var info = trackInfos[i];
-        var sampleDescription = info.asGetPublicProperty('sampledescription')[0];
-        if (sampleDescription.asGetPublicProperty('sampletype') === audioCodecCode) {
-          audioTrack.language = info.asGetPublicProperty('language');
-          audioTrack.timescale = +info.asGetPublicProperty('timescale');
-        } else if (sampleDescription.asGetPublicProperty('sampletype') === videoCodecCode) {
-          videoTrack.language = info.asGetPublicProperty('language');
-          videoTrack.timescale = +info.asGetPublicProperty('timescale');
+        var sampleDescription = info.axGetPublicProperty('sampledescription')[0];
+        if (sampleDescription.axGetPublicProperty('sampletype') === audioCodecCode) {
+          audioTrack.language = info.axGetPublicProperty('language');
+          audioTrack.timescale = +info.axGetPublicProperty('timescale');
+        } else if (sampleDescription.axGetPublicProperty('sampletype') === videoCodecCode) {
+          videoTrack.language = info.axGetPublicProperty('language');
+          videoTrack.timescale = +info.axGetPublicProperty('timescale');
         }
       }
     }

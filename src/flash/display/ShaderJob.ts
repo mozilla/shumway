@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: ShaderJob
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class ShaderJob extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -34,8 +30,7 @@ module Shumway.AVM2.AS.flash.display {
     
     constructor (shader: flash.display.Shader = null, target: ASObject = null, width: number /*int*/ = 0, height: number /*int*/ = 0) {
       shader = shader; target = target; width = width | 0; height = height | 0;
-      false && super(undefined);
-      dummyConstructor("public flash.display.ShaderJob");
+      super();
     }
     
     // JS -> AS Bindings
@@ -49,51 +44,51 @@ module Shumway.AVM2.AS.flash.display {
     // _height: number /*int*/;
     // _progress: number;
     get shader(): flash.display.Shader {
-      notImplemented("public flash.display.ShaderJob::get shader"); return;
+      release || notImplemented("public flash.display.ShaderJob::get shader"); return;
       // return this._shader;
     }
     set shader(s: flash.display.Shader) {
       s = s;
-      notImplemented("public flash.display.ShaderJob::set shader"); return;
+      release || notImplemented("public flash.display.ShaderJob::set shader"); return;
       // this._shader = s;
     }
     get target(): ASObject {
-      notImplemented("public flash.display.ShaderJob::get target"); return;
+      release || notImplemented("public flash.display.ShaderJob::get target"); return;
       // return this._target;
     }
     set target(s: ASObject) {
       s = s;
-      notImplemented("public flash.display.ShaderJob::set target"); return;
+      release || notImplemented("public flash.display.ShaderJob::set target"); return;
       // this._target = s;
     }
     get width(): number /*int*/ {
-      notImplemented("public flash.display.ShaderJob::get width"); return;
+      release || notImplemented("public flash.display.ShaderJob::get width"); return;
       // return this._width;
     }
     set width(v: number /*int*/) {
       v = v | 0;
-      notImplemented("public flash.display.ShaderJob::set width"); return;
+      release || notImplemented("public flash.display.ShaderJob::set width"); return;
       // this._width = v;
     }
     get height(): number /*int*/ {
-      notImplemented("public flash.display.ShaderJob::get height"); return;
+      release || notImplemented("public flash.display.ShaderJob::get height"); return;
       // return this._height;
     }
     set height(v: number /*int*/) {
       v = v | 0;
-      notImplemented("public flash.display.ShaderJob::set height"); return;
+      release || notImplemented("public flash.display.ShaderJob::set height"); return;
       // this._height = v;
     }
     get progress(): number {
-      notImplemented("public flash.display.ShaderJob::get progress"); return;
+      release || notImplemented("public flash.display.ShaderJob::get progress"); return;
       // return this._progress;
     }
     start(waitForCompletion: boolean = false): void {
       waitForCompletion = !!waitForCompletion;
-      notImplemented("public flash.display.ShaderJob::start"); return;
+      release || notImplemented("public flash.display.ShaderJob::start"); return;
     }
     cancel(): void {
-      notImplemented("public flash.display.ShaderJob::cancel"); return;
+      release || notImplemented("public flash.display.ShaderJob::cancel"); return;
     }
   }
 }

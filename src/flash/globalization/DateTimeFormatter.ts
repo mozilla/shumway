@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: DateTimeFormatter
-module Shumway.AVM2.AS.flash.globalization {
+module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class DateTimeFormatter extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class DateTimeFormatter extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,8 @@ module Shumway.AVM2.AS.flash.globalization {
     static instanceSymbols: string [] = null; // ["format", "formatUTC"];
     
     constructor (requestedLocaleIDName: string, dateStyle: string = "long", timeStyle: string = "long") {
-      requestedLocaleIDName = asCoerceString(requestedLocaleIDName); dateStyle = asCoerceString(dateStyle); timeStyle = asCoerceString(timeStyle);
-      false && super();
-      dummyConstructor("public flash.globalization.DateTimeFormatter");
+      super();
+      requestedLocaleIDName = axCoerceString(requestedLocaleIDName); dateStyle = axCoerceString(dateStyle); timeStyle = axCoerceString(timeStyle);
     }
     
     // JS -> AS Bindings
@@ -45,59 +40,59 @@ module Shumway.AVM2.AS.flash.globalization {
     
     // AS -> JS Bindings
     static getAvailableLocaleIDNames(): ASVector<any> {
-      notImplemented("public flash.globalization.DateTimeFormatter::static getAvailableLocaleIDNames"); return;
+      release || notImplemented("public flash.globalization.DateTimeFormatter::static getAvailableLocaleIDNames"); return;
     }
     
     // _lastOperationStatus: string;
     // _requestedLocaleIDName: string;
     // _actualLocaleIDName: string;
     get lastOperationStatus(): string {
-      notImplemented("public flash.globalization.DateTimeFormatter::get lastOperationStatus"); return;
+      release || notImplemented("public flash.globalization.DateTimeFormatter::get lastOperationStatus"); return;
       // return this._lastOperationStatus;
     }
     get requestedLocaleIDName(): string {
-      notImplemented("public flash.globalization.DateTimeFormatter::get requestedLocaleIDName"); return;
+      release || notImplemented("public flash.globalization.DateTimeFormatter::get requestedLocaleIDName"); return;
       // return this._requestedLocaleIDName;
     }
     get actualLocaleIDName(): string {
-      notImplemented("public flash.globalization.DateTimeFormatter::get actualLocaleIDName"); return;
+      release || notImplemented("public flash.globalization.DateTimeFormatter::get actualLocaleIDName"); return;
       // return this._actualLocaleIDName;
     }
     setDateTimeStyles(dateStyle: string, timeStyle: string): void {
-      dateStyle = asCoerceString(dateStyle); timeStyle = asCoerceString(timeStyle);
-      notImplemented("public flash.globalization.DateTimeFormatter::setDateTimeStyles"); return;
+      dateStyle = axCoerceString(dateStyle); timeStyle = axCoerceString(timeStyle);
+      release || notImplemented("public flash.globalization.DateTimeFormatter::setDateTimeStyles"); return;
     }
     getTimeStyle(): string {
-      notImplemented("public flash.globalization.DateTimeFormatter::getTimeStyle"); return;
+      release || notImplemented("public flash.globalization.DateTimeFormatter::getTimeStyle"); return;
     }
     getDateStyle(): string {
-      notImplemented("public flash.globalization.DateTimeFormatter::getDateStyle"); return;
+      release || notImplemented("public flash.globalization.DateTimeFormatter::getDateStyle"); return;
     }
     getMonthNames(nameStyle: string = "full", context: string = "standalone"): ASVector<any> {
-      nameStyle = asCoerceString(nameStyle); context = asCoerceString(context);
-      notImplemented("public flash.globalization.DateTimeFormatter::getMonthNames"); return;
+      nameStyle = axCoerceString(nameStyle); context = axCoerceString(context);
+      release || notImplemented("public flash.globalization.DateTimeFormatter::getMonthNames"); return;
     }
     getWeekdayNames(nameStyle: string = "full", context: string = "standalone"): ASVector<any> {
-      nameStyle = asCoerceString(nameStyle); context = asCoerceString(context);
-      notImplemented("public flash.globalization.DateTimeFormatter::getWeekdayNames"); return;
+      nameStyle = axCoerceString(nameStyle); context = axCoerceString(context);
+      release || notImplemented("public flash.globalization.DateTimeFormatter::getWeekdayNames"); return;
     }
     getFirstWeekday(): number /*int*/ {
-      notImplemented("public flash.globalization.DateTimeFormatter::getFirstWeekday"); return;
+      release || notImplemented("public flash.globalization.DateTimeFormatter::getFirstWeekday"); return;
     }
     getDateTimePattern(): string {
-      notImplemented("public flash.globalization.DateTimeFormatter::getDateTimePattern"); return;
+      release || notImplemented("public flash.globalization.DateTimeFormatter::getDateTimePattern"); return;
     }
     setDateTimePattern(pattern: string): void {
-      pattern = asCoerceString(pattern);
-      notImplemented("public flash.globalization.DateTimeFormatter::setDateTimePattern"); return;
+      pattern = axCoerceString(pattern);
+      release || notImplemented("public flash.globalization.DateTimeFormatter::setDateTimePattern"); return;
     }
     ctor(requestedLocaleIDName: string, dateStyle: string, timeStyle: string): void {
-      requestedLocaleIDName = asCoerceString(requestedLocaleIDName); dateStyle = asCoerceString(dateStyle); timeStyle = asCoerceString(timeStyle);
-      notImplemented("public flash.globalization.DateTimeFormatter::ctor"); return;
+      requestedLocaleIDName = axCoerceString(requestedLocaleIDName); dateStyle = axCoerceString(dateStyle); timeStyle = axCoerceString(timeStyle);
+      release || notImplemented("public flash.globalization.DateTimeFormatter::ctor"); return;
     }
     formatImplementation(dateTime: ASDate, utc: boolean): string {
       dateTime = dateTime; utc = !!utc;
-      notImplemented("public flash.globalization.DateTimeFormatter::formatImplementation"); return;
+      release || notImplemented("public flash.globalization.DateTimeFormatter::formatImplementation"); return;
     }
   }
 }

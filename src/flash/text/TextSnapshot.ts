@@ -14,70 +14,54 @@
  * limitations under the License.
  */
 // Class: TextSnapshot
-module Shumway.AVM2.AS.flash.text {
+module Shumway.AVMX.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class TextSnapshot extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class TextSnapshot extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
+
     constructor () {
-      false && super();
-      dummyConstructor("public flash.text.TextSnapshot");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
+
     // _charCount: number /*int*/;
     get charCount(): number /*int*/ {
-      notImplemented("public flash.text.TextSnapshot::get charCount"); return;
+      release || notImplemented("public flash.text.TextSnapshot::get charCount"); return;
       // return this._charCount;
     }
     findText(beginIndex: number /*int*/, textToFind: string, caseSensitive: boolean): number /*int*/ {
-      beginIndex = beginIndex | 0; textToFind = asCoerceString(textToFind); caseSensitive = !!caseSensitive;
-      notImplemented("public flash.text.TextSnapshot::findText"); return;
+      beginIndex = beginIndex | 0; textToFind = axCoerceString(textToFind); caseSensitive = !!caseSensitive;
+      release || notImplemented("public flash.text.TextSnapshot::findText"); return;
     }
     getSelected(beginIndex: number /*int*/, endIndex: number /*int*/): boolean {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0;
-      notImplemented("public flash.text.TextSnapshot::getSelected"); return;
+      release || notImplemented("public flash.text.TextSnapshot::getSelected"); return;
     }
     getSelectedText(includeLineEndings: boolean = false): string {
       includeLineEndings = !!includeLineEndings;
-      notImplemented("public flash.text.TextSnapshot::getSelectedText"); return;
+      release || notImplemented("public flash.text.TextSnapshot::getSelectedText"); return;
     }
     getText(beginIndex: number /*int*/, endIndex: number /*int*/, includeLineEndings: boolean = false): string {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0; includeLineEndings = !!includeLineEndings;
-      notImplemented("public flash.text.TextSnapshot::getText"); return;
+      release || notImplemented("public flash.text.TextSnapshot::getText"); return;
     }
-    getTextRunInfo(beginIndex: number /*int*/, endIndex: number /*int*/): any [] {
+    getTextRunInfo(beginIndex: number /*int*/, endIndex: number /*int*/): ASArray {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0;
-      notImplemented("public flash.text.TextSnapshot::getTextRunInfo"); return;
+      release || notImplemented("public flash.text.TextSnapshot::getTextRunInfo"); return;
     }
     hitTestTextNearPos(x: number, y: number, maxDistance: number = 0): number {
       x = +x; y = +y; maxDistance = +maxDistance;
-      notImplemented("public flash.text.TextSnapshot::hitTestTextNearPos"); return;
+      release || notImplemented("public flash.text.TextSnapshot::hitTestTextNearPos"); return;
     }
     setSelectColor(hexColor: number /*uint*/ = 16776960): void {
       hexColor = hexColor >>> 0;
-      notImplemented("public flash.text.TextSnapshot::setSelectColor"); return;
+      release || notImplemented("public flash.text.TextSnapshot::setSelectColor"); return;
     }
     setSelected(beginIndex: number /*int*/, endIndex: number /*int*/, select: boolean): void {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0; select = !!select;
-      notImplemented("public flash.text.TextSnapshot::setSelected"); return;
+      release || notImplemented("public flash.text.TextSnapshot::setSelected"); return;
     }
   }
 }

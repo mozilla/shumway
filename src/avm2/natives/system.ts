@@ -14,88 +14,95 @@
  * limitations under the License.
  */
 
-module Shumway.AVM2.AS {
-  import assertNotImplemented = Shumway.Debug.assertNotImplemented;
-  import notImplemented = Shumway.Debug.notImplemented;
+module Shumway.AVMX.AS {
+
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
 
   export module flash.system {
-    export class IME extends ASNative /* flash.events.EventDispatcher */ {
+    export class IME extends ASObject /* flash.events.EventDispatcher */ {
       constructor () {
-        false && super();
+        super();
       }
       static get enabled(): boolean {
-        notImplemented("public flash.system.IME::static get enabled"); return;
+        release || release || somewhatImplemented("public flash.system.IME::static get enabled");
+        return false;
       }
       static set enabled(enabled: boolean) {
+        release || release || somewhatImplemented("public flash.system.IME::static set enabled");
         enabled = !!enabled;
-        notImplemented("public flash.system.IME::static set enabled"); return;
       }
       static get conversionMode(): string {
-        notImplemented("public flash.system.IME::static get conversionMode"); return;
+        release || somewhatImplemented("public flash.system.IME::static get conversionMode");
+        return 'UNKNOWN';
       }
       static set conversionMode(mode: string) {
-        mode = asCoerceString(mode);
-        notImplemented("public flash.system.IME::static set conversionMode"); return;
+        mode = axCoerceString(mode);
+        release || somewhatImplemented("public flash.system.IME::static set conversionMode");
       }
       static setCompositionString(composition: string): void {
-        composition = asCoerceString(composition);
-        notImplemented("public flash.system.IME::static setCompositionString"); return;
+        composition = axCoerceString(composition);
+        release || somewhatImplemented("public flash.system.IME::static setCompositionString");
       }
       static doConversion(): void {
-        notImplemented("public flash.system.IME::static doConversion"); return;
+        release || somewhatImplemented("public flash.system.IME::static doConversion");
       }
       static compositionSelectionChanged(start: number /*int*/, end: number /*int*/): void {
         start = start | 0; end = end | 0;
-        notImplemented("public flash.system.IME::static compositionSelectionChanged"); return;
+        release || somewhatImplemented("public flash.system.IME::static compositionSelectionChanged");
       }
       static compositionAbandoned(): void {
-        notImplemented("public flash.system.IME::static compositionAbandoned"); return;
+        release || somewhatImplemented("public flash.system.IME::static compositionAbandoned");
       }
       static get isSupported(): boolean {
-        somewhatImplemented("public flash.system.IME::static get isSupported");
+        release || somewhatImplemented("public flash.system.IME::static get isSupported");
         return false;
       }
     }
 
-    export class System extends ASNative {
+    export class System extends ASObject {
       private static _useCodePage: boolean = false;
 
+      static classInitializer() {
+        defineNonEnumerableProperty(this, '$Bgargv', this.sec.createArray([]));
+      }
+
       static get ime(): flash.system.IME {
-        notImplemented("public flash.system.System::get ime"); return;
+        release || somewhatImplemented("public flash.system.System::get ime");
+        return null;
       }
 
       static setClipboard(string: string): void {
-        string = asCoerceString(string);
+        string = axCoerceString(string);
         if (ClipboardService.instance === null) {
-          console.warn('setClipboard is only available in the Firefox extension');
+          Debug.warning('setClipboard is only available in the Firefox extension');
           return;
         }
         ClipboardService.instance.setClipboard(string);
       }
 
       static get totalMemoryNumber(): number {
-        somewhatImplemented("public flash.system.System::get totalMemoryNumber");
+        release || somewhatImplemented("public flash.system.System::get totalMemoryNumber");
         return 1024 * 1024 * 2;
       }
 
       static get freeMemory(): number {
-        somewhatImplemented("public flash.system.System::get freeMemory");
+        release || somewhatImplemented("public flash.system.System::get freeMemory");
         return 1024 * 1024;
       }
 
       static get privateMemory(): number {
-        somewhatImplemented("public flash.system.System::get privateMemory");
+        release || somewhatImplemented("public flash.system.System::get privateMemory");
         return 1024*1024;
       }
 
       static get useCodePage(): boolean {
-        return System._useCodePage;
+        return this._useCodePage;
       }
 
       static set useCodePage(value: boolean) {
-        System._useCodePage = !!value;
+        release || somewhatImplemented("public flash.system.System::set useCodePage");
+        this._useCodePage = !!value;
       }
 
       static get vmVersion(): string {
@@ -145,3 +152,6 @@ module Shumway.AVM2.AS {
     export var OriginalSystem = System;
   }
 }
+
+// Do this here temporarily until we find a nicer place.
+Shumway.AVMX.AS.initializeBuiltins();

@@ -44,14 +44,12 @@ module Shumway.GFX {
     HardLight  = 14
   }
 
-  export enum NodeFlags {
+  export const enum NodeFlags {
     None                              = 0x00000,
 
-    /**
-     * Whether this node's bounding box is automatically computed from its children. If this
-     * flag is |false| then this node's bounding box can only be set via |setBounds|.
-     */
-    BoundsAutoCompute                 = 0x00002,
+    Visible                           = 0x00001,
+
+    Transparent                       = 0x00002,
 
     /**
      * Whether this node acts as a mask for another node.
@@ -59,32 +57,71 @@ module Shumway.GFX {
     IsMask                            = 0x00004,
 
     /**
+     * Whether this node is marked to be cached as a bitmap. This isn't just a performance optimization,
+     * but also affects the way masking is performed.
+     */
+    CacheAsBitmap                     = 0x00010,
+
+    /**
+     * Whether this node's contents should be drawn snapped to pixel boundaries.
+     * Only relevant for bitmaps.
+     */
+    PixelSnapping                     = 0x00020,
+
+    /**
+     * Whether this node's contents should use higher quality image smoothing.
+     * Only relevant for bitmaps.
+     */
+    ImageSmoothing                    = 0x00040,
+
+    /**
+     * Whether source has dynamic content.
+     */
+    Dynamic                           = 0x00100,
+
+    /**
+     * Whether the source's content can be scaled and drawn at a higher resolution.
+     */
+    Scalable                          = 0x00200,
+
+    /**
+     * Whether the source's content should be tiled.
+     */
+    Tileable                          = 0x00400,
+
+    /**
+     * Whether this node's bounding box is automatically computed from its children. If this
+     * flag is |false| then this node's bounding box can only be set via |setBounds|.
+     */
+    BoundsAutoCompute                 = 0x00800,
+
+    /**
      * Whether this node needs to be repainted.
      */
-    Dirty                             = 0x00010,
+    Dirty                             = 0x01000,
 
     /**
      * Whether this node's bounds is invalid and needs to be recomputed. Only nodes that have the
      * |BoundsAutoCompute| flag set can have this flag set.
      */
-    InvalidBounds                     = 0x00100,
+    InvalidBounds                     = 0x02000,
 
     /**
      * Whether this node's concatenated matrix is invalid. This happens whenever a node's ancestor
      * is moved in the node tree.
      */
-    InvalidConcatenatedMatrix         = 0x00200,
+    InvalidConcatenatedMatrix         = 0x04000,
 
     /**
      * Whether this node's inverted concatenated matrix is invalid. This happens whenever a node's ancestor
      * is moved in the node tree.
      */
-    InvalidInvertedConcatenatedMatrix = 0x00400,
+    InvalidInvertedConcatenatedMatrix = 0x08000,
 
     /**
      * Same as above, but for colors.
      */
-    InvalidConcatenatedColorMatrix    = 0x00800,
+    InvalidConcatenatedColorMatrix    = 0x10000,
 
     /**
      * Flags to propagate upwards when a node is added or removed from a group.
@@ -92,19 +129,19 @@ module Shumway.GFX {
     UpOnAddedOrRemoved                = InvalidBounds | Dirty,
 
     /**
+     * Flags to propagate downwards when a node is added or removed from a group.
+     */
+    DownOnAddedOrRemoved              = InvalidConcatenatedMatrix | InvalidInvertedConcatenatedMatrix | InvalidConcatenatedColorMatrix,
+
+    /**
      * Flags to propagate upwards when a node is moved.
      */
     UpOnMoved                         = InvalidBounds | Dirty,
 
     /**
-     * Flags to propagate downwards when a mode is added or removed from a group.
-     */
-    DownOnAddedOrRemoved              = InvalidConcatenatedMatrix | InvalidInvertedConcatenatedMatrix | InvalidConcatenatedColorMatrix,
-
-    /**
      * Flags to propagate downwards when a node is moved.
      */
-    DownOnMoved                       = InvalidConcatenatedMatrix | InvalidInvertedConcatenatedMatrix | InvalidConcatenatedColorMatrix,
+    DownOnMoved                       = InvalidConcatenatedMatrix | InvalidInvertedConcatenatedMatrix,
 
     /**
      * Flags to propagate upwards when a node's color matrix is changed.
@@ -115,8 +152,6 @@ module Shumway.GFX {
      * Flags to propagate downwards when a node's color matrix is changed.
      */
     DownOnColorMatrixChanged          = InvalidConcatenatedColorMatrix,
-
-    Visible                           = 0x10000,
 
     /**
      * Flags to propagate upwards when a node is invalidated.
@@ -131,46 +166,12 @@ module Shumway.GFX {
                                         InvalidConcatenatedMatrix |
                                         InvalidInvertedConcatenatedMatrix |
                                         Visible,
-
-    /**
-     * Whether this node is marked to be cached as a bitmap. This isn't just a performance optimization,
-     * but also affects the way masking is performed.
-     */
-    CacheAsBitmap                     = 0x20000,
-
-    /**
-     * Whether this node's contents should be drawn snapped to pixel boundaries.
-     */
-    PixelSnapping                     = 0x40000,
-
-    /**
-     * Whether this node's contents should use higher quality image smoothing.
-     */
-    ImageSmoothing                    = 0x80000,
-
-    /**
-     * Whether source has dynamic content.
-     */
-    Dynamic                           = 0x100000,
-
-    /**
-     * Whether the source's content can be scaled and drawn at a higher resolution.
-     */
-    Scalable                          = 0x200000,
-
-    /**
-     * Whether the source's content should be tiled.
-     */
-    Tileable                          = 0x400000,
-
-    // Delete These
-    Transparent                       = 0x08000,
   }
 
   /**
    * Scene graph object hierarchy. This enum makes it possible to write fast type checks.
    */
-  export enum NodeType {
+  export const enum NodeType {
     Node                   = 0x0001,
       Shape                = 0x0003, // 0x0002 | Node,
       Group                = 0x0005, // 0x0004 | Node,
@@ -178,10 +179,18 @@ module Shumway.GFX {
       Renderable           = 0x0021  // 0x0020 | Node
   }
 
+  function getNodeTypeName(nodeType: NodeType) {
+    if (nodeType === NodeType.Node) return "Node";
+    else if (nodeType === NodeType.Shape) return "Shape";
+    else if (nodeType === NodeType.Group) return "Group";
+    else if (nodeType === NodeType.Stage) return "Stage";
+    else if (nodeType === NodeType.Renderable) return "Renderable";
+  }
+
   /**
    * Basic event types. Not much here.
    */
-  export enum NodeEventType {
+  export const enum NodeEventType {
     None                        = 0x0000,
     OnStageBoundsChanged        = 0x0001,
     RemovedFromStage            = 0x0002
@@ -229,45 +238,9 @@ module Shumway.GFX {
   }
 
   export class PreRenderState extends State {
-    private static _dirtyStack: PreRenderState [] = [];
-
-    matrix: Matrix = Matrix.createIdentity();
     depth: number = 0;
-
     constructor() {
       super();
-    }
-
-    transform(transform: Transform): PreRenderState {
-      var state = this.clone();
-      state.matrix.preMultiply(transform.getMatrix());
-      return state;
-    }
-
-    static allocate(): PreRenderState {
-      var dirtyStack = PreRenderState._dirtyStack;
-      var state = null;
-      if (dirtyStack.length) {
-        state = dirtyStack.pop();
-      }
-      return state;
-    }
-
-    public clone(): PreRenderState {
-      var state = PreRenderState.allocate();
-      if (!state) {
-        state = new PreRenderState();
-      }
-      state.set(this);
-      return state;
-    }
-
-    set (state: PreRenderState) {
-      this.matrix.set(state.matrix);
-    }
-
-    free() {
-      PreRenderState._dirtyStack.push(this);
     }
   }
 
@@ -277,33 +250,29 @@ module Shumway.GFX {
    */
   export class PreRenderVisitor extends NodeVisitor {
     public isDirty = true;
-    private _dirtyRegion: DirtyRegion;
+    private _dirtyRegion: DirtyRegion = null;
+    private _depth = 0;
 
     start(node: Group, dirtyRegion: DirtyRegion) {
       this._dirtyRegion = dirtyRegion;
-      var state = new PreRenderState();
-      state.matrix.setIdentity();
-      node.visit(this, state);
-      state.free();
+      this._depth = 0;
+      node.visit(this, null);
     }
 
-    visitGroup(node: Group, state: PreRenderState) {
+    visitGroup(node: Group, state: State) {
       var children = node.getChildren();
       this.visitNode(node, state);
       for (var i = 0; i < children.length; i++) {
-        var child = children[i];
-        var childState = state.transform(child.getTransform());
-        child.visit(this, childState);
-        childState.free();
+        children[i].visit(this, state);
       }
     }
 
-    visitNode(node: Node, state: PreRenderState) {
+    visitNode(node: Node, state: State) {
       if (node.hasFlags(NodeFlags.Dirty)) {
         this.isDirty = true;
       }
       node.toggleFlags(NodeFlags.Dirty, false);
-      node.depth = state.depth++;
+      node.depth = this._depth++;
     }
   }
 
@@ -368,17 +337,17 @@ module Shumway.GFX {
     /**
      * All sorts of flags.
      */
-    public _flags: NodeFlags;
+    _flags: NodeFlags;
 
     /**
      * Index of this node in its parent's children list.
      */
-    public _index: number;
+    _index: number;
 
     /**
      * Parent node. This is |null| for the root node and for |Renderables| which have more than one parent.
      */
-    public _parent: Group;
+    _parent: Group;
 
     /**
      * Number of sibillings to clip.
@@ -509,15 +478,13 @@ module Shumway.GFX {
     }
 
     _markCurrentBoundsAsDirtyRegion() {
-      return;
-      /*
+      // return;
       var stage = this.getStage();
       if (!stage) {
         return;
       }
       var bounds = this.getTransformedBounds(stage);
       stage.dirtyRegion.addDirtyRectangle(bounds);
-      */
     }
 
     public getStage(withDirtyRegion: boolean = true): Stage {
@@ -700,6 +667,14 @@ module Shumway.GFX {
       }
       return this._layer;
     }
+    
+    public getLayerBounds(includeFilters: boolean): Rectangle {
+      var bounds = this.getBounds();
+      if (includeFilters && this._layer) {
+        this._layer.expandBounds(bounds);
+      }
+      return bounds;
+    }
 
 //    public getConcatenatedMatrix(clone: boolean = false): Matrix {
 //      var transform: Transform = this.getTransform(false);
@@ -740,7 +715,7 @@ module Shumway.GFX {
     }
 
     public toString(bounds: boolean = false): string {
-      var s = NodeType[this._type] + " " + this._id;
+      var s = getNodeTypeName(this._type) + " " + this._id;
       if (bounds) {
         s += " " + this._bounds.toString();
       }
@@ -845,7 +820,7 @@ module Shumway.GFX {
     }
 
     /**
-     * Takes the inion of all child bounds and caches the bounds locally.
+     * Takes the union of all child bounds and caches the bounds locally.
      */
     public getBounds(clone: boolean = false): Rectangle {
       var bounds = this._bounds || (this._bounds = Rectangle.createEmpty());
@@ -864,6 +839,29 @@ module Shumway.GFX {
       }
       if (clone) {
         return bounds.clone();
+      }
+      return bounds;
+    }
+    
+    /**
+     * Takes the union of all child bounds, optionaly including filter expansions.
+     */
+    public getLayerBounds(includeFilters: boolean): Rectangle {
+      if (!includeFilters) {
+        return this.getBounds();
+      }
+      var bounds = Rectangle.createEmpty();
+      var children = this._children;
+      var childBounds = Rectangle.allocate();
+      for (var i = 0; i < children.length; i++) {
+        var child = children[i];
+        childBounds.set(child.getLayerBounds(includeFilters));
+        child.getTransformMatrix().transformRectangleAABB(childBounds);
+        bounds.union(childBounds);
+      }
+      childBounds.free();
+      if (includeFilters && this._layer) {
+        this._layer.expandBounds(bounds);
       }
       return bounds;
     }
@@ -951,6 +949,7 @@ module Shumway.GFX {
       this._colorMatrix.set(value);
       this._node._propagateFlagsUp(NodeFlags.UpOnColorMatrixChanged);
       this._node._propagateFlagsDown(NodeFlags.DownOnColorMatrixChanged);
+      this._node._markCurrentBoundsAsDirtyRegion();
     }
 
     public getMatrix(clone: boolean = false): Matrix {
@@ -1056,6 +1055,10 @@ module Shumway.GFX {
 
     set filters(value: Filter []) {
       this._filters = value;
+      if (value.length) {
+        // TODO: We could avoid invalidating the node if the new filter list contains equal filter objects.
+        this._node.invalidate();
+      }
     }
 
     get blendMode() {
@@ -1071,8 +1074,11 @@ module Shumway.GFX {
     }
 
     set mask(value: Node) {
-      if (this._mask && this._mask !== value) {
-        this._mask.removeFlags(NodeFlags.IsMask);
+      if (this._mask !== value) {
+        this._node.invalidate();
+        if (this._mask) {
+          this._mask.removeFlags(NodeFlags.IsMask);
+        }
       }
       this._mask = value;
       if (this._mask) {
@@ -1084,6 +1090,15 @@ module Shumway.GFX {
     public toString() {
       return BlendMode[this._blendMode];
     }
+    
+    public expandBounds(bounds: Rectangle) {
+      var filters = this._filters;
+      if (filters) {
+        for (var i = 0; i < filters.length; i++) {
+          filters[i].expandBounds(bounds);
+        }
+      }
+    }
   }
 
   /**
@@ -1091,14 +1106,14 @@ module Shumway.GFX {
    */
   export class Shape extends Node {
     private _source: Renderable;
-    public ratio: number;
+    private _ratio: number;
 
     constructor(source: Renderable) {
       super();
       release || assert(source);
       this._source = source;
       this._type = NodeType.Shape;
-      this.ratio = 0;
+      this._ratio = 0;
     }
 
     public getBounds(clone: boolean = false): Rectangle {
@@ -1115,6 +1130,18 @@ module Shumway.GFX {
 
     get source(): Renderable {
       return this._source;
+    }
+
+    get ratio(): number {
+      return this._ratio;
+    }
+
+    set ratio(value: number) {
+      if (value === this._ratio) {
+        return;
+      }
+      this.invalidate();
+      this._ratio = value;
     }
 
     _propagateFlagsDown(flags: NodeFlags) {
@@ -1144,7 +1171,7 @@ module Shumway.GFX {
     clear: boolean = true;
   }
 
-  export enum Backend {
+  export const enum Backend {
     Canvas2D = 0,
     WebGL = 1, // Soon
     Both = 2,
@@ -1200,7 +1227,7 @@ module Shumway.GFX {
      * Captures a rectangular region of the easel as a dataURL as specified by |bounds|. |stageContent| indicates if the bounds
      * should be computed by looking at the bounds of the content of the easel rather than the easel itself.
      */
-    public screenShot(bounds: Rectangle, stageContent: boolean): ScreenShot {
+    public screenShot(bounds: Rectangle, stageContent: boolean, disableHidpi: boolean): ScreenShot {
       throw Shumway.Debug.abstractMethod("Renderer::screenShot");
     }
   }

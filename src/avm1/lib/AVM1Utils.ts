@@ -17,15 +17,21 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import ASObject = Shumway.AVM2.AS.ASObject;
-  import flash = Shumway.AVM2.AS.flash;
+  import ASObject = Shumway.AVMX.AS.ASObject;
+  import flash = Shumway.AVMX.AS.flash;
+  import AXClass = Shumway.AVMX.AXClass;
 
-  export interface IAVM1SymbolBase {
-    isAVM1Instance: boolean;
-    as3Object: flash.display.DisplayObject;
+  export var DEPTH_OFFSET = 16384;
+
+  export interface IHasAS3ObjectReference {
+    _as3Object: ASObject;
+  }
+
+  export interface IAVM1SymbolBase extends IHasAS3ObjectReference{
     context: AVM1Context;
-    initAVM1SymbolInstance(context: AVM1Context, as3Object: flash.display.DisplayObject);
+    initAVM1SymbolInstance(context: AVM1Context, as3Object: flash.display.InteractiveObject);
     updateAllEvents();
+    getDepth(): number;
   }
 
   export class AVM1EventHandler {
@@ -37,39 +43,125 @@ module Shumway.AVM1.Lib {
     public onUnbind(target: IAVM1SymbolBase): void {}
   }
 
-  export class AVM1NativeObject {
-    _context: AVM1Context;
+  /**
+   * Checks if an object contains a reference to a native AS3 object.
+   * Returns false for MovieClip instances or instances of constructors with
+   * MovieClip on their prototype chain that were created in script using,
+   * e.g. new MovieClip(). Those lack the part of their internal structure
+   * that makes them displayable.
+   */
+  export function hasAS3ObjectReference(obj: any): boolean {
+    return !!obj._as3Object;
+  }
 
-    public get context() {
-      return this._context;
+  /**
+   * Returns obj's reference to a native AS3 object. If the reference
+   * does not exist, returns undefined.
+   */
+  export function getAS3Object(obj: IHasAS3ObjectReference): ASObject {
+    return obj._as3Object;
+  }
+
+  /**
+   * Returns obj's reference to a native AS3 object. If the reference
+   * doesn't exist, obj was created in script, e.g. with new MovieClip(),
+   * and doesn't reflect a real, displayable display object. In that case,
+   * an empty null-proto object is created and returned. This is used for
+   * classes that are linked to embedded symbols that extend MovieClip. Their
+   * inheritance chain is built by assigning new MovieClip to their prototype.
+   * When a proper, displayable, instance of such a class is created via
+   * attachMovie, initial values for properties such as tabEnabled
+   * can be initialized from values set on the template object.
+   */
+  export function getAS3ObjectOrTemplate<T extends flash.display.InteractiveObject>(obj: AVM1SymbolBase<T>): T {
+    if (obj._as3Object) {
+      return <T>obj._as3Object;
+    }
+    // The _as3ObjectTemplate is not really an ASObject type, but we will fake
+    // that for AVM1SymbolBase's properties transfers.
+    if (!obj._as3ObjectTemplate) {
+      var template;
+      var proto = obj.alPrototype;
+      while (proto && !(<any>proto).initAVM1SymbolInstance) {
+        template = (<any>proto)._as3ObjectTemplate;
+        if (template) {
+          break;
+        }
+        proto = proto.alPrototype;
+      }
+      obj._as3ObjectTemplate = Object.create(template || null);
+    }
+    return <T>obj._as3ObjectTemplate;
+  }
+
+  export class AVM1LoaderHelper {
+    private _loader: flash.display.Loader;
+    private _context: AVM1Context;
+
+    public get loader(): flash.display.Loader {
+      return this._loader;
     }
 
-    public initAVM1ObjectInstance(context: AVM1Context) {
-      release || Debug.assert(context);
+    public get loaderInfo(): flash.display.LoaderInfo {
+      return this._loader.contentLoaderInfo;
+    }
+
+    public get content(): flash.display.DisplayObject {
+      return this._loader._content;
+    }
+
+    public constructor(context: AVM1Context) {
       this._context = context;
+      this._loader = new context.sec.flash.display.Loader();
+    }
+
+    public load(url: string, method: string): Promise<flash.display.DisplayObject> {
+      var context = this._context;
+      var loader = this._loader;
+      var loaderContext: flash.system.LoaderContext = new context.sec.flash.system.LoaderContext();
+      loaderContext._avm1Context = context;
+      var request = new context.sec.flash.net.URLRequest(url);
+      if (method) {
+        request.method = method;
+      }
+
+      var loaderInfo = loader.contentLoaderInfo;
+      var result = new PromiseWrapper<flash.display.DisplayObject>();
+      // Waiting for content in the progress event -- the result promise will be resolved
+      // as soon as loader's content will be set to non-empty value.
+      var progressEventHandler = function (e: flash.events.ProgressEvent): void {
+        if (!loader._content) {
+          return;
+        }
+        loaderInfo.removeEventListener(flash.events.ProgressEvent.PROGRESS, progressEventHandler);
+        result.resolve(loader._content);
+      };
+      loaderInfo.addEventListener(flash.events.ProgressEvent.PROGRESS, progressEventHandler);
+
+      loader.load(request, loaderContext);
+      return result.promise;
     }
   }
 
-  export class AVM1SymbolBase<T extends flash.display.DisplayObject> extends AVM1NativeObject implements IAVM1SymbolBase, IAVM1EventPropertyObserver {
-    public get isAVM1Instance(): boolean {
-      return !!this._as3Object;
-    }
-
+  export class AVM1SymbolBase<T extends flash.display.InteractiveObject> extends AVM1Object implements IAVM1SymbolBase, IAVM1EventPropertyObserver {
     _as3Object: T;
-
-    public get as3Object(): T {
-      return this._as3Object;
-    }
+    _as3ObjectTemplate: any;
 
     public initAVM1SymbolInstance(context: AVM1Context, as3Object: T) {
-      this.initAVM1ObjectInstance(context);
+      AVM1Object.call(this, context);
+
       release || Debug.assert(as3Object);
       this._as3Object = as3Object;
+      var name = as3Object.name;
+      var parent = this.get_parent();
+      if (name && parent) {
+        parent._addChildName(this, name);
+      }
     }
 
-    private _eventsMap: Map<AVM1EventHandler>;
+    private _eventsMap: MapObject<AVM1EventHandler>;
     private _events: AVM1EventHandler[];
-    private _eventsListeners: Map<Function>;
+    private _eventsListeners: MapObject<Function>;
 
     public bindEvents(events: AVM1EventHandler[], autoUnbind: boolean = true) {
       this._events = events;
@@ -77,16 +169,19 @@ module Shumway.AVM1.Lib {
       this._eventsMap = eventsMap;
       this._eventsListeners = Object.create(null);
       var observer = this;
-      var context = this.context;
+      var context: AVM1Context = (<any>this).context;
       events.forEach(function (event: AVM1EventHandler) {
-        eventsMap[event.propertyName] = event;
-        context.registerEventPropertyObserver(event.propertyName, observer);
+        // Normalization will always stay valid in a player instance, so we can safely modify
+        // the event itself, here.
+        var propertyName = event.propertyName = context.normalizeName(event.propertyName);
+        eventsMap[propertyName] = event;
+        context.registerEventPropertyObserver(propertyName, observer);
         observer._updateEvent(event);
       });
 
       if (autoUnbind) {
-        observer.as3Object.addEventListener('removedFromStage', function removedHandler() {
-          observer.as3Object.removeEventListener('removedFromStage', removedHandler);
+        observer._as3Object.addEventListener('removedFromStage', function removedHandler() {
+          observer._as3Object.removeEventListener('removedFromStage', removedHandler);
           observer.unbindEvents();
         });
       }
@@ -120,306 +215,599 @@ module Shumway.AVM1.Lib {
     }
 
     private _addEventListener(event: AVM1EventHandler) {
-      var listener: any = this._eventsListeners[event.propertyName];
+      var propertyName = this.context.normalizeName(event.propertyName);
+      var listener: any = this._eventsListeners[propertyName];
       if (!listener) {
         listener = function avm1EventHandler() {
           var args = event.argsConverter ? event.argsConverter.apply(null, arguments) : null;
-          avm1BroadcastEvent(this.context, this, event.propertyName, args);
+          avm1BroadcastNativeEvent(this.context, this, propertyName, args);
         }.bind(this);
-        this.as3Object.addEventListener(event.eventName, listener);
+        this._as3Object.addEventListener(event.eventName, listener);
         event.onBind(this);
-        this._eventsListeners[event.propertyName] = listener;
+        this._eventsListeners[propertyName] = listener;
       }
     }
 
     private _removeEventListener(event: AVM1EventHandler) {
-      var listener: any = this._eventsListeners[event.propertyName];
+      var propertyName = this.context.normalizeName(event.propertyName);
+      var listener: any = this._eventsListeners[propertyName];
       if (listener) {
         event.onUnbind(this);
-        this.as3Object.removeEventListener(event.eventName, listener);
-        this._eventsListeners[event.propertyName] = null;
+        this._as3Object.removeEventListener(event.eventName, listener);
+        this._eventsListeners[propertyName] = null;
       }
     }
 
-    public onEventPropertyModified(propertyName) {
+    public onEventPropertyModified(propertyName: string) {
+      var propertyName = this.context.normalizeName(propertyName);
       var event = this._eventsMap[propertyName];
       this._updateEvent(event);
     }
-  }
 
-  export function avm1HasEventProperty(context: AVM1Context, target: any, propertyName: string): boolean {
-    if (context.utils.hasProperty(target, propertyName)) {
-      return true;
-    }
-    var _listeners = context.utils.getProperty(target, '_listeners');
-    if (!_listeners) {
-      return false;
-    }
-    return _listeners.some(function (listener) {
-      return context.utils.hasProperty(listener, propertyName);
-    });
-  }
+    // Common DisplayObject properties
 
-  export function avm1BroadcastEvent(context: AVM1Context, target: any, propertyName: string, args: any[] = null): void {
-    var handler: Function = context.utils.getProperty(target, propertyName);
-    if (isFunction(handler)) {
-      handler.apply(target, args);
+    public get_alpha(): number {
+      return this._as3Object.alpha * 100;
     }
-    var _listeners = context.utils.getProperty(this, '_listeners');
-    if (Array.isArray(_listeners)) {
-      _listeners.forEach(function (listener) {
-        var handlerOnListener:Function = context.utils.getProperty(listener, propertyName);
-        if (isFunction(handlerOnListener)) {
-          handlerOnListener.apply(target, args);
+
+    public set_alpha(value: number) {
+      value = alToNumber(this.context, value);
+      if (isNaN(value)) {
+        return;
+      }
+      this._as3Object.alpha = value / 100;
+    }
+
+    public getBlendMode(): string {
+      return this._as3Object.blendMode;
+    }
+
+    public setBlendMode(value: string) {
+      value = typeof value === 'number' ? BlendModesMap[value] : alCoerceString(this.context, value);
+      this._as3Object.blendMode = value || null;
+    }
+
+    public getCacheAsBitmap(): boolean {
+      return this._as3Object.cacheAsBitmap;
+    }
+
+    public setCacheAsBitmap(value: boolean) {
+      value = alToBoolean(this.context, value);
+      this._as3Object.cacheAsBitmap = value;
+    }
+
+    public getFilters(): AVM1Object {
+      return convertFromAS3Filters(this.context, this._as3Object.filters);
+    }
+
+    public setFilters(value) {
+      this._as3Object.filters = convertToAS3Filters(this.context, value);
+    }
+
+    public get_focusrect(): boolean {
+      return this._as3Object.focusRect || false; // suppressing null
+    }
+
+    public set_focusrect(value: boolean) {
+      value = alToBoolean(this.context, value);
+      this._as3Object.focusRect = value;
+    }
+
+    public get_height() {
+      return this._as3Object.height;
+    }
+
+    public set_height(value: number) {
+      value = alToNumber(this.context, value);
+      if (isNaN(value)) {
+        return;
+      }
+      this._as3Object.height = value;
+    }
+
+    public get_highquality(): number {
+      switch (this.get_quality()) {
+        case 'BEST':
+          return 2;
+        case 'HIGH':
+          return 1;
+        default: // case 'LOW':
+          return 0;
+      }
+    }
+
+    public set_highquality(value: number) {
+      var quality: string;
+      switch (alToInteger(this.context, value)) {
+        case 2:
+          quality = 'BEST';
+          break;
+        case 1:
+          quality = 'HIGH';
+          break;
+        default:
+          quality = 'LOW';
+          break;
+      }
+      this.set_quality(quality);
+    }
+
+    public getMenu() {
+      Debug.somewhatImplemented('AVM1SymbolBase.getMenu');
+      // return this._as3Object.contextMenu;
+    }
+
+    public setMenu(value) {
+      Debug.somewhatImplemented('AVM1SymbolBase.setMenu');
+      // this._as3Object.contextMenu = value;
+    }
+
+    public get_name(): string {
+      return this._as3Object ? this._as3Object.name : undefined;
+    }
+
+    public set_name(value: string) {
+      value = alCoerceString(this.context, value);
+      var oldName = this._as3Object.name;
+      this._as3Object.name = value;
+      this.get_parent()._updateChildName(<AVM1MovieClip><any>this, oldName, value);
+    }
+
+    public get_parent(): AVM1MovieClip {
+      var parent = getAVM1Object(this._as3Object.parent, this.context);
+      // In AVM1, the _parent property is `undefined`, not `null` if the element has no parent.
+      return <AVM1MovieClip>parent || undefined;
+    }
+
+    public set_parent(value: AVM1MovieClip) {
+      Debug.notImplemented('AVM1SymbolBase.set_parent');
+    }
+
+    public getOpaqueBackground(): number {
+      return this._as3Object.opaqueBackground;
+    }
+
+    public setOpaqueBackground(value: number) {
+      if (isNullOrUndefined(value)) {
+        this._as3Object.opaqueBackground = null;
+      } else {
+        this._as3Object.opaqueBackground = alToInt32(this.context, value);
+      }
+    }
+
+    public get_quality(): string {
+      Debug.somewhatImplemented('AVM1SymbolBase.get_quality');
+      return 'HIGH';
+    }
+
+    public set_quality(value) {
+      Debug.somewhatImplemented('AVM1SymbolBase.set_quality');
+    }
+
+    public get_root(): AVM1MovieClip {
+      var as3Object: flash.display.InteractiveObject = this._as3Object;
+      while (as3Object && as3Object !== as3Object.root) {
+        var as2Object = <AVM1MovieClip>getAVM1Object(as3Object, this.context);
+        if (as2Object.get_lockroot()) {
+          return as2Object;
         }
-      });
-    }
-  }
-
-  export class AVM1Utils {
-    static addProperty(obj: any, propertyName: string, getter: () => any,
-                       setter: (v:any) => any, enumerable:boolean = true): any
-    {
-      obj.asDefinePublicProperty(propertyName, {
-        get: getter,
-        set: setter || undefined,
-        enumerable: enumerable,
-        configurable: true
-      });
+        as3Object = as3Object.parent;
+      }
+      if (!as3Object) {
+        return undefined;
+      }
+      return <AVM1MovieClip>getAVM1Object(as3Object, this.context);
     }
 
-    static resolveTarget<T extends IAVM1SymbolBase>(target_mc: any = undefined): T {
-      return AVM1Context.instance.resolveTarget(target_mc);
+    public get_rotation(): number {
+      return this._as3Object.rotation;
     }
 
-    // Temporary solution as suggested by Yury. Will be refactored soon.
-    static resolveMovieClip<T extends IAVM1SymbolBase>(target: any = undefined): T {
-      return target ? AVM1Context.instance.resolveTarget(target) : undefined;
+    public set_rotation(value: number) {
+      value = alToNumber(this.context, value);
+      if (isNaN(value)) {
+        return;
+      }
+      this._as3Object.rotation = value;
     }
 
-    static resolveLevel(level: number): AVM1MovieClip {
-      level = +level;
-      return AVM1Context.instance.resolveLevel(level);
+    public getScale9Grid(): AVM1Rectangle {
+      return AVM1Rectangle.fromAS3Rectangle(this.context, this._as3Object.scale9Grid);
     }
 
-    static get currentStage(): flash.display.Stage {
-      return (<IAVM1SymbolBase>AVM1Context.instance.root).as3Object.stage;
+    public setScale9Grid(value: AVM1Rectangle) {
+      this._as3Object.scale9Grid = isNullOrUndefined(value) ? null : toAS3Rectangle(value);
     }
 
-    static get swfVersion(): number {
-      return AVM1Context.instance.loaderInfo.swfVersion;
+    public getScrollRect(): AVM1Rectangle {
+      return AVM1Rectangle.fromAS3Rectangle(this.context, this._as3Object.scrollRect);
     }
 
-    public static getTarget(mc: IAVM1SymbolBase) {
-      var nativeObject = mc.as3Object;
+    public setScrollRect(value: AVM1Rectangle) {
+      this._as3Object.scrollRect = isNullOrUndefined(value) ? null : toAS3Rectangle(value);
+    }
+
+    public get_soundbuftime(): number {
+      Debug.somewhatImplemented('AVM1SymbolBase.get_soundbuftime');
+      return 0;
+    }
+
+    public set_soundbuftime(value: number) {
+      Debug.somewhatImplemented('AVM1SymbolBase.set_soundbuftime');
+    }
+
+    public getTabEnabled(): boolean {
+      return getAS3ObjectOrTemplate(this).tabEnabled;
+    }
+
+    public setTabEnabled(value: boolean) {
+      value = alToBoolean(this.context, value);
+      getAS3ObjectOrTemplate(this).tabEnabled = value;
+    }
+
+    public getTabIndex(): number {
+      var tabIndex = this._as3Object.tabIndex;
+      return tabIndex < 0 ? undefined : tabIndex;
+    }
+
+    public setTabIndex(value: number) {
+      if (isNullOrUndefined(value)) {
+        this._as3Object.tabIndex = -1;
+      } else {
+        this._as3Object.tabIndex = alToInteger(this.context, value);
+      }
+    }
+
+    public get_target(): string {
+      var nativeObject: flash.display.DisplayObject = this._as3Object;
       if (nativeObject === nativeObject.root) {
         return '/';
       }
       var path = '';
       do {
+        if (isNullOrUndefined(nativeObject)) {
+          release || Debug.assert(false);
+          return undefined; // something went wrong
+        }
         path = '/' + nativeObject.name + path;
         nativeObject = nativeObject.parent;
       } while (nativeObject !== nativeObject.root);
       return path;
     }
+
+    public getTransform(): AVM1Object {
+      var transformCtor = <AVM1Function>this.context.globals.Transform;
+      return transformCtor.alConstruct([this]);
+    }
+
+    public setTransform(value: AVM1Transform) {
+      if (!(value instanceof AVM1Transform)) {
+        return;
+      }
+      var as3Transform = value.as3Transform;
+      this._as3Object.transform = as3Transform;
+    }
+
+    public get_visible(): boolean {
+      return this._as3Object.visible;
+    }
+
+    public set_visible(value: boolean) {
+      value = alToBoolean(this.context, value);
+      this._as3Object.visible = value;
+    }
+
+    public get_url(): string {
+      return this._as3Object.loaderInfo.url;
+    }
+
+    public get_width(): number {
+      return this._as3Object.width;
+    }
+
+    public set_width(value: number) {
+      value = alToNumber(this.context, value);
+      if (isNaN(value)) {
+        return;
+      }
+      this._as3Object.width = value;
+    }
+
+    public get_x(): number {
+      return this._as3Object.x;
+    }
+
+    public set_x(value: number) {
+      value = alToNumber(this.context, value);
+      if (isNaN(value)) {
+        return;
+      }
+      this._as3Object.x = value;
+    }
+
+    public get_xmouse(): number {
+      return this._as3Object.mouseX;
+    }
+
+    public get_xscale(): number {
+      return this._as3Object.scaleX * 100;
+    }
+
+    public set_xscale(value: number) {
+      value = alToNumber(this.context, value);
+      if (isNaN(value)) {
+        return;
+      }
+      this._as3Object.scaleX = value / 100;
+    }
+
+    public get_y(): number {
+      return this._as3Object.y;
+    }
+
+    public set_y(value: number) {
+      value = alToNumber(this.context, value);
+      if (isNaN(value)) {
+        return;
+      }
+      this._as3Object.y = value;
+    }
+
+    public get_ymouse(): number {
+      return this._as3Object.mouseY;
+    }
+
+    public get_yscale(): number {
+      return this._as3Object.scaleY * 100;
+    }
+
+    public set_yscale(value: number) {
+      value = alToNumber(this.context, value);
+      if (isNaN(value)) {
+        return;
+      }
+      this._as3Object.scaleY = value / 100;
+    }
+
+    public getDepth() {
+      return this._as3Object._depth - DEPTH_OFFSET;
+    }
   }
 
-  function createAVM1Object(ctor, nativeObject: flash.display.DisplayObject, context: AVM1Context) {
+  export var BlendModesMap = [undefined, "normal", "layer", "multiply",
+    "screen", "lighten", "darken", "difference", "add", "subtract", "invert",
+    "alpha", "erase", "overlay", "hardlight"];
+
+  export function avm1HasEventProperty(context: AVM1Context, target: any, propertyName: string): boolean {
+    if (target.alHasProperty(propertyName) &&
+        (target.alGet(propertyName) instanceof AVM1Function)) {
+      return true;
+    }
+    var listenersField = target.alGet('_listeners');
+    if (!(listenersField instanceof Natives.AVM1ArrayNative)) {
+      return false;
+    }
+    var listeners: any[] = listenersField.value;
+    return listeners.some(function (listener) {
+      return (listener instanceof AVM1Object) && listener.alHasProperty(propertyName);
+    });
+  }
+
+  function avm1BroadcastNativeEvent(context: AVM1Context, target: any, propertyName: string, args: any[] = null): void {
+    var handler: AVM1Function = target.alGet(propertyName);
+    if (handler instanceof AVM1Function) {
+      context.executeFunction(handler, target, args);
+    }
+    var _listeners = target.alGet('_listeners');
+    if (_listeners instanceof Natives.AVM1ArrayNative) {
+      _listeners.value.forEach(function (listener) {
+        if (!(listener instanceof AVM1Object)) {
+          return;
+        }
+        var handlerOnListener: AVM1Function = listener.alGet(propertyName);
+        if (handlerOnListener instanceof AVM1Function) {
+          context.executeFunction(handlerOnListener, target, args);
+        }
+      });
+    }
+  }
+
+  export function avm1BroadcastEvent(context: AVM1Context, target: any, propertyName: string, args: any[] = null): void {
+    var handler: AVM1Function = target.alGet(propertyName);
+    if (handler instanceof AVM1Function) {
+      handler.alCall(target, args);
+    }
+    var _listeners = target.alGet('_listeners');
+    if (_listeners instanceof Natives.AVM1ArrayNative) {
+      _listeners.value.forEach(function (listener) {
+        if (!(listener instanceof AVM1Object)) {
+          return;
+        }
+        var handlerOnListener: AVM1Function = listener.alGet(propertyName);
+        if (handlerOnListener instanceof AVM1Function) {
+          handlerOnListener.alCall(target, args);
+        }
+      });
+    }
+  }
+
+  function createAVM1NativeObject(ctor, nativeObject: flash.display.DisplayObject, context: AVM1Context) {
     // We need to walk on __proto__ to find right ctor.prototype.
-    var proto = ctor.prototype;
-    while (proto && !proto.initAVM1SymbolInstance) {
-      proto = proto.asGetPublicProperty('__proto__');
+    var template;
+    var proto = ctor.alGetPrototypeProperty();
+    while (proto && !(<any>proto).initAVM1SymbolInstance) {
+      if ((<any>proto)._as3ObjectTemplate && !template) {
+        template = (<any>proto)._as3ObjectTemplate;
+      }
+      proto = proto.alPrototype;
     }
     release || Debug.assert(proto);
-
-    var avm1Object: any = Object.create(proto);
-    avm1Object.asSetPublicProperty('__proto__', ctor.asGetPublicProperty('prototype'));
-    avm1Object.asDefinePublicProperty('__constructor__', {
-      value: ctor,
-      writable: true,
-      enumerable: false,
-      configurable: false
-    });
+    var avm1Object = Object.create(proto);
+    (<any>proto).initAVM1SymbolInstance.call(avm1Object, context, nativeObject);
+    avm1Object.alPrototype = ctor.alGetPrototypeProperty();
+    avm1Object.alSetOwnConstructorProperty(ctor);
     (<any>nativeObject)._as2Object = avm1Object;
-    (<IAVM1SymbolBase>avm1Object).initAVM1SymbolInstance(context, nativeObject);
-    ctor.call(avm1Object);
+    ctor.alCall(avm1Object);
+    if (template) {
+      // transfer properties from the template
+      for (var prop in template) {
+        nativeObject[prop] = template[prop];
+      }
+    }
     return avm1Object;
   }
 
-  export function getAVM1Object(as3Object, context: AVM1Context) {
+  export function getAVM1Object(as3Object, context: AVM1Context): AVM1Object {
     if (!as3Object) {
       return null;
     }
     if (as3Object._as2Object) {
       return as3Object._as2Object;
     }
-    if (flash.display.MovieClip.isType(as3Object)) {
-      if (<flash.display.MovieClip>as3Object._avm1SymbolClass) {
-        return createAVM1Object(<flash.display.MovieClip>as3Object._avm1SymbolClass, as3Object, context);
+    var sec = context.sec;
+    if (sec.flash.display.MovieClip.axClass.axIsType(as3Object)) {
+      var theClass = as3Object._symbol &&
+                     context.getSymbolClass(as3Object._symbol.data.id);
+      if (theClass) {
+        return createAVM1NativeObject(theClass, as3Object, context);
       }
-      return createAVM1Object(context.globals.MovieClip, as3Object, context);
+      return createAVM1NativeObject(context.globals.MovieClip, as3Object, context);
     }
-    if (flash.display.SimpleButton.isType(as3Object)) {
-      return createAVM1Object(context.globals.Button, as3Object, context);
+    if (sec.flash.display.SimpleButton.axClass.axIsType(as3Object)) {
+      return createAVM1NativeObject(context.globals.Button, as3Object, context);
     }
-    if (flash.text.TextField.isType(as3Object)) {
-      return createAVM1Object(context.globals.TextField, as3Object, context);
+    if (sec.flash.text.TextField.axClass.axIsType(as3Object)) {
+      return createAVM1NativeObject(context.globals.TextField, as3Object, context);
     }
-    if (flash.display.BitmapData.isType(as3Object)) {
+    if (sec.flash.display.BitmapData.axClass.axIsType(as3Object)) {
       return new as3Object;
     }
 
     return null;
   }
 
-  export function wrapAVM1Object<T>(obj: T, members: string[]): T  {
-    var wrap: any;
-    if (typeof obj === 'function') {
-      // Coping all members if we wrapping a function
-      wrap = function () {
-        return (<any>obj).apply(this, arguments);
-      };
-      Object.getOwnPropertyNames(obj).forEach(function (name) {
-        if (wrap.hasOwnProperty(name)) {
-          // Object.defineProperty will error e.g. on name or length
-          return;
-        }
-        Object.defineProperty(wrap, name,
-          Object.getOwnPropertyDescriptor(obj, name));
-      });
-    } else {
-      // Using prototype chain in case of the object
-      Debug.assert(typeof obj === 'object' && obj !== null);
-      wrap = Object.create(obj);
-    }
-    if (!members) {
-      return wrap;
-    }
-    members.forEach(function (memberName) {
-      var definedAs = memberName;
-      // We can re-map property names by specifying memberName in the format:
-      //   "as2_property_name=>ts_property_name"
-      var i = memberName.indexOf('=>');
-      if (i >= 0) {
-        definedAs = memberName.substring(0, i);
-        memberName = memberName.substring(i + 2);
+  export function wrapAVM1NativeMembers(context: AVM1Context, wrap: AVM1Object, obj: any, members: string[], prefixFunctions: boolean = false): void  {
+    function wrapFunction(fn) {
+      if (isNullOrUndefined(fn)) {
+        return undefined;
       }
-
-      var getter = function() {
-        return this[memberName];
-      };
-      var setter = function(value) {
-        this[memberName] = value;
-      };
-      wrap.asDefinePublicProperty(definedAs, {
-        get: getter,
-        set: setter,
-        enumerable: false,
-        configurable: true
+      release || Debug.assert(typeof fn === 'function');
+      if (!prefixFunctions) {
+        return new AVM1NativeFunction(context, fn);
+      }
+      return new AVM1NativeFunction(context, function () {
+        var args = Array.prototype.slice.call(arguments, 0);
+        args.unshift(context);
+        return fn.apply(this, args);
       });
-    });
-    return wrap;
-  }
+    }
+    function getMemberDescriptor(memberName): PropertyDescriptor {
+      var desc;
+      for (var p = obj; p; p = Object.getPrototypeOf(p)) {
+        desc = Object.getOwnPropertyDescriptor(p, memberName);
+        if (desc) {
+          return desc;
+        }
+      }
+      return null;
+    }
 
-  export function wrapAVM1Class<T>(fn: T, staticMembers: string[], members: string[]): T  {
-    var wrappedFn = wrapAVM1Object(fn, staticMembers);
-    var prototype = (<any>fn).prototype;
-    var wrappedPrototype = wrapAVM1Object(prototype, members);
-    wrappedFn.asSetPublicProperty('prototype', wrappedPrototype);
-    return wrappedFn;
-  }
-
-  var isAvm1ObjectMethodsInstalled: boolean = false;
-
-  export function installObjectMethods(): any {
-    if (isAvm1ObjectMethodsInstalled) {
+    if (!members) {
       return;
     }
-    isAvm1ObjectMethodsInstalled = true;
-    var c: any = Shumway.AVM2.AS.ASObject, p = c.asGetPublicProperty('prototype');
-    c.asSetPublicProperty('registerClass', function registerClass(name, theClass) {
-      AVM1Context.instance.registerClass(name, theClass);
-    });
-    p.asDefinePublicProperty('addProperty', {
-      value: function addProperty(name, getter, setter) {
-        if (typeof name !== 'string' || name === '') {
-          return false;
-        }
-        if (typeof getter !== 'function') {
-          return false;
-        }
-        if (typeof setter !== 'function' && setter !== null) {
-          return false;
-        }
-        this.asDefinePublicProperty(name, {
-          get: getter,
-          set: setter || undefined,
-          configurable: true,
-          enumerable: true
-        });
-        return true;
-      },
-      writable: false,
-      enumerable: false,
-      configurable: false
-    });
-    // TODO move this initialization closer to the interpreter
-    Object.defineProperty(p, '__proto__avm1', {
-      value: null,
-      writable: true,
-      enumerable: false
-    });
-    p.asDefinePublicProperty('__proto__', {
-      get: function () {
-        return this.__proto__avm1;
-      },
-      set: function (proto) {
-        if (proto === this.__proto__avm1) {
-          return;
-        }
-        if (!proto) {
-          this.__proto__avm1 = null;
-          return;
-        }
+    members.forEach(function (memberName) {
+      if (memberName[memberName.length - 1] === '#') {
+        // Property mapping
+        var getterName = 'get' + memberName[0].toUpperCase() + memberName.slice(1, -1);
+        var getter = obj[getterName];
+        var setterName = 'set' + memberName[0].toUpperCase() + memberName.slice(1, -1);
+        var setter = obj[setterName];
+        release || Debug.assert(getter || setter, 'define getter or setter')
+        var desc = new AVM1PropertyDescriptor(AVM1PropertyFlags.ACCESSOR |
+                                              AVM1PropertyFlags.DONT_DELETE |
+                                              AVM1PropertyFlags.DONT_ENUM,
+                                              null, wrapFunction(getter), wrapFunction(setter));
+        wrap.alSetOwnProperty(memberName.slice(0, -1), desc);
+        return;
+      }
 
-        // checking for circular references
-        var p = proto;
-        while (p) {
-          if (p === this) {
-            return; // potencial loop found
-          }
-          p = p.__proto__avm1;
-        }
-        this.__proto__avm1 = proto;
-      },
-      enumerable: false,
-      configurable: false
+      var nativeDesc = getMemberDescriptor(memberName);
+      if (!nativeDesc) {
+        return;
+      }
+      if (nativeDesc.get || nativeDesc.set) {
+        release || Debug.assert(false, 'Redefine ' + memberName + ' property getter/setter as functions');
+        return;
+      }
+
+      var value = nativeDesc.value;
+      if (typeof value === 'function') {
+        value = wrapFunction(value);
+      }
+      var desc = new AVM1PropertyDescriptor(AVM1PropertyFlags.DATA |
+                                            AVM1PropertyFlags.DONT_DELETE |
+                                            AVM1PropertyFlags.DONT_ENUM,
+                                            value);
+      wrap.alSetOwnProperty(memberName, desc);
     });
+  }
+
+  export function wrapAVM1NativeClass(context: AVM1Context, wrapAsFunction: boolean, cls: typeof AVM1Object, staticMembers: string[], members: string[], call?: Function, cstr?: Function): AVM1Object  {
+    var wrappedFn = wrapAsFunction ?
+      new AVM1NativeFunction(context, call || function () { }, function () {
+        // Creating simple AVM1 object
+        var obj = new cls(context);
+        obj.alPrototype = wrappedPrototype;
+        obj.alSetOwnConstructorProperty(wrappedFn);
+        if (cstr) {
+          cstr.apply(obj, arguments);
+        }
+        return obj;
+      }) :
+      new AVM1Object(context);
+    wrapAVM1NativeMembers(context, wrappedFn, cls, staticMembers, true);
+    var wrappedPrototype = new cls(context);
+    wrappedPrototype.alPrototype = context.builtins.Object.alGetPrototypeProperty();
+    wrapAVM1NativeMembers(context, wrappedPrototype, cls.prototype, members, false);
+    alDefineObjectProperties(wrappedFn, {
+      prototype: {
+        value: wrappedPrototype
+      }
+    });
+    alDefineObjectProperties(wrappedPrototype, {
+      constructor: {
+        value: wrappedFn,
+        writable: true
+      }
+    });
+    return wrappedFn;
   }
 
   // TODO: type arguments strongly
   export function initializeAVM1Object(as3Object: any,
                                        context: AVM1Context,
                                        placeObjectTag: any) {
-    var instanceAVM1 = getAVM1Object(as3Object, context);
+    var instanceAVM1 = <AVM1SymbolBase<flash.display.DisplayObject>>getAVM1Object(as3Object, context);
     release || Debug.assert(instanceAVM1);
 
     if (placeObjectTag.variableName) {
-      instanceAVM1.asSetPublicProperty('variable', placeObjectTag.variableName);
+      instanceAVM1.alPut('variable', placeObjectTag.variableName);
     }
 
     var events = placeObjectTag.events;
     if (!events) {
       return;
     }
-    //var stageListeners = [];
+    var stageListeners = [];
+    var as3Stage = (<any>context.globals.Stage)._as3Stage;
     for (var j = 0; j < events.length; j++) {
       var swfEvent = events[j];
       var actionsData;
-      if (swfEvent.actionsData) {
+      if (swfEvent.actionsBlock) {
         actionsData = context.actionsDataFactory.createActionsData(
-          swfEvent.actionsData, 's' + placeObjectTag.symbolId + 'e' + j);
-        swfEvent.actionsData = null;
+          swfEvent.actionsBlock,
+          's' + placeObjectTag.symbolId + 'd' + placeObjectTag.depth + 'e' + j);
+        swfEvent.actionsBlock = null;
         swfEvent.compiled = actionsData;
       } else {
         actionsData = swfEvent.compiled;
@@ -432,32 +820,36 @@ module Shumway.AVM1.Lib {
         if (!(flags & (eventFlag | 0))) {
           continue;
         }
-        var eventName = ClipEventMappings[eventFlag];
-        //if (eventName === 'mouseDown' || eventName === 'mouseUp' || eventName === 'mouseMove') {
-        //  // FIXME regressed, avm1 mouse events shall be received all the time.
-        //  stageListeners.push({eventName: eventName, handler: handler});
-        //  as3Object.stage.addEventListener(eventName, handler);
-        //} else {
+        var eventMapping = ClipEventMappings[eventFlag];
+        var eventName = eventMapping.name;
+        if (!eventName) {
+          Debug.warning("ClipEvent: " + eventFlag + ' not implemented');
+          continue;
+        }
+
         // AVM1 MovieClips are set to button mode if one of the button-related event listeners is
         // set. This behaviour is triggered regardless of the actual value they are set to.
-        switch (eventFlag) {
-          case AVM1ClipEvents.Release:
-          case AVM1ClipEvents.ReleaseOutside:
-          case AVM1ClipEvents.RollOver:
-          case AVM1ClipEvents.RollOut:
-            as3Object.buttonMode = true;
+        if (eventMapping.isButtonEvent) {
+          as3Object.buttonMode = true;
         }
-        as3Object.addEventListener(eventName, handler);
-        //}
+
+        // Some AVM1 MovieClip events (e.g. mouse and key events) are bound to
+        // the stage rather then object itself -- binding listeners there.
+        if (eventMapping.isStageEvent) {
+          stageListeners.push({eventName: eventName, handler: handler});
+          as3Stage.addEventListener(eventName, handler);
+        } else {
+          as3Object.addEventListener(eventName, handler);
+        }
       }
     }
-    //if (stageListeners.length > 0) {
-    //  as3Object.addEventListener('removedFromStage', function () {
-    //    for (var i = 0; i < stageListeners.length; i++) {
-    //      this.removeEventListener(stageListeners[i].eventName, stageListeners[i].fn, false);
-    //    }
-    //  }, false);
-    //}
+    if (stageListeners.length > 0) {
+      as3Object.addEventListener('removedFromStage', function () {
+        for (var i = 0; i < stageListeners.length; i++) {
+          as3Stage.removeEventListener(stageListeners[i].eventName, stageListeners[i].fn, false);
+        }
+      }, false);
+    }
   }
 
   function clipEventHandler(actionsData: AVM1.AVM1ActionsData,
@@ -466,26 +858,27 @@ module Shumway.AVM1.Lib {
   }
 
   import AVM1ClipEvents = SWF.Parser.AVM1ClipEvents;
-  var ClipEventMappings = Object.create(null);
-  ClipEventMappings[AVM1ClipEvents.Load] = 'load';
+  var ClipEventMappings: Map<number, {name: string; isStageEvent: boolean; isButtonEvent: boolean}>;
+  ClipEventMappings = Object.create(null);
+  ClipEventMappings[AVM1ClipEvents.Load] = {name: 'load', isStageEvent: false, isButtonEvent: false};
   // AVM1's enterFrame happens at the same point in the cycle as AVM2's frameConstructed.
-  ClipEventMappings[AVM1ClipEvents.EnterFrame] = 'frameConstructed';
-  ClipEventMappings[AVM1ClipEvents.Unload] = 'unload';
-  ClipEventMappings[AVM1ClipEvents.MouseMove] = 'mouseMove';
-  ClipEventMappings[AVM1ClipEvents.MouseDown] = 'mouseDown';
-  ClipEventMappings[AVM1ClipEvents.MouseUp] = 'mouseUp';
-  ClipEventMappings[AVM1ClipEvents.KeyDown] = 'keyDown';
-  ClipEventMappings[AVM1ClipEvents.KeyUp] = 'keyUp';
-  ClipEventMappings[AVM1ClipEvents.Data] = {toString: function() {Debug.warning('Data ClipEvent not implemented');}};
-  ClipEventMappings[AVM1ClipEvents.Initialize] = 'initialize';
-  ClipEventMappings[AVM1ClipEvents.Press] = 'mouseDown';
-  ClipEventMappings[AVM1ClipEvents.Release] = 'click';
-  ClipEventMappings[AVM1ClipEvents.ReleaseOutside] = 'releaseOutside';
-  ClipEventMappings[AVM1ClipEvents.RollOver] = 'mouseOver';
-  ClipEventMappings[AVM1ClipEvents.RollOut] = 'mouseOut';
-  ClipEventMappings[AVM1ClipEvents.DragOver] = {toString: function() {Debug.warning('DragOver ClipEvent not implemented');}};
-  ClipEventMappings[AVM1ClipEvents.DragOut] =  {toString: function() {Debug.warning('DragOut ClipEvent not implemented');}};
-  ClipEventMappings[AVM1ClipEvents.KeyPress] =  {toString: function() {Debug.warning('KeyPress ClipEvent not implemented');}};
-  ClipEventMappings[AVM1ClipEvents.Construct] =  'construct';
+  ClipEventMappings[AVM1ClipEvents.EnterFrame] = {name: 'frameConstructed', isStageEvent: false, isButtonEvent: false};
+  ClipEventMappings[AVM1ClipEvents.Unload] = {name: 'unload', isStageEvent: false, isButtonEvent: false};
+  ClipEventMappings[AVM1ClipEvents.MouseMove] = {name: 'mouseMove', isStageEvent: true, isButtonEvent: false};
+  ClipEventMappings[AVM1ClipEvents.MouseDown] = {name: 'mouseDown', isStageEvent: true, isButtonEvent: false};
+  ClipEventMappings[AVM1ClipEvents.MouseUp] = {name: 'mouseUp', isStageEvent: true, isButtonEvent: false};
+  ClipEventMappings[AVM1ClipEvents.KeyDown] = {name: 'keyDown', isStageEvent: true, isButtonEvent: false};
+  ClipEventMappings[AVM1ClipEvents.KeyUp] = {name: 'keyUp', isStageEvent: true, isButtonEvent: false};
+  ClipEventMappings[AVM1ClipEvents.Data] = {name: null, isStageEvent: false, isButtonEvent: false};
+  ClipEventMappings[AVM1ClipEvents.Initialize] = {name: 'initialize', isStageEvent: false, isButtonEvent: false};
+  ClipEventMappings[AVM1ClipEvents.Press] = {name: 'mouseDown', isStageEvent: true, isButtonEvent: true};
+  ClipEventMappings[AVM1ClipEvents.Release] = {name: 'click', isStageEvent: false, isButtonEvent: true};
+  ClipEventMappings[AVM1ClipEvents.ReleaseOutside] = {name: 'releaseOutside', isStageEvent: false, isButtonEvent: true};
+  ClipEventMappings[AVM1ClipEvents.RollOver] = {name: 'mouseOver', isStageEvent: true, isButtonEvent: true};
+  ClipEventMappings[AVM1ClipEvents.RollOut] = {name: 'mouseOut', isStageEvent: true, isButtonEvent: true};
+  ClipEventMappings[AVM1ClipEvents.DragOver] = {name: null, isStageEvent: false, isButtonEvent: false};
+  ClipEventMappings[AVM1ClipEvents.DragOut] =  {name: null, isStageEvent: false, isButtonEvent: false};
+  ClipEventMappings[AVM1ClipEvents.KeyPress] =  {name: null, isStageEvent: true, isButtonEvent: false};
+  ClipEventMappings[AVM1ClipEvents.Construct] =  {name: 'construct', isStageEvent: false, isButtonEvent: false};
 
 }

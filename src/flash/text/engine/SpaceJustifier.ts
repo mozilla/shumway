@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: SpaceJustifier
-module Shumway.AVM2.AS.flash.text.engine {
+module Shumway.AVMX.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class SpaceJustifier extends flash.text.engine.TextJustifier {
     
     // Called whenever the class is initialized.
@@ -33,8 +33,8 @@ module Shumway.AVM2.AS.flash.text.engine {
     static instanceSymbols: string [] = null; // ["clone"];
     
     constructor (locale: string = "en", lineJustification: string = "unjustified", letterSpacing: boolean = false) {
-      locale = asCoerceString(locale); lineJustification = asCoerceString(lineJustification); letterSpacing = !!letterSpacing;
-      false && super(undefined, undefined);
+      locale = axCoerceString(locale); lineJustification = axCoerceString(lineJustification); letterSpacing = !!letterSpacing;
+      super(undefined, undefined);
       dummyConstructor("public flash.text.engine.SpaceJustifier");
     }
     
@@ -49,39 +49,39 @@ module Shumway.AVM2.AS.flash.text.engine {
     // _optimumSpacing: number;
     // _maximumSpacing: number;
     get letterSpacing(): boolean {
-      notImplemented("public flash.text.engine.SpaceJustifier::get letterSpacing"); return;
+      release || notImplemented("public flash.text.engine.SpaceJustifier::get letterSpacing"); return;
       // return this._letterSpacing;
     }
     set letterSpacing(value: boolean) {
       value = !!value;
-      notImplemented("public flash.text.engine.SpaceJustifier::set letterSpacing"); return;
+      release || notImplemented("public flash.text.engine.SpaceJustifier::set letterSpacing"); return;
       // this._letterSpacing = value;
     }
     get minimumSpacing(): number {
-      notImplemented("public flash.text.engine.SpaceJustifier::get minimumSpacing"); return;
+      release || notImplemented("public flash.text.engine.SpaceJustifier::get minimumSpacing"); return;
       // return this._minimumSpacing;
     }
     set minimumSpacing(value: number) {
       value = +value;
-      notImplemented("public flash.text.engine.SpaceJustifier::set minimumSpacing"); return;
+      release || notImplemented("public flash.text.engine.SpaceJustifier::set minimumSpacing"); return;
       // this._minimumSpacing = value;
     }
     get optimumSpacing(): number {
-      notImplemented("public flash.text.engine.SpaceJustifier::get optimumSpacing"); return;
+      release || notImplemented("public flash.text.engine.SpaceJustifier::get optimumSpacing"); return;
       // return this._optimumSpacing;
     }
     set optimumSpacing(value: number) {
       value = +value;
-      notImplemented("public flash.text.engine.SpaceJustifier::set optimumSpacing"); return;
+      release || notImplemented("public flash.text.engine.SpaceJustifier::set optimumSpacing"); return;
       // this._optimumSpacing = value;
     }
     get maximumSpacing(): number {
-      notImplemented("public flash.text.engine.SpaceJustifier::get maximumSpacing"); return;
+      release || notImplemented("public flash.text.engine.SpaceJustifier::get maximumSpacing"); return;
       // return this._maximumSpacing;
     }
     set maximumSpacing(value: number) {
       value = +value;
-      notImplemented("public flash.text.engine.SpaceJustifier::set maximumSpacing"); return;
+      release || notImplemented("public flash.text.engine.SpaceJustifier::set maximumSpacing"); return;
       // this._maximumSpacing = value;
     }
   }

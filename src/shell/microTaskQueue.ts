@@ -21,6 +21,8 @@ module Shumway.Shell {
                 public interval: number, public repeat: boolean) {
     }
   }
+  
+  var jsGlobal = (function() { return this || (1, eval)('this//# sourceURL=jsGlobal-getter'); })();
 
   export class MicroTasksQueue {
     private tasks: MicroTask[] = [];
@@ -37,10 +39,12 @@ module Shumway.Shell {
 
     public scheduleInterval(fn: () => any, args: any[], interval: number, repeat: boolean) {
       var MIN_INTERVAL = 4;
+      interval = Math.round((interval || 0)/10) * 10;
+      if (interval < MIN_INTERVAL) {
+        interval = MIN_INTERVAL;
+      }
       var taskId = this.nextId++;
-      var task = new MicroTask(taskId, fn, args,
-                               interval > MIN_INTERVAL ? (interval | 0) : MIN_INTERVAL,
-                               repeat);
+      var task = new MicroTask(taskId, fn, args, interval, repeat);
       this.enqueue(task);
       return task;
     }
@@ -83,8 +87,10 @@ module Shumway.Shell {
      * Runs micro tasks for a certain |duration| and |count| whichever comes first. Optionally,
      * if the |clear| option is specified, the micro task queue is cleared even if not all the
      * tasks have been executed.
+     *
+     * If a |preCallback| function is specified, only continue execution if |preCallback()| returns true.
      */
-    run(duration: number = 0, count: number = 0, clear: boolean = false) {
+    run(duration: number = 0, count: number = 0, clear: boolean = false, preCallback: Function = null) {
       this.stopped = false;
       var executedTasks = 0;
       var stopAt = Date.now() + duration;
@@ -96,6 +102,9 @@ module Shumway.Shell {
           break;
         }
         var task = this.dequeue();
+        if (preCallback && !preCallback(task)) {
+          return;
+        }
         task.fn.apply(null, task.args);
         executedTasks ++;
       }

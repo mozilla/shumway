@@ -21,10 +21,6 @@ module Shumway.GFX {
   import Rectangle = Geometry.Rectangle;
 
   import Canvas2DRenderer = Shumway.GFX.Canvas2D.Canvas2DRenderer;
-  import WebGLRenderer = Shumway.GFX.WebGL.WebGLRenderer;
-  import WebGLRendererOptions = Shumway.GFX.WebGL.WebGLRendererOptions;
-  import WebGLContext = Shumway.GFX.WebGL.WebGLContext;
-  import FPS = Shumway.Tools.Mini.FPS;
 
   import DisplayParameters = Shumway.Remoting.DisplayParameters;
 
@@ -283,8 +279,8 @@ module Shumway.GFX {
     private _isRendering: boolean = false;
     private _rAF: number = undefined;
 
-    private _eventListeners: Shumway.Map<any []> = Object.create(null);
-    private _fps: FPS;
+    private _eventListeners: Shumway.MapObject<any []> = Object.create(null);
+    private _fps: Shumway.Tools.Mini.FPS;
     private _fullScreen: boolean = false;
 
     constructor(
@@ -295,7 +291,7 @@ module Shumway.GFX {
       release || assert(container && container.children.length === 0,
                         "Easel container must be empty.");
       this._container = container;
-      this._stage = new Stage(512, 512, true);
+      this._stage = new Stage(512, 512, false);
       this._worldView = this._stage.content;
       this._world = new Group();
       this._worldView.addChild(this._world);
@@ -310,7 +306,7 @@ module Shumway.GFX {
       container.appendChild(stageContainer);
 
       // Create hud container, that lives on top of the stage.
-      if (hud.value) {
+      if (hud.value && Shumway.Tools) {
         var hudContainer = document.createElement("div");
         hudContainer.style.position = "absolute";
         hudContainer.style.width = "100%";
@@ -323,7 +319,7 @@ module Shumway.GFX {
         fpsContainer.style.pointerEvents = "none";
         hudContainer.appendChild(fpsContainer);
         container.appendChild(hudContainer);
-        this._fps = new FPS(fpsContainer);
+        this._fps = new Shumway.Tools.Mini.FPS(fpsContainer);
       } else {
         this._fps = null;
       }
@@ -391,7 +387,7 @@ module Shumway.GFX {
     }
 
     private _listenForContainerSizeChanges() {
-      var pollInterval = 10;
+      var pollInterval = 1000;
       var w = this._containerWidth;
       var h = this._containerHeight;
       this._onContainerSizeChanged();
@@ -591,8 +587,8 @@ module Shumway.GFX {
 
     }
 
-    public screenShot(bounds: Rectangle, stageContent: boolean): ScreenShot {
-      return this._renderer.screenShot(bounds, stageContent);
+    public screenShot(bounds: Rectangle, stageContent: boolean, disableHidpi: boolean): ScreenShot {
+      return this._renderer.screenShot(bounds, stageContent, disableHidpi);
     }
   }
 }

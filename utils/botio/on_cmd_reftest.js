@@ -23,7 +23,12 @@ echo('Preparing');
 exec('make BASE=' + shumwayConfig.shumwayBase + ' link-utils clone-build');
 exec('npm install');
 
-exec('grunt shu --sha1=true --threads=' + shumwayConfig.threads);
+var result = exec('grunt build --sha1=true --threads=' + shumwayConfig.threads);
+if (!result || result.code) {
+  botio.message('+ **Build:** FAILED');
+  exit(1);
+}
+
 cp(shumwayConfig.shumwayBase + '/test/resources/browser_manifests/browser_manifest.json',
    'test/resources/browser_manifests/browser_manifest.json');
 cp('-R', shumwayConfig.shumwayBase + '/test/ref', 'test/');
@@ -46,7 +51,7 @@ var tests = [
   }
   botio.message();
 }],
-['grunt reftest --bundle=true --noPrompts=true', function (error, output) {
+['grunt reftest --noPrompts=true', function (error, output) {
   var regressionSuccess = output.match(/All regression tests passed/g);
   var failures = [];
   if (regressionSuccess) {

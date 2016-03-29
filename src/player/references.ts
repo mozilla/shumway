@@ -18,11 +18,10 @@
 /// <reference path='../../build/ts/tools.d.ts' />
 /// <reference path='../../build/ts/swf.d.ts' />
 /// <reference path='../../build/ts/flash.d.ts' />
-// /// <reference path='../../build/ts/avm1.d.ts' />
 /// <reference path='../flash/avm1.d.ts' />
 
 ///<reference path='module.ts' />
-///<reference path='options.ts' />
+///<reference path='settings.ts' />
 ///<reference path='frameScheduler.ts' />
 ///<reference path='remotingPlayer.ts' />
 ///<reference path='player.ts' />
@@ -30,5 +29,3 @@
 ///<reference path='external.ts' />
 
 ///<reference path='window/windowPlayer.ts' />
-///<reference path='test/testPlayer.ts' />
-///<reference path='test/fakeSyncWorker.ts' />

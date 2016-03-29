@@ -31,7 +31,7 @@ check-system:
 	fi
 	echo "The environment is good"
 
-bootstrap: check-system install-libs install-utils build-libs
+bootstrap: check-system install-libs install-utils show-welcome
 
 install-libs:
 	git submodule init
@@ -54,6 +54,7 @@ BASE ?= $(error ERROR: Specify BASE that points to the Shumway folder with insta
 link-utils:
 	cp -R $(BASE)/node_modules .
 	ln -s $(BASE)/utils/tamarin-redux $(BASE)/utils/jsshell $(BASE)/utils/swfdec utils/
+	ln -s $(BASE)/test/ats/swfs test/ats/swfs
 
 clone-build:
 	cp -R $(BASE)/build .
@@ -63,6 +64,9 @@ run-tamarin-sanity-tests:
 
 run-tamarin-tests:
 	make -C utils/ run-tamarin-tests
+
+show-welcome:
+	echo "Everything's in order, now run \`grunt build\` to compile."
 
 build-libs:
 	grunt shu
@@ -105,5 +109,5 @@ server:
 .PHONY: check-system install-libs install-utils build-tamarin-tests \
         build-playerglobal build-extension build-web default \
         reftest makeref check-browser-manifest test-avm2 \
-        link-utils clone-build bootstrap
+        link-utils clone-build bootstrap show-welcome
 

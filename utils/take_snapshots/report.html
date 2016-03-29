@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <title>Snapshot comparison report</title>
+  <script src="report.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      font-size: small;
+    }
+
+    table#report {
+      border: 1px solid #000000;
+      width: 220px;
+    }
+
+    table#report tr:nth-child(even) {
+      background: #C0C000;
+    }
+    table#report td:nth-child(2) {
+      text-align: center;
+    }
+
+    div#details {
+      position: fixed;
+      top: 10px;
+      bottom: 10px;
+      left: 250px;
+      right: 10px;
+      border: 1px solid #808080;
+      overflow: scroll;
+    }
+
+    span.wrapper {
+      display: inline-block;
+      padding: 2px;
+    }
+
+    span.fp {
+      color: white;
+      background-color: blue;
+    }
+
+    span.shumway {
+      color: white;
+      background-color: green;
+    }
+  </style>
+</head>
+<body>
+   <table id="report">
+     <tr>
+       <th>id</th><th>Success</th><th>Frames</th><th></th>
+     </tr>
+   </table>
+   <div id="details">
+
+   </div>
+</body>
+</html>

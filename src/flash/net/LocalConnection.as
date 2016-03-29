@@ -19,11 +19,8 @@ import flash.events.EventDispatcher;
 
 [native(cls="LocalConnectionClass")]
 public class LocalConnection extends EventDispatcher {
-  public function LocalConnection() {
-  }
-  public static function get isSupported():Boolean {
-    return true;
-  }
+  public native function LocalConnection();
+  public static native function get isSupported():Boolean;
   public native function close():void;
   public native function connect(connectionName:String):void;
   public native function get domain():String;
@@ -32,7 +29,7 @@ public class LocalConnection extends EventDispatcher {
   public native function set client(client:Object):void;
   public native function get isPerUser():Boolean;
   public native function set isPerUser(newValue:Boolean):void;
-  public native function allowDomain():void;
-  public native function allowInsecureDomain():void;
+  public native function allowDomain(...domains):void;
+  public native function allowInsecureDomain(...domains):void;
 }
 }

@@ -1,0 +1,6 @@
+HASHCODE: test/swf/demo.swf: 0x5536f4a7
+HASHCODE: test/swf/main.swf: 0xc4443936
+HASHCODE: test/swf/pac.swf: 0xe0efeb40
+RUNNING:  test/swf/demo.swf
+RUNNING:  test/swf/main.swf
+RUNNING:  test/swf/pac.swf

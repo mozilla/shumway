@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 // Class: MessageChannel
-module Shumway.AVM2.AS.flash.system {
+module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class MessageChannel extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,11 +28,8 @@ module Shumway.AVM2.AS.flash.system {
     static instanceSymbols: string [] = null; // ["addEventListener", "removeEventListener", "toString"];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.system.MessageChannel");
+      super();
     }
-    
-    // JS -> AS Bindings
     
     // addEventListener: (type: string, listener: ASFunction, useCapture: boolean = false, priority: number /*int*/ = 0, useWeakReference: boolean = false) => void;
     // removeEventListener: (type: string, listener: ASFunction, useCapture: boolean = false) => void;
@@ -47,23 +39,23 @@ module Shumway.AVM2.AS.flash.system {
     // _messageAvailable: boolean;
     // _state: string;
     get messageAvailable(): boolean {
-      notImplemented("public flash.system.MessageChannel::get messageAvailable"); return;
+      release || notImplemented("public flash.system.MessageChannel::get messageAvailable"); return;
       // return this._messageAvailable;
     }
     get state(): string {
-      notImplemented("public flash.system.MessageChannel::get state"); return;
+      release || notImplemented("public flash.system.MessageChannel::get state"); return;
       // return this._state;
     }
     send(arg: any, queueLimit: number /*int*/ = -1): void {
       queueLimit = queueLimit | 0;
-      notImplemented("public flash.system.MessageChannel::send"); return;
+      release || notImplemented("public flash.system.MessageChannel::send"); return;
     }
     receive(blockUntilReceived: boolean = false): any {
       blockUntilReceived = !!blockUntilReceived;
-      notImplemented("public flash.system.MessageChannel::receive"); return;
+      release || notImplemented("public flash.system.MessageChannel::receive"); return;
     }
     close(): void {
-      notImplemented("public flash.system.MessageChannel::close"); return;
+      release || notImplemented("public flash.system.MessageChannel::close"); return;
     }
   }
 }

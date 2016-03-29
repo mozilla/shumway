@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: CurrencyParseResult
-module Shumway.AVM2.AS.flash.globalization {
+module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class CurrencyParseResult extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class CurrencyParseResult extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,8 @@ module Shumway.AVM2.AS.flash.globalization {
     static instanceSymbols: string [] = null; // [];
     
     constructor (value: number = NaN, symbol: string = "") {
-      value = +value; symbol = asCoerceString(symbol);
-      false && super();
-      dummyConstructor("public flash.globalization.CurrencyParseResult");
+      super();
+      value = +value; symbol = axCoerceString(symbol);
     }
     
     // JS -> AS Bindings
@@ -46,16 +41,16 @@ module Shumway.AVM2.AS.flash.globalization {
     // _value: number;
     // _currencyString: string;
     get value(): number {
-      notImplemented("public flash.globalization.CurrencyParseResult::get value"); return;
+      release || notImplemented("public flash.globalization.CurrencyParseResult::get value"); return;
       // return this._value;
     }
     get currencyString(): string {
-      notImplemented("public flash.globalization.CurrencyParseResult::get currencyString"); return;
+      release || notImplemented("public flash.globalization.CurrencyParseResult::get currencyString"); return;
       // return this._currencyString;
     }
     ctor(value: number, symbol: string): void {
-      value = +value; symbol = asCoerceString(symbol);
-      notImplemented("public flash.globalization.CurrencyParseResult::ctor"); return;
+      value = +value; symbol = axCoerceString(symbol);
+      release || notImplemented("public flash.globalization.CurrencyParseResult::ctor"); return;
     }
   }
 }

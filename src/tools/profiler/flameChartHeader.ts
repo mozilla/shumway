@@ -16,7 +16,7 @@
 module Shumway.Tools.Profiler {
   import clamp = NumberUtilities.clamp;
 
-  export enum FlameChartHeaderType {
+  export const enum FlameChartHeaderType {
     OVERVIEW,
     CHART
   }

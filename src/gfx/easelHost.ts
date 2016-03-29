@@ -25,6 +25,9 @@ module Shumway.GFX {
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
   import DisplayParameters = Shumway.Remoting.DisplayParameters;
 
+  // Set to -1 to enable events for right button.
+  export var ContextMenuButton = 2;
+
   export class EaselHost {
     private static _mouseEvents = Shumway.Remoting.MouseEventNames;
     private static _keyboardEvents = Shumway.Remoting.KeyboardEventNames;
@@ -44,6 +47,7 @@ module Shumway.GFX {
       this._fullscreen = false;
       this._context = new Shumway.Remoting.GFX.GFXChannelDeserializerContext(this, this._group, transparent);
       this._addEventListeners();
+      registerFallbackFont();
     }
 
     onSendUpdates(update: DataBuffer, asssets: Array<DataBuffer>) {
@@ -78,6 +82,10 @@ module Shumway.GFX {
     }
 
     private _mouseEventListener(event: MouseEvent) {
+      if (event.button === ContextMenuButton) {
+        // Disable all events for right button -- usually it triggers context menu.
+        return;
+      }
       // var position = this._easel.getMouseWorldPosition(event);
       var position = this._easel.getMousePosition(event, this._content);
       var point = new Point(position.x, position.y);
@@ -166,20 +174,24 @@ module Shumway.GFX {
       return (<RenderableVideo>asset).processControlRequest(eventType, data);
     }
 
-    processRegisterFontOrImage(syncId: number, symbolId: number, type: string, data: any,
-                               resolve: (data: any) => void) {
-      if (type === 'font') {
-        this._context.registerFont(syncId, data, resolve);
-        return;
-      }
-      release || Debug.assert(type === 'image');
-      this._context.registerImage(syncId, symbolId, data, resolve);
+    processRegisterFont(syncId: number, data: Uint8Array, resolve: (data: any) => void) {
+      this._context.registerFont(syncId, data, resolve);
+    }
+    processRegisterImage(syncId: number, symbolId: number, imageType: ImageType, data: Uint8Array,
+                         alphaData: Uint8Array, resolve: (data: any) => void) {
+      this._context.registerImage(syncId, symbolId, imageType, data, alphaData, resolve);
     }
 
     processFSCommand(command: string, args: string) {
+      if (typeof ShumwayCom !== 'undefined' && ShumwayCom.environment === ShumwayEnvironment.TEST) {
+        ShumwayCom.processFSCommand(command, args);
+      }
     }
 
     processFrame() {
+      if (typeof ShumwayCom !== 'undefined' && ShumwayCom.environment === ShumwayEnvironment.TEST) {
+        ShumwayCom.processFrame();
+      }
     }
 
     onVideoPlaybackEvent(id: number, eventType: VideoPlaybackEvent, data: any) {

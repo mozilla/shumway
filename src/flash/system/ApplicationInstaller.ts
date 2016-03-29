@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 // Class: ApplicationInstaller
-module Shumway.AVM2.AS.flash.system {
+module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ApplicationInstaller extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,31 +28,26 @@ module Shumway.AVM2.AS.flash.system {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.system.ApplicationInstaller");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
+
     static stringsDigest(strings: ASXML): string {
       strings = strings;
-      notImplemented("public flash.system.ApplicationInstaller::static stringsDigest"); return;
+      release || notImplemented("public flash.system.ApplicationInstaller::static stringsDigest"); return;
     }
     static iconDigest(icon: flash.utils.ByteArray): string {
       icon = icon;
-      notImplemented("public flash.system.ApplicationInstaller::static iconDigest"); return;
+      release || notImplemented("public flash.system.ApplicationInstaller::static iconDigest"); return;
     }
     
     // _isInstalled: boolean;
     get isInstalled(): boolean {
-      notImplemented("public flash.system.ApplicationInstaller::get isInstalled"); return;
+      release || notImplemented("public flash.system.ApplicationInstaller::get isInstalled"); return;
       // return this._isInstalled;
     }
     install(shortcutsOnly: boolean = false): void {
       shortcutsOnly = !!shortcutsOnly;
-      notImplemented("public flash.system.ApplicationInstaller::install"); return;
+      release || notImplemented("public flash.system.ApplicationInstaller::install"); return;
     }
   }
 }

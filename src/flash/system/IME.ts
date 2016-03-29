@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: IME
-module Shumway.AVM2.AS.flash.system {
+module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class IME extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // ["isSupported"];
     
@@ -33,8 +29,7 @@ module Shumway.AVM2.AS.flash.system {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.system.IME");
+      super();
     }
     
     // JS -> AS Bindings
@@ -46,36 +41,36 @@ module Shumway.AVM2.AS.flash.system {
     // static _conversionMode: string;
     // static _isSupported: boolean;
     get enabled(): boolean {
-      notImplemented("public flash.system.IME::get enabled"); return;
+      release || notImplemented("public flash.system.IME::get enabled"); return;
       // return this._enabled;
     }
     set enabled(enabled: boolean) {
       enabled = !!enabled;
-      notImplemented("public flash.system.IME::set enabled"); return;
+      release || notImplemented("public flash.system.IME::set enabled"); return;
       // this._enabled = enabled;
     }
     get conversionMode(): string {
-      notImplemented("public flash.system.IME::get conversionMode"); return;
+      release || notImplemented("public flash.system.IME::get conversionMode"); return;
       // return this._conversionMode;
     }
     set conversionMode(mode: string) {
-      mode = asCoerceString(mode);
-      notImplemented("public flash.system.IME::set conversionMode"); return;
+      mode = axCoerceString(mode);
+      release || notImplemented("public flash.system.IME::set conversionMode"); return;
       // this._conversionMode = mode;
     }
     static setCompositionString(composition: string): void {
-      composition = asCoerceString(composition);
-      notImplemented("public flash.system.IME::static setCompositionString"); return;
+      composition = axCoerceString(composition);
+      release || notImplemented("public flash.system.IME::static setCompositionString"); return;
     }
     static doConversion(): void {
-      notImplemented("public flash.system.IME::static doConversion"); return;
+      release || notImplemented("public flash.system.IME::static doConversion"); return;
     }
     static compositionSelectionChanged(start: number /*int*/, end: number /*int*/): void {
       start = start | 0; end = end | 0;
-      notImplemented("public flash.system.IME::static compositionSelectionChanged"); return;
+      release || notImplemented("public flash.system.IME::static compositionSelectionChanged"); return;
     }
     static compositionAbandoned(): void {
-      notImplemented("public flash.system.IME::static compositionAbandoned"); return;
+      release || notImplemented("public flash.system.IME::static compositionAbandoned"); return;
     }
     
   }

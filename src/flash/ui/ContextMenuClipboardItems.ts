@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 // Class: ContextMenuClipboardItems
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  export class ContextMenuClipboardItems extends ASNative {
+  export class ContextMenuClipboardItems extends ASObject {
     
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null;
     
     constructor () {
-      false && super();
+      super();
 
       this._cut = true;
       this._copy = true;
@@ -41,47 +40,47 @@ module Shumway.AVM2.AS.flash.ui {
 
 
     get cut(): boolean {
-      somewhatImplemented("cut");
+      release || somewhatImplemented("cut");
       return this._cut;
     }
     set cut(val: boolean) {
-      somewhatImplemented("cut");
+      release || somewhatImplemented("cut");
       this._cut = !!val;
     }
     get copy(): boolean {
-      somewhatImplemented("copy");
+      release || somewhatImplemented("copy");
       return this._copy;
     }
     set copy(val: boolean) {
-      somewhatImplemented("copy");
+      release || somewhatImplemented("copy");
       this._copy = !!val;
     }
     get paste(): boolean {
-      somewhatImplemented("paste");
+      release || somewhatImplemented("paste");
       return this._paste;
     }
     set paste(val: boolean) {
-      somewhatImplemented("paste");
+      release || somewhatImplemented("paste");
       this._paste = !!val;
     }
     get clear(): boolean {
-      somewhatImplemented("clear");
+      release || somewhatImplemented("clear");
       return this._clear;
     }
     set clear(val: boolean) {
-      somewhatImplemented("clear");
+      release || somewhatImplemented("clear");
       this._clear = !!val;
     }
     get selectAll(): boolean {
-      somewhatImplemented("selectAll");
+      release || somewhatImplemented("selectAll");
       return this._selectAll;
     }
     set selectAll(val: boolean) {
-      somewhatImplemented("selectAll");
+      release || somewhatImplemented("selectAll");
       this._selectAll = !!val;
     }
     clone(): ContextMenuClipboardItems {
-      var items = new ui.ContextMenuClipboardItems();
+      var items = new this.sec.flash.ui.ContextMenuClipboardItems();
       items._cut = this._cut;
       items._copy = this._copy;
       items._paste = this._paste;

@@ -70,6 +70,7 @@ function remoteDebuggerInitServices() {
     setFullscreen: function (enabled) { remoteDebuggerSendMessage('setFullscreen', enabled, true); },
     externalCom: function (args) { return remoteDebuggerSendMessage('externalCom', args, false); },
     loadFile: function (args) { remoteDebuggerSendMessage('loadFile', args, true); },
+    abortLoad: function (sessionId) { remoteDebuggerSendMessage('abortLoad', sessionId, true); },
     navigateTo: function (args) { remoteDebuggerSendMessage('navigateTo', args, true); },
 
     setLoadFileCallback: function (callback) { shumwayComLoadFileCallback = callback; },

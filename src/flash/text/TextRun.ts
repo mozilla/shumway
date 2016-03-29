@@ -14,30 +14,23 @@
  * limitations under the License.
  */
 // Class: TextRun
-module Shumway.AVM2.AS.flash.text {
-  import notImplemented = Shumway.Debug.notImplemented;
-
-  export class TextRun extends ASNative {
+module Shumway.AVMX.AS.flash.text {
+  export class TextRun extends ASObject {
 
     static classInitializer: any = null;
-    static initializer: any = null;
-    static classSymbols: string [] = null;
-    static instanceSymbols: string [] = null; // ["beginIndex", "endIndex", "textFormat"];
 
     constructor(beginIndex: number /*int*/, endIndex: number /*int*/,
                 textFormat: flash.text.TextFormat) {
-      false && super();
+      super();
       this._beginIndex = beginIndex | 0;
       this._endIndex = endIndex | 0;
       this._textFormat = textFormat;
     }
 
-    // JS -> AS Bindings
     _beginIndex: number /*int*/;
     _endIndex: number /*int*/;
     _textFormat: flash.text.TextFormat;
 
-    // AS -> JS Bindings
     get beginIndex(): number {
       return this._beginIndex;
     }
@@ -63,7 +56,8 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     clone(): TextRun {
-      return new flash.text.TextRun(this.beginIndex, this.endIndex, this.textFormat.clone());
+      return new this.sec.flash.text.TextRun(this.beginIndex, this.endIndex,
+                                             this.textFormat.clone());
     }
 
     containsIndex(index: number): boolean {

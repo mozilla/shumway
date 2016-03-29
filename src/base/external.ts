@@ -14,13 +14,22 @@
  * limitations under the License.
  */
 
+var ShumwayEnvironment = {
+  DEBUG: 'test',
+  DEVELOPMENT: 'dev',
+  RELEASE: 'release',
+  TEST: 'test'
+};
+
 declare var ShumwayCom: {
-  createSpecialInflate: () => SpecialInflate;
-  createRtmpSocket: (options: {host: string; port: number; ssl: boolean}) => RtmpSocket;
-  createRtmpXHR: () => RtmpXHR;
+  environment: string // ShumwayEnvironment;
+  
+  createSpecialInflate?: () => SpecialInflate;
+  createRtmpSocket?: (options: {host: string; port: number; ssl: boolean}) => RtmpSocket;
+  createRtmpXHR?: () => RtmpXHR;
+  
   createSpecialStorage: () => SpecialStorage;
   getWeakMapKeys: (weakMap) => Array<any>;
-  userInput: () => void;
   fallback: () => void;
   reportIssue: (details?: string) => void;
   reportTelemetry: (data) => void;
@@ -31,15 +40,24 @@ declare var ShumwayCom: {
   setFullscreen: (enabled: boolean) => void;
   externalCom: (args: any) => any;
   loadFile: (args: any) => void;
+  abortLoad: (sessionId: number) => void;
   loadSystemResource: (id: number) => void;
   navigateTo: (args: any) => void;
   setupComBridge: (playerWindow: any) => void;
-  postSyncMessage: (data: any) => any;
+  sendSyncMessage: (data: any) => any;
+  postAsyncMessage: (data: any) => void;
 
   setLoadFileCallback: (callback: (data) => void) => void;
   setExternalCallback: (callback: (call) => any) => void;
   setSystemResourceCallback: (callback: (id: number, data: any) => void) => void;
   setSyncMessageCallback: (callback: (data: any) => any) => void;
+  setAsyncMessageCallback: (callback: (data: any) => void) => void;
+
+  getLocalConnectionService: () => LocalConnectionService;
+  
+  processFrame?: () => void;
+  processFSCommand?: (command: string, args: any) => void;
+  print?: (msg: string) => void;
 };
 
 interface SpecialStorage {
@@ -52,6 +70,19 @@ interface SpecialInflate {
   setDataCallback(callback: (data: Uint8Array) => void): void;
   push(data: Uint8Array);
   close();
+}
+
+interface LocalConnectionService {
+  createLocalConnection: (connectionName: string,
+                          callback: (methodName: string, argsBuffer: ArrayBuffer) => any
+                         ) => Shumway.LocalConnectionConnectResult;
+  hasLocalConnection: (connectionName: string) => boolean;
+  closeLocalConnection: (connectionName: string) => Shumway.LocalConnectionCloseResult;
+  sendLocalConnectionMessage: (connectionName: string, methodName: string,
+                               argsBuffer: ArrayBuffer, sender: Shumway.ILocalConnectionSender,
+                               senderDomain: string, senderIsSecure: boolean) => void;
+  allowDomainsForLocalConnection: (connectionName: string, domains: string[],
+                                   secure: boolean) => void;
 }
 
 interface RtmpSocket {

@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 // Class: BitmapData
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import assert = Shumway.Debug.assert;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import throwError = Shumway.AVM2.Runtime.throwError;
-  import AVM2 = Shumway.AVM2.Runtime.AVM2;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import swap32 = Shumway.IntegerUtilities.swap32;
   import premultiplyARGB = Shumway.ColorUtilities.premultiplyARGB;
   import unpremultiplyARGB = Shumway.ColorUtilities.unpremultiplyARGB;
@@ -30,26 +28,39 @@ module Shumway.AVM2.AS.flash.display {
   import blendPremultipliedBGRA = Shumway.ColorUtilities.blendPremultipliedBGRA;
   import indexOf = Shumway.ArrayUtilities.indexOf;
 
-  import Rectangle = flash.geom.Rectangle;
-
   /**
-   * Holds blobs of bitmap data in various formats and lets you do basic pixel operations. When data is
-   * unpacked, it is stored as premultiplied ARGB since it's what the SWF encodes bitmaps as.  This way
-   * we don't have to do unecessary byte conversions.
+   * Holds blobs of bitmap data in various formats and lets you do basic pixel operations. When
+   * data is unpacked, it is stored as premultiplied ARGB since it's what the SWF encodes bitmaps
+   * as.  This way we don't have to do unecessary byte conversions.
    */
-  export class BitmapData extends ASNative implements IBitmapDrawable, Shumway.Remoting.IRemotable {
+  export class BitmapData extends ASObject implements IBitmapDrawable, Shumway.Remoting.IRemotable {
 
-    static classInitializer: any = function () {
-      // ...
-    };
+    static axClass: typeof BitmapData;
+
+    static classInitializer() {
+      this._temporaryRectangle = new this.sec.flash.geom.Rectangle();
+    }
 
     _symbol: BitmapSymbol;
-    static initializer: any = function (symbol: BitmapSymbol) {
-      this._symbol = symbol;
-    };
-
-    static classSymbols: string [] = null; // [];
-    static instanceSymbols: string [] = null; // ["rect"];
+    applySymbol() {
+      release || assert(this._symbol);
+      var symbol = this._symbol;
+      release || assert(symbol.syncId);
+      this._rect = new this.sec.flash.geom.Rectangle(0, 0, symbol.width, symbol.height);
+      this._transparent = true;
+      this._id = symbol.syncId;
+      if (symbol.type === ImageType.PremultipliedAlphaARGB ||
+          symbol.type === ImageType.StraightAlphaARGB ||
+          symbol.type === ImageType.StraightAlphaRGBA) {
+        release || assert(symbol.data);
+        this._setData(symbol.data, symbol.type);
+      } else {
+        this._isDirty = false;
+        this._isRemoteDirty = true;
+      }
+      this._solidFillColorPBGRA = null;
+      this._bitmapReferrers = [];
+    }
 
     static MAXIMUM_WIDTH: number = 8191;
     static MAXIMUM_HEIGHT: number = 8191;
@@ -61,43 +72,26 @@ module Shumway.AVM2.AS.flash.display {
       height = height | 0;
       transparent = !!transparent;
       fillColorARGB = fillColorARGB | 0;
-      false && super();
-      var symbol = this._symbol;
-      if (symbol) {
-        width = symbol.width | 0;
-        height = symbol.height | 0;
+      super();
+      if (this._symbol) {
+        this.applySymbol();
+        return;
       }
       if (width > BitmapData.MAXIMUM_WIDTH || width <= 0 ||
           height > BitmapData.MAXIMUM_HEIGHT || height <= 0 ||
           width * height > BitmapData.MAXIMUM_DIMENSION) {
-        throwError('ArgumentError', Errors.InvalidBitmapData);
+        this.sec.throwError('ArgumentError', Errors.InvalidBitmapData);
       }
-      this._rect = new Rectangle(0, 0, width, height);
+      this._rect = new this.sec.flash.geom.Rectangle(0, 0, width, height);
       this._transparent = transparent;
-
-      if (symbol) {
-        release || assert(symbol.syncId);
-        this._id = symbol.syncId;
-        if (symbol.type === ImageType.PremultipliedAlphaARGB ||
-            symbol.type === ImageType.StraightAlphaARGB ||
-            symbol.type === ImageType.StraightAlphaRGBA) {
-          release || assert(symbol.data);
-          this._setData(symbol.data, symbol.type);
-        } else {
-          this._isDirty = false;
-          this._isRemoteDirty = true;
-        }
-        this._solidFillColorPBGRA = null;
+      this._id = flash.display.DisplayObject.getNextSyncID();
+      this._setData(new Uint8Array(width * height * 4), ImageType.PremultipliedAlphaARGB);
+      var alpha = fillColorARGB >> 24;
+      if (alpha === 0 && transparent) {
+        // No need to do an initial fill since this would all be zeros anyway.
+        this._solidFillColorPBGRA = 0;
       } else {
-        this._id = flash.display.DisplayObject.getNextSyncID();
-        this._setData(new Uint8Array(width * height * 4), ImageType.PremultipliedAlphaARGB);
-        var alpha = fillColorARGB >> 24;
-        if (alpha === 0 && transparent) {
-          // No need to do an initial fill since this would all be zeros anyway.
-          this._solidFillColorPBGRA = 0;
-        } else {
-          this.fillRect(this._rect, fillColorARGB);
-        }
+        this.fillRect(this._rect, fillColorARGB);
       }
       this._bitmapReferrers = [];
       release || assert(this._isDirty === !!this._data);
@@ -149,7 +143,7 @@ module Shumway.AVM2.AS.flash.display {
       for (var i = 0; i < this._bitmapReferrers.length; i++) {
         var bitmap = this._bitmapReferrers[i];
         if (bitmap) {
-          bitmap._setDirtyFlags(DisplayObjectFlags.DirtyBitmapData);
+          bitmap._setDirtyFlags(DisplayObjectDirtyFlags.DirtyBitmapData);
         }
       }
     }
@@ -183,38 +177,31 @@ module Shumway.AVM2.AS.flash.display {
     _view: Int32Array;
 
     /**
-     * Indicates whether this bitmap data's data buffer has changed since the last time it was synchronized.
+     * Indicates whether this bitmap data's data buffer has changed since the last time it was
+     * synchronized.
      */
     _isDirty: boolean;
 
     /**
-     * Indicates whether this bitmap data's data buffer has changed on the remote end and needs to be read
-     * back before any pixel operations can be performed.
+     * Indicates whether this bitmap data's data buffer has changed on the remote end and needs to
+     * be read back before any pixel operations can be performed.
      */
     _isRemoteDirty: boolean;
 
-
     /**
-     * If non-null then this value indicates that the bitmap is filled with a solid color. This is useful
-     * for optimizations.
+     * If non-null then this value indicates that the bitmap is filled with a solid color. This is
+     * useful for optimizations.
      */
     _solidFillColorPBGRA: any; // any | number;
 
     /**
-     * Pool of temporary rectangles that is used to prevent allocation. We don't need more than 3 for now.
+     * Temporary rectangle that is used to prevent allocation.
      */
-    private static _temporaryRectangles: Rectangle [] = [
-      new flash.geom.Rectangle(),
-      new flash.geom.Rectangle(),
-      new flash.geom.Rectangle()
-    ];
+    private static _temporaryRectangle: flash.geom.Rectangle;
 
-    private _getTemporaryRectangleFrom(rect: Rectangle, index: number = 0): Rectangle {
-      release || assert (index >= 0 && index < BitmapData._temporaryRectangles.length);
-      var r = BitmapData._temporaryRectangles[index];
-      if (rect) {
-        r.copyFrom(rect);
-      }
+    private _getTemporaryRectangleFrom(rect: flash.geom.Rectangle): flash.geom.Rectangle {
+      var r = this.sec.flash.display.BitmapData.axClass._temporaryRectangle;
+      r.copyFrom(rect);
       return r;
     }
 
@@ -238,6 +225,7 @@ module Shumway.AVM2.AS.flash.display {
       var xMax = r.x + r.width;
       var yMin = r.y;
       var yMax = r.y + r.height;
+      this._ensureBitmapData();
       var view = this._view;
       var width = this._rect.width;
       var output = new Int32Array(r.area);
@@ -267,6 +255,7 @@ module Shumway.AVM2.AS.flash.display {
       var xMax = r.x + r.width;
       var yMin = r.y;
       var yMax = r.y + r.height;
+      this._ensureBitmapData();
       var view = this._view;
       var width = this._rect.width;
       var p = (rect.width * rect.height - r.height) + (xMin - rect.x);
@@ -302,11 +291,15 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     clone(): flash.display.BitmapData {
-      somewhatImplemented("public flash.display.BitmapData::clone");
-      // This should be coping the buffer not the view.
-      var bd = new BitmapData(this._rect.width, this._rect.height, this._transparent,
-                              this._solidFillColorPBGRA);
-      bd._view.set(this._view);
+      var bd: BitmapData = Object.create(this.sec.flash.display.BitmapData.axClass.tPrototype);
+      bd._rect = this._rect.clone();
+      bd._transparent = this._transparent;
+      bd._solidFillColorPBGRA = this._solidFillColorPBGRA;
+      bd._bitmapReferrers = [];
+      // TODO: clone without reading back bitmapdata. There's no need for that.
+      this._ensureBitmapData();
+      bd._id = flash.display.DisplayObject.getNextSyncID();
+      bd._setData(new Uint8Array(this._data), this._type);
       return bd;
     }
 
@@ -344,6 +337,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     setPixel(x: number /*int*/, y: number /*int*/, uARGB: number /*uint*/): void {
+      // TODO: implement this as a wrapper for setPixel32.
       x = x | 0;
       y = y | 0;
       uARGB = uARGB | 0;
@@ -386,20 +380,20 @@ module Shumway.AVM2.AS.flash.display {
       sourceRect = sourceRect;
       destPoint = destPoint;
       filter = filter;
-      somewhatImplemented("public flash.display.BitmapData::applyFilter " + filter);
+      release || somewhatImplemented("public flash.display.BitmapData::applyFilter " + filter);
       return;
     }
 
     colorTransform(rect: flash.geom.Rectangle, colorTransform: flash.geom.ColorTransform): void {
       rect = rect;
       colorTransform = colorTransform;
-      somewhatImplemented("public flash.display.BitmapData::colorTransform");
+      release || somewhatImplemented("public flash.display.BitmapData::colorTransform");
       return;
     }
 
     compare(otherBitmapData: flash.display.BitmapData): ASObject {
       otherBitmapData = otherBitmapData;
-      notImplemented("public flash.display.BitmapData::compare");
+      release || notImplemented("public flash.display.BitmapData::compare");
       return;
     }
 
@@ -411,7 +405,7 @@ module Shumway.AVM2.AS.flash.display {
       destPoint = destPoint;
       sourceChannel = sourceChannel >>> 0;
       destChannel = destChannel >>> 0;
-      notImplemented("public flash.display.BitmapData::copyChannel");
+      release || somewhatImplemented("public flash.display.BitmapData::copyChannel");
       return;
     }
 
@@ -423,19 +417,24 @@ module Shumway.AVM2.AS.flash.display {
                destPoint: flash.geom.Point,
                alphaBitmapData: flash.display.BitmapData = null,
                alphaPoint: flash.geom.Point = null,
-               mergeAlpha: boolean = false): void
+               mergeAlpha?: boolean): void
     {
       mergeAlpha = !!mergeAlpha;
 
       if (alphaBitmapData || alphaPoint) {
-        notImplemented("public flash.display.BitmapData::copyPixels - Alpha");
+        release || somewhatImplemented("public flash.display.BitmapData::copyPixels - Alpha");
         return;
       }
 
       // Deal with fractional pixel coordinates, looks like Flash "rounds" the corners of
       // the source rect, however a width of |0.5| rounds down rather than up so we're not
       // quite correct here.
-      var sRect = this._getTemporaryRectangleFrom(sourceRect, 0).roundInPlace();
+      var sRect;
+      if (sourceRect) {
+        sRect = this._getTemporaryRectangleFrom(sourceRect).roundInPlace();
+      } else {
+        sRect = this.sec.flash.display.BitmapData.axClass._temporaryRectangle.setEmpty();
+      }
 
       var tBRect = this._rect;
       var sBRect = sourceBitmapData._rect;
@@ -450,8 +449,8 @@ module Shumway.AVM2.AS.flash.display {
       var oX = sL - sRect.x ;
       var oY = sT - sRect.y;
 
-      var tL = destPoint.x | 0 + oX;
-      var tT = destPoint.y | 0 + oY;
+      var tL = (destPoint.x | 0) + oX;
+      var tT = (destPoint.y | 0) + oY;
 
       if (tL < 0) {
         sL -= tL;
@@ -486,16 +485,16 @@ module Shumway.AVM2.AS.flash.display {
       var t = this._view;
 
       if (sourceBitmapData._type !== this._type) {
-        somewhatImplemented("public flash.display.BitmapData::copyPixels - Color Format Conversion");
+        release || somewhatImplemented("public flash.display.BitmapData::copyPixels - Color Format Conversion");
       }
 
       if (mergeAlpha && this._type !== ImageType.PremultipliedAlphaARGB) {
-        notImplemented("public flash.display.BitmapData::copyPixels - Merge Alpha");
+        release || somewhatImplemented("public flash.display.BitmapData::copyPixels - Merge Alpha");
         return;
       }
 
-      // No reason to copy pixels since since both source and target are the same solid fill, regardless
-      // of alpha blending. (TODO: I think the math works out for mergeAlpha also.)
+      // No reason to copy pixels since since both source and target are the same solid fill,
+      // regardless of alpha blending. (TODO: I think the math works out for mergeAlpha also.)
       if (this._solidFillColorPBGRA !== null &&
           this._solidFillColorPBGRA === sourceBitmapData._solidFillColorPBGRA) {
         return;
@@ -586,8 +585,10 @@ module Shumway.AVM2.AS.flash.display {
     draw(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null,
          colorTransform: flash.geom.ColorTransform = null, blendMode: string = null,
          clipRect: flash.geom.Rectangle = null, smoothing: boolean = false): void {
-      somewhatImplemented("public flash.display.BitmapData::draw");
-      var serializer: IBitmapDataSerializer = AVM2.instance.globals['Shumway.Player.Utils'];
+      blendMode = axCoerceString(blendMode);
+      smoothing = !!smoothing;
+      release || somewhatImplemented("public flash.display.BitmapData::draw");
+      var serializer: IBitmapDataSerializer = this.sec.player;
       if (matrix) {
         matrix = matrix.clone().toTwipsInPlace();
       }
@@ -599,15 +600,9 @@ module Shumway.AVM2.AS.flash.display {
                     colorTransform: flash.geom.ColorTransform = null, blendMode: string = null,
                     clipRect: flash.geom.Rectangle = null, smoothing: boolean = false,
                     quality: string = null): void {
-      source = source;
-      matrix = matrix;
-      colorTransform = colorTransform;
-      blendMode = asCoerceString(blendMode);
-      clipRect = clipRect;
-      smoothing = !!smoothing;
-      quality = asCoerceString(quality);
-      notImplemented("public flash.display.BitmapData::drawWithQuality");
-      return;
+      quality = axCoerceString(quality);
+      release || somewhatImplemented("public flash.display.BitmapData::drawWithQuality");
+      this.draw(source, matrix, colorTransform, blendMode, clipRect, smoothing);
     }
 
     fillRect(rect: flash.geom.Rectangle, uARGB: number /*uint*/): void {
@@ -667,7 +662,7 @@ module Shumway.AVM2.AS.flash.display {
       x = x | 0;
       y = y | 0;
       color = color >>> 0;
-      notImplemented("public flash.display.BitmapData::floodFill");
+      release || somewhatImplemented("public flash.display.BitmapData::floodFill");
       return;
     }
 
@@ -675,7 +670,7 @@ module Shumway.AVM2.AS.flash.display {
                        filter: flash.filters.BitmapFilter): flash.geom.Rectangle {
       sourceRect = sourceRect;
       filter = filter;
-      notImplemented("public flash.display.BitmapData::generateFilterRect");
+      release || somewhatImplemented("public flash.display.BitmapData::generateFilterRect");
       return;
     }
 
@@ -684,12 +679,12 @@ module Shumway.AVM2.AS.flash.display {
       mask = mask >>> 0;
       color = color >>> 0;
       findColor = !!findColor;
-      notImplemented("public flash.display.BitmapData::getColorBoundsRect");
-      return;
+      release || somewhatImplemented("public flash.display.BitmapData::getColorBoundsRect");
+      return new this.sec.flash.geom.Rectangle();
     }
 
     getPixels(rect: flash.geom.Rectangle): flash.utils.ByteArray {
-      var outputByteArray = new flash.utils.ByteArray();
+      var outputByteArray = new this.sec.flash.utils.ByteArray();
       this.copyPixelsToByteArray(rect, outputByteArray);
       return outputByteArray;
     }
@@ -703,7 +698,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     getVector(rect: flash.geom.Rectangle): Uint32Vector {
-      var outputVector = new Uint32Vector(pixelData.length);
+      var outputVector = new this.sec.Uint32Vector(pixelData.length);
       var pixelData = this._getPixelData(rect);
       if (!pixelData) {
         return outputVector;
@@ -722,8 +717,8 @@ module Shumway.AVM2.AS.flash.display {
       secondObject = secondObject;
       secondBitmapDataPoint = secondBitmapDataPoint;
       secondAlphaThreshold = secondAlphaThreshold >>> 0;
-      notImplemented("public flash.display.BitmapData::hitTest");
-      return;
+      release || somewhatImplemented("public flash.display.BitmapData::hitTest");
+      return true;
     }
 
     merge(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle,
@@ -736,7 +731,7 @@ module Shumway.AVM2.AS.flash.display {
       greenMultiplier = greenMultiplier >>> 0;
       blueMultiplier = blueMultiplier >>> 0;
       alphaMultiplier = alphaMultiplier >>> 0;
-      somewhatImplemented("public flash.display.BitmapData::merge");
+      release || somewhatImplemented("public flash.display.BitmapData::merge");
     }
 
     noise(randomSeed: number /*int*/, low: number /*uint*/ = 0, high: number /*uint*/ = 255,
@@ -746,7 +741,7 @@ module Shumway.AVM2.AS.flash.display {
       high = high >>> 0;
       channelOptions = channelOptions >>> 0;
       grayScale = !!grayScale;
-      somewhatImplemented("public flash.display.BitmapData::noise");
+      release || somewhatImplemented("public flash.display.BitmapData::noise");
     }
 
     paletteMap(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle,
@@ -759,7 +754,7 @@ module Shumway.AVM2.AS.flash.display {
       greenArray = greenArray;
       blueArray = blueArray;
       alphaArray = alphaArray;
-      somewhatImplemented("public flash.display.BitmapData::paletteMap");
+      release || somewhatImplemented("public flash.display.BitmapData::paletteMap");
     }
 
     perlinNoise(baseX: number, baseY: number, numOctaves: number /*uint*/, randomSeed: number
@@ -775,7 +770,7 @@ module Shumway.AVM2.AS.flash.display {
       channelOptions = channelOptions >>> 0;
       grayScale = !!grayScale;
       offsets = offsets;
-      somewhatImplemented("public flash.display.BitmapData::perlinNoise");
+      release || somewhatImplemented("public flash.display.BitmapData::perlinNoise");
     }
 
     pixelDissolve(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle,
@@ -787,14 +782,14 @@ module Shumway.AVM2.AS.flash.display {
       randomSeed = randomSeed | 0;
       numPixels = numPixels | 0;
       fillColor = fillColor >>> 0;
-      notImplemented("public flash.display.BitmapData::pixelDissolve");
+      release || somewhatImplemented("public flash.display.BitmapData::pixelDissolve");
       return;
     }
 
     scroll(x: number /*int*/, y: number /*int*/): void {
       x = x | 0;
       y = y | 0;
-      notImplemented("public flash.display.BitmapData::scroll");
+      release || somewhatImplemented("public flash.display.BitmapData::scroll");
       return;
     }
 
@@ -813,12 +808,12 @@ module Shumway.AVM2.AS.flash.display {
       sourceBitmapData = sourceBitmapData;
       sourceRect = sourceRect;
       destPoint = destPoint;
-      operation = asCoerceString(operation);
+      operation = axCoerceString(operation);
       threshold = threshold >>> 0;
       color = color >>> 0;
       mask = mask >>> 0;
       copySource = !!copySource;
-      notImplemented("public flash.display.BitmapData::threshold");
+      release || somewhatImplemented("public flash.display.BitmapData::threshold");
       return;
     }
 
@@ -831,9 +826,9 @@ module Shumway.AVM2.AS.flash.display {
       this._locked = false;
     }
 
-    histogram(hRect: flash.geom.Rectangle = null): ASVector<any> {
+    histogram(hRect: flash.geom.Rectangle = null): GenericVector {
       hRect = hRect;
-      notImplemented("public flash.display.BitmapData::histogram");
+      release || notImplemented("public flash.display.BitmapData::histogram");
       return;
     }
 
@@ -842,7 +837,7 @@ module Shumway.AVM2.AS.flash.display {
       rect = rect;
       compressor = compressor;
       byteArray = byteArray;
-      notImplemented("public flash.display.BitmapData::encode");
+      release || notImplemented("public flash.display.BitmapData::encode");
       return;
     }
 
@@ -856,8 +851,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     private _ensureBitmapData() {
       if (this._isRemoteDirty) {
-        var serializer = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
-        var data = serializer.requestBitmapData(this);
+        var data = this.sec.player.requestBitmapData(this);
         this._setData(data.getBytes(), ImageType.StraightAlphaRGBA);
         this._isRemoteDirty = false;
         this._isDirty = false;
@@ -885,6 +879,7 @@ module Shumway.AVM2.AS.flash.display {
     drawToBitmap(bitmapData: flash.display.BitmapData, source: flash.display.IBitmapDrawable,
                  matrix: flash.geom.Matrix, colorTransform: flash.geom.ColorTransform,
                  blendMode: string, clipRect: flash.geom.Rectangle, smoothing: boolean);
+    requestBitmapData(bitmapData: BitmapData): DataBuffer;
   }
 
   export class BitmapSymbol extends Timeline.DisplaySymbol
@@ -897,17 +892,17 @@ module Shumway.AVM2.AS.flash.display {
 
     private sharedInstance: flash.display.BitmapData;
 
-    constructor(data: Timeline.SymbolData) {
-      super(data, flash.display.BitmapData, false);
+    constructor(data: Timeline.SymbolData, sec: ISecurityDomain) {
+      super(data, sec.flash.display.BitmapData.axClass, false);
       this.ready = false;
     }
 
-    static FromData(data: any): BitmapSymbol {
-      var symbol = new BitmapSymbol(data);
+    static FromData(data: any, loaderInfo: LoaderInfo): BitmapSymbol {
+      var symbol = new BitmapSymbol(data, loaderInfo.sec);
       // For non-decoded images, we don't yet have dimensions.
       symbol.width = data.width || -1;
       symbol.height = data.height || -1;
-      symbol.syncId = flash.display.DisplayObject.getNextSyncID();
+      symbol.syncId = loaderInfo.sec.flash.display.DisplayObject.axClass.getNextSyncID();
       symbol.data = data.data;
       switch (data.mimeType) {
         case "application/octet-stream":
@@ -934,9 +929,7 @@ module Shumway.AVM2.AS.flash.display {
     }
     createSharedInstance() {
       release || assert(this.ready);
-      this.sharedInstance = this.symbolClass.initializeFrom(this);
-      this.symbolClass.instanceConstructorNoInitialize.call(this.sharedInstance);
-      return this.sharedInstance;
+      return this.sharedInstance = constructClassFromSymbol(this, this.symbolClass);
     }
 
     get resolveAssetCallback() {

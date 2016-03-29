@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: FontPosture
-module Shumway.AVM2.AS.flash.text.engine {
+module Shumway.AVMX.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class FontPosture extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class FontPosture extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -33,7 +33,7 @@ module Shumway.AVM2.AS.flash.text.engine {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
+      super();
       dummyConstructor("public flash.text.engine.FontPosture");
     }
     

@@ -39,7 +39,6 @@ public final class Camera extends EventDispatcher {
     public native function get motionTimeout():int;
     public native function get muted():Boolean;
     public native function get name():String;
-    public native function get position():String;
     public native function get quality():int;
     public native function get width():int;
     public native function setCursor(value:Boolean):void;

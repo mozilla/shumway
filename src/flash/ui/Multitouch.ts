@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: Multitouch
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Multitouch extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class Multitouch extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -34,14 +30,9 @@ module Shumway.AVM2.AS.flash.ui {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.ui.Multitouch");
+      super();
     }
     
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
     // static _inputMode: string;
     // static _supportsTouchEvents: boolean;
     // static _supportsGestureEvents: boolean;
@@ -49,42 +40,42 @@ module Shumway.AVM2.AS.flash.ui {
     // static _maxTouchPoints: number /*int*/;
     // static _mapTouchToMouse: boolean;
     static get inputMode(): string {
-      notImplemented("public flash.ui.Multitouch::get inputMode"); return;
+      release || notImplemented("public flash.ui.Multitouch::get inputMode"); return;
       // return this._inputMode;
     }
     static set inputMode(value: string) {
-      value = asCoerceString(value);
-      notImplemented("public flash.ui.Multitouch::set inputMode"); return;
+      value = axCoerceString(value);
+      release || notImplemented("public flash.ui.Multitouch::set inputMode"); return;
       // this._inputMode = value;
     }
     static get supportsTouchEvents(): boolean {
-      somewhatImplemented("public flash.ui.Multitouch::get supportsTouchEvents");
+      release || somewhatImplemented("public flash.ui.Multitouch::get supportsTouchEvents");
       return false;
       // return this._supportsTouchEvents;
     }
     static get supportsGestureEvents(): boolean {
-      somewhatImplemented("public flash.ui.Multitouch::get supportsGestureEvents");
+      release || somewhatImplemented("public flash.ui.Multitouch::get supportsGestureEvents");
       return false;
       // return this._supportsGestureEvents;
     }
-    static get supportedGestures(): ASVector<any> {
-      somewhatImplemented("public flash.ui.Multitouch::get supportedGestures");
+    static get supportedGestures(): GenericVector {
+      release || somewhatImplemented("public flash.ui.Multitouch::get supportedGestures");
       return null;
       // return this._supportedGestures;
     }
     static get maxTouchPoints(): number /*int*/ {
-      somewhatImplemented("public flash.ui.Multitouch::get maxTouchPoints");
+      release || somewhatImplemented("public flash.ui.Multitouch::get maxTouchPoints");
       return 0;
       // return this._maxTouchPoints;
     }
     static get mapTouchToMouse(): boolean {
-      somewhatImplemented("public flash.ui.Multitouch::get mapTouchToMouse");
+      release || somewhatImplemented("public flash.ui.Multitouch::get mapTouchToMouse");
       return true;
       // return this._mapTouchToMouse;
     }
     static set mapTouchToMouse(value: boolean) {
       value = !!value;
-      notImplemented("public flash.ui.Multitouch::set mapTouchToMouse"); return;
+      release || notImplemented("public flash.ui.Multitouch::set mapTouchToMouse"); return;
       // this._mapTouchToMouse = value;
     }
     

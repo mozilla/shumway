@@ -14,51 +14,25 @@
  * limitations under the License.
  */
 // Class: FSCommand
-module Shumway.AVM2.AS.flash.system {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-
-  export class FSCommand extends ASNative {
-    
-    // Called whenever the class is initialized.
-    static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
-    constructor () {
-      false && super();
-      dummyConstructor("packageInternal flash.system.FSCommand");
-    }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    static _fscommand(command: string, args: string): void {
-      command = asCoerceString(command); args = asCoerceString(args);
-      console.log('FSCommand: ' + command + '; ' + args);
-      command = command.toLowerCase();
-      if (command === 'debugger') {
-        /* tslint:disable */
-        debugger;
-        /* tslint:enable */
-        return;
-      }
-
-      var listener: IFSCommandListener = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
-      listener.executeFSCommand(command, args);
-    }
-  }
+module Shumway.AVMX.AS.flash.system {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   export interface IFSCommandListener {
     executeFSCommand(command: string, args: string);
+  }
+
+  export function fscommand(sec: ISecurityDomain, command: string, args: string): void {
+    command = axCoerceString(command);
+    args = axCoerceString(args);
+    console.log('FSCommand: ' + command + '; ' + args);
+    command = command.toLowerCase();
+    if (command === 'debugger') {
+      /* tslint:disable */
+      debugger;
+      /* tslint:enable */
+      return;
+    }
+
+    sec.player.executeFSCommand(command, args);
   }
 }

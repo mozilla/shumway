@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 // Class: SecureSocket
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class SecureSocket extends flash.net.Socket {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +28,7 @@ module Shumway.AVM2.AS.flash.net {
     static instanceSymbols: string [] = null; // ["serverCertificateStatus", "connect"];
     
     constructor () {
-      false && super(undefined, undefined);
-      dummyConstructor("public flash.net.SecureSocket");
+      super(undefined, undefined);
     }
     
     // JS -> AS Bindings
@@ -45,19 +39,19 @@ module Shumway.AVM2.AS.flash.net {
     // AS -> JS Bindings
     // static _isSupported: boolean;
     get isSupported(): boolean {
-      notImplemented("public flash.net.SecureSocket::get isSupported"); return;
+      release || notImplemented("public flash.net.SecureSocket::get isSupported"); return;
       // return this._isSupported;
     }
     
     // _serverCertificateStatus: string;
     // _serverCertificate: flash.security.X509Certificate;
     get serverCertificate(): flash.security.X509Certificate {
-      notImplemented("public flash.net.SecureSocket::get serverCertificate"); return;
+      release || notImplemented("public flash.net.SecureSocket::get serverCertificate"); return;
       // return this._serverCertificate;
     }
     addBinaryChainBuildingCertificate(certificate: flash.utils.ByteArray, trusted: boolean): void {
       certificate = certificate; trusted = !!trusted;
-      notImplemented("public flash.net.SecureSocket::addBinaryChainBuildingCertificate"); return;
+      release || notImplemented("public flash.net.SecureSocket::addBinaryChainBuildingCertificate"); return;
     }
   }
 }

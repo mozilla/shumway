@@ -13,40 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Class: SecurityDomain
-module Shumway.AVM2.AS.flash.system {
-  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  export class SecurityDomain extends ASNative {
+module Shumway.AVMX.AS.flash.system {
+  export class SecurityDomain extends ASObject {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
 
-    static _currentDomain: SecurityDomain;
-    
     constructor () {
-      false && super();
+      super();
+      this.sec.throwError('ArgumentError', Errors.CantInstantiateError, 'SecurityDomain');
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
+
     static get currentDomain(): flash.system.SecurityDomain {
-      if (!this._currentDomain) {
-        this._currentDomain = new system.SecurityDomain();
-      }
-      somewhatImplemented("public flash.system.SecurityDomain::get currentDomain");
-      return this._currentDomain;
+      var currentABC = getCurrentABC();
+      var sec = currentABC ? currentABC.env.app.sec : this.sec;
+      // TODO: memoize the flash.system.SecurityDomain instance
+      return Object.create(sec.flash.system.SecurityDomain.axClass.tPrototype);
     }
   }
 }

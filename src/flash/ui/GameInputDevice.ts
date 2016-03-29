@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: GameInputDevice
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class GameInputDevice extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,65 +29,60 @@ module Shumway.AVM2.AS.flash.ui {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.ui.GameInputDevice");
+      super();
     }
     
-    // JS -> AS Bindings
     static MAX_BUFFER_SIZE: number /*int*/ = 4800;
-    
-    
-    // AS -> JS Bindings
-    
+
     // _numControls: number /*int*/;
     // _sampleInterval: number /*int*/;
     // _enabled: boolean;
     // _id: string;
     // _name: string;
     get numControls(): number /*int*/ {
-      notImplemented("public flash.ui.GameInputDevice::get numControls"); return;
+      release || notImplemented("public flash.ui.GameInputDevice::get numControls"); return;
       // return this._numControls;
     }
     get sampleInterval(): number /*int*/ {
-      notImplemented("public flash.ui.GameInputDevice::get sampleInterval"); return;
+      release || notImplemented("public flash.ui.GameInputDevice::get sampleInterval"); return;
       // return this._sampleInterval;
     }
     set sampleInterval(val: number /*int*/) {
       val = val | 0;
-      notImplemented("public flash.ui.GameInputDevice::set sampleInterval"); return;
+      release || notImplemented("public flash.ui.GameInputDevice::set sampleInterval"); return;
       // this._sampleInterval = val;
     }
     get enabled(): boolean {
-      notImplemented("public flash.ui.GameInputDevice::get enabled"); return;
+      release || notImplemented("public flash.ui.GameInputDevice::get enabled"); return;
       // return this._enabled;
     }
     set enabled(val: boolean) {
       val = !!val;
-      notImplemented("public flash.ui.GameInputDevice::set enabled"); return;
+      release || notImplemented("public flash.ui.GameInputDevice::set enabled"); return;
       // this._enabled = val;
     }
     get id(): string {
-      notImplemented("public flash.ui.GameInputDevice::get id"); return;
+      release || notImplemented("public flash.ui.GameInputDevice::get id"); return;
       // return this._id;
     }
     get name(): string {
-      notImplemented("public flash.ui.GameInputDevice::get name"); return;
+      release || notImplemented("public flash.ui.GameInputDevice::get name"); return;
       // return this._name;
     }
     getControlAt(i: number /*int*/): flash.ui.GameInputControl {
       i = i | 0;
-      notImplemented("public flash.ui.GameInputDevice::getControlAt"); return;
+      release || notImplemented("public flash.ui.GameInputDevice::getControlAt"); return;
     }
-    startCachingSamples(numSamples: number /*int*/, controls: ASVector<any>): void {
+    startCachingSamples(numSamples: number /*int*/, controls: GenericVector): void {
       numSamples = numSamples | 0; controls = controls;
-      notImplemented("public flash.ui.GameInputDevice::startCachingSamples"); return;
+      release || notImplemented("public flash.ui.GameInputDevice::startCachingSamples"); return;
     }
     stopCachingSamples(): void {
-      notImplemented("public flash.ui.GameInputDevice::stopCachingSamples"); return;
+      release || notImplemented("public flash.ui.GameInputDevice::stopCachingSamples"); return;
     }
     getCachedSamples(data: flash.utils.ByteArray, append: boolean = false): number /*int*/ {
       data = data; append = !!append;
-      notImplemented("public flash.ui.GameInputDevice::getCachedSamples"); return;
+      release || notImplemented("public flash.ui.GameInputDevice::getCachedSamples"); return;
     }
   }
 }

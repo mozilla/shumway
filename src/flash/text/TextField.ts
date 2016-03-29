@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 // Class: TextField
-module Shumway.AVM2.AS.flash.text {
+module Shumway.AVMX.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   import assert = Shumway.Debug.assert;
   import warning = Shumway.Debug.warning;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import throwError = Shumway.AVM2.Runtime.throwError;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import clamp = Shumway.NumberUtilities.clamp;
 
   import DisplayObjectFlags = flash.display.DisplayObjectFlags;
+  import DisplayObjectDirtyFlags = flash.display.DisplayObjectDirtyFlags;
+
+  import TextTag = Shumway.SWF.Parser.TextTag;
+  import TextFlags = Shumway.SWF.Parser.TextFlags;
+  import TextRecord = Shumway.SWF.Parser.TextRecord;
+  import TextRecordFlags = Shumway.SWF.Parser.TextRecordFlags;
 
   export class TextField extends flash.display.InteractiveObject {
 
@@ -33,47 +38,93 @@ module Shumway.AVM2.AS.flash.text {
 
     static classInitializer: any = null;
 
-    static initializer: any = function (symbol: TextSymbol) {
-      var self: TextField = this;
+    _symbol: TextSymbol;
 
-      self._alwaysShowSelection = false;
-      self._antiAliasType = AntiAliasType.NORMAL;
-      self._autoSize = TextFieldAutoSize.NONE;
-      self._background = false;
-      self._backgroundColor = 0xffffffff;
-      self._border = false;
-      self._borderColor = 0x000000ff;
-      self._bottomScrollV = 1;
-      self._caretIndex = 0;
-      self._condenseWhite = false;
-      self._embedFonts = false;
-      self._gridFitType = GridFitType.PIXEL;
-      self._htmlText = '';
-      self._length = 0;
-      self._textInteractionMode = TextInteractionMode.NORMAL;
-      self._maxChars = 0;
-      self._maxScrollH = 0;
-      self._maxScrollV = 1;
-      self._mouseWheelEnabled = false;
-      self._multiline = false;
-      self._numLines = 1;
-      self._displayAsPassword = false;
-      self._restrict = null;
-      self._selectable = true;
-      self._selectedText = '';
-      self._selectionBeginIndex = 0;
-      self._selectionEndIndex = 0;
-      self._sharpness = 0;
-      self._styleSheet = null;
-      self._textColor = null;
-      self._textHeight = 0;
-      self._textWidth = 0;
-      self._thickness = 0;
-      self._type = TextFieldType.DYNAMIC;
-      self._useRichTextClipboard = false;
+    applySymbol() {
+      this._initializeFields();
+      release || assert(this._symbol);
+      var symbol = this._symbol;
+      this._setFillAndLineBoundsFromSymbol(symbol);
+      var defaultTextFormat = this._textContent.defaultTextFormat;
+      defaultTextFormat.color = symbol.color;
+      defaultTextFormat.size = (symbol.size / 20) | 0;
+      defaultTextFormat.font = symbol.face;
+      defaultTextFormat.bold = symbol.bold;
+      defaultTextFormat.italic = symbol.italic;
+      defaultTextFormat.align = symbol.align;
+      defaultTextFormat.leftMargin = (symbol.leftMargin / 20) | 0;
+      defaultTextFormat.rightMargin = (symbol.rightMargin / 20) | 0;
+      defaultTextFormat.indent = (symbol.indent / 20) | 0;
+      defaultTextFormat.leading = (symbol.leading / 20) | 0;
+      this._multiline = symbol.multiline;
+      this._embedFonts = symbol.embedFonts;
+      this._selectable = symbol.selectable;
+      this._displayAsPassword = symbol.displayAsPassword;
+      this._type = symbol.type;
+      this._maxChars = symbol.maxChars;
+      if (symbol.border) {
+        this.background = true;
+        this.border = true;
+      }
+      if (symbol.html) {
+        this.htmlText = symbol.initialText;
+      } else {
+        this.text = symbol.initialText;
+      }
+      this.wordWrap = symbol.wordWrap;
+      this.autoSize = symbol.autoSize;
+    }
+    constructor() {
+      super();
+      if (!this._fieldsInitialized) {
+        this._initializeFields();
+      }
+      if (!this._symbol) {
+        this._setFillAndLineBoundsFromWidthAndHeight(100 * 20, 100 * 20);
+      }
+    }
 
-      var defaultTextFormat = new flash.text.TextFormat(
-        Font.DEFAULT_FONT_SERIF,
+    protected _initializeFields(): void {
+      super._initializeFields();
+      this._alwaysShowSelection = false;
+      this._antiAliasType = AntiAliasType.NORMAL;
+      this._autoSize = TextFieldAutoSize.NONE;
+      this._background = false;
+      this._backgroundColor = 0xffffffff;
+      this._border = false;
+      this._borderColor = 0x000000ff;
+      this._bottomScrollV = 1;
+      this._caretIndex = 0;
+      this._condenseWhite = false;
+      this._embedFonts = false;
+      this._gridFitType = GridFitType.PIXEL;
+      this._htmlText = '';
+      this._length = 0;
+      this._textInteractionMode = TextInteractionMode.NORMAL;
+      this._maxChars = 0;
+      this._maxScrollH = 0;
+      this._maxScrollV = 1;
+      this._mouseWheelEnabled = false;
+      this._multiline = false;
+      this._numLines = 1;
+      this._displayAsPassword = false;
+      this._restrict = null;
+      this._selectable = true;
+      this._selectedText = '';
+      this._selectionBeginIndex = 0;
+      this._selectionEndIndex = 0;
+      this._sharpness = 0;
+      this._styleSheet = null;
+      this._textColor = null;
+      this._textHeight = 0;
+      this._textWidth = 0;
+      this._thickness = 0;
+      this._type = TextFieldType.DYNAMIC;
+      this._useRichTextClipboard = false;
+      this._lineMetricsData = null;
+
+      var defaultTextFormat = new this.sec.flash.text.TextFormat(
+        this.sec.flash.text.Font.axClass.DEFAULT_FONT_SERIF,
         12,
         0,
         false,
@@ -83,49 +134,9 @@ module Shumway.AVM2.AS.flash.text {
         '',
         TextFormatAlign.LEFT
       );
-      self._textContent = new Shumway.TextContent(defaultTextFormat);
-      self._lineMetricsData = null;
-
-      if (symbol) {
-        self._setFillAndLineBoundsFromSymbol(symbol);
-
-        defaultTextFormat.color = symbol.color;
-        defaultTextFormat.size = (symbol.size / 20) | 0;
-        defaultTextFormat.font = symbol.face;
-        defaultTextFormat.bold = symbol.bold;
-        defaultTextFormat.italic = symbol.italic;
-        defaultTextFormat.align = symbol.align;
-        defaultTextFormat.leftMargin = (symbol.leftMargin / 20) | 0;
-        defaultTextFormat.rightMargin = (symbol.rightMargin / 20) | 0;
-        defaultTextFormat.indent = (symbol.indent / 20) | 0;
-        defaultTextFormat.leading = (symbol.leading / 20) | 0;
-
-        self._multiline = symbol.multiline;
-        self._embedFonts = symbol.embedFonts;
-        self._selectable = symbol.selectable;
-        self._displayAsPassword = symbol.displayAsPassword;
-        self._type = symbol.type;
-        self._maxChars = symbol.maxChars;
-
-        if (symbol.border) {
-          self.background = true;
-          self.border = true;
-        }
-        if (symbol.html) {
-          self.htmlText = symbol.initialText;
-        } else {
-          self.text = symbol.initialText;
-        }
-        self.wordWrap = symbol.wordWrap;
-        self.autoSize = symbol.autoSize;
-      } else {
-        self._setFillAndLineBoundsFromWidthAndHeight(100 * 20, 100 * 20);
-      }
-    };
-
-    constructor() {
-      false && super();
-      display.InteractiveObject.instanceConstructorNoInitialize.call(this);
+      defaultTextFormat.letterSpacing = 0;
+      defaultTextFormat.kerning = 0;
+      this._textContent = new Shumway.TextContent(this.sec, defaultTextFormat);
     }
 
     _setFillAndLineBoundsFromSymbol(symbol: Timeline.DisplaySymbol) {
@@ -163,7 +174,7 @@ module Shumway.AVM2.AS.flash.text {
 
     private _invalidateContent() {
       if (this._textContent.flags & Shumway.TextContentFlags.Dirty) {
-        this._setFlags(DisplayObjectFlags.DirtyTextContent);
+        this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyTextContent);
       }
     }
 
@@ -174,15 +185,16 @@ module Shumway.AVM2.AS.flash.text {
 
     //selectedText: string;
     //appendText: (newText: string) => void;
-    //getXMLText: (beginIndex: number /*int*/ = 0, endIndex: number /*int*/ = 2147483647) => string;
-    //insertXMLText: (beginIndex: number /*int*/, endIndex: number /*int*/, richText: string, pasting: boolean = false) => void;
-    //copyRichText: () => string;
-    //pasteRichText: (richText: string) => boolean;
+    //getXMLText: (beginIndex: number /*int*/ = 0, endIndex: number /*int*/ = 2147483647) =>
+    // string;
+    //insertXMLText: (beginIndex: number /*int*/, endIndex: number /*int*/, richText: string,
+    // pasting: boolean = false) => void; copyRichText: () => string; pasteRichText: (richText:
+    // string) => boolean;
 
     // AS -> JS Bindings
     static isFontCompatible(fontName: string, fontStyle: string): boolean {
-      fontName = asCoerceString(fontName);
-      fontStyle = asCoerceString(fontStyle);
+      fontName = axCoerceString(fontName);
+      fontStyle = axCoerceString(fontStyle);
       var font = Font.getByNameAndStyle(fontName, fontStyle);
       if (!font) {
         return false;
@@ -242,9 +254,12 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set antiAliasType(antiAliasType: string) {
-      antiAliasType = asCoerceString(antiAliasType);
+      if (isNullOrUndefined(antiAliasType)) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'antiAliasType');
+      }
+      antiAliasType = axCoerceString(antiAliasType);
       if (AntiAliasType.toNumber(antiAliasType) < 0) {
-        throwError("ArgumentError", Errors.InvalidParamError, "antiAliasType");
+        this.sec.throwError("ArgumentError", Errors.InvalidParamError, "antiAliasType");
       }
       this._antiAliasType = antiAliasType;
     }
@@ -254,12 +269,15 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set autoSize(value: string) {
-      value = asCoerceString(value);
+      if (isNullOrUndefined(value)) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'autoSize');
+      }
+      value = axCoerceString(value);
       if (value === this._autoSize) {
         return;
       }
       if (TextFieldAutoSize.toNumber(value) < 0) {
-        throwError("ArgumentError", Errors.InvalidParamError, "autoSize");
+        this.sec.throwError("ArgumentError", Errors.InvalidParamError, "autoSize");
       }
       this._autoSize = value;
       this._textContent.autoSize = TextFieldAutoSize.toNumber(value);
@@ -278,7 +296,7 @@ module Shumway.AVM2.AS.flash.text {
       }
       this._background = value;
       this._textContent.backgroundColor = value ? this._backgroundColor : 0;
-      this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyTextContent);
     }
 
     get backgroundColor(): number /*uint*/ {
@@ -293,7 +311,7 @@ module Shumway.AVM2.AS.flash.text {
       this._backgroundColor = value;
       if (this._background) {
         this._textContent.backgroundColor = value;
-        this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
+        this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyTextContent);
       }
     }
 
@@ -308,7 +326,7 @@ module Shumway.AVM2.AS.flash.text {
       }
       this._border = value;
       this._textContent.borderColor = value ? this._borderColor : 0;
-      this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyTextContent);
     }
 
     get borderColor(): number /*uint*/ {
@@ -323,7 +341,7 @@ module Shumway.AVM2.AS.flash.text {
       this._borderColor = value;
       if (this._border) {
         this._textContent.borderColor = value;
-        this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
+        this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyTextContent);
       }
     }
 
@@ -333,7 +351,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get caretIndex(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get caretIndex"); return;
+      release || notImplemented("public flash.text.TextField::get caretIndex"); return;
       // return this._caretIndex;
     }
 
@@ -350,6 +368,9 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set defaultTextFormat(format: flash.text.TextFormat) {
+      if (isNullOrUndefined(format)) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'format');
+      }
       var defaultTextFormat = this._textContent.defaultTextFormat;
       defaultTextFormat.merge(format);
       if (defaultTextFormat.color === null) {
@@ -372,7 +393,10 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set gridFitType(gridFitType: string) {
-      gridFitType = asCoerceString(gridFitType);
+      if (isNullOrUndefined(gridFitType)) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'gridFitType');
+      }
+      gridFitType = axCoerceString(gridFitType);
       release || assert (flash.text.GridFitType.toNumber(gridFitType) >= 0);
       this._gridFitType = gridFitType;
     }
@@ -382,8 +406,12 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set htmlText(value: string) {
-      value = asCoerceString(value);
-      // Flash resets the bold and italic flags when an html value is set on a text field created from a symbol.
+      if (isNullOrUndefined(value)) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'value');
+      }
+      value = axCoerceString(value);
+      // Flash resets the bold and italic flags when an html value is set on a text field created
+      // from a symbol.
       if (this._symbol) {
         this._textContent.defaultTextFormat.bold = false;
         this._textContent.defaultTextFormat.italic = false;
@@ -399,7 +427,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get textInteractionMode(): string {
-      notImplemented("public flash.text.TextField::get textInteractionMode"); return;
+      release || notImplemented("public flash.text.TextField::get textInteractionMode"); return;
       // return this._textInteractionMode;
     }
 
@@ -426,7 +454,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set mouseWheelEnabled(value: boolean) {
-      somewhatImplemented("public flash.text.TextField::set mouseWheelEnabled");
+      release || somewhatImplemented("public flash.text.TextField::set mouseWheelEnabled");
       this._mouseWheelEnabled = !!value;
     }
 
@@ -447,7 +475,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set displayAsPassword(value: boolean) {
-      somewhatImplemented("public flash.text.TextField::set displayAsPassword");
+      release || somewhatImplemented("public flash.text.TextField::set displayAsPassword");
       this._displayAsPassword = !!value;
     }
 
@@ -456,8 +484,8 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set restrict(value: string) {
-      somewhatImplemented("public flash.text.TextField::set restrict");
-      this._restrict = asCoerceString(value);
+      release || somewhatImplemented("public flash.text.TextField::set restrict");
+      this._restrict = axCoerceString(value);
     }
 
     // Returns the current vertical scrolling position in lines.
@@ -525,7 +553,10 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set text(value: string) {
-      value = asCoerceString(value);
+      if (isNullOrUndefined(value)) {
+        this.sec.throwError('TypeError', Errors.NullPointerError, 'value');
+      }
+      value = axCoerceString(value) || '';
       if (value === this._textContent.plainText) {
         return;
       }
@@ -565,7 +596,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set type(value: string) {
-      this._type = asCoerceString(value);
+      this._type = axCoerceString(value);
     }
 
     get wordWrap(): boolean {
@@ -582,51 +613,51 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get useRichTextClipboard(): boolean {
-      notImplemented("public flash.text.TextField::get useRichTextClipboard"); return;
+      release || notImplemented("public flash.text.TextField::get useRichTextClipboard"); return;
       // return this._useRichTextClipboard;
     }
     set useRichTextClipboard(value: boolean) {
       value = !!value;
-      notImplemented("public flash.text.TextField::set useRichTextClipboard"); return;
+      release || notImplemented("public flash.text.TextField::set useRichTextClipboard"); return;
       // this._useRichTextClipboard = value;
     }
 
     copyRichText() {
-      notImplemented("public flash.text.TextField::copyRichText");
+      release || notImplemented("public flash.text.TextField::copyRichText");
     }
     pasteRichText(richText: string) {
-      richText = asCoerceString(richText);
-      notImplemented("public flash.text.TextField::pasteRichText");
+      richText = axCoerceString(richText);
+      release || notImplemented("public flash.text.TextField::pasteRichText");
     }
 
     getXMLText(beginIndex: number, endIndex: number = 2147483647): string {
       beginIndex = +beginIndex;
       endIndex = +endIndex;
-      notImplemented("public flash.text.TextField::getXMLText");
+      release || notImplemented("public flash.text.TextField::getXMLText");
       return "";
     }
     insertXMLText(beginIndex: number, endIndex: number, richText: String, pasting: Boolean): void {
       beginIndex = +beginIndex;
       endIndex = +endIndex;
-      richText = asCoerceString(richText);
+      richText = axCoerceString(richText);
       pasting = !!pasting;
-      notImplemented("public flash.text.TextField::insertXMLText");
+      release || notImplemented("public flash.text.TextField::insertXMLText");
     }
 
     private _ensureLineMetrics() {
-      if (!this._hasFlags(DisplayObjectFlags.DirtyTextContent)) {
+      if (!this._hasDirtyFlags(DisplayObjectDirtyFlags.DirtyTextContent)) {
         return;
       }
-      var serializer = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+      var serializer = this.sec.player;
       var lineMetricsData = serializer.syncDisplayObject(this, false);
       var textWidth = lineMetricsData.readInt();
       var textHeight = lineMetricsData.readInt();
       var offsetX = lineMetricsData.readInt();
       var bounds = this._lineBounds;
       if (this._autoSize !== TextFieldAutoSize.NONE) {
-        bounds.xMin = bounds.xMin = offsetX;
-        bounds.xMax = bounds.xMax = offsetX + textWidth + 80;
-        bounds.yMax = bounds.yMax = bounds.yMin + textHeight + 80;
+        bounds.xMin = offsetX;
+        bounds.xMax = offsetX + textWidth + 80;
+        bounds.yMax = bounds.yMin + textHeight + 80;
       }
       this._textWidth = textWidth;
       this._textHeight = textHeight;
@@ -661,40 +692,41 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     appendText(newText: string) {
-      this._textContent.appendText(asCoerceString(newText));
+      this._textContent.appendText(axCoerceString(newText));
     }
 
     getCharBoundaries(charIndex: number /*int*/): flash.geom.Rectangle {
       charIndex = charIndex | 0;
-      somewhatImplemented("public flash.text.TextField::getCharBoundaries");
+      release || somewhatImplemented("public flash.text.TextField::getCharBoundaries");
       var fakeCharHeight = this.textHeight, fakeCharWidth = fakeCharHeight * 0.75;
-      return new flash.geom.Rectangle(charIndex * fakeCharWidth, 0, fakeCharWidth, fakeCharHeight);
+      return new this.sec.flash.geom.Rectangle(charIndex * fakeCharWidth, 0,
+                                                          fakeCharWidth, fakeCharHeight);
     }
     getCharIndexAtPoint(x: number, y: number): number /*int*/ {
       x = +x; y = +y;
-      notImplemented("public flash.text.TextField::getCharIndexAtPoint"); return;
+      release || notImplemented("public flash.text.TextField::getCharIndexAtPoint"); return;
     }
     getFirstCharInParagraph(charIndex: number /*int*/): number /*int*/ {
       charIndex = charIndex | 0;
-      notImplemented("public flash.text.TextField::getFirstCharInParagraph"); return;
+      release || notImplemented("public flash.text.TextField::getFirstCharInParagraph"); return;
     }
     getLineIndexAtPoint(x: number, y: number): number /*int*/ {
       x = +x; y = +y;
-      notImplemented("public flash.text.TextField::getLineIndexAtPoint"); return;
+      release || notImplemented("public flash.text.TextField::getLineIndexAtPoint"); return;
     }
     getLineIndexOfChar(charIndex: number /*int*/): number /*int*/ {
       charIndex = charIndex | 0;
-      notImplemented("public flash.text.TextField::getLineIndexOfChar"); return;
+      release || notImplemented("public flash.text.TextField::getLineIndexOfChar"); return;
     }
     getLineLength(lineIndex: number /*int*/): number /*int*/ {
       lineIndex = lineIndex | 0;
-      notImplemented("public flash.text.TextField::getLineLength"); return;
+      release || notImplemented("public flash.text.TextField::getLineLength"); return;
     }
 
     getLineMetrics(lineIndex: number /*int*/): flash.text.TextLineMetrics {
       lineIndex = lineIndex | 0;
       if (lineIndex < 0 || lineIndex > this._numLines - 1) {
-        throwError('RangeError', Errors.ParamRangeError);
+        this.sec.throwError('RangeError', Errors.ParamRangeError);
       }
       this._ensureLineMetrics();
       var lineMetricsData = this._lineMetricsData;
@@ -707,20 +739,37 @@ module Shumway.AVM2.AS.flash.text {
       var descent = lineMetricsData.readInt();
       var leading = lineMetricsData.readInt();
       var height = ascent + descent + leading;
-      return new TextLineMetrics(x, width, height, ascent, descent, leading);
+      return new this.sec.flash.text.TextLineMetrics(x, width, height, ascent, descent,
+                                                                leading);
     }
 
     getLineOffset(lineIndex: number /*int*/): number /*int*/ {
       lineIndex = lineIndex | 0;
-      notImplemented("public flash.text.TextField::getLineOffset"); return;
+      var lines = this._textContent.plainText.split('\r');
+      if (lineIndex < 0 || lineIndex >= lines.length) {
+        this.sec.throwError('RangeError', Errors.ParamRangeError);
+      }
+      var offset = 0;
+      for (var i = 0; i < lineIndex; i++) {
+        offset += lines[i].length + 1; // Length + `\r`
+      }
+      // TODO:  I've tried modifying the width of the text field so that lines wrap, but this doesn't seem
+      // to have any effect on how line offsets are computed. I'm leaving in the |somewhatImplemented| call
+      // since this is not fully tested.
+      release || release || somewhatImplemented("public flash.text.TextField::getLineOffset");
+      return offset;
     }
     getLineText(lineIndex: number /*int*/): string {
       lineIndex = lineIndex | 0;
-      notImplemented("public flash.text.TextField::getLineText"); return;
+      var lines = this._textContent.plainText.split('\r');
+      if (lineIndex < 0 || lineIndex >= lines.length) {
+        this.sec.throwError('RangeError', Errors.ParamRangeError);
+      }
+      return lines[lineIndex];
     }
     getParagraphLength(charIndex: number /*int*/): number /*int*/ {
       charIndex = charIndex | 0;
-      notImplemented("public flash.text.TextField::getParagraphLength"); return;
+      release || notImplemented("public flash.text.TextField::getParagraphLength"); return;
     }
 
     /**
@@ -742,7 +791,7 @@ module Shumway.AVM2.AS.flash.text {
         }
       }
       if (endIndex <= beginIndex || endIndex > maxIndex) {
-        throwError('RangeError', Errors.ParamRangeError);
+        this.sec.throwError('RangeError', Errors.ParamRangeError);
       }
       var format: TextFormat;
       var textRuns = this._textContent.textRuns;
@@ -759,7 +808,7 @@ module Shumway.AVM2.AS.flash.text {
       return format;
     }
 
-    getTextRuns(beginIndex: number /*int*/ = 0, endIndex: number /*int*/ = 2147483647): any [] {
+    getTextRuns(beginIndex: number /*int*/ = 0, endIndex: number /*int*/ = 2147483647): ASArray {
       var textRuns = this._textContent.textRuns;
       var result = [];
       for (var i = 0; i < textRuns.length; i++) {
@@ -768,11 +817,11 @@ module Shumway.AVM2.AS.flash.text {
           result.push(textRun.clone());
         }
       }
-      return result;
+      return this.sec.createArrayUnsafe(result);
     }
 
     getRawText(): string {
-      notImplemented("public flash.text.TextField::getRawText"); return;
+      release || notImplemented("public flash.text.TextField::getRawText"); return;
     }
 
     replaceSelectedText(value: string): void {
@@ -810,7 +859,7 @@ module Shumway.AVM2.AS.flash.text {
         }
       }
       if (beginIndex > maxIndex || endIndex > maxIndex) {
-        throwError('RangeError', Errors.ParamRangeError);
+        this.sec.throwError('RangeError', Errors.ParamRangeError);
       }
       if (endIndex <= beginIndex) {
         return;
@@ -823,7 +872,7 @@ module Shumway.AVM2.AS.flash.text {
 
     getImageReference(id: string): flash.display.DisplayObject {
       //id = "" + id;
-      notImplemented("public flash.text.TextField::getImageReference"); return;
+      release || notImplemented("public flash.text.TextField::getImageReference"); return;
     }
   }
 
@@ -852,66 +901,71 @@ module Shumway.AVM2.AS.flash.text {
     variableName: string = null;
     textContent: Shumway.TextContent = null;
 
-    constructor(data: Timeline.SymbolData) {
-      super(data, flash.text.TextField, true);
+    constructor(data: Timeline.SymbolData, sec: ISecurityDomain) {
+      super(data, sec.flash.text.TextField.axClass, true);
     }
 
     static FromTextData(data: any, loaderInfo: flash.display.LoaderInfo): TextSymbol {
-      var symbol = new TextSymbol(data);
+      var sec = loaderInfo.sec;
+      var symbol = new TextSymbol(data, sec);
       symbol._setBoundsFromData(data);
-      var tag = data.tag;
+      var tag = <TextTag>data.tag;
       if (data.static) {
         symbol.dynamic = false;
-        symbol.symbolClass = flash.text.StaticText;
+        symbol.symbolClass = sec.flash.text.StaticText.axClass;
         if (tag.initialText) {
-          var textContent = new Shumway.TextContent();
+          var textContent = new Shumway.TextContent(sec);
           textContent.bounds = symbol.lineBounds;
           textContent.parseHtml(tag.initialText, null, false);
-          var matrix = new flash.geom.Matrix();
-          textContent.matrix = new flash.geom.Matrix();
+          textContent.matrix = new sec.flash.geom.Matrix();
           textContent.matrix.copyFromUntyped(data.matrix);
           textContent.coords = data.coords;
           symbol.textContent = textContent;
         }
       }
-      if (tag.hasColor) {
+      if (tag.flags & TextFlags.HasColor) {
         symbol.color = tag.color >>> 8;
       }
-      if (tag.hasFont) {
+      if (tag.flags & TextFlags.HasFont) {
         symbol.size = tag.fontHeight;
         // Requesting the font symbol guarantees that it's loaded and initialized.
         var fontSymbol = <flash.text.FontSymbol>loaderInfo.getSymbolById(tag.fontId);
         if (fontSymbol) {
-          symbol.face = tag.useOutlines ? fontSymbol.name : 'swffont' + fontSymbol.syncId;
+          symbol.face = tag.flags & TextFlags.UseOutlines ?
+                        fontSymbol.name :
+                        'swffont' + fontSymbol.syncId;
           symbol.bold = fontSymbol.bold;
           symbol.italic = fontSymbol.italic;
         } else {
           warning("Font " + tag.fontId + " is not defined.");
         }
       }
-      if (tag.hasLayout) {
+      if (tag.flags & TextFlags.HasLayout) {
         symbol.align = flash.text.TextFormatAlign.fromNumber(tag.align);
         symbol.leftMargin = tag.leftMargin;
         symbol.rightMargin = tag.rightMargin;
         symbol.indent = tag.indent;
         symbol.leading = tag.leading;
       }
-      symbol.multiline = !!tag.multiline;
-      symbol.wordWrap = !!tag.wordWrap;
-      symbol.embedFonts = !!tag.useOutlines;
-      symbol.selectable = !tag.noSelect;
-      symbol.border = !!tag.border;
-      if (tag.hasText) {
+      symbol.multiline = !!(tag.flags & TextFlags.Multiline);
+      symbol.wordWrap = !!(tag.flags & TextFlags.WordWrap);
+      symbol.embedFonts = !!(tag.flags & TextFlags.UseOutlines);
+      symbol.selectable = !(tag.flags & TextFlags.NoSelect);
+      symbol.border = !!(tag.flags & TextFlags.Border);
+      if (tag.flags & TextFlags.HasText) {
         symbol.initialText = tag.initialText;
       }
-      symbol.html = !!tag.html;
-      symbol.displayAsPassword = !!tag.password;
-      symbol.type = tag.readonly ? flash.text.TextFieldType.DYNAMIC :
+      symbol.html = !!(tag.flags & TextFlags.Html);
+      symbol.displayAsPassword = !!(tag.flags & TextFlags.Password);
+      symbol.type = tag.flags & TextFlags.ReadOnly ?
+                    flash.text.TextFieldType.DYNAMIC :
                     flash.text.TextFieldType.INPUT;
-      if (tag.hasMaxLength) {
+      if (tag.flags & TextFlags.HasMaxLength) {
         symbol.maxChars = tag.maxLength;
       }
-      symbol.autoSize = tag.autoSize ? flash.text.TextFieldAutoSize.LEFT : flash.text.TextFieldAutoSize.NONE;
+      symbol.autoSize = tag.flags & TextFlags.AutoSize ?
+                        flash.text.TextFieldAutoSize.LEFT :
+                        flash.text.TextFieldAutoSize.NONE;
       symbol.variableName = tag.variableName;
       return symbol;
     }
@@ -925,7 +979,7 @@ module Shumway.AVM2.AS.flash.text {
      */
     static FromLabelData(data: any, loaderInfo: flash.display.LoaderInfo): TextSymbol {
       var bounds = data.fillBounds;
-      var records = data.records;
+      var records: TextRecord[] = data.records;
       var coords = data.coords = [];
       var htmlText = '';
       var size = 12;
@@ -938,10 +992,7 @@ module Shumway.AVM2.AS.flash.text {
       var codes: number[];
       for (var i = 0; i < records.length; i++) {
         var record = records[i];
-        if (record.eot) {
-          break;
-        }
-        if (record.hasFont) {
+        if (record.flags & TextRecordFlags.HasFont) {
           var fontSymbol = <flash.text.FontSymbol>loaderInfo.getSymbolById(record.fontId);
           if (fontSymbol) {
             codes = fontSymbol.codes;
@@ -956,20 +1007,14 @@ module Shumway.AVM2.AS.flash.text {
             Debug.warning('Label ' + data.id + 'refers to undefined font symbol ' + record.fontId);
           }
         }
-        if (record.hasColor) {
+        if (record.flags & TextRecordFlags.HasColor) {
           color = record.color >>> 8;
         }
-        if (record.hasMoveX) {
+        if (record.flags & TextRecordFlags.HasMoveX) {
           x = record.moveX;
-          if (x < bounds.xMin) {
-            bounds.xMin = x;
-          }
         }
-        if (record.hasMoveY) {
+        if (record.flags & TextRecordFlags.HasMoveY) {
           y = record.moveY;
-          if (y < bounds.yMin) {
-            bounds.yMin = y;
-          }
         }
         var text = '';
         var entries = record.entries;

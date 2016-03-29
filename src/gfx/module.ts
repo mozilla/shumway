@@ -28,7 +28,7 @@ module Shumway.GFX {
   import assert = Shumway.Debug.assert;
   import clamp = Shumway.NumberUtilities.clamp;
 
-  export enum TraceLevel {
+  export const enum TraceLevel {
     None,
     Brief,
     Verbose,
@@ -45,7 +45,7 @@ module Shumway.GFX {
     frameCounter.count(name);
   }
 
-  export var timelineBuffer = new Shumway.Tools.Profiler.TimelineBuffer("GFX");
+  export var timelineBuffer = Shumway.Tools ? new Shumway.Tools.Profiler.TimelineBuffer("GFX") : null;
 
   export function enterTimeline(name: string, data?: any) {
     profile && timelineBuffer && timelineBuffer.enter(name, data);
@@ -515,15 +515,22 @@ module Shumway.GFX {
         var hasStyleTransformation = !!this.strokeStyle._transform;
         if (supportsStyle && hasStyleTransformation && path instanceof Path2D) {
           var m = this.strokeStyle._transform;
-          var i = m.inverse();
+          var i;
+          try {
+            i = m.inverse();
+          } catch (e) {
+            i = m = Geometry.Matrix.createIdentitySVGMatrix();
+          }
           // Transform the context by the style transform ...
           this.transform(m.a, m.b, m.c, m.d, m.e, m.f);
           // transform the path by the inverse of the style transform ...
           var transformedPath = new Path2D();
           transformedPath.addPath(path, i);
-          // draw the transformed path, which should render it in its original position but with a transformed style.
+          // Scale the lineWidth down since it will be scaled up by the current transform.
           var oldLineWidth = this.lineWidth;
-          this.lineWidth *= (i.a + i.d) / 2; // Scale the lineWidth down since it will be scaled up by the current transform.
+          this.lineWidth *= Math.sqrt((i.a + i.c) * (i.a + i.c) +
+                            (i.d + i.b) * (i.d + i.b)) * Math.SQRT1_2;
+          // draw the transformed path, which should render it in its original position but with a transformed style.
           originalStroke.call(this, transformedPath);
           this.transform(i.a, i.b, i.c, i.d, i.e, i.f);
           this.lineWidth = oldLineWidth;
@@ -580,23 +587,25 @@ module Shumway.GFX {
         transformedPath.addPath(path, m);
         var oldLineWidth = this.lineWidth;
         this.setTransform(1, 0, 0, 1, 0, 0);
-        // Figure out how we should scale the |lineWidth|. This is not quite how Flash does it but it's close enough. Flash
-        // documentation says that for |Vertica| or |Horizontal| scale modes the |lineWidth| is only scaled if the stroke
-        // is scaled in that direction. This is a bit strange if you scale in one direction and then rotate. The |lineWidth|
-        // will change with the angle of rotation, probably because the scaleX and scaleY properties change.
-        // If this code turns out to be incorrect in practice, we should look deeper into how |getScaleX| and |getScaleY| are
-        // computed.
+        // We need to scale the |lineWidth| based on the current transform.
+        // If we scale square 1x1 using this transform, it will fit into a
+        // rectangular area, that has sides parallel to the x- and y-axis,
+        // (a + c) x (d + b).
         switch (lineScaleMode) {
           case LineScaleMode.None:
             break;
           case LineScaleMode.Normal:
-            this.lineWidth = clamp(oldLineWidth * (getScaleX(m) + getScaleY(m)) / 2, MIN_LINE_WIDTH, MAX_LINE_WIDTH);
+            var scale = Math.sqrt((m.a + m.c) * (m.a + m.c) +
+                                  (m.d + m.b) * (m.d + m.b)) * Math.SQRT1_2;
+            this.lineWidth = clamp(oldLineWidth * scale, MIN_LINE_WIDTH, MAX_LINE_WIDTH);
             break;
           case LineScaleMode.Vertical:
-            this.lineWidth = clamp(oldLineWidth * getScaleY(m), MIN_LINE_WIDTH, MAX_LINE_WIDTH);
+            var scaleHeight = m.d + m.b;
+            this.lineWidth = clamp(oldLineWidth * scaleHeight, MIN_LINE_WIDTH, MAX_LINE_WIDTH);
             break;
           case LineScaleMode.Horizontal:
-            this.lineWidth = clamp(oldLineWidth * getScaleX(m), MIN_LINE_WIDTH, MAX_LINE_WIDTH);
+            var scaleWidth = m.a + m.c;
+            this.lineWidth = clamp(oldLineWidth * scaleWidth, MIN_LINE_WIDTH, MAX_LINE_WIDTH);
             break;
         }
         // Stroke and restore the previous matrix.
@@ -773,7 +782,7 @@ module Shumway.GFX {
   }
 
   export class ScreenShot {
-    constructor(public dataURL: string, public w: number, public h: number) {
+    constructor(public dataURL: string, public w: number, public h: number, public pixelRatio: number) {
       // ...
     }
   }

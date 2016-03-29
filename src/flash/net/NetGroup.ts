@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: NetGroup
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class NetGroup extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,8 @@ module Shumway.AVM2.AS.flash.net {
     static instanceSymbols: string [] = null; // ["close", "replicationStrategy", "replicationStrategy", "addHaveObjects", "removeHaveObjects", "addWantObjects", "removeWantObjects", "writeRequestedObject", "denyRequestedObject", "estimatedMemberCount", "neighborCount", "receiveMode", "receiveMode", "post", "sendToNearest", "sendToNeighbor", "sendToAllNeighbors", "addNeighbor", "addMemberHint"];
     
     constructor (connection: flash.net.NetConnection, groupspec: string) {
-      connection = connection; groupspec = asCoerceString(groupspec);
-      false && super(undefined);
-      dummyConstructor("public flash.net.NetGroup");
+      super();
+      connection = connection; groupspec = axCoerceString(groupspec);
     }
     
     // JS -> AS Bindings
@@ -68,19 +63,19 @@ module Shumway.AVM2.AS.flash.net {
     // _localCoverageFrom: string;
     // _localCoverageTo: string;
     get info(): flash.net.NetGroupInfo {
-      notImplemented("public flash.net.NetGroup::get info"); return;
+      release || notImplemented("public flash.net.NetGroup::get info"); return;
       // return this._info;
     }
     convertPeerIDToGroupAddress(peerID: string): string {
-      peerID = asCoerceString(peerID);
-      notImplemented("public flash.net.NetGroup::convertPeerIDToGroupAddress"); return;
+      peerID = axCoerceString(peerID);
+      release || notImplemented("public flash.net.NetGroup::convertPeerIDToGroupAddress"); return;
     }
     get localCoverageFrom(): string {
-      notImplemented("public flash.net.NetGroup::get localCoverageFrom"); return;
+      release || notImplemented("public flash.net.NetGroup::get localCoverageFrom"); return;
       // return this._localCoverageFrom;
     }
     get localCoverageTo(): string {
-      notImplemented("public flash.net.NetGroup::get localCoverageTo"); return;
+      release || notImplemented("public flash.net.NetGroup::get localCoverageTo"); return;
       // return this._localCoverageTo;
     }
   }

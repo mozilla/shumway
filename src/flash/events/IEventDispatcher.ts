@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Class: IEventDispatcher
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
 
   export interface EventHandler {
     (event: flash.events.Event): void;

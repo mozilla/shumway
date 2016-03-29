@@ -14,50 +14,47 @@
  * limitations under the License.
  */
 // Class: StageCapture
-module Shumway.AVM2.AS.flash.automation {
+module Shumway.AVMX.AS.flash.automation {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class StageCapture extends flash.events.EventDispatcher {
-    static initializer: any = null;
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.automation.StageCapture");
+      super();
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings
     // Instance JS -> AS Bindings
     // Instance AS -> JS Bindings
     capture(type: string): void {
-      type = asCoerceString(type);
-      notImplemented("public flash.automation.StageCapture::capture"); return;
+      type = axCoerceString(type);
+      release || notImplemented("public flash.automation.StageCapture::capture"); return;
     }
     cancel(): void {
-      notImplemented("public flash.automation.StageCapture::cancel"); return;
+      release || notImplemented("public flash.automation.StageCapture::cancel"); return;
     }
     set fileNameBase(value: string) {
-      value = asCoerceString(value);
-      notImplemented("public flash.automation.StageCapture::set fileNameBase"); return;
+      value = axCoerceString(value);
+      release || notImplemented("public flash.automation.StageCapture::set fileNameBase"); return;
     }
     get fileNameBase(): string {
-      notImplemented("public flash.automation.StageCapture::get fileNameBase"); return;
+      release || notImplemented("public flash.automation.StageCapture::get fileNameBase"); return;
     }
     set clipRect(value: flash.geom.Rectangle) {
       value = value;
-      notImplemented("public flash.automation.StageCapture::set clipRect"); return;
+      release || notImplemented("public flash.automation.StageCapture::set clipRect"); return;
     }
     get clipRect(): flash.geom.Rectangle {
-      notImplemented("public flash.automation.StageCapture::get clipRect"); return;
+      release || notImplemented("public flash.automation.StageCapture::get clipRect"); return;
     }
     captureBitmapData(): flash.display.BitmapData {
-      notImplemented("public flash.automation.StageCapture::captureBitmapData"); return;
+      release || notImplemented("public flash.automation.StageCapture::captureBitmapData"); return;
     }
     set captureSource(value: string) {
-      value = asCoerceString(value);
-      notImplemented("public flash.automation.StageCapture::set captureSource"); return;
+      value = axCoerceString(value);
+      release || notImplemented("public flash.automation.StageCapture::set captureSource"); return;
     }
     get captureSource(): string {
-      notImplemented("public flash.automation.StageCapture::get captureSource"); return;
+      release || notImplemented("public flash.automation.StageCapture::get captureSource"); return;
     }
   }
 }

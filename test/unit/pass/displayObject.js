@@ -8,8 +8,8 @@ function displayTests() {
   var Bounds = Shumway.Bounds;
   var Point = flash.geom.Point;
 
-  var VisitorFlags = flash.display.VisitorFlags;
-  var DisplayObjectFlags = flash.display.DisplayObjectFlags;
+  var VisitorFlagsContinue = 0; // Shumway.AVMX.AS.flash.display.VisitorFlags.Continue;
+  var DisplayObjectFlagsInvalidConcatenatedMatrix = 0x0020; // Shumway.AVMX.AS.flash.display.DisplayObjectFlags.InvalidConcatenatedMatrix;
 
   var DisplayObject = flash.display.DisplayObject;
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
@@ -77,12 +77,12 @@ function displayTests() {
     var containers = [];
     var leafs = [];
     r.visit(function (o) {
-      if (o instanceof DisplayObjectContainer) {
+      if (DisplayObjectContainer.axIsType(o)) {
         containers.push(o);
       } else {
         leafs.push(o)
       }
-      return VisitorFlags.Continue;
+      return VisitorFlagsContinue;
     });
 
     r.x = 10;
@@ -94,10 +94,10 @@ function displayTests() {
     // Test concatenatedMatrix propagation.
     for (var i = 0; i < p.length; i++) {
       r[p[i]] += 0.1;
-      check(leafs[0]._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix),
+      check(leafs[0]._hasFlags(DisplayObjectFlagsInvalidConcatenatedMatrix),
         "Should invalidate concatenatedMatrix when setting: " + p[i]);
       leafs[0]._getConcatenatedMatrix();
-      check(!leafs[0]._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix),
+      check(!leafs[0]._hasFlags(DisplayObjectFlagsInvalidConcatenatedMatrix),
         "Should have cached concatenatedMatrix when setting: " + p[i]);
       eq(leafs[0]._getConcatenatedMatrix(), leafs[0]._getConcatenatedMatrix(),
          "Repeatedly getting internal matrix gives same object.")
@@ -337,17 +337,17 @@ function displayTests() {
   unitTests.push(function checkFiltersGetterAndSetter() {
     var o = new DisplayObject();
     eq(o.filters.length, 0);
-    var a = [];
+    var a = {value:[]};
     o.filters = a;
     neq(o.filters, a);
     neq(o.filters, o.filters);
     var D = new flash.filters.DropShadowFilter ();
-    o.filters = [D];
+    o.filters = sec.createArray([D]);
     D.distance = 10;
-    eq(o.filters[0].distance, 4);
-    o.filters[0].distance = 19;
-    eq(o.filters[0].distance, 4);
-    neq(o.filters[0], o.filters[0]);
+    eq(o.filters.value[0].distance, 4);
+    o.filters.value[0].distance = 19;
+    eq(o.filters.value[0].distance, 4);
+    neq(o.filters.value[0], o.filters.value[0]);
     o.filters = null;
     eq(o.filters.length, 0);
   });
@@ -425,7 +425,7 @@ function displayTests() {
   });
 
   unitTests.push(function defaultNames() {
-    DisplayObject._instanceID = 1;
+    DisplayObject.axClass._instanceID = 1;
     eq(new Stage().name, null);
     eq(new DisplayObject().name, 'instance1');
     eq(new Sprite().name, 'instance2');

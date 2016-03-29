@@ -45,6 +45,7 @@
 include "Object.as"
 include "Class.as"
 include "Function.as"
+// This needs to be in the very first script, because Namespace is used as default
 include "Namespace.as"
 include "Boolean.as"
 include "Number.as"
@@ -52,3 +53,5 @@ include "String.as"
 include "Array.as"
 include "actionscript.lang.as"
 include "shumway.toplevel.as"
+include "../shell/System.as"
+include "BaseError.as"

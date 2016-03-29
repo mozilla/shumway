@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 // Class: GestureEvent
-module Shumway.AVM2.AS.flash.events {
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
+module Shumway.AVMX.AS.flash.events {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   export class GestureEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
@@ -30,8 +27,13 @@ module Shumway.AVM2.AS.flash.events {
     constructor(type: string, bubbles: boolean = true, cancelable: boolean = false,
                 phase: string = null, localX: number = 0, localY: number = 0,
                 ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.GestureEvent");
+      super(type, bubbles, cancelable);
+      this._phase = axCoerceString(phase);
+      this._localX = +localX;
+      this._localY = +localY;
+      this._ctrlKey = !!ctrlKey;
+      this._altKey = !!altKey;
+      this._shiftKey = !!shiftKey;
     }
 
     // JS -> AS Bindings
@@ -60,12 +62,12 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     get stageX(): number {
-      somewhatImplemented("public flash.events.GestureEvent::stageX");
+      release || somewhatImplemented("public flash.events.GestureEvent::stageX");
       return 0;
     }
 
     get stageY(): number {
-      somewhatImplemented("public flash.events.GestureEvent::stageY");
+      release || somewhatImplemented("public flash.events.GestureEvent::stageY");
       return 0;
     }
 
@@ -94,16 +96,16 @@ module Shumway.AVM2.AS.flash.events {
       return this._phase;
     }
     set phase(value: string) {
-      this._phase = asCoerceString(value);
+      this._phase = axCoerceString(value);
     }
 
     updateAfterEvent(): void {
-      somewhatImplemented("public flash.events.GestureEvent::updateAfterEvent");
+      release || somewhatImplemented("public flash.events.GestureEvent::updateAfterEvent");
     }
 
     NativeCtor(phase: string, localX: number, localY: number,
                ctrlKey: boolean, altKey: boolean, shiftKey: boolean) {
-      this._phase = asCoerceString(phase);
+      this._phase = axCoerceString(phase);
       this._localX = +localX;
       this._localY = +localY;
       this._ctrlKey = !!ctrlKey;
@@ -112,9 +114,11 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     clone(): Event {
-      return new flash.events.GestureEvent(this.type, this.bubbles, this.cancelable, this.phase,
-                                           this.localX, this.localY,
-                                           this.ctrlKey, this.altKey, this.shiftKey);
+      return new this.sec.flash.events.GestureEvent(this.type, this.bubbles,
+                                                               this.cancelable, this.phase,
+                                                               this.localX, this.localY,
+                                                               this.ctrlKey, this.altKey,
+                                                               this.shiftKey);
     }
 
     toString(): string {

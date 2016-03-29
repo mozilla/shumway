@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: EastAsianJustifier
-module Shumway.AVM2.AS.flash.text.engine {
+module Shumway.AVMX.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class EastAsianJustifier extends flash.text.engine.TextJustifier {
     
     // Called whenever the class is initialized.
@@ -33,8 +33,8 @@ module Shumway.AVM2.AS.flash.text.engine {
     static instanceSymbols: string [] = null; // ["clone"];
     
     constructor (locale: string = "ja", lineJustification: string = "allButLast", justificationStyle: string = "pushInKinsoku") {
-      locale = asCoerceString(locale); lineJustification = asCoerceString(lineJustification); justificationStyle = asCoerceString(justificationStyle);
-      false && super(undefined, undefined);
+      locale = axCoerceString(locale); lineJustification = axCoerceString(lineJustification); justificationStyle = axCoerceString(justificationStyle);
+      super(undefined, undefined);
       dummyConstructor("public flash.text.engine.EastAsianJustifier");
     }
     
@@ -47,21 +47,21 @@ module Shumway.AVM2.AS.flash.text.engine {
     // _justificationStyle: string;
     // _composeTrailingIdeographicSpaces: boolean;
     get justificationStyle(): string {
-      notImplemented("public flash.text.engine.EastAsianJustifier::get justificationStyle"); return;
+      release || notImplemented("public flash.text.engine.EastAsianJustifier::get justificationStyle"); return;
       // return this._justificationStyle;
     }
     set justificationStyle(value: string) {
-      value = asCoerceString(value);
-      notImplemented("public flash.text.engine.EastAsianJustifier::set justificationStyle"); return;
+      value = axCoerceString(value);
+      release || notImplemented("public flash.text.engine.EastAsianJustifier::set justificationStyle"); return;
       // this._justificationStyle = value;
     }
     get composeTrailingIdeographicSpaces(): boolean {
-      notImplemented("public flash.text.engine.EastAsianJustifier::get composeTrailingIdeographicSpaces"); return;
+      release || notImplemented("public flash.text.engine.EastAsianJustifier::get composeTrailingIdeographicSpaces"); return;
       // return this._composeTrailingIdeographicSpaces;
     }
     set composeTrailingIdeographicSpaces(value: boolean) {
       value = !!value;
-      notImplemented("public flash.text.engine.EastAsianJustifier::set composeTrailingIdeographicSpaces"); return;
+      release || notImplemented("public flash.text.engine.EastAsianJustifier::set composeTrailingIdeographicSpaces"); return;
       // this._composeTrailingIdeographicSpaces = value;
     }
   }

@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 // Class: BevelFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
   import Rectangle = flash.geom.Rectangle;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import assert = Shumway.Debug.assert;
 
   export class BevelFilter extends flash.filters.BitmapFilter {
 
+    static axClass: typeof BevelFilter;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
 
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -35,14 +34,15 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     public static FromUntyped(obj: any) {
-      // obj.highlightColor is an RGBA color.
-      var highlightColor: number = obj.highlightColor >>> 8;
-      var highlightAlpha: number = (obj.highlightColor & 0xff) / 0xff;
       // obj.colors is an array of RGBA colors.
-      // Here it contains exactly one color object, which maps to shadowColor and shadowAlpha.
-      release || assert(obj.colors && obj.colors.length === 1, "colors must be Array of length 1");
-      var shadowColor: number = obj.colors[0] >>> 8;
-      var shadowAlpha: number = (obj.colors[0] & 0xff) / 0xff;
+      // Here it contains exactly two color objects (spec might state it differently):
+      //  - first maps to highlightColor and highlightAlpha;
+      //  - second maps to shadowColor and shadowAlpha;
+      release || assert(obj.colors && obj.colors.length === 2, "colors must be Array of length 2");
+      var highlightColor: number = obj.colors[0] >>> 8;
+      var highlightAlpha: number = (obj.colors[0] & 0xff) / 0xff;
+      var shadowColor: number = obj.colors[1] >>> 8;
+      var shadowAlpha: number = (obj.colors[1] & 0xff) / 0xff;
       // type is derived from obj.onTop and obj.innerShadow
       // obj.onTop true: type is FULL
       // obj.inner true: type is INNER
@@ -55,7 +55,7 @@ module Shumway.AVM2.AS.flash.filters {
       }
       // obj.angle is represented in radians, the api needs degrees
       var angle: number = obj.angle * 180 / Math.PI;
-      return new BevelFilter(
+      return new this.sec.flash.filters.BevelFilter(
         obj.distance,
         angle,
         highlightColor,
@@ -71,8 +71,13 @@ module Shumway.AVM2.AS.flash.filters {
       );
     }
 
-    constructor (distance: number = 4, angle: number = 45, highlightColor: number /*uint*/ = 16777215, highlightAlpha: number = 1, shadowColor: number /*uint*/ = 0, shadowAlpha: number = 1, blurX: number = 4, blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1, type: string = "inner", knockout: boolean = false) {
-      false && super();
+    constructor(distance: number = 4, angle: number = 45,
+                highlightColor: number /*uint*/ = 16777215, highlightAlpha: number = 1,
+                shadowColor: number /*uint*/ = 0, shadowAlpha: number = 1, blurX: number = 4,
+                blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1,
+                type: string = "inner", knockout: boolean = false)
+    {
+      super();
       this.distance = distance;
       this.angle = angle;
       this.highlightColor = highlightColor;
@@ -198,9 +203,9 @@ module Shumway.AVM2.AS.flash.filters {
       return this._type;
     }
     set type(value: string) {
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       if (value === null) {
-        Runtime.throwError("TypeError", Errors.NullPointerError, "type");
+        this.sec.throwError("TypeError", Errors.NullPointerError, "type");
       } else {
         if (value === BitmapFilterType.INNER || value === BitmapFilterType.OUTER) {
           this._type = value;
@@ -211,7 +216,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return new BevelFilter(
+      return new this.sec.flash.filters.BevelFilter(
         this._distance,
         this._angle,
         this._highlightColor,

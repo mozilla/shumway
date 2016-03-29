@@ -133,7 +133,7 @@ module Shumway.Remoting.GFX {
         registerInspectorAsset(id, symbolId, asset);
       }
       if (!release && this._assets[id]) {
-        console.warn("Asset already exists: " + id + ". old:", this._assets[id], "new: " + asset);
+        Debug.warning("Asset already exists: " + id + ". old:", this._assets[id], "new: " + asset);
       }
       this._assets[id] = asset;
     }
@@ -169,8 +169,8 @@ module Shumway.Remoting.GFX {
       return <RenderableText>this._assets[id];
     }
 
-    registerFont(syncId: number, data: any, resolve: (data: any) => void) {
-      Shumway.registerCSSFont(syncId, data.data, !inFirefox);
+    registerFont(syncId: number, data: Uint8Array, resolve: (data: any) => void) {
+      Shumway.registerCSSFont(syncId, data, !inFirefox);
       if (inFirefox) {
         resolve(null);
       } else {
@@ -178,8 +178,9 @@ module Shumway.Remoting.GFX {
       }
     }
 
-    registerImage(syncId: number, symbolId: number, data: any, resolve: (data: any) => void) {
-      this._registerAsset(syncId, symbolId, this._decodeImage(data.dataType, data.data, resolve));
+    registerImage(syncId: number, symbolId: number, imageType: ImageType, data: Uint8Array,
+                  alphaData: Uint8Array, resolve: (data: any) => void) {
+      this._registerAsset(syncId, symbolId, this._decodeImage(imageType, data, alphaData, resolve));
     }
 
     registerVideo(syncId: number) {
@@ -194,13 +195,16 @@ module Shumway.Remoting.GFX {
      * Once the image is loaded, the RenderableBitmap's bounds are updated and the provided
      * oncomplete callback is invoked with the image dimensions.
      */
-    _decodeImage(type: ImageType, data: Uint8Array, oncomplete: (data: any) => void) {
+    _decodeImage(type: ImageType, data: Uint8Array, alphaData: Uint8Array, oncomplete: (data: any) => void) {
       var image = new Image();
       var asset = RenderableBitmap.FromImage(image, -1, -1);
       image.src = URL.createObjectURL(new Blob([data], {type: getMIMETypeForImageType(type)}));
       image.onload = function () {
         release || assert(!asset.parent);
         asset.setBounds(new Rectangle(0, 0, image.width, image.height));
+        if (alphaData) {
+          asset.mask(alphaData);
+        }
         asset.invalidate();
         oncomplete({width: image.width, height: image.height});
       };
@@ -248,6 +252,7 @@ module Shumway.Remoting.GFX {
         updateTextContent: 0,
         updateFrame: 0,
         updateStage: 0,
+        updateCurrentMouseTarget: 0,
         updateNetStream: 0,
         registerFont: 0,
         drawToBitmap: 0,
@@ -281,6 +286,10 @@ module Shumway.Remoting.GFX {
             data.updateStage ++;
             this._readUpdateStage();
             break;
+          case MessageTag.UpdateCurrentMouseTarget:
+            data.updateCurrentMouseTarget ++;
+            this._readUpdateCurrentMouseTarget();
+            break;
           case MessageTag.UpdateNetStream:
             data.updateNetStream ++;
             this._readUpdateNetStream();
@@ -304,14 +313,30 @@ module Shumway.Remoting.GFX {
     private _readMatrix(): Matrix {
       var input = this.input;
       var matrix = GFXChannelDeserializer._temporaryReadMatrix;
-      matrix.setElements (
-        input.readFloat(),
-        input.readFloat(),
-        input.readFloat(),
-        input.readFloat(),
-        input.readFloat() / 20,
-        input.readFloat() / 20
-      );
+      var a = 1, b = 0, c = 0, d = 1, tx = 0, ty = 0;
+      switch (input.readInt()) {
+        case MatrixEncoding.ScaleAndTranslationOnly:
+          a = input.readFloat();
+          d = input.readFloat(); // Fallthrough
+        case MatrixEncoding.TranslationOnly:
+          tx = input.readFloat() / 20;
+          ty = input.readFloat() / 20;
+          break;
+        case MatrixEncoding.UniformScaleAndTranslationOnly:
+          a = d = input.readFloat();
+          tx = input.readFloat() / 20;
+          ty = input.readFloat() / 20;
+          break;
+        case MatrixEncoding.All:
+          a = input.readFloat();
+          b = input.readFloat();
+          c = input.readFloat();
+          d = input.readFloat();
+          tx = input.readFloat() / 20;
+          ty = input.readFloat() / 20;
+          break;
+      }
+      matrix.setElements(a, b, c, d, tx, ty);
       return matrix;
     }
 
@@ -338,6 +363,16 @@ module Shumway.Remoting.GFX {
           break;
         case ColorTransformEncoding.AlphaMultiplierOnly:
           am = input.readFloat();
+          break;
+        case ColorTransformEncoding.AlphaMultiplierWithOffsets:
+          rm = 0;
+          gm = 0;
+          bm = 0;
+          am = input.readFloat();
+          ro = input.readInt();
+          go = input.readInt();
+          bo = input.readInt();
+          ao = input.readInt();
           break;
         case ColorTransformEncoding.All:
           rm = input.readFloat();
@@ -485,10 +520,14 @@ module Shumway.Remoting.GFX {
       context.stage.align = this.input.readInt();
       context.stage.scaleMode = this.input.readInt();
       var displayState = this.input.readInt();
+      context._easelHost.fullscreen = displayState === 0 || displayState === 1;
+    }
+
+    private _readUpdateCurrentMouseTarget() {
+      var context = this.context;
       var currentMouseTarget = this.input.readInt();
       var cursor = this.input.readInt();
       context._easelHost.cursor = Shumway.UI.toCSSCursor(cursor);
-      context._easelHost.fullscreen = displayState === 0 || displayState === 1;
     }
 
     private _readUpdateNetStream() {
@@ -533,6 +572,30 @@ module Shumway.Remoting.GFX {
                 input.readFloat()    // strength
               ));
               break;
+            case FilterType.ColorMatrix:
+              var matrix = new Float32Array(20);
+              matrix[0] = input.readFloat();
+              matrix[4] = input.readFloat();
+              matrix[8] = input.readFloat();
+              matrix[12] = input.readFloat();
+              matrix[16] = input.readFloat() / 255;
+              matrix[1] = input.readFloat();
+              matrix[5] = input.readFloat();
+              matrix[9] = input.readFloat();
+              matrix[13] = input.readFloat();
+              matrix[17] = input.readFloat() / 255;;
+              matrix[2] = input.readFloat();
+              matrix[6] = input.readFloat();
+              matrix[10] = input.readFloat();
+              matrix[14] = input.readFloat();
+              matrix[18] = input.readFloat() / 255;;
+              matrix[3] = input.readFloat();
+              matrix[7] = input.readFloat();
+              matrix[11] = input.readFloat();
+              matrix[15] = input.readFloat();
+              matrix[19] = input.readFloat() / 255;
+              filters.push(new ColorMatrix (matrix));
+              break;
             default:
               Shumway.Debug.somewhatImplemented(FilterType[type]);
               break;
@@ -561,9 +624,7 @@ module Shumway.Remoting.GFX {
       }
       if (hasBits & MessageBits.HasMask) {
         var maskId = input.readInt();
-        if (maskId >= 0) {
-          node.getLayer().mask = context._makeNode(maskId);
-        }
+        node.getLayer().mask = maskId >= 0 ? context._makeNode(maskId) : null;
       }
       if (hasBits & MessageBits.HasClip) {
         node.clip = input.readInt();
@@ -571,14 +632,11 @@ module Shumway.Remoting.GFX {
       if (hasBits & MessageBits.HasMiscellaneousProperties) {
         ratio = input.readInt() / 0xffff;
         release || assert(ratio >= 0 && ratio <= 1);
-        var blendMode = input.readInt();
-        if (blendMode !== BlendMode.Normal) {
-          node.getLayer().blendMode = blendMode;
-        }
+        node.getLayer().blendMode = input.readInt();
         this._readFilters(node);
         node.toggleFlags(NodeFlags.Visible, input.readBoolean());
         node.toggleFlags(NodeFlags.CacheAsBitmap, input.readBoolean());
-        node.toggleFlags(NodeFlags.PixelSnapping, !!input.readInt());
+        node.toggleFlags(NodeFlags.PixelSnapping, !!input.readInt()); // TODO: support `auto`.
         node.toggleFlags(NodeFlags.ImageSmoothing, !!input.readInt());
       }
       if (hasBits & MessageBits.HasChildren) {

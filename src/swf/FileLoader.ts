@@ -37,9 +37,11 @@
      symbols.
   5. `LoaderInfo#getSymbolById` creates a `{Font,Bitmap}Symbol` instance, which gets a `syncID` and
      a `resolveAssetPromise` and a `ready` flag set to `false`.
-  6. `LoaderInfo#getSymbolById` invokes `Timeline.IAssetResolver#registerFontOrImage`. The singleton
-     implementation of `IAssetResolver` is the active instance of `Player`.
-  7. `Player#registerFontOrImage` send sync message to GFX side requesting decoding of asset.
+  6. `LoaderInfo#getSymbolById` invokes `Timeline.IAssetResolver#registerFont` or
+     `Timeline.IAssetResolver#registerImage`. The singleton implementation of `IAssetResolver` is
+     the active instance of `Player`.
+  7. `Player#registerFont` or `Player#registerImage` send sync message to GFX side requesting
+     decoding of asset.
   8. `GFXChannelDeserializerContext#register{Font,Image}` is called, which triggers the actual
      decoding and, in the image case, registration of the asset.
   9.
@@ -96,9 +98,11 @@ module Shumway {
   }
 
   export class FileLoader {
+    _url: string;
     _file: any; // {SWFFile|ImageFile}
 
     private _listener: ILoadListener;
+    private _env: any;
     private _loadingServiceSession: FileLoadingSession;
     private _delayedUpdatesPromise: Promise<any>;
     private _lastDelayedUpdate: LoadProgressUpdate;
@@ -106,10 +110,12 @@ module Shumway {
     private _queuedInitialData: Uint8Array;
 
 
-    constructor(listener: ILoadListener) {
+    constructor(listener: ILoadListener, env: any) {
       release || assert(listener);
       this._file = null;
+      this._url = '';
       this._listener = listener;
+      this._env = env;
       this._loadingServiceSession = null;
       this._delayedUpdatesPromise = null;
       this._bytesLoaded = 0;
@@ -117,6 +123,7 @@ module Shumway {
 
     // TODO: strongly type
     loadFile(request: any) {
+      this._url = request.url;
       SWF.enterTimeline('Load file', request.url);
       this._bytesLoaded = 0;
       var session = this._loadingServiceSession = FileLoadingService.instance.createSession();
@@ -127,7 +134,11 @@ module Shumway {
       session.open(request);
     }
     abortLoad() {
-      // TODO: implement
+      if (this._loadingServiceSession) {
+        this._loadingServiceSession.close();
+        SWF.leaveTimeline();
+      }
+      this._file = null;
     }
     loadBytes(bytes: Uint8Array) {
       SWF.enterTimeline('Load bytes');
@@ -141,7 +152,8 @@ module Shumway {
     }
     processNewData(data: Uint8Array, progressInfo: {bytesLoaded: number; bytesTotal: number}) {
       this._bytesLoaded += data.length;
-      if (this._bytesLoaded < MIN_LOADED_BYTES && this._bytesLoaded < progressInfo.bytesTotal) {
+      var isLoadingInProgress = progressInfo.bytesLoaded < progressInfo.bytesTotal;
+      if (this._bytesLoaded < MIN_LOADED_BYTES && isLoadingInProgress) {
         if (!this._queuedInitialData) {
           this._queuedInitialData = new Uint8Array(Math.min(MIN_LOADED_BYTES,
                                                             progressInfo.bytesTotal));
@@ -159,8 +171,10 @@ module Shumway {
       var eagerlyParsedSymbolsCount = 0;
       var previousFramesLoaded = 0;
       if (!file) {
-        file = this._file = createFileInstanceForHeader(data, progressInfo.bytesTotal);
-        this._listener.onLoadOpen(file);
+        file = this._file = createFileInstanceForHeader(data, progressInfo.bytesTotal, this._env);
+        if (file) {
+          this._listener.onLoadOpen(file);
+        }
       } else {
         if (file instanceof SWFFile) {
           eagerlyParsedSymbolsCount = file.eagerlyParsedSymbolsList.length;
@@ -183,6 +197,10 @@ module Shumway {
     }
     processLoadClose() {
       var file = this._file;
+      if (!file) {
+        this._listener.onLoadOpen(null);
+        return;
+      }
       if (file instanceof SWFFile) {
         var eagerlyParsedSymbolsCount = file.eagerlyParsedSymbolsList.length;
         var previousFramesLoaded = file.framesLoaded;
@@ -192,7 +210,9 @@ module Shumway {
         this.processSWFFileUpdate(file, eagerlyParsedSymbolsCount, previousFramesLoaded);
       }
       if (file.bytesLoaded !== file.bytesTotal) {
-        Debug.warning("Not Implemented: processing loadClose when loading was aborted");
+        Debug.warning("Shouldn't have reached this: aborting a load should prevent this from " +
+                      "being called.");
+        Debug.warning(new Error().stack);
       } else {
         SWF.leaveTimeline();
       }
@@ -249,16 +269,16 @@ module Shumway {
     }
   }
 
-  function createFileInstanceForHeader(header: Uint8Array, fileLength: number): any {
+  function createFileInstanceForHeader(header: Uint8Array, fileLength: number, env: any): any {
     var magic = (header[0] << 16) | (header[1] << 8) | header[2];
 
     if ((magic & 0xffff) === FileTypeMagicHeaderBytes.SWF) {
-      return new SWFFile(header, fileLength);
+      return new SWFFile(header, fileLength, env);
     }
 
     if (magic === FileTypeMagicHeaderBytes.JPG || magic === FileTypeMagicHeaderBytes.PNG ||
         magic === FileTypeMagicHeaderBytes.GIF) {
-      return new ImageFile(header, fileLength);
+      return new ImageFile(header, fileLength, env);
     }
 
     // TODO: throw instead of returning null? Perhaps?

@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: ClipboardTransferMode
-module Shumway.AVM2.AS.flash.desktop {
+module Shumway.AVMX.AS.flash.desktop {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class ClipboardTransferMode extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class ClipboardTransferMode extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +29,7 @@ module Shumway.AVM2.AS.flash.desktop {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.desktop.ClipboardTransferMode");
+      super();
     }
     
     // JS -> AS Bindings

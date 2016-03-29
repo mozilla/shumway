@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: ShaderInput
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class ShaderInput extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class ShaderInput extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +29,7 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.display.ShaderInput");
+      super();
     }
     
     // JS -> AS Bindings
@@ -48,38 +43,38 @@ module Shumway.AVM2.AS.flash.display {
     // _channels: number /*int*/;
     // _index: number /*int*/;
     get input(): ASObject {
-      notImplemented("public flash.display.ShaderInput::get input"); return;
+      release || notImplemented("public flash.display.ShaderInput::get input"); return;
       // return this._input;
     }
     set input(input: ASObject) {
       input = input;
-      notImplemented("public flash.display.ShaderInput::set input"); return;
+      release || notImplemented("public flash.display.ShaderInput::set input"); return;
       // this._input = input;
     }
     get width(): number /*int*/ {
-      notImplemented("public flash.display.ShaderInput::get width"); return;
+      release || notImplemented("public flash.display.ShaderInput::get width"); return;
       // return this._width;
     }
     set width(value: number /*int*/) {
       value = value | 0;
-      notImplemented("public flash.display.ShaderInput::set width"); return;
+      release || notImplemented("public flash.display.ShaderInput::set width"); return;
       // this._width = value;
     }
     get height(): number /*int*/ {
-      notImplemented("public flash.display.ShaderInput::get height"); return;
+      release || notImplemented("public flash.display.ShaderInput::get height"); return;
       // return this._height;
     }
     set height(value: number /*int*/) {
       value = value | 0;
-      notImplemented("public flash.display.ShaderInput::set height"); return;
+      release || notImplemented("public flash.display.ShaderInput::set height"); return;
       // this._height = value;
     }
     get channels(): number /*int*/ {
-      notImplemented("public flash.display.ShaderInput::get channels"); return;
+      release || notImplemented("public flash.display.ShaderInput::get channels"); return;
       // return this._channels;
     }
     get index(): number /*int*/ {
-      notImplemented("public flash.display.ShaderInput::get index"); return;
+      release || notImplemented("public flash.display.ShaderInput::get index"); return;
       // return this._index;
     }
   }

@@ -25,7 +25,7 @@ echo('Preparing');
 exec('make BASE=' + shumwayConfig.shumwayBase + ' link-utils');
 exec('npm install');
 
-var result = exec('grunt shu --sha1=true --threads=' + shumwayConfig.threads);
+var result = exec('grunt build --sha1=true --threads=' + shumwayConfig.threads);
 if (!result || result.code) {
   botio.message('+ **Build:** FAILED');
   exit(1);
@@ -96,8 +96,8 @@ var tests = [
     botio.message();
   }
 }],
-['grunt exec:test_avm2_quick --threads=3', function (error, output) {
-  var regressionSuccess = output.match(/SUCCESS: ALL TESTS PASSED/g);
+['grunt exec:test_avm2_acceptance', function (error, output) {
+  var regressionSuccess = output.match(/Done, without errors./g);
   if (regressionSuccess) {
     botio.message('+ **AVM2 tests:** Passed');
   } else {
@@ -112,6 +112,15 @@ var tests = [
     botio.message('+ **AVM1 trace tests:** Passed');
   } else {
     botio.message('+ **AVM1 trace tests:** FAILED');
+    fail = true;
+  }
+  botio.message();
+}],
+['grunt exec:test_avm2_ats', function (error, output) {
+  if (!error) {
+    botio.message('+ **AVM2 ATS tests:** Passed');
+  } else {
+    botio.message('+ **AVM2 ATS tests:** FAILED');
     fail = true;
   }
   botio.message();

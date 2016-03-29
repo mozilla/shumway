@@ -14,34 +14,37 @@
  * limitations under the License.
  */
 // Class: Transform
-module Shumway.AVM2.AS.flash.geom {
+module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import throwError = Shumway.AVM2.Runtime.throwError;
-  import Errors = Shumway.AVM2.Errors;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  import checkNullParameter = Shumway.AVMX.checkNullParameter;
 
-  export class Transform extends ASNative {
+  export class Transform extends ASObject {
     static classInitializer: any = null;
-    static initializer: any = null;
-    static classSymbols: string [] = null; // [];
-    static instanceSymbols: string [] = null; // [];
 
     private _displayObject: flash.display.DisplayObject;
 
     constructor (displayObject: flash.display.DisplayObject) {
-      false && super();
+      super();
       if (!displayObject) {
-        throwError("ArgumentError", Errors.NullPointerError, "displayObject");
+        this.sec.throwError("ArgumentError", Errors.NullPointerError, "displayObject");
       }
       this._displayObject = displayObject;
     }
 
     get matrix(): flash.geom.Matrix {
+      if (this._displayObject._matrix3D) {
+        return null;
+      }
       return this._displayObject._getMatrix().clone().toPixelsInPlace();
     }
 
     set matrix(value: flash.geom.Matrix) {
+      if (this._displayObject._matrix3D) {
+        this._displayObject._matrix3D.resetTargetDisplayObject();
+        this._displayObject._matrix3D = null;
+      }
       this._displayObject._setMatrix(value, true);
     }
 
@@ -55,6 +58,7 @@ module Shumway.AVM2.AS.flash.geom {
 
     get concatenatedMatrix(): flash.geom.Matrix {
       var matrix = this._displayObject._getConcatenatedMatrix().clone().toPixelsInPlace();
+      // For some reason, all dimensions are scale 5x for off-stage objects.
       if (!this._displayObject._stage) {
         matrix.scale(5, 5);
       }
@@ -66,50 +70,64 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     get pixelBounds(): flash.geom.Rectangle {
-      notImplemented("public flash.geom.Transform::get pixelBounds"); return;
-      // return this._pixelBounds;
+      // Only somewhat implemented because this is largely untested.
+      release || somewhatImplemented("public flash.geom.Transform::get pixelBounds");
+      var stage = this._displayObject.stage;
+      var targetCoordinateSpace = stage || this._displayObject;
+      var rect = this._displayObject.getRect(targetCoordinateSpace);
+      // For some reason, all dimensions are scale 5x for off-stage objects.
+      if (!stage) {
+        rect.width *= 5;
+        rect.height *= 5;
+      }
+      return rect;
     }
 
     get matrix3D(): flash.geom.Matrix3D {
-      var m = this._displayObject._matrix3D;
-      return m && m.clone();
+      release || somewhatImplemented("public flash.geom.Transform::get matrix3D");
+      // Note: matrix3D returns the original object, *not* a clone.
+      return this._displayObject._matrix3D;
     }
 
     set matrix3D(m: flash.geom.Matrix3D) {
-      if (!(Matrix3D.isType(m))) {
-        throwError('TypeError', Errors.CheckTypeFailedError, m, 'flash.geom.Matrix3D');
+      if (!(this.sec.flash.geom.Matrix3D.axIsType(m))) {
+        this.sec.throwError('TypeError', Errors.CheckTypeFailedError, m, 'flash.geom.Matrix3D');
       }
 
-      var raw = m.rawData;
-      // TODO why is this not a 3D matrix?
-      this.matrix = new flash.geom.Matrix (
-        raw.asGetPublicProperty(0),
-        raw.asGetPublicProperty(1),
-        raw.asGetPublicProperty(4),
-        raw.asGetPublicProperty(5),
-        raw.asGetPublicProperty(12),
-        raw.asGetPublicProperty(13)
-      );
-      // this.matrix will reset this._target._matrix3D
-      // TODO: Must make sure to also deal with the _rotateXYZ properties.
-      somewhatImplemented("public flash.geom.Transform::set matrix3D");
-      // this._displayObject._matrix3D = m;
+      release || somewhatImplemented("public flash.geom.Transform::set matrix3D");
+      // Setting the displayObject on the matrix can throw an error, so do that first.
+      m.setTargetDisplayObject(this._displayObject);
+      // Note: matrix3D stores the original object, *not* a clone.
+      this._displayObject._matrix3D = m;
     }
 
     getRelativeMatrix3D(relativeTo: flash.display.DisplayObject): flash.geom.Matrix3D {
-      relativeTo = relativeTo;
-      notImplemented("public flash.geom.Transform::getRelativeMatrix3D"); return;
+      checkNullParameter(relativeTo, "relativeTo", this.sec);
+      release || somewhatImplemented("public flash.geom.Transform::getRelativeMatrix3D");
+      var matrix3D = this._displayObject._matrix3D;
+      // TODO: actually calculate the relative matrix.
+      return matrix3D ? matrix3D.clone() : null;
     }
 
     get perspectiveProjection(): flash.geom.PerspectiveProjection {
-      notImplemented("public flash.geom.Transform::get perspectiveProjection"); return;
-      // return this._perspectiveProjection;
+      release || somewhatImplemented("public flash.geom.Transform::get perspectiveProjection");
+      if (!this._displayObject._hasFlags(display.DisplayObjectFlags.HasPerspectiveProjection)) {
+        return null;
+      }
+      var PerspectiveProjectionClass = this.sec.flash.geom.PerspectiveProjection.axClass;
+      return PerspectiveProjectionClass.FromDisplayObject(this._displayObject);
     }
 
-    set perspectiveProjection(pm: flash.geom.PerspectiveProjection) {
-      pm = pm;
-      notImplemented("public flash.geom.Transform::set perspectiveProjection"); return;
-      // this._perspectiveProjection = pm;
+    set perspectiveProjection(projection: flash.geom.PerspectiveProjection) {
+      release || somewhatImplemented("public flash.geom.Transform::set perspectiveProjection");
+      if (!projection) {
+        this._displayObject._removeFlags(display.DisplayObjectFlags.HasPerspectiveProjection);
+        return;
+      }
+      this._displayObject._setFlags(display.DisplayObjectFlags.HasPerspectiveProjection);
+      this._displayObject._perspectiveProjectionCenterX = +projection._centerX;
+      this._displayObject._perspectiveProjectionCenterY = +projection._centerY;
+      this._displayObject._perspectiveProjectionFOV = +projection._fieldOfView;
     }
   }
 }

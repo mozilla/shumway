@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: ShaderData
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class ShaderData extends ASNative {
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  export class ShaderData extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,15 +29,10 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = null; // [];
     
     constructor (byteCode: flash.utils.ByteArray) {
-      byteCode = byteCode;
-      false && super();
-      dummyConstructor("public flash.display.ShaderData");
+      super();
+      this.byteCode = byteCode;
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
+
+    bytecode: flash.utils.ByteArray;
   }
 }

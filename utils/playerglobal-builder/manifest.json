@@ -2238,6 +2238,15 @@
     ]
   },
   {
+    "name": "flash/sampler/getSize",
+    "defs": [
+      "flash.sampler:getSize"
+    ],
+    "files": [
+      "flash/sampler/getSize.as"
+    ]
+  },
+  {
     "name": "flash/system/ApplicationDomain",
     "defs": [
       "flash.system:ApplicationDomain"

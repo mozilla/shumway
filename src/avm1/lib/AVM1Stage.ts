@@ -17,31 +17,39 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  export class AVM1Stage {
-    public static createAVM1Class(): typeof AVM1Stage {
-      return wrapAVM1Class(AVM1Stage,
-        ['align', 'displayState', 'fullScreenSourceRect', 'height', 'scaleMode',
-          'showMenu', 'width'],
-        []);
+  export class AVM1Stage extends AVM1Object {
+    public static createAVM1Class(context: AVM1Context): AVM1Object {
+      var wrapped = new AVM1Stage(context);
+      wrapAVM1NativeMembers(context, wrapped, AVM1Stage.prototype,
+        ['align#', 'displayState#', 'fullScreenSourceRect#', 'height#',
+          'scaleMode#', 'showMenu#', 'width#'],
+        false);
+      return wrapped;
     }
 
-    public static get align() { return AVM1Utils.currentStage.align; }
-    public static set align(value) { AVM1Utils.currentStage.align = value; }
+    public static bindStage(context: AVM1Context, cls: AVM1Object, stage: Shumway.AVMX.AS.flash.display.Stage): void  {
+      (<AVM1Stage>cls)._as3Stage = stage;
+    }
 
-    public static get displayState() { return AVM1Utils.currentStage.displayState; }
-    public static set displayState(value) { AVM1Utils.currentStage.displayState = value; }
+    _as3Stage: Shumway.AVMX.AS.flash.display.Stage;
 
-    public static get fullScreenSourceRect() { return AVM1Utils.currentStage.fullScreenSourceRect; }
-    public static set fullScreenSourceRect(value) { AVM1Utils.currentStage.fullScreenSourceRect = value; }
+    public getAlign() { return this._as3Stage.align; }
+    public setAlign(value) { this._as3Stage.align = value; }
 
-    public static get height() { return AVM1Utils.currentStage.stageHeight; }
+    public getDisplayState() { return this._as3Stage.displayState; }
+    public setDisplayState(value) { this._as3Stage.displayState = value; }
 
-    public static get scaleMode() { return AVM1Utils.currentStage.scaleMode; }
-    public static set scaleMode(value) { AVM1Utils.currentStage.scaleMode = value; }
+    public getFullScreenSourceRect() { return this._as3Stage.fullScreenSourceRect; }
+    public setFullScreenSourceRect(value) { this._as3Stage.fullScreenSourceRect = value; }
 
-    public static get showMenu() { return AVM1Utils.currentStage.showDefaultContextMenu; }
-    public static set showMenu(value) { AVM1Utils.currentStage.showDefaultContextMenu = value; }
+    public getHeight() { return this._as3Stage.stageHeight; }
 
-    public static get width() { return AVM1Utils.currentStage.stageWidth; }
+    public getScaleMode() { return this._as3Stage.scaleMode; }
+    public setScaleMode(value) { this._as3Stage.scaleMode = value; }
+
+    public getShowMenu() { return this._as3Stage.showDefaultContextMenu; }
+    public setShowMenu(value) { this._as3Stage.showDefaultContextMenu = value; }
+
+    public getWidth() { return this._as3Stage.stageWidth; }
   }
 }

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 // Class: Sprite
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   import Timeline = Shumway.Timeline;
-  import SwfTag = Shumway.SWF.Parser.SwfTag;
+  import SwfTagCode = Shumway.SWF.Parser.SwfTagCode;
   import PlaceObjectFlags = Shumway.SWF.Parser.PlaceObjectFlags;
   import clamp = Shumway.NumberUtilities.clamp;
 
@@ -33,38 +33,24 @@ module Shumway.AVM2.AS.flash.display {
   }
 
   export class Sprite extends flash.display.DisplayObjectContainer {
-
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: SpriteSymbol) {
-      var self: Sprite = this;
 
-      self._graphics = null;
-      self._buttonMode = false;
-      self._dropTarget = null;
-      self._hitArea = null;
-      self._useHandCursor = true;
+    _symbol: SpriteSymbol;
 
-      self._dragMode = DragMode.Inactive;
-      self._dragDeltaX = 0;
-      self._dragDeltaY = 0;
-      self._dragBounds = null;
-      self._hitTarget = null;
-
-      if (symbol) {
-        if (symbol.isRoot) {
-          self._root = self;
-        }
-        if (symbol.numFrames && symbol.frames.length > 0) {
-          // For a SWF's root symbol, all frames are added after initialization, with
-          // _initializeChildren called after the first frame is added.
-          self._initializeChildren(symbol.frames[0]);
-        }
+    applySymbol() {
+      release || assert(this._symbol);
+      this._initializeFields();
+      var symbol = this._symbol;
+      if (symbol.isRoot) {
+        this._root = this;
       }
-    };
-    
+      this._children = [];
+      if (symbol.numFrames && symbol.frames.length > 0) {
+        // For a SWF's root symbol, all frames are added after initialization, with
+        // _initializeChildren called after the first frame is added.
+        this._initializeChildren(symbol.frames[0]);
+      }
+    }
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -72,9 +58,29 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = null; // [];
 
     constructor () {
-      false && super();
-      DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
+      if (this._symbol && !this._fieldsInitialized) {
+        this.applySymbol();
+      }
+      super();
+      if (!this._fieldsInitialized) {
+        this._initializeFields();
+      }
       this._constructChildren();
+    }
+
+    protected _initializeFields() {
+      super._initializeFields();
+      this._graphics = null;
+      this._buttonMode = false;
+      this._dropTarget = null;
+      this._hitArea = null;
+      this._useHandCursor = true;
+
+      this._dragMode = DragMode.Inactive;
+      this._dragDeltaX = 0;
+      this._dragDeltaY = 0;
+      this._dragBounds = null;
+      this._hitTarget = null;
     }
     
     // JS -> AS Bindings
@@ -116,8 +122,14 @@ module Shumway.AVM2.AS.flash.display {
           if (child._depth < 0) {
             continue;
           }
+          // For AVM1 objects, children with depth 16384 (0 from API point of view)
+          // are not removed.
+          if ('_as2Object' in child && child._depth >= 16384) {
+            continue;
+          }
           var tag = null;
-          // Look for a control tag tag that places an object at the same depth as the current child.
+          // Look for a control tag tag that places an object at the same depth as the current
+          // child.
           for (var j = 0; j < tags.length; j++) {
             if (tags[j].depth === child._depth) {
               tag = tags[j];
@@ -138,17 +150,17 @@ module Shumway.AVM2.AS.flash.display {
         var tag = parsedOrUnparsedTag.tagCode === undefined ?
                   parsedOrUnparsedTag : <any>loaderInfo._file.getParsedTag(parsedOrUnparsedTag);
         switch (tag.code) {
-          case SwfTag.CODE_REMOVE_OBJECT:
-          case SwfTag.CODE_REMOVE_OBJECT2:
+          case SwfTagCode.CODE_REMOVE_OBJECT:
+          case SwfTagCode.CODE_REMOVE_OBJECT2:
             var child = this.getTimelineObjectAtDepth(tag.depth | 0);
             if (child) {
               this._removeAnimatedChild(child);
             }
             break;
-          case SwfTag.CODE_PLACE_OBJECT:
-          case SwfTag.CODE_PLACE_OBJECT2:
-          case SwfTag.CODE_PLACE_OBJECT3:
-            var placeObjectTag = <Shumway.SWF.PlaceObjectTag>tag;
+          case SwfTagCode.CODE_PLACE_OBJECT:
+          case SwfTagCode.CODE_PLACE_OBJECT2:
+          case SwfTagCode.CODE_PLACE_OBJECT3:
+            var placeObjectTag = <Shumway.SWF.Parser.PlaceObjectTag>tag;
             var depth = placeObjectTag.depth;
             var child = this.getTimelineObjectAtDepth(depth);
             var hasCharacter = placeObjectTag.symbolId > -1;
@@ -179,9 +191,10 @@ module Shumway.AVM2.AS.flash.display {
 
             if (child) {
               if (symbol && !symbol.dynamic) {
-                // If the current object is of a simple type (for now Shapes, MorphShapes and StaticText)
-                // only its static content is updated instead of replacing it with a new instance.
-                // TODO: Handle http://wahlers.com.br/claus/blog/hacking-swf-2-placeobject-and-ratio/.
+                // If the current object is of a simple type (for now Shapes, MorphShapes and
+                // StaticText) only its static content is updated instead of replacing it with a
+                // new instance. TODO: Handle
+                // http://wahlers.com.br/claus/blog/hacking-swf-2-placeobject-and-ratio/.
                 child._setStaticContentFromSymbol(symbol);
               }
               // We animate the object only if a user script didn't touch any of the properties
@@ -194,7 +207,8 @@ module Shumway.AVM2.AS.flash.display {
               child = this.createAnimatedDisplayObject(symbol, placeObjectTag, false);
               this.addTimelineObjectAtDepth(child, depth);
               if (symbol.isAVM1Object) {
-                Shumway.AVM1.Lib.initializeAVM1Object(child, symbol.avm1Context, placeObjectTag);
+                child._placeObjectTag = placeObjectTag;
+                child._setFlags(DisplayObjectFlags.HasPlaceObjectInitPending);
               }
             }
             break;
@@ -205,12 +219,14 @@ module Shumway.AVM2.AS.flash.display {
     _removeAnimatedChild(child: flash.display.DisplayObject) {
       this.removeChild(child);
       if (child._name) {
-        var mn =  Shumway.AVM2.ABC.Multiname.getPublicQualifiedName(child._name);
-        if (this[mn] === child) {
-          this[mn] = null;
+        if (this.axGetPublicProperty(child._name) === child) {
+          this.axSetPublicProperty(child._name, null);
         }
         // TODO: Implement proper reference counting.
         // child._removeReference();
+      }
+      if (child._maskedObject) {
+        child._maskedObject.mask = null;
       }
     }
 
@@ -265,30 +281,44 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get soundTransform(): flash.media.SoundTransform {
-      notImplemented("public flash.display.Sprite::get soundTransform"); return;
+      release || notImplemented("public flash.display.Sprite::get soundTransform"); return;
       // return this._soundTransform;
     }
     set soundTransform(sndTransform: flash.media.SoundTransform) {
       sndTransform = sndTransform;
-      notImplemented("public flash.display.Sprite::set soundTransform"); return;
+      release || notImplemented("public flash.display.Sprite::set soundTransform"); return;
       // this._soundTransform = sndTransform;
     }
+
+    /**
+     * Returns the current mouse position relative to this object.
+     */
+    _getDragMousePosition(): flash.geom.Point {
+      var position = this.sec.flash.ui.Mouse.axClass._currentPosition;
+      if (this._parent) {
+        position = this._parent.globalToLocal(position);
+      }
+      return position;
+    }
+
     startDrag(lockCenter: boolean = false, bounds: flash.geom.Rectangle = null): void {
       lockCenter = !!lockCenter;
       if (lockCenter) {
         this._dragMode = DragMode.LockToPointer;
       } else {
         this._dragMode = DragMode.PreserveDistance;
-        var mousePosition = this._getLocalMousePosition();
+        var mousePosition = this._getDragMousePosition();
         this._dragDeltaX = this.x - mousePosition.x;
         this._dragDeltaY = this.y - mousePosition.y;
       }
       this._dragBounds = bounds;
-      flash.ui.Mouse.draggableObject = this;
+      // TODO: Our mouse handling logic looks up draggableObject on stage.sec.flash.ui.Mouse.axClass
+      // to update its position. Could there be a case where stage.sec !== this.sec?
+      this.sec.flash.ui.Mouse.axClass.draggableObject = this;
     }
     stopDrag(): void {
-      if (flash.ui.Mouse.draggableObject === this) {
-        flash.ui.Mouse.draggableObject = null;
+      if (this.sec.flash.ui.Mouse.axClass.draggableObject === this) {
+        this.sec.flash.ui.Mouse.axClass.draggableObject = null;
         this._dragMode = DragMode.Inactive;
         this._dragDeltaX = 0;
         this._dragDeltaY = 0;
@@ -296,7 +326,7 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
     _updateDragState(dropTarget: DisplayObject = null): void {
-      var mousePosition = this._getLocalMousePosition();
+      var mousePosition = this._getDragMousePosition();
       var newX = mousePosition.x;
       var newY = mousePosition.y;
       if (this._dragMode === DragMode.PreserveDistance) {
@@ -316,11 +346,11 @@ module Shumway.AVM2.AS.flash.display {
     }
     startTouchDrag(touchPointID: number /*int*/, lockCenter: boolean = false, bounds: flash.geom.Rectangle = null): void {
       touchPointID = touchPointID | 0; lockCenter = !!lockCenter; bounds = bounds;
-      notImplemented("public flash.display.Sprite::startTouchDrag"); return;
+      release || notImplemented("public flash.display.Sprite::startTouchDrag"); return;
     }
     stopTouchDrag(touchPointID: number /*int*/): void {
       touchPointID = touchPointID | 0;
-      notImplemented("public flash.display.Sprite::stopTouchDrag"); return;
+      release || notImplemented("public flash.display.Sprite::stopTouchDrag"); return;
     }
 
     _containsPoint(globalX: number, globalY: number, localX: number, localY: number,
@@ -359,14 +389,12 @@ module Shumway.AVM2.AS.flash.display {
     numFrames: number = 1;
     frames: any[] = [];
     labels: flash.display.FrameLabel[] = [];
-    frameScripts: any[] = [];
     isRoot: boolean;
     avm1Name: string;
-    avm1SymbolClass;
     loaderInfo: flash.display.LoaderInfo;
 
     constructor(data: Timeline.SymbolData, loaderInfo: flash.display.LoaderInfo) {
-      super(data, flash.display.MovieClip, true);
+      super(data, loaderInfo.app.sec.flash.display.MovieClip.axClass, true);
       this.loaderInfo = loaderInfo;
     }
 
@@ -377,19 +405,12 @@ module Shumway.AVM2.AS.flash.display {
         symbol.isAVM1Object = true;
         symbol.avm1Context = loaderInfo._avm1Context;
       }
-      symbol.frameScripts = [];
       var frames = data.frames;
+      var frameLabelCtor = loaderInfo.app.sec.flash.display.FrameLabel;
       for (var i = 0; i < frames.length; i++) {
         var frame = loaderInfo.getFrame(data, i);
-        var actionBlocks = frame.actionBlocks;
-        if (actionBlocks) {
-          for (var j = 0; j < actionBlocks.length; j++) {
-            symbol.frameScripts.push(i);
-            symbol.frameScripts.push(actionBlocks[j]);
-          }
-        }
         if (frame.labelName) {
-          symbol.labels.push(new flash.display.FrameLabel(frame.labelName, i + 1));
+          symbol.labels.push(new frameLabelCtor(frame.labelName, i + 1));
         }
         symbol.frames.push(frame);
       }

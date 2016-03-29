@@ -14,48 +14,35 @@
  * limitations under the License.
  */
 // Class: InteractiveObject
-module Shumway.AVM2.AS.flash.display {
-  import notImplemented = Shumway.Debug.notImplemented;
+module Shumway.AVMX.AS.flash.display {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import DisplayObject = flash.display.DisplayObject;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
 
   import events = flash.events;
 
   export class InteractiveObject extends flash.display.DisplayObject {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function () {
-      var self: InteractiveObject = this;
-      self._tabEnabled = false;
-      self._tabIndex = -1;
-      self._focusRect = null;
-      self._mouseEnabled = true;
-      self._doubleClickEnabled = false;
-      self._accessibilityImplementation = null;
-      self._softKeyboardInputAreaOfInterest = null;
-      self._needsSoftKeyboard = false;
-      self._contextMenu = null;
-    };
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
+
     constructor () {
-      false && super();
-      DisplayObject.instanceConstructorNoInitialize.call(this);
+      super();
+      if (!this._fieldsInitialized) {
+        this._initializeFields();
+      }
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
+
+    protected _initializeFields() {
+      super._initializeFields();
+      this._tabEnabled = false;
+      this._tabIndex = -1;
+      this._focusRect = null;
+      this._mouseEnabled = true;
+      this._doubleClickEnabled = false;
+      this._accessibilityImplementation = null;
+      this._softKeyboardInputAreaOfInterest = null;
+      this._needsSoftKeyboard = false;
+      this._contextMenu = null;
+    }
     
     _tabEnabled: boolean;
     _tabIndex: number /*int*/;
@@ -76,7 +63,7 @@ module Shumway.AVM2.AS.flash.display {
       var old = this._tabEnabled;
       this._tabEnabled = enabled;
       if (old !== enabled) {
-        this.dispatchEvent(events.Event.getInstance(events.Event.TAB_ENABLED_CHANGE, true));
+        this.dispatchEvent(this.sec.flash.events.Event.axClass.getInstance(events.Event.TAB_ENABLED_CHANGE, true));
       }
     }
 
@@ -89,7 +76,7 @@ module Shumway.AVM2.AS.flash.display {
       var old = this._tabIndex;
       this._tabIndex = index;
       if (old !== index) {
-        this.dispatchEvent(events.Event.getInstance(events.Event.TAB_INDEX_CHANGE, true));
+        this.dispatchEvent(this.sec.flash.events.Event.axClass.getInstance(events.Event.TAB_INDEX_CHANGE, true));
       }
     }
 
@@ -101,7 +88,7 @@ module Shumway.AVM2.AS.flash.display {
      * The given |focusRect| can be one of: |true|, |false| or |null|.
      */
     set focusRect(focusRect: any) {
-      somewhatImplemented("public flash.display.InteractiveObject::set focusRect");
+      release || somewhatImplemented("public flash.display.InteractiveObject::set focusRect");
       this._focusRect = focusRect;
     }
 
@@ -126,9 +113,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set accessibilityImplementation(value: flash.accessibility.AccessibilityImplementation) {
-      value = value;
-      notImplemented("public flash.display.InteractiveObject::set accessibilityImplementation"); return;
-      // this._accessibilityImplementation = value;
+      release || somewhatImplemented("public flash.display.InteractiveObject::set" +
+                         " accessibilityImplementation");
+      this._accessibilityImplementation = value;
     }
 
     get softKeyboardInputAreaOfInterest(): flash.geom.Rectangle {
@@ -136,9 +123,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set softKeyboardInputAreaOfInterest(value: flash.geom.Rectangle) {
-      value = value;
-      notImplemented("public flash.display.InteractiveObject::set softKeyboardInputAreaOfInterest"); return;
-      // this._softKeyboardInputAreaOfInterest = value;
+      release || somewhatImplemented("public flash.display.InteractiveObject::set" +
+                          " softKeyboardInputAreaOfInterest");
+       this._softKeyboardInputAreaOfInterest = value;
     }
 
     get needsSoftKeyboard(): boolean {
@@ -147,8 +134,8 @@ module Shumway.AVM2.AS.flash.display {
 
     set needsSoftKeyboard(value: boolean) {
       value = !!value;
-      notImplemented("public flash.display.InteractiveObject::set needsSoftKeyboard"); return;
-      // this._needsSoftKeyboard = value;
+      release || somewhatImplemented("public flash.display.InteractiveObject::set needsSoftKeyboard");
+       this._needsSoftKeyboard = value;
     }
 
     get contextMenu(): flash.ui.ContextMenu {
@@ -157,12 +144,13 @@ module Shumway.AVM2.AS.flash.display {
 
     set contextMenu(cm: flash.ui.ContextMenu) {
       cm = cm;
-      somewhatImplemented("public flash.display.InteractiveObject::set contextMenu");
+      release || somewhatImplemented("public flash.display.InteractiveObject::set contextMenu");
       this._contextMenu = cm;
     }
 
     requestSoftKeyboard(): boolean {
-      notImplemented("public flash.display.InteractiveObject::requestSoftKeyboard"); return;
+      release || somewhatImplemented("public flash.display.InteractiveObject::requestSoftKeyboard");
+      return false;
     }
   }
 }

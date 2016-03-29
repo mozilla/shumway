@@ -1,0 +1,20 @@
+Running test file: test/mock/jwplayer.js ...
+Executed JS File: test/mock/jwplayer.js
+RUNNING:  examples/jwplayer/jwplayer.flash.swf
+[91msomewhatImplemented: public flash.system.Security::static allowDomain ["*"][0m
+eval(try {__flash__toXML(jwplayer.utils.tea.decrypt("","36QXq4W@GSBV^teR"));} catch (e) {"<undefined/>";})
+[91msomewhatImplemented: public flash.display.InteractiveObject::set focusRect[0m
+eval(try {__flash__toXML(jwplayer.embed.flash.getVars("jwplayerObjectId"));} catch (e) {"<undefined/>";})
+[91msomewhatImplemented: public flash.net.NetConnection::connect[0m
+[91msomewhatImplemented: public flash.media.SoundTransform::_updateTransform[0m
+[91msomewhatImplemented: NetStream._invoke (4)[0m
+[91msomewhatImplemented: public flash.net.NetStream::set client[0m
+[91msomewhatImplemented: public flash.net.NetConnection::set objectEncoding[0m
+[91msomewhatImplemented: public flash.ui.ContextMenu::get builtInItems[0m
+[91msomewhatImplemented: public flash.display.InteractiveObject::set contextMenu[0m
+[91msomewhatImplemented: public flash.ui.ContextMenu::get customItems[0m
+[91msomewhatImplemented: public flash.system.Capabilities::get version[0m
+[91mLoading error encountered:, Can't read file://examples/jwplayer/../examples/image-loading/firefox.png[0m
+[91msomewhatImplemented: public flash.text.TextField::getCharBoundaries[0m
+[91msomewhatImplemented: public flash.net.SharedObject::flush[0m
+HASHCODE: examples/jwplayer/jwplayer.flash.swf: 0xe79658d0

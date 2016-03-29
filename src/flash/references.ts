@@ -17,9 +17,10 @@
 /// <reference path='../../build/ts/avm2.d.ts' />
 /// <reference path='../../build/ts/swf.d.ts' />
 
+///<reference path='module.ts' />
 ///<reference path='../htmlparser.ts' />
 ///<reference path='../TextContent.ts' />
-///<reference path='options.ts' />
+///<reference path='settings.ts' />
 
 ///<reference path='symbol.ts' />
 
@@ -56,11 +57,11 @@
 ///<reference path='events/EventPhase.ts' />
 // ///<reference path='events/AccelerometerEvent.ts' />
 // ///<reference path='events/ActivityEvent.ts' />
-// ///<reference path='events/AsyncErrorEvent.ts' />
 // ///<reference path='events/ContextMenuEvent.ts' />
 // ///<reference path='events/DataEvent.ts' />
 ///<reference path='events/TextEvent.ts' />
 ///<reference path='events/ErrorEvent.ts' />
+///<reference path='events/AsyncErrorEvent.ts' />
 // ///<reference path='events/FocusEvent.ts' />
 // ///<reference path='events/FullScreenEvent.ts' />
 ///<reference path='events/GameInputEvent.ts' />
@@ -87,7 +88,7 @@
 // ///<reference path='events/SoftKeyboardTrigger.ts' />
 // ///<reference path='events/StageVideoAvailabilityEvent.ts' />
 // ///<reference path='events/StageVideoEvent.ts' />
-// ///<reference path='events/StatusEvent.ts' />
+///<reference path='events/StatusEvent.ts' />
 // ///<reference path='events/SyncEvent.ts' />
 // ///<reference path='events/ThrottleEvent.ts' />
 // ///<reference path='events/ThrottleType.ts' />
@@ -250,8 +251,8 @@
 
 // ///<reference path='net/DynamicPropertyOutput.ts' />
 ///<reference path='net/FileFilter.ts' />
-// ///<reference path='net/FileReference.ts' />
-// ///<reference path='net/FileReferenceList.ts' />
+///<reference path='net/FileReference.ts' />
+///<reference path='net/FileReferenceList.ts' />
 // ///<reference path='net/GroupSpecifier.ts' />
 // ///<reference path='net/IDynamicPropertyOutput.ts' />
 // ///<reference path='net/IDynamicPropertyWriter.ts' />
@@ -407,12 +408,7 @@
 ///<reference path='utils/Timer.ts' />
 ///<reference path='utils/SetIntervalTimer.ts' />
 
-///<reference path='xml/XMLNode.ts' />
-///<reference path='xml/XMLDocument.ts' />
-///<reference path='xml/XMLNodeType.ts' />
-///<reference path='xml/XMLParser.ts' />
-///<reference path='xml/XMLTag.ts' />
-
 ///<reference path='avm1.d.ts' />
 
-///<reference path='linker.ts' />
+// ///<reference path='linker.ts' />
+///<reference path='link.ts' />

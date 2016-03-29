@@ -24,14 +24,13 @@
  *
  */
 // Class: DisplayObject
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import abstractMethod = Shumway.Debug.abstractMethod;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import throwError = Shumway.AVM2.Runtime.throwError;
-  import checkNullParameter = Shumway.AVM2.Runtime.checkNullParameter;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
+  import checkNullParameter = Shumway.AVMX.checkNullParameter;
   import assert = Shumway.Debug.assert;
   import unexpected = Shumway.Debug.unexpected;
 
@@ -73,7 +72,7 @@ module Shumway.AVM2.AS.flash.display {
    *
    * These are used to mark properties as having been changed.
    */
-  export enum DisplayObjectFlags {
+  export const enum DisplayObjectFlags {
     None                                      = 0x0000,
 
     /**
@@ -181,63 +180,81 @@ module Shumway.AVM2.AS.flash.display {
     CacheAsBitmap                             = 0x010000,
 
     /**
-     * Indicates whether this display object's matrix has changed since the last time it was
-     * synchronized.
+     * Indicates whether an AVM1 timeline needs to initialize an object after place object
+     * occurred.
      */
-    DirtyMatrix                               = 0x100000,
+    HasPlaceObjectInitPending                 = 0x020000,
 
     /**
-     * Indicates whether this display object's children list is dirty.
+     * Indicates whether a transform.perspectiveProjection was set.
      */
-    DirtyChildren                             = 0x200000,
-
-    /**
-     * Indicates whether this display object's graphics has changed since the last time it was
-     * synchronized.
-     */
-    DirtyGraphics                             = 0x400000,
-
-    /**
-     * Indicates whether this display object's text content has changed since the last time it was
-     * synchronized.
-     */
-    DirtyTextContent                          = 0x800000,
-
-    /**
-     * Indicates whether this display object's bitmap data has changed since the last time it was
-     * synchronized.
-     */
-    DirtyBitmapData                           = 0x1000000,
-
-    /**
-     * Indicates whether this display object's bitmap data has changed since the last time it was
-     * synchronized.
-     */
-    DirtyNetStream                            = 0x2000000,
-
-    /**
-     * Indicates whether this display object's color transform has changed since the last time it
-     * was synchronized.
-     */
-    DirtyColorTransform                       = 0x4000000,
-
-    /**
-     * Indicates whether this display object's mask has changed since the last time it was
-     * synchronized.
-     */
-    DirtyMask                                 = 0x8000000,
-
-    /**
-     * Indicates whether this display object's clip depth has changed since the last time it was
-     * synchronized.
-     */
-    DirtyClipDepth                            = 0x10000000,
+    HasPerspectiveProjection                  = 0x040000,
 
     /**
      * Indicates whether this display object has dirty descendents. If this flag is set then the
      * subtree need to be synchronized.
      */
     DirtyDescendents                          = 0x20000000,
+
+    /**
+     * Masks flags that need to be propagated up when this display object gets added to a parent.
+     */
+    Bubbling                                  = ContainsFrameScriptPendingChildren | ContainsMorph | DirtyDescendents
+  }
+
+  export const enum DisplayObjectDirtyFlags {
+    /**
+     * Indicates whether this display object's matrix has changed since the last time it was
+     * synchronized.
+     */
+    DirtyMatrix                               = 0x001,
+
+    /**
+     * Indicates whether this display object's children list is dirty.
+     */
+    DirtyChildren                             = 0x002,
+
+    /**
+     * Indicates whether this display object's graphics has changed since the last time it was
+     * synchronized.
+     */
+    DirtyGraphics                             = 0x004,
+
+    /**
+     * Indicates whether this display object's text content has changed since the last time it was
+     * synchronized.
+     */
+    DirtyTextContent                          = 0x008,
+
+    /**
+     * Indicates whether this display object's bitmap data has changed since the last time it was
+     * synchronized.
+     */
+    DirtyBitmapData                           = 0x010,
+
+    /**
+     * Indicates whether this display object's bitmap data has changed since the last time it was
+     * synchronized.
+     */
+    DirtyNetStream                            = 0x020,
+
+    /**
+     * Indicates whether this display object's color transform has changed since the last time it
+     * was synchronized.
+     */
+    DirtyColorTransform                       = 0x040,
+
+    /**
+     * Indicates whether this display object's mask has changed since the last time it was
+     * synchronized.
+     */
+    DirtyMask                                 = 0x080,
+
+    /**
+     * Indicates whether this display object's clip depth has changed since the last time it was
+     * synchronized.
+     */
+    DirtyClipDepth                            = 0x100,
 
     /**
      * Indicates whether this display object's other properties have changed. We need to split this
@@ -251,7 +268,7 @@ module Shumway.AVM2.AS.flash.display {
      * filters,
      * visible,
      */
-    DirtyMiscellaneousProperties              = 0x40000000,
+    DirtyMiscellaneousProperties              = 0x200,
 
     /**
      * All synchronizable properties are dirty.
@@ -259,18 +276,12 @@ module Shumway.AVM2.AS.flash.display {
     Dirty                                     = DirtyMatrix | DirtyChildren | DirtyGraphics |
                                                 DirtyTextContent | DirtyBitmapData | DirtyNetStream |
                                                 DirtyColorTransform | DirtyMask | DirtyClipDepth |
-                                                DirtyMiscellaneousProperties,
-
-    /**
-     * Masks flags that need to be propagated up when this display object gets added to a parent.
-     */
-    Bubbling                                  = ContainsFrameScriptPendingChildren | ContainsMorph
+                                                DirtyMiscellaneousProperties
   }
-
   /**
    * Controls how the visitor walks the display tree.
    */
-  export enum VisitorFlags {
+  export const enum VisitorFlags {
     /**
      * None
      */
@@ -302,7 +313,7 @@ module Shumway.AVM2.AS.flash.display {
     Filter       = 0x10
   }
 
-  export enum HitTestingType {
+  export const enum HitTestingType {
     HitTestBounds,
     HitTestBoundsAndMask,
     HitTestShape,
@@ -311,7 +322,7 @@ module Shumway.AVM2.AS.flash.display {
     Drop
   }
 
-  export enum HitTestingResult {
+  export const enum HitTestingResult {
     None,
     Bounds,
     Shape
@@ -331,15 +342,17 @@ module Shumway.AVM2.AS.flash.display {
     _constructFrame(): void;
   }
 
+  var displayObjectSyncID = 0;
+
   export class DisplayObject extends flash.events.EventDispatcher implements IBitmapDrawable, Shumway.Remoting.IRemotable {
+
+    static axClass: typeof DisplayObject;
 
     /**
      * Every displayObject is assigned an unique integer ID.
      */
-    static _syncID = 0;
-
     static getNextSyncID() {
-      return this._syncID++;
+      return displayObjectSyncID++;
     }
 
     /**
@@ -352,96 +365,13 @@ module Shumway.AVM2.AS.flash.display {
     static _advancableInstances: WeakList<IAdvancable>;
 
     // Called whenever the class is initialized.
-    static classInitializer: any = function () {
+    static classInitializer() {
       this.reset();
-    };
+    }
 
     static reset() {
       this._advancableInstances = new WeakList<IAdvancable>();
     }
-
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Shumway.Timeline.DisplaySymbol) {
-      release || counter.count("DisplayObject::initializer");
-
-      var self: DisplayObject = this;
-
-      self._id = flash.display.DisplayObject.getNextSyncID();
-      self._displayObjectFlags = DisplayObjectFlags.Visible                            |
-                                 DisplayObjectFlags.InvalidLineBounds                  |
-                                 DisplayObjectFlags.InvalidFillBounds                  |
-                                 DisplayObjectFlags.InvalidConcatenatedMatrix          |
-                                 DisplayObjectFlags.InvalidInvertedConcatenatedMatrix  |
-                                 DisplayObjectFlags.DirtyDescendents                   |
-                                 DisplayObjectFlags.DirtyGraphics                      |
-                                 DisplayObjectFlags.DirtyMatrix                        |
-                                 DisplayObjectFlags.DirtyColorTransform                |
-                                 DisplayObjectFlags.DirtyMask                          |
-                                 DisplayObjectFlags.DirtyClipDepth                     |
-                                 DisplayObjectFlags.DirtyMiscellaneousProperties;
-
-      self._root = null;
-      self._stage = null;
-      self._setInitialName();
-      self._parent = null;
-      self._mask = null;
-
-      self._z = 0;
-      self._scaleX = 1;
-      self._scaleY = 1;
-      self._skewX = 0;
-      self._skewY = 0;
-      self._scaleZ = 1;
-      self._rotation = 0;
-      self._rotationX = 0;
-      self._rotationY = 0;
-      self._rotationZ = 0;
-
-      self._width = 0;
-      self._height = 0;
-      self._opaqueBackground = null;
-      self._scrollRect = null;
-      self._filters = null;
-      self._blendMode = BlendMode.NORMAL;
-      release || assert (self._blendMode);
-      self._scale9Grid = null;
-      self._loaderInfo = null;
-      self._accessibilityProperties = null;
-
-      self._fillBounds = new Bounds(0, 0, 0, 0);
-      self._lineBounds = new Bounds(0, 0, 0, 0);
-      self._clipDepth = -1;
-
-      self._concatenatedMatrix = new geom.Matrix();
-      self._invertedConcatenatedMatrix = new geom.Matrix();
-      self._matrix = new geom.Matrix();
-      self._invertedMatrix = new geom.Matrix();
-      self._matrix3D = null;
-      self._colorTransform = new geom.ColorTransform();
-      self._concatenatedColorTransform = new geom.ColorTransform();
-
-      self._depth = -1;
-      self._ratio = 0;
-      self._index = -1;
-      self._maskedObject = null;
-
-      self._mouseOver = false;
-      self._mouseDown = false;
-
-      self._symbol = null;
-      self._graphics = null;
-      self._children = null;
-
-      self._referenceCount = 0;
-
-      if (symbol) {
-        if (symbol.scale9Grid) {
-          // No need to take ownership: scale9Grid is never changed.
-          self._scale9Grid = symbol.scale9Grid;
-        }
-        self._symbol = symbol;
-      }
-    };
 
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -455,22 +385,23 @@ module Shumway.AVM2.AS.flash.display {
      * phase.
      */
     createAnimatedDisplayObject(symbol: Shumway.Timeline.DisplaySymbol,
-                                placeObjectTag: Shumway.SWF.PlaceObjectTag,
+                                placeObjectTag: Shumway.SWF.Parser.PlaceObjectTag,
                                 callConstructor: boolean): DisplayObject {
       var symbolClass = symbol.symbolClass;
-      var instance: DisplayObject;
-      if (symbolClass.isSubtypeOf(flash.display.BitmapData)) {
-        instance = flash.display.Bitmap.initializeFrom(symbol);
-      } else {
-        instance = symbolClass.initializeFrom(symbol);
+
+      var bitmapDataClass = this.sec.flash.display.BitmapData.axClass;
+      if (symbolClass === bitmapDataClass ||
+          bitmapDataClass.dPrototype.isPrototypeOf(symbolClass.dPrototype)) {
+        symbolClass = this.sec.flash.display.Bitmap.axClass;
       }
+      var instance: DisplayObject = constructClassFromSymbol(symbol, symbolClass);
       if (placeObjectTag.flags & PlaceObjectFlags.HasName) {
         instance._name = placeObjectTag.name;
       }
       instance._setFlags(DisplayObjectFlags.AnimatedByTimeline);
       instance._animate(placeObjectTag);
       if (callConstructor) {
-        symbolClass.instanceConstructorNoInitialize.call(instance);
+        (<AXObject><any>instance).axInitializer();
       }
       return instance;
     }
@@ -490,12 +421,12 @@ module Shumway.AVM2.AS.flash.display {
      */
     static performFrameNavigation(mainLoop: boolean, runScripts: boolean) {
       if (mainLoop) {
-        DisplayObject._runScripts = runScripts;
+        this._runScripts = runScripts;
       } else {
-        runScripts = DisplayObject._runScripts;
+        runScripts = this._runScripts;
       }
 
-      release || assert(display.DisplayObject._advancableInstances.length < 1024 * 16,
+      release || assert(this._advancableInstances.length < 1024 * 16,
       "Too many advancable instances.");
 
       // Step 1: Remove timeline objects that don't exist on new frame, update existing ones with
@@ -507,26 +438,26 @@ module Shumway.AVM2.AS.flash.display {
       // construction after ENTER_FRAME.
       // Thus, all these can be done together.
       enterTimeline("DisplayObject.InitFrame");
-      display.DisplayObject._advancableInstances.forEach(function (value) {
+      this._advancableInstances.forEach(function (value) {
         value._initFrame(mainLoop);
       });
       leaveTimeline();
       // Step 2: Dispatch ENTER_FRAME, only called in outermost invocation.
       enterTimeline("DisplayObject.EnterFrame");
       if (mainLoop && runScripts) {
-        DisplayObject._broadcastFrameEvent(events.Event.ENTER_FRAME);
+        this._broadcastFrameEvent(events.Event.ENTER_FRAME);
       }
       leaveTimeline();
       // Step 3: Create new timeline objects.
       enterTimeline("DisplayObject.ConstructFrame");
-      display.DisplayObject._advancableInstances.forEach(function (value) {
+      this._advancableInstances.forEach(function (value) {
         value._constructFrame();
       });
       leaveTimeline();
       // Step 4: Dispatch FRAME_CONSTRUCTED.
       if (runScripts) {
         enterTimeline("DisplayObject.FrameConstructed");
-        DisplayObject._broadcastFrameEvent(events.Event.FRAME_CONSTRUCTED);
+        this._broadcastFrameEvent(events.Event.FRAME_CONSTRUCTED);
         leaveTimeline();
         // Step 5: Run frame scripts
         // Flash seems to enqueue all frame scripts recursively, starting at the root of each
@@ -540,26 +471,32 @@ module Shumway.AVM2.AS.flash.display {
         // Of course, nothing guarantees that there isn't content that accidentally does, so it'd
         // be nice to eventually get this right.
         enterTimeline("DisplayObject.EnqueueFrameScripts");
-        display.DisplayObject._advancableInstances.forEach(function (value) {
+        var displayObjectContainerClass = this.sec.flash.display.DisplayObjectContainer.axClass;
+        this._advancableInstances.forEach(function (value) {
           var container: any = value;
-          if (DisplayObjectContainer.isInstanceOf(container) && !container.parent) {
+          if (displayObjectContainerClass.axIsType(container) && !container.parent) {
             container._enqueueFrameScripts();
           }
         });
-        flash.display.DisplayObject._stage._enqueueFrameScripts();
+        this._stage._enqueueFrameScripts();
         leaveTimeline();
         enterTimeline("DisplayObject.RunFrameScript");
-        MovieClip.runFrameScripts();
+        var movieClipClass = this.sec.flash.display.MovieClip.axClass;
+        if (movieClipClass.frameNavigationModel === FrameNavigationModel.SWF1) {
+          movieClipClass.runAvm1FrameScripts();
+        } else {
+          movieClipClass.runFrameScripts();
+        }
         leaveTimeline();
         // Step 6: Dispatch EXIT_FRAME.
         enterTimeline("DisplayObject.ExitFrame");
-        DisplayObject._broadcastFrameEvent(events.Event.EXIT_FRAME);
+        this._broadcastFrameEvent(events.Event.EXIT_FRAME);
         leaveTimeline();
       } else {
         MovieClip.reset();
       }
       if (mainLoop) {
-        DisplayObject._runScripts = true;
+        this._runScripts = true;
       }
     }
 
@@ -567,31 +504,102 @@ module Shumway.AVM2.AS.flash.display {
      * Dispatches a frame event on all instances of DisplayObjects.
      */
     static _broadcastFrameEvent(type: string): void {
-      var event: flash.events.Event;
-      switch (type) {
-        case events.Event.ENTER_FRAME:
-        case events.Event.FRAME_CONSTRUCTED:
-        case events.Event.EXIT_FRAME:
-        case events.Event.RENDER:
-          // TODO: Fire RENDER events only for objects on the display list.
-          event = events.Event.getBroadcastInstance(type);
-      }
-      release || assert (event, "Invalid frame event.");
-      events.EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(event);
+      var eventsPackage = this.sec.flash.events;
+      var event = eventsPackage.Event.axClass.getBroadcastInstance(type);
+      eventsPackage.EventDispatcher.axClass.broadcastEventDispatchQueue.dispatchEvent(event);
     }
 
     constructor () {
-      false && super(undefined);
-      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      super();
+
+      if (!this._fieldsInitialized) {
+        this._initializeFields();
+      }
+
       this._addReference();
       this._setFlags(DisplayObjectFlags.Constructed);
+    }
+
+    protected _initializeFields() {
+      super._initializeFields(this);
+      this._id = this.sec.flash.display.DisplayObject.axClass.getNextSyncID();
+      this._flags = DisplayObjectFlags.Visible |
+                    DisplayObjectFlags.InvalidLineBounds |
+                    DisplayObjectFlags.InvalidFillBounds |
+                    DisplayObjectFlags.InvalidConcatenatedMatrix |
+                    DisplayObjectFlags.InvalidInvertedConcatenatedMatrix |
+                    DisplayObjectFlags.DirtyDescendents;
+      this._dirtyFlags = DisplayObjectDirtyFlags.DirtyGraphics |
+                         DisplayObjectDirtyFlags.DirtyMatrix |
+                         DisplayObjectDirtyFlags.DirtyColorTransform |
+                         DisplayObjectDirtyFlags.DirtyMask |
+                         DisplayObjectDirtyFlags.DirtyClipDepth |
+                         DisplayObjectDirtyFlags.DirtyMiscellaneousProperties;
+      this._root = null;
+      this._stage = null;
+      this._setInitialName();
+      this._parent = null;
+      this._mask = null;
+
+      this._z = 0;
+      this._scaleX = 1;
+      this._scaleY = 1;
+      this._skewX = 0;
+      this._skewY = 0;
+      this._scaleZ = 1;
+      this._rotation = 0;
+      this._rotationX = 0;
+      this._rotationY = 0;
+      this._rotationZ = 0;
+
+      this._width = 0;
+      this._height = 0;
+      this._opaqueBackground = null;
+      this._scrollRect = null;
+      this._filters = null;
+      this._blendMode = BlendMode.NORMAL;
+      // No need to take ownership: scale9Grid is never changed.
+      this._scale9Grid = this._symbol ? this._symbol.scale9Grid : null;
+      this._loaderInfo = null;
+      this._accessibilityProperties = null;
+
+      this._fillBounds = new Bounds(0, 0, 0, 0);
+      this._lineBounds = new Bounds(0, 0, 0, 0);
+      this._clipDepth = -1;
+
+      var matrixClass = this.sec.flash.geom.Matrix;
+      this._concatenatedMatrix = new matrixClass();
+      this._invertedConcatenatedMatrix = new matrixClass();
+      this._matrix = new matrixClass();
+      this._invertedMatrix = new matrixClass();
+      this._matrix3D = null;
+      this._perspectiveProjectionFOV = geom.DefaultPerspectiveProjection.FOV;
+      this._perspectiveProjectionCenterX = geom.DefaultPerspectiveProjection.CenterX;
+      this._perspectiveProjectionCenterY = geom.DefaultPerspectiveProjection.CenterY;
+      var colorTransformClass = this.sec.flash.geom.ColorTransform;
+      this._colorTransform = new colorTransformClass();
+      this._concatenatedColorTransform = new colorTransformClass();
+
+      this._depth = -1;
+      this._ratio = 0;
+      this._index = -1;
+      this._maskedObject = null;
+
+      this._mouseOver = false;
+      this._mouseDown = false;
+
+      this._graphics = null;
+      this._children = null;
+
+      this._referenceCount = 0;
     }
 
     /**
      * Sets the object's initial name to adhere to the 'instanceN' naming scheme.
      */
     _setInitialName() {
-      this._name = 'instance' + (flash.display.DisplayObject._instanceID++);
+      this._name = 'instance' +
+                   (this.sec.flash.display.DisplayObject.axClass._instanceID++);
     }
 
     _setParent(parent: DisplayObjectContainer, depth: number) {
@@ -605,8 +613,11 @@ module Shumway.AVM2.AS.flash.display {
         if (this._hasFlags(DisplayObjectFlags.HasFrameScriptPending)) {
           bubblingFlags |= DisplayObjectFlags.ContainsFrameScriptPendingChildren;
         }
+        if (this._hasAnyDirtyFlags(DisplayObjectDirtyFlags.Dirty)) {
+          bubblingFlags |= DisplayObjectFlags.DirtyDescendents;
+        }
         if (this._hasAnyFlags(DisplayObjectFlags.Bubbling)) {
-          bubblingFlags |= this._displayObjectFlags & DisplayObjectFlags.Bubbling;
+          bubblingFlags |= this._flags & DisplayObjectFlags.Bubbling;
         }
         if (bubblingFlags) {
           parent._propagateFlagsUp(bubblingFlags);
@@ -649,38 +660,50 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _setFlags(flags: DisplayObjectFlags) {
-      this._displayObjectFlags |= flags;
+      this._flags |= flags;
     }
 
     /**
      * Use this to set dirty flags so that we can also propagate the dirty child bit.
      */
-    _setDirtyFlags(flags: DisplayObjectFlags) {
-      this._displayObjectFlags |= flags;
+    _setDirtyFlags(flags: DisplayObjectDirtyFlags) {
+      this._dirtyFlags |= flags;
       if (this._parent) {
         // Notify parent that it has a dirty descendent.
         this._parent._propagateFlagsUp(DisplayObjectFlags.DirtyDescendents);
       }
     }
 
+    _removeDirtyFlags(flags: DisplayObjectDirtyFlags) {
+      this._dirtyFlags &= ~flags;
+    }
+
+    _hasDirtyFlags(flags: DisplayObjectDirtyFlags): boolean {
+      return (this._dirtyFlags & flags) === flags;
+    }
+
+    _hasAnyDirtyFlags(flags: DisplayObjectDirtyFlags): boolean {
+      return !!(this._dirtyFlags & flags);
+    }
+
     _toggleFlags(flags: DisplayObjectFlags, on: boolean) {
       if (on) {
-        this._displayObjectFlags |= flags;
+        this._flags |= flags;
       } else {
-        this._displayObjectFlags &= ~flags;
+        this._flags &= ~flags;
       }
     }
 
     _removeFlags(flags: DisplayObjectFlags) {
-      this._displayObjectFlags &= ~flags;
+      this._flags &= ~flags;
     }
 
     _hasFlags(flags: DisplayObjectFlags): boolean {
-      return (this._displayObjectFlags & flags) === flags;
+      return (this._flags & flags) === flags;
     }
 
     _hasAnyFlags(flags: DisplayObjectFlags): boolean {
-      return !!(this._displayObjectFlags & flags);
+      return !!(this._flags & flags);
     }
 
     /**
@@ -709,7 +732,8 @@ module Shumway.AVM2.AS.flash.display {
     // AS -> JS Bindings
 
     _id: number;
-    private _displayObjectFlags: number;
+    private _flags: DisplayObjectFlags;
+    private _dirtyFlags: DisplayObjectDirtyFlags;
 
     _root: flash.display.DisplayObject;
     _stage: flash.display.Stage;
@@ -786,6 +810,10 @@ module Shumway.AVM2.AS.flash.display {
     _colorTransform: flash.geom.ColorTransform;
     _concatenatedColorTransform: flash.geom.ColorTransform;
     _matrix3D: flash.geom.Matrix3D;
+    _perspectiveProjectionFOV: number;
+    _perspectiveProjectionCenterX: number;
+    _perspectiveProjectionCenterY: number;
+    _perspectiveProjection: flash.geom.PerspectiveProjection;
     _depth: number;
     _ratio: number;
 
@@ -799,7 +827,8 @@ module Shumway.AVM2.AS.flash.display {
     _mouseOver: boolean;
     _mouseDown: boolean;
 
-    _symbol: Shumway.Timeline.Symbol;
+    _symbol: Shumway.Timeline.DisplaySymbol;
+    _placeObjectTag: Shumway.SWF.Parser.PlaceObjectTag;
     _graphics: flash.display.Graphics;
 
     /**
@@ -926,7 +955,7 @@ module Shumway.AVM2.AS.flash.display {
       this._rotation = DisplayObject._clampRotation(this._skewY * 180 / Math.PI);
       this._removeFlags(DisplayObjectFlags.InvalidMatrix);
       this._setFlags(DisplayObjectFlags.InvalidInvertedMatrix);
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMatrix);
       this._invalidatePosition();
     }
 
@@ -962,11 +991,13 @@ module Shumway.AVM2.AS.flash.display {
         var ancestor = this._findNearestAncestor(DisplayObjectFlags.InvalidConcatenatedColorTransform, false);
         var path = DisplayObject._getAncestors(this, ancestor);
         var i = path.length - 1;
-        if (flash.display.Stage.isType(path[i])) {
+        var stageClass = this.sec.flash.display.Stage;
+        if (stageClass.axIsType(path[i])) {
           i--;
         }
-        var m = ancestor && !flash.display.Stage.isType(ancestor) ? ancestor._concatenatedColorTransform.clone()
-                                                                  : new geom.ColorTransform();
+        var m = ancestor && !stageClass.axIsType(ancestor) ?
+                ancestor._concatenatedColorTransform.clone() :
+                new this.sec.flash.geom.ColorTransform();
         while (i >= 0) {
           ancestor = path[i--];
           release || assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform));
@@ -980,10 +1011,13 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _setColorTransform(colorTransform: flash.geom.ColorTransform) {
+      if (this._colorTransform.equals(colorTransform)) {
+        return;
+      }
       this._colorTransform.copyFrom(colorTransform);
       this._colorTransform.convertToFixedPoint();
       this._propagateFlagsDown(DisplayObjectFlags.InvalidConcatenatedColorTransform);
-      this._setDirtyFlags(DisplayObjectFlags.DirtyColorTransform);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyColorTransform);
     }
 
     /**
@@ -1055,7 +1089,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       var m;
       if (targetCoordinateSpace) {
-        m = geom.Matrix.TEMP_MATRIX;
+        m = this.sec.flash.geom.Matrix.axClass.TEMP_MATRIX;
         var invertedTargetMatrix = targetCoordinateSpace._getInvertedConcatenatedMatrix();
         invertedTargetMatrix.preMultiplyInto(this._getConcatenatedMatrix(), m);
       } else {
@@ -1080,7 +1114,7 @@ module Shumway.AVM2.AS.flash.display {
      * TODO: check if we can usefully combine all upwards-propagated flags here.
      */
     private _invalidateMatrix() {
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMatrix);
       this._setFlags(DisplayObjectFlags.InvalidMatrix | DisplayObjectFlags.InvalidInvertedMatrix);
       this._invalidatePosition();
     }
@@ -1097,24 +1131,26 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Animates this object's display properties.
      */
-    _animate(placeObjectTag: Shumway.SWF.PlaceObjectTag): void {
+    _animate(placeObjectTag: Shumway.SWF.Parser.PlaceObjectTag): void {
       release || assert(this._hasFlags(DisplayObjectFlags.AnimatedByTimeline));
 
       var reset = !(placeObjectTag.flags & PlaceObjectFlags.Move) &&
                   placeObjectTag.flags & PlaceObjectFlags.HasCharacter;
 
+      var matrixClass = this.sec.flash.geom.Matrix.axClass;
       if (placeObjectTag.flags & PlaceObjectFlags.HasMatrix) {
-        geom.Matrix.TEMP_MATRIX.copyFromUntyped(placeObjectTag.matrix);
-        this._setMatrix(geom.Matrix.TEMP_MATRIX, false);
+        matrixClass.TEMP_MATRIX.copyFromUntyped(placeObjectTag.matrix);
+        this._setMatrix(matrixClass.TEMP_MATRIX, false);
       } else if (reset) {
-        this._setMatrix(geom.Matrix.FROZEN_IDENTITY_MATRIX, false);
+        this._setMatrix(matrixClass.FROZEN_IDENTITY_MATRIX, false);
       }
 
+      var colorTransformClass = this.sec.flash.geom.ColorTransform.axClass;
       if (placeObjectTag.flags & PlaceObjectFlags.HasColorTransform) {
-        geom.ColorTransform.TEMP_COLOR_TRANSFORM.copyFromUntyped(placeObjectTag.cxform);
-        this._setColorTransform(geom.ColorTransform.TEMP_COLOR_TRANSFORM);
+        colorTransformClass.TEMP_COLOR_TRANSFORM.copyFromUntyped(placeObjectTag.cxform);
+        this._setColorTransform(colorTransformClass.TEMP_COLOR_TRANSFORM);
       } else if (reset) {
-        this._setColorTransform(geom.ColorTransform.FROZEN_IDENTITY_COLOR_TRANSFORM);
+        this._setColorTransform(colorTransformClass.FROZEN_IDENTITY_COLOR_TRANSFORM);
       }
 
       if (placeObjectTag.flags & PlaceObjectFlags.HasRatio || reset) {
@@ -1122,7 +1158,7 @@ module Shumway.AVM2.AS.flash.display {
         if (ratio !== this._ratio) {
           release || assert(ratio >= 0 && ratio <= 0xffff);
           this._ratio = ratio;
-          this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+          this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
         }
       }
 
@@ -1130,40 +1166,41 @@ module Shumway.AVM2.AS.flash.display {
         var clipDepth = placeObjectTag.clipDepth === undefined ? -1 : placeObjectTag.clipDepth;
         if (clipDepth !== this._clipDepth) {
           this._clipDepth = clipDepth;
-          this._setDirtyFlags(DisplayObjectFlags.DirtyClipDepth);
+          this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyClipDepth);
         }
       }
 
       if (placeObjectTag.flags & PlaceObjectFlags.HasFilterList) {
-        var filters: flash.filters.BitmapFilter[] = [];
+        var filtersPackage = this.sec.flash.filters;
+        var filters: filters.BitmapFilter[] = [];
         var swfFilters = placeObjectTag.filters;
         for (var i = 0; i < swfFilters.length; i++) {
           var obj = swfFilters[i];
-          var filter: flash.filters.BitmapFilter;
+          var filter: filters.BitmapFilter;
           switch (obj.type) {
             case 0:
-              filter = flash.filters.DropShadowFilter.FromUntyped(obj);
+              filter = filtersPackage.DropShadowFilter.axClass.FromUntyped(obj);
               break;
             case 1:
-              filter = flash.filters.BlurFilter.FromUntyped(obj);
+              filter = filtersPackage.BlurFilter.axClass.FromUntyped(obj);
               break;
             case 2:
-              filter = flash.filters.GlowFilter.FromUntyped(obj);
+              filter = filtersPackage.GlowFilter.axClass.FromUntyped(obj);
               break;
             case 3:
-              filter = flash.filters.BevelFilter.FromUntyped(obj);
+              filter = filtersPackage.BevelFilter.axClass.FromUntyped(obj);
               break;
             case 4:
-              filter = flash.filters.GradientGlowFilter.FromUntyped(obj);
+              filter = filtersPackage.GradientGlowFilter.axClass.FromUntyped(obj);
               break;
             case 5:
-              filter = flash.filters.ConvolutionFilter.FromUntyped(obj);
+              filter = filtersPackage.ConvolutionFilter.axClass.FromUntyped(obj);
               break;
             case 6:
-              filter = flash.filters.ColorMatrixFilter.FromUntyped(obj);
+              filter = filtersPackage.ColorMatrixFilter.axClass.FromUntyped(obj);
               break;
             case 7:
-              filter = flash.filters.GradientBevelFilter.FromUntyped(obj);
+              filter = filtersPackage.GradientBevelFilter.axClass.FromUntyped(obj);
               break;
             default:
               release || assert(filter, "Unknown filter type.");
@@ -1171,10 +1208,10 @@ module Shumway.AVM2.AS.flash.display {
           filters.push(filter);
         }
         this._filters = filters;
-        this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
-      } else if (reset) {
+        this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
+      } else if (reset && this._filters) {
         this._filters = null;
-        this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+        this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
       }
 
       if (placeObjectTag.flags & PlaceObjectFlags.HasBlendMode || reset) {
@@ -1182,7 +1219,7 @@ module Shumway.AVM2.AS.flash.display {
                                                             1 : placeObjectTag.blendMode);
         if (blendMode !== this._blendMode) {
           this._blendMode = blendMode;
-          this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+          this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
         }
       }
 
@@ -1190,15 +1227,15 @@ module Shumway.AVM2.AS.flash.display {
         var cacheAsBitmap = placeObjectTag.bmpCache > 0;
         if (cacheAsBitmap !== this._hasFlags(DisplayObjectFlags.CacheAsBitmap)) {
           this._toggleFlags(DisplayObjectFlags.CacheAsBitmap, cacheAsBitmap);
-          this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+          this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
         }
       }
 
       if (placeObjectTag.flags & PlaceObjectFlags.HasVisible || reset) {
-        var visible = placeObjectTag.visibility !== 0;
+        var visible = placeObjectTag.visibility === undefined || placeObjectTag.visibility;
         if (visible !== this._hasFlags(DisplayObjectFlags.Visible)) {
           this._toggleFlags(DisplayObjectFlags.Visible, visible);
-          this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+          this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
         }
       }
     }
@@ -1238,7 +1275,7 @@ module Shumway.AVM2.AS.flash.display {
       this._matrix.tx = value;
       this._invertedMatrix.tx = -value;
       this._invalidatePosition();
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMatrix);
     }
 
     get y(): number {
@@ -1266,7 +1303,7 @@ module Shumway.AVM2.AS.flash.display {
       this._matrix.ty = value;
       this._invertedMatrix.ty = -value;
       this._invalidatePosition();
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMatrix);
     }
 
     /**
@@ -1307,7 +1344,8 @@ module Shumway.AVM2.AS.flash.display {
 
     set scaleZ(value: number) {
       value = +value;
-      notImplemented("public DisplayObject::set scaleZ"); return;
+      release || somewhatImplemented("public DisplayObject::set scaleZ");
+      this._scaleZ = value;
     }
 
     get rotation(): number {
@@ -1335,7 +1373,8 @@ module Shumway.AVM2.AS.flash.display {
 
     set rotationX(value: number) {
       value = +value;
-      notImplemented("public DisplayObject::set rotationX"); return;
+      release || somewhatImplemented("public DisplayObject::set rotationX");
+      this._rotationZ = value;
     }
 
     get rotationY(): number {
@@ -1344,7 +1383,8 @@ module Shumway.AVM2.AS.flash.display {
 
     set rotationY(value: number) {
       value = +value;
-      notImplemented("public DisplayObject::set rotationY"); return;
+      release || somewhatImplemented("public DisplayObject::set rotationY");
+      this._rotationY = value;
     }
 
     get rotationZ(): number {
@@ -1353,7 +1393,8 @@ module Shumway.AVM2.AS.flash.display {
 
     set rotationZ(value: number) {
       value = +value;
-      notImplemented("public DisplayObject::set rotationZ"); return;
+      release || somewhatImplemented("public DisplayObject::set rotationZ");
+      this._rotationZ = value;
     }
 
     /**
@@ -1460,18 +1501,21 @@ module Shumway.AVM2.AS.flash.display {
       if (value && value._maskedObject) {
         value._maskedObject.mask = null;
       }
+      if (this._mask) {
+        this._mask._maskedObject = null;
+      }
       this._mask = value;
       if (value) {
         value._maskedObject = this;
       }
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMask);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMask);
     }
 
     get transform(): flash.geom.Transform {
       return this._getTransform();
     }
     _getTransform() {
-      return new flash.geom.Transform(this);
+      return new this.sec.flash.geom.Transform(this);
     }
 
     set transform(value: flash.geom.Transform) {
@@ -1512,7 +1556,7 @@ module Shumway.AVM2.AS.flash.display {
       var node = this;
       do {
         if (node._stage === node) {
-          release || assert(flash.display.Stage.isType(node));
+          release || assert(this.sec.flash.display.Stage.axIsType(node));
           return <flash.display.Stage>node;
         }
         node = node._parent;
@@ -1525,8 +1569,15 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set name(value: string) {
-      checkNullParameter(value, "name");
-      this._name = asCoerceString(value);
+      checkNullParameter(value, "name", this.sec);
+      if (this._hasFlags(DisplayObjectFlags.OwnedByTimeline)) {
+        // In AVM2, setting the name of a timline-placed DisplayObject throws.
+        if (this._symbol && !this._symbol.isAVM1Object) { // fail only in AVM2
+          this.sec.throwError('IllegalOperationError', Errors.TimelineObjectNameSealedError);
+        }
+        return;
+      }
+      this._name = axCoerceString(value);
     }
 
     get parent(): DisplayObjectContainer {
@@ -1546,7 +1597,7 @@ module Shumway.AVM2.AS.flash.display {
       this._colorTransform.alphaMultiplier = value;
       this._colorTransform.convertToFixedPoint();
       this._propagateFlagsDown(DisplayObjectFlags.InvalidConcatenatedColorTransform);
-      this._setDirtyFlags(DisplayObjectFlags.DirtyColorTransform);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyColorTransform);
     }
 
     get blendMode(): string {
@@ -1555,28 +1606,29 @@ module Shumway.AVM2.AS.flash.display {
 
     set blendMode(value: string) {
       this._stopTimelineAnimation();
-      value = asCoerceString(value);
+      value = axCoerceString(value);
       if (value === this._blendMode) {
         return;
       }
       if (BlendMode.toNumber(value) < 0) {
-        throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
+        this.sec.throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
       }
       this._blendMode = value;
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
     }
 
     get scale9Grid(): flash.geom.Rectangle {
       return this._getScale9Grid();
     }
     _getScale9Grid() {
-      return this._scale9Grid ? flash.geom.Rectangle.FromBounds(this._scale9Grid) : null;
+      var rectangleClass = this.sec.flash.geom.Rectangle.axClass;
+      return this._scale9Grid ? rectangleClass.FromBounds(this._scale9Grid) : null;
     }
 
     set scale9Grid(innerRectangle: flash.geom.Rectangle) {
       this._stopTimelineAnimation();
       this._scale9Grid = Bounds.FromRectangle(innerRectangle);
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
     }
 
     /**
@@ -1594,7 +1646,7 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       this._toggleFlags(DisplayObjectFlags.CacheAsBitmap, !!value);
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
     }
 
     /**
@@ -1602,32 +1654,37 @@ module Shumway.AVM2.AS.flash.display {
      * outside of this class. The get/set filters accessors always return deep clones of this
      * array.
      */
-    get filters(): flash.filters.BitmapFilter [] {
+    get filters(): ASArray /* flash.filters.BitmapFilter [] */ {
       return this._getFilters();
     }
     _getFilters() {
-      return this._filters ? this._filters.map(function (x: flash.filters.BitmapFilter) {
+      var filters = this._filters ? this._filters.map(function (x: flash.filters.BitmapFilter) {
         return x.clone();
       }) : [];
+      return this.sec.createArray(filters);
     }
 
-    set filters(value: flash.filters.BitmapFilter []) {
+    set filters(value_: ASArray) {
+      var value: flash.filters.BitmapFilter [] = value_ ? value_.value : null;
       if (!this._filters) {
         this._filters = [];
       }
       var changed = false;
       if (isNullOrUndefined(value)) {
-        changed = this.filters.length > 0;
+        changed = this._filters.length > 0;
         this._filters.length = 0;
       } else {
+        var bitmapFilterClass = this.sec.flash.filters.BitmapFilter.axClass;
         this._filters = value.map(function (x: flash.filters.BitmapFilter) {
-          release || assert (flash.filters.BitmapFilter.isType(x));
+          if (!bitmapFilterClass.axIsType(x)) {
+            this.sec.throwError('TypeError', Errors.ParamTypeError, '0', 'Filter');
+          }
           return x.clone();
         });
         changed = true;
       }
       if (changed) {
-        this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+        this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
       }
     }
 
@@ -1644,7 +1701,7 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       this._toggleFlags(DisplayObjectFlags.Visible, value);
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyMiscellaneousProperties);
     }
 
     get z(): number {
@@ -1654,17 +1711,19 @@ module Shumway.AVM2.AS.flash.display {
     set z(value: number) {
       value = +value;
       this._z = value;
-      notImplemented("public DisplayObject::set z"); return;
+      release || somewhatImplemented("public DisplayObject::set z");
     }
 
     getBounds(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
       targetCoordinateSpace = targetCoordinateSpace || this;
-      return geom.Rectangle.FromBounds(this._getTransformedBounds(targetCoordinateSpace, true));
+      var rectangleClass = this.sec.flash.geom.Rectangle.axClass;
+      return rectangleClass.FromBounds(this._getTransformedBounds(targetCoordinateSpace, true));
     }
 
     getRect(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
       targetCoordinateSpace = targetCoordinateSpace || this;
-      return geom.Rectangle.FromBounds(this._getTransformedBounds(targetCoordinateSpace, false));
+      var rectangleClass = this.sec.flash.geom.Rectangle.axClass;
+      return rectangleClass.FromBounds(this._getTransformedBounds(targetCoordinateSpace, false));
     }
 
     /**
@@ -1686,17 +1745,17 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     globalToLocal3D(point: flash.geom.Point): flash.geom.Vector3D {
-      notImplemented("public DisplayObject::globalToLocal3D");
+      release || notImplemented("public DisplayObject::globalToLocal3D");
       return null;
     }
 
     localToGlobal3D(point: flash.geom.Point): flash.geom.Vector3D {
-      notImplemented("public DisplayObject::localToGlobal3D");
+      release || notImplemented("public DisplayObject::localToGlobal3D");
       return null;
     }
 
     local3DToGlobal(point3d: flash.geom.Vector3D): flash.geom.Point {
-      notImplemented("public DisplayObject::local3DToGlobal");
+      release || notImplemented("public DisplayObject::local3DToGlobal");
       return null;
     }
 
@@ -1780,10 +1839,10 @@ module Shumway.AVM2.AS.flash.display {
       if (this._graphics) {
         return this._graphics;
       }
-      this._graphics = new flash.display.Graphics();
+      this._graphics = new this.sec.flash.display.Graphics();
       this._graphics._setParent(this);
       this._invalidateFillAndLineBounds(true, true);
-      this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
+      this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyGraphics);
       return this._graphics;
     }
 
@@ -1794,15 +1853,22 @@ module Shumway.AVM2.AS.flash.display {
      */
     _setStaticContentFromSymbol(symbol: Shumway.Timeline.DisplaySymbol) {
       release || assert(!symbol.dynamic);
-      if (this._canHaveGraphics()) {
-        release || assert(symbol instanceof flash.display.ShapeSymbol);
-        this._graphics = (<flash.display.ShapeSymbol>symbol).graphics;
-        this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
-      } else if (flash.text.StaticText.isType(this)) {
-        release || assert(symbol instanceof flash.text.TextSymbol);
-        var textSymbol = <flash.text.TextSymbol>symbol;
-        (<flash.text.StaticText>this)._textContent = textSymbol.textContent;
-        this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
+      if (symbol instanceof flash.display.ShapeSymbol) {
+        release || assert(this._canHaveGraphics());
+        var newGraphics = (<flash.display.ShapeSymbol>symbol).graphics;
+        if (this._graphics === newGraphics) {
+          return;
+        }
+        this._graphics = newGraphics;
+        this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyGraphics);
+      } else if (symbol instanceof flash.text.TextSymbol) {
+        release || assert(this.sec.flash.text.StaticText.axIsType(this));
+        var newTextContent = (<flash.text.TextSymbol>symbol).textContent;
+        if ((<flash.text.StaticText>this)._textContent === newTextContent) {
+          return;
+        }
+        (<flash.text.StaticText>this)._textContent = newTextContent;
+        this._setDirtyFlags(DisplayObjectDirtyFlags.DirtyTextContent);
       }
       this._symbol = symbol;
       this._setFillAndLineBoundsFromSymbol(symbol);
@@ -1816,7 +1882,7 @@ module Shumway.AVM2.AS.flash.display {
      * in the global coordinate space overlap.
      */
     hitTestObject(other: DisplayObject): boolean {
-      release || assert (other && DisplayObject.isType(other));
+      release || assert (other && this.sec.flash.display.DisplayObject.axIsType(other));
       var a = this, b = other;
       var aBounds = a._getContentBounds(false).clone();
       var bBounds = b._getContentBounds(false).clone();
@@ -1875,7 +1941,8 @@ module Shumway.AVM2.AS.flash.display {
           // For Drop, replace previous hit with current one.
           objects[0] = this;
         } else if (testingType === HitTestingType.ObjectsUnderPoint ||
-            InteractiveObject.isType(this) && (<InteractiveObject>this)._mouseEnabled) {
+                   this.sec.flash.display.InteractiveObject.axIsType(this) &&
+                   (<InteractiveObject>this)._mouseEnabled) {
           // For getObjectsUnderPoint, push all direct hits, for mouse target finding
           // InteractiveObjects only.
           objects.push(this);
@@ -1948,7 +2015,7 @@ module Shumway.AVM2.AS.flash.display {
       this._scrollRect = value ? value.clone() : null;
       /* TODO: Figure out how to deal with the bounds and hit testing when scroll rects are applied.
        * The Flash implementation appears to be broken. */
-      somewhatImplemented("public DisplayObject::set scrollRect");
+      release || somewhatImplemented("public DisplayObject::set scrollRect");
       return;
     }
 
@@ -1971,7 +2038,7 @@ module Shumway.AVM2.AS.flash.display {
     private _getDistance(ancestor: DisplayObject): number {
       var d = 0;
       var node = this;
-      while (node !== ancestor) {
+      while (node && node !== ancestor) {
         d++;
         node = node._parent;
       }
@@ -2007,11 +2074,8 @@ module Shumway.AVM2.AS.flash.display {
      * Returns the current mouse position relative to this object.
      */
     _getLocalMousePosition(): flash.geom.Point {
-      var position = flash.ui.Mouse._currentPosition;
-      if (this._parent) {
-        position = this._parent.globalToLocal(flash.ui.Mouse._currentPosition);
-      }
-      return position;
+      var position = this.sec.flash.ui.Mouse.axClass._currentPosition;
+      return this.globalToLocal(position);
     }
 
     get mouseX(): number {
@@ -2028,7 +2092,7 @@ module Shumway.AVM2.AS.flash.display {
         var flagNames = [];
         for (var i = 0; i < 32; i++) {
           if (this._hasFlags(1 << i)) {
-            flagNames.push(DisplayObjectFlags[1 << i]);
+            flagNames.push(String([1 << i]));
           }
         }
         name += " " + flagNames.join("|");
@@ -2036,16 +2100,27 @@ module Shumway.AVM2.AS.flash.display {
       return name;
     }
 
-    public debugTrace(maxDistance = 1024, name = "") {
+    public debugNameShort(): string {
+      return "[" + this._depth + ":" + this._id + "]: (" + this._referenceCount + ") {" + this._flags + "} " + this;
+    }
+
+    public hashCode(): number {
+      return this.getBounds(null).hashCode();
+    }
+
+    public getAncestorCount(): number {
+      return 0;
+    }
+
+    public debugTrace(writer = new IndentingWriter(), maxDistance = 1024, name = "") {
       var self = this;
-      var writer = new IndentingWriter();
       this.visit(function (node) {
         var distance = node._getDistance(self);
         if (distance > maxDistance) {
           return VisitorFlags.Skip;
         }
         var prefix = name + Shumway.StringUtilities.multiple(" ", distance);
-        writer.writeObject(prefix + node.debugName() + ", bounds: " + node.getBounds(null).toString(), { "...": { value: node} });
+        writer.writeLn(prefix + node.debugNameShort() + ", bounds: " + node.getBounds(null).toString());
         return VisitorFlags.Continue;
       }, VisitorFlags.None);
     }
@@ -2067,6 +2142,22 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
 
+    /**
+     * Returns script precedence sequence based on placeObjectTag. Creates every
+     * time a new array, so it's safe to modify it.
+     * @private
+     */
+    _getScriptPrecedence(): number[] {
+      if (!this._parent) {
+        return [];
+      }
+      var result = this._parent._getScriptPrecedence();
+      if (this._placeObjectTag) {
+        result.push(this._placeObjectTag.actionBlocksPrecedence);
+      }
+      return result;
+    }
+
     get accessibilityProperties(): flash.accessibility.AccessibilityProperties {
       return this._accessibilityProperties;
     }
@@ -2078,7 +2169,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set blendShader(value: any /* flash.display.Shader */) {
-      notImplemented("public DisplayObject::set blendShader");
+      release || somewhatImplemented("public DisplayObject::set blendShader");
     }
   }
 }

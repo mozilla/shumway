@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 // Class: Rectangle
-module Shumway.AVM2.AS.flash.geom {
+module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import ArrayWriter = Shumway.ArrayUtilities.ArrayWriter;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import Bounds = Shumway.Bounds;
 
-  export class Rectangle extends ASNative implements flash.utils.IExternalizable {
+  export class Rectangle extends ASObject implements flash.utils.IExternalizable {
+
+    static axClass: typeof Rectangle;
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
 
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -40,7 +38,7 @@ module Shumway.AVM2.AS.flash.geom {
     public height: number;
 
     constructor(x: number = 0, y: number = 0, width: number = 0, height: number = 0) {
-      false && super();
+      super();
       x = +x;
       y = +y;
       width = +width;
@@ -54,8 +52,9 @@ module Shumway.AVM2.AS.flash.geom {
     public static FromBounds(bounds: Bounds): Rectangle {
       var xMin = bounds.xMin;
       var yMin = bounds.yMin;
-      return new Rectangle(xMin / 20, yMin / 20, (bounds.xMax - xMin) / 20,
-                           (bounds.yMax - yMin) / 20);
+      return new this.sec.flash.geom.Rectangle(xMin / 20, yMin / 20,
+                                               (bounds.xMax - xMin) / 20,
+                                               (bounds.yMax - yMin) / 20);
     }
 
     public set native_x(x: number) {
@@ -129,7 +128,7 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public get topLeft(): Point {
-      return new Point(this.left, this.top);
+      return new this.sec.flash.geom.Point(this.left, this.top);
     }
 
     public set topLeft(value: Point) {
@@ -138,7 +137,7 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public get bottomRight(): Point {
-      return new Point(this.right, this.bottom);
+      return new this.sec.flash.geom.Point(this.right, this.bottom);
     }
 
     public set bottomRight(value: Point) {
@@ -147,7 +146,7 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public get size(): Point {
-      return new Point(this.width, this.height);
+      return new this.sec.flash.geom.Point(this.width, this.height);
     }
 
     public set size(value: Point) {
@@ -160,18 +159,19 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public clone(): Rectangle {
-      return new Rectangle(this.x, this.y, this.width, this.height);
+      return new this.sec.flash.geom.Rectangle(this.x, this.y, this.width, this.height);
     }
 
     public isEmpty(): boolean {
       return this.width <= 0 || this.height <= 0;
     }
 
-    public setEmpty(): void {
+    public setEmpty(): Rectangle {
       this.x = 0;
       this.y = 0;
       this.width = 0;
       this.height = 0;
+      return this;
     }
 
     public inflate(dx: number, dy: number): void {
@@ -227,8 +227,8 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public intersects(toIntersect: Rectangle): boolean {
-      return Math.max(this.x, toIntersect.x) <= Math.min(this.right, toIntersect.right)
-        && Math.max(this.y, toIntersect.y) <= Math.min(this.bottom, toIntersect.bottom);
+      return Math.max(this.x, toIntersect.x) <= Math.min(this.right, toIntersect.right) &&
+             Math.max(this.y, toIntersect.y) <= Math.min(this.bottom, toIntersect.bottom);
     }
 
     public intersectInPlace(clipRect: Rectangle): Rectangle {
@@ -363,6 +363,15 @@ module Shumway.AVM2.AS.flash.geom {
 
     public toString(): string {
       return "(x=" + this.x + ", y=" + this.y + ", w=" + this.width + ", h=" + this.height + ")";
+    }
+
+    public hashCode(): number {
+      var hash = 0;
+      hash += this.x * 20 | 0;      hash *= 37;
+      hash += this.y * 20 | 0;      hash *= 37;
+      hash += this.width * 20 | 0;  hash *= 37;
+      hash += this.height * 20 | 0;
+      return hash;
     }
 
     public writeExternal(output: flash.utils.IDataOutput) {

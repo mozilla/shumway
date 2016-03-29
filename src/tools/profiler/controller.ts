@@ -15,7 +15,7 @@
  */
 module Shumway.Tools.Profiler {
 
-  export enum UIThemeType {
+  export const enum UIThemeType {
     DARK,
     LIGHT
   }

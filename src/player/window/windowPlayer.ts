@@ -21,19 +21,16 @@ module Shumway.Player.Window {
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
 
   export class WindowGFXService extends GFXServiceBase {
-    private _window;
-    private _parent;
-    private _fontOrImageRequests: PromiseWrapper<any>[];
+    private _peer: Shumway.Remoting.ITransportPeer;
+    private _assetDecodingRequests: PromiseWrapper<any>[];
 
-    constructor(window, parent?) {
-      super();
-
-      this._window = window;
-      this._parent = parent || window.parent;
-      this._window.addEventListener('message', function (e) {
-        this.onWindowMessage(e.data);
-      }.bind(this));
-      this._fontOrImageRequests = [];
+    constructor(sec: ISecurityDomain, peer: Shumway.Remoting.ITransportPeer) {
+      super(sec);
+      this._peer = peer;
+      this._peer.onAsyncMessage = function (msg) {
+        this.onWindowMessage(msg);
+      }.bind(this);
+      this._assetDecodingRequests = [];
     }
 
     update(updates: DataBuffer, assets: any[]): void {
@@ -45,7 +42,7 @@ module Shumway.Player.Window {
         result: undefined
       };
       var transferList = [bytes.buffer];
-      this._parent.postMessage(message, '*', transferList);
+      this._peer.postAsyncMessage(message, transferList);
     }
 
     updateAndGet(updates: DataBuffer, assets: any[]): any {
@@ -56,14 +53,14 @@ module Shumway.Player.Window {
         assets: assets,
         result: undefined
       };
-      var result = this._sendSyncMessage(message);
+      var result = this._peer.sendSyncMessage(message);
       return DataBuffer.FromPlainObject(result);
     }
 
     frame(): void {
-      this._parent.postMessage({
+      this._peer.postAsyncMessage({
         type: 'frame'
-      }, '*');
+      });
     }
 
     videoControl(id: number, eventType: VideoControlEvent, data: any): any {
@@ -74,57 +71,50 @@ module Shumway.Player.Window {
         data: data,
         result: undefined
       };
-      return this._sendSyncMessage(message);
+      return this._peer.sendSyncMessage(message);
     }
 
-    private _sendSyncMessage(message) {
-      if (typeof ShumwayCom !== 'undefined' && ShumwayCom.postSyncMessage) {
-        return ShumwayCom.postSyncMessage(message);
-      }
-
-      var event = this._parent.document.createEvent('CustomEvent');
-      event.initCustomEvent('syncmessage', false, false, message);
-      this._parent.dispatchEvent(event);
-      return message.result;
-    }
-
-    registerFont(syncId: number, data: any): Promise<any> {
-      var requestId = this._fontOrImageRequests.length;
+    registerFont(syncId: number, data: Uint8Array): Promise<any> {
+      var requestId = this._assetDecodingRequests.length;
       var result = new PromiseWrapper<any>();
-      this._fontOrImageRequests[requestId] = result;
+      this._assetDecodingRequests[requestId] = result;
       var message = {
-        type: 'registerFontOrImage',
+        type: 'registerFont',
         syncId: syncId,
-        assetType: 'font',
         data: data,
         requestId: requestId
       };
-      this._parent.postMessage(message, '*');
+      // Unfortunately we have to make this message synchronously since scripts in the same frame
+      // might rely on it being available in the gfx backend when requesting text measurements.
+      // Just another disadvantage of not doing our our own text shaping.
+      this._peer.sendSyncMessage(message);
       return result.promise;
     }
 
-    registerImage(syncId: number, symbolId: number, data: any): Promise<any> {
-      var requestId = this._fontOrImageRequests.length;
+    registerImage(syncId: number, symbolId: number, imageType: ImageType,
+                  data: Uint8Array, alphaData: Uint8Array): Promise<any> {
+      var requestId = this._assetDecodingRequests.length;
       var result = new PromiseWrapper<any>();
-      this._fontOrImageRequests[requestId] = result;
+      this._assetDecodingRequests[requestId] = result;
       var message = {
-        type: 'registerFontOrImage',
+        type: 'registerImage',
         syncId: syncId,
         symbolId: symbolId,
-        assetType: 'image',
+        imageType: imageType,
         data: data,
+        alphaData: alphaData,
         requestId: requestId
       };
-      this._parent.postMessage(message, '*');
+      this._peer.postAsyncMessage(message);
       return result.promise;
     }
 
     fscommand(command: string, args: string): void {
-      this._parent.postMessage({
+      this._peer.postAsyncMessage({
         type: 'fscommand',
         command: command,
         args: args
-      }, '*');
+      });
     }
 
     private onWindowMessage(data) {
@@ -141,51 +131,15 @@ module Shumway.Player.Window {
           case 'displayParameters':
             this.processDisplayParameters(data.params);
             break;
-          case 'registerFontOrImageResponse':
-            var request = this._fontOrImageRequests[data.requestId];
+          case 'registerFontResponse':
+          case 'registerImageResponse':
+            var request = this._assetDecodingRequests[data.requestId];
             release || Debug.assert(request);
-            delete this._fontOrImageRequests[data.requestId];
+            delete this._assetDecodingRequests[data.requestId];
             request.resolve(data.result);
             break;
           case 'options':
             Shumway.Settings.setSettings(data.settings);
-            break;
-          case 'timeline':
-            switch (data.request) {
-              case 'AVM2':
-                if (data.cmd === 'clear') {
-                  Shumway.AVM2.timelineBuffer.reset();
-                  break;
-                }
-                this._parent.postMessage({
-                  type: 'timelineResponse',
-                  request: data.request,
-                  timeline: Shumway.AVM2.timelineBuffer
-                }, '*');
-                break;
-              case 'Player':
-                if (data.cmd === 'clear') {
-                  Shumway.Player.timelineBuffer.reset();
-                  break;
-                }
-                this._parent.postMessage({
-                  type: 'timelineResponse',
-                  request: data.request,
-                  timeline: Shumway.Player.timelineBuffer
-                }, '*');
-                break;
-              case 'SWF':
-                if (data.cmd === 'clear') {
-                  Shumway.SWF.timelineBuffer.reset();
-                  break;
-                }
-                this._parent.postMessage({
-                  type: 'timelineResponse',
-                  request: data.request,
-                  timeline: Shumway.SWF.timelineBuffer
-                }, '*');
-                break;
-            }
             break;
         }
       }

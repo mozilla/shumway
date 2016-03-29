@@ -9,7 +9,7 @@ module Shumway.GFX {
   import Tile = Shumway.GFX.Geometry.Tile;
   import OBB = Shumway.GFX.Geometry.OBB;
 
-  export enum Layout {
+  export const enum Layout {
     Simple
   }
 

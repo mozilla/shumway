@@ -28,10 +28,8 @@ declare var putstr;
 // declare var document;
 // declare var getComputedStyle;
 
-/** @const */ var release: boolean = true; // by default 'true' -- we are folding constants in closure compiler
-/** @const */ var profile: boolean = false;
-
-declare var dateNow: () => number;
+/** @define {boolean} */ var release = false;
+/** @define {boolean} */ var profile = false;
 
 declare var dump: (message: string) => void;
 
@@ -46,23 +44,9 @@ if (!jsGlobal.performance) {
 }
 
 if (!jsGlobal.performance.now) {
-  jsGlobal.performance.now = typeof dateNow !== 'undefined' ? dateNow : Date.now;
-}
-
-function lazyInitializer(obj: any, propertyName: string, fn: ()=>any) {
-  Object.defineProperty(obj, propertyName, {
-    get: function () {
-      var value = fn();
-      Object.defineProperty(obj, propertyName, {
-        value: value,
-        configurable: true,
-        enumerable: true
-      });
-      return value;
-    },
-    configurable: true,
-    enumerable: true
-  });
+  jsGlobal.performance.now = function () {
+    return Date.now();
+  };
 }
 
 var START_TIME = performance.now();
@@ -94,6 +78,48 @@ interface Error {
   stack: string;
 }
 
+interface Map<K, V> {
+  clear(): void;
+  delete(key: K): boolean;
+  forEach(callbackfn: (value: V, index: K, map: Map<K, V>) => void, thisArg?: any): void;
+  get(key: K): V;
+  has(key: K): boolean;
+  set(key: K, value: V): Map<K, V>;
+  size: number;
+}
+
+declare var Map: {
+  new <K, V>(): Map<K, V>;
+  prototype: Map<any, any>;
+};
+
+interface WeakMap<K, V> {
+  clear(): void;
+  delete(key: K): boolean;
+  get(key: K): V;
+  has(key: K): boolean;
+  set(key: K, value: V): WeakMap<K, V>;
+}
+
+declare var WeakMap: {
+  new <K, V>(): WeakMap<K, V>;
+  prototype: WeakMap<any, any>;
+};
+
+interface Set<T> {
+  add(value: T): Set<T>;
+  clear(): void;
+  delete(value: T): boolean;
+  forEach(callbackfn: (value: T, index: T, set: Set<T>) => void, thisArg?: any): void;
+  has(value: T): boolean;
+  size: number;
+}
+
+declare var Set: {
+  new <T>(): Set<T>;
+  prototype: Set<any>;
+};
+
 interface Uint8ClampedArray extends ArrayBufferView {
   BYTES_PER_ELEMENT: number;
   length: number;
@@ -112,7 +138,7 @@ declare var Uint8ClampedArray: {
   new (array: number[]): Uint8ClampedArray;
   new (buffer: ArrayBuffer, byteOffset?: number, length?: number): Uint8ClampedArray;
   BYTES_PER_ELEMENT: number;
-}
+};
 
 declare module Shumway {
   var version: string;
@@ -121,7 +147,7 @@ declare module Shumway {
 
 module Shumway {
 
-  export enum CharacterCodes {
+  export const enum CharacterCodes {
     _0 = 48,
     _1 = 49,
     _2 = 50,
@@ -201,7 +227,6 @@ module Shumway {
       }
       return isIndex(value) || isNumericString(value);
     }
-    // Debug.notImplemented(typeof value);
     return false;
   }
 
@@ -263,6 +288,27 @@ module Shumway {
     return value == undefined;
   }
 
+  export function argumentsToString(args: IArguments) {
+    var resultList = [];
+    for (var i = 0; i < args.length; i++) {
+      var arg = args[i];
+      try {
+        var argStr;
+        if (typeof arg !== 'object' || !arg) {
+          argStr = arg + '';
+        } else if ('toString' in arg) {
+          argStr = arg.toString();
+        } else {
+          argStr = Object.prototype.toString.call(arg);
+        }
+        resultList.push(argStr);
+      } catch (e) {
+        resultList.push('<unprintable value>');
+      }
+    }
+    return resultList.join(', ');
+  }
+
   export module Debug {
     export function error(message: string) {
       console.error(message);
@@ -294,12 +340,30 @@ module Shumway {
       }
     }
 
+    var _warnedCounts = Object.create(null);
+
     export function warning(message: any, arg1?: any, arg2?: any/*...messages: any[]*/) {
-      release || console.warn.apply(console, arguments);
+      if (release) {
+        return;
+      }
+      var key = argumentsToString(arguments);
+      if (_warnedCounts[key]) {
+        _warnedCounts[key]++;
+        if (Shumway.omitRepeatedWarnings.value) {
+          return;
+        }
+      }
+      _warnedCounts[key] = 1;
+      console.warn.apply(console, arguments);
     }
 
-    export function notUsed(message: string) {
-      release || Debug.assert(false, "Not Used " + message);
+    export function warnCounts() {
+      var list = [];
+      for (var key in _warnedCounts) {
+        list.push({key: key, count: _warnedCounts[key]});
+      }
+      list.sort((entry, prev) => prev.count - entry.count);
+      return list.reduce((result, entry) => (result += '\n' + entry.count + '\t' + entry.key), '');
     }
 
     export function notImplemented(message: string) {
@@ -337,7 +401,7 @@ module Shumway {
     return performance.now();
   }
 
-  export interface Map<T> {
+  export interface MapObject<T> {
     [name: string]: T
   }
 
@@ -382,11 +446,11 @@ module Shumway {
     }
 
     export function top(array: any []) {
-      return array.length && array[array.length - 1]
+      return array.length && array[array.length - 1];
     }
 
     export function last(array: any []) {
-      return array.length && array[array.length - 1]
+      return array.length && array[array.length - 1];
     }
 
     export function peek(array: any []) {
@@ -403,7 +467,7 @@ module Shumway {
       return -1;
     }
 
-    export function equals<T>(a: T [], b: T []): boolean{
+    export function equals<T>(a: T [], b: T []): boolean {
       if (a.length !== b.length) {
         return false;
       }
@@ -470,203 +534,11 @@ module Shumway {
       }
     }
 
-    export class ArrayWriter {
-      _u8: Uint8Array;
-      _u16: Uint16Array;
-      _i32: Int32Array;
-      _f32: Float32Array;
-      _u32: Uint32Array;
-      _offset: number;
-
-      constructor(initialCapacity: number = 16) {
-        this._u8 = null;
-        this._u16 = null;
-        this._i32 = null;
-        this._f32 = null;
-        this._offset = 0;
-        this.ensureCapacity(initialCapacity);
-      }
-
-      public reset() {
-        this._offset = 0;
-      }
-
-      public get offset (): number {
-        return this._offset;
-      }
-
-      getIndex(size: number) {
-        release || assert (size === 1 || size === 2 || size === 4 || size === 8 || size === 16);
-        var index = this._offset / size;
-        release || assert ((index | 0) === index);
-        return index;
-      }
-
-      ensureAdditionalCapacity(size) {
-        this.ensureCapacity(this._offset + size);
-      }
-
-      ensureCapacity(minCapacity: number) {
-        if (!this._u8) {
-          this._u8 = new Uint8Array(minCapacity);
-        } else if (this._u8.length > minCapacity) {
-          return;
-        }
-        var oldCapacity = this._u8.length;
-        // var newCapacity = (((oldCapacity * 3) >> 1) + 8) & ~0x7;
-        var newCapacity = oldCapacity * 2;
-        if (newCapacity < minCapacity) {
-          newCapacity = minCapacity;
-        }
-        var u8 = new Uint8Array(newCapacity);
-        u8.set(this._u8, 0);
-        this._u8 = u8;
-        this._u16 = new Uint16Array(u8.buffer);
-        this._i32 = new Int32Array(u8.buffer);
-        this._f32 = new Float32Array(u8.buffer);
-      }
-
-      writeInt(v: number) {
-        release || assert ((this._offset & 0x3) === 0);
-        this.ensureCapacity(this._offset + 4);
-        this.writeIntUnsafe(v);
-      }
-
-      writeIntAt(v: number, offset: number) {
-        release || assert (offset >= 0 && offset <= this._offset);
-        release || assert ((offset & 0x3) === 0);
-        this.ensureCapacity(offset + 4);
-        var index = offset >> 2;
-        this._i32[index] = v;
-      }
-
-      writeIntUnsafe(v: number) {
-        var index = this._offset >> 2;
-        this._i32[index] = v;
-        this._offset += 4;
-      }
-
-      writeFloat(v: number) {
-        release || assert ((this._offset & 0x3) === 0);
-        this.ensureCapacity(this._offset + 4);
-        this.writeFloatUnsafe(v);
-      }
-
-      writeFloatUnsafe(v: number) {
-        var index = this._offset >> 2;
-        this._f32[index] = v;
-        this._offset += 4;
-      }
-
-      write4Floats(a: number, b: number, c: number, d: number) {
-        release || assert ((this._offset & 0x3) === 0);
-        this.ensureCapacity(this._offset + 16);
-        this.write4FloatsUnsafe(a, b, c, d);
-      }
-
-      write4FloatsUnsafe(a: number, b: number, c: number, d: number) {
-        var index = this._offset >> 2;
-        this._f32[index + 0] = a;
-        this._f32[index + 1] = b;
-        this._f32[index + 2] = c;
-        this._f32[index + 3] = d;
-        this._offset += 16;
-      }
-
-      write6Floats(a: number, b: number, c: number, d: number, e: number, f: number) {
-        release || assert ((this._offset & 0x3) === 0);
-        this.ensureCapacity(this._offset + 24);
-        this.write6FloatsUnsafe(a, b, c, d, e, f);
-      }
-
-      write6FloatsUnsafe(a: number, b: number, c: number, d: number, e: number, f: number) {
-        var index = this._offset >> 2;
-        this._f32[index + 0] = a;
-        this._f32[index + 1] = b;
-        this._f32[index + 2] = c;
-        this._f32[index + 3] = d;
-        this._f32[index + 4] = e;
-        this._f32[index + 5] = f;
-        this._offset += 24;
-      }
-
-      subF32View(): Float32Array {
-        return this._f32.subarray(0, this._offset >> 2);
-      }
-
-      subI32View(): Int32Array {
-        return this._i32.subarray(0, this._offset >> 2);
-      }
-
-      subU16View(): Uint16Array {
-        return this._u16.subarray(0, this._offset >> 1);
-      }
-
-      subU8View(): Uint8Array {
-        return this._u8.subarray(0, this._offset);
-      }
-
-      hashWords(hash: number, offset: number, length: number) {
-        var i32 = this._i32;
-        for (var i = 0; i < length; i++) {
-          hash = (((31 * hash) | 0) + i32[i]) | 0;
-        }
-        return hash;
-      }
-
-      reserve(size: number) {
-        size = (size + 3) & ~0x3; // Round up to multiple of 4.
-        this.ensureCapacity(this._offset + size);
-        this._offset += size;
-      }
-    }
-
     export interface IDataDecoder {
       onData: (data: Uint8Array) => void;
       onError: (e) => void;
       push(data: Uint8Array);
       close();
-    }
-  }
-
-  export class ArrayReader {
-    _u8: Uint8Array;
-    _u16: Uint16Array;
-    _i32: Int32Array;
-    _f32: Float32Array;
-    _u32: Uint32Array;
-    _offset: number;
-
-    constructor(buffer: ArrayBuffer) {
-      this._u8 = new Uint8Array(buffer);
-      this._u16 = new Uint16Array(buffer);
-      this._i32 = new Int32Array(buffer);
-      this._f32 = new Float32Array(buffer);
-      this._offset = 0;
-    }
-
-    public get offset (): number {
-      return this._offset;
-    }
-
-    public isEmpty (): boolean {
-      return this._offset === this._u8.length;
-    }
-
-    readInt(): number {
-      release || Debug.assert ((this._offset & 0x3) === 0);
-      release || Debug.assert (this._offset <= this._u8.length - 4);
-      var v = this._i32[this._offset >> 2];
-      this._offset += 4;
-      return v;
-    }
-
-    readFloat(): number {
-      release || Debug.assert ((this._offset & 0x3) === 0);
-      release || Debug.assert (this._offset <= this._u8.length - 4);
-      var v = this._f32[this._offset >> 2];
-      this._offset += 4;
-      return v;
     }
   }
 
@@ -701,8 +573,19 @@ module Shumway {
       return Object.prototype.propertyIsEnumerable.call(object, name);
     }
 
-    export function getOwnPropertyDescriptor(object: Object, name: string): PropertyDescriptor {
-      return Object.getOwnPropertyDescriptor(object, name);
+    /**
+     * Returns a property descriptor for the own or inherited property with the given name, or
+     * null if one doesn't exist.
+     */
+    export function getPropertyDescriptor(object: Object, name: string): PropertyDescriptor {
+      do {
+        var propDesc = Object.getOwnPropertyDescriptor(object, name);
+        if (propDesc) {
+          return propDesc;
+        }
+        object = Object.getPrototypeOf(object);
+      } while (object);
+      return null;
     }
 
     export function hasOwnGetter(object: Object, name: string): boolean {
@@ -720,12 +603,12 @@ module Shumway {
       return !!(d && !!d.set);
     }
 
-    export function createMap<T>():Map<T> {
+    export function createMap<T>():MapObject<T> {
       return Object.create(null);
     }
 
-    export function createArrayMap<T>():Map<T> {
-      return <Map<T>><any>[];
+    export function createArrayMap<T>():MapObject<T> {
+      return <MapObject<T>><any>[];
     }
 
     export function defineReadOnlyProperty(object: Object, name: string, value: any) {
@@ -735,21 +618,6 @@ module Shumway {
         configurable: true,
         enumerable: false
       });
-    }
-
-    export function getOwnPropertyDescriptors(object: Object): Map<PropertyDescriptor> {
-      var o = ObjectUtilities.createMap<PropertyDescriptor>();
-      var properties = Object.getOwnPropertyNames(object);
-      for (var i = 0; i < properties.length; i++) {
-        o[properties[i]] = Object.getOwnPropertyDescriptor(object, properties[i]);
-      }
-      return o;
-    }
-
-    export function cloneObject(object: Object): Object {
-      var clone = Object.create(Object.getPrototypeOf(object));
-      copyOwnProperties(clone, object);
-      return clone;
     }
 
     export function copyProperties(object: Object, template: Object) {
@@ -766,60 +634,41 @@ module Shumway {
       }
     }
 
-    export function copyOwnPropertyDescriptors(object: Object, template: Object, overwrite = true) {
+    export function copyOwnPropertyDescriptors(object: Object,
+                                               template: Object,
+                                               filter: (name: string) => boolean = null,
+                                               overwrite = true,
+                                               makeWritable = false) {
       for (var property in template) {
-        if (hasOwnProperty(template, property)) {
+        if (hasOwnProperty(template, property) && (!filter || filter(property))) {
           var descriptor = Object.getOwnPropertyDescriptor(template, property);
           if (!overwrite && hasOwnProperty(object, property)) {
-            continue
+            continue;
           }
           release || Debug.assert (descriptor);
           try {
+            if (makeWritable && descriptor.writable === false) {
+              descriptor.writable = true;
+            }
             Object.defineProperty(object, property, descriptor);
           } catch (e) {
-            // console.log("Can't define " + property);
+            Debug.assert("Can't define: " + property);
           }
         }
       }
     }
 
-    export function getLatestGetterOrSetterPropertyDescriptor(object, name) {
-      var descriptor: PropertyDescriptor = {};
-      while (object) {
-        var tmp = Object.getOwnPropertyDescriptor(object, name);
-        if (tmp) {
-          descriptor.get = descriptor.get || tmp.get;
-          descriptor.set = descriptor.set || tmp.set;
-        }
-        if (descriptor.get && descriptor.set) {
-          break;
-        }
-        object = Object.getPrototypeOf(object);
+    export function copyPropertiesByList(object: Object,
+                                         template: Object,
+                                         propertyList: string []) {
+      for (var i = 0; i < propertyList.length; i++) {
+        var property = propertyList[i];
+        object[property] = template[property];
       }
-      return descriptor;
-    }
-
-    export function defineNonEnumerableGetterOrSetter(obj, name, value, isGetter) {
-      var descriptor = ObjectUtilities.getLatestGetterOrSetterPropertyDescriptor(obj, name);
-      descriptor.configurable = true;
-      descriptor.enumerable = false;
-      if (isGetter) {
-        descriptor.get = value;
-      } else {
-        descriptor.set = value;
-      }
-      Object.defineProperty(obj, name, descriptor);
     }
 
     export function defineNonEnumerableGetter(obj, name, getter) {
       Object.defineProperty(obj, name, { get: getter,
-        configurable: true,
-        enumerable: false
-      });
-    }
-
-    export function defineNonEnumerableSetter(obj, name, setter) {
-      Object.defineProperty(obj, name, { set: setter,
         configurable: true,
         enumerable: false
       });
@@ -832,39 +681,6 @@ module Shumway {
         enumerable: false
       });
     }
-
-    export function defineNonEnumerableForwardingProperty(obj, name: string, otherName: string) {
-      Object.defineProperty(obj, name, {
-        get: FunctionUtilities.makeForwardingGetter(otherName),
-        set: FunctionUtilities.makeForwardingSetter(otherName),
-        writable: true,
-        configurable: true,
-        enumerable: false
-      });
-    }
-
-    export function defineNewNonEnumerableProperty(obj, name: string, value) {
-      release || Debug.assert (!Object.prototype.hasOwnProperty.call(obj, name), "Property: " + name + " already exits.");
-      ObjectUtilities.defineNonEnumerableProperty(obj, name, value);
-    }
-
-    /**
-     * Takes an object and a list of property names and creates an alias in the public namespace
-     * for each.
-     */
-    export function createPublicAliases(obj: any, names: string[]) {
-      var prop = {
-        value: null,
-        writable: true,
-        configurable: true,
-        enumerable: false
-      };
-      for (var i = 0; i < names.length; i++) {
-        var name = names[i];
-        prop.value = obj[name];
-        Object.defineProperty(obj, '$Bg' + name, prop);
-      }
-    }
   }
 
   export module FunctionUtilities {
@@ -876,20 +692,6 @@ module Shumway {
     export function makeForwardingSetter(target: string): (any) => void {
       return <(any) => void> new Function("value", "this[\"" + target + "\"] = value;" +
                                                    "//# sourceURL=fwd-set-" + target + ".as");
-    }
-
-    /**
-     * Attaches a property to the bound function so we can detect when if it
-     * ever gets rebound.
-     */
-    export function bindSafely(method: Function, receiver: Object) {
-      release || Debug.assert (!method.boundTo);
-      release || Debug.assert (receiver);
-      function methodClosure() {
-        return method.apply(receiver, arguments);
-      }
-      (<any>methodClosure).boundTo = receiver;
-      return methodClosure;
     }
   }
 
@@ -1034,11 +836,10 @@ module Shumway {
     }
 
     // https://gist.github.com/958841
-    export function base64ArrayBuffer(arrayBuffer: ArrayBuffer) {
+    export function base64EncodeBytes(bytes: Uint8Array) {
       var base64 = '';
       var encodings = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
-      var bytes = new Uint8Array(arrayBuffer);
       var byteLength = bytes.byteLength;
       var byteRemainder = byteLength % 3;
       var mainLength = byteLength - byteRemainder;
@@ -1084,6 +885,54 @@ module Shumway {
         base64 += concat4(encodings[a], encodings[b], encodings[c], '=');
       }
       return base64;
+    }
+
+    var base64DecodeMap = [ // starts at 0x2B
+      62, 0, 0, 0, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,
+      0, 0, 0, 0, 0, 0, 0, // 0x3A-0x40
+      0,  1,  2,  3,  4,  5,  6, 7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+      19, 20, 21, 22, 23, 24, 25, 0, 0, 0, 0, 0, 0, // 0x5B-0x0x60
+      26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43,
+      44, 45, 46, 47, 48, 49, 50, 51];
+    var base64DecodeMapOffset = 0x2B;
+    var base64EOF = 0x3D;
+
+    /**
+     * Decodes the result of encoding with base64EncodeBytes, but not necessarily any other
+     * base64-encoded data. Note that this also doesn't do any error checking.
+     */
+    export function decodeRestrictedBase64ToBytes(encoded: string): Uint8Array {
+      var ch: number;
+      var code: number;
+      var code2: number;
+
+      var len = encoded.length;
+      var padding = encoded.charAt(len - 2) === '=' ? 2 : encoded.charAt(len - 1) === '=' ? 1 : 0;
+      release || assert(encoded.length % 4 === 0);
+      var decoded = new Uint8Array((encoded.length >> 2) * 3 - padding);
+
+      for (var i = 0, j = 0; i < encoded.length;) {
+        ch = encoded.charCodeAt(i++);
+        code = base64DecodeMap[ch - base64DecodeMapOffset];
+        ch = encoded.charCodeAt(i++);
+        code2 = base64DecodeMap[ch - base64DecodeMapOffset];
+        decoded[j++] = (code << 2) | ((code2 & 0x30) >> 4);
+
+        ch = encoded.charCodeAt(i++);
+        if (ch == base64EOF) {
+          return decoded;
+        }
+        code = base64DecodeMap[ch - base64DecodeMapOffset];
+        decoded[j++] = ((code2 & 0x0f) << 4) | ((code & 0x3c) >> 2);
+
+        ch = encoded.charCodeAt(i++);
+        if (ch == base64EOF) {
+          return decoded;
+        }
+        code2 = base64DecodeMap[ch - base64DecodeMapOffset];
+        decoded[j++] = ((code & 0x03) << 6) | code2;
+      }
+      return decoded;
     }
 
     export function escapeString(str: string) {
@@ -1183,10 +1032,6 @@ module Shumway {
 
     var _concat3array = new Array(3);
     var _concat4array = new Array(4);
-    var _concat5array = new Array(5);
-    var _concat6array = new Array(6);
-    var _concat7array = new Array(7);
-    var _concat8array = new Array(8);
     var _concat9array = new Array(9);
 
     /**
@@ -1211,51 +1056,6 @@ module Shumway {
         _concat4array[2] = s2;
         _concat4array[3] = s3;
         return _concat4array.join('');
-    }
-
-    export function concat5(s0: any, s1: any, s2: any, s3: any, s4: any) {
-        _concat5array[0] = s0;
-        _concat5array[1] = s1;
-        _concat5array[2] = s2;
-        _concat5array[3] = s3;
-        _concat5array[4] = s4;
-        return _concat5array.join('');
-    }
-
-    export function concat6(s0: any, s1: any, s2: any, s3: any, s4: any,
-                            s5: any) {
-        _concat6array[0] = s0;
-        _concat6array[1] = s1;
-        _concat6array[2] = s2;
-        _concat6array[3] = s3;
-        _concat6array[4] = s4;
-        _concat6array[5] = s5;
-        return _concat6array.join('');
-    }
-
-    export function concat7(s0: any, s1: any, s2: any, s3: any, s4: any,
-                            s5: any, s6: any) {
-        _concat7array[0] = s0;
-        _concat7array[1] = s1;
-        _concat7array[2] = s2;
-        _concat7array[3] = s3;
-        _concat7array[4] = s4;
-        _concat7array[5] = s5;
-        _concat7array[6] = s6;
-        return _concat7array.join('');
-    }
-
-    export function concat8(s0: any, s1: any, s2: any, s3: any, s4: any,
-                            s5: any, s6: any, s7: any) {
-        _concat8array[0] = s0;
-        _concat8array[1] = s1;
-        _concat8array[2] = s2;
-        _concat8array[3] = s3;
-        _concat8array[4] = s4;
-        _concat8array[5] = s5;
-        _concat8array[6] = s6;
-        _concat8array[7] = s7;
-        return _concat8array.join('');
     }
 
     export function concat9(s0: any, s1: any, s2: any, s3: any, s4: any,
@@ -1354,15 +1154,35 @@ module Shumway {
       return h0;
     }
 
-    export function hashBytesTo32BitsAdler(data: Uint8Array, offset: number, length: number): number {
-      var a = 1;
-      var b = 0;
-      var end = offset + length;
-      for (var i = offset; i < end; ++i) {
-        a = (a + (data[i] & 0xff)) % 65521;
-        b = (b + a) % 65521;
+    export function mixHash(a: number, b: number) {
+      return (((31 * a) | 0) + b) | 0;
+    }
+  }
+
+  /**
+   * An extremely naive cache with a maximum size.
+   * TODO: LRU
+   */
+  export class Cache {
+    private _data;
+    private _size: number;
+    private _maxSize: number;
+    constructor(maxSize: number) {
+      this._data = Object.create(null);
+      this._size = 0;
+      this._maxSize = maxSize;
+    }
+    get(key) {
+      return this._data[key];
+    }
+    set(key, value) {
+      release || Debug.assert(!(key in this._data)); // Cannot mutate cache entries.
+      if (this._size >= this._maxSize) {
+        return false;
       }
-      return (b << 16) | a;
+      this._data[key] = value;
+      this._size ++;
+      return true;
     }
   }
 
@@ -1375,6 +1195,11 @@ module Shumway {
     public static seed(seed: number) {
       Random._state[0] = seed;
       Random._state[1] = seed;
+    }
+
+    public static reset() {
+      Random._state[0] = 0xDEAD;
+      Random._state[1] = 0xBEEF;
     }
 
     public static next(): number {
@@ -1392,6 +1217,39 @@ module Shumway {
   Math.random = function random(): number {
     return Random.next();
   };
+
+  /**
+   * This should only be called if you need fake time.
+   */
+  export function installTimeWarper() {
+    var RealDate = Date;
+
+    // Go back in time.
+    var fakeTime = 1428107694580; // 3-Apr-2015
+
+    // Overload
+    jsGlobal.Date = function (yearOrTimevalue, month, date, hour, minute, second, millisecond) {
+      switch (arguments.length) {
+        case  0: return new RealDate(fakeTime);
+        case  1: return new RealDate(yearOrTimevalue);
+        case  2: return new RealDate(yearOrTimevalue, month);
+        case  3: return new RealDate(yearOrTimevalue, month, date);
+        case  4: return new RealDate(yearOrTimevalue, month, date, hour);
+        case  5: return new RealDate(yearOrTimevalue, month, date, hour, minute);
+        case  6: return new RealDate(yearOrTimevalue, month, date, hour, minute, second);
+        default: return new RealDate(yearOrTimevalue, month, date, hour, minute, second, millisecond);
+      }
+    };
+
+    // Make date now deterministic.
+    jsGlobal.Date.now = function () {
+      return fakeTime += 10; // Advance time.
+    };
+
+    jsGlobal.Date.UTC = function () {
+      return RealDate.UTC.apply(RealDate, arguments);
+    };
+  }
 
   function polyfillWeakMap() {
     if (typeof jsGlobal.WeakMap === 'function') {
@@ -1433,11 +1291,15 @@ module Shumway {
   var useReferenceCounting = true;
 
   export class WeakList<T extends IReferenceCountable> {
-    private _map: WeakMap<T, T>;
+    private _map: WeakMap<T, number>;
+    private _newAdditions: Array<Array<T>>;
     private _list: T [];
+    private _id: number;
     constructor() {
       if (typeof ShumwayCom !== "undefined" && ShumwayCom.getWeakMapKeys) {
-        this._map = new WeakMap<T, T>();
+        this._map = new WeakMap<T, number>();
+        this._id = 0;
+        this._newAdditions = [];
       } else {
         this._list = [];
       }
@@ -1452,7 +1314,11 @@ module Shumway {
     push(value: T) {
       if (this._map) {
         release || Debug.assert(!this._map.has(value));
-        this._map.set(value, null);
+        // We store an increasing id as the value so that keys can be sorted by it.
+        this._map.set(value, this._id++);
+        this._newAdditions.forEach(function (additions: Array<T>) {
+          additions.push(value);
+        });
       } else {
         release || Debug.assert(this._list.indexOf(value) === -1);
         this._list.push(value);
@@ -1470,12 +1336,28 @@ module Shumway {
     }
     forEach(callback: (value: T) => void) {
       if (this._map) {
-        var keys: Array<T> = ShumwayCom.getWeakMapKeys(this._map);
+        var newAdditionsToKeys : Array<T> = [];
+        this._newAdditions.push(newAdditionsToKeys);
+        var map = this._map;
+        var keys: Array<T> = ShumwayCom.getWeakMapKeys(map);
+        // The keys returned by ShumwayCom.getWeakMapKeys are not guaranteed to
+        // be in insertion order. Therefore we have to sort them manually.
+        keys.sort(function (a: T, b: T) {
+          return map.get(a) - map.get(b);
+        });
         keys.forEach(function (value: T) {
           if (value._referenceCount !== 0) {
             callback(value);
           }
         });
+        // ShumwayCom.getWeakMapKeys take snapshot of the keys, but we are also
+        // interested in new added keys while keys.forEach was run.
+        newAdditionsToKeys.forEach(function (value: T) {
+          if (value._referenceCount !== 0) {
+            callback(value);
+          }
+        });
+        this._newAdditions.splice(this._newAdditions.indexOf(newAdditionsToKeys), 1);
         return;
       }
       var list = this._list;
@@ -1556,7 +1438,7 @@ module Shumway {
     }
   }
 
-  export enum Numbers {
+  export const enum Numbers {
     MaxU16 = 0xFFFF,
     MaxI16 = 0x7FFF,
     MinI16 = -0x8000
@@ -1680,6 +1562,11 @@ module Shumway {
       return (i + x) & ~x; // Round up to multiple of power of two.
     }
 
+    export function toHEX(i: number) {
+      var i = (i < 0 ? 0xFFFFFFFF + i + 1 : i);
+      return "0x" + ("00000000" + i.toString(16)).substr(-8);
+    }
+
     /**
      * Polyfill imul.
      */
@@ -1692,7 +1579,7 @@ module Shumway {
         // the shift by 0 fixes the sign on the high part
         // the final |0 converts the unsigned value into a signed value
         return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
-      }
+      };
     }
 
     /**
@@ -1706,84 +1593,11 @@ module Shumway {
         i |= (i >> 8);
         i |= (i >> 16);
         return 32 - IntegerUtilities.ones(i);
-      }
+      };
     }
   }
 
-  export module GeometricUtilities {
-    /**
-     * Crossing numeber tests to check if a point is inside a polygon. The polygon is given as
-     * an array of n + 1 float pairs where the last is equal to the first.
-     *
-     * http://geomalgorithms.com/a03-_inclusion.html
-     */
-    export function pointInPolygon(x: number, y: number, polygon: Float32Array): boolean {
-      // release || assert (((polygon.length & 1) === 0) && polygon.length >= 8);
-      // release || assert (polygon[0] === polygon[polygon.length - 2] &&
-      //        polygon[1] === polygon[polygon.length - 1], "First and last points should be equal.");
-      var crosses = 0;
-      var n = polygon.length - 2;
-      var p = polygon;
-
-      for (var i = 0; i < n; i += 2) {
-        var x0 = p[i + 0];
-        var y0 = p[i + 1];
-        var x1 = p[i + 2];
-        var y1 = p[i + 3];
-        if (((y0 <= y) && (y1 > y)) || ((y0 > y) && (y1 <= y))) {
-          var t = (y  - y0) / (y1 - y0);
-          if (x < x0 + t * (x1 - x0)) {
-            crosses ++;
-          }
-        }
-      }
-      return (crosses & 1) === 1;
-    }
-
-    /**
-     * Signed area of a triangle. If zero then points are collinear, if < 0 then points
-     * are clockwise otherwise counter-clockwise.
-     */
-    export function signedArea(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number): number {
-      return (x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0);
-    }
-
-    export function counterClockwise(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number): boolean {
-      return signedArea(x0, y0, x1, y1, x2, y2) > 0;
-    }
-
-    export function clockwise(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number): boolean {
-      return signedArea(x0, y0, x1, y1, x2, y2) < 0;
-    }
-
-    export function pointInPolygonInt32(x: number, y: number, polygon: Int32Array): boolean {
-      // release || assert (((polygon.length & 1) === 0) && polygon.length >= 8);
-      // release || assert (polygon[0] === polygon[polygon.length - 2] &&
-      //        polygon[1] === polygon[polygon.length - 1], "First and last points should be equal.");
-      x = x | 0;
-      y = y | 0;
-      var crosses = 0;
-      var n = polygon.length - 2;
-      var p = polygon;
-
-      for (var i = 0; i < n; i += 2) {
-        var x0 = p[i + 0];
-        var y0 = p[i + 1];
-        var x1 = p[i + 2];
-        var y1 = p[i + 3];
-        if (((y0 <= y) && (y1 > y)) || ((y0 > y) && (y1 <= y))) {
-          var t = (y  - y0) / (y1 - y0);
-          if (x < x0 + t * (x1 - x0)) {
-            crosses ++;
-          }
-
-        }
-      }
-      return (crosses & 1) === 1;
-    }
-  }
-
-  export enum LogLevel {
+  export const enum LogLevel {
     Error = 0x1,
     Warn = 0x2,
     Debug = 0x4,
@@ -1802,14 +1616,22 @@ module Shumway {
 
     public static logLevel: LogLevel = LogLevel.All;
 
-    private static _consoleOut = console.info.bind(console);
-    private static _consoleOutNoNewline = console.info.bind(console);
+    private static _consoleOut = console.log.bind(console);
+    private static _consoleOutNoNewline = console.log.bind(console);
 
     private _tab: string;
     private _padding: string;
     private _suppressOutput: boolean;
     private _out: (s: string, o?: any) => void;
     private _outNoNewline: (s: string) => void;
+
+    get suppressOutput() {
+      return this._suppressOutput;
+    }
+
+    set suppressOutput(val: boolean) {
+      this._suppressOutput = val;
+    }
 
     constructor(suppressOutput: boolean = false, out?) {
       this._tab = "  ";
@@ -1844,7 +1666,7 @@ module Shumway {
     }
 
     writeComment(str: string) {
-      var lines = str.split("\n");
+      var lines = (str || '').split("\n");
       if (lines.length === 1) {
         this.writeLn("// " + lines[0]);
       } else {
@@ -1857,7 +1679,7 @@ module Shumway {
     }
 
     writeLns(str: string) {
-      var lines = str.split("\n");
+      var lines = (str || '').split("\n");
       for (var i = 0; i < lines.length; i++) {
         this.writeLn(lines[i]);
       }
@@ -1928,7 +1750,7 @@ module Shumway {
     }
 
     colorLns(color: string, str: string) {
-      var lines = str.split("\n");
+      var lines = (str || '').split("\n");
       for (var i = 0; i < lines.length; i++) {
         this.colorLn(color, lines[i]);
       }
@@ -1983,125 +1805,6 @@ module Shumway {
     }
   }
 
-  /**
-   * Insertion sort SortedList backed by a linked list.
-   */
-  class SortedListNode<T> {
-    value: T;
-    next: SortedListNode<T>;
-    constructor(value: T, next: SortedListNode<T>) {
-      this.value = value;
-      this.next = next;
-    }
-  }
-
-  export class SortedList<T>  {
-    public static RETURN = 1;
-    public static DELETE = 2;
-    private _compare: (l: T, r: T) => number;
-    private _head: SortedListNode<T>;
-    private _length: number;
-
-    constructor (compare: (l: T, r: T) => number) {
-      release || Debug.assert(compare);
-      this._compare = compare;
-      this._head = null;
-      this._length = 0;
-    }
-
-    public push(value: T) {
-      release || Debug.assert(value !== undefined);
-      this._length ++;
-      if (!this._head) {
-        this._head = new SortedListNode<T>(value, null);
-        return;
-      }
-
-      var curr = this._head;
-      var prev = null;
-      var node = new SortedListNode<T>(value, null);
-      var compare = this._compare;
-      while (curr) {
-        if (compare(curr.value, node.value) > 0) {
-          if (prev) {
-            node.next = curr;
-            prev.next = node;
-          } else {
-            node.next = this._head;
-            this._head = node;
-          }
-          return;
-        }
-        prev = curr;
-        curr = curr.next;
-      }
-      prev.next = node;
-    }
-
-    /**
-     * Visitors can return RETURN if they wish to stop the iteration or DELETE if they need to delete the current node.
-     * NOTE: DELETE most likley doesn't work if there are multiple active iterations going on.
-     */
-    public forEach(visitor: (value: T) => any) {
-      var curr = this._head;
-      var last = null;
-      while (curr) {
-        var result = visitor(curr.value);
-        if (result === SortedList.RETURN) {
-          return;
-        } else if (result === SortedList.DELETE) {
-          if (!last) {
-            curr = this._head = this._head.next;
-          } else {
-            curr = last.next = curr.next;
-          }
-        } else {
-          last = curr;
-          curr = curr.next;
-        }
-      }
-    }
-
-    public isEmpty(): boolean {
-      return !this._head;
-    }
-
-    public pop(): T {
-      if (!this._head) {
-        return undefined;
-      }
-      this._length --;
-      var ret = this._head;
-      this._head = this._head.next;
-      return ret.value;
-    }
-
-    public contains(value: T): boolean {
-      var curr = this._head;
-      while (curr) {
-        if (curr.value === value) {
-          return true;
-        }
-        curr = curr.next;
-      }
-      return false;
-    }
-
-    public toString(): string {
-      var str = "[";
-      var curr = this._head;
-      while (curr) {
-        str += curr.value.toString();
-        curr = curr.next;
-        if (curr) {
-          str += ",";
-        }
-      }
-      str += "]";
-      return str;
-    }
-  }
-
   export class CircularBuffer {
     index: number;
     start: number;
@@ -2152,425 +1855,6 @@ module Shumway {
     public reset() {
       this.index = 0;
       this.start = 0;
-    }
-  }
-
-  export module BitSets {
-    import assert = Shumway.Debug.assert;
-
-    export var ADDRESS_BITS_PER_WORD = 5;
-    export var BITS_PER_WORD = 1 << ADDRESS_BITS_PER_WORD;
-    export var BIT_INDEX_MASK = BITS_PER_WORD - 1;
-
-    function getSize(length): number {
-      return ((length + (BITS_PER_WORD - 1)) >> ADDRESS_BITS_PER_WORD) << ADDRESS_BITS_PER_WORD;
-    }
-
-    export interface BitSet {
-      set: (i) => void;
-      setAll: () => void;
-      assign: (set: BitSet) => void;
-      clear: (i: number) => void;
-      get: (i: number) => boolean;
-      clearAll: () => void;
-      intersect: (other: BitSet) => void;
-      subtract: (other: BitSet) => void;
-      negate: () => void;
-      forEach: (fn) => void;
-      toArray: () => boolean [];
-      equals: (other: BitSet) => boolean;
-      contains: (other: BitSet) => boolean;
-      isEmpty: () => boolean;
-      clone: () => BitSet;
-      recount: () => void;
-      toString: (names: string []) => string;
-      toBitString: (on: string, off: string) => string;
-    }
-
-    function toBitString(on: string, off: string) {
-      var self: BitSet = this;
-      on = on || "1";
-      off = off || "0";
-      var str = "";
-      for (var i = 0; i < length; i++) {
-        str += self.get(i) ? on : off;
-      }
-      return str;
-    }
-
-    function toString(names: any[]) {
-      var self: BitSet = this;
-      var set = [];
-      for (var i = 0; i < length; i++) {
-        if (self.get(i)) {
-          set.push(names ? names[i] : i);
-        }
-      }
-      return set.join(", ");
-    }
-
-    export class Uint32ArrayBitSet implements BitSet {
-      size: number;
-      bits: Uint32Array;
-      count: number;
-      dirty: number;
-      length: number;
-
-      constructor(length: number) {
-        this.size = getSize(length);
-        this.count = 0;
-        this.dirty = 0;
-        this.length = length;
-        this.bits = new Uint32Array(this.size >> ADDRESS_BITS_PER_WORD);
-      }
-
-      recount() {
-        if (!this.dirty) {
-          return;
-        }
-
-        var bits = this.bits;
-        var c = 0;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          var v = bits[i];
-          v = v - ((v >> 1) & 0x55555555);
-          v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
-          c += ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
-        }
-
-        this.count = c;
-        this.dirty = 0;
-      }
-
-      set(i) {
-        var n = i >> ADDRESS_BITS_PER_WORD;
-        var old = this.bits[n];
-        var b = old | (1 << (i & BIT_INDEX_MASK));
-        this.bits[n] = b;
-        this.dirty |= old ^ b;
-      }
-
-      setAll() {
-        var bits = this.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          bits[i] = 0xFFFFFFFF;
-        }
-        this.count = this.size;
-        this.dirty = 0;
-      }
-
-      assign(set) {
-        this.count = set.count;
-        this.dirty = set.dirty;
-        this.size = set.size;
-        for (var i = 0, j = this.bits.length; i < j; i++) {
-          this.bits[i] = set.bits[i];
-        }
-      }
-
-      clear(i) {
-        var n = i >> ADDRESS_BITS_PER_WORD;
-        var old = this.bits[n];
-        var b = old & ~(1 << (i & BIT_INDEX_MASK));
-        this.bits[n] = b;
-        this.dirty |= old ^ b;
-      }
-
-      get(i): boolean {
-        var word = this.bits[i >> ADDRESS_BITS_PER_WORD];
-        return ((word & 1 << (i & BIT_INDEX_MASK))) !== 0;
-      }
-
-      clearAll() {
-        var bits = this.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          bits[i] = 0;
-        }
-        this.count = 0;
-        this.dirty = 0;
-      }
-
-      private _union(other: Uint32ArrayBitSet) {
-        var dirty = this.dirty;
-        var bits = this.bits;
-        var otherBits = other.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          var old = bits[i];
-          var b = old | otherBits[i];
-          bits[i] = b;
-          dirty |= old ^ b;
-        }
-        this.dirty = dirty;
-      }
-
-      intersect(other: Uint32ArrayBitSet) {
-        var dirty = this.dirty;
-        var bits = this.bits;
-        var otherBits = other.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          var old = bits[i];
-          var b = old & otherBits[i];
-          bits[i] = b;
-          dirty |= old ^ b;
-        }
-        this.dirty = dirty;
-      }
-
-      subtract(other: Uint32ArrayBitSet) {
-        var dirty = this.dirty;
-        var bits = this.bits;
-        var otherBits = other.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          var old = bits[i];
-          var b = old & ~otherBits[i];
-          bits[i] = b;
-          dirty |= old ^ b;
-        }
-        this.dirty = dirty;
-      }
-
-      negate() {
-        var dirty = this.dirty;
-        var bits = this.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          var old = bits[i];
-          var b = ~old;
-          bits[i] = b;
-          dirty |= old ^ b;
-        }
-        this.dirty = dirty;
-      }
-
-      forEach(fn) {
-        release || assert(fn);
-        var bits = this.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          var word = bits[i];
-          if (word) {
-            for (var k = 0; k < BITS_PER_WORD; k++) {
-              if (word & (1 << k)) {
-                fn(i * BITS_PER_WORD + k);
-              }
-            }
-          }
-        }
-      }
-
-      toArray(): boolean[] {
-        var set = [];
-        var bits = this.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          var word = bits[i];
-          if (word) {
-            for (var k = 0; k < BITS_PER_WORD; k++) {
-              if (word & (1 << k)) {
-                set.push(i * BITS_PER_WORD + k);
-              }
-            }
-          }
-        }
-        return set;
-      }
-
-      equals(other: Uint32ArrayBitSet) {
-        if (this.size !== other.size) {
-          return false;
-        }
-        var bits = this.bits;
-        var otherBits = other.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          if (bits[i] !== otherBits[i]) {
-            return false;
-          }
-        }
-        return true;
-      }
-
-      contains(other: Uint32ArrayBitSet) {
-        if (this.size !== other.size) {
-          return false;
-        }
-        var bits = this.bits;
-        var otherBits = other.bits;
-        for (var i = 0, j = bits.length; i < j; i++) {
-          if ((bits[i] | otherBits[i]) !== bits[i]) {
-            return false;
-          }
-        }
-        return true;
-      }
-
-      toBitString: (on: string, off: string) => string;
-      toString: (names: string []) => string;
-
-      isEmpty(): boolean {
-        this.recount();
-        return this.count === 0;
-      }
-
-      clone(): Uint32ArrayBitSet {
-        var set = new Uint32ArrayBitSet(this.length);
-        set._union(this);
-        return set;
-      }
-    }
-
-    export class Uint32BitSet implements BitSet {
-      size: number;
-      bits: number;
-      count: number;
-      dirty: number;
-      singleWord: boolean;
-      length: number;
-      constructor(length: number) {
-        this.count = 0;
-        this.dirty = 0;
-        this.size = getSize(length);
-        this.bits = 0;
-        this.singleWord = true;
-        this.length = length;
-      }
-
-      recount() {
-        if (!this.dirty) {
-          return;
-        }
-
-        var c = 0;
-        var v = this.bits;
-        v = v - ((v >> 1) & 0x55555555);
-        v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
-        c += ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
-
-        this.count = c;
-        this.dirty = 0;
-      }
-
-      set(i) {
-        var old = this.bits;
-        var b = old | (1 << (i & BIT_INDEX_MASK));
-        this.bits = b;
-        this.dirty |= old ^ b;
-      }
-
-      setAll() {
-        this.bits = 0xFFFFFFFF;
-        this.count = this.size;
-        this.dirty = 0;
-      }
-
-      assign(set: Uint32BitSet) {
-        this.count = set.count;
-        this.dirty = set.dirty;
-        this.size = set.size;
-        this.bits = set.bits;
-      }
-
-      clear(i: number) {
-        var old = this.bits;
-        var b = old & ~(1 << (i & BIT_INDEX_MASK));
-        this.bits = b;
-        this.dirty |= old ^ b;
-      }
-
-      get(i: number): boolean {
-        return ((this.bits & 1 << (i & BIT_INDEX_MASK))) !== 0;
-      }
-
-      clearAll() {
-        this.bits = 0;
-        this.count = 0;
-        this.dirty = 0;
-      }
-
-      private _union(other: Uint32BitSet) {
-        var old = this.bits;
-        var b = old | other.bits;
-        this.bits = b;
-        this.dirty = old ^ b;
-      }
-
-      intersect(other: Uint32BitSet) {
-        var old = this.bits;
-        var b = old & other.bits;
-        this.bits = b;
-        this.dirty = old ^ b;
-      }
-
-      subtract(other: Uint32BitSet) {
-        var old = this.bits;
-        var b = old & ~other.bits;
-        this.bits = b;
-        this.dirty = old ^ b;
-      }
-
-      negate() {
-        var old = this.bits;
-        var b = ~old;
-        this.bits = b;
-        this.dirty = old ^ b;
-      }
-
-      forEach(fn) {
-        release || assert(fn);
-        var word = this.bits;
-        if (word) {
-          for (var k = 0; k < BITS_PER_WORD; k++) {
-            if (word & (1 << k)) {
-              fn(k);
-            }
-          }
-        }
-      }
-
-      toArray(): boolean [] {
-        var set = [];
-        var word = this.bits;
-        if (word) {
-          for (var k = 0; k < BITS_PER_WORD; k++) {
-            if (word & (1 << k)) {
-              set.push(k);
-            }
-          }
-        }
-        return set;
-      }
-
-      equals(other: Uint32BitSet) {
-        return this.bits === other.bits;
-      }
-
-      contains(other: Uint32BitSet) {
-        var bits = this.bits;
-        return (bits | other.bits) === bits;
-      }
-
-      toBitString: (on: string, off: string) => string;
-      toString: (names: string []) => string;
-
-      isEmpty(): boolean {
-        this.recount();
-        return this.count === 0;
-      }
-
-      clone(): Uint32BitSet {
-        var set = new Uint32BitSet(this.length);
-        set._union(this);
-        return set;
-      }
-    }
-
-    Uint32BitSet.prototype.toString = toString;
-    Uint32BitSet.prototype.toBitString = toBitString;
-    Uint32ArrayBitSet.prototype.toString = toString;
-    Uint32ArrayBitSet.prototype.toBitString = toBitString;
-
-    export function BitSetFunctor(length: number) {
-      var shouldUseSingleWord = (getSize(length) >> ADDRESS_BITS_PER_WORD) === 1;
-      var type = (shouldUseSingleWord ? <any>Uint32BitSet : <any>Uint32ArrayBitSet);
-      return function () {
-        return new type(length);
-      }
     }
   }
 
@@ -3001,7 +2285,7 @@ module Shumway {
     toString(): string {
       return "{ " +
              "xMin: " + this._xMin + ", " +
-             "xMin: " + this._yMin + ", " +
+             "yMin: " + this._yMin + ", " +
              "xMax: " + this._xMax + ", " +
              "yMax: " + this._yMax +
              " }";
@@ -3041,7 +2325,7 @@ module Shumway {
       return Color.FromARGB(ColorUtilities.RGBAToARGB(rgba));
     }
     public toRGBA() {
-      return (this.r * 255) << 24 | (this.g * 255) << 16 | (this.b * 255) << 8 | (this.a * 255)
+      return (this.r * 255) << 24 | (this.g * 255) << 16 | (this.b * 255) << 8 | (this.a * 255);
     }
     public toCSSStyle() {
       return ColorUtilities.rgbaToCSSStyle(this.toRGBA());
@@ -3095,15 +2379,35 @@ module Shumway {
       return argb << 8 | ((argb >> 24) & 0xff);
     }
 
-    export function rgbaToCSSStyle(color: number): string {
-      return Shumway.StringUtilities.concat9('rgba(', color >> 24 & 0xff, ',', color >> 16 & 0xff, ',', color >> 8 & 0xff, ',', (color & 0xff) / 0xff, ')');
+    /**
+     * Cache frequently used rgba -> css style conversions.
+     */
+    var rgbaToCSSStyleCache = new Cache(1024);
+
+    export function rgbaToCSSStyle(rgba: number): string {
+      var result = rgbaToCSSStyleCache.get(rgba);
+      if (typeof result === "string") {
+        return result;
+      }
+      result = Shumway.StringUtilities.concat9('rgba(', rgba >> 24 & 0xff, ',', rgba >> 16 & 0xff, ',', rgba >> 8 & 0xff, ',', (rgba & 0xff) / 0xff, ')');
+      rgbaToCSSStyleCache.set(rgba, result);
+      return result;
     }
 
+    /**
+     * Cache frequently used css -> rgba styles conversions.
+     */
+    var cssStyleToRGBACache = new Cache(1024);
+
     export function cssStyleToRGBA(style: string) {
+      var result = cssStyleToRGBACache.get(style);
+      if (typeof result === "number") {
+        return result;
+      }
+      result =  0xff0000ff; // Red
       if (style[0] === "#") {
         if (style.length === 7) {
-          var value = parseInt(style.substring(1), 16);
-          return (value << 8) | 0xff;
+          result = (parseInt(style.substring(1), 16) << 8) | 0xff;
         }
       } else if (style[0] === "r") {
         // We don't parse all types of rgba(....) color styles. We only handle the
@@ -3113,12 +2417,13 @@ module Shumway {
         var g = parseInt(values[1]);
         var b = parseInt(values[2]);
         var a = parseFloat(values[3]);
-        return (r & 0xff) << 24 |
-               (g & 0xff) << 16 |
-               (b & 0xff) << 8  |
-               ((a * 255) & 0xff);
+        result = (r & 0xff) << 24 |
+                 (g & 0xff) << 16 |
+                 (b & 0xff) << 8  |
+                 ((a * 255) & 0xff);
       }
-      return 0xff0000ff; // Red
+      cssStyleToRGBACache.set(style, result);
+      return result;
     }
 
     export function hexToRGB(color: string): number {
@@ -3193,6 +2498,11 @@ module Shumway {
           }
         }
       }
+    }
+    
+    export function getUnpremultiplyTable(): Uint8Array {
+      ensureUnpremultiplyTable();
+      return unpremultiplyTable;
     }
 
     export function tableLookupUnpremultiplyARGB(pARGB): number {
@@ -3295,7 +2605,7 @@ module Shumway {
           target[i] = swap32(premultiplyARGB(uARGB));
         }
       } else {
-        Debug.somewhatImplemented("Image Format Conversion: " + ImageType[sourceFormat] + " -> " + ImageType[targetFormat]);
+        release || Debug.somewhatImplemented("Image Format Conversion: " + ImageType[sourceFormat] + " -> " + ImageType[targetFormat]);
         // Copy the buffer over for now, we should at least get some image output.
         for (var i = 0; i < length; i++) {
           target[i] = source[i];
@@ -3384,7 +2694,7 @@ module Shumway {
   }
 
   export module Telemetry {
-    export enum Feature {
+    export const enum Feature {
       EXTERNAL_INTERFACE_FEATURE = 1,
       CLIPBOARD_FEATURE = 2,
       SHAREDOBJECT_FEATURE = 3,
@@ -3393,9 +2703,18 @@ module Shumway {
       NETCONNECTION_FEATURE = 6
     }
 
-    export enum ErrorTypes {
+    export const enum ErrorTypes {
       AVM1_ERROR = 1,
       AVM2_ERROR = 2
+    }
+
+    export const enum LoadResource {
+      LoadSource = 0,
+      LoadWhitelistAllowed = 1,
+      LoadWhitelistDenied = 2,
+      StreamAllowed = 3,
+      StreamDenied = 4,
+      StreamCrossdomain = 5
     }
 
     export var instance: ITelemetryService;
@@ -3422,6 +2741,7 @@ module Shumway {
     onhttpstatus?: (location: string, httpStatus: number, httpHeaders: any) => void;
     onerror?: (e) => void;
     open(request: FileLoadingRequest);
+    close: () => void;
   }
 
   export interface IFileLoadingService {
@@ -3434,7 +2754,7 @@ module Shumway {
     export var instance: IFileLoadingService;
   }
 
-  export enum SystemResourceId {
+  export const enum SystemResourceId {
     BuiltinAbc = 0,
     PlayerglobalAbcs = 1,
     PlayerglobalManifest = 2,
@@ -3449,7 +2769,7 @@ module Shumway {
     export var instance: ISystemResourcesLoadingService;
   }
 
-  export function registerCSSFont(id: number, buffer: ArrayBuffer, forceFontInit: boolean) {
+  export function registerCSSFont(id: number, data: Uint8Array, forceFontInit: boolean) {
     if (!inBrowser) {
       Debug.warning('Cannot register CSS font outside the browser');
       return;
@@ -3458,7 +2778,7 @@ module Shumway {
     head.insertBefore(document.createElement('style'), head.firstChild);
     var style = <CSSStyleSheet>document.styleSheets[0];
     var rule = '@font-face{font-family:swffont' + id + ';src:url(data:font/opentype;base64,' +
-               Shumway.StringUtilities.base64ArrayBuffer(buffer) + ')' + '}';
+               Shumway.StringUtilities.base64EncodeBytes(data) + ')' + '}';
     style.insertRule(rule, style.cssRules.length);
     // In at least Chrome, the browser only decodes a font once it's used in the page at all.
     // Because it still does so asynchronously, we create a with some text using the font, take
@@ -3476,6 +2796,8 @@ module Shumway {
     }
   }
 
+
+
   export interface IExternalInterfaceService {
     enabled: boolean;
     initJS(callback: (functionName: string, args: any[]) => any);
@@ -3489,13 +2811,60 @@ module Shumway {
   export module ExternalInterfaceService {
     export var instance: IExternalInterfaceService = {
       enabled: false,
-      initJS(callback: (functionName: string, args: any[]) => any) { },
-      registerCallback(functionName: string) { },
-      unregisterCallback(functionName: string) { },
-      eval(expression: string): any { },
-      call(request: string): any { },
+      initJS(callback: (functionName: string, args: any[]) => any) {
+        // ...
+      },
+      registerCallback(functionName: string) {
+        // ...
+      },
+      unregisterCallback(functionName: string) {
+        // ...
+      },
+      eval(expression: string): any {
+        // ...
+      },
+      call(request: string): any {
+        // ...
+      },
       getId(): string { return null; }
     };
+  }
+
+  export const enum LocalConnectionConnectResult {
+    InvalidCallback = -3,
+    AlreadyTaken = -2,
+    InvalidName = -1,
+    Success = 0
+  }
+
+  export const enum LocalConnectionCloseResult {
+    NotConnected = -1,
+    Success = 0
+  }
+
+  export interface ILocalConnectionReceiver {
+    handleMessage(methodName: string, argsBuffer: ArrayBuffer): void;
+  }
+
+  export interface ILocalConnectionSender {
+    dispatchEvent(event): void;
+    hasEventListener(type: string): boolean;
+    sec: any;
+  }
+
+  export interface ILocalConnectionService {
+    createConnection(connectionName: string,
+                          receiver: ILocalConnectionReceiver): LocalConnectionConnectResult;
+    closeConnection(connectionName: string,
+                         receiver: ILocalConnectionReceiver): LocalConnectionCloseResult;
+    send(connectionName: string, methodName: string, args: ArrayBuffer,
+         sender: ILocalConnectionSender, senderDomain: string, senderIsSecure: boolean): void;
+    allowDomains(connectionName: string, receiver: ILocalConnectionReceiver, domains: string[],
+                 secure: boolean);
+  }
+
+  export module LocalConnectionService {
+    export var instance: ILocalConnectionService;
   }
 
   export interface IClipboardService {
@@ -3643,331 +3012,6 @@ module Shumway {
   }
 }
 
-// Polyfill for Promises
-(function PromiseClosure() {
-  /*jshint -W061 */
-  var global = Function("return this")();
-  if (global.Promise) {
-    // Promises existing in the DOM/Worker, checking presence of all/resolve
-    if (typeof global.Promise.all !== 'function') {
-      global.Promise.all = function (iterable) {
-        var count = 0, results = [], resolve, reject;
-        var promise = new global.Promise(function (resolve_, reject_) {
-          resolve = resolve_;
-          reject = reject_;
-        });
-        iterable.forEach(function (p, i) {
-          count++;
-          p.then(function (result) {
-            results[i] = result;
-            count--;
-            if (count === 0) {
-              resolve(results);
-            }
-          }, reject);
-        });
-        if (count === 0) {
-          resolve(results);
-        }
-        return promise;
-      };
-    }
-    if (typeof global.Promise.resolve !== 'function') {
-      global.Promise.resolve = function (x) {
-        return new global.Promise(function (resolve) { resolve(x); });
-      };
-    }
-    return;
-  }
-
-  function getDeferred(C) {
-    if (typeof C !== 'function') {
-      throw new TypeError('Invalid deferred constructor');
-    }
-    var resolver = createDeferredConstructionFunctions();
-    var promise = new C(resolver);
-    var resolve = resolver.resolve;
-    if (typeof resolve !== 'function') {
-      throw new TypeError('Invalid resolve construction function');
-    }
-    var reject = resolver.reject;
-    if (typeof reject !== 'function') {
-      throw new TypeError('Invalid reject construction function');
-    }
-    return {promise: promise, resolve: resolve, reject: reject};
-  }
-
-  function updateDeferredFromPotentialThenable(x, deferred) {
-    if (typeof x !== 'object' || x === null) {
-      return false;
-    }
-    try {
-      var then = x.then;
-      if (typeof then !== 'function') {
-        return false;
-      }
-      var thenCallResult = then.call(x, deferred.resolve, deferred.reject);
-    } catch (e) {
-      var reject = deferred.reject;
-      reject(e);
-    }
-    return true;
-  }
-
-  function isPromise(x) {
-    return typeof x === 'object' && x !== null &&
-      typeof x.promiseStatus !== 'undefined';
-  }
-
-  function rejectPromise(promise, reason) {
-    if (promise.promiseStatus !== 'unresolved') {
-      return;
-    }
-    var reactions = promise.rejectReactions;
-    promise.result = reason;
-    promise.resolveReactions = undefined;
-    promise.rejectReactions = undefined;
-    promise.promiseStatus = 'has-rejection';
-    triggerPromiseReactions(reactions, reason);
-  }
-
-  function resolvePromise(promise, resolution) {
-    if (promise.promiseStatus !== 'unresolved') {
-      return;
-    }
-    var reactions = promise.resolveReactions;
-    promise.result = resolution;
-    promise.resolveReactions = undefined;
-    promise.rejectReactions = undefined;
-    promise.promiseStatus = 'has-resolution';
-    triggerPromiseReactions(reactions, resolution);
-  }
-
-  function triggerPromiseReactions(reactions, argument) {
-    for (var i = 0; i < reactions.length; i++) {
-      queueMicrotask({reaction: reactions[i], argument: argument});
-    }
-  }
-
-  function queueMicrotask(task) {
-    if (microtasksQueue.length === 0) {
-      setTimeout(handleMicrotasksQueue, 0);
-    }
-    microtasksQueue.push(task);
-  }
-
-  function executePromiseReaction(reaction, argument) {
-    var deferred = reaction.deferred;
-    var handler = reaction.handler;
-    var handlerResult, updateResult;
-    try {
-      handlerResult = handler(argument);
-    } catch (e) {
-      var reject = deferred.reject;
-      return reject(e);
-    }
-
-    if (handlerResult === deferred.promise) {
-      var reject = deferred.reject;
-      return reject(new TypeError('Self resolution'));
-    }
-
-    try {
-      updateResult = updateDeferredFromPotentialThenable(handlerResult,
-        deferred);
-      if (!updateResult) {
-        var resolve = deferred.resolve;
-        return resolve(handlerResult);
-      }
-    } catch (e) {
-      var reject = deferred.reject;
-      return reject(e);
-    }
-  }
-
-  var microtasksQueue = [];
-
-  function handleMicrotasksQueue() {
-    while (microtasksQueue.length > 0) {
-      var task = microtasksQueue[0];
-      try {
-        executePromiseReaction(task.reaction, task.argument);
-      } catch (e) {
-        // unhandler onFulfillment/onRejection exception
-        if (typeof (<any>Promise).onerror === 'function') {
-          (<any>Promise).onerror(e);
-        }
-      }
-      microtasksQueue.shift();
-    }
-  }
-
-  function throwerFunction(e) {
-    throw e;
-  }
-
-  function identityFunction(x) {
-    return x;
-  }
-
-  function createRejectPromiseFunction(promise) {
-    return function (reason) {
-      rejectPromise(promise, reason);
-    };
-  }
-
-  function createResolvePromiseFunction(promise) {
-    return function (resolution) {
-      resolvePromise(promise, resolution);
-    };
-  }
-
-  function createDeferredConstructionFunctions(): any {
-    var fn: any = function (resolve, reject) {
-      fn.resolve = resolve;
-      fn.reject = reject;
-    };
-    return fn;
-  }
-
-  function createPromiseResolutionHandlerFunctions(promise,
-                                                   fulfillmentHandler, rejectionHandler) {
-    return function (x) {
-      if (x === promise) {
-        return rejectionHandler(new TypeError('Self resolution'));
-      }
-      var cstr = promise.promiseConstructor;
-      if (isPromise(x)) {
-        var xConstructor = x.promiseConstructor;
-        if (xConstructor === cstr) {
-          return x.then(fulfillmentHandler, rejectionHandler);
-        }
-      }
-      var deferred = getDeferred(cstr);
-      var updateResult = updateDeferredFromPotentialThenable(x, deferred);
-      if (updateResult) {
-        var deferredPromise = deferred.promise;
-        return deferredPromise.then(fulfillmentHandler, rejectionHandler);
-      }
-      return fulfillmentHandler(x);
-    };
-  }
-
-  function createPromiseAllCountdownFunction(index, values, deferred,
-                                             countdownHolder) {
-    return function (x) {
-      values[index] = x;
-      countdownHolder.countdown--;
-      if (countdownHolder.countdown === 0) {
-        deferred.resolve(values);
-      }
-    };
-  }
-
-  function Promise(resolver) {
-    if (typeof resolver !== 'function') {
-      throw new TypeError('resolver is not a function');
-    }
-    var promise = this;
-    if (typeof promise !== 'object') {
-      throw new TypeError('Promise to initialize is not an object');
-    }
-    promise.promiseStatus = 'unresolved';
-    promise.resolveReactions = [];
-    promise.rejectReactions = [];
-    promise.result = undefined;
-
-    var resolve = createResolvePromiseFunction(promise);
-    var reject = createRejectPromiseFunction(promise);
-
-    try {
-      var result = resolver(resolve, reject);
-    } catch (e) {
-      rejectPromise(promise, e);
-    }
-
-    promise.promiseConstructor = Promise;
-    return promise;
-  }
-
-  (<any>Promise).all = function (iterable) {
-    var deferred = getDeferred(this);
-    var values = [];
-    var countdownHolder = {countdown: 0};
-    var index = 0;
-    iterable.forEach(function (nextValue) {
-      var nextPromise = this.cast(nextValue);
-      var fn = createPromiseAllCountdownFunction(index, values,
-        deferred, countdownHolder);
-      nextPromise.then(fn, deferred.reject);
-      index++;
-      countdownHolder.countdown++;
-    }, this);
-    if (index === 0) {
-      deferred.resolve(values);
-    }
-    return deferred.promise;
-  };
-  (<any>Promise).cast = function (x) {
-    if (isPromise(x)) {
-      return x;
-    }
-    var deferred = getDeferred(this);
-    deferred.resolve(x);
-    return deferred.promise;
-  };
-  (<any>Promise).reject = function (r) {
-    var deferred = getDeferred(this);
-    var rejectResult = deferred.reject(r);
-    return deferred.promise;
-  };
-  (<any>Promise).resolve = function (x) {
-    var deferred = getDeferred(this);
-    var rejectResult = deferred.resolve(x);
-    return deferred.promise;
-  };
-  Promise.prototype = {
-    'catch': function (onRejected) {
-      this.then(undefined, onRejected);
-    },
-    then: function (onFulfilled, onRejected) {
-      var promise = this;
-      if (!isPromise(promise)) {
-        throw new TypeError('this is not a Promises');
-      }
-      var cstr = promise.promiseConstructor;
-      var deferred = getDeferred(cstr);
-
-      var rejectionHandler = typeof onRejected === 'function' ? onRejected :
-        throwerFunction;
-      var fulfillmentHandler = typeof onFulfilled === 'function' ? onFulfilled :
-        identityFunction;
-      var resolutionHandler = createPromiseResolutionHandlerFunctions(promise,
-        fulfillmentHandler, rejectionHandler);
-
-      var resolveReaction = {deferred: deferred, handler: resolutionHandler};
-      var rejectReaction = {deferred: deferred, handler: rejectionHandler};
-
-      switch (promise.promiseStatus) {
-        case 'unresolved':
-          promise.resolveReactions.push(resolveReaction);
-          promise.rejectReactions.push(rejectReaction);
-          break;
-        case 'has-resolution':
-          var resolution = promise.result;
-          queueMicrotask({reaction: resolveReaction, argument: resolution});
-          break;
-        case 'has-rejection':
-          var rejection = promise.result;
-          queueMicrotask({reaction: rejectReaction, argument: rejection});
-          break;
-      }
-      return deferred.promise;
-    }
-  };
-
-  global.Promise = Promise;
-})();
 
 declare var exports;
 if (typeof exports !== "undefined") {

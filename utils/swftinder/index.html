@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SWF Tinder</title>
+  <style>
+    textarea {
+      width: 100%;
+      height: 200px;
+      display: block;
+      white-space: pre-line;
+    }
+    #swfDisplay0, #swfDisplay1 {
+      display: block;
+    }
+    .swfContainer {
+      width: 500px;
+      display: block;
+      padding: 4px;
+      border: 2px solid #0066c0;
+    }
+    label {
+      display: block;
+    }
+    body {
+      font-size: 10px;
+    }
+  </style>
+</head>
+<body>
+<div class="swfContainer">Shumway<div id="swfDisplay0"></div></div>
+<div class="swfContainer">Flash<div id="swfDisplay1"></div></div><br>
+<div id="current"></div><br>
+<button id="good" title="<left arrow>">Good</button>
+<button id="bad" title="<right arrow>">Bad</button>
+<button id="clear" title="">Clear</button><br>
+<label>Heap:</label>
+<textarea id="heap"></textarea>
+<label>Good:</label>
+<textarea id="goodEntries"></textarea>
+<label>Bad:</label>
+<textarea id="badEntries"></textarea>
+<script>
+
+  function sortGood() {
+    addCurrentToList(state.good, 'good');
+    goodDisplay.value = state.good.map(index => entries[index]).join('\n');
+  }
+
+  function sortBad() {
+    addCurrentToList(state.bad, 'bad');
+    badDisplay.value = state.bad.map(index => entries[index]).join('\n');
+  }
+
+  function clear() {
+    localStorage.clear();
+  }
+
+  function addCurrentToList(list, listName) {
+    console.log(listName + ': ' + entries[state.index], state.index);
+    list.push(state.index);
+    localStorage.setItem('swftinder-' + listName, list.join(','));
+    showNext();
+  }
+
+  document.body.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowLeft') {
+      sortGood();
+      e.preventDefault();
+    } else if (e.key === 'ArrowRight') {
+      sortBad();
+      e.preventDefault();
+    }
+  });
+  document.getElementById('good').addEventListener('click', sortGood);
+  document.getElementById('bad').addEventListener('click', sortBad);
+  document.getElementById('clear').addEventListener('click', clear);
+  var heapDisplay = document.getElementById('heap');
+  var goodDisplay = document.getElementById('goodEntries');
+  var badDisplay = document.getElementById('badEntries');
+  heapDisplay.addEventListener('input', function() {
+    resetState(heapDisplay.value);
+  });
+
+  var entries;
+  var state;
+  loadState();
+  if (state.index < entries.length) {
+    showIndex(state.index);
+  }
+
+  function resetState(heap = '') {
+    state = {
+      heap: heap,
+      index: -1,
+      good: [],
+      bad: []
+    };
+    saveState();
+    entries = heap.split('\n');
+    if (entries.length) {
+      showNext();
+    }
+  }
+
+  function showNext() {
+    localStorage.setItem('swftinder-index', ++state.index);
+    if (state.index >= entries.length) {
+      alert('done!');
+      console.log('Good entries:\n' + state.good.map(index => entries[index]).join('\n'));
+      return;
+    }
+
+    showIndex(state.index);
+  }
+
+  function getParameterHTMLString(parameters) {
+    var parametersHTML = "";
+    for (var name in parameters) {
+      parametersHTML += `<param name="${name}" value="${parameters[name]}" />`;
+    }
+    return parametersHTML;
+  }
+
+  function showIndex(index) {
+    var entry = entries[index];
+    document.getElementById('current').innerHTML = `<a href="http://localhost:8000/examples/inspector/inspector.html?rfile=../../${entry}">Index: ${index}, URL: ${entry}</a>`;
+    document.getElementById('swfDisplay0').innerHTML = '<object type="application/x-shockwave-flash" data="' + '../../' + entry + '" width="500" height="300">' + getParameterHTMLString({allownetworking: false, allowscriptaccess: false}) + '</object>';
+    document.getElementById('swfDisplay1').innerHTML = '<object type="application/x-shockwave-flash" data="' + '../../' + entry + '" width="500" height="300">' + getParameterHTMLString({allownetworking: false, allowscriptaccess: false, shumwaymode: 'off'}) + '</object>';
+  }
+
+  function loadState() {
+    var goodStr = localStorage.getItem('swftinder-good');
+    var badStr = localStorage.getItem('swftinder-bad');
+    var heapStr = localStorage.getItem('swftinder-heap') || '';
+    state = {
+      heap,
+      index: localStorage.getItem('swftinder-index') | 0,
+      good: goodStr ? goodStr.split(',').map(e => e|0) : [],
+      bad: badStr ? badStr.split(',').map(e => e|0) : []
+    };
+    entries = heapStr.split('\n');
+    heapDisplay.value = heapStr;
+    goodDisplay.value = state.good.map(index => entries[index]).join('\n');
+    badDisplay.value = state.bad.map(index => entries[index]).join('\n');
+  }
+
+  function saveState() {
+    localStorage.setItem('swftinder-heap', state.heap);
+    localStorage.setItem('swftinder-index', state.index);
+    localStorage.setItem('swftinder-good', state.good.join(','));
+    localStorage.setItem('swftinder-bad', state.bad.join(','));
+  }
+</script>
+</body>
+</html>

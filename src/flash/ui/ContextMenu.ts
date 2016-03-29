@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 // Class: ContextMenu
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class ContextMenu extends flash.display.NativeMenu {
     
     static classInitializer: any = null;
-    static initializer: any = null;
-    static classSymbols: string [] = null;
-    static instanceSymbols: string [] = null;
-    
+
     constructor () {
-      false && super();
-      display.NativeMenu.instanceConstructorNoInitialize.call(this);
-      this.builtInItems = new ui.ContextMenuBuiltInItems();
-      this.customItems = [];
+      super();
+      this._builtInItems = new this.sec.flash.ui.ContextMenuBuiltInItems();
+      this._customItems = [];
     }
     
     static get isSupported(): boolean {
@@ -44,51 +40,51 @@ module Shumway.AVM2.AS.flash.ui {
 
     get builtInItems(): flash.ui.ContextMenuBuiltInItems {
       // TODO: Should clone here probably.
-      somewhatImplemented("public flash.ui.ContextMenu::get builtInItems");
+      release || somewhatImplemented("public flash.ui.ContextMenu::get builtInItems");
       return this._builtInItems;
     }
     set builtInItems(value: flash.ui.ContextMenuBuiltInItems) {
       // TODO: Should clone here probably.
       value = value;
-      somewhatImplemented("public flash.ui.ContextMenu::set builtInItems");
+      release || somewhatImplemented("public flash.ui.ContextMenu::set builtInItems");
       this._builtInItems = value;
     }
-    get customItems(): any [] {
+    get customItems(): ASArray {
       // TODO: Should clone here probably.
-      somewhatImplemented("public flash.ui.ContextMenu::get customItems");
-      return this._customItems;
+      release || somewhatImplemented("public flash.ui.ContextMenu::get customItems");
+      return this.sec.createArrayUnsafe(this._customItems);
     }
-    set customItems(value: any []) {
+    set customItems(value: ASArray) {
       // TODO: Should clone here probably.
       value = value;
-      somewhatImplemented("public flash.ui.ContextMenu::set customItems");
-      this._customItems = value;
+      release || somewhatImplemented("public flash.ui.ContextMenu::set customItems");
+      this._customItems = value.value;
     }
     get link(): flash.net.URLRequest {
-      somewhatImplemented("public flash.ui.ContextMenu::get link");
+      release || somewhatImplemented("public flash.ui.ContextMenu::get link");
       return this._link;
     }
     set link(value: flash.net.URLRequest) {
       value = value;
-      somewhatImplemented("public flash.ui.ContextMenu::set link");
+      release || somewhatImplemented("public flash.ui.ContextMenu::set link");
       this._link = value;
     }
     get clipboardMenu(): boolean {
-      somewhatImplemented("public flash.ui.ContextMenu::get clipboardMenu");
+      release || somewhatImplemented("public flash.ui.ContextMenu::get clipboardMenu");
       return this._clipboardMenu;
     }
     set clipboardMenu(value: boolean) {
       value = !!value;
-      somewhatImplemented("public flash.ui.ContextMenu::set clipboardMenu");
+      release || somewhatImplemented("public flash.ui.ContextMenu::set clipboardMenu");
       this._clipboardMenu = value;
     }
     get clipboardItems(): flash.ui.ContextMenuClipboardItems {
-      somewhatImplemented("public flash.ui.ContextMenu::get clipboardItems");
+      release || somewhatImplemented("public flash.ui.ContextMenu::get clipboardItems");
       return this._clipboardItems;
     }
     set clipboardItems(value: flash.ui.ContextMenuClipboardItems) {
       value = value;
-      somewhatImplemented("public flash.ui.ContextMenu::set clipboardItems");
+      release || somewhatImplemented("public flash.ui.ContextMenu::set clipboardItems");
       this._clipboardItems = value;
     }
 
@@ -108,20 +104,20 @@ module Shumway.AVM2.AS.flash.ui {
     }
 
     clone(): ContextMenu {
-      var result = new ui.ContextMenu();
-      result.builtInItems = this.builtInItems.clone();
+      var result: ContextMenu = new this.sec.flash.ui.ContextMenu();
+      result._builtInItems = this._builtInItems.clone();
 
       this.cloneLinkAndClipboardProperties(result);
-      var customItems = this.customItems;
+      var customItems = this._customItems;
       for (var i = 0; i < customItems.length; i++) {
-        result.customItems.push(customItems[i].clone());
+        result._customItems.push(customItems[i].clone());
       }
       return result;
     }
 
     cloneLinkAndClipboardProperties(c: flash.ui.ContextMenu): void {
       c = c;
-      somewhatImplemented("public flash.ui.ContextMenu::cloneLinkAndClipboardProperties"); return;
+      release || somewhatImplemented("public flash.ui.ContextMenu::cloneLinkAndClipboardProperties"); return;
     }
   }
 }

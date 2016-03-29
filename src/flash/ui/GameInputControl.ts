@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 // Class: GameInputControl
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GameInputControl extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,15 +28,9 @@ module Shumway.AVM2.AS.flash.ui {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.ui.GameInputControl");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
+
     // _numValues: number /*int*/;
     // _index: number /*int*/;
     // _relative: boolean;
@@ -50,36 +39,36 @@ module Shumway.AVM2.AS.flash.ui {
     // _finger: string;
     // _device: flash.ui.GameInputDevice;
     get numValues(): number /*int*/ {
-      notImplemented("public flash.ui.GameInputControl::get numValues"); return;
+      release || notImplemented("public flash.ui.GameInputControl::get numValues"); return;
       // return this._numValues;
     }
     get index(): number /*int*/ {
-      notImplemented("public flash.ui.GameInputControl::get index"); return;
+      release || notImplemented("public flash.ui.GameInputControl::get index"); return;
       // return this._index;
     }
     get relative(): boolean {
-      notImplemented("public flash.ui.GameInputControl::get relative"); return;
+      release || notImplemented("public flash.ui.GameInputControl::get relative"); return;
       // return this._relative;
     }
     get type(): string {
-      notImplemented("public flash.ui.GameInputControl::get type"); return;
+      release || notImplemented("public flash.ui.GameInputControl::get type"); return;
       // return this._type;
     }
     get hand(): string {
-      notImplemented("public flash.ui.GameInputControl::get hand"); return;
+      release || notImplemented("public flash.ui.GameInputControl::get hand"); return;
       // return this._hand;
     }
     get finger(): string {
-      notImplemented("public flash.ui.GameInputControl::get finger"); return;
+      release || notImplemented("public flash.ui.GameInputControl::get finger"); return;
       // return this._finger;
     }
     get device(): flash.ui.GameInputDevice {
-      notImplemented("public flash.ui.GameInputControl::get device"); return;
+      release || notImplemented("public flash.ui.GameInputControl::get device"); return;
       // return this._device;
     }
     getValueAt(index: number /*int*/ = 0): number {
       index = index | 0;
-      notImplemented("public flash.ui.GameInputControl::getValueAt"); return;
+      release || notImplemented("public flash.ui.GameInputControl::getValueAt"); return;
     }
   }
 }

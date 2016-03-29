@@ -88,6 +88,6 @@ module Shumway.AVM2.Runtime {
   };
 
   VM_METHOD_OVERRIDES["facebook.utils.FBURI::is_facebook_cdn_url"] = function () {
-    return !!this.asGetPublicProperty('authority');
+    return !!this.axGetPublicProperty('authority');
   };
 }

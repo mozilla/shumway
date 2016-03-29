@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 // Class: Security
-module Shumway.AVM2.AS.flash.system {
+module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
-  export class Security extends ASNative {
+  export class Security extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -35,8 +31,7 @@ module Shumway.AVM2.AS.flash.system {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.system.Security");
+      super();
     }
     
     // JS -> AS Bindings
@@ -60,60 +55,76 @@ module Shumway.AVM2.AS.flash.system {
       Security._exactSettings = value;
     }
     static get disableAVM1Loading(): boolean {
-      notImplemented("public flash.system.Security::get disableAVM1Loading"); return;
+      release || notImplemented("public flash.system.Security::get disableAVM1Loading"); return;
       // return Security._disableAVM1Loading;
     }
     static set disableAVM1Loading(value: boolean) {
       value = !!value;
-      notImplemented("public flash.system.Security::set disableAVM1Loading"); return;
+      release || notImplemented("public flash.system.Security::set disableAVM1Loading"); return;
       // Security._disableAVM1Loading = value;
     }
     static get sandboxType(): string {
-      somewhatImplemented("public flash.system.Security::get sandboxType");
+      release || somewhatImplemented("public flash.system.Security::get sandboxType");
       return Security._sandboxType;
     }
     static get pageDomain(): string {
-      somewhatImplemented("public flash.system.Security::get pageDomain");
+      release || somewhatImplemented("public flash.system.Security::get pageDomain");
+      // TODO: convert this to proper URI parsing.
       var pageHost: string = Shumway.FileLoadingService.instance.resolveUrl('/');
       var parts = pageHost.split('/'); parts.pop();
       return parts.pop();
     }
     static allowDomain(): void {
-      somewhatImplemented("public flash.system.Security::static allowDomain [\"" +
-        Array.prototype.join.call(arguments, "\", \"") + "\"]");
-      var whitelist: ICrossDomainSWFLoadingWhitelist = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+      release || somewhatImplemented('public flash.system.Security::static allowDomain ["' +
+        Array.prototype.join.call(arguments, '", "') + '"]');
+      var whitelist: ICrossDomainSWFLoadingWhitelist = this.sec.player;
       for (var i = 0; i < arguments.length; i++) {
-        whitelist.addToSWFLoadingWhitelist(asCoerceString(arguments[i]), false);
+        whitelist.addToSWFLoadingWhitelist(axCoerceString(arguments[i]) || '', false, false);
       }
     }
     static allowInsecureDomain(): void {
-      somewhatImplemented("public flash.system.Security::static allowInsecureDomain");
-      var whitelist: ICrossDomainSWFLoadingWhitelist = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+      release || somewhatImplemented("public flash.system.Security::static allowInsecureDomain");
+      var whitelist: ICrossDomainSWFLoadingWhitelist = this.sec.player;
       for (var i = 0; i < arguments.length; i++) {
-        whitelist.addToSWFLoadingWhitelist(asCoerceString(arguments[i]), true);
+        whitelist.addToSWFLoadingWhitelist(axCoerceString(arguments[i]) || '', true, false);
       }
     }
     static loadPolicyFile(url: string): void {
-      url = asCoerceString(url);
-      somewhatImplemented("public flash.system.Security::static loadPolicyFile");
+      url = axCoerceString(url);
+      release || somewhatImplemented("public flash.system.Security::static loadPolicyFile");
     }
     static showSettings(panel: string = "default"): void {
-      panel = asCoerceString(panel);
-      notImplemented("public flash.system.Security::static showSettings"); return;
+      panel = axCoerceString(panel);
+      release || notImplemented("public flash.system.Security::static showSettings"); return;
     }
-    static duplicateSandboxBridgeInputArguments(toplevel: ASObject, args: any []): any [] {
+    static duplicateSandboxBridgeInputArguments(toplevel: ASObject, args: ASArray): ASArray {
       toplevel = toplevel; args = args;
-      notImplemented("public flash.system.Security::static duplicateSandboxBridgeInputArguments"); return;
+      release || notImplemented("public flash.system.Security::static duplicateSandboxBridgeInputArguments"); return;
     }
     static duplicateSandboxBridgeOutputArgument(toplevel: ASObject, arg: any): any {
       toplevel = toplevel;
-      notImplemented("public flash.system.Security::static duplicateSandboxBridgeOutputArgument"); return;
+      release || notImplemented("public flash.system.Security::static duplicateSandboxBridgeOutputArgument"); return;
     }
     
   }
 
+  export const enum CrossDomainSWFLoadingWhitelistResult {
+    /**
+     * The requested domain belongs to the same domain as SWF's.
+     */
+    OwnDomain = 0,
+    /**
+     * The requested domain belongs to the other domain than SWF's.
+     */
+    Remote = 1,
+    /**
+     * The requested domain is not whitelisted.
+     */
+    Failed = 2
+  }
+
   export interface ICrossDomainSWFLoadingWhitelist {
-    addToSWFLoadingWhitelist(domain: string, insecure: boolean);
-    checkDomainForSWFLoading(domain: string): boolean;
+    addToSWFLoadingWhitelist(domain: string, insecure: boolean, ownDomain: boolean);
+    checkDomainForSWFLoading(domain: string): CrossDomainSWFLoadingWhitelistResult;
   }
 }

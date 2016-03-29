@@ -65,6 +65,7 @@ module Shumway.ArrayUtilities {
     }
 
     public close() {
+      //
     }
 
     public static create(verifyHeader: boolean): Inflate {

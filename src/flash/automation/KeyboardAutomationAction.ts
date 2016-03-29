@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 // Class: KeyboardAutomationAction
-module Shumway.AVM2.AS.flash.automation {
+module Shumway.AVMX.AS.flash.automation {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   export class KeyboardAutomationAction extends flash.automation.AutomationAction {
-    static initializer: any = null;
     constructor (type: string, keyCode: number /*uint*/ = 0) {
-      type = asCoerceString(type); keyCode = keyCode >>> 0;
-      false && super();
-      dummyConstructor("public flash.automation.KeyboardAutomationAction");
+      type = axCoerceString(type); keyCode = keyCode >>> 0;
+      super();
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings

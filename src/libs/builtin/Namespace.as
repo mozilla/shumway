@@ -54,4 +54,19 @@ package
     // Dummy constructor function
     public native function Namespace(prefix = void 0, uri = void 0 );
   }
+
+  [native(cls="QNameClass")]
+  public final class QName extends Object
+  {
+    // E357 {DontDelete, ReadOnly}
+    public native function get localName():String
+
+    // E357 {DontDelete, ReadOnly}
+    public native function get uri();
+
+    AS3 native function valueOf():QName;
+    AS3 native function toString():String;
+
+    public native function QName(namespace = void 0, name = void 0);
+  }
 }

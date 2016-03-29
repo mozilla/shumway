@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 // Class: SoundMixer
-module Shumway.AVM2.AS.flash.media {
+module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import axCoerceString = Shumway.AVMX.axCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
   export interface ISoundSource {
@@ -26,14 +25,11 @@ module Shumway.AVM2.AS.flash.media {
     stopSound();
   }
 
-  export class SoundMixer extends ASNative {
+  export class SoundMixer extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -41,8 +37,7 @@ module Shumway.AVM2.AS.flash.media {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.media.SoundMixer");
+      super();
     }
 
     private static _masterVolume = 1;
@@ -53,43 +48,45 @@ module Shumway.AVM2.AS.flash.media {
     // static _useSpeakerphoneForVoice: boolean;
 
     static get bufferTime(): number /*int*/ {
-      notImplemented("public flash.media.SoundMixer::get bufferTime");
+      release || notImplemented("public flash.media.SoundMixer::get bufferTime");
       return SoundMixer._bufferTime;
     }
     
     static set bufferTime(bufferTime: number /*int*/) {
-      somewhatImplemented("public flash.media.SoundMixer::set bufferTime");
+      release || somewhatImplemented("public flash.media.SoundMixer::set bufferTime");
       SoundMixer._bufferTime = bufferTime | 0;
     }
 
     static get soundTransform(): flash.media.SoundTransform {
-      somewhatImplemented("public flash.media.SoundMixer::get soundTransform");
+      release || somewhatImplemented("public flash.media.SoundMixer::get soundTransform");
       return isNullOrUndefined(SoundMixer._soundTransform) ?
-        new flash.media.SoundTransform() :
-        new flash.media.SoundTransform(SoundMixer._soundTransform.volume, SoundMixer._soundTransform.pan);
+             new this.sec.flash.media.SoundTransform() :
+             new this.sec.flash.media.SoundTransform(SoundMixer._soundTransform.volume,
+                                                     SoundMixer._soundTransform.pan);
     }
     static set soundTransform(sndTransform: flash.media.SoundTransform) {
-      somewhatImplemented("public flash.media.SoundMixer::set soundTransform");
+      release || somewhatImplemented("public flash.media.SoundMixer::set soundTransform");
       SoundMixer._soundTransform = isNullOrUndefined(sndTransform) ?
-        new flash.media.SoundTransform() : sndTransform;
+                                   new this.sec.flash.media.SoundTransform() :
+                                   sndTransform;
       SoundMixer._updateAllSoundSources();
     }
     static get audioPlaybackMode(): string {
-      notImplemented("public flash.media.SoundMixer::get audioPlaybackMode"); return;
+      release || notImplemented("public flash.media.SoundMixer::get audioPlaybackMode"); return;
       // return SoundMixer._audioPlaybackMode;
     }
     static set audioPlaybackMode(value: string) {
-      value = asCoerceString(value);
-      notImplemented("public flash.media.SoundMixer::set audioPlaybackMode"); return;
+      value = axCoerceString(value);
+      release || notImplemented("public flash.media.SoundMixer::set audioPlaybackMode"); return;
       // SoundMixer._audioPlaybackMode = value;
     }
     static get useSpeakerphoneForVoice(): boolean {
-      notImplemented("public flash.media.SoundMixer::get useSpeakerphoneForVoice"); return;
+      release || notImplemented("public flash.media.SoundMixer::get useSpeakerphoneForVoice"); return;
       // return SoundMixer._useSpeakerphoneForVoice;
     }
     static set useSpeakerphoneForVoice(value: boolean) {
       value = !!value;
-      notImplemented("public flash.media.SoundMixer::set useSpeakerphoneForVoice"); return;
+      release || notImplemented("public flash.media.SoundMixer::set useSpeakerphoneForVoice"); return;
       // SoundMixer._useSpeakerphoneForVoice = value;
     }
     static stopAll(): void {
@@ -100,7 +97,7 @@ module Shumway.AVM2.AS.flash.media {
     }
     static computeSpectrum(outputArray: flash.utils.ByteArray, FFTMode: boolean = false, stretchFactor: number /*int*/ = 0): void {
       FFTMode = !!FFTMode; stretchFactor = stretchFactor | 0;
-      somewhatImplemented("public flash.media.SoundMixer::static computeSpectrum");
+      release || somewhatImplemented("public flash.media.SoundMixer::static computeSpectrum");
       var data = new Float32Array(1024);
       for (var i = 0; i < 1024; i++) {
         data[i] = Math.random();
@@ -109,7 +106,7 @@ module Shumway.AVM2.AS.flash.media {
       outputArray.position = 0;
     }
     static areSoundsInaccessible(): boolean {
-      notImplemented("public flash.media.SoundMixer::static areSoundsInaccessible"); return;
+      release || notImplemented("public flash.media.SoundMixer::static areSoundsInaccessible"); return;
     }
     static _getMasterVolume(): number {
       return SoundMixer._masterVolume;
