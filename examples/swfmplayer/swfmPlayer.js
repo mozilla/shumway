@@ -37,6 +37,7 @@ var queryVariables = parseQueryString(window.location.search);
 var movieURL = queryVariables['swfm'] || 'tiger.swfm';
 var scoreRun = queryVariables['score'] === 'true';
 var fastRun = queryVariables['fast'] === 'true';
+var preview = queryVariables['preview'] === 'true';
 var easelHost;
 
 function startMovie(file) {
@@ -56,6 +57,42 @@ function startMovie(file) {
     };
   } else {
     easel.startRendering();
+    if (preview) {
+      easelHost.useIntrinsicSize = true;
+      var currentFrame = 0;
+      var currentPosition = 0;
+      var cpuTime = 0;
+      var previews = document.getElementById('previews');
+      var frames = [];
+      easelHost.onFrame = function () {
+        var frame = document.createElement('div');
+        currentFrame++;
+        var frameSize = easelHost.currentPosition - currentPosition;
+        currentPosition += frameSize;
+        var frameTime = easelHost.cpuTime - cpuTime;
+        cpuTime += frameTime;
+        frame.innerHTML = 'Frame ' + currentFrame + ' (size: ' + frameSize + ', render time: ' +
+                          frameTime.toPrecision(2) + '):';
+        var img = new Image();
+        img.src = easel.screenShot(null, true, true).dataURL;
+        frame.insertBefore(img, frame.firstChild);
+        frames.push(frame);
+      };
+      document.body.onscroll = function() {
+        if (!frames.length) {
+          return;
+        }
+        var currentFrame = previews.firstChild;
+        currentFrame && previews.removeChild(currentFrame);
+        previews.appendChild(frames[0]);
+        //if (previews.style.width === '') {
+        //  previews.style.width = img.width + 'px';
+        //  previews.style.height = img.height + 'px';
+        //}
+        "use strict";
+        console.log('scr')
+      }
+    }
   }
 }
 

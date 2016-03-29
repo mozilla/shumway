@@ -35,7 +35,7 @@ module Shumway.GFX {
     private _easel: Easel;
     private _group: Group;
     private _context: Shumway.Remoting.GFX.GFXChannelDeserializerContext;
-    private _content: Group;
+    protected _content: Group;
     private _fullscreen: boolean;
 
     constructor(easel: Easel) {

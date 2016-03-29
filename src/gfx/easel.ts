@@ -336,7 +336,7 @@ module Shumway.GFX {
 
       this._renderer = new Canvas2D.Canvas2DRenderer(stageContainer, this._stage, this._options);
       this._listenForContainerSizeChanges();
-      this._onMouseUp = this._onMouseUp.bind(this)
+      this._onMouseUp = this._onMouseUp.bind(this);
       this._onMouseDown = this._onMouseDown.bind(this);
       this._onMouseMove = this._onMouseMove.bind(this);
 
@@ -384,6 +384,11 @@ module Shumway.GFX {
           self._persistentState.onKeyUp(self, event);
         }
       }, false);
+    }
+
+    setSize(width: number, height: number) {
+      this._container.style.width = width + 'px';
+      this._container.style.height = height + 'px';
     }
 
     private _listenForContainerSizeChanges() {

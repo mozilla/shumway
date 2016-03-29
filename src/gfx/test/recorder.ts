@@ -296,6 +296,10 @@ module Shumway.GFX.Test {
       this._buffer.position = 4;
     }
 
+    public get position(): number {
+      return this._buffer.position;
+    }
+
     public readNextRecord(): MovieRecordType  {
       if (this._buffer.position >= this._buffer.length) {
         return MovieRecordType.None;
