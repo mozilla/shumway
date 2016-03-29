@@ -17,6 +17,9 @@
 module Shumway.GFX.Test {
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import PlainObjectDataBuffer = Shumway.ArrayUtilities.PlainObjectDataBuffer;
+  import IDataDecoder = Shumway.ArrayUtilities.IDataDecoder;
+  import Inflate = Shumway.ArrayUtilities.Inflate;
+  import LzmaDecoder = Shumway.ArrayUtilities.LzmaDecoder;
 
   enum MovieRecordObjectType {
     Undefined = 0,
@@ -118,6 +121,7 @@ module Shumway.GFX.Test {
   }
 
   export const enum MovieRecordType {
+    Incomplete = -1,
     None = 0,
     PlayerCommand = 1,
     PlayerCommandAsync = 2,
@@ -150,7 +154,8 @@ module Shumway.GFX.Test {
     }
 
     public dump() {
-      var parser = new MovieRecordParser(this._recording.getBytes());
+      var parser = new MovieRecordParser();
+      parser.push(this._recording.getBytes());
       parser.dump();
     }
 
@@ -283,26 +288,132 @@ module Shumway.GFX.Test {
     }
   }
 
+  const enum MovieCompressionType {
+    None,
+    ZLib,
+    Lzma
+  }
+
+  const enum MovieRecordParserState {
+    Initial,
+    Parsing,
+    Ended
+  }
+
+  var MovieHeaderSize = 4;
+  var MovieRecordHeaderSize = 12;
+
+  class IdentityDataTransform implements IDataDecoder {
+    onData: (data: Uint8Array) => void = null;
+    onError: (e) => void = null;
+    push(data: Uint8Array) { this.onData(data); }
+    close() {}
+  }
+
   export class MovieRecordParser {
     private _buffer: DataBuffer;
+    private _state: MovieRecordParserState;
+    private _comressionType: MovieCompressionType;
+    private _closed: boolean;
+    private _transform: IDataDecoder;
 
     public currentTimestamp: number;
     public currentType: MovieRecordType;
     public currentData: DataBuffer;
 
-    constructor(data: Uint8Array) {
+    constructor () {
+      this._state = MovieRecordParserState.Initial;
       this._buffer = new DataBuffer();
+      this._closed = false;
+    }
+
+    public push(data: Uint8Array): void {
+      if (this._state === MovieRecordParserState.Initial) {
+        // SWFM file starts from 4 bytes header: "MSWF", "MSWC", or "MSWZ"
+        var needToRead = MovieHeaderSize - this._buffer.length;
+        this._buffer.writeRawBytes(data.subarray(0, needToRead));
+        if (MovieHeaderSize > this._buffer.length) {
+          return;
+        }
+        this._buffer.position = 0;
+        var headerBytes = this._buffer.readRawBytes(MovieHeaderSize);
+        if (headerBytes[0] !== 0x4D || headerBytes[1] !== 0x53 || headerBytes[2] !== 0x57 ||
+           (headerBytes[3] !== 0x46 && headerBytes[3] !== 0x43 && headerBytes[3] !== 0x5A)) {
+          console.warn('Invalid SWFM header, stopping parsing');
+          return;
+        }
+        switch (headerBytes[3]) {
+          case 0x46: // 'F'
+            this._comressionType = MovieCompressionType.None;
+            this._transform = new IdentityDataTransform();
+            break;
+          case 0x43: // 'C'
+            this._comressionType = MovieCompressionType.ZLib;
+            this._transform = Inflate.create(true);
+            break;
+          case 0x5A: // 'Z'
+            this._comressionType = MovieCompressionType.Lzma;
+            this._transform = new LzmaDecoder(false);
+            break;
+        }
+
+        this._transform.onData = this._pushTransformed.bind(this);
+        this._transform.onError = this._errorTransformed.bind(this);
+        this._state = MovieRecordParserState.Parsing;
+        this._buffer.clear();
+        data = data.subarray(needToRead);
+      }
+      this._transform.push(data);
+    }
+
+    private _pushTransformed(data: Uint8Array): void {
+      this._buffer.removeHead();
+
+      var savedPosition = this._buffer.position;
+      this._buffer.position = this._buffer.length;
       this._buffer.writeRawBytes(data);
-      this._buffer.position = 4;
+      this._buffer.position = savedPosition;
+    }
+
+    public close() {
+      this._transform.close();
+      this._closed = true;
+    }
+
+    private _errorTransformed() {
+      console.warn('Error in SWFM stream');
+      this.close();
     }
 
     public readNextRecord(): MovieRecordType  {
-      if (this._buffer.position >= this._buffer.length) {
+      if (this._state === MovieRecordParserState.Initial) {
+        return MovieRecordType.Incomplete;
+      }
+      if (this._state === MovieRecordParserState.Ended) {
         return MovieRecordType.None;
       }
+
+      if (this._buffer.position >= this._buffer.length) {
+        if (this._closed) {
+          this._state = MovieRecordParserState.Ended;
+          return MovieRecordType.None;
+        }
+        return MovieRecordType.Incomplete;
+      }
+
+      if (this._buffer.position + MovieRecordHeaderSize > this._buffer.length) {
+        return MovieRecordType.Incomplete;
+      }
+
       var timestamp: number = this._buffer.readInt();
       var type: MovieRecordType = this._buffer.readInt();
-      var length: number = this._buffer.readInt();
+      var length: number = this._buffer.readInt() >>> 0;
+
+      if (this._buffer.position + MovieRecordHeaderSize + length > this._buffer.length) {
+        this._buffer.position -= MovieRecordHeaderSize;
+        return MovieRecordType.Incomplete;
+      }
+
       var data: DataBuffer = null;
 
       if (length > 0) {
@@ -350,7 +461,7 @@ module Shumway.GFX.Test {
 
     public dump() {
       var type: MovieRecordType;
-      while ((type = this.readNextRecord())) {
+      while ((type = this.readNextRecord()) !== MovieRecordType.None) {
         console.log('record ' + type + ' @' + this.currentTimestamp);
         switch (type) {
           case MovieRecordType.PlayerCommand:
@@ -366,6 +477,8 @@ module Shumway.GFX.Test {
           case MovieRecordType.Image:
             console.log(this.parseImage());
             break;
+          case MovieRecordType.Incomplete:
+            return;
         }
       }
     }

@@ -161,6 +161,21 @@ module Shumway.ArrayUtilities {
     }
 
     /**
+     * Removes bytes from start to the current position, and moves the rest of the data
+     * to the beginning of the buffer. The length will be reduced by the number of
+     * the removed bytes, and the position will be set to 0.
+     */
+    removeHead(): void {
+      var position = this._position;
+      if (position === 0) {
+        return; // nothing to compact
+      }
+      this._u8.set(this._u8.subarray(position, this._length), 0);
+      this._length -= position;
+      this._position = 0;
+    }
+
+    /**
      * By default, we only have a byte view. All other views are |null|.
      */
     private _resetViews() {
@@ -615,8 +630,19 @@ module Shumway.ArrayUtilities {
       }
     }
 
-    readRawBytes(): Int8Array {
-      return new Int8Array(this._buffer, 0, this._length);
+    readRawBytes(length: number): Uint8Array {
+      if (length < 0) {
+        release || assert((<any>this).sec);
+        (<any>this).sec.throwError('RangeError', Errors.ParamRangeError);
+      }
+      var position = this._position;
+      if (position + length > this._length) {
+        release || assert((<any>this).sec);
+        (<any>this).sec.throwError('flash.errors.EOFError', Errors.EOFError);
+      }
+      var result = new Uint8Array(this._u8.subarray(position, position + length));
+      this._position = position + 4;
+      return result;
     }
 
     writeUTF(value: string): void {

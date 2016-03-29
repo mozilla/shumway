@@ -794,7 +794,8 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     setPixels(rect: flash.geom.Rectangle, inputByteArray: flash.utils.ByteArray): void {
-      this._putPixelData(rect, new Int32Array(inputByteArray.readRawBytes()));
+      var data = inputByteArray.getBytes();
+      this._putPixelData(rect, new Int32Array(data.buffer, 0, data.length >> 2));
     }
 
     setVector(rect: flash.geom.Rectangle, inputVector: Uint32Vector): void {

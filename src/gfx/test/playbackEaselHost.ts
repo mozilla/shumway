@@ -28,6 +28,7 @@ module Shumway.GFX.Test {
   export class PlaybackEaselHost extends EaselHost {
     private _parser: MovieRecordParser;
     private _lastTimestamp: number;
+    private _parsingInProgress: boolean;
 
     public ignoreTimestamps: boolean = false;
     public alwaysRenderFrame: boolean = false;
@@ -38,6 +39,9 @@ module Shumway.GFX.Test {
 
     public constructor(easel: Easel) {
       super(easel);
+      this._parsingInProgress = false;
+      this._parser = new MovieRecordParser();
+      this._lastTimestamp = 0;
     }
 
     public get cpuTime(): number {
@@ -49,15 +53,22 @@ module Shumway.GFX.Test {
       xhr.open('GET', url, true);
       xhr.responseType = 'arraybuffer';
       xhr.onload = function () {
-        this.playBytes(new Uint8Array(xhr.response));
+        var data = new Uint8Array(xhr.response);
+        this.playBytes(data);
+        this.finish();
       }.bind(this);
       xhr.send();
     }
 
     private playBytes(data: Uint8Array) {
-      this._parser = new MovieRecordParser(data);
-      this._lastTimestamp = 0;
-      this._parseNext();
+      this._parser.push(data);
+      if (!this._parsingInProgress) {
+        this._parseNext();
+      }
+    }
+
+    private finish() {
+      this._parser.close();
     }
 
     onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>) {
@@ -74,7 +85,13 @@ module Shumway.GFX.Test {
 
     private _parseNext() {
       var type = this._parser.readNextRecord();
+      if (type === MovieRecordType.Incomplete) {
+        this._parsingInProgress = false;
+        return;
+      }
+
       if (type !== MovieRecordType.None) {
+        this._parsingInProgress = true;
         var runRecordBound = this._runRecord.bind(this);
         var interval = this._parser.currentTimestamp - this._lastTimestamp;
         this._lastTimestamp = this._parser.currentTimestamp;
@@ -87,6 +104,7 @@ module Shumway.GFX.Test {
           setTimeout(runRecordBound, interval);
         }
       } else {
+        this._parsingInProgress = false;
         if (this.onComplete) {
           this.onComplete();
         }
