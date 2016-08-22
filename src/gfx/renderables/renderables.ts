@@ -499,10 +499,24 @@ module Shumway.GFX {
       } else {
         var bounds = this._bounds;
         var imageData = this._imageData;
+        var reuseDataBuffer = false;
         if (!imageData || imageData.width !== bounds.w || imageData.height !== bounds.h) {
-          imageData = this._imageData = this._context.createImageData(bounds.w, bounds.h);
+          if (dataBuffer.length == bounds.w * bounds.h * 4 &&
+              type == ImageType.StraightAlphaRGBA &&
+              imageConvertOption.value) {
+            // If we reach here we can avoid the ColorUtilities.convertImage()
+            // call below -- which would just copy the data from |dataBuffer|
+            // into |imageData| -- and instead simply reuse |dataBuffer|'s
+            // ArrayBuffer within |imageData|.
+            reuseDataBuffer = true;
+            imageData = this._imageData =
+              new ImageData(new Uint8ClampedArray(buffer), bounds.w, bounds.h);
+          } else {
+            // We have to allocate new image data.
+            imageData = this._imageData = this._context.createImageData(bounds.w, bounds.h);
+          }
         }
-        if (imageConvertOption.value) {
+        if (!reuseDataBuffer && imageConvertOption.value) {
           enterTimeline("ColorUtilities.convertImage");
           var pixels = new Int32Array(buffer);
           var out = new Int32Array((<any>imageData.data).buffer);
