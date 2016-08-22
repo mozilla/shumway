@@ -1,0 +1,38 @@
+{
+"params": {
+"auto_hd": false,
+"autoplay_reason": "unknown",
+"default_hd": false,
+"disable_native_controls": false,
+"inline_player": false,
+"pixel_ratio": 2,
+"preload": true,
+"start_muted": false,
+"video_data": [
+{
+"hd_src": null,
+"is_hds": false,
+"is_hls": false,
+"index": 0,
+"rotation": 0,
+"sd_src": "../../examples/videoplayer/big_buck_bunny.mp4",
+"video_id": "252838751555822",
+"sd_src_no_ratelimit": "../../examples/videoplayer/big_buck_bunny.mp4",
+"subtitles_src": "../../examples/videoplayer/big_buck_bunny.srt"
+}
+],
+"show_captions_default": false,
+"persistent_volume": true,
+"buffer_length": 0.1
+},
+"width": "520",
+"height": "291",
+"user": "0",
+"log": "no",
+"div_id": "id_5488ab933396f4971639505",
+"swf_id": "swf_id_5488ab933396f4971639505",
+"browser": "Firefox+37.0",
+"tracking_domain": "https://pixel.facebook.com",
+"post_form_id": "",
+"string_table": "https://s-static.ak.facebook.com/flash_strings.php/t98489/en_US"
+} 

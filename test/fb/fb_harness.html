@@ -1,0 +1,133 @@
+<html>
+<head><title>FB video harness</title></head>
+<body onload=loadDefaultJSON()>
+<script>
+var COMMA = "%2C";
+var COLON = "%3A";
+var SLASH = "%2F";
+var AMP = "&amp;";
+
+function loadDefaultJSON()
+{
+  var url = "sample.json";
+  var req = new XMLHttpRequest();
+  req.addEventListener("load", loadSuccess)
+  req.addEventListener("error", loadError)
+  req.open("GET", url);
+  req.send();
+}
+
+function loadSuccess(e)
+{
+  var data = e.target.response.toString();
+  var textArea = document.getElementById("text_area");
+  textArea.value = data;
+}
+
+function loadError(e)
+{
+  alert ("Missing sample.json file" );
+}
+
+function loadSWF()
+{
+  var str = document.getElementById("text_area");
+  var content_div = document.getElementById("content");
+  try
+  {
+    var jsonObj = JSON.parse(str.value);
+    content_div.innerHTML = "<div>" + buildEmbedTag(jsonObj) + "</div>";
+  } catch(e)
+  {
+    alert("Bad JSON");
+  }
+}
+
+function buildParamString(jsonObj)
+{
+  var temp = "";
+  for (var val in jsonObj)
+  {
+    if (val == "params")
+    {
+      temp += val + "=" + myEncode(JSON.stringify(jsonObj[val]), false) + AMP;
+    } else {
+      temp += val + "=" + myEncode(JSON.stringify(jsonObj[val]), true) + AMP;
+    }
+  }
+
+  // remove trailing HTML-encoded ampersand
+  temp = temp.substring(0, temp.length-5);
+  return temp;
+}
+
+function buildEmbedTag(jsonObj)
+{
+  var htmlStr = "<embed type=\"application/x-shockwave-flash\" src=\"../../fbplayer.swf\" width=\"520\" height=\"291\" style=\"display: block;\" bgcolor=\"#000000\" quality=\"high\" allowfullscreen=\"true\" allowscriptaccess=\"always\" salign=\"tl\" scale=\"noscale\" wmode=\"opaque\" ";
+  var id = jsonObj.swf_id;
+  htmlStr += "name=\"" + id + "\" id=\"" + id + "\" flashvars=\"" + buildParamString(jsonObj) + "\">";
+  return htmlStr;
+}
+
+function myEncode(str, removeQuotes)
+{
+  // because the FB widget seems to need its own type of URL/HTML encoding :(
+  var temp = encodeURI(str);
+
+  // replace comma and colon
+  temp = temp.replace(/,/g,COMMA);
+  temp = temp.replace(/:/g,COLON);
+  temp = temp.replace(/\//g,SLASH);
+  
+  // hack to remove quotes - only from non-param values
+  if (removeQuotes)
+  {
+    temp = temp.replace(/%22/g,"");
+  }
+  return temp;
+}
+
+// taken from shumway inspector
+function stageScaleTest() {
+  var ticks = 2000;
+  var s = 0;
+  var easelContainer = document.getElementsByTagName("embed")[0]; // dunno if we want this or its div
+  function tick() {
+    s += 0.01;
+    if (ticks > 1500) {
+      var w = 512 * (Math.abs(Math.sin(s)));
+      var h = w;
+    } else if (ticks > 1000) {
+      var w = 512 * (Math.abs(Math.sin(s)));
+      var h = 200;
+    } else if (ticks > 500) {
+      var w = 200;
+      var h = 512 * (Math.abs(Math.sin(s)));
+    } else {
+      var w = Math.random() * 1024 | 0;
+      var h = Math.random() * 1024 | 0;
+    }
+    easelContainer.style.width = w + 'px';
+    easelContainer.style.height = h + 'px';
+    if (ticks--) {
+      setTimeout(tick, 16);
+    }
+  }
+  tick();
+}
+</script>
+<div id="controls">
+<span>JSON here:</span>
+<p>
+<textarea id="text_area" rows="20" cols="45">
+JSON here
+</textarea>
+<p>
+<button type="button" value="test" onclick=loadSWF()>test</button></div>
+<button type="button" value="scale_test" onclick=stageScaleTest()>stage scale test</button></div>
+<div id="content" style="position: absolute; top: 10px; left: 400px; background-color: azure;">
+content here
+</div>
+</body>
+</html>
+
