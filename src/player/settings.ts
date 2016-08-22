@@ -34,10 +34,6 @@ module Shumway {
     new Shumway.Options.Option("enablePump", "Enable Pump", "boolean", true, "Enable display tree serialization.")
   );
 
-  export var pumpRateOption = playerOptions.register (
-    new Shumway.Options.Option("pumpRate", "Pump Rate", "number", 60, "Number of times / second that the display list is synchronized.", {range: { min: 1, max: 120, step: 1 }})
-  );
-
   export var frameRateOption = playerOptions.register (
     new Shumway.Options.Option("frameRate", "Frame Rate", "number", -1, "Override a movie's frame rate, set to -1 to use the movies default frame rate.", {range: { min: -1, max: 120, step: 1 }})
   );
