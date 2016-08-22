@@ -1,0 +1,40 @@
+doctype html
+block vars
+  - var bodyclass = null;
+html(lang='en')
+  a(href='https://github.com/jnordberg/wintersmith')
+  a(href="http://github.com/mozilla/shumway")
+    img(style="position: absolute; top: 0; left: 0; border: 0;" src="//s3.amazonaws.com/github/ribbons/forkme_left_white_ffffff.png" alt="Fork me on GitHub")
+  a(href="/en-US/", id="tabzilla")
+    mozilla
+  head
+    block head
+      meta(charset='utf-8')
+      meta(http-equiv='X-UA-Compatible', content='IE=edge,chrome=1')
+      meta(name='viewport', content='width=device-width')
+      title
+        block title
+          = locals.name
+      link(rel='stylesheet', href="//mozorg.cdn.mozilla.net/media/css/tabzilla-min.css")
+      link(rel='alternate', href=locals.url+'/feed.xml', type='application/rss+xml', title=locals.description)
+      link(rel='stylesheet', href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic|Anonymous+Pro:400,700,400italic,700italic|Merriweather:400,700,300')
+      link(rel='stylesheet', href='/css/main.css')
+  body(class=bodyclass)
+    header.header
+      div.content-wrap
+        block header
+          div.logo
+            h1
+              a(href=locals.url)= locals.name
+            p.description= locals.description
+    div#content
+      div.content-wrap
+        block content
+          h2 Welcome to zombocom!
+    footer
+      div.content-wrap
+        block footer
+          section.about
+            !=contents['about.md'].html
+
+  script(src="//mozorg.cdn.mozilla.net/tabzilla/tabzilla.js")

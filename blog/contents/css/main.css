@@ -1,0 +1,462 @@
+@charset 'utf-8';
+/* initialize */
+html {
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    -o-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+}
+body {
+    background: #232830;
+    color: #c0c5ce;
+    font-family: 'PT Serif', serif;
+    font-size: 16px;
+    line-height: 1.52;
+    background-color: #c8c88;
+    text-rendering: optimizeLegibility;
+
+}
+a {
+    color: #c3eeac;
+    font-weight: bolder;
+    text-decoration: none;
+}
+a:hover,
+a:active {
+    color: #bf616a;
+}
+a img {
+    border: none;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+body,
+a,
+img,
+ul,
+ol,
+blockquote,
+pre {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+/* contents */
+.content {
+    margin: 0 auto;
+    width: 46em;
+}
+p {
+    margin-bottom: 1.52em;
+}
+pre {
+    background: #1c1f26;
+    border-radius: 0.25em;
+    color: #7f939e;
+    font-size: 0.9em;
+    margin-bottom: 1.8em;
+    overflow: auto;
+    padding: 1em;
+}
+h1,
+h2,
+h3,
+h4,
+h5 {
+    font-family: 'PT Serif', serif;
+}
+h1 {
+    font-size: 2em;
+    margin-bottom: 1em;
+}
+h2 {
+    font-size: 1.2em;
+    font-weight: 400;
+    line-height: 1.43;
+    margin-bottom: 1.35em;
+}
+h3 {
+    text-align: center;
+    font-style: italic;
+    font-size: 1.4em;
+    font-weight: 400;
+    margin: 1.8em 0 0.8em;
+}
+ol,
+ul {
+    margin: 0 0 1.4em 4em;
+}
+li {
+    margin-bottom: 0.5em;
+}
+blockquote {
+    font-style: italic;
+    margin: 1.2em 3em;
+    padding-left: 1em;
+}
+hr {
+    border: 0;
+    border-top: 1px dashed #4e596b;
+    height: 0;
+    margin: 1.6em 0;
+}
+iframe {
+    max-width: 100%;
+}
+img {
+    max-width: 100%;
+}
+/* page header */
+.header {
+    margin: 6em 0;
+}
+.header h1 {
+    font-size: 2.6em;
+    text-align: center;
+    font-weight: 700;
+    margin: 0;
+}
+.header a {
+    color: #c0c5ce;
+}
+.header a:hover {
+    color: #bf616a;
+}
+.header .author {
+    font-family: 'Merriweather', serif;
+    font-variant: small-caps;
+    font-weight: 400;
+    letter-spacing: 1px;
+    text-align: center;
+    text-rendering: auto;
+    text-transform: lowercase;
+}
+.header .description {
+    font-family: 'PT Serif', serif;
+    font-size: 1.2em;
+    font-style: italic;
+    margin-top: -0.3em;
+    text-align: center;
+}
+body.article-detail > header {
+    margin-bottom: 3em;
+}
+body.article-detail > header h1 {
+    font-size: 2.5em;
+    font-style: italic;
+    font-weight: 400;
+    margin-bottom: -0.2em;
+}
+/* page footer */
+footer {
+    margin: 3em 0;
+}
+footer .nav {
+    border-top: 1px solid #4e596b;
+    font-family: 'PT Serif', serif;
+    margin-top: 7em;
+    padding: 1em 0;
+    text-align: center;
+}
+footer .nav a {
+    font-size: 1.2em;
+    padding: 0 0.5em;
+}
+footer .about {
+    border-top: 1px dashed #4e596b;
+    color: #7f939e;
+    font-family: 'Merriweather', serif;
+    font-size: 0.7em;
+    padding: 2.2em 0;
+    text-align: center;
+    /* -webkit-column-count: 3;
+      -moz-column-count: 3;
+      -ms-column-count: 3;
+      column-count: 3;
+      -webkit-column-gap: 2em;
+      -moz-column-gap: 2em;
+      -ms-column-gap: 2em;
+      column-gap: 2em; */
+}
+footer .copy {
+    color: #7f939e;
+    font-family: 'Merriweather', serif;
+    font-size: 0.7em;
+    font-style: italic;
+    margin-top: 1em;
+    text-align: center;
+}
+footer .copy a {
+    color: #7f939e;
+    text-decoration: underline;
+}
+footer .copy a:hover {
+    color: #c0c5ce;
+}
+/* article */
+.article {
+    margin: 3em 0 6em;
+}
+.article header {
+    border-top: 1px dashed #4e596b;
+}
+.article header h2 {
+    font-style: italic;
+    font-size: 1.4em;
+    font-weight: 400;
+    margin: 1.5em 0;
+    text-align: center;
+}
+.article header h2 a {
+    color: #c0c5ce;
+}
+.article header h2 a:hover {
+    color: #bf616a;
+}
+.article header .date {
+    font-size: 0.8em;
+    text-align: center;
+    margin-top: -0.7em;
+}
+.article header .date span {
+    background-color: #232830;
+    padding: 0 0.7em;
+}
+.more,
+.date {
+    font-family: 'Merriweather', serif;
+    font-variant: small-caps;
+    text-transform: lowercase;
+    font-weight: 400;
+    text-rendering: auto;
+    letter-spacing: 1px;
+}
+/* archive */
+.archive {
+    margin: 5em auto 6em;
+    padding-left: 2em;
+    width: 32em;
+}
+.archive h2 {
+    font-size: 2em;
+    font-style: italic;
+    margin: 0 0 .5em 6.1em;
+}
+.archive a,
+.archive span {
+    display: block;
+    float: left;
+    margin-bottom: -1px;
+    text-decoration: none;
+}
+.archive li:not(:last-child) {
+    border-bottom: 1px solid #4e596b;
+    margin-bottom: -1px;
+}
+.archive a,
+.archive span.last {
+    border: 0;
+    margin-bottom: 0;
+}
+.archive a {
+    white-space: nowrap;
+    width: 21em;
+    text-indent: 1em;
+}
+.archive .year-label,
+.archive .month-label {
+    font-family: 'Merriweather', serif;
+    text-transform: lowercase;
+    font-variant: small-caps;
+    font-weight: 400;
+    letter-spacing: 1px;
+    text-align: center;
+    text-rendering: auto;
+    width: 4em;
+}
+.archive .month-label {
+    width: 7em;
+}
+.archive ul {
+    list-style: none;
+    margin: 0;
+}
+.archive ul li {
+    margin: 0;
+}
+/* code styling */
+code {
+    font-family: 'Courier', 'Courier New', monospace;
+    font-size: 0.85em;
+    font-weight: bold;
+    color: #7f939e;
+}
+pre code {
+    display: block;
+    line-height: 1.1;
+}
+p code {
+    background: #1c1f26;
+    border-radius: 0.3em;
+    color: #7f939e;
+    padding: 0.1em 0.3em 0.2em;
+    position: relative;
+    top: -0.15em;
+    white-space: nowrap;
+}
+/* syntax hl stuff */
+code.lang-markdown {
+    color: #7f939e;
+}
+code.lang-markdown .header,
+code.lang-markdown .strong {
+    font-weight: bold;
+}
+code.lang-markdown .emphasis {
+    font-style: italic;
+}
+code.lang-markdown .horizontal_rule,
+code.lang-markdown .link_label,
+code.lang-markdown .code,
+code.lang-markdown .header,
+code.lang-markdown .link_url {
+    color: #d08360;
+}
+code.lang-markdown .blockquote,
+code.lang-markdown .bullet {
+    color: #7f939e;
+}
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+.tomorrow-comment,
+pre .comment,
+pre .title {
+    color: #8e908c;
+}
+.tomorrow-red,
+pre .variable,
+pre .attribute,
+pre .tag,
+pre .regexp,
+pre .ruby .constant,
+pre .xml .tag .title,
+pre .xml .pi,
+pre .xml .doctype,
+pre .html .doctype,
+pre .css .id,
+pre .css .class,
+pre .css .pseudo {
+    color: #c82829;
+}
+.tomorrow-orange,
+pre .number,
+pre .preprocessor,
+pre .built_in,
+pre .literal,
+pre .params,
+pre .constant {
+    color: #f5871f;
+}
+.tomorrow-yellow,
+pre .class,
+pre .ruby .class .title,
+pre .css .rules .attribute {
+    color: #eab700;
+}
+.tomorrow-green,
+pre .string,
+pre .value,
+pre .inheritance,
+pre .header,
+pre .ruby .symbol,
+pre .xml .cdata {
+    color: #718c00;
+}
+.tomorrow-aqua,
+pre .css .hexcolor {
+    color: #3e999f;
+}
+.tomorrow-blue,
+pre .function,
+pre .python .decorator,
+pre .python .title,
+pre .ruby .function .title,
+pre .ruby .title .keyword,
+pre .perl .sub,
+pre .javascript .title,
+pre .coffeescript .title {
+    color: #4271ae;
+}
+.tomorrow-purple,
+pre .keyword,
+pre .javascript .function {
+    color: #8959a8;
+}
+/* media queries */
+@media (min-width: 1600px) {
+    body {
+        font-size: 26px;
+    }
+}
+@media (max-width: 900px) {
+    body {
+        font-size: 14px;
+    }
+}
+@media (max-width: 690px) {
+    .content {
+        width: auto;
+        padding: 0 1em;
+    }
+    .header {
+        margin: 3em 0;
+    }
+    .header h1 {
+        font-size: 1.4em;
+        margin-bottom: 0.6em;
+    }
+    .header .description {
+        font-size: 1em;
+    }
+    .article {
+        margin: 1em 0 2.5em;
+    }
+    .archive {
+        width: 80%;
+        margin: 0 auto;
+    }
+    .archive * {
+        float: none !important;
+        line-height: 1.6 !important;
+        width: auto !important;
+        height: auto !important;
+        text-align: left !important;
+        border: 0 !important;
+        margin: 0 !important;
+    }
+    footer .nav {
+        margin-top: 5em;
+    }
+    footer .about {
+        padding: 0;
+        font-size: 0.9em;
+        padding-top: 1.6em;
+        -webkit-column-count: 1;
+        -moz-column-count: 1;
+        -ms-column-count: 1;
+        column-count: 1;
+    }
+    footer .about p {
+        margin-bottom: 1em;
+    }
+}
