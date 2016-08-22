@@ -496,3 +496,7 @@ this.window.Promise = (function () {
 
   return Promise;
 })();
+
+this.CanvasRenderingContext2D = function CanvasRenderingContext2D() {
+
+}

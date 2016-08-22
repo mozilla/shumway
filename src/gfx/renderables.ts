@@ -15,10 +15,6 @@
  */
 
 module Shumway.GFX {
-  import Point = Geometry.Point;
-  import Rectangle = Geometry.Rectangle;
-  import PathCommand = Shumway.PathCommand;
-  import Matrix = Geometry.Matrix;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import swap32 = Shumway.IntegerUtilities.swap32;
   import memorySizeToString = Shumway.StringUtilities.memorySizeToString;
@@ -35,149 +31,8 @@ module Shumway.GFX {
 
   declare var registerInspectorAsset;
 
-  /**
-   * Represents some source renderable content.
-   */
-  export class Renderable extends Node {
-
-    /**
-     * Back reference to nodes that use this renderable.
-     */
-    private _parents: Shape [] = [];
-
-    /**
-     * Back reference to renderables that use this renderable.
-     */
-    private _renderableParents: Renderable [] = [];
-
-    public get parents(): Shape [] {
-      return this._parents;
-    }
-
-    public addParent(frame: Shape) {
-      release || assert(frame);
-      var index = indexOf(this._parents, frame);
-      release || assert(index < 0);
-      this._parents.push(frame);
-    }
-
-    /**
-     * Checks if this node will be reached by the renderer.
-     */
-    public willRender(): boolean {
-      var parents = this._parents;
-      for (var i = 0; i < parents.length; i++) {
-        var node = <Node>parents[i];
-        while (node) {
-          if (node.isType(NodeType.Stage)) {
-            return true;
-          }
-          if (!node.hasFlags(NodeFlags.Visible)) {
-            break;
-          }
-          node = node._parent;
-        }
-      }
-      return false;
-    }
-
-    public addRenderableParent(renderable: Renderable) {
-      release || assert(renderable);
-      release || assert(this._renderableParents.indexOf(renderable) === -1);
-      this._renderableParents.push(renderable);
-    }
-
-    /**
-     * Returns the first unrooted parent or creates a new parent if none was found.
-     */
-    public wrap(): Shape {
-      var node: Shape;
-      var parents = this._parents;
-      for (var i = 0; i < parents.length; i++) {
-        node = parents[i];
-        if (!node._parent) {
-          return node;
-        }
-      }
-      node = new Shape(this);
-      this.addParent(node);
-      return node;
-    }
-
-    public invalidate() {
-      this.setFlags(NodeFlags.Dirty);
-      var nodes = this._parents;
-      for (var i = 0; i < nodes.length; i++) {
-        nodes[i].invalidate();
-      }
-      var renderables = this._renderableParents;
-      for (var i = 0; i < renderables.length; i++) {
-        renderables[i].invalidate();
-      }
-      var listeners = this._invalidateEventListeners;
-      if (listeners) {
-        for (var i = 0; i < listeners.length; i++) {
-          listeners[i](this);
-        }
-      }
-    }
-
-    private _invalidateEventListeners: {(renderable: Renderable): void} [] = null;
-
-    public addInvalidateEventListener(listener: (renderable: Renderable) => void) {
-      if (!this._invalidateEventListeners) {
-        this._invalidateEventListeners = [];
-      }
-      var index = indexOf(this._invalidateEventListeners, listener);
-      release || assert(index < 0);
-      this._invalidateEventListeners.push(listener);
-    }
-
-
-    getBounds(clone: boolean = false): Shumway.GFX.Geometry.Rectangle {
-      if (clone) {
-        return this._bounds.clone();
-      }
-      return this._bounds;
-    }
-
-    public getChildren(clone: boolean = false): Node [] {
-      return null;
-    }
-
-    _propagateFlagsUp(flags: NodeFlags) {
-      if (flags === NodeFlags.None || this.hasFlags(flags)) {
-        return;
-      }
-      for (var i = 0; i < this._parents.length; i++) {
-        this._parents[i]._propagateFlagsUp(flags);
-      }
-    }
-
-    constructor() {
-      super();
-      this._flags &= ~NodeFlags.BoundsAutoCompute;
-      this._type = NodeType.Renderable;
-    }
-
-    /**
-     * Render source content in the specified |context| or add one or more paths to |clipPath| if specified.
-     * If specified, the rectangular |cullBounds| can be used to cull parts of the shape for better performance.
-     * If |paintStencil| is |true| then we must not create any alpha values, and also not paint any strokes.
-     */
-    render(context: CanvasRenderingContext2D, ratio: number, cullBounds?: Shumway.GFX.Geometry.Rectangle,
-           clipPath?: Path2D, paintStencil?: boolean): void {
-
-    }
-  }
-
-  export class CustomRenderable extends Renderable {
-    constructor(bounds: Rectangle, render: (context: CanvasRenderingContext2D, ratio: number, cullBounds: Shumway.GFX.Geometry.Rectangle) => void) {
-      super();
-      this.setBounds(bounds);
-      this.render = render;
-    }
-  }
+  export var imageUpdateOption = true;
+  export var imageConvertOption = true;
 
   export interface IVideoPlaybackEventSerializer {
     sendVideoPlaybackEvent(assetId: number, eventType: VideoPlaybackEvent, data: any): void;
@@ -190,6 +45,7 @@ module Shumway.GFX {
     Ended
   }
 
+  /*
   export class RenderableVideo extends Renderable {
     _flags = NodeFlags.Dynamic | NodeFlags.Dirty;
     private _video: HTMLVideoElement;
@@ -445,6 +301,7 @@ module Shumway.GFX {
       leaveTimeline("RenderableVideo.render");
     }
   }
+  */
 
   export class RenderableBitmap extends Renderable {
     _flags = NodeFlags.Dynamic | NodeFlags.Dirty;
@@ -466,7 +323,7 @@ module Shumway.GFX {
       return renderableBitmap;
     }
 
-    public static FromNode(source: Node, matrix: Shumway.GFX.Geometry.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clipRect: Rectangle) {
+    public static FromNode(source: Node, matrix: Shumway.GFX.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clipRect: Rectangle) {
       enterTimeline("RenderableBitmap.FromFrame");
       var canvas = document.createElement("canvas");
       var bounds = source.getBounds();
@@ -489,7 +346,7 @@ module Shumway.GFX {
     }
 
     public updateFromDataBuffer(type: ImageType, dataBuffer: DataBuffer) {
-      if (!imageUpdateOption.value) {
+      if (!imageUpdateOption) {
         return;
       }
       var buffer = dataBuffer.buffer;
@@ -502,7 +359,7 @@ module Shumway.GFX {
         if (!imageData || imageData.width !== bounds.w || imageData.height !== bounds.h) {
           imageData = this._imageData = this._context.createImageData(bounds.w, bounds.h);
         }
-        if (imageConvertOption.value) {
+        if (imageConvertOption) {
           enterTimeline("ColorUtilities.convertImage");
           var pixels = new Int32Array(buffer);
           var out = new Int32Array((<any>imageData.data).buffer);
@@ -545,7 +402,7 @@ module Shumway.GFX {
       leaveTimeline("RenderableBitmap.render");
     }
 
-    drawNode(source: Node, matrix: Shumway.GFX.Geometry.Matrix,
+    drawNode(source: Node, matrix: Shumway.GFX.Matrix,
              colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clip: Rectangle): void {
       // TODO: Support colorMatrix and blendMode.
       enterTimeline("RenderableBitmap.drawFrame");
@@ -1364,7 +1221,7 @@ module Shumway.GFX {
     private _plainText: string;
     private _backgroundColor: number;
     private _borderColor: number;
-    private _matrix: Shumway.GFX.Geometry.Matrix;
+    private _matrix: Shumway.GFX.Matrix;
     private _coords: DataBuffer;
     private _scrollV: number;
     private _scrollH: number;
@@ -1394,7 +1251,7 @@ module Shumway.GFX {
       this.textRect.setElements(bounds.x + 2, bounds.y + 2, bounds.w - 2, bounds.h - 2);
     }
 
-    setContent(plainText: string, textRunData: DataBuffer, matrix: Shumway.GFX.Geometry.Matrix, coords: DataBuffer): void {
+    setContent(plainText: string, textRunData: DataBuffer, matrix: Shumway.GFX.Matrix, coords: DataBuffer): void {
       this._textRunData = textRunData;
       this._plainText = plainText;
       this._matrix.set(matrix);

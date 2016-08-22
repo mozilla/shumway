@@ -15,11 +15,6 @@
  */
 
 module Shumway.GFX {
-  import roundToMultipleOfPowerOfTwo = IntegerUtilities.roundToMultipleOfPowerOfTwo;
-  import assert = Shumway.Debug.assert;
-  import Rectangle = Geometry.Rectangle;
-
-
   /**
    * Various 2D rectangular region allocators. These are used to manage
    * areas of surfaces, 2D Canvases or WebGL surfaces. Each allocator
@@ -41,7 +36,7 @@ module Shumway.GFX {
 
   export module RegionAllocator {
 
-    export class Region extends Geometry.Rectangle {
+    export class Region extends Rectangle {
       /**
        * The allocator who allocated this region. Once this is assigned it will never
        * change, even if the region is freed.

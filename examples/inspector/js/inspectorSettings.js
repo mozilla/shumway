@@ -174,7 +174,7 @@ function createOptionsGUI() {
   }
 
   function screenShot() {
-    var screenShot = currentEasel.screenShot(undefined, true);
+    var screenShot = easelHost.easel.screenShot(undefined, true);
     var w = window.open(screenShot.dataURL, 'screenShot', 'height=' + screenShot.w + ', width=' + screenShot.h);
     w.document.title = 'Shumway Screen Shot';
   }

@@ -34,9 +34,9 @@ module Shumway.Remoting.GFX {
   import Stage = Shumway.GFX.Stage;
   import NodeEventType = Shumway.GFX.NodeEventType;
 
-  import Point = Shumway.GFX.Geometry.Point;
-  import Matrix = Shumway.GFX.Geometry.Matrix;
-  import Rectangle = Shumway.GFX.Geometry.Rectangle;
+  import Point = Shumway.GFX.Point;
+  import Matrix = Shumway.GFX.Matrix;
+  import Rectangle = Shumway.GFX.Rectangle;
 
   import StageAlignFlags = Shumway.Remoting.StageAlignFlags;
   import StageScaleModeId = Shumway.Remoting.StageScaleMode;
@@ -48,6 +48,10 @@ module Shumway.Remoting.GFX {
 
   declare var registerInspectorAsset;
   declare var registerInspectorStage;
+
+  export function ARGBToRGBA(argb: number): number {
+    return argb << 8 | ((argb >> 24) & 0xff);
+  }
 
   export class GFXChannelSerializer {
     public output: IDataOutput;
@@ -184,7 +188,8 @@ module Shumway.Remoting.GFX {
     }
 
     registerVideo(syncId: number) {
-      this._registerAsset(syncId, 0, new RenderableVideo(syncId, this));
+      assert(false);
+      // this._registerAsset(syncId, 0, new RenderableVideo(syncId, this));
     }
 
     /**
@@ -512,11 +517,11 @@ module Shumway.Remoting.GFX {
       if (!context._nodes[id]) {
         context._nodes[id] = context.stage.content;
       }
-      var color = this.input.readInt();
+      var color = ARGBToRGBA(this.input.readInt());
       var bounds = this._readRectangle();
       // TODO: Need to updateContentMatrix on stage here.
       context.stage.content.setBounds(bounds);
-      context.stage.color = Color.FromARGB(color);
+      context.stage.color = color;
       context.stage.align = this.input.readInt();
       context.stage.scaleMode = this.input.readInt();
       var displayState = this.input.readInt();

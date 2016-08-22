@@ -83,8 +83,8 @@ module.exports = function(grunt) {
       build_gfx_ts: {
         cmd: commonArguments + 'gfx.js src/gfx/references.ts'
       },
-      build_gfx_base_ts: {
-        cmd: commonArguments + 'gfx-base.js src/gfx/references-base.ts'
+      build_gfx_scene_ts: {
+        cmd: commonArguments + 'gfx-scene.js src/gfx/scene/references.ts'
       },
       build_flash_ts: {
         cmd: commonArguments + 'flash.js src/flash/references.ts'
@@ -355,10 +355,6 @@ module.exports = function(grunt) {
                 'src/flash/**/*.ts'],
         tasks: ['exec:build_flash_ts']
       },
-      gfx_base_ts: {
-        files: ['src/gfx/**/*.ts'],
-        tasks: ['exec:build_gfx_base_ts']
-      },
       gfx_ts: {
         files: ['src/gfx/**/*.ts'],
         tasks: ['exec:build_gfx_ts']
@@ -500,7 +496,7 @@ module.exports = function(grunt) {
       "build/ts/avm2.js",
       "build/ts/flash.js",
       "build/ts/avm1.js",
-      "build/ts/gfx-base.js",
+      "build/ts/gfx-scene.js",
       "build/ts/gfx.js",
       "build/ts/player.js"
     ], "build/shumway.cc.js", true, this.async());
@@ -515,7 +511,7 @@ module.exports = function(grunt) {
       ["build/ts/avm2.js", outputDir + "avm2.js"],
       ["build/ts/flash.js", outputDir + "flash.js"],
       ["build/ts/avm1.js", outputDir + "avm1.js"],
-      ["build/ts/gfx-base.js", outputDir + "gfx-base.js"],
+      ["build/ts/gfx-scene.js", outputDir + "gfx-scene.js"],
       ["build/ts/gfx.js", outputDir + "gfx.js"],
       ["build/ts/player.js", outputDir + "player.js"]
     ], true, this.async());
@@ -708,7 +704,7 @@ module.exports = function(grunt) {
   grunt.registerTask('watch-swf', ['exec:build_swf_ts', 'watch:swf_ts']);
   grunt.registerTask('watch-flash', ['exec:build_flash_ts', 'watch:flash_ts']);
   grunt.registerTask('watch-player', ['exec:build_player_ts', 'watch:player_ts']);
-  grunt.registerTask('watch-gfx', ['exec:build_gfx_base_ts', 'exec:build_gfx_ts', 'watch:gfx_ts']);
+  grunt.registerTask('watch-gfx', ['exec:build_gfx_ts', 'watch:gfx_ts']);
   grunt.registerTask('watch-tools', ['exec:build_tools_ts', 'watch:tools_ts']);
 
   // temporary make/python calls based on grunt-exec
@@ -724,8 +720,8 @@ module.exports = function(grunt) {
   grunt.registerTask('shell', ['exec:build_shell_ts', 'test-quick']);
   grunt.registerTask('tools', ['exec:build_tools_ts', 'test-quick']);
   grunt.registerTask('avm2', ['exec:build_avm2_ts', 'copy_relooper', 'test-quick']);
-  grunt.registerTask('gfx', ['exec:build_gfx_base_ts', 'exec:build_gfx_ts', 'test-quick']);
-  grunt.registerTask('gfx-base', ['exec:build_gfx_base_ts']);
+  grunt.registerTask('gfx', ['exec:build_gfx_scene_ts', 'exec:build_gfx_ts', 'test-quick']);
+  grunt.registerTask('gfx-scene', ['exec:build_gfx_scene_ts']);
   grunt.registerTask('perf', ['exec:perf']);
   grunt.registerTask('gfx-test', ['exec:gfx-test']);
   grunt.registerTask('build', "Builds all modules.", [
@@ -733,7 +729,7 @@ module.exports = function(grunt) {
     'parallel:base',
     'parallel:playerglobal',
     'exec:build_tools_ts',
-    'exec:build_gfx_base_ts',
+    'exec:build_gfx_scene_ts',
     'parallel:tier2',
     'copy_relooper',
     'parallel:natives',

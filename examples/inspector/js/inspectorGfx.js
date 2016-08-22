@@ -31,7 +31,6 @@ function createEasel() {
 
 function setRelease(release) {
   window.release = release;
-  Shumway.GFX.Canvas2D.notifyReleaseChanged();
 }
 
 function setProfile(enabled) {
@@ -112,25 +111,6 @@ Shumway.Telemetry.instance = {
 
 function invalidateStage() {
   easel.stage.invalidate();
-}
-
-function syncGFXOptions() {
-  var GFX = Shumway.GFX;
-
-  var options = easel.options;
-  options.clipDirtyRegions = GFX.clipDirtyRegions.value;
-  options.clipCanvas = GFX.clipCanvas.value;
-  options.masking = GFX.masking.value;
-
-  options.snapToDevicePixels = GFX.snapToDevicePixels.value;
-  options.imageSmoothing = GFX.imageSmoothing.value;
-  options.blending = GFX.blending.value;
-  options.debugLayers = GFX.debugLayers.value;
-
-  options.filters = GFX.filters.value;
-  options.cacheShapes = GFX.cacheShapes.value;
-  options.cacheShapesMaxSize = GFX.cacheShapesMaxSize.value;
-  options.cacheShapesThreshold = GFX.cacheShapesThreshold.value;
 }
 
 document.createElement = (function () {

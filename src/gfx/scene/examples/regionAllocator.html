@@ -14,11 +14,7 @@
   </style>
 </head>
 <body style="background-color: #333333;">
-  <script src="../../build/ts/utilities.js"></script>
-  <script src="../../build/ts/gfx/utilities.js"></script>
-  <script src="../../build/ts/gfx/geometry.js"></script>
-  <script src="../../build/ts/gfx/references.js"></script>
-  <script src="../../build/ts/gfx/regionAllocator.js"></script>
+  <script src="../../../../build/ts/gfx-scene.js"></script>
   <table>
     <tr>
       <td>
@@ -48,7 +44,7 @@
 
 
   <script>
-    var Geometry = Shumway.GFX.Geometry;
+    var release = false;
     var RegionAllocator = Shumway.GFX.RegionAllocator;
     var SurfaceRegionAllocator = Shumway.GFX.SurfaceRegionAllocator;
     var a = document.getElementById("a").getContext("2d");
@@ -71,8 +67,8 @@
       setInterval(function () {
         var s = Date.now();
         for (var i = 0; i < 64; i++) {
-          var w = (Math.random() * 16) | 0;
-          var h = (Math.random() * 16) | 0;
+          var w = 1 + (Math.random() * 16) | 0;
+          var h = 1 + (Math.random() * 16) | 0;
           var c = compact.allocate(w, h);
           if (!c) {
             compact = new RegionAllocator.CompactAllocator(W, H);
@@ -81,25 +77,26 @@
             a.clearRect(0, 0, a.canvas.width, a.canvas.height);
           }
           cRegions.push(c);
-          a.fillStyle = Shumway.ColorStyle.randomStyle();
+          a.fillStyle = Shumway.GFX.ColorStyle.randomStyle();
           a.fillRect(c.x, c.y, c.w, c.h);
         }
         aResults.innerHTML = "Total Regions: " + cRegions.length + " Amortized Allocation Time: " + (Date.now() - s) + " ms";
 
         var s = Date.now();
         for (var i = 0; i < 64; i++) {
-          var w = (Math.random() * 16) | 0;
-          var h = (Math.random() * 16) | 0;
+          var w = 1 + (Math.random() * 16) | 0;
+          var h = 1 + (Math.random() * 16) | 0;
           var g = grid.allocate(w, h);
           if (!g) {
             grid = new RegionAllocator.GridAllocator(W, H, 16);
             g = grid.allocate(w, h);
             gRegions.length = 0;
             b.clearRect(0, 0, b.canvas.width, b.canvas.height);
+          } else {
+            b.fillStyle = Shumway.GFX.ColorStyle.randomStyle();
+            b.fillRect(g.x, g.y, g.w, g.h);
           }
           gRegions.push(g);
-          b.fillStyle = Shumway.ColorStyle.randomStyle();
-          b.fillRect(g.x, g.y, g.w, g.h);
         }
         bResults.innerHTML = "Total Regions: " + gRegions.length + " Amortized Allocation Time: " + (Date.now() - s) + " ms";
       }, 16);
@@ -115,8 +112,8 @@
       setInterval(function () {
         var s = Date.now();
         for (var i = 0; i < 64; i++) {
-          var w = (Math.random() * 16) | 0;
-          var h = (Math.random() * 16) | 0;
+          var w = 1 + (Math.random() * 16) | 0;
+          var h = 1 + (Math.random() * 16) | 0;
           var c = compact.allocate(w, h);
           if (!c) {
             var count = (cRegions.length / 2) | 0;
@@ -133,15 +130,15 @@
             cRegions.length = 0;
           }
           cRegions.push(c);
-          a.fillStyle = Shumway.ColorStyle.randomStyle();
+          a.fillStyle = Shumway.GFX.ColorStyle.randomStyle();
           a.fillRect(c.x, c.y, c.w, c.h);
         }
         aResults.innerHTML = "Total Regions: " + cRegions.length + " Amortized Allocation Time: " + (Date.now() - s) + " ms";
 
         var s = Date.now();
         for (var i = 0; i < 64; i++) {
-          var w = (Math.random() * 16) | 0;
-          var h = (Math.random() * 16) | 0;
+          var w = 1 + (Math.random() * 16) | 0;
+          var h = 1 + (Math.random() * 16) | 0;
           var g = grid.allocate(w, h);
           if (!g) {
             var count = (gRegions.length / 2) | 0;
@@ -150,10 +147,11 @@
             }
             gRegions = gRegions.slice(count);
             g = grid.allocate(w, h);
+          } else {
+            b.fillStyle = Shumway.GFX.ColorStyle.randomStyle();
+            b.fillRect(g.x, g.y, g.w, g.h);
           }
           gRegions.push(g);
-          b.fillStyle = Shumway.ColorStyle.randomStyle();
-          b.fillRect(g.x, g.y, g.w, g.h);
         }
         bResults.innerHTML = "Total Regions: " + gRegions.length + " Amortized Allocation Time: " + (Date.now() - s) + " ms";
       }, 16);
@@ -170,8 +168,8 @@
         var s = Date.now();
         for (var i = 0; i < 64; i++) {
           var size = (64 - i);
-          var w = (Math.random() * size) | 0;
-          var h = (Math.random() * size) | 0;
+          var w = 1 + (Math.random() * size) | 0;
+          var h = 1 + (Math.random() * size) | 0;
           var c = compact.allocate(w, h);
           if (!c) {
             var count = (cRegions.length / 2) | 0;
@@ -188,7 +186,7 @@
             cRegions.length = 0;
           }
           cRegions.push(c);
-          a.fillStyle = Shumway.ColorStyle.randomStyle();
+          a.fillStyle = Shumway.GFX.ColorStyle.randomStyle();
           a.fillRect(c.x, c.y, c.w, c.h);
         }
         aResults.innerHTML = "Total Regions: " + cRegions.length + " Amortized Allocation Time: " + (Date.now() - s) + " ms";
@@ -203,8 +201,8 @@
         var s = Date.now();
         for (var i = 0; i < 64; i++) {
           var size = (64 - i);
-          var w = (Math.random() * size) | 0;
-          var h = (Math.random() * size) | 0;
+          var w = 1 + (Math.random() * size) | 0;
+          var h = 1 + (Math.random() * size) | 0;
           // debugger;
           // w = h = i;
           var c = bucketAllocator.allocate(w, h);
@@ -215,7 +213,7 @@
             bRegions.length = 0;
           }
           bRegions.push(c);
-          a.fillStyle = Shumway.ColorStyle.randomStyle();
+          a.fillStyle = Shumway.GFX.ColorStyle.randomStyle();
           a.fillRect(c.x, c.y, c.w, c.h);
         }
         aResults.innerHTML = "Total Regions: " + bRegions.length + " Amortized Allocation Time: " + (Date.now() - s) + " ms";
@@ -233,8 +231,8 @@
           for (var s = 0; s < 100; s++) {
             tick += 0.001;
             var size = (32 - i);
-            var w = (Math.random() * size) | 0;
-            var h = (Math.random() * size) | 0;
+            var w = 1 + (Math.random() * size) | 0;
+            var h = 1 + (Math.random() * size) | 0;
             w = h;
             w = h = i;
             w = h = 1 + ((Math.sin(tick) + 1) * 16) | 0;
@@ -243,7 +241,7 @@
               break;
             } else {
               stack.push(c);
-              a.fillStyle = Shumway.ColorStyle.randomStyle();
+              a.fillStyle = Shumway.GFX.ColorStyle.randomStyle();
               a.fillRect(c.x, c.y, c.w, c.h);
             }
           }

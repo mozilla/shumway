@@ -15,13 +15,9 @@
  */
 
 module Shumway.GFX {
-  import Rectangle = Geometry.Rectangle;
-  import Point = Geometry.Point;
-  import Matrix = Geometry.Matrix;
-  import DirtyRegion = Geometry.DirtyRegion;
-  import clampByte = Shumway.ColorUtilities.clampByte;
-
-  import assert = Shumway.Debug.assert;
+  export function clampByte(value: number) {
+    return Math.max(0, Math.min(255, value | 0));
+  }
 
   export class Filter {
   	public expandBounds(bounds: Rectangle) {
@@ -186,7 +182,7 @@ module Shumway.GFX {
 
     constructor (data: any) {
       super();
-      release || assert (data.length === 20);
+      release || assert(data.length === 20);
       this._data = new Float32Array(data);
       this._type = ColorMatrixType.Unknown;
     }

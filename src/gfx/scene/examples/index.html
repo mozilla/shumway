@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <title></title>
+</head>
+<body>
+  <style>
+    body {
+      background-color: #333;
+    }
+  </style>
+  <script src="../../../../build/ts/gfx-scene.js"></script>
+  <div id="a" style="width: 100%; height: 512px;">
+  </div>
+  <script>
+    var release = false;
+    var Easel = Shumway.GFX.Easel;
+    var Shape = Shumway.GFX.Shape;
+    var Group = Shumway.GFX.Group;
+    var Matrix = Shumway.GFX.Matrix;
+    var Rectangle = Shumway.GFX.Rectangle;
+    var CustomRenderable = Shumway.GFX.CustomRenderable;
+    var easel = new Easel(document.getElementById("a"), false);
+    var renderable = new CustomRenderable(new Rectangle(-70, -70, 140, 140), function (context) {
+      var radius = 70;
+      var eyeRadius = 10;
+      var centerX = 0;
+      var centerY = 0;
+      var eyeXOffset = 25;
+      var eyeYOffset = 20;
+      // draw the yellow circle
+      context.beginPath();
+      context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+      context.fillStyle = 'yellow';
+      context.fill();
+      context.lineWidth = 5;
+      context.strokeStyle = 'black';
+      context.stroke();
+      // draw the eyes
+      context.beginPath();
+      var eyeX = centerX - eyeXOffset;
+      var eyeY = centerY - eyeXOffset;
+      context.arc(eyeX, eyeY, eyeRadius, 0, 2 * Math.PI, false);
+      var eyeX = centerX + eyeXOffset;
+      context.arc(eyeX, eyeY, eyeRadius, 0, 2 * Math.PI, false);
+      context.fillStyle = 'black';
+      context.fill();
+      // draw the mouth
+      context.beginPath();
+      context.arc(centerX, centerY, 50, 0, Math.PI, false);
+      context.stroke();
+    });
+    var g = new Group();
+    setInterval(tick, 16);
+    function tick() {
+      var children = g.getChildren();
+      for (var i = 0; i < children.length; i++) {
+        var c = children[i];
+        c.getTransform().x += c.dx;
+        c.getTransform().y += c.dy;
+      }
+    }
+    tick();
+    function Flake(renderable) {
+      Shape.call(this, renderable);
+      var speed = 4;
+      this.dx = (Math.random() - 0.5) * speed;
+      this.dy = (Math.random() - 0.5) * speed;
+    }
+    Flake.prototype = Object.create(Shape.prototype);
+    for (var i = 0; i < 100; i++) {
+      var s = new Flake(renderable);
+      var m = s.getTransform().getMatrix();
+      m.tx = Math.random() * easel.stage.content.getBounds().w;
+      m.ty = Math.random() * easel.stage.content.getBounds().h;
+      m.a = m.d = Math.max(0.2, Math.random() / 2);
+      s.getTransform().setMatrix(m);
+      g.addChild(s);
+    }
+    easel.world.addChild(g);
+    easel.startRendering();
+  </script>
+</body>
+</html>

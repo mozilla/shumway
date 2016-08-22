@@ -15,11 +15,6 @@
  */
 
 module Shumway.GFX {
-  import Easel = Shumway.GFX.Easel;
-  import Stage = Shumway.GFX.Stage;
-  import Point = Shumway.GFX.Geometry.Point;
-  import Rectangle = Geometry.Rectangle;
-
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
@@ -162,16 +157,17 @@ module Shumway.GFX {
     }
 
     processVideoControl(id: number, eventType: VideoControlEvent, data: any): any {
-      var context = this._context;
-      var asset = context._getVideoAsset(id);
-      if (!asset) {
-        if (eventType !== VideoControlEvent.Init) {
-          return undefined;
-        }
-        context.registerVideo(id);
-        asset = context._getVideoAsset(id);
-      }
-      return (<RenderableVideo>asset).processControlRequest(eventType, data);
+      assert(false);
+      //var context = this._context;
+      //var asset = context._getVideoAsset(id);
+      //if (!asset) {
+      //  if (eventType !== VideoControlEvent.Init) {
+      //    return undefined;
+      //  }
+      //  context.registerVideo(id);
+      //  asset = context._getVideoAsset(id);
+      //}
+      //return (<RenderableVideo>asset).processControlRequest(eventType, data);
     }
 
     processRegisterFont(syncId: number, data: Uint8Array, resolve: (data: any) => void) {

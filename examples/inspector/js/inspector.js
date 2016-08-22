@@ -91,10 +91,8 @@ function setLogOptions(logToConsole, logToDebugPanel) {
 
 function monitorGfxOptionsChange() {
   document.addEventListener('shumwayOptionsChanged', function () {
-    gfxWindow.syncGFXOptions();
     gfxWindow.invalidateStage();
   });
-  gfxWindow.syncGFXOptions();
 }
 
 var easelHost;

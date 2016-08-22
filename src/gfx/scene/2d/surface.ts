@@ -1,9 +1,4 @@
 module Shumway.GFX.Canvas2D {
-  import Rectangle = Shumway.GFX.Geometry.Rectangle;
-
-  import assert = Shumway.Debug.assert;
-  import clamp = Shumway.NumberUtilities.clamp;
-
   declare var registerScratchCanvas;
 
   var isFirefox = navigator.userAgent.indexOf('Firefox') != -1;
@@ -156,7 +151,7 @@ module Shumway.GFX.Canvas2D {
         Filters._svgDropshadowFilterOffset.setAttribute("dy",
           String(Math.sin(dropshadowFilter.angle * Math.PI / 180) * dropshadowFilter.distance * scale));
         Filters._svgDropshadowFilterFlood.setAttribute("flood-color",
-          ColorUtilities.rgbaToCSSStyle(((dropshadowFilter.color << 8) | Math.round(255 * dropshadowFilter.alpha))));
+          rgbaToCSSStyle(((dropshadowFilter.color << 8) | Math.round(255 * dropshadowFilter.alpha))));
         Filters._svgDropshadowMergeNode.setAttribute("in",
           dropshadowFilter.knockout ? "outer" : "SourceGraphic");
         context.filter = "url(#svgDropShadowFilter)";
@@ -192,7 +187,7 @@ module Shumway.GFX.Canvas2D {
     }
   }
   
-  if (filters && Filters._svgFiltersAreSupported) {
+  if (Filters._svgFiltersAreSupported) {
     // Temporary hack to work around a bug that prevents SVG filters to work for off-screen canvases.
     if (!('registerScratchCanvas' in window)) {
       window['registerScratchCanvas'] = function (scratchCanvas) {
@@ -239,7 +234,7 @@ module Shumway.GFX.Canvas2D {
       case BlendMode.Alpha:      compositeOp = "destination-in";  break;
       case BlendMode.Erase:      compositeOp = "destination-out"; break;
       default:
-        release || Shumway.Debug.somewhatImplemented("Blend Mode: " + BlendMode[blendMode]);
+        release || somewhatImplemented("Blend Mode: " + BlendMode[blendMode]);
     }
     return compositeOp;
   }
@@ -284,14 +279,14 @@ module Shumway.GFX.Canvas2D {
         if (typeof registerScratchCanvas !== "undefined") {
           registerScratchCanvas(canvas);
         }
-        canvas.width = IntegerUtilities.nearestPowerOfTwo(w);
-        canvas.height = IntegerUtilities.nearestPowerOfTwo(h);
+        canvas.width = nearestPowerOfTwo(w);
+        canvas.height = nearestPowerOfTwo(h);
         Canvas2DSurfaceRegion._copyCanvasContext = canvas.getContext("2d");
       } else {
         canvas = Canvas2DSurfaceRegion._copyCanvasContext.canvas;
         if (canvas.width < w || canvas.height < h) {
-          canvas.width = IntegerUtilities.nearestPowerOfTwo(w);
-          canvas.height = IntegerUtilities.nearestPowerOfTwo(h);
+          canvas.width = nearestPowerOfTwo(w);
+          canvas.height = nearestPowerOfTwo(h);
         }
       }
     }

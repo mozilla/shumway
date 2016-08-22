@@ -15,16 +15,12 @@
  */
 
 module Shumway.GFX {
-  import assert = Shumway.Debug.assert;
-  import Point = Geometry.Point;
-  import Matrix = Geometry.Matrix;
-  import Rectangle = Geometry.Rectangle;
-
   import Canvas2DRenderer = Shumway.GFX.Canvas2D.Canvas2DRenderer;
 
-  import DisplayParameters = Shumway.Remoting.DisplayParameters;
-
   declare var GUI;
+
+  export var viewportLoupeDiameter = 256;
+  export var forcePaint = false;
 
   export interface IState {
     onMouseUp(easel: Easel, event: MouseEvent);
@@ -190,7 +186,7 @@ module Shumway.GFX {
     private _update(easel: Easel) {
       easel.paused = this._paused;
       if (easel.getOption("paintViewport")) {
-        var w = viewportLoupeDiameter.value, h = viewportLoupeDiameter.value;
+        var w = viewportLoupeDiameter, h = viewportLoupeDiameter;
         easel.viewport = new Rectangle(this._mousePosition.x - w / 2, this._mousePosition.y - h / 2, w, h);
       } else {
         easel.viewport = null;
@@ -279,20 +275,20 @@ module Shumway.GFX {
     private _isRendering: boolean = false;
     private _rAF: number = undefined;
 
-    private _eventListeners: Shumway.MapObject<any []> = Object.create(null);
-    private _fps: Shumway.Tools.Mini.FPS;
+    private _eventListeners: any = Object.create(null);
     private _fullScreen: boolean = false;
 
     constructor(
       container: HTMLDivElement,
       disableHiDPI: boolean = false,
-      backgroundColor: number = undefined
+      backgroundColor: Color = undefined
     ) {
       release || assert(container && container.children.length === 0,
                         "Easel container must be empty.");
       this._container = container;
       this._stage = new Stage(512, 512, false);
-      this._worldView = this._stage.content;
+      this._worldView = new Group();
+      this._stage.content.addChild(this._worldView);
       this._world = new Group();
       this._worldView.addChild(this._world);
       this._disableHiDPI = disableHiDPI;
@@ -305,31 +301,12 @@ module Shumway.GFX {
       stageContainer.style.zIndex = "0";
       container.appendChild(stageContainer);
 
-      // Create hud container, that lives on top of the stage.
-      if (hud.value && Shumway.Tools) {
-        var hudContainer = document.createElement("div");
-        hudContainer.style.position = "absolute";
-        hudContainer.style.width = "100%";
-        hudContainer.style.height = "100%";
-        hudContainer.style.pointerEvents = "none";
-        var fpsContainer = document.createElement("div");
-        fpsContainer.style.position = "absolute";
-        fpsContainer.style.width = "100%";
-        fpsContainer.style.height = "20px";
-        fpsContainer.style.pointerEvents = "none";
-        hudContainer.appendChild(fpsContainer);
-        container.appendChild(hudContainer);
-        this._fps = new Shumway.Tools.Mini.FPS(fpsContainer);
-      } else {
-        this._fps = null;
-      }
-
       var transparent = backgroundColor === 0;
       this.transparent = transparent;
 
       var cssBackgroundColor = backgroundColor === undefined ? "#14171a" :
                                backgroundColor === 0 ? 'transparent' :
-                               Shumway.ColorUtilities.rgbaToCSSStyle(backgroundColor);
+                               rgbaToCSSStyle(backgroundColor);
 
       this._options = new Canvas2D.Canvas2DRendererOptions();
       this._options.alpha = transparent;
@@ -461,8 +438,8 @@ module Shumway.GFX {
     }
 
     private _render() {
-      RenderableVideo.checkForVideoUpdates();
-      var mustRender = (this._stage.readyToRender() || forcePaint.value) && !this.paused;
+      // RenderableVideo.checkForVideoUpdates();
+      var mustRender = (this._stage.readyToRender() || forcePaint) && !this.paused;
       var renderTime = 0;
       if (mustRender) {
         var renderer = this._renderer;
@@ -472,15 +449,9 @@ module Shumway.GFX {
           renderer.viewport = this._stage.getBounds();
         }
         this._dispatchEvent("render");
-        enterTimeline("Render");
         renderTime = performance.now();
         renderer.render();
         renderTime = performance.now() - renderTime;
-        leaveTimeline("Render");
-
-      }
-      if (this._fps) {
-        this._fps.tickAndRender(!mustRender, renderTime);
       }
     }
 
