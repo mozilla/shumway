@@ -11,6 +11,7 @@ create a general-purpose, web standards-based platform for parsing and
 rendering SWFs. Integration with Firefox is a possibility if the experiment
 proves successful.
 
+
 # Getting started
 
 ### Online demo
