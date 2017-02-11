@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<meta charset="utf8">
+<style>
+	html {
+		background: #ccc;
+	}
+</style>
+<title>JWPlayer</title>
+<script src="dat.gui.min.js"></script>
+<script src="jwplayer.js"></script>
+<script src="../../build/shuobject/shuobject.js"></script>
+<script>
+	shuobject.hack('jwplayer', true);
+	jwplayer.key="CZ1NIKr/zc7LWAKtyMr+sToZQmznGTyYSxK3aw==";
+</script>
+<div id='player'></div>
+<script>
+	var config = {
+		aspectratio: [ '16:9', '16:10', '4:3', '3:2', '1:1', '2.4:1' ],
+		autostart: false,
+		controls: true,
+		file: [ 'elephants_dream_640x360_2.30.mp4',
+				'big_buck_bunny_640x360_2.28.mp4',
+				'sintel_640x360_2.28.mp4' ],
+		height: 360,
+		image: [ 'elephants_dream_640x360.jpg',
+				 'big_buck_bunny_640x360.jpg',
+				 'sintel_640x360.jpg' ],
+		mute: false,
+		primary: [ 'flash', 'html5' ],
+		repeat: false,
+		skin: '',
+		width: 640,
+		androidhls: false,
+		hlslabels: '',
+
+		listbar: {
+			position: [ 'bar', 'bottom', 'right' ],
+			size: 180,
+			layout: [ 'extended', 'basic' ]
+		},
+
+		captions: {
+			color: '#ffffff',
+			fontSize: 15,
+			fontFamily: 'sans',
+			fontOpacity: 100,
+			backgroundColor: '#000000',
+			backgroundOpacity: 75,
+			edgeStyle: 'none',
+			windowColor: '#000000',
+			windowOpacity: 0
+		},
+
+		abouttext: 'JW Player 6.x.xxx',
+		aboutlink: 'http://www.jwplayer.com/learn-more/',
+		displaytitle: true,
+    	fallback: false,
+    	flashplayer: 'jwplayer.flash.swf',
+   		html5player: 'jwplayer.html5.js',
+   		startparam: '',
+    	stagevideo: true,
+    	stretching: [ 'uniform', 'exactfit', 'fill', 'none' ]
+    };
+
+	var playlist = [
+		{
+			image: "elephants_dream_640x360.jpg",
+			sources: [{file: "elephants_dream_640x360_2.30.mp4"}],
+			title: "Elephants Dream",
+			tracks: [{
+				file: "elephants_dream.srt"
+			}]
+		},
+		{
+		    image: "big_buck_bunny_640x360.jpg",
+		    sources: [{file: "big_buck_bunny_640x360_2.28.mp4"}],
+		    title: "Big Buck Bunny",
+		    tracks: [{
+		    	file: "big_buck_bunny.srt"
+		    }]
+		}, {
+		    image: "sintel_640x360.jpg",
+		    sources: [{file: "sintel_640x360_2.28.mp4"}],
+		    title: "Sintel Trailer",
+		    tracks: [{
+		    	file: "sintel.srt"
+		    }]
+		}
+	];
+
+    var proxy = {
+		'Load Playlist Block': function () {
+			jwplayer('player').load(playlist);
+		},
+		'Load Playlist RSS': function () {
+			jwplayer('player').load('playlist.rss');
+		}
+	};
+
+    function setupPlayer() {
+		jwplayer('player').setup(config);
+    }
+
+	function addOption(gui, controller, object, property, value) {
+		var setting;
+
+		if (Array.isArray(value)) {
+			object[property] = value[0];
+			setting = controller.add(object, property, value);
+		} else if (typeof value === 'object') {
+			var folder = gui.addFolder(property[0].toUpperCase() + property.slice(1));
+			for (var property in value) {
+				addOption(gui, folder, value, property, value[property]);
+			}
+			return;
+		} else if (typeof value === 'boolean') {
+			object[property] = value + '';
+			proxy[property] = value;
+			setting = controller.add(proxy, property);
+			setting.onChange(function (value) {
+				object[property] = +value;
+			});
+		} else if (typeof value === 'string' && value[0] === '#') {
+			object[property] = value.slice(1);
+			proxy[property] = value;
+			setting = controller.addColor(proxy, property);
+			setting.onChange(function (value) {
+				object[property] = value.slice(1);
+			});
+		} else {
+			setting = controller.add(object, property);
+		}
+
+		setting.onFinishChange(setupPlayer);
+	}
+
+	window.onload = function() {
+		var gui = new dat.GUI({ width: 400 });
+		gui.remember(config);
+
+		gui.add(proxy, 'Load Playlist Block');
+		gui.add(proxy, 'Load Playlist RSS');
+
+		var options = gui.addFolder('Basic');
+		options.open();
+
+		for (var property in config) {
+			var value = config[property];
+
+			if (property === 'abouttext') {
+				options = gui.addFolder('Other');
+			}
+
+			addOption(gui, options, config, property, value);
+		}
+
+    	setupPlayer();
+	};
+</script>

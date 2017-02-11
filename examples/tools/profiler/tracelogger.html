@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TraceLogger Demo</title>
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="bootstrap-select.min.css">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <div class="row-fluid">
+    <div id="form" style="display: inline-block;">
+      <select id="engines-menu" class="selectpicker" style="display: none;"></select>
+      <select id="suites-menu" class="selectpicker" style="display: none;"></select>
+      <select id="scripts-menu" class="selectpicker" style="display: none;"></select>
+    </div>
+    <button id="submit" type="button" class="btn btn-primary">Load</button>
+  </div>
+
+  <div id="progress" class="modal fade bs-example-modal-sm" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div id="progress-bar" class="progress progress-striped">
+          <div class="progress-bar"  role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
+            <span class="sr-only">0% Complete</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="container"></div>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+  <script src="bootstrap-select.min.js"></script>
+  <script src="../../../build/ts/utilities.js"></script>
+  <script src="../../../build/ts/tools/profiler/references.js"></script>
+  <script src="../../../build/ts/tools/profiler/profile.js"></script>
+  <script src="../../../build/ts/tools/profiler/controller.js"></script>
+  <script src="../../../build/ts/tools/profiler/mouseController.js"></script>
+  <script src="../../../build/ts/tools/profiler/flameChartBase.js"></script>
+  <script src="../../../build/ts/tools/profiler/flameChart.js"></script>
+  <script src="../../../build/ts/tools/profiler/flameChartHeader.js"></script>
+  <script src="../../../build/ts/tools/profiler/flameChartOverview.js"></script>
+  <script src="../../../build/ts/tools/profiler/timelineFrame.js"></script>
+  <script src="../../../build/ts/tools/profiler/timelineBuffer.js"></script>
+  <script src="../../../build/ts/tools/profiler/tracelogger/traceLogger.js"></script>
+  <script src="../../../build/ts/tools/profiler/tracelogger/thread.js"></script>
+  <script src="../../../build/ts/tools/theme/ui.js"></script>
+  <script src="data/tracelogger/data.js"></script>
+  <script src="tracelogger.js"></script>
+</body>
+</html>

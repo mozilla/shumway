@@ -1,0 +1,291 @@
+.toolbarBox {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  height: 32px;
+  background: url(images/background-noise-toolbar.png),
+              linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
+  background: url(images/background-noise-toolbar.png),
+              -moz-linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
+  background: url(images/background-noise-toolbar.png),
+              -webkit-linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
+  background: url(images/background-noise-toolbar.png),
+              -o-linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
+  background: url(images/background-noise-toolbar.png),
+              -ms-linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
+  background: url(images/background-noise-toolbar.png),
+  border-radius: 4px;
+  box-shadow: 0 1px 0 hsla(210,16%,76%,.2) inset,
+              0 0 0 1px hsla(0,0%,0%,.15),
+              0 10px 14px hsla(0,0%,0%,.4);
+  font-family: Lucida Grande, sans-serif;
+}
+
+.toolbarBox.withEmphasis {
+  background: url(images/background-noise-toolbar.png),
+              linear-gradient(hsl(0,51%,36%), hsl(0,51%,18%));
+  background: url(images/background-noise-toolbar.png),
+              -moz-linear-gradient(hsl(0,51%,36%), hsl(0,51%,18%));
+  background: url(images/background-noise-toolbar.png),
+              -webkit-linear-gradient(hsl(0,51%,36%), hsl(0,51%,18%));
+  background: url(images/background-noise-toolbar.png),
+              -o-linear-gradient(hsl(0,51%,36%), hsl(0,51%,18%));
+  background: url(images/background-noise-toolbar.png),
+              -ms-linear-gradient(hsl(0,51%,36%), hsl(0,51%,18%));
+  border-radius: 4px;
+  box-shadow: 0 1px 0 hsla(0,56%,76%,.2) inset,
+              0 0 0 1px hsla(0,0%,0%,.15);
+  font-family: Lucida Grande, sans-serif;
+}
+
+.iconButton {
+  display: inline-block;
+  float: left;
+  width: 16px;
+  height: 22px;
+  line-height: 24px;
+  font-size: 14px;
+  text-align: center;
+  color: hsl(210,30%,85%);
+  cursor: default;
+}
+.iconButton:hover {
+  color: hsl(210,30%,100%);
+}
+.iconButton.disabled, .iconButton.disabled:hover {
+  opacity: 0.3;
+}
+
+.closeButton {
+  float: left;
+  width: 16px;
+  height: 22px;
+  margin-right: 8px;
+  background-image: url(images/close-devtools-toolbar-mac.png);
+  background-repeat: no-repeat;
+  background-position: 0px center;
+}
+.closeButton:hover {
+  background-position: -16px center;
+}
+.closeButton:hover:active {
+  background-position: -32px center;
+}
+
+.toolbarLabel {
+  display: inline-block;
+  height: 22px;
+  margin-right: 10px;
+  color: hsl(210,30%,85%);
+  font-size: 12px;
+  line-height: 22px;
+  text-align: center;
+  text-shadow: 0 -1px 0 hsla(210,8%,5%,.45);
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -o-user-select: none;
+  -ms-user-select: none;
+  cursor: default;
+}
+
+.toolbarButtonBar {
+  display: inline-block;
+  height: 22px;
+}
+.toolbarButtonBar > .toolbarButton {
+  border-radius: 0;
+}
+.toolbarButtonBar > .toolbarButton:first-child {
+  border-radius: 3px 0 0 3px;
+  border-right: none !important;
+}
+.toolbarButtonBar > .toolbarButton:last-child {
+  border-radius: 0 3px 3px 0;
+  border-right: none !important;
+}
+
+.toolbarButton {
+  display: inline-block;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid hsla(210,8%,5%,.45);
+  border-radius: 3px;
+  background: linear-gradient(hsla(212,7%,57%,.35), hsla(212,7%,57%,.1));
+  background: -moz-linear-gradient(hsla(212,7%,57%,.35), hsla(212,7%,57%,.1));
+  background: -webkit-linear-gradient(hsla(212,7%,57%,.35), hsla(212,7%,57%,.1));
+  background: -o-linear-gradient(hsla(212,7%,57%,.35), hsla(212,7%,57%,.1));
+  background: -ms-linear-gradient(hsla(212,7%,57%,.35), hsla(212,7%,57%,.1));
+  background-clip: padding-box;
+  box-shadow: 0 1px 0 hsla(210,16%,76%,.15) inset,
+              0 0 0 1px hsla(210,16%,76%,.15) inset,
+              0 1px 0 hsla(210,16%,76%,.15);
+  color: hsl(210,30%,85%);
+  font-size: 12px;
+  line-height: 22px;
+  text-align: center;
+  text-shadow: 0 -1px 0 hsla(210,8%,5%,.45);
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -o-user-select: none;
+  -ms-user-select: none;
+  cursor: default;
+}
+
+.toolbarButton:not(.pressedState):hover:active {
+  border: 1px solid hsla(210,8%,5%,.6);
+  background: linear-gradient(hsla(220,6%,10%,.3), hsla(212,7%,57%,.15) 65%, hsla(212,7%,57%,.3));
+  background: -moz-linear-gradient(hsla(220,6%,10%,.3), hsla(212,7%,57%,.15) 65%, hsla(212,7%,57%,.3));
+  background: -webkit-linear-gradient(hsla(220,6%,10%,.3), hsla(212,7%,57%,.15) 65%, hsla(212,7%,57%,.3));
+  background: -o-linear-gradient(hsla(220,6%,10%,.3), hsla(212,7%,57%,.15) 65%, hsla(212,7%,57%,.3));
+  background: -ms-linear-gradient(hsla(220,6%,10%,.3), hsla(212,7%,57%,.15) 65%, hsla(212,7%,57%,.3));
+  box-shadow: 0 0 3px hsla(210,8%,5%,.25) inset,
+              0 1px 3px hsla(210,8%,5%,.25) inset,
+              0 1px 0 hsla(210,16%,76%,.15);
+}
+
+.toolbarButton.pressedState {
+  border: 1px solid hsla(210,8%,5%,.6);
+  background: linear-gradient(hsla(220,6%,10%,.6), hsla(210,11%,18%,.45) 75%, hsla(210,11%,30%,.4));
+  background: -moz-linear-gradient(hsla(220,6%,10%,.6), hsla(210,11%,18%,.45) 75%, hsla(210,11%,30%,.4));
+  background: -webkit-linear-gradient(hsla(220,6%,10%,.6), hsla(210,11%,18%,.45) 75%, hsla(210,11%,30%,.4));
+  background: -o-linear-gradient(hsla(220,6%,10%,.6), hsla(210,11%,18%,.45) 75%, hsla(210,11%,30%,.4));
+  background: -ms-linear-gradient(hsla(220,6%,10%,.6), hsla(210,11%,18%,.45) 75%, hsla(210,11%,30%,.4));
+  box-shadow: 0 1px 3px hsla(210,8%,5%,.25) inset,
+              0 1px 3px hsla(210,8%,5%,.25) inset,
+              0 1px 0 hsla(210,16%,76%,.15);
+  color: hsl(208,100%,60%);
+}
+.toolbarButton.pressedState:hover:active {
+  background-color: hsla(210,8%,5%,.2);
+}
+
+.toolbarBox.withEmphasis .toolbarButton.pressedState {
+  background: linear-gradient(hsla(220,6%,10%,.3), hsla(212,7%,57%,.15) 65%, hsla(212,7%,57%,.1));
+  color: hsl(210,30%,85%);
+}
+.toolbarBox.withEmphasis .toolbarButton.pressedState:hover:active {
+  background: linear-gradient(hsla(220,6%,10%,.7), hsla(212,7%,57%,.1) 65%, hsla(212,7%,57%,.1));
+}
+
+.breadcrumbBar {
+  float: left;
+  height: 24px;
+  border-radius: 3px;
+  box-shadow: 0 1px 0 hsla(210,16%,76%,.15);
+  color: hsl(210,30%,85%);
+  font-size: 12px;
+  line-height: 22px;
+  text-align: center;
+  text-shadow: 0 -1px 0 hsla(210,8%,5%,.45);
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -o-user-select: none;
+  -ms-user-select: none;
+  cursor: default;
+}
+
+.breadcrumbBarStart {
+  float: left;
+  padding: 0 4px;
+  height: 24px;
+  border-width: 0 13px 0 8px;
+  border-image: url(images/breadcrumb-mac-start.png) 0 13 0 8 repeat;
+  -moz-border-image: url(images/breadcrumb-mac-start.png) 0 13 0 8 repeat;
+  -webkit-border-image: url(images/breadcrumb-mac-start.png) 0 13 0 8 repeat;
+  -o-border-image: url(images/breadcrumb-mac-start.png) 0 13 0 8 repeat;
+  -ms-border-image: url(images/breadcrumb-mac-start.png) 0 13 0 8 repeat;
+}
+.breadcrumbBarStart:hover:active {
+  border-image: url(images/breadcrumb-mac-start-pressed.png) 0 13 0 8 repeat;
+  -moz-border-image: url(images/breadcrumb-mac-start-pressed.png) 0 13 0 8 repeat;
+  -webkit-border-image: url(images/breadcrumb-mac-start-pressed.png) 0 13 0 8 repeat;
+  -o-border-image: url(images/breadcrumb-mac-start-pressed.png) 0 13 0 8 repeat;
+  -ms-border-image: url(images/breadcrumb-mac-start-pressed.png) 0 13 0 8 repeat;
+}
+
+.breadcrumbBarMiddle {
+  margin-left: -11px;
+  padding: 0 4px;
+  float: left;
+  height: 24px;
+  border-width: 0 13px;
+  border-image: url(images/breadcrumb-mac-middle.png) 0 13 0 13 repeat;
+  -moz-border-image: url(images/breadcrumb-mac-middle.png) 0 13 0 13 repeat;
+  -webkit-border-image: url(images/breadcrumb-mac-middle.png) 0 13 0 13 repeat;
+  -o-border-image: url(images/breadcrumb-mac-middle.png) 0 13 0 13 repeat;
+  -moz-border-image: url(images/breadcrumb-mac-middle.png) 0 13 0 13 repeat;
+}
+.breadcrumbBarMiddle:hover:active {
+  border-image: url(images/breadcrumb-mac-middle-pressed.png) 0 13 0 13 repeat;
+  -moz-border-image: url(images/breadcrumb-mac-middle-pressed.png) 0 13 0 13 repeat;
+  -webkit-border-image: url(images/breadcrumb-mac-middle-pressed.png) 0 13 0 13 repeat;
+  -o-border-image: url(images/breadcrumb-mac-middle-pressed.png) 0 13 0 13 repeat;
+  -ms-border-image: url(images/breadcrumb-mac-middle-pressed.png) 0 13 0 13 repeat;
+}
+
+.breadcrumbBarEnd {
+  margin-left: -11px;
+  padding: 0 4px;
+  float: left;
+  height: 24px;
+  border-width: 0 8px 0 13px;
+  border-image: url(images/breadcrumb-mac-end-selected.png) 0 8 0 13 repeat;
+  -moz-border-image: url(images/breadcrumb-mac-end-selected.png) 0 8 0 13 repeat;
+  -webkit-border-image: url(images/breadcrumb-mac-end-selected.png) 0 8 0 13 repeat;
+  -o-border-image: url(images/breadcrumb-mac-end-selected.png) 0 8 0 13 repeat;
+  -ms-border-image: url(images/breadcrumb-mac-end-selected.png) 0 8 0 13 repeat;
+  color: hsl(208,100%,60%);
+}
+.breadcrumbBarEnd:hover:active {
+  border-image: url(images/breadcrumb-mac-end-selected-pressed.png) 0 8 0 13 repeat;
+  -moz-border-image: url(images/breadcrumb-mac-end-selected-pressed.png) 0 8 0 13 repeat;
+  -webkit-border-image: url(images/breadcrumb-mac-end-selected-pressed.png) 0 8 0 13 repeat;
+  -o-border-image: url(images/breadcrumb-mac-end-selected-pressed.png) 0 8 0 13 repeat;
+  -ms-border-image: url(images/breadcrumb-mac-end-selected-pressed.png) 0 8 0 13 repeat;
+}
+
+.textInput {
+  float: left;
+  appearance: none;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  -o-appearance: none;
+  -ms-appearance: none;
+  margin: 0 3px;
+  background-color: transparent;
+  height: 22px;
+  border: 1px solid hsla(210,8%,5%,.6);
+  border-radius: 6px;
+  background-image: linear-gradient(hsla(210,16%,76%,.15), hsla(210,16%,76%,.35));
+  background-image: -moz-linear-gradient(hsla(210,16%,76%,.15), hsla(210,16%,76%,.35));
+  background-image: -webkit-linear-gradient(hsla(210,16%,76%,.15), hsla(210,16%,76%,.35));
+  background-image: -o-linear-gradient(hsla(210,16%,76%,.15), hsla(210,16%,76%,.35));
+  background-image: -ms-linear-gradient(hsla(210,16%,76%,.15), hsla(210,16%,76%,.35));
+  background-repeat: no-repeat;
+  background-position: 4px center, top left, top left;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-start: 10px;
+  -moz-padding-start: 10px;
+  -webkit-padding-start: 10px;
+  -o-padding-start: 10px;
+  -ms-padding-start: 10px;
+  padding-end: 4px;
+  -moz-padding-end: 4px;
+  -webkit-padding-end: 4px;
+  -o-padding-end: 4px;
+  -ms-padding-end: 4px;
+  box-shadow: 0 1px 1px hsla(210,8%,5%,.3) inset,
+              0 0 0 1px hsla(210,16%,76%,.1) inset,
+              0 1px 0 hsla(210,16%,76%,.15);
+  color: hsl(210,30%,85%);
+  font-weight: bolder;
+}
+
+.textInput:-moz-locale-dir(rtl) {
+  background-position: calc(100% - 4px) center, top left, top left;
+}

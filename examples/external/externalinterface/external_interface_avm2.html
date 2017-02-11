@@ -1,0 +1,49 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<title>avm2</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<style type="text/css" media="screen">
+		html, body { height:100%; background-color: #ffffff;}
+		body { margin:0; padding:0; overflow:hidden; }
+		#flashContent { width:100%; height:100%; }
+		</style>
+
+	</head>
+
+	<body>
+<script>
+var swf;
+function isReady()
+{
+	return true;
+}
+function jsFunction1()
+{
+	alert("from Flash");
+}
+function jsFunction2()
+{
+	return "from JavaScript";
+}
+function callFlash()
+{
+	swf = document.getElementById("avm2");
+	swf.fromJS("This is also from JavaScript");
+}
+</script>
+
+<div style="position: absolute; left: 65px; top: 48px;">
+<button type="button" onclick="callFlash()">Click Me</button></div>
+<div style="position: absolute; left: 170px; top: 50px;">Click the button on the left to call a function in the SWF.</div>
+
+
+
+<div id="flashContent" style="position: absolute; left: 30px; top: 150px;">
+    <object type="application/x-shockwave-flash" data="avm2.swf" name="avm2" id="avm2" width="550" height="400">
+      <param name="movie" value="avm2.swf" />
+    </object>
+</div>
+
+	</body>
+</html>

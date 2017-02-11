@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Shumway viewer</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+    }
+
+    #gfxIframe {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      top: 0;
+      height: 100%;
+      border: 0 solid;
+    }
+
+    #playerIframe {
+      position:fixed !important;
+      right:0;top:0;width:0;height:0;
+      visibility: hidden;
+    }
+  </style>
+  <script src="../src/compatibility.js"></script>
+</head>
+<body>
+   <iframe id="gfxIframe" src="viewer.gfx.html"></iframe>
+   <iframe id="playerIframe" src="viewer.player.html"></iframe>
+   <script src="viewer.js"></script>
+</body>
+</html>

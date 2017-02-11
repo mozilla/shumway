@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<!-- Any copyright is dedicated to the Public Domain.
+   - http://creativecommons.org/publicdomain/zero/1.0/ -->
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        #testButton { width: 200px; height: 170px; }
+    </style>
+</head>
+<body>
+
+<button id="testButton">Copy Stuff</button><br>
+
+<script src='zeroclipboard/ZeroClipboard.js'></script>
+<script>
+  var client = new ZeroClipboard(document.getElementById('testButton'));
+  client.on('copy', function (event) {
+    var clipboard = event.clipboardData;
+    clipboard.setData( "text/plain", "Test: " + Date.now() );
+    document.getElementById('test').value = 'Copied, try to paste here';
+ });
+client.setText('test');
+</script>
+
+<textarea id="test" cols="80">Just place for paste</textarea>
+
+</body>
+</html>
