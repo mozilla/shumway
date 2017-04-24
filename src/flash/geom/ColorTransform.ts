@@ -147,7 +147,7 @@ module Shumway.AVMX.AS.flash.geom {
       this.redOffset = (newColor >> 16) & 0xff;
       this.greenOffset = (newColor >> 8) & 0xff;
       this.blueOffset = newColor & 0xff;
-      this.redMultiplier = this.greenMultiplier = this.blueMultiplier = 1;
+      this.redMultiplier = this.greenMultiplier = this.blueMultiplier = 0;
     }
 
     public concat(second: ColorTransform): void {
