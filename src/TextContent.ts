@@ -479,13 +479,13 @@ module Shumway {
       if (font.fontType === flash.text.FontType.DEVICE) {
         if (textFormat.bold === null) {
           bold = font.fontStyle === flash.text.FontStyle.BOLD ||
-                 font.fontType === flash.text.FontStyle.BOLD_ITALIC;
+                 font.fontStyle === flash.text.FontStyle.BOLD_ITALIC;
         } else {
           bold = !!textFormat.bold;
         }
         if (textFormat.italic === null) {
           italic = font.fontStyle === flash.text.FontStyle.ITALIC ||
-                   font.fontType === flash.text.FontStyle.BOLD_ITALIC;
+                   font.fontStyle === flash.text.FontStyle.BOLD_ITALIC;
         } else {
           italic = !!textFormat.italic;
         }

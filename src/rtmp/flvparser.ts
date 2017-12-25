@@ -136,7 +136,7 @@ module RtmpJs.FLV {
             var needPreprocessing = !!(flags & 0x20);
             var timestamp = (parseBuffer[parsed + 8] << 16) |
               (parseBuffer[parsed + 9] << 8) | parseBuffer[parsed + 10] |
-              (parseBuffer[parseBuffer + 11] << 24) /* signed part */;
+              (parseBuffer[parsed + 11] << 24) /* signed part */;
             this.onTag && this.onTag({
               type: dataType,
               needPreprocessing: needPreprocessing,

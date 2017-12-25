@@ -778,7 +778,7 @@ module Shumway.AVMX.AS {
         var descriptor = Object.getOwnPropertyDescriptor(this.value, nm);
         return !!descriptor && descriptor.enumerable;
       }
-      super.native_propertyIsEnumerable(nm);
+      return super.native_propertyIsEnumerable(nm);
     }
 
     $Bglength: number;
@@ -1553,7 +1553,7 @@ module Shumway.AVMX.AS {
       if (as3Compatibility) {
         return as3ToLowerCase(String(receiver));
       }
-      String.prototype.toLowerCase.call(receiver);
+      return String.prototype.toLowerCase.call(receiver);
     }
     generic_toUpperCase() {
       var receiver = this == undefined ? '' : this;
