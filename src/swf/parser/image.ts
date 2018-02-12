@@ -90,7 +90,7 @@ module Shumway.SWF.Parser {
     }
     image.width = readInt32(bytes, ihdrOffset + 4);
     image.height = readInt32(bytes, ihdrOffset + 8);
-    var type = bytes[ihdrOffset + 14];
+    var type = bytes[ihdrOffset + 13];
     image.hasAlpha = type === 4 || type === 6;
   }
 
