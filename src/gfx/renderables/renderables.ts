@@ -725,9 +725,7 @@ module Shumway.GFX {
       enterTimeline("RenderableShape.render", this);
       for (var i = 0; i < paths.length; i++) {
         var path = paths[i];
-        context['mozImageSmoothingEnabled'] = context.msImageSmoothingEnabled =
-                                              context['imageSmoothingEnabled'] =
-                                              path.smoothImage;
+        context.imageSmoothingEnabled = path.smoothImage;
         if (path.type === PathType.Fill) {
           if (clipPath) {
             clipPath.addPath(path.path, (<any>context).currentTransform);

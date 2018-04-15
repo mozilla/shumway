@@ -191,7 +191,7 @@ function packageRefs(includes, output, license) {
       '\n';
   });
   var content = '', included = {};
-  refs.split('\n').forEach(function (entry) {
+  refs.split(/\r\n|\r|\n/).forEach(function (entry) {
     if (entry.trim() === '') {
       return;
     }

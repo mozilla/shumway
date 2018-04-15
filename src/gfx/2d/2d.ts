@@ -551,7 +551,7 @@ module Shumway.GFX.Canvas2D {
       var region = mipMapLevelSurfaceRegion.region;
       if (mipMapLevel) {
         var context = state.target.context;
-        context.imageSmoothingEnabled = context.mozImageSmoothingEnabled = true;
+        context.imageSmoothingEnabled = true;
         context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
         context.drawImage (
           mipMapLevelSurfaceRegion.surface.canvas,
@@ -844,7 +844,7 @@ module Shumway.GFX.Canvas2D {
 
       this._frameInfo.shapes ++;
 
-      context.imageSmoothingEnabled = context.mozImageSmoothingEnabled = state.hasFlags(RenderFlags.ImageSmoothing);
+      context.imageSmoothingEnabled = state.hasFlags(RenderFlags.ImageSmoothing);
 
       var renderCount = node.properties["renderCount"] || 0;
       var cacheShapesMaxSize = this._options.cacheShapesMaxSize;

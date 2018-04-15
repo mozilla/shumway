@@ -41,7 +41,6 @@ interface CanvasRenderingContext2D {
   stroke(path: Path2D): void;
 
   imageSmoothingEnabled: boolean
-  mozImageSmoothingEnabled: boolean
 
   fillRule: string;
   mozFillRule: string;
