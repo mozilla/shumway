@@ -757,10 +757,12 @@ module Shumway.GFX.Canvas2D {
       if (!this._intersectsClipList(node, state)) {
         return;
       }
+      var oldMatrix = state.matrix;
       var matrix = state.matrix;
       if (state.flags & RenderFlags.PixelSnapping) {
         matrix = matrix.clone();
         matrix.snap();
+        state.matrix = matrix;
       }
       var context = state.target.context;
       Filters._applyColorMatrix(context, state.colorMatrix);
@@ -772,6 +774,7 @@ module Shumway.GFX.Canvas2D {
       }
       if (state.flags & RenderFlags.PixelSnapping) {
         matrix.free();
+        state.matrix = oldMatrix;
       }
       Filters._removeFilter(context);
     }

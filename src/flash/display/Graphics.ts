@@ -908,7 +908,7 @@ module Shumway.AVMX.AS.flash.display {
             fromY = formOpenY = coordinates[coordinatesIndex++];
             if (ratio) {
               fromX = formOpenX += (morphCoordinates[coordinatesIndex - 2] - formOpenX) * ratio;
-              fromY = formOpenY += (morphCoordinates[coordinatesIndex - 2] - formOpenY) * ratio;
+              fromY = formOpenY += (morphCoordinates[coordinatesIndex - 1] - formOpenY) * ratio;
             }
             // Continue outer loop.
             continue;

@@ -99,7 +99,7 @@ install-tamarin-tests: $(TAMARIN_HOME)/configure.py
 
 $(TAMARIN_HOME)/configure.py:
 	hg clone $(TAMARIN_URL) $(TAMARIN_HOME)
-	cd $(TAMARIN_HOME) hg update -C 2b38aa82c803   # get a stable version
+	cd $(TAMARIN_HOME); hg update -C 2b38aa82c803   # get a stable version
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-108-fix.patch
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-npexp-fix.patch
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-gcc47-fix.patch

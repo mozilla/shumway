@@ -1312,7 +1312,7 @@ module Shumway.GFX {
                 chunk = chunk.substr(k);
                 wordWidth = measureText(measureContext, chunk, letterSpacing);
               }
-            } while (chunk && spaceLeft < 0);
+            } while (chunk.length > 0 && spaceLeft < 0);
           } else {
             spaceLeft = spaceLeft - wordWidth;
           }

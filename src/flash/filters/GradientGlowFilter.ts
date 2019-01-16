@@ -33,7 +33,7 @@ module Shumway.AVMX.AS.flash.filters {
       for (var i = 0; i < obj.colors.length; i++) {
         var color = obj.colors[i];
         colors.push(color >>> 8);
-        alphas.push(color & 0xff) / 0xff;
+        alphas.push((color & 0xff) / 0xff);
       }
       // type is derived from obj.onTop and obj.innerShadow
       // obj.onTop true: type is FULL

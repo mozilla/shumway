@@ -2730,12 +2730,12 @@ module Shumway.AVM1 {
       var instructionsExecuted = 0;
       var abortExecutionAt = currentContext.abortExecutionAt;
 
+      var ir = actionsData.ir;
       if (avm1DebuggerEnabled.value &&
           (Debugger.pause || Debugger.breakpoints[(<AnalyzerResults>ir).dataId])) {
         debugger;
       }
 
-      var ir = actionsData.ir;
       release || Debug.assert(ir);
 
       var position = 0;

@@ -644,6 +644,14 @@ module Shumway.AVMX.AS.flash.text {
       release || notImplemented("public flash.text.TextField::insertXMLText");
     }
 
+    private _invalidateFillAndLineBoundsParents() {
+      if (this.parent) {
+        this.parent._propagateFlagsUp(DisplayObjectFlags.DirtyDescendents |
+          DisplayObjectFlags.InvalidFillBounds |
+          DisplayObjectFlags.InvalidLineBounds);
+      }
+    }
+
     private _ensureLineMetrics() {
       if (!this._hasDirtyFlags(DisplayObjectDirtyFlags.DirtyTextContent)) {
         return;
@@ -658,6 +666,7 @@ module Shumway.AVMX.AS.flash.text {
         bounds.xMin = offsetX;
         bounds.xMax = offsetX + textWidth + 80;
         bounds.yMax = bounds.yMin + textHeight + 80;
+        this._invalidateFillAndLineBoundsParents();
       }
       this._textWidth = textWidth;
       this._textHeight = textHeight;
@@ -939,6 +948,9 @@ module Shumway.AVMX.AS.flash.text {
         } else {
           warning("Font " + tag.fontId + " is not defined.");
         }
+      }
+      if (tag.flags & TextFlags.HasFontClass) {
+        symbol.size = tag.fontHeight;
       }
       if (tag.flags & TextFlags.HasLayout) {
         symbol.align = flash.text.TextFormatAlign.fromNumber(tag.align);

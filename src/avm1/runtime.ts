@@ -242,7 +242,7 @@ module Shumway.AVM1 {
     }
 
     public alGet(p): any {
-      name = this.context.normalizeName(p);
+      var name = this.context.normalizeName(p);
       var desc = this.alGetProperty(name);
       if (!desc) {
         return undefined;

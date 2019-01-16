@@ -606,7 +606,7 @@ module Shumway.SWF.Parser.LowLevel {
     if (flags & TextFlags.HasFontClass) {
       tag.fontClass = stream.readString(-1);
     }
-    if (flags & TextFlags.HasFont) {
+    if (flags & (TextFlags.HasFont | TextFlags.HasFontClass)) {
       tag.fontHeight = stream.readUi16();
     }
     if (flags & TextFlags.HasColor) {
