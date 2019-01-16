@@ -276,7 +276,7 @@ module Shumway.AVMX.AS.flash.display {
       return false;
     }
     if (fromX >= x && cpX >= x && toX >= x) {
-      return true;
+      return (toY > y) !== (fromY > y);
     }
 
     // Finding the intersections with our ray means solving a quadratic
@@ -293,17 +293,44 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     d = Math.sqrt(d);
-    a = 1 / (a + a);
-    var t1 = (d - b) * a;
-    var t2 = (-b - d) * a;
 
-    var crosses = false;
-    if (t1 >= 0 && t1 <= 1 && quadraticBezier(fromX, cpX, toX, t1) > x) {
-      crosses = !crosses;
+    var t1 = -c / b;
+    var t2 = 10.0;
+
+    if (a !== 0) {
+      a = 1 / (a + a);
+      t1 = (d - b) * a;
+      t2 = (-b - d) * a;
     }
 
-    if (t2 >= 0 && t2 <= 1 && quadraticBezier(fromX, cpX, toX, t2) > x) {
-      crosses = !crosses;
+    var goesDown = cpY > y || cpY === y && toY > y;
+    var goesUp = cpY > y || cpY === y && fromY > y;
+
+    if (d === 0) {
+      if (t1 === 0) {
+        return goesDown && fromX > x;
+      }
+      if (t1 === 1) {
+        return goesUp && toX > x;
+      }
+      return false;
+    }
+
+    var crosses = false;
+    if (t1 >= 0 && t1 <= 1) {
+      if ((t1 > 0 || goesDown) && (t1 < 1 || goesUp)) {
+        if (quadraticBezier(fromX, cpX, toX, t1) > x) {
+          crosses = !crosses;
+        }
+      }
+    }
+
+    if (t2 >= 0 && t2 <= 1) {
+      if ((t2 > 0 || goesDown) && (t2 < 1 || goesUp)) {
+        if (quadraticBezier(fromX, cpX, toX, t2) > x) {
+          crosses = !crosses;
+        }
+      }
     }
     return crosses;
   }
