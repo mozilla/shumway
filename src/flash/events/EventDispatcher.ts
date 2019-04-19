@@ -60,7 +60,9 @@ module Shumway.AVMX.AS.flash.events {
         if (priority > entry.priority) {
           index = i;
         } else {
-          break;
+          if (priority < entry.priority) {
+            break;
+          }
         }
       }
       entries = this.ensureNonAliasedEntries();
